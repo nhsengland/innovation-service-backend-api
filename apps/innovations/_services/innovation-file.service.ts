@@ -3,7 +3,11 @@ import { basename, extname } from 'path';
 
 import type { EntityManager } from 'typeorm';
 
-import { InnovationDocumentEntity, InnovationFileEntity } from '@innovations/shared/entities';
+import {
+  InnovationDocumentEntity,
+  InnovationFileEntity,
+  InnovationThreadMessageEntity
+} from '@innovations/shared/entities';
 import type { FileStorageService, IdentityProviderService } from '@innovations/shared/services';
 
 import { MAX_FILES_ALLOWED } from '@innovations/shared/constants';
@@ -188,7 +192,7 @@ export class InnovationFileService extends BaseService {
       .filter((u): u is string => u !== undefined);
     const usersInfo = await this.identityProviderService.getUsersMap(usersIds);
 
-    const contextMap = this.x(files);
+    const contextMap = await this.files2ResolvedContexts(files, innovationId, connection);
 
     return {
       count,
@@ -519,9 +523,15 @@ export class InnovationFileService extends BaseService {
    * specific for each file type.
    *
    * @param files the document files
+   * @param innovationId the innovation id
+   * @param entityManager the entity manager
    * @returns a map of contextType:contextId -> context output for each file
    */
-  x(files: InnovationFileEntity[]): Map<string, InnovationFileDocumentOutputContextType> {
+  private async files2ResolvedContexts(
+    files: InnovationFileEntity[],
+    innovationId: string,
+    entityManager: EntityManager
+  ): Promise<Map<string, InnovationFileDocumentOutputContextType>> {
     const contextTypeIDsMap = files.reduce((acc, file) => {
       if (!acc.has(file.contextType)) {
         acc.set(file.contextType, new Set<string>());
@@ -531,40 +541,81 @@ export class InnovationFileService extends BaseService {
     }, new Map<InnovationFileContextTypeEnum, Set<string>>());
 
     // This is a map of contextType:contextId -> context output
-    return new Map(
-      [...contextTypeIDsMap.entries()].flatMap(([type, ids]) =>
-        this.contextMapper[type]([...ids]).map(ct => [this.contextTypeId2Key(type, ct.id), ct])
-      )
-    );
+    const res = new Map<string, InnovationFileDocumentOutputContextType>();
+
+    for (const [type, ids] of contextTypeIDsMap.entries()) {
+      const resolved = await this.contextMapper[type]([...ids], innovationId, entityManager);
+      resolved.forEach(ct => res.set(this.contextTypeId2Key(type, ct.id), ct));
+    }
+    return res;
   }
 
   // Helper mapper function for each file types
-  private x1 =
+  private defaultContextMapper =
     <T extends InnovationFileContextTypeEnum>(contextType: T) =>
-    (ids: string[]) => {
+    (ids: string[], _innovationId: string, _entityManager: EntityManager) => {
       return ids.map(id => ({ id, type: contextType }));
     };
-  private x2 =
-    <T extends InnovationFileContextTypeEnum>(contextType: T) =>
-    (ids: string[]) => {
-      return ids.map(id => ({ id, type: contextType, name: 'TODO' }));
-    };
-  private x3 =
-    <T extends InnovationFileContextTypeEnum>(contextType: T) =>
-    (ids: string[]) => {
-      return ids.map(id => ({ id, type: contextType, name: 'TODO', threadId: 'TODO' }));
-    };
+
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+  private evidenceContextMapper = async (ids: string[], innovationId: string, entityManager: EntityManager) => {
+    const innovationDocument = await entityManager
+      .createQueryBuilder(InnovationDocumentEntity, 'document')
+      .where('document.id = :innovationId', { innovationId })
+      .andWhere('document.version = :version', { version: CurrentDocumentConfig.version })
+      .getOne();
+
+    if (!innovationDocument || innovationDocument.document.version !== CurrentDocumentConfig.version) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
+    }
+
+    const evidenceMap = new Map(
+      (innovationDocument.document.evidences ?? []).map(e => [
+        e.id,
+        e.description ?? TranslationHelper.translate(`EVIDENCE_SUBMIT_TYPES.${e.evidenceSubmitType}`)
+      ])
+    );
+
+    return ids.map(id => ({
+      id: id,
+      type: InnovationFileContextTypeEnum.INNOVATION_EVIDENCE as const,
+      name: evidenceMap.get(id) ?? '' // this should never be undefined since all evidence files must have an evidence (not throwing error though )
+    }));
+  };
+
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+  private messageContextMapper = async (ids: string[], _innovationId: string, entityManager: EntityManager) => {
+    const messagesMap = new Map(
+      (
+        await entityManager
+          .createQueryBuilder(InnovationThreadMessageEntity, 'message')
+          .select(['message.id', 'thread.id', 'thread.subject'])
+          .innerJoin('message.thread', 'thread')
+          .where('message.id IN (:...ids)', { ids })
+          .getMany()
+      ).map(m => [m.id, { threadId: m.thread.id, name: m.thread.subject }])
+    );
+
+    return ids.map(id => ({
+      id,
+      type: InnovationFileContextTypeEnum.INNOVATION_MESSAGE as const,
+      name: messagesMap.get(id)?.name ?? '', // this should never be undefined since all message files must have a message (not throwing error though )
+      threadId: messagesMap.get(id)?.threadId ?? ''
+    }));
+  };
 
   private contextTypeId2Key = (type: InnovationFileContextTypeEnum, id: string): string => `${type}:${id}`;
 
   // Helper mapper for each file types to map the contextType and contextId -> context output
   contextMapper = {
-    [InnovationFileContextTypeEnum.INNOVATION]: this.x1(InnovationFileContextTypeEnum.INNOVATION),
-    [InnovationFileContextTypeEnum.INNOVATION_PROGRESS_UPDATE]: this.x1(
+    [InnovationFileContextTypeEnum.INNOVATION]: this.defaultContextMapper(InnovationFileContextTypeEnum.INNOVATION),
+    [InnovationFileContextTypeEnum.INNOVATION_PROGRESS_UPDATE]: this.defaultContextMapper(
       InnovationFileContextTypeEnum.INNOVATION_PROGRESS_UPDATE
     ),
-    [InnovationFileContextTypeEnum.INNOVATION_SECTION]: this.x1(InnovationFileContextTypeEnum.INNOVATION_SECTION),
-    [InnovationFileContextTypeEnum.INNOVATION_EVIDENCE]: this.x2(InnovationFileContextTypeEnum.INNOVATION_EVIDENCE),
-    [InnovationFileContextTypeEnum.INNOVATION_MESSAGE]: this.x3(InnovationFileContextTypeEnum.INNOVATION_MESSAGE)
+    [InnovationFileContextTypeEnum.INNOVATION_SECTION]: this.defaultContextMapper(
+      InnovationFileContextTypeEnum.INNOVATION_SECTION
+    ),
+    [InnovationFileContextTypeEnum.INNOVATION_EVIDENCE]: this.evidenceContextMapper,
+    [InnovationFileContextTypeEnum.INNOVATION_MESSAGE]: this.messageContextMapper
   };
 }
