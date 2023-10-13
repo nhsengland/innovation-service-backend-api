@@ -651,7 +651,7 @@ export class InnovationThreadsService extends BaseService {
           file: {
             name: file.name,
             extension: file.extension,
-            size: file.filesize,
+            size: file.filesize ?? undefined,
             url: this.fileStorageService.getDownloadUrl(file.storageId, file.filename)
           }
         }),

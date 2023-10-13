@@ -16,6 +16,7 @@ import type { TestUserType } from '@innovations/shared/tests/builders/user.build
 import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
 import type { DomainContextType } from '@innovations/shared/types';
 import { randAirportName, randFileName, randFutureDate, randNumber, randText, randUrl, randUuid } from '@ngneat/falso';
+import { fail } from 'assert';
 import type { EntityManager } from 'typeorm';
 import type { InnovationFileService } from './innovation-file.service';
 import SYMBOLS from './symbols';
@@ -1134,4 +1135,10 @@ describe('Services / Innovation File service suite', () => {
       file: { ...file.file, url }
     };
   };
+
+  describe('contextType', () => {
+    it('todo', () => {
+      fail('todo');
+    });
+  });
 });

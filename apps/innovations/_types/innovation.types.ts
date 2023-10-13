@@ -162,7 +162,7 @@ export const InnovationFileDocumentSchema = Joi.object<InnovationFileDocumentTyp
 
 export type InnovationFileDocumentOutputType = {
   name: string;
-  size: number | null;
+  size?: number;
   extension: string;
   url: string;
 };

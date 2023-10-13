@@ -27,6 +27,7 @@ import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { DomainContextType, IdentityUserInfo } from '@innovations/shared/types';
 import { randomUUID } from 'crypto';
 import type {
+  InnovationDocumentTypeWithContext,
   InnovationFileDocumentOutputContextType,
   InnovationFileDocumentOutputType
 } from '../_types/innovation.types';
@@ -218,7 +219,7 @@ export class InnovationFileService extends BaseService {
         },
         file: {
           name: file.filename,
-          size: file.filesize ?? null,
+          size: file.filesize ?? undefined,
           extension: file.extension,
           url: this.fileStorageService.getDownloadUrl(file.storageId, file.filename)
         }
