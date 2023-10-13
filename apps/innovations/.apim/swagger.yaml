@@ -3348,36 +3348,23 @@ paths:
                     file:
                       type: object
                       properties:
+                        id:
+                          type: string
+                          maxLength: 100
                         name:
                           type: string
                           maxLength: 100
-                        description:
+                        size:
+                          type: number
+                          format: float
+                        extension:
                           type: string
-                          maxLength: 500
-                        file:
-                          type: object
-                          properties:
-                            id:
-                              type: string
-                              maxLength: 100
-                            name:
-                              type: string
-                              maxLength: 100
-                            size:
-                              type: number
-                              format: float
-                            extension:
-                              type: string
-                              maxLength: 4
-                          required:
-                            - id
-                            - name
-                            - size
-                            - extension
-                          additionalProperties: false
+                          maxLength: 4
                       required:
+                        - id
                         - name
-                        - file
+                        - size
+                        - extension
                       additionalProperties: false
                   required:
                     - name
