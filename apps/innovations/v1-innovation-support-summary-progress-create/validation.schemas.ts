@@ -17,9 +17,5 @@ export type BodyType = {
 export const BodySchema = Joi.object<BodyType>({
   title: Joi.string().max(100).required(),
   description: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).required(),
-  document: Joi.object<BodyType['document']>({
-    name: Joi.string().max(100).required(),
-    description: Joi.string().max(TEXTAREA_LENGTH_LIMIT.s).optional(),
-    file: InnovationFileDocumentSchema.required()
-  }).optional()
+  document: InnovationFileDocumentSchema.optional()
 }).required();
