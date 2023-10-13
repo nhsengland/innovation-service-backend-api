@@ -38,7 +38,7 @@ import type { DomainContextType, DomainUserInfoType, IdentityUserInfo } from '@i
 
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import type { InnovationFileOutputType, InnovationFileType } from '../_types/innovation.types';
+import type { InnovationFileType } from '../_types/innovation.types';
 import { BaseService } from './base.service';
 import type { InnovationFileService } from './innovation-file.service';
 import SYMBOLS from './symbols';
@@ -537,7 +537,7 @@ export class InnovationThreadsService extends BaseService {
     messages: {
       id: string;
       message: string;
-      file?: InnovationFileOutputType;
+      file?: { id: string; name: string; url: string };
       createdAt: Date;
       isNew: boolean;
       isEditable: boolean;
@@ -633,7 +633,7 @@ export class InnovationThreadsService extends BaseService {
     const messageIds = messages.map(m => m.id);
     const files = await em
       .createQueryBuilder(InnovationFileEntity, 'file')
-      .select(['file.name', 'file.extension', 'file.filesize', 'file.storageId', 'file.filename', 'file.contextId'])
+      .select(['file.id', 'file.name', 'file.storageId', 'file.filename', 'file.contextId'])
       .where('file.contextId IN(:...messageIds)', { messageIds })
       .andWhere('file.contextType = :contextType', { contextType: InnovationFileContextTypeEnum.INNOVATION_MESSAGE })
       .getMany();
@@ -649,9 +649,8 @@ export class InnovationThreadsService extends BaseService {
         message: tm.message,
         ...(file && {
           file: {
+            id: file.id,
             name: file.name,
-            extension: file.extension,
-            size: file.filesize ?? undefined,
             url: this.fileStorageService.getDownloadUrl(file.storageId, file.filename)
           }
         }),

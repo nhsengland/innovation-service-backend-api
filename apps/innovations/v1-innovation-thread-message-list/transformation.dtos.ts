@@ -1,11 +1,9 @@
-import type { InnovationFileOutputType } from '../_types/innovation.types';
-
 export type ResponseDTO = {
   count: number;
   messages: {
     id: string;
     message: string;
-    file?: InnovationFileOutputType;
+    file?: { id: string; name: string; url: string };
     createdAt: Date;
     isNew: boolean;
     isEditable: boolean;

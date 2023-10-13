@@ -175,10 +175,8 @@ export default openApi(
                         file: {
                           type: 'object',
                           properties: {
-                            id: { type: 'string', description: 'Storage Id' },
+                            id: { type: 'string' },
                             name: { type: 'string' },
-                            size: { type: 'number' },
-                            extension: { type: 'string' },
                             url: { type: 'string' }
                           }
                         },
