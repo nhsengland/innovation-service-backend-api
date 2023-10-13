@@ -167,6 +167,26 @@ export type InnovationFileDocumentOutputType = {
   url: string;
 };
 
+export type InnovationFileDocumentOutputContextType =
+  | {
+      id: string;
+      type:
+        | InnovationFileContextTypeEnum.INNOVATION
+        | InnovationFileContextTypeEnum.INNOVATION_SECTION
+        | InnovationFileContextTypeEnum.INNOVATION_PROGRESS_UPDATE;
+    }
+  | {
+      id: string;
+      type: InnovationFileContextTypeEnum.INNOVATION_EVIDENCE;
+      name: string;
+    }
+  | {
+      id: string;
+      type: InnovationFileContextTypeEnum.INNOVATION_MESSAGE;
+      name: string;
+      threadId: string;
+    };
+
 export type InnovationDocumentTypeWithContext = InnovationFileDocumentType & {
   context: { id: string; type: InnovationFileContextTypeEnum };
 };

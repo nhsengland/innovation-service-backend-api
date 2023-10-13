@@ -24,9 +24,12 @@ import { CurrentDocumentConfig } from '@innovations/shared/schemas/innovation-re
 import { allowFileUploads } from '@innovations/shared/schemas/innovation-record/202304/document.config';
 import type { DocumentType202304 } from '@innovations/shared/schemas/innovation-record/202304/document.types';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import type { DomainContextType, IdentityUserInfo } from '@innovations/shared/types';
+import type { DomainContextType } from '@innovations/shared/types';
 import { randomUUID } from 'crypto';
-import type { InnovationDocumentTypeWithContext } from '../_types/innovation.types';
+import type {
+  InnovationFileDocumentOutputContextType,
+  InnovationFileDocumentOutputType
+} from '../_types/innovation.types';
 import { BaseService } from './base.service';
 
 @injectable()
@@ -60,12 +63,12 @@ export class InnovationFileService extends BaseService {
     data: {
       id: string;
       storageId: string;
-      context: { id: string; type: InnovationFileContextTypeEnum; name?: string };
+      context: InnovationFileDocumentOutputContextType;
       name: string;
       description?: string;
       createdAt: Date;
       createdBy: { name: string; role: ServiceRoleEnum; isOwner?: boolean; orgUnitName?: string };
-      file: { name: string; size?: number; extension: string; url: string };
+      file: InnovationFileDocumentOutputType;
     }[];
   }> {
     const connection = entityManager ?? this.sqlConnection.manager;
@@ -221,6 +224,48 @@ export class InnovationFileService extends BaseService {
         }
       }))
     };
+  }
+
+  private x1 =
+    <T extends InnovationFileContextTypeEnum>(contextType: T) =>
+    (ids: string[]) => {
+      return ids.map(id => ({ id, type: contextType }));
+    };
+  private x2 =
+    <T extends InnovationFileContextTypeEnum>(contextType: T) =>
+    (ids: string[]) => {
+      return ids.map(id => ({ id, type: contextType, name: 'TODO' }));
+    };
+  private x3 =
+    <T extends InnovationFileContextTypeEnum>(contextType: T) =>
+    (ids: string[]) => {
+      return ids.map(id => ({ id, type: contextType, name: 'TODO', threadId: 'TODO' }));
+    };
+
+  contextMapper = {
+    [InnovationFileContextTypeEnum.INNOVATION]: this.x1(InnovationFileContextTypeEnum.INNOVATION),
+    [InnovationFileContextTypeEnum.INNOVATION_PROGRESS_UPDATE]: this.x1(
+      InnovationFileContextTypeEnum.INNOVATION_PROGRESS_UPDATE
+    ),
+    [InnovationFileContextTypeEnum.INNOVATION_SECTION]: this.x1(InnovationFileContextTypeEnum.INNOVATION_SECTION),
+    [InnovationFileContextTypeEnum.INNOVATION_EVIDENCE]: this.x2(InnovationFileContextTypeEnum.INNOVATION_EVIDENCE),
+    [InnovationFileContextTypeEnum.INNOVATION_MESSAGE]: this.x3(InnovationFileContextTypeEnum.INNOVATION_MESSAGE)
+  };
+  x(files: InnovationFileEntity[]): InnovationFileDocumentOutputContextType {
+    const contextTypeIDsMap = files.reduce((acc, file) => {
+      if (!acc.has(file.contextType)) {
+        acc.set(file.contextType, new Set<string>());
+      }
+      acc.get(file.contextType)?.add(file.contextId);
+      return acc;
+    }, new Map<InnovationFileContextTypeEnum, Set<string>>());
+
+    const resolvedContextIDsMap = [...contextTypeIDsMap.entries()].reduce((acc, [contextType, ids]) => {
+      const x: InnovationFileDocumentOutputContextType[] = this.contextMapper[contextType]([...ids]);
+      acc.set(contextType, new Map());
+      return acc;
+    }, new Map<InnovationFileContextTypeEnum, Map<string, InnovationFileDocumentOutputContextType>>());
+    throw new Error('');
   }
 
   async getFileInfo(
