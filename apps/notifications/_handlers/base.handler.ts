@@ -1,14 +1,13 @@
 import type { Context } from '@azure/functions';
 import {
-  EmailNotificationPreferenceEnum,
-  EmailNotificationType,
   NotificationContextDetailEnum,
   NotificationContextTypeEnum,
   NotificationLogTypeEnum,
+  NotificationPreferenceEnum,
   NotifierTypeEnum,
   ServiceRoleEnum
 } from '@notifications/shared/enums';
-import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
+import type { DomainContextType, NotificationPreferences, NotifierTemplatesType } from '@notifications/shared/types';
 import { EmailTemplatesType, EmailTypeEnum, container } from '../_config';
 import type { RecipientType, RecipientsService } from '../_services/recipients.service';
 import SYMBOLS from '../_services/symbols';
@@ -18,7 +17,7 @@ type IdentityRecipientType = Omit<RecipientType, 'userRole'>;
 
 type HandlerEmailType<T> = Array<{
   templateId: EmailTypeEnum;
-  notificationPreferenceType: EmailNotificationType | null;
+  notificationPreferenceType: keyof NotificationPreferences | null;
   to: EmailRecipientType | Omit<IdentityRecipientType, 'userId' | 'role'>; // maybe review this later and it will probably only require roleId
   params: T;
   log?: {
@@ -72,13 +71,10 @@ export abstract class BaseHandler<
 
   /**
    * Helper method to verify users email notification preferences.
-   * Ex: this.isEmailPreferenceInstantly(EmailNotificationType.ACTION, userData);
+   * Ex: this.isEmailPreferenceInstantly(NotificationCategoryEnum.TASK, userData);
    */
-  protected isEmailPreferenceInstantly(
-    type: EmailNotificationType,
-    data?: Partial<Record<EmailNotificationType, EmailNotificationPreferenceEnum>>
-  ): boolean {
-    return !data || !data[type] || data[type] === EmailNotificationPreferenceEnum.INSTANTLY;
+  protected isEmailPreferenceInstantly(type: keyof NotificationPreferences, data?: NotificationPreferences): boolean {
+    return !data || !data[type] || data[type] === NotificationPreferenceEnum.YES;
   }
 
   protected frontendBaseUrl(userRole: ServiceRoleEnum): string {
@@ -134,7 +130,7 @@ export abstract class BaseHandler<
         if (
           recipient.notificationPreferenceType && // if preference is set
           !recipient.options?.ignorePreferences && // and ignore is not set
-          // and preference is not instant
+          // and don't have preference for this type
           !this.isEmailPreferenceInstantly(
             recipient.notificationPreferenceType,
             emailPreferences.get(recipient.to.roleId)

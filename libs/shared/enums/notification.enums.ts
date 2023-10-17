@@ -1,3 +1,6 @@
+/**
+ * @deprecated Use `NotificationCategoryEnum` instead.
+ */
 export enum NotificationContextTypeEnum {
   NEEDS_ASSESSMENT = 'NEEDS_ASSESSMENT',
   INNOVATION = 'INNOVATION',
@@ -6,6 +9,30 @@ export enum NotificationContextTypeEnum {
   THREAD = 'THREAD',
   DATA_SHARING = 'DATA_SHARING',
   COMMENT = 'COMMENT' // TODO: Deprecated!
+}
+
+export enum NotificationCategoryEnum {
+  // GENERAL
+  // A are only composed by GENERAL ones (not all)
+  TASK = 'TASK',
+  MESSAGE = 'MESSAGE',
+  INNOVATION_MANAGEMENT = 'INNOVATION_MANAGEMENT',
+  SUPPORT = 'SUPPORT',
+  EXPORT_REQUEST = 'EXPORT_REQUEST',
+  ACCOUNT = 'ACCOUNT',
+  REMINDER = 'REMINDER',
+  // NA
+  INNOVATOR_SUBMIT_IR = 'INNOVATOR_SUBMIT_IR',
+  ASSIGN_NA = 'ASSIGN_NA',
+  // QA
+  SUGGEST_SUPPORT = 'SUGGEST_SUPPORT',
+  // I
+  DOCUMENT = 'DOCUMENT'
+}
+
+export enum NotificationPreferenceEnum {
+  YES = 'YES',
+  NO = 'NO'
 }
 
 export enum NotificationContextDetailEnum {
@@ -36,8 +63,13 @@ export enum NotificationContextDetailEnum {
   INNOVATION_ORGANISATION_SUGGESTION_NOT_SHARED = 'INNOVATION_ORGANISATION_SUGGESTION_NOT_SHARED'
 }
 
-// TODO MJS this is no longer a enum so move it out of here
+/**
+ * @deprecated Use `NotificationCategoryEnum` instead.
+ */
 export const EmailNotificationType = ['TASK', 'MESSAGE', 'SUPPORT'] as const;
+/**
+ * @deprecated Use `NotificationCategoryEnum` instead.
+ */
 export type EmailNotificationType = (typeof EmailNotificationType)[number];
 
 export enum EmailNotificationPreferenceEnum {

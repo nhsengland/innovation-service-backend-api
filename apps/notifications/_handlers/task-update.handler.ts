@@ -1,5 +1,6 @@
 import {
   InnovationTaskStatusEnum,
+  NotificationCategoryEnum,
   NotificationContextDetailEnum,
   NotificationContextTypeEnum,
   NotifierTypeEnum,
@@ -138,7 +139,7 @@ export class TaskUpdateHandler extends BaseHandler<
     this.emails.push({
       templateId: templateId,
       to: task.owner,
-      notificationPreferenceType: 'TASK',
+      notificationPreferenceType: NotificationCategoryEnum.TASK,
       params: {
         // display_name: '', // This will be filled by the email-listener function.
         innovator_name: requestInfo.displayName,
@@ -183,7 +184,7 @@ export class TaskUpdateHandler extends BaseHandler<
 
     this.emails.push({
       templateId,
-      notificationPreferenceType: 'TASK',
+      notificationPreferenceType: NotificationCategoryEnum.TASK,
       to: innovation.owner,
       params: {
         accessor_name: accessor_name,
@@ -221,7 +222,7 @@ export class TaskUpdateHandler extends BaseHandler<
 
     this.emails.push({
       templateId,
-      notificationPreferenceType: 'TASK',
+      notificationPreferenceType: NotificationCategoryEnum.TASK,
       to: innovation.owner,
       params: {
         // display_name: '', // This will be filled by the email-listener function.
@@ -264,7 +265,7 @@ export class TaskUpdateHandler extends BaseHandler<
 
     this.emails.push({
       templateId,
-      notificationPreferenceType: 'TASK',
+      notificationPreferenceType: NotificationCategoryEnum.TASK,
       to: innovator,
       params: {
         // display_name: '', // This will be filled by the email-listener function.

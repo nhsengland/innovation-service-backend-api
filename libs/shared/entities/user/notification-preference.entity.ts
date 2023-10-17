@@ -2,15 +2,12 @@ import { Column, Entity, PrimaryColumn } from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
 
-import { EmailNotificationPreferenceEnum, EmailNotificationType } from '../../enums/notification.enums';
+import type { NotificationPreferences } from '../../types/notification.types';
 
 @Entity('notification_preference')
 export class NotificationPreferenceEntity extends BaseEntity {
-  @PrimaryColumn({ type: 'simple-enum', enum: EmailNotificationType, name: 'notification_type' })
-  notificationType: EmailNotificationType;
-
-  @Column({ type: 'simple-enum', enum: EmailNotificationPreferenceEnum, nullable: false })
-  preference: EmailNotificationPreferenceEnum;
+  @Column({ name: 'preferences', type: 'simple-json' })
+  preferences: NotificationPreferences;
 
   @PrimaryColumn({ name: 'user_role_id', type: 'uniqueidentifier' })
   userRoleId: string;

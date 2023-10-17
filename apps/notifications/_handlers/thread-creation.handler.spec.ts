@@ -1,5 +1,9 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { NotificationContextDetailEnum, NotificationContextTypeEnum } from '@notifications/shared/enums';
+import {
+  NotificationCategoryEnum,
+  NotificationContextDetailEnum,
+  NotificationContextTypeEnum
+} from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
 import { CompleteScenarioType, MocksHelper, TestsHelper } from '@notifications/shared/tests';
 import type {
@@ -104,7 +108,7 @@ describe('Notifications / _handlers / thread-creation suite', () => {
       expect(handler.emails).toMatchObject([
         {
           templateId: EmailTypeEnum.THREAD_CREATION_TO_INNOVATOR_FROM_ASSIGNED_USER,
-          notificationPreferenceType: 'MESSAGE',
+          notificationPreferenceType: NotificationCategoryEnum.MESSAGE,
           to: DTOsHelper.getRecipientUser(scenario.users.johnInnovator),
           params: {
             accessor_name: requestUser.name, //Review what should happen if user is not found
@@ -120,7 +124,7 @@ describe('Notifications / _handlers / thread-creation suite', () => {
         },
         {
           templateId: EmailTypeEnum.THREAD_CREATION_TO_INNOVATOR_FROM_ASSIGNED_USER,
-          notificationPreferenceType: 'MESSAGE',
+          notificationPreferenceType: NotificationCategoryEnum.MESSAGE,
           to: DTOsHelper.getRecipientUser(scenario.users.janeInnovator),
           params: {
             accessor_name: requestUser.name, //Review what should happen if user is not found
@@ -232,7 +236,7 @@ describe('Notifications / _handlers / thread-creation suite', () => {
       expect(handler.emails).toMatchObject([
         {
           templateId: EmailTypeEnum.THREAD_CREATION_TO_INNOVATOR_FROM_INNOVATOR,
-          notificationPreferenceType: 'MESSAGE',
+          notificationPreferenceType: NotificationCategoryEnum.MESSAGE,
           to: DTOsHelper.getRecipientUser(emailRecipient!, 'innovatorRole'),
           params: {
             // display_name: '', // This will be filled by the email-listener function.
@@ -249,7 +253,7 @@ describe('Notifications / _handlers / thread-creation suite', () => {
         },
         {
           templateId: EmailTypeEnum.THREAD_CREATION_TO_ASSIGNED_USERS,
-          notificationPreferenceType: 'MESSAGE',
+          notificationPreferenceType: NotificationCategoryEnum.MESSAGE,
           to: DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole'),
           params: {
             // display_name: '', // This will be filled by the email-listener function.

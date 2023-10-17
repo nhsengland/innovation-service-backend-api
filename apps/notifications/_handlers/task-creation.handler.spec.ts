@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {
+  NotificationCategoryEnum,
   NotificationContextDetailEnum,
   NotificationContextTypeEnum,
   ServiceRoleEnum
@@ -133,7 +134,7 @@ describe('Notifications / _handlers / task-creation suite', () => {
 
         expect(expectedEmail).toMatchObject({
           templateId: EmailTypeEnum.TASK_CREATION_TO_INNOVATOR,
-          notificationPreferenceType: 'TASK',
+          notificationPreferenceType: NotificationCategoryEnum.TASK,
           to: DTOsHelper.getRecipientUser(scenario.users.johnInnovator, 'innovatorRole'),
           params: {
             accessor_name: requestUser.name,
@@ -158,7 +159,7 @@ describe('Notifications / _handlers / task-creation suite', () => {
 
         expect(expectedEmail).toMatchObject({
           templateId: EmailTypeEnum.TASK_CREATION_TO_INNOVATOR,
-          notificationPreferenceType: 'TASK',
+          notificationPreferenceType: NotificationCategoryEnum.TASK,
           to: DTOsHelper.getRecipientUser(scenario.users.janeInnovator, 'innovatorRole'),
           params: {
             accessor_name: requestUser.name,
