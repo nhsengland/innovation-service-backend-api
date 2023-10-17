@@ -4,7 +4,7 @@ import { NotificationContextDetailEnum, NotificationContextTypeEnum } from '@not
 import { UrlModel } from '@notifications/shared/models';
 import { MocksHelper, TestsHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
-import { ENV, EmailTypeEnum } from '../../_config';
+import { ENV } from '../../_config';
 import { RecipientsService } from '../../_services/recipients.service';
 
 describe('Notifications / _handlers / innovation-organisation-units-suggestion handler suite', () => {
@@ -87,12 +87,10 @@ describe('Notifications / _handlers / innovation-organisation-units-suggestion h
   });
 
   it('Should send email to all QAs of suggested organisation units that innovation shares with', () => {
-    const expectedEmails = handler.emails.filter(
-      email => email.templateId === EmailTypeEnum.ORGANISATION_SUGGESTION_TO_QA
-    );
+    const expectedEmails = handler.emails.filter(email => email.templateId === 'ORGANISATION_SUGGESTION_TO_QA');
     expect(expectedEmails).toMatchObject([
       {
-        templateId: EmailTypeEnum.ORGANISATION_SUGGESTION_TO_QA,
+        templateId: 'ORGANISATION_SUGGESTION_TO_QA',
         to: DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor),
         notificationPreferenceType: null,
         params: {
@@ -103,7 +101,7 @@ describe('Notifications / _handlers / innovation-organisation-units-suggestion h
         }
       },
       {
-        templateId: EmailTypeEnum.ORGANISATION_SUGGESTION_TO_QA,
+        templateId: 'ORGANISATION_SUGGESTION_TO_QA',
         to: DTOsHelper.getRecipientUser(scenario.users.scottQualifyingAccessor),
         notificationPreferenceType: null,
         params: {
@@ -118,11 +116,11 @@ describe('Notifications / _handlers / innovation-organisation-units-suggestion h
 
   it('Should send email to innovation owner and collaborators when there are suggested organisation units that innovation is not shared with', () => {
     const expectedEmails = handler.emails.filter(
-      email => email.templateId === EmailTypeEnum.ORGANISATION_SUGGESTION_NOT_SHARED_TO_INNOVATOR
+      email => email.templateId === 'ORGANISATION_SUGGESTION_NOT_SHARED_TO_INNOVATOR'
     );
     expect(expectedEmails).toMatchObject([
       {
-        templateId: EmailTypeEnum.ORGANISATION_SUGGESTION_NOT_SHARED_TO_INNOVATOR,
+        templateId: 'ORGANISATION_SUGGESTION_NOT_SHARED_TO_INNOVATOR',
         to: DTOsHelper.getRecipientUser(scenario.users.johnInnovator),
         notificationPreferenceType: null,
         params: {
@@ -134,7 +132,7 @@ describe('Notifications / _handlers / innovation-organisation-units-suggestion h
         }
       },
       {
-        templateId: EmailTypeEnum.ORGANISATION_SUGGESTION_NOT_SHARED_TO_INNOVATOR,
+        templateId: 'ORGANISATION_SUGGESTION_NOT_SHARED_TO_INNOVATOR',
         to: DTOsHelper.getRecipientUser(scenario.users.janeInnovator),
         notificationPreferenceType: null,
         params: {

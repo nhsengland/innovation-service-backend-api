@@ -1,4 +1,4 @@
-import { EmailTypeEnum, ENV } from '../../_config';
+import { ENV } from '../../_config';
 
 import {
   NotificationContextDetailEnum,
@@ -14,8 +14,7 @@ import { BaseHandler } from '../base.handler';
 
 export class InnovationTransferOwnershipExpirationHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_EXPIRATION,
-  EmailTypeEnum.INNOVATION_TRANSFER_EXPIRED,
-  Record<string, never>
+  'MIGRATION_OLD'
 > {
   constructor(
     requestUser: DomainContextType,
@@ -39,7 +38,7 @@ export class InnovationTransferOwnershipExpirationHandler extends BaseHandler<
 
     if (targetUser) {
       this.emails.push({
-        templateId: EmailTypeEnum.INNOVATION_TRANSFER_EXPIRED,
+        templateId: 'INNOVATION_TRANSFER_EXPIRED',
         to: targetUser,
         notificationPreferenceType: null,
         params: {

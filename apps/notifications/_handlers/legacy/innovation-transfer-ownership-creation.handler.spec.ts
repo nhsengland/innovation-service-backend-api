@@ -2,7 +2,7 @@ import { UrlModel } from '@notifications/shared/models';
 import { IdentityProviderService } from '@notifications/shared/services';
 import { CompleteScenarioType, MocksHelper, TestsHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
-import { ENV, EmailTypeEnum } from '../../_config';
+import { ENV } from '../../_config';
 import { RecipientsService } from '../../_services/recipients.service';
 import { InnovationTransferOwnershipCreationHandler } from './innovation-transfer-ownership-creation.handler';
 
@@ -66,7 +66,7 @@ describe('Notifications / _handlers / innovation-transfer-ownership-creation han
 
       expect(handler.emails).toMatchObject([
         {
-          templateId: EmailTypeEnum.INNOVATION_TRANSFER_TO_EXISTING_USER,
+          templateId: 'INNOVATION_TRANSFER_TO_EXISTING_USER',
           to: DTOsHelper.getRecipientUser(scenario.users.janeInnovator, 'innovatorRole'),
           notificationPreferenceType: null,
           params: {
@@ -94,7 +94,7 @@ describe('Notifications / _handlers / innovation-transfer-ownership-creation han
 
       expect(handler.emails).toMatchObject([
         {
-          templateId: EmailTypeEnum.INNOVATION_TRANSFER_TO_EXISTING_USER,
+          templateId: 'INNOVATION_TRANSFER_TO_EXISTING_USER',
           to: DTOsHelper.getRecipientUser(scenario.users.janeInnovator, 'innovatorRole'),
           notificationPreferenceType: null,
           params: {
@@ -136,7 +136,7 @@ describe('Notifications / _handlers / innovation-transfer-ownership-creation han
 
       expect(handler.emails).toMatchObject([
         {
-          templateId: EmailTypeEnum.INNOVATION_TRANSFER_TO_NEW_USER,
+          templateId: 'INNOVATION_TRANSFER_TO_NEW_USER',
           to: { email: innovation.transfer.email },
           notificationPreferenceType: null,
           params: {
@@ -166,7 +166,7 @@ describe('Notifications / _handlers / innovation-transfer-ownership-creation han
 
       expect(handler.emails).toMatchObject([
         {
-          templateId: EmailTypeEnum.INNOVATION_TRANSFER_TO_NEW_USER,
+          templateId: 'INNOVATION_TRANSFER_TO_NEW_USER',
           to: { email: innovation.transfer.email },
           notificationPreferenceType: null,
           params: {

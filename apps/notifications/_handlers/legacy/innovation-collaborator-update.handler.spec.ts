@@ -9,7 +9,7 @@ import { InnovationErrorsEnum, NotFoundError, UserErrorsEnum } from '@notificati
 import { UrlModel } from '@notifications/shared/models';
 import { CompleteScenarioType, MocksHelper, TestsHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
-import { ENV, EmailTypeEnum } from '../../_config';
+import { ENV } from '../../_config';
 import { RecipientsService } from '../../_services/recipients.service';
 
 describe('Notifications / _handlers / innovation-collborator-update handler suite', () => {
@@ -36,98 +36,36 @@ describe('Notifications / _handlers / innovation-collborator-update handler suit
   });
 
   describe.each([
-    [InnovationCollaboratorStatusEnum.ACTIVE, EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_ACCEPTED_TO_OWNER],
-    [InnovationCollaboratorStatusEnum.DECLINED, EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_DECLINED_TO_OWNER]
-  ])(
-    'Collaborator status updated to %s',
-    (collaboratorStatus: InnovationCollaboratorStatusEnum, templateId: EmailTypeEnum) => {
-      let innovationUrl: string | undefined = undefined;
+    [InnovationCollaboratorStatusEnum.ACTIVE, 'INNOVATION_COLLABORATOR_INVITE_ACCEPTED_TO_OWNER' as const],
+    [InnovationCollaboratorStatusEnum.DECLINED, 'INNOVATION_COLLABORATOR_INVITE_DECLINED_TO_OWNER' as const]
+  ])('Collaborator status updated to %s', (collaboratorStatus, templateId) => {
+    let innovationUrl: string | undefined = undefined;
 
-      // beforeEach(() => {
-      //   // mock innovation info
-      //   jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
-      //     name: innovation.name,
-      //     ownerId: innovationOwner.id,
-      //     ownerIdentityId: innovationOwner.identityId
-      //   });
-      //   // mock innovation owner info
-      //   jest
-      //     .spyOn(RecipientsService.prototype, 'getUsersRecipient')
-      //     .mockResolvedValueOnce(DTOsHelper.getRecipientUser(innovationOwner, 'innovatorRole'));
-      // });
+    // beforeEach(() => {
+    //   // mock innovation info
+    //   jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+    //     name: innovation.name,
+    //     ownerId: innovationOwner.id,
+    //     ownerIdentityId: innovationOwner.identityId
+    //   });
+    //   // mock innovation owner info
+    //   jest
+    //     .spyOn(RecipientsService.prototype, 'getUsersRecipient')
+    //     .mockResolvedValueOnce(DTOsHelper.getRecipientUser(innovationOwner, 'innovatorRole'));
+    // });
 
-      describe('Collaborator does not exist in the service yet', () => {
-        beforeAll(() => {
-          // mock innovation info
-          jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
-            name: innovation.name,
-            ownerId: innovationOwner.id,
-            ownerIdentityId: innovationOwner.identityId
-          });
-          // mock innovation owner info
-          jest
-            .spyOn(RecipientsService.prototype, 'getUsersRecipient')
-            .mockResolvedValueOnce(DTOsHelper.getRecipientUser(innovationOwner, 'innovatorRole'));
-          handler = new InnovationCollaboratorUpdateHandler(
-            DTOsHelper.getUserRequestContext(collaboratorUser, 'innovatorRole'),
-            {
-              innovationId: innovation.id,
-              innovationCollaborator: {
-                id: collaborator.id,
-                status: collaboratorStatus
-              }
-            },
-            MocksHelper.mockContext()
-          );
+    describe('Collaborator does not exist in the service yet', () => {
+      beforeAll(() => {
+        // mock innovation info
+        jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+          name: innovation.name,
+          ownerId: innovationOwner.id,
+          ownerIdentityId: innovationOwner.identityId
         });
-
-        it('Should throw a not found error when the collaborator has no userId', async () => {
-          // mock collaborator info
-          jest.spyOn(RecipientsService.prototype, 'innovationCollaborationInfo').mockResolvedValueOnce({
-            collaboratorId: collaborator.id,
-            userId: null,
-            email: collaboratorUser.email,
-            status: collaboratorStatus
-          });
-
-          await expect(() => handler.run()).rejects.toThrowError(
-            new NotFoundError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_MUST_BE_INNOVATOR)
-          );
-        });
-
-        it('Should throw a not found error when the collaborator has no identityId', async () => {
-          // mock collaborator info
-          jest.spyOn(RecipientsService.prototype, 'innovationCollaborationInfo').mockResolvedValueOnce({
-            collaboratorId: collaborator.id,
-            userId: collaboratorUser.id,
-            email: collaboratorUser.email,
-            status: collaboratorStatus
-          });
-          // mock collaborator identity info
-          jest.spyOn(RecipientsService.prototype, 'userId2IdentityId').mockResolvedValueOnce(null);
-
-          await expect(() => handler.run()).rejects.toThrowError(
-            new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND)
-          );
-        });
-      });
-
-      it('Should send an email to the innovation owner when the collaborator exists in the service as an innovator', async () => {
-        // mock collaborator info
-        jest.spyOn(RecipientsService.prototype, 'innovationCollaborationInfo').mockResolvedValueOnce({
-          collaboratorId: collaborator.id,
-          userId: collaboratorUser.id,
-          email: collaboratorUser.email,
-          status: collaboratorStatus
-        });
-
-        if (collaboratorStatus === InnovationCollaboratorStatusEnum.ACTIVE) {
-          innovationUrl = new UrlModel(ENV.webBaseTransactionalUrl)
-            .addPath('innovator/innovations/:innovationId/manage/innovation/collaborators')
-            .setPathParams({ innovationId: innovation.id })
-            .buildUrl();
-        }
-
+        // mock innovation owner info
+        jest
+          .spyOn(RecipientsService.prototype, 'getUsersRecipient')
+          .mockResolvedValueOnce(DTOsHelper.getRecipientUser(innovationOwner, 'innovatorRole'));
         handler = new InnovationCollaboratorUpdateHandler(
           DTOsHelper.getUserRequestContext(collaboratorUser, 'innovatorRole'),
           {
@@ -139,28 +77,87 @@ describe('Notifications / _handlers / innovation-collborator-update handler suit
           },
           MocksHelper.mockContext()
         );
-
-        await handler.run();
-
-        const expectedEmail = handler.emails.find(email => email.templateId === templateId);
-
-        expect(expectedEmail).toMatchObject({
-          templateId,
-          to: DTOsHelper.getRecipientUser(innovationOwner),
-          notificationPreferenceType: null,
-          params: {
-            collaborator_name: collaboratorUser.name,
-            innovation_name: innovation.name,
-            ...(innovationUrl && { innovation_url: innovationUrl })
-          }
-        });
       });
-    }
-  );
+
+      it('Should throw a not found error when the collaborator has no userId', async () => {
+        // mock collaborator info
+        jest.spyOn(RecipientsService.prototype, 'innovationCollaborationInfo').mockResolvedValueOnce({
+          collaboratorId: collaborator.id,
+          userId: null,
+          email: collaboratorUser.email,
+          status: collaboratorStatus
+        });
+
+        await expect(() => handler.run()).rejects.toThrowError(
+          new NotFoundError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_MUST_BE_INNOVATOR)
+        );
+      });
+
+      it('Should throw a not found error when the collaborator has no identityId', async () => {
+        // mock collaborator info
+        jest.spyOn(RecipientsService.prototype, 'innovationCollaborationInfo').mockResolvedValueOnce({
+          collaboratorId: collaborator.id,
+          userId: collaboratorUser.id,
+          email: collaboratorUser.email,
+          status: collaboratorStatus
+        });
+        // mock collaborator identity info
+        jest.spyOn(RecipientsService.prototype, 'userId2IdentityId').mockResolvedValueOnce(null);
+
+        await expect(() => handler.run()).rejects.toThrowError(
+          new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND)
+        );
+      });
+    });
+
+    it('Should send an email to the innovation owner when the collaborator exists in the service as an innovator', async () => {
+      // mock collaborator info
+      jest.spyOn(RecipientsService.prototype, 'innovationCollaborationInfo').mockResolvedValueOnce({
+        collaboratorId: collaborator.id,
+        userId: collaboratorUser.id,
+        email: collaboratorUser.email,
+        status: collaboratorStatus
+      });
+
+      if (collaboratorStatus === InnovationCollaboratorStatusEnum.ACTIVE) {
+        innovationUrl = new UrlModel(ENV.webBaseTransactionalUrl)
+          .addPath('innovator/innovations/:innovationId/manage/innovation/collaborators')
+          .setPathParams({ innovationId: innovation.id })
+          .buildUrl();
+      }
+
+      handler = new InnovationCollaboratorUpdateHandler(
+        DTOsHelper.getUserRequestContext(collaboratorUser, 'innovatorRole'),
+        {
+          innovationId: innovation.id,
+          innovationCollaborator: {
+            id: collaborator.id,
+            status: collaboratorStatus
+          }
+        },
+        MocksHelper.mockContext()
+      );
+
+      await handler.run();
+
+      const expectedEmail = handler.emails.find(email => email.templateId === templateId);
+
+      expect(expectedEmail).toMatchObject({
+        templateId,
+        to: DTOsHelper.getRecipientUser(innovationOwner),
+        notificationPreferenceType: null,
+        params: {
+          collaborator_name: collaboratorUser.name,
+          innovation_name: innovation.name,
+          ...(innovationUrl && { innovation_url: innovationUrl })
+        }
+      });
+    });
+  });
 
   describe('Collaborator status updated to CANCELLED', () => {
     const collaboratorStatus = InnovationCollaboratorStatusEnum.CANCELLED;
-    const templateId = EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_CANCELLED_TO_COLLABORATOR;
+    const templateId = 'INNOVATION_COLLABORATOR_INVITE_CANCELLED_TO_COLLABORATOR';
 
     beforeAll(() => {
       // mock innovation info
@@ -321,7 +318,7 @@ describe('Notifications / _handlers / innovation-collborator-update handler suit
 
   describe('Collaborator status updated to REMOVED', () => {
     const collaboratorStatus = InnovationCollaboratorStatusEnum.REMOVED;
-    const templateId = EmailTypeEnum.INNOVATION_COLLABORATOR_REMOVED_TO_COLLABORATOR;
+    const templateId = 'INNOVATION_COLLABORATOR_REMOVED_TO_COLLABORATOR';
 
     beforeAll(() => {
       // mock innovation info
@@ -473,9 +470,9 @@ describe('Notifications / _handlers / innovation-collborator-update handler suit
 
     let otherCollaborator: CompleteScenarioType['users']['adamInnovator'];
 
-    const templateIdToOwner = EmailTypeEnum.INNOVATION_COLLABORATOR_LEAVES_TO_OWNER;
-    const templateIdToCollaborator = EmailTypeEnum.INNOVATION_COLLABORATOR_LEAVES_TO_COLLABORATOR;
-    const templateIdToOtherCollaborators = EmailTypeEnum.INNOVATION_COLLABORATOR_LEAVES_TO_OTHER_COLLABORATORS;
+    const templateIdToOwner = 'INNOVATION_COLLABORATOR_LEAVES_TO_OWNER';
+    const templateIdToCollaborator = 'INNOVATION_COLLABORATOR_LEAVES_TO_COLLABORATOR';
+    const templateIdToOtherCollaborators = 'INNOVATION_COLLABORATOR_LEAVES_TO_OTHER_COLLABORATORS';
 
     let innovationUrl: string;
 
@@ -640,12 +637,12 @@ describe('Notifications / _handlers / innovation-collborator-update handler suit
     });
 
     it.each([
-      [InnovationCollaboratorStatusEnum.ACTIVE, EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_ACCEPTED_TO_OWNER],
-      [InnovationCollaboratorStatusEnum.DECLINED, EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_DECLINED_TO_OWNER],
-      [InnovationCollaboratorStatusEnum.LEFT, EmailTypeEnum.INNOVATION_COLLABORATOR_LEAVES_TO_OWNER]
+      [InnovationCollaboratorStatusEnum.ACTIVE, 'INNOVATION_COLLABORATOR_INVITE_ACCEPTED_TO_OWNER'],
+      [InnovationCollaboratorStatusEnum.DECLINED, 'INNOVATION_COLLABORATOR_INVITE_DECLINED_TO_OWNER'],
+      [InnovationCollaboratorStatusEnum.LEFT, 'INNOVATION_COLLABORATOR_LEAVES_TO_OWNER']
     ])(
       'Should not send any email to the innovation owner when collaborator status is updated to %s',
-      async (collaboratorStatus: InnovationCollaboratorStatusEnum, templateId: EmailTypeEnum) => {
+      async (collaboratorStatus, templateId) => {
         handler = new InnovationCollaboratorUpdateHandler(
           DTOsHelper.getUserRequestContext(collaboratorUser, 'innovatorRole'),
           {

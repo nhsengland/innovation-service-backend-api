@@ -1,6 +1,6 @@
 import { CompleteScenarioType, MocksHelper, TestsHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
-import { ENV, EmailTypeEnum } from '../../_config';
+import { ENV } from '../../_config';
 import { RecipientsService } from '../../_services/recipients.service';
 import { InnovatorAccountCreationHandler } from './innovator-account-creation.handler';
 
@@ -29,7 +29,7 @@ describe('Innovator account creation notification handler', () => {
       expect(handler.inApp).toHaveLength(0);
       expect(handler.emails).toHaveLength(1);
       expect(handler.emails[0]).toMatchObject({
-        templateId: EmailTypeEnum.ACCOUNT_CREATION_TO_INNOVATOR,
+        templateId: 'ACCOUNT_CREATION_TO_INNOVATOR',
         to: {
           roleId: userContext.currentRole.id,
           role: userContext.currentRole.role,

@@ -7,7 +7,7 @@ import {
 import { UrlModel } from '@notifications/shared/models';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { EmailTypeEnum, ENV } from '../../_config';
+import { ENV } from '../../_config';
 
 import type { Context } from '@azure/functions';
 import type { RecipientType } from '../../_services/recipients.service';
@@ -15,10 +15,7 @@ import { BaseHandler } from '../base.handler';
 
 export class NeedsAssessmentCompletedHandler extends BaseHandler<
   NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED,
-  | EmailTypeEnum.NEEDS_ASSESSMENT_COMPLETED_TO_INNOVATOR
-  | EmailTypeEnum.ORGANISATION_SUGGESTION_TO_QA
-  | EmailTypeEnum.NEEDS_ASSESSMENT_SUGGESTED_ORG_NOT_SHARED_TO_INNOVATOR,
-  Record<string, never>
+  'MIGRATION_OLD'
 > {
   constructor(
     requestUser: DomainContextType,
@@ -89,7 +86,7 @@ export class NeedsAssessmentCompletedHandler extends BaseHandler<
     for (const recipient of recipients) {
       // Prepare email for all innovators (owner + collaborators).
       this.emails.push({
-        templateId: EmailTypeEnum.NEEDS_ASSESSMENT_COMPLETED_TO_INNOVATOR,
+        templateId: 'NEEDS_ASSESSMENT_COMPLETED_TO_INNOVATOR',
         to: recipient,
         notificationPreferenceType: null,
         params: {
@@ -127,7 +124,7 @@ export class NeedsAssessmentCompletedHandler extends BaseHandler<
     for (const recipient of recipients) {
       // Prepare email for all innovators (owner + collaborators).
       this.emails.push({
-        templateId: EmailTypeEnum.NEEDS_ASSESSMENT_SUGGESTED_ORG_NOT_SHARED_TO_INNOVATOR,
+        templateId: 'NEEDS_ASSESSMENT_SUGGESTED_ORG_NOT_SHARED_TO_INNOVATOR',
         to: recipient,
         notificationPreferenceType: null,
         params: {
@@ -160,7 +157,7 @@ export class NeedsAssessmentCompletedHandler extends BaseHandler<
   async prepareSuggestedAndSharedOrganisationEmailToQAs(recipients: RecipientType[]): Promise<void> {
     for (const recipient of recipients) {
       this.emails.push({
-        templateId: EmailTypeEnum.ORGANISATION_SUGGESTION_TO_QA,
+        templateId: 'ORGANISATION_SUGGESTION_TO_QA',
         to: recipient,
         notificationPreferenceType: null,
         params: {

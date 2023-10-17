@@ -4,7 +4,6 @@ import SHARED_SYMBOLS from '@notifications/shared/services/symbols';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { ENV, container } from '../../_config';
-import { EmailTypeEnum } from '../../_config/emails.config';
 
 import type { Context } from '@azure/functions';
 import { UrlModel } from '@notifications/shared/models';
@@ -12,10 +11,7 @@ import { BaseHandler } from '../base.handler';
 
 export class InnovationTransferOwnershipCompletedHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_COMPLETED,
-  | EmailTypeEnum.INNOVATION_TRANSFER_COMPLETED_TO_ORIGINAL_OWNER
-  | EmailTypeEnum.INNOVATION_TRANSFER_CANCELLED_TO_NEW_OWNER
-  | EmailTypeEnum.INNOVATION_TRANSFER_DECLINED_TO_ORIGINAL_OWNER,
-  never
+  'MIGRATION_OLD'
 > {
   private identityProviderService = container.get<IdentityProviderService>(SHARED_SYMBOLS.IdentityProviderService);
 
@@ -39,7 +35,7 @@ export class InnovationTransferOwnershipCompletedHandler extends BaseHandler<
           const innovatorIdentity = await this.recipientsService.usersIdentityInfo(transferOwner?.identityId);
 
           this.emails.push({
-            templateId: EmailTypeEnum.INNOVATION_TRANSFER_COMPLETED_TO_ORIGINAL_OWNER,
+            templateId: 'INNOVATION_TRANSFER_COMPLETED_TO_ORIGINAL_OWNER',
             to: transferOwner,
             notificationPreferenceType: null,
             params: {
@@ -59,7 +55,7 @@ export class InnovationTransferOwnershipCompletedHandler extends BaseHandler<
         // 2. if user is found then use the user info to get the role and send to role
         // 3. if user is not found then use the email as the recipient
         this.emails.push({
-          templateId: EmailTypeEnum.INNOVATION_TRANSFER_CANCELLED_TO_NEW_OWNER,
+          templateId: 'INNOVATION_TRANSFER_CANCELLED_TO_NEW_OWNER',
           to: { email: transfer.email },
           notificationPreferenceType: null,
           params: {
@@ -74,7 +70,7 @@ export class InnovationTransferOwnershipCompletedHandler extends BaseHandler<
         if (transferOwner) {
           const targetUser = await this.identityProviderService.getUserInfoByEmail(transfer.email);
           this.emails.push({
-            templateId: EmailTypeEnum.INNOVATION_TRANSFER_DECLINED_TO_ORIGINAL_OWNER,
+            templateId: 'INNOVATION_TRANSFER_DECLINED_TO_ORIGINAL_OWNER',
             to: transferOwner,
             notificationPreferenceType: null,
             params: {

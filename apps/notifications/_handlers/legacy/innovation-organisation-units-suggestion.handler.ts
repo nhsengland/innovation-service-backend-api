@@ -8,7 +8,6 @@ import { UrlModel } from '@notifications/shared/models';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { ENV } from '../../_config';
-import { EmailTypeEnum } from '../../_config/emails.config';
 
 import type { Context } from '@azure/functions';
 import type { RecipientType } from '../../_services/recipients.service';
@@ -16,8 +15,7 @@ import { BaseHandler } from '../base.handler';
 
 export class InnovationOrganisationUnitsSuggestionHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_ORGANISATION_UNITS_SUGGESTION,
-  EmailTypeEnum.ORGANISATION_SUGGESTION_TO_QA | EmailTypeEnum.ORGANISATION_SUGGESTION_NOT_SHARED_TO_INNOVATOR,
-  Record<string, never>
+  'MIGRATION_OLD'
 > {
   constructor(
     requestUser: DomainContextType,
@@ -75,7 +73,7 @@ export class InnovationOrganisationUnitsSuggestionHandler extends BaseHandler<
   prepareOrganisationsSuggestedSharedWithNotificationToUnitUsers(unitRecipients: RecipientType[]): void {
     for (const user of unitRecipients) {
       this.emails.push({
-        templateId: EmailTypeEnum.ORGANISATION_SUGGESTION_TO_QA,
+        templateId: 'ORGANISATION_SUGGESTION_TO_QA',
         to: user,
         notificationPreferenceType: null,
         params: {
@@ -93,7 +91,7 @@ export class InnovationOrganisationUnitsSuggestionHandler extends BaseHandler<
     innovationName: string
   ): void {
     this.emails.push({
-      templateId: EmailTypeEnum.ORGANISATION_SUGGESTION_NOT_SHARED_TO_INNOVATOR,
+      templateId: 'ORGANISATION_SUGGESTION_NOT_SHARED_TO_INNOVATOR',
       to: ownerRecipient,
       notificationPreferenceType: null,
       params: {
@@ -123,7 +121,7 @@ export class InnovationOrganisationUnitsSuggestionHandler extends BaseHandler<
   ): void {
     for (const recipient of collaboratorRecipients) {
       this.emails.push({
-        templateId: EmailTypeEnum.ORGANISATION_SUGGESTION_NOT_SHARED_TO_INNOVATOR,
+        templateId: 'ORGANISATION_SUGGESTION_NOT_SHARED_TO_INNOVATOR',
         to: recipient,
         notificationPreferenceType: null,
         params: {

@@ -7,24 +7,17 @@ import {
 } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { EmailTypeEnum, ENV } from '../../_config';
+import { ENV } from '../../_config';
 
 import type { Context } from '@azure/functions';
 import { EmailErrorsEnum, InnovationErrorsEnum, NotFoundError, UserErrorsEnum } from '@notifications/shared/errors';
 import { UrlModel } from '@notifications/shared/models';
-import type { RecipientsService, RecipientType } from '../../_services/recipients.service';
+import type { RecipientType, RecipientsService } from '../../_services/recipients.service';
 import { BaseHandler } from '../base.handler';
 
 export class InnovationCollaboratorUpdateHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_COLLABORATOR_UPDATE,
-  | EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_ACCEPTED_TO_OWNER
-  | EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_DECLINED_TO_OWNER
-  | EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_CANCELLED_TO_COLLABORATOR
-  | EmailTypeEnum.INNOVATION_COLLABORATOR_REMOVED_TO_COLLABORATOR
-  | EmailTypeEnum.INNOVATION_COLLABORATOR_LEAVES_TO_OWNER
-  | EmailTypeEnum.INNOVATION_COLLABORATOR_LEAVES_TO_COLLABORATOR
-  | EmailTypeEnum.INNOVATION_COLLABORATOR_LEAVES_TO_OTHER_COLLABORATORS,
-  { collaboratorId: string }
+  'MIGRATION_OLD'
 > {
   constructor(
     requestUser: DomainContextType,
@@ -93,22 +86,25 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
       throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
     }
 
-    let templateId: EmailTypeEnum;
+    let templateId:
+      | 'INNOVATION_COLLABORATOR_INVITE_ACCEPTED_TO_OWNER'
+      | 'INNOVATION_COLLABORATOR_INVITE_DECLINED_TO_OWNER'
+      | 'INNOVATION_COLLABORATOR_LEAVES_TO_OWNER';
     let innovationUrl: string | undefined;
 
     switch (this.inputData.innovationCollaborator.status) {
       case InnovationCollaboratorStatusEnum.ACTIVE:
-        templateId = EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_ACCEPTED_TO_OWNER;
+        templateId = 'INNOVATION_COLLABORATOR_INVITE_ACCEPTED_TO_OWNER';
         innovationUrl = new UrlModel(ENV.webBaseTransactionalUrl)
           .addPath('innovator/innovations/:innovationId/manage/innovation/collaborators')
           .setPathParams({ innovationId: this.inputData.innovationId })
           .buildUrl();
         break;
       case InnovationCollaboratorStatusEnum.DECLINED:
-        templateId = EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_DECLINED_TO_OWNER;
+        templateId = 'INNOVATION_COLLABORATOR_INVITE_DECLINED_TO_OWNER';
         break;
       case InnovationCollaboratorStatusEnum.LEFT:
-        templateId = EmailTypeEnum.INNOVATION_COLLABORATOR_LEAVES_TO_OWNER;
+        templateId = 'INNOVATION_COLLABORATOR_LEAVES_TO_OWNER';
         innovationUrl = new UrlModel(ENV.webBaseTransactionalUrl)
           .addPath('innovator/innovations/:innovationId')
           .setPathParams({ innovationId: this.inputData.innovationId })
@@ -136,17 +132,20 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
   ): Promise<void> {
     const ownerInfo = await this.recipientsService.usersIdentityInfo(innovation.ownerIdentityId);
 
-    let templateId: EmailTypeEnum;
+    let templateId:
+      | 'INNOVATION_COLLABORATOR_INVITE_CANCELLED_TO_COLLABORATOR'
+      | 'INNOVATION_COLLABORATOR_REMOVED_TO_COLLABORATOR'
+      | 'INNOVATION_COLLABORATOR_LEAVES_TO_COLLABORATOR';
 
     switch (this.inputData.innovationCollaborator.status) {
       case InnovationCollaboratorStatusEnum.CANCELLED:
-        templateId = EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_CANCELLED_TO_COLLABORATOR;
+        templateId = 'INNOVATION_COLLABORATOR_INVITE_CANCELLED_TO_COLLABORATOR';
         break;
       case InnovationCollaboratorStatusEnum.REMOVED:
-        templateId = EmailTypeEnum.INNOVATION_COLLABORATOR_REMOVED_TO_COLLABORATOR;
+        templateId = 'INNOVATION_COLLABORATOR_REMOVED_TO_COLLABORATOR';
         break;
       case InnovationCollaboratorStatusEnum.LEFT:
-        templateId = EmailTypeEnum.INNOVATION_COLLABORATOR_LEAVES_TO_COLLABORATOR;
+        templateId = 'INNOVATION_COLLABORATOR_LEAVES_TO_COLLABORATOR';
         break;
       default:
         throw new NotFoundError(EmailErrorsEnum.EMAIL_TEMPLATE_NOT_FOUND);
@@ -200,11 +199,11 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
     const collaboratorIds = await this.recipientsService.getInnovationActiveCollaborators(this.inputData.innovationId);
     const collaboratorInfo = await this.recipientsService.usersIdentityInfo(this.requestUser.identityId);
 
-    let templateId: EmailTypeEnum;
+    let templateId: 'INNOVATION_COLLABORATOR_LEAVES_TO_OTHER_COLLABORATORS';
 
     switch (this.inputData.innovationCollaborator.status) {
       case InnovationCollaboratorStatusEnum.LEFT:
-        templateId = EmailTypeEnum.INNOVATION_COLLABORATOR_LEAVES_TO_OTHER_COLLABORATORS;
+        templateId = 'INNOVATION_COLLABORATOR_LEAVES_TO_OTHER_COLLABORATORS';
         break;
       default:
         throw new NotFoundError(EmailErrorsEnum.EMAIL_TEMPLATE_NOT_FOUND);

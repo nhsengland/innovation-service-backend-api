@@ -8,19 +8,13 @@ import {
 import { UrlModel } from '@notifications/shared/models';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { EmailTypeEnum, ENV } from '../../_config';
+import { ENV } from '../../_config';
 
 import type { Context } from '@azure/functions';
 import type { RecipientType } from '../../_services/recipients.service';
 import { BaseHandler } from '../base.handler';
 
-export class ThreadCreationHandler extends BaseHandler<
-  NotifierTypeEnum.THREAD_CREATION,
-  | EmailTypeEnum.THREAD_CREATION_TO_INNOVATOR_FROM_ASSIGNED_USER
-  | EmailTypeEnum.THREAD_CREATION_TO_INNOVATOR_FROM_INNOVATOR
-  | EmailTypeEnum.THREAD_CREATION_TO_ASSIGNED_USERS,
-  { subject: string; messageId: string }
-> {
+export class ThreadCreationHandler extends BaseHandler<NotifierTypeEnum.THREAD_CREATION, 'MIGRATION_OLD'> {
   constructor(
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.THREAD_CREATION],
@@ -75,7 +69,7 @@ export class ThreadCreationHandler extends BaseHandler<
 
       for (const recipient of innovatorRecipients) {
         this.emails.push({
-          templateId: EmailTypeEnum.THREAD_CREATION_TO_INNOVATOR_FROM_ASSIGNED_USER,
+          templateId: 'THREAD_CREATION_TO_INNOVATOR_FROM_ASSIGNED_USER',
           notificationPreferenceType: NotificationCategoryEnum.MESSAGE,
           to: recipient,
           params: {
@@ -114,7 +108,7 @@ export class ThreadCreationHandler extends BaseHandler<
   ): Promise<void> {
     for (const recipient of recipients) {
       this.emails.push({
-        templateId: EmailTypeEnum.THREAD_CREATION_TO_INNOVATOR_FROM_INNOVATOR,
+        templateId: 'THREAD_CREATION_TO_INNOVATOR_FROM_INNOVATOR',
         notificationPreferenceType: NotificationCategoryEnum.MESSAGE,
         to: recipient,
         params: {
@@ -153,7 +147,7 @@ export class ThreadCreationHandler extends BaseHandler<
     // Send emails only to users with email preference INSTANTLY.
     for (const user of followers) {
       this.emails.push({
-        templateId: EmailTypeEnum.THREAD_CREATION_TO_ASSIGNED_USERS,
+        templateId: 'THREAD_CREATION_TO_ASSIGNED_USERS',
         notificationPreferenceType: NotificationCategoryEnum.MESSAGE,
         to: user,
         params: {

@@ -1,4 +1,3 @@
-import type { Schema } from 'joi';
 import Joi from 'joi';
 
 import { TEXTAREA_LENGTH_LIMIT } from '@notifications/shared/constants';
@@ -16,7 +15,6 @@ import {
   AccessorUnitChangeHandler,
   ActionCreationHandler,
   ActionUpdateHandler,
-  BaseHandler,
   DailyDigestHandler,
   IdleInnovatorsHandler,
   IdleSupportHandler,
@@ -46,16 +44,8 @@ import {
   ThreadMessageCreationHandler,
   UnitInactivationSupportStatusCompletedHandler
 } from '../_handlers';
-import type { EmailTypeEnum } from './emails.config';
 
-export const NOTIFICATIONS_CONFIG: {
-  [key in NotifierTypeEnum]: {
-    handler: {
-      new (...args: any[]): BaseHandler<NotifierTypeEnum, EmailTypeEnum, Record<string, unknown>>;
-    };
-    joiDefinition: Schema;
-  };
-} = {
+export const NOTIFICATIONS_CONFIG = {
   [NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION]: {
     handler: InnovatorAccountCreationHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION]>({})
@@ -384,4 +374,4 @@ export const NOTIFICATIONS_CONFIG: {
     handler: IdleSupportHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.IDLE_SUPPORT]>({})
   }
-};
+} as const;

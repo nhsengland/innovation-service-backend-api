@@ -1,15 +1,14 @@
 import { NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { EmailTypeEnum, ENV } from '../../_config';
+import { ENV } from '../../_config';
 
 import type { Context } from '@azure/functions';
 import { BaseHandler } from '../base.handler';
 
 export class InnovatorAccountCreationHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION,
-  EmailTypeEnum.ACCOUNT_CREATION_TO_INNOVATOR,
-  never
+  'MIGRATION_OLD'
 > {
   constructor(
     requestUser: DomainContextType,
@@ -23,7 +22,7 @@ export class InnovatorAccountCreationHandler extends BaseHandler<
     const recipient = await this.recipientsService.getUsersRecipient(this.requestUser.id, ServiceRoleEnum.INNOVATOR);
     if (recipient) {
       this.emails.push({
-        templateId: EmailTypeEnum.ACCOUNT_CREATION_TO_INNOVATOR,
+        templateId: 'ACCOUNT_CREATION_TO_INNOVATOR',
         to: recipient,
         notificationPreferenceType: null,
         params: {

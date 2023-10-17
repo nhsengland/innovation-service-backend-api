@@ -3,7 +3,7 @@ import { NeedsAssessmentAssessorUpdateHandler } from './needs-assessment-assesso
 import { UrlModel } from '@notifications/shared/models';
 import { CompleteScenarioType, MocksHelper, TestsHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
-import { ENV, EmailTypeEnum } from '../../_config';
+import { ENV } from '../../_config';
 import { RecipientsService } from '../../_services/recipients.service';
 
 describe('Notifications / _handlers / needs-assessment-assessor-update handler suite', () => {
@@ -38,16 +38,16 @@ describe('Notifications / _handlers / needs-assessment-assessor-update handler s
   });
 
   it.each([
-    ['previous assessor', EmailTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE_TO_OLD_NA],
-    ['new assessor', EmailTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE_TO_NEW_NA]
-  ])('Should send email to %s', async (_, templateId: EmailTypeEnum) => {
+    ['previous assessor', 'NEEDS_ASSESSMENT_ASSESSOR_UPDATE_TO_OLD_NA'],
+    ['new assessor', 'NEEDS_ASSESSMENT_ASSESSOR_UPDATE_TO_NEW_NA']
+  ])('Should send email to %s', async (_, templateId) => {
     jest
       .spyOn(RecipientsService.prototype, 'getUsersRecipient')
       .mockResolvedValueOnce(DTOsHelper.getRecipientUser(previousAssessor))
       .mockResolvedValueOnce(DTOsHelper.getRecipientUser(newAssessor));
 
     const recipientAssessor =
-      templateId === EmailTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE_TO_OLD_NA ? previousAssessor : newAssessor;
+      templateId === 'NEEDS_ASSESSMENT_ASSESSOR_UPDATE_TO_OLD_NA' ? previousAssessor : newAssessor;
 
     handler = new NeedsAssessmentAssessorUpdateHandler(
       DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),

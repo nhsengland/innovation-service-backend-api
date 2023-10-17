@@ -1,16 +1,10 @@
 import type { NotifierTypeEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { EmailTypeEnum } from '../../_config';
-
 import type { Context } from '@azure/functions';
 import { BaseHandler } from '../base.handler';
 
-export class IdleInnovatorsHandler extends BaseHandler<
-  NotifierTypeEnum.INCOMPLETE_INNOVATION_RECORD,
-  EmailTypeEnum.INNOVATOR_INCOMPLETE_RECORD,
-  never
-> {
+export class IdleInnovatorsHandler extends BaseHandler<NotifierTypeEnum.INCOMPLETE_INNOVATION_RECORD, 'MIGRATION_OLD'> {
   constructor(
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.DAILY_DIGEST],
@@ -30,7 +24,7 @@ export class IdleInnovatorsHandler extends BaseHandler<
 
     for (const user of idleInnovators) {
       this.emails.push({
-        templateId: EmailTypeEnum.INNOVATOR_INCOMPLETE_RECORD,
+        templateId: 'INNOVATOR_INCOMPLETE_RECORD',
         to: user.recipient,
         notificationPreferenceType: null,
         params: {

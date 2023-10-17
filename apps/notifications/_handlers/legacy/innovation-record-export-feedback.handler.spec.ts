@@ -1,10 +1,9 @@
 import { InnovationExportRequestStatusEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
 import { MocksHelper } from '@notifications/shared/tests';
-import type { TestInnovationExportRequestType } from '@notifications/shared/tests/builders/innovation-export-request.builder';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
-import { ENV, EmailTypeEnum } from '../../_config';
-import { RecipientType, RecipientsService } from '../../_services/recipients.service';
+import { ENV } from '../../_config';
+import { RecipientsService } from '../../_services/recipients.service';
 import { NotificationsTestsHelper } from '../../_tests/notifications-test.helper';
 import { InnovationRecordExportFeedbackHandler } from './innovation-record-export-feedback.handler';
 
@@ -27,131 +26,123 @@ describe('Notifications / _handlers / innovation-record-export-feedback handler 
   describe.each([
     [
       InnovationExportRequestStatusEnum.APPROVED,
-      EmailTypeEnum.INNOVATION_RECORD_EXPORT_APPROVED_TO_REQUEST_CREATOR,
+      'INNOVATION_RECORD_EXPORT_APPROVED_TO_REQUEST_CREATOR',
       DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole'),
       requestByAlice
     ],
     [
       InnovationExportRequestStatusEnum.REJECTED,
-      EmailTypeEnum.INNOVATION_RECORD_EXPORT_REJECTED_TO_REQUEST_CREATOR,
+      'INNOVATION_RECORD_EXPORT_REJECTED_TO_REQUEST_CREATOR',
       DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole'),
       requestByAlice
     ],
     [
       InnovationExportRequestStatusEnum.APPROVED,
-      EmailTypeEnum.INNOVATION_RECORD_EXPORT_APPROVED_TO_REQUEST_CREATOR,
+      'INNOVATION_RECORD_EXPORT_APPROVED_TO_REQUEST_CREATOR',
       DTOsHelper.getRecipientUser(scenario.users.paulNeedsAssessor, 'assessmentRole'),
       requestByPaul
     ],
     [
       InnovationExportRequestStatusEnum.REJECTED,
-      EmailTypeEnum.INNOVATION_RECORD_EXPORT_REJECTED_TO_REQUEST_CREATOR,
+      'INNOVATION_RECORD_EXPORT_REJECTED_TO_REQUEST_CREATOR',
       DTOsHelper.getRecipientUser(scenario.users.paulNeedsAssessor, 'assessmentRole'),
       requestByPaul
     ]
-  ])(
-    'Innovation record export %s',
-    (
-      status: InnovationExportRequestStatusEnum,
-      templateId: EmailTypeEnum,
-      recipient: RecipientType,
-      request: TestInnovationExportRequestType
-    ) => {
-      beforeEach(() => {
-        // mock innovation info
-        jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
-          name: innovation.name,
-          ownerId: innovationOwner.id,
-          ownerIdentityId: innovationOwner.identityId
-        });
-
-        // mock export request info
-        jest
-          .spyOn(RecipientsService.prototype, 'getExportRequestInfo')
-          .mockResolvedValueOnce({ ...request, status: status });
+  ])('Innovation record export %s', (status, templateId, recipient, request) => {
+    beforeEach(() => {
+      // mock innovation info
+      jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+        name: innovation.name,
+        ownerId: innovationOwner.id,
+        ownerIdentityId: innovationOwner.identityId
       });
 
-      it('Should send email to the user who created the request', async () => {
-        jest.spyOn(RecipientsService.prototype, 'getUsersRecipient').mockResolvedValueOnce(recipient);
+      // mock export request info
+      jest
+        .spyOn(RecipientsService.prototype, 'getExportRequestInfo')
+        .mockResolvedValueOnce({ ...request, status: status });
+    });
 
-        handler = new InnovationRecordExportFeedbackHandler(
-          DTOsHelper.getUserRequestContext(innovationOwner, 'innovatorRole'),
-          { innovationId: innovation.id, requestId: request.id },
-          MocksHelper.mockContext()
-        );
+    it('Should send email to the user who created the request', async () => {
+      jest.spyOn(RecipientsService.prototype, 'getUsersRecipient').mockResolvedValueOnce(recipient);
 
-        await handler.run();
+      handler = new InnovationRecordExportFeedbackHandler(
+        DTOsHelper.getUserRequestContext(innovationOwner, 'innovatorRole'),
+        { innovationId: innovation.id, requestId: request.id },
+        MocksHelper.mockContext()
+      );
 
-        expect(handler.emails).toMatchObject([
-          {
-            templateId,
-            to: recipient,
-            notificationPreferenceType: null,
-            params: {
-              innovation_name: innovation.name,
-              innovator_name: innovationOwner.name,
-              innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
-                .addPath(':userBasePath/innovations/:innovationId/record')
-                .setPathParams({
-                  userBasePath: recipient.role === ServiceRoleEnum.ASSESSMENT ? 'assessment' : 'accessor',
-                  innovationId: innovation.id
-                })
-                .buildUrl(),
-              pdf_rejection_comment: request.rejectReason
-            }
+      await handler.run();
+
+      expect(handler.emails).toMatchObject([
+        {
+          templateId,
+          to: recipient,
+          notificationPreferenceType: null,
+          params: {
+            innovation_name: innovation.name,
+            innovator_name: innovationOwner.name,
+            innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
+              .addPath(':userBasePath/innovations/:innovationId/record')
+              .setPathParams({
+                userBasePath: recipient.role === ServiceRoleEnum.ASSESSMENT ? 'assessment' : 'accessor',
+                innovationId: innovation.id
+              })
+              .buildUrl(),
+            pdf_rejection_comment: request.rejectReason
           }
-        ]);
-      });
+        }
+      ]);
+    });
 
-      it('Should correct innovation owner name in email to request creatorn when innovation owner info is not found', async () => {
-        jest.spyOn(RecipientsService.prototype, 'getUsersRecipient').mockResolvedValueOnce(recipient);
-        jest.spyOn(RecipientsService.prototype, 'usersIdentityInfo').mockResolvedValueOnce(null);
+    it('Should correct innovation owner name in email to request creatorn when innovation owner info is not found', async () => {
+      jest.spyOn(RecipientsService.prototype, 'getUsersRecipient').mockResolvedValueOnce(recipient);
+      jest.spyOn(RecipientsService.prototype, 'usersIdentityInfo').mockResolvedValueOnce(null);
 
-        handler = new InnovationRecordExportFeedbackHandler(
-          DTOsHelper.getUserRequestContext(innovationOwner, 'innovatorRole'),
-          { innovationId: innovation.id, requestId: request.id },
-          MocksHelper.mockContext()
-        );
+      handler = new InnovationRecordExportFeedbackHandler(
+        DTOsHelper.getUserRequestContext(innovationOwner, 'innovatorRole'),
+        { innovationId: innovation.id, requestId: request.id },
+        MocksHelper.mockContext()
+      );
 
-        await handler.run();
+      await handler.run();
 
-        expect(handler.emails).toMatchObject([
-          {
-            templateId,
-            to: recipient,
-            notificationPreferenceType: null,
-            params: {
-              innovation_name: innovation.name,
-              innovator_name: 'user',
-              innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
-                .addPath(':userBasePath/innovations/:innovationId/record')
-                .setPathParams({
-                  userBasePath: recipient.role === ServiceRoleEnum.ASSESSMENT ? 'assessment' : 'accessor',
-                  innovationId: innovation.id
-                })
-                .buildUrl(),
-              pdf_rejection_comment: request.rejectReason
-            }
+      expect(handler.emails).toMatchObject([
+        {
+          templateId,
+          to: recipient,
+          notificationPreferenceType: null,
+          params: {
+            innovation_name: innovation.name,
+            innovator_name: 'user',
+            innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
+              .addPath(':userBasePath/innovations/:innovationId/record')
+              .setPathParams({
+                userBasePath: recipient.role === ServiceRoleEnum.ASSESSMENT ? 'assessment' : 'accessor',
+                innovationId: innovation.id
+              })
+              .buildUrl(),
+            pdf_rejection_comment: request.rejectReason
           }
-        ]);
+        }
+      ]);
+    });
+
+    it('Should not send email to request creator if he is not active', async () => {
+      jest.spyOn(RecipientsService.prototype, 'getUsersRecipient').mockResolvedValueOnce({
+        ...recipient,
+        isActive: false
       });
 
-      it('Should not send email to request creator if he is not active', async () => {
-        jest.spyOn(RecipientsService.prototype, 'getUsersRecipient').mockResolvedValueOnce({
-          ...recipient,
-          isActive: false
-        });
+      handler = new InnovationRecordExportFeedbackHandler(
+        DTOsHelper.getUserRequestContext(innovationOwner, 'innovatorRole'),
+        { innovationId: innovation.id, requestId: request.id },
+        MocksHelper.mockContext()
+      );
 
-        handler = new InnovationRecordExportFeedbackHandler(
-          DTOsHelper.getUserRequestContext(innovationOwner, 'innovatorRole'),
-          { innovationId: innovation.id, requestId: request.id },
-          MocksHelper.mockContext()
-        );
+      await handler.run();
 
-        await handler.run();
-
-        expect(handler.emails).toHaveLength(0);
-      });
-    }
-  );
+      expect(handler.emails).toHaveLength(0);
+    });
+  });
 });

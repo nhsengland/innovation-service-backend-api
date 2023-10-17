@@ -2,7 +2,7 @@ import { randText } from '@ngneat/falso';
 import { UrlModel } from '@notifications/shared/models';
 import { CompleteScenarioType, MocksHelper, TestsHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
-import { ENV, EmailTypeEnum } from '../../_config';
+import { ENV } from '../../_config';
 import { RecipientsService } from '../../_services/recipients.service';
 import { InnovationStopSharingHandler } from './innovation-stop-sharing.handler';
 
@@ -52,12 +52,10 @@ describe('Notifications / _handlers / innovation-stop-sharing handler suite', ()
 
     await handler.run();
 
-    const expectedEmail = handler.emails.find(
-      email => email.templateId === EmailTypeEnum.INNOVATION_STOP_SHARING_TO_INNOVATOR
-    );
+    const expectedEmail = handler.emails.find(email => email.templateId === 'INNOVATION_STOP_SHARING_TO_INNOVATOR');
 
     expect(expectedEmail).toMatchObject({
-      templateId: EmailTypeEnum.INNOVATION_STOP_SHARING_TO_INNOVATOR,
+      templateId: 'INNOVATION_STOP_SHARING_TO_INNOVATOR',
       to: DTOsHelper.getRecipientUser(innovationOwner, 'innovatorRole'),
       notificationPreferenceType: null,
       params: {
@@ -93,9 +91,7 @@ describe('Notifications / _handlers / innovation-stop-sharing handler suite', ()
 
     await handler.run();
 
-    const expectedEmail = handler.emails.find(
-      email => email.templateId === EmailTypeEnum.INNOVATION_STOP_SHARING_TO_INNOVATOR
-    );
+    const expectedEmail = handler.emails.find(email => email.templateId === 'INNOVATION_STOP_SHARING_TO_INNOVATOR');
 
     expect(expectedEmail).toBeUndefined();
   });
@@ -124,11 +120,11 @@ describe('Notifications / _handlers / innovation-stop-sharing handler suite', ()
     await handler.run();
 
     const expectedEmail = handler.emails.find(
-      email => email.templateId === EmailTypeEnum.INNOVATION_STOP_SHARING_TO_ENGAGING_ACCESSORS
+      email => email.templateId === 'INNOVATION_STOP_SHARING_TO_ENGAGING_ACCESSORS'
     );
 
     expect(expectedEmail).toMatchObject({
-      templateId: EmailTypeEnum.INNOVATION_STOP_SHARING_TO_ENGAGING_ACCESSORS,
+      templateId: 'INNOVATION_STOP_SHARING_TO_ENGAGING_ACCESSORS',
       notificationPreferenceType: null,
       to: DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole'),
       params: {
@@ -165,11 +161,11 @@ describe('Notifications / _handlers / innovation-stop-sharing handler suite', ()
     await handler.run();
 
     const expectedEmail = handler.emails.find(
-      email => email.templateId === EmailTypeEnum.INNOVATION_STOP_SHARING_TO_ENGAGING_ACCESSORS
+      email => email.templateId === 'INNOVATION_STOP_SHARING_TO_ENGAGING_ACCESSORS'
     );
 
     expect(expectedEmail).toMatchObject({
-      templateId: EmailTypeEnum.INNOVATION_STOP_SHARING_TO_ENGAGING_ACCESSORS,
+      templateId: 'INNOVATION_STOP_SHARING_TO_ENGAGING_ACCESSORS',
       notificationPreferenceType: null,
       to: DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole'),
       params: {

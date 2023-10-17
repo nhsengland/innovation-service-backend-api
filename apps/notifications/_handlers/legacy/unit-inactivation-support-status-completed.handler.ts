@@ -1,16 +1,15 @@
-import { InnovationSupportStatusEnum, NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import { NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { EmailTypeEnum, ENV } from '../../_config';
+import { ENV } from '../../_config';
 
 import type { Context } from '@azure/functions';
 import { BaseHandler } from '../base.handler';
 
 export class UnitInactivationSupportStatusCompletedHandler extends BaseHandler<
   NotifierTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED,
-  EmailTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED,
-  { organisationUnitName: string; supportStatus: InnovationSupportStatusEnum }
+  'MIGRATION_OLD'
 > {
   constructor(
     requestUser: DomainContextType,
@@ -28,7 +27,7 @@ export class UnitInactivationSupportStatusCompletedHandler extends BaseHandler<
       const unitInfo = await this.recipientsService.organisationUnitInfo(this.inputData.unitId);
 
       this.emails.push({
-        templateId: EmailTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED,
+        templateId: 'UNIT_INACTIVATION_SUPPORT_COMPLETED',
         to: innovator,
         notificationPreferenceType: null,
         params: {

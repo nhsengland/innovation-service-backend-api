@@ -6,18 +6,14 @@ import {
 } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { ENV, EmailTypeEnum } from '../../_config';
+import { ENV } from '../../_config';
 import type { RecipientType } from '../../_services/recipients.service';
 
 import type { Context } from '@azure/functions';
 import { UrlModel } from '@notifications/shared/models';
 import { BaseHandler } from '../base.handler';
 
-export class SupportSummaryUpdateHandler extends BaseHandler<
-  NotifierTypeEnum.SUPPORT_SUMMARY_UPDATE,
-  EmailTypeEnum.SUPPORT_SUMMARY_UPDATE_TO_INNOVATOR,
-  { organisationUnitName: string }
-> {
+export class SupportSummaryUpdateHandler extends BaseHandler<NotifierTypeEnum.SUPPORT_SUMMARY_UPDATE, 'MIGRATION_OLD'> {
   constructor(
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.SUPPORT_SUMMARY_UPDATE],
@@ -57,7 +53,7 @@ export class SupportSummaryUpdateHandler extends BaseHandler<
     organisationUnitName: string
   ): void {
     this.emails.push({
-      templateId: EmailTypeEnum.SUPPORT_SUMMARY_UPDATE_TO_INNOVATOR,
+      templateId: 'SUPPORT_SUMMARY_UPDATE_TO_INNOVATOR',
       notificationPreferenceType: null,
       to: innovationOwner,
       params: {
@@ -97,7 +93,7 @@ export class SupportSummaryUpdateHandler extends BaseHandler<
   ): void {
     for (const collaborator of collaborators) {
       this.emails.push({
-        templateId: EmailTypeEnum.SUPPORT_SUMMARY_UPDATE_TO_INNOVATOR,
+        templateId: 'SUPPORT_SUMMARY_UPDATE_TO_INNOVATOR',
         notificationPreferenceType: null,
         to: collaborator,
         params: {

@@ -3,15 +3,14 @@ import { TranslationHelper } from '@notifications/shared/helpers';
 import { UrlModel } from '@notifications/shared/models';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { EmailTypeEnum, ENV } from '../../_config';
+import { ENV } from '../../_config';
 
 import type { Context } from '@azure/functions';
 import { BaseHandler } from '../base.handler';
 
 export class InnovationSupportStatusChangeRequestHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_CHANGE_REQUEST,
-  EmailTypeEnum.ACCESSOR_TO_QA_SUPPORT_CHANGE_REQUEST,
-  never
+  'MIGRATION_OLD'
 > {
   constructor(
     requestUser: DomainContextType,
@@ -31,7 +30,7 @@ export class InnovationSupportStatusChangeRequestHandler extends BaseHandler<
     // does not check email preferences. QA will always receive this email.
     for (const qualifyingAccessor of qualifyingAccessors) {
       this.emails.push({
-        templateId: EmailTypeEnum.ACCESSOR_TO_QA_SUPPORT_CHANGE_REQUEST,
+        templateId: 'ACCESSOR_TO_QA_SUPPORT_CHANGE_REQUEST',
         to: qualifyingAccessor,
         notificationPreferenceType: null,
         params: {

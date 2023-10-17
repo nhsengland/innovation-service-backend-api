@@ -5,16 +5,10 @@ import {
 } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { EmailTypeEnum } from '../../_config';
-
 import type { Context } from '@azure/functions';
 import { BaseHandler } from '../base.handler';
 
-export class InnovationWithdrawnHandler extends BaseHandler<
-  NotifierTypeEnum.INNOVATION_WITHDRAWN,
-  EmailTypeEnum.INNOVATION_WITHDRAWN_TO_ASSIGNED_USERS,
-  Record<string, string>
-> {
+export class InnovationWithdrawnHandler extends BaseHandler<NotifierTypeEnum.INNOVATION_WITHDRAWN, 'MIGRATION_OLD'> {
   constructor(
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_WITHDRAWN],
@@ -36,7 +30,7 @@ export class InnovationWithdrawnHandler extends BaseHandler<
     // Send emails only to users with email preference INSTANTLY.
     for (const user of uniqueAssignedUsers) {
       this.emails.push({
-        templateId: EmailTypeEnum.INNOVATION_WITHDRAWN_TO_ASSIGNED_USERS,
+        templateId: 'INNOVATION_WITHDRAWN_TO_ASSIGNED_USERS',
         notificationPreferenceType: null, // Before: 'SUPPORT'
         to: user,
         params: {

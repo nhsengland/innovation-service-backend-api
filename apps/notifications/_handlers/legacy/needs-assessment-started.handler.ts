@@ -7,14 +7,13 @@ import {
 } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
-import { ENV, EmailTypeEnum } from '../../_config';
+import { ENV } from '../../_config';
 import type { RecipientType } from '../../_services/recipients.service';
 import { BaseHandler } from '../base.handler';
 
 export class NeedsAssessmentStartedHandler extends BaseHandler<
   NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED,
-  EmailTypeEnum.NEEDS_ASSESSMENT_STARTED_TO_INNOVATOR,
-  Record<string, never>
+  'MIGRATION_OLD'
 > {
   constructor(
     requestUser: DomainContextType,
@@ -37,7 +36,7 @@ export class NeedsAssessmentStartedHandler extends BaseHandler<
 
   async prepareEmailForInnovator(innovationName: string, owner: RecipientType): Promise<void> {
     this.emails.push({
-      templateId: EmailTypeEnum.NEEDS_ASSESSMENT_STARTED_TO_INNOVATOR,
+      templateId: 'NEEDS_ASSESSMENT_STARTED_TO_INNOVATOR',
       to: owner,
       notificationPreferenceType: null,
       params: {

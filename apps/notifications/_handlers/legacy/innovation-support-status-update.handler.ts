@@ -11,7 +11,7 @@ import type { IdentityProviderService } from '@notifications/shared/services';
 import SHARED_SYMBOLS from '@notifications/shared/services/symbols';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { container, EmailTypeEnum, ENV } from '../../_config';
+import { container, ENV } from '../../_config';
 
 import type { Context } from '@azure/functions';
 import { NotFoundError, OrganisationErrorsEnum } from '@notifications/shared/errors';
@@ -20,9 +20,7 @@ import { BaseHandler } from '../base.handler';
 
 export class InnovationSupportStatusUpdateHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE,
-  | EmailTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE_TO_INNOVATOR
-  | EmailTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE_TO_ASSIGNED_ACCESSORS,
-  { organisationUnitName: string; supportStatus: InnovationSupportStatusEnum }
+  'MIGRATION_OLD'
 > {
   private identityProviderService = container.get<IdentityProviderService>(SHARED_SYMBOLS.IdentityProviderService);
 
@@ -123,7 +121,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
     // Send email only to user if email preference INSTANTLY (NotifierTypeEnum.SUPPORT).
     for (const recipient of recipients) {
       this.emails.push({
-        templateId: EmailTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE_TO_INNOVATOR,
+        templateId: 'INNOVATION_SUPPORT_STATUS_UPDATE_TO_INNOVATOR',
         notificationPreferenceType: null, // Before: 'SUPPORT'
         to: recipient,
         params: {
@@ -157,7 +155,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
 
     for (const recipient of recipients) {
       this.emails.push({
-        templateId: EmailTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE_TO_ASSIGNED_ACCESSORS,
+        templateId: 'INNOVATION_SUPPORT_STATUS_UPDATE_TO_ASSIGNED_ACCESSORS',
         notificationPreferenceType: null, // Before: 'SUPPORT'
         to: recipient,
         params: {

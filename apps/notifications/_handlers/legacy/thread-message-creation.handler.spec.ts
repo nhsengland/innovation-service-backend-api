@@ -8,7 +8,7 @@ import {
 import { UrlModel } from '@notifications/shared/models';
 import { MocksHelper, TestsHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
-import { ENV, EmailTypeEnum } from '../../_config';
+import { ENV } from '../../_config';
 import { RecipientsService } from '../../_services/recipients.service';
 import { ThreadMessageCreationHandler } from './thread-message-creation.handler';
 
@@ -71,7 +71,7 @@ describe('Notifications / _handlers / thread-message-creation suite', () => {
       await handler.run();
 
       expect(handler.emails).toContainEqual({
-        templateId: EmailTypeEnum.THREAD_MESSAGE_CREATION_TO_ALL,
+        templateId: 'THREAD_MESSAGE_CREATION_TO_ALL',
         notificationPreferenceType: NotificationCategoryEnum.MESSAGE,
         to: userRecipient,
         params: {
@@ -159,7 +159,7 @@ describe('Notifications / _handlers / thread-message-creation suite', () => {
       await handler.run();
 
       expect(handler.emails).toContainEqual({
-        templateId: EmailTypeEnum.THREAD_MESSAGE_CREATION_TO_ALL,
+        templateId: 'THREAD_MESSAGE_CREATION_TO_ALL',
         notificationPreferenceType: NotificationCategoryEnum.MESSAGE,
         to: userRecipient,
         params: {

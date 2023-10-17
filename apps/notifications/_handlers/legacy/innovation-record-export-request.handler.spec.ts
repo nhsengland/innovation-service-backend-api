@@ -1,7 +1,7 @@
 import { UrlModel } from '@notifications/shared/models';
 import { MocksHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
-import { ENV, EmailTypeEnum } from '../../_config';
+import { ENV } from '../../_config';
 import { RecipientsService } from '../../_services/recipients.service';
 import { NotificationsTestsHelper } from '../../_tests/notifications-test.helper';
 import { InnovationRecordExportRequestHandler } from './innovation-record-export-request.handler';
@@ -48,7 +48,7 @@ describe('Notifications / _handlers / innovation-record-export-request handler s
 
     expect(handler.emails).toMatchObject([
       {
-        templateId: EmailTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST_TO_INNOVATOR,
+        templateId: 'INNOVATION_RECORD_EXPORT_REQUEST_TO_INNOVATOR',
         to: DTOsHelper.getRecipientUser(innovationOwner, 'innovatorRole'),
         notificationPreferenceType: null,
         params: {
@@ -83,7 +83,7 @@ describe('Notifications / _handlers / innovation-record-export-request handler s
 
     expect(handler.emails).toMatchObject([
       {
-        templateId: EmailTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST_TO_INNOVATOR,
+        templateId: 'INNOVATION_RECORD_EXPORT_REQUEST_TO_INNOVATOR',
         to: DTOsHelper.getRecipientUser(innovationOwner, 'innovatorRole'),
         notificationPreferenceType: null,
         params: {
@@ -113,7 +113,7 @@ describe('Notifications / _handlers / innovation-record-export-request handler s
 
     expect(handler.emails).toMatchObject([
       {
-        templateId: EmailTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST_TO_INNOVATOR,
+        templateId: 'INNOVATION_RECORD_EXPORT_REQUEST_TO_INNOVATOR',
         to: DTOsHelper.getRecipientUser(innovationOwner, 'innovatorRole'),
         notificationPreferenceType: null,
         params: {

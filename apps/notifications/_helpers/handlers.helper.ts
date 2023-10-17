@@ -5,7 +5,7 @@ import type { NotifierTypeEnum } from '@notifications/shared/enums';
 
 import type { Context } from '@azure/functions';
 import type { DomainContextType } from '@notifications/shared/types';
-import { EmailTypeEnum, NOTIFICATIONS_CONFIG } from '../_config';
+import { NOTIFICATIONS_CONFIG } from '../_config';
 import type { BaseHandler } from '../_handlers/base.handler';
 
 export class HandlersHelper {
@@ -13,9 +13,9 @@ export class HandlersHelper {
     //TODO: Add azure function context for logs
     requestUser: DomainContextType,
     action: NotifierTypeEnum,
-    params: { [key: string]: any },
+    params: any, // TODO: Add type, issues with the Record<string, never> from the recurrent notifications
     azureContext: Context
-  ): Promise<BaseHandler<NotifierTypeEnum, EmailTypeEnum, Record<string, unknown>>> {
+  ): Promise<BaseHandler<NotifierTypeEnum, any>> {
     return new NOTIFICATIONS_CONFIG[action].handler(requestUser, params, azureContext).run();
   }
 

@@ -3,13 +3,12 @@ import { NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { TranslationHelper } from '@notifications/shared/helpers';
 import { UrlModel } from '@notifications/shared/models';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
-import { ENV, EmailTypeEnum } from '../../_config';
+import { ENV } from '../../_config';
 import { BaseHandler } from '../base.handler';
 
 export class InnovationRecordExportRequestHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST,
-  EmailTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST_TO_INNOVATOR,
-  never
+  'MIGRATION_OLD'
 > {
   constructor(
     requestUser: DomainContextType,
@@ -30,7 +29,7 @@ export class InnovationRecordExportRequestHandler extends BaseHandler<
       const user = await this.recipientsService.usersIdentityInfo(userIdentityId ?? undefined);
 
       this.emails.push({
-        templateId: EmailTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST_TO_INNOVATOR,
+        templateId: 'INNOVATION_RECORD_EXPORT_REQUEST_TO_INNOVATOR',
         to: owner,
         notificationPreferenceType: null,
         params: {

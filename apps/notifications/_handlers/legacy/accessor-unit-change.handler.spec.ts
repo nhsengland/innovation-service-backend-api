@@ -1,7 +1,6 @@
 import { NotFoundError, UserErrorsEnum } from '@notifications/shared/errors';
 import { CompleteScenarioType, MocksHelper, TestsHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
-import { EmailTypeEnum } from '../../_config';
 import { RecipientType, RecipientsService } from '../../_services/recipients.service';
 import { AccessorUnitChangeHandler } from './accessor-unit-change.handler';
 
@@ -134,12 +133,10 @@ describe('Notifications / _handlers / accessor-unit-change suite', () => {
     });
 
     it('Should send email to accessor that changed unit', () => {
-      const expectedEmail = handler.emails.find(
-        email => email.templateId === EmailTypeEnum.ACCESSOR_UNIT_CHANGE_TO_USER_MOVED
-      );
+      const expectedEmail = handler.emails.find(email => email.templateId === 'ACCESSOR_UNIT_CHANGE_TO_USER_MOVED');
 
       expect(expectedEmail).toMatchObject({
-        templateId: EmailTypeEnum.ACCESSOR_UNIT_CHANGE_TO_USER_MOVED,
+        templateId: 'ACCESSOR_UNIT_CHANGE_TO_USER_MOVED',
         to: DTOsHelper.getRecipientUser(user),
         notificationPreferenceType: null,
         params: {
@@ -159,7 +156,7 @@ describe('Notifications / _handlers / accessor-unit-change suite', () => {
       );
 
       expect(expectedEmail).toMatchObject({
-        templateId: EmailTypeEnum.ACCESSOR_UNIT_CHANGE_TO_QA_NEW_UNIT,
+        templateId: 'ACCESSOR_UNIT_CHANGE_TO_QA_NEW_UNIT',
         to: DTOsHelper.getRecipientUser(scenario.users.bartQualifyingAccessor, 'qaRole'),
         notificationPreferenceType: null,
         params: {
@@ -173,7 +170,7 @@ describe('Notifications / _handlers / accessor-unit-change suite', () => {
       const expectedEmail = handler.emails.find(
         email =>
           (email.to as Omit<RecipientType, 'role' | 'userId'>).roleId === user.roles.qaRole.id &&
-          email.templateId === EmailTypeEnum.ACCESSOR_UNIT_CHANGE_TO_QA_NEW_UNIT
+          email.templateId === 'ACCESSOR_UNIT_CHANGE_TO_QA_NEW_UNIT'
       );
 
       expect(expectedEmail).toBeUndefined();
@@ -187,7 +184,7 @@ describe('Notifications / _handlers / accessor-unit-change suite', () => {
       );
 
       expect(expectedEmail).toMatchObject({
-        templateId: EmailTypeEnum.ACCESSOR_UNIT_CHANGE_TO_QA_OLD_UNIT,
+        templateId: 'ACCESSOR_UNIT_CHANGE_TO_QA_OLD_UNIT',
         to: DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole'),
         notificationPreferenceType: null,
         params: {

@@ -1,7 +1,6 @@
 import { NotificationContextDetailEnum, NotificationContextTypeEnum } from '@notifications/shared/enums';
 import { CompleteScenarioType, MocksHelper, TestsHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
-import { EmailTypeEnum } from '../../_config';
 import { RecipientsService } from '../../_services/recipients.service';
 import { InnovationWithdrawnHandler } from './innovation-withdrawn.handler';
 
@@ -59,7 +58,7 @@ describe('Notifications / _handlers / innovation-withdrawn handler suite', () =>
   it('Should send email to all affectedUsers without duplicate emails', () => {
     expect(handler.emails).toMatchObject([
       {
-        templateId: EmailTypeEnum.INNOVATION_WITHDRAWN_TO_ASSIGNED_USERS,
+        templateId: 'INNOVATION_WITHDRAWN_TO_ASSIGNED_USERS',
         notificationPreferenceType: null,
         to: DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'healthAccessorRole'),
         params: {

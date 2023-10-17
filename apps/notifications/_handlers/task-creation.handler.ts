@@ -9,14 +9,12 @@ import { UrlModel } from '@notifications/shared/models';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { ENV } from '../_config';
-import { EmailTypeEnum } from '../_config/emails.config';
 
 import type { Context } from '@azure/functions';
 import { BaseHandler } from './base.handler';
 
 export class TaskCreationHandler extends BaseHandler<
   NotifierTypeEnum.TASK_CREATION,
-  EmailTypeEnum.TA01_TASK_CREATION_TO_INNOVATOR,
   'TA01_TASK_CREATION_TO_INNOVATOR'
 > {
   constructor(
@@ -43,7 +41,7 @@ export class TaskCreationHandler extends BaseHandler<
 
     for (const innovator of innovatorRecipients.filter(i => i.isActive)) {
       this.emails.push({
-        templateId: EmailTypeEnum.TA01_TASK_CREATION_TO_INNOVATOR,
+        templateId: 'TA01_TASK_CREATION_TO_INNOVATOR',
         notificationPreferenceType: NotificationCategoryEnum.TASK,
         to: innovator,
         params: {

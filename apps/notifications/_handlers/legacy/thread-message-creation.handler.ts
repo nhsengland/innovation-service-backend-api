@@ -8,7 +8,7 @@ import {
 import { UrlModel } from '@notifications/shared/models';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { EmailTypeEnum, ENV } from '../../_config';
+import { ENV } from '../../_config';
 
 import type { Context } from '@azure/functions';
 import type { RecipientType } from '../../_services/recipients.service';
@@ -16,8 +16,7 @@ import { BaseHandler } from '../base.handler';
 
 export class ThreadMessageCreationHandler extends BaseHandler<
   NotifierTypeEnum.THREAD_MESSAGE_CREATION,
-  EmailTypeEnum.THREAD_MESSAGE_CREATION_TO_ALL,
-  { subject: string; messageId: string }
+  'MIGRATION_OLD'
 > {
   constructor(
     requestUser: DomainContextType,
@@ -42,7 +41,7 @@ export class ThreadMessageCreationHandler extends BaseHandler<
     // Send emails only to users with email preference INSTANTLY.
     for (const recipient of emailRecipients) {
       this.emails.push({
-        templateId: EmailTypeEnum.THREAD_MESSAGE_CREATION_TO_ALL,
+        templateId: 'THREAD_MESSAGE_CREATION_TO_ALL',
         notificationPreferenceType: NotificationCategoryEnum.MESSAGE,
         to: recipient,
         params: {

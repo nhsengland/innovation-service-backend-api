@@ -3,7 +3,6 @@ import { IdleInnovatorsHandler } from './idle-innovators.handler';
 
 import { CompleteScenarioType, MocksHelper, TestsHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
-import { EmailTypeEnum } from '../../_config';
 import { RecipientType, RecipientsService } from '../../_services/recipients.service';
 
 describe('Notifications / _handlers / idle-innovators handler suite', () => {
@@ -53,7 +52,7 @@ describe('Notifications / _handlers / idle-innovators handler suite', () => {
     expect(handler.emails).toHaveLength(2);
     expect(handler.emails).toMatchObject([
       {
-        templateId: EmailTypeEnum.INNOVATOR_INCOMPLETE_RECORD,
+        templateId: 'INNOVATOR_INCOMPLETE_RECORD',
         to: recipients['john']?.recipient,
         notificationPreferenceType: null,
         params: {
@@ -61,7 +60,7 @@ describe('Notifications / _handlers / idle-innovators handler suite', () => {
         }
       },
       {
-        templateId: EmailTypeEnum.INNOVATOR_INCOMPLETE_RECORD,
+        templateId: 'INNOVATOR_INCOMPLETE_RECORD',
         to: recipients['adam']?.recipient,
         notificationPreferenceType: null,
         params: {

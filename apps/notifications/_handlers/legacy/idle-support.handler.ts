@@ -1,17 +1,13 @@
 import { NotificationLogTypeEnum, NotifierTypeEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { EmailTypeEnum, ENV } from '../../_config';
+import { ENV } from '../../_config';
 
 import type { Context } from '@azure/functions';
 import { UrlModel } from '@notifications/shared/models';
 import { BaseHandler } from '../base.handler';
 
-export class IdleSupportHandler extends BaseHandler<
-  NotifierTypeEnum.IDLE_SUPPORT,
-  EmailTypeEnum.QA_A_IDLE_SUPPORT,
-  never
-> {
+export class IdleSupportHandler extends BaseHandler<NotifierTypeEnum.IDLE_SUPPORT, 'MIGRATION_OLD'> {
   constructor(
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.DAILY_DIGEST],
@@ -44,7 +40,7 @@ export class IdleSupportHandler extends BaseHandler<
       }
 
       this.emails.push({
-        templateId: EmailTypeEnum.QA_A_IDLE_SUPPORT,
+        templateId: 'QA_A_IDLE_SUPPORT',
         to: idleSupport.recipient,
         notificationPreferenceType: null,
         params: {

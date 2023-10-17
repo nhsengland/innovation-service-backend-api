@@ -6,7 +6,7 @@ import { NotificationLogTypeEnum } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
 import { CompleteScenarioType, MocksHelper, TestsHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
-import { ENV, EmailTypeEnum } from '../../_config';
+import { ENV } from '../../_config';
 import { RecipientType, RecipientsService } from '../../_services/recipients.service';
 
 describe('Notifications / _handlers / idle-innovators handler suite', () => {
@@ -84,7 +84,7 @@ describe('Notifications / _handlers / idle-innovators handler suite', () => {
     expect(handler.emails).toHaveLength(2);
     expect(handler.emails).toMatchObject([
       {
-        templateId: EmailTypeEnum.QA_A_IDLE_SUPPORT,
+        templateId: 'QA_A_IDLE_SUPPORT',
         to: idleSupports['johnInnovationByAlice']?.recipient,
         notificationPreferenceType: null,
         params: {
@@ -106,7 +106,7 @@ describe('Notifications / _handlers / idle-innovators handler suite', () => {
         }
       },
       {
-        templateId: EmailTypeEnum.QA_A_IDLE_SUPPORT,
+        templateId: 'QA_A_IDLE_SUPPORT',
         to: idleSupports['johnInnovationBySam']?.recipient,
         notificationPreferenceType: null,
         params: {

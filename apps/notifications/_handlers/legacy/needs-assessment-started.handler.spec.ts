@@ -4,7 +4,7 @@ import { NotificationContextDetailEnum, NotificationContextTypeEnum } from '@not
 import { UrlModel } from '@notifications/shared/models';
 import { CompleteScenarioType, MocksHelper, TestsHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
-import { ENV, EmailTypeEnum } from '../../_config';
+import { ENV } from '../../_config';
 import { RecipientsService } from '../../_services/recipients.service';
 
 describe('Notifications / _handlers / needs-assessment-started handler suite', () => {
@@ -59,12 +59,10 @@ describe('Notifications / _handlers / needs-assessment-started handler suite', (
     });
 
     it('Should send email to innovation owner', () => {
-      const expectedEmail = handler.emails.find(
-        email => email.templateId === EmailTypeEnum.NEEDS_ASSESSMENT_STARTED_TO_INNOVATOR
-      );
+      const expectedEmail = handler.emails.find(email => email.templateId === 'NEEDS_ASSESSMENT_STARTED_TO_INNOVATOR');
 
       expect(expectedEmail).toMatchObject({
-        templateId: EmailTypeEnum.NEEDS_ASSESSMENT_STARTED_TO_INNOVATOR,
+        templateId: 'NEEDS_ASSESSMENT_STARTED_TO_INNOVATOR',
         to: DTOsHelper.getRecipientUser(innovationOwner),
         notificationPreferenceType: null,
         params: {

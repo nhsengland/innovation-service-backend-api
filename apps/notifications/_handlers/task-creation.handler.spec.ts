@@ -9,7 +9,7 @@ import { BadRequestError, UserErrorsEnum } from '@notifications/shared/errors';
 import { UrlModel } from '@notifications/shared/models';
 import { CompleteScenarioType, MocksHelper, TestsHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
-import { ENV, EmailTypeEnum } from '../_config';
+import { ENV } from '../_config';
 import { RecipientType, RecipientsService } from '../_services/recipients.service';
 import { TaskCreationHandler } from './task-creation.handler';
 
@@ -133,7 +133,7 @@ describe.skip('Notifications / _handlers / task-creation suite', () => {
         );
 
         expect(expectedEmail).toMatchObject({
-          templateId: EmailTypeEnum.TA01_TASK_CREATION_TO_INNOVATOR,
+          templateId: 'TA01_TASK_CREATION_TO_INNOVATOR',
           notificationPreferenceType: NotificationCategoryEnum.TASK,
           to: DTOsHelper.getRecipientUser(scenario.users.johnInnovator, 'innovatorRole'),
           params: {
@@ -158,7 +158,7 @@ describe.skip('Notifications / _handlers / task-creation suite', () => {
         );
 
         expect(expectedEmail).toMatchObject({
-          templateId: EmailTypeEnum.TA01_TASK_CREATION_TO_INNOVATOR,
+          templateId: 'TA01_TASK_CREATION_TO_INNOVATOR',
           notificationPreferenceType: NotificationCategoryEnum.TASK,
           to: DTOsHelper.getRecipientUser(scenario.users.janeInnovator, 'innovatorRole'),
           params: {

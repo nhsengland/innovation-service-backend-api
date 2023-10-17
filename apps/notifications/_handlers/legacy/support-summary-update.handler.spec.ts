@@ -2,7 +2,7 @@ import { NotificationContextDetailEnum, NotificationContextTypeEnum } from '@not
 import { UrlModel } from '@notifications/shared/models';
 import { MocksHelper, TestsHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
-import { ENV, EmailTypeEnum } from '../../_config';
+import { ENV } from '../../_config';
 import { RecipientsService, type RecipientType } from '../../_services/recipients.service';
 import { SupportSummaryUpdateHandler } from './support-summary-update.handler';
 
@@ -45,7 +45,7 @@ describe('Notifications / _handlers / support-summary-update handler suite', () 
     );
 
     expect(expectedEmail).toMatchObject({
-      templateId: EmailTypeEnum.SUPPORT_SUMMARY_UPDATE_TO_INNOVATOR,
+      templateId: 'SUPPORT_SUMMARY_UPDATE_TO_INNOVATOR',
       notificationPreferenceType: null,
       to: DTOsHelper.getRecipientUser(scenario.users.johnInnovator),
       params: {
@@ -187,7 +187,7 @@ describe('Notifications / _handlers / support-summary-update handler suite', () 
     );
 
     expect(expectedEmail).toMatchObject({
-      templateId: EmailTypeEnum.SUPPORT_SUMMARY_UPDATE_TO_INNOVATOR,
+      templateId: 'SUPPORT_SUMMARY_UPDATE_TO_INNOVATOR',
       notificationPreferenceType: null,
       to: DTOsHelper.getRecipientUser(scenario.users.janeInnovator),
       params: {

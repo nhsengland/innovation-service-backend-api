@@ -2,15 +2,14 @@ import { NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { EmailTypeEnum, ENV } from '../../_config';
+import { ENV } from '../../_config';
 
 import type { Context } from '@azure/functions';
 import { BaseHandler } from '../base.handler';
 
 export class NeedsAssessmentAssessorUpdateHandler extends BaseHandler<
   NotifierTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE,
-  EmailTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE_TO_OLD_NA | EmailTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE_TO_NEW_NA,
-  never
+  'MIGRATION_OLD'
 > {
   constructor(
     requestUser: DomainContextType,
@@ -36,7 +35,7 @@ export class NeedsAssessmentAssessorUpdateHandler extends BaseHandler<
     // Prepare email for previous NA.
     if (previousAssessor) {
       this.emails.push({
-        templateId: EmailTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE_TO_OLD_NA,
+        templateId: 'NEEDS_ASSESSMENT_ASSESSOR_UPDATE_TO_OLD_NA',
         to: previousAssessor,
         notificationPreferenceType: null,
         params: {
@@ -53,7 +52,7 @@ export class NeedsAssessmentAssessorUpdateHandler extends BaseHandler<
     // Prepare email for new NA.
     if (newAssessor) {
       this.emails.push({
-        templateId: EmailTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE_TO_NEW_NA,
+        templateId: 'NEEDS_ASSESSMENT_ASSESSOR_UPDATE_TO_NEW_NA',
         to: newAssessor,
         notificationPreferenceType: null,
         params: {

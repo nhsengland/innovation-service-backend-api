@@ -4,7 +4,7 @@ import { UrlModel } from '@notifications/shared/models';
 import { CompleteScenarioType, MocksHelper, TestsHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import type { InnovatorDomainContextType } from '@notifications/shared/types';
-import { ENV, EmailTypeEnum } from '../../_config';
+import { ENV } from '../../_config';
 import { RecipientsService } from '../../_services/recipients.service';
 import { InnovationSupportStatusChangeRequestHandler } from './innovation-support-status-change-request.handler';
 
@@ -57,7 +57,7 @@ describe('Notifications / _handlers / innovation-support-status-change-request h
 
     expect(handler.emails).toMatchObject([
       {
-        templateId: EmailTypeEnum.ACCESSOR_TO_QA_SUPPORT_CHANGE_REQUEST,
+        templateId: 'ACCESSOR_TO_QA_SUPPORT_CHANGE_REQUEST',
         to: DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole'),
         notificationPreferenceType: null,
         params: {
@@ -99,7 +99,7 @@ describe('Notifications / _handlers / innovation-support-status-change-request h
 
     expect(handler.emails).toMatchObject([
       {
-        templateId: EmailTypeEnum.ACCESSOR_TO_QA_SUPPORT_CHANGE_REQUEST,
+        templateId: 'ACCESSOR_TO_QA_SUPPORT_CHANGE_REQUEST',
         to: DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole'),
         notificationPreferenceType: null,
         params: {

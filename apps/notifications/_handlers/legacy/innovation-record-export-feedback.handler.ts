@@ -2,14 +2,12 @@ import type { Context } from '@azure/functions';
 import { InnovationExportRequestStatusEnum, NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
-import { ENV, EmailTypeEnum } from '../../_config';
+import { ENV } from '../../_config';
 import { BaseHandler } from '../base.handler';
 
 export class InnovationRecordExportFeedbackHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST,
-  | EmailTypeEnum.INNOVATION_RECORD_EXPORT_REJECTED_TO_REQUEST_CREATOR
-  | EmailTypeEnum.INNOVATION_RECORD_EXPORT_APPROVED_TO_REQUEST_CREATOR,
-  never
+  'MIGRATION_OLD'
 > {
   constructor(
     requestUser: DomainContextType,
@@ -32,8 +30,8 @@ export class InnovationRecordExportFeedbackHandler extends BaseHandler<
 
     const templateId =
       request.status === InnovationExportRequestStatusEnum.APPROVED
-        ? EmailTypeEnum.INNOVATION_RECORD_EXPORT_APPROVED_TO_REQUEST_CREATOR
-        : EmailTypeEnum.INNOVATION_RECORD_EXPORT_REJECTED_TO_REQUEST_CREATOR;
+        ? 'INNOVATION_RECORD_EXPORT_APPROVED_TO_REQUEST_CREATOR'
+        : 'INNOVATION_RECORD_EXPORT_REJECTED_TO_REQUEST_CREATOR';
 
     if (requestCreator?.isActive) {
       this.emails.push({

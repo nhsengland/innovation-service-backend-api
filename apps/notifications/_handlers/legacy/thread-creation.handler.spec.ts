@@ -12,7 +12,7 @@ import type {
 } from '@notifications/shared/tests/builders/innovation-thread.builder';
 import type { TestUserType } from '@notifications/shared/tests/builders/user.builder';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
-import { ENV, EmailTypeEnum } from '../../_config';
+import { ENV } from '../../_config';
 import { RecipientsService } from '../../_services/recipients.service';
 import { ThreadCreationHandler } from './thread-creation.handler';
 
@@ -107,7 +107,7 @@ describe('Notifications / _handlers / thread-creation suite', () => {
       expect(handler.emails).toHaveLength(2);
       expect(handler.emails).toMatchObject([
         {
-          templateId: EmailTypeEnum.THREAD_CREATION_TO_INNOVATOR_FROM_ASSIGNED_USER,
+          templateId: 'THREAD_CREATION_TO_INNOVATOR_FROM_ASSIGNED_USER',
           notificationPreferenceType: NotificationCategoryEnum.MESSAGE,
           to: DTOsHelper.getRecipientUser(scenario.users.johnInnovator),
           params: {
@@ -123,7 +123,7 @@ describe('Notifications / _handlers / thread-creation suite', () => {
           }
         },
         {
-          templateId: EmailTypeEnum.THREAD_CREATION_TO_INNOVATOR_FROM_ASSIGNED_USER,
+          templateId: 'THREAD_CREATION_TO_INNOVATOR_FROM_ASSIGNED_USER',
           notificationPreferenceType: NotificationCategoryEnum.MESSAGE,
           to: DTOsHelper.getRecipientUser(scenario.users.janeInnovator),
           params: {
@@ -235,7 +235,7 @@ describe('Notifications / _handlers / thread-creation suite', () => {
       expect(handler.emails).toHaveLength(2);
       expect(handler.emails).toMatchObject([
         {
-          templateId: EmailTypeEnum.THREAD_CREATION_TO_INNOVATOR_FROM_INNOVATOR,
+          templateId: 'THREAD_CREATION_TO_INNOVATOR_FROM_INNOVATOR',
           notificationPreferenceType: NotificationCategoryEnum.MESSAGE,
           to: DTOsHelper.getRecipientUser(emailRecipient!, 'innovatorRole'),
           params: {
@@ -252,7 +252,7 @@ describe('Notifications / _handlers / thread-creation suite', () => {
           }
         },
         {
-          templateId: EmailTypeEnum.THREAD_CREATION_TO_ASSIGNED_USERS,
+          templateId: 'THREAD_CREATION_TO_ASSIGNED_USERS',
           notificationPreferenceType: NotificationCategoryEnum.MESSAGE,
           to: DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole'),
           params: {

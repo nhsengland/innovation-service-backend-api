@@ -4,7 +4,6 @@ import { DailyDigestHandler } from './daily-digest.handler';
 import { randNumber } from '@ngneat/falso';
 import { CompleteScenarioType, MocksHelper, TestsHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
-import { EmailTypeEnum } from '../../_config';
 import { RecipientType, RecipientsService } from '../../_services/recipients.service';
 
 describe('Notifications / _handlers / daily-digest handler suite', () => {
@@ -56,10 +55,10 @@ describe('Notifications / _handlers / daily-digest handler suite', () => {
   });
 
   it('Should send email to all daily digest innovator recipients', () => {
-    const johnEmail = handler.emails.find(email => email.templateId === EmailTypeEnum.INNOVATOR_DAILY_DIGEST);
+    const johnEmail = handler.emails.find(email => email.templateId === 'INNOVATOR_DAILY_DIGEST');
 
     expect(johnEmail).toMatchObject({
-      templateId: EmailTypeEnum.INNOVATOR_DAILY_DIGEST,
+      templateId: 'INNOVATOR_DAILY_DIGEST',
       to: recipients['john']?.recipient,
       notificationPreferenceType: null,
       params: {
@@ -71,10 +70,10 @@ describe('Notifications / _handlers / daily-digest handler suite', () => {
   });
 
   it('Should send email to all daily digest accessor recipients', () => {
-    const aliceEmail = handler.emails.find(email => email.templateId === EmailTypeEnum.ACCESSOR_DAILY_DIGEST);
+    const aliceEmail = handler.emails.find(email => email.templateId === 'ACCESSOR_DAILY_DIGEST');
 
     expect(aliceEmail).toMatchObject({
-      templateId: EmailTypeEnum.ACCESSOR_DAILY_DIGEST,
+      templateId: 'ACCESSOR_DAILY_DIGEST',
       to: recipients['alice']?.recipient,
       notificationPreferenceType: null,
       params: {

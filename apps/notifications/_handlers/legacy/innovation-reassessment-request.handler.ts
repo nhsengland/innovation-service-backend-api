@@ -7,7 +7,7 @@ import {
 import { UrlModel } from '@notifications/shared/models';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { EmailTypeEnum, ENV } from '../../_config';
+import { ENV } from '../../_config';
 
 import type { Context } from '@azure/functions';
 import type { RecipientType } from '../../_services/recipients.service';
@@ -15,10 +15,7 @@ import { BaseHandler } from '../base.handler';
 
 export class InnovationReassessmentRequestHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_REASSESSMENT_REQUEST,
-  | EmailTypeEnum.INNOVATION_REASSESSMENT_REQUEST_TO_NEEDS_ASSESSMENT
-  | EmailTypeEnum.INNOVATION_SUBMITTED_TO_ALL_INNOVATORS
-  | EmailTypeEnum.INNOVATION_REASSESSMENT_REQUEST_TO_INNOVATOR,
-  Record<string, never>
+  'MIGRATION_OLD'
 > {
   constructor(
     requestUser: DomainContextType,
@@ -69,7 +66,7 @@ export class InnovationReassessmentRequestHandler extends BaseHandler<
   async prepareEmailToInnovators(recipients: RecipientType[], innovationName: string): Promise<void> {
     for (const recipient of recipients) {
       this.emails.push({
-        templateId: EmailTypeEnum.INNOVATION_SUBMITTED_TO_ALL_INNOVATORS,
+        templateId: 'INNOVATION_SUBMITTED_TO_ALL_INNOVATORS',
         to: recipient,
         notificationPreferenceType: null,
         params: { innovation_name: innovationName }
@@ -92,7 +89,7 @@ export class InnovationReassessmentRequestHandler extends BaseHandler<
 
   async prepareConfirmationEmail(innovationName: string, innovator: RecipientType): Promise<void> {
     this.emails.push({
-      templateId: EmailTypeEnum.INNOVATION_REASSESSMENT_REQUEST_TO_INNOVATOR,
+      templateId: 'INNOVATION_REASSESSMENT_REQUEST_TO_INNOVATOR',
       to: innovator,
       notificationPreferenceType: null,
       params: { innovation_name: innovationName }
@@ -114,7 +111,7 @@ export class InnovationReassessmentRequestHandler extends BaseHandler<
   async prepareEmailToAssessmentUsers(recipients: RecipientType[], innovationName: string): Promise<void> {
     for (const recipient of recipients) {
       this.emails.push({
-        templateId: EmailTypeEnum.INNOVATION_REASSESSMENT_REQUEST_TO_NEEDS_ASSESSMENT,
+        templateId: 'INNOVATION_REASSESSMENT_REQUEST_TO_NEEDS_ASSESSMENT',
         to: recipient,
         notificationPreferenceType: null,
         params: {

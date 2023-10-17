@@ -7,14 +7,9 @@ import {
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import type { Context } from '@azure/functions';
-import { EmailTypeEnum } from '../../_config';
 import { BaseHandler } from '../base.handler';
 
-export class LockUserHandler extends BaseHandler<
-  NotifierTypeEnum.LOCK_USER,
-  EmailTypeEnum.LOCK_USER_TO_LOCKED_USER,
-  Record<string, never>
-> {
+export class LockUserHandler extends BaseHandler<NotifierTypeEnum.LOCK_USER, 'MIGRATION_OLD'> {
   constructor(
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.LOCK_USER],
@@ -35,7 +30,7 @@ export class LockUserHandler extends BaseHandler<
     if (identityInfo) {
       // E-mail to the user who is being locked.
       this.emails.push({
-        templateId: EmailTypeEnum.LOCK_USER_TO_LOCKED_USER,
+        templateId: 'LOCK_USER_TO_LOCKED_USER',
         to: { email: identityInfo.email, displayname: identityInfo.displayName },
         notificationPreferenceType: null,
         params: {

@@ -1,7 +1,7 @@
 import { UrlModel } from '@notifications/shared/models';
 import { CompleteScenarioType, MocksHelper, TestsHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
-import { ENV, EmailTypeEnum } from '../../_config';
+import { ENV } from '../../_config';
 import { RecipientsService } from '../../_services/recipients.service';
 import { UnitInactivationSupportStatusCompletedHandler } from './unit-inactivation-support-status-completed.handler';
 
@@ -64,7 +64,7 @@ describe('Notifications / _handlers / unit-inactivation-support-status-completed
 
     expect(handler.emails).toMatchObject([
       {
-        templateId: EmailTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED,
+        templateId: 'UNIT_INACTIVATION_SUPPORT_COMPLETED',
         to: DTOsHelper.getRecipientUser(innovationOwner, 'innovatorRole'),
         notificationPreferenceType: null,
         params: {

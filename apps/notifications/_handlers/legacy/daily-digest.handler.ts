@@ -1,16 +1,10 @@
 import { NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { EmailTypeEnum } from '../../_config';
-
 import type { Context } from '@azure/functions';
 import { BaseHandler } from '../base.handler';
 
-export class DailyDigestHandler extends BaseHandler<
-  NotifierTypeEnum.DAILY_DIGEST,
-  EmailTypeEnum.INNOVATOR_DAILY_DIGEST | EmailTypeEnum.ACCESSOR_DAILY_DIGEST,
-  never
-> {
+export class DailyDigestHandler extends BaseHandler<NotifierTypeEnum.DAILY_DIGEST, 'MIGRATION_OLD'> {
   constructor(
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.DAILY_DIGEST],
@@ -31,9 +25,7 @@ export class DailyDigestHandler extends BaseHandler<
     for (const user of dailyDigestUsers) {
       this.emails.push({
         templateId:
-          user.recipient.role === ServiceRoleEnum.INNOVATOR
-            ? EmailTypeEnum.INNOVATOR_DAILY_DIGEST
-            : EmailTypeEnum.ACCESSOR_DAILY_DIGEST,
+          user.recipient.role === ServiceRoleEnum.INNOVATOR ? 'INNOVATOR_DAILY_DIGEST' : 'ACCESSOR_DAILY_DIGEST',
         to: user.recipient,
         notificationPreferenceType: null,
         params: {

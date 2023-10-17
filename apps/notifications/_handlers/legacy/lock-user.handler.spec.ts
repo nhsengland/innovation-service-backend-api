@@ -4,7 +4,6 @@ import { randUuid } from '@ngneat/falso';
 import { NotificationContextDetailEnum, NotificationContextTypeEnum } from '@notifications/shared/enums';
 import { CompleteScenarioType, MocksHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
-import { EmailTypeEnum } from '../../_config';
 import { RecipientsService } from '../../_services/recipients.service';
 import { NotificationsTestsHelper } from '../../_tests/notifications-test.helper';
 
@@ -47,7 +46,7 @@ describe('Notifications / _handlers / lock-user suite', () => {
     expect(handler.emails).toHaveLength(1);
     expect(handler.emails).toMatchObject([
       {
-        templateId: EmailTypeEnum.LOCK_USER_TO_LOCKED_USER,
+        templateId: 'LOCK_USER_TO_LOCKED_USER',
         to: { email: lockedUser.email, displayname: lockedUser.name },
         notificationPreferenceType: null,
         params: {}

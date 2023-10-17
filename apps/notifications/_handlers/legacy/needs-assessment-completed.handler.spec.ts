@@ -2,7 +2,7 @@ import { NotificationContextDetailEnum, NotificationContextTypeEnum } from '@not
 import { UrlModel } from '@notifications/shared/models';
 import { CompleteScenarioType, MocksHelper, TestsHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
-import { ENV, EmailTypeEnum } from '../../_config';
+import { ENV } from '../../_config';
 import { RecipientType, RecipientsService } from '../../_services/recipients.service';
 import { NeedsAssessmentCompletedHandler } from './needs-assessment-completed.handler';
 
@@ -93,11 +93,11 @@ describe('Notifications / _handlers / needs-assessment-completed handler suite',
       const expectedEmail = handler.emails.find(
         email =>
           (email.to as Omit<RecipientType, 'role' | 'userId'>).roleId === innovationOwner.roles.innovatorRole.id &&
-          email.templateId === EmailTypeEnum.NEEDS_ASSESSMENT_COMPLETED_TO_INNOVATOR
+          email.templateId === 'NEEDS_ASSESSMENT_COMPLETED_TO_INNOVATOR'
       );
 
       expect(expectedEmail).toMatchObject({
-        templateId: EmailTypeEnum.NEEDS_ASSESSMENT_COMPLETED_TO_INNOVATOR,
+        templateId: 'NEEDS_ASSESSMENT_COMPLETED_TO_INNOVATOR',
         to: DTOsHelper.getRecipientUser(innovationOwner, 'innovatorRole'),
         notificationPreferenceType: null,
         params: {
@@ -118,11 +118,11 @@ describe('Notifications / _handlers / needs-assessment-completed handler suite',
         email =>
           (email.to as Omit<RecipientType, 'role' | 'userId'>).roleId ===
             scenario.users.janeInnovator.roles.innovatorRole.id &&
-          email.templateId === EmailTypeEnum.NEEDS_ASSESSMENT_COMPLETED_TO_INNOVATOR
+          email.templateId === 'NEEDS_ASSESSMENT_COMPLETED_TO_INNOVATOR'
       );
 
       expect(expectedEmail).toMatchObject({
-        templateId: EmailTypeEnum.NEEDS_ASSESSMENT_COMPLETED_TO_INNOVATOR,
+        templateId: 'NEEDS_ASSESSMENT_COMPLETED_TO_INNOVATOR',
         to: DTOsHelper.getRecipientUser(scenario.users.janeInnovator, 'innovatorRole'),
         notificationPreferenceType: null,
         params: {
@@ -155,13 +155,11 @@ describe('Notifications / _handlers / needs-assessment-completed handler suite',
     });
 
     it('Should send email to QAs of suggested and shared with organisation units', () => {
-      const expectedEmails = handler.emails.filter(
-        email => email.templateId === EmailTypeEnum.ORGANISATION_SUGGESTION_TO_QA
-      );
+      const expectedEmails = handler.emails.filter(email => email.templateId === 'ORGANISATION_SUGGESTION_TO_QA');
 
       expect(expectedEmails).toMatchObject([
         {
-          templateId: EmailTypeEnum.ORGANISATION_SUGGESTION_TO_QA,
+          templateId: 'ORGANISATION_SUGGESTION_TO_QA',
           to: DTOsHelper.getRecipientUser(accessor, 'qaRole'),
           notificationPreferenceType: null,
           params: {
@@ -196,11 +194,11 @@ describe('Notifications / _handlers / needs-assessment-completed handler suite',
       const expectedEmail = handler.emails.find(
         email =>
           (email.to as Omit<RecipientType, 'role' | 'userId'>).roleId === innovationOwner.roles.innovatorRole.id &&
-          email.templateId === EmailTypeEnum.NEEDS_ASSESSMENT_SUGGESTED_ORG_NOT_SHARED_TO_INNOVATOR
+          email.templateId === 'NEEDS_ASSESSMENT_SUGGESTED_ORG_NOT_SHARED_TO_INNOVATOR'
       );
 
       expect(expectedEmail).toMatchObject({
-        templateId: EmailTypeEnum.NEEDS_ASSESSMENT_SUGGESTED_ORG_NOT_SHARED_TO_INNOVATOR,
+        templateId: 'NEEDS_ASSESSMENT_SUGGESTED_ORG_NOT_SHARED_TO_INNOVATOR',
         to: DTOsHelper.getRecipientUser(innovationOwner, 'innovatorRole'),
         notificationPreferenceType: null,
         params: {
@@ -219,11 +217,11 @@ describe('Notifications / _handlers / needs-assessment-completed handler suite',
         email =>
           (email.to as Omit<RecipientType, 'role' | 'userId'>).roleId ===
             scenario.users.janeInnovator.roles.innovatorRole.id &&
-          email.templateId === EmailTypeEnum.NEEDS_ASSESSMENT_SUGGESTED_ORG_NOT_SHARED_TO_INNOVATOR
+          email.templateId === 'NEEDS_ASSESSMENT_SUGGESTED_ORG_NOT_SHARED_TO_INNOVATOR'
       );
 
       expect(expectedEmail).toMatchObject({
-        templateId: EmailTypeEnum.NEEDS_ASSESSMENT_SUGGESTED_ORG_NOT_SHARED_TO_INNOVATOR,
+        templateId: 'NEEDS_ASSESSMENT_SUGGESTED_ORG_NOT_SHARED_TO_INNOVATOR',
         to: DTOsHelper.getRecipientUser(scenario.users.janeInnovator, 'innovatorRole'),
         notificationPreferenceType: null,
         params: {
@@ -321,7 +319,7 @@ describe('Notifications / _handlers / needs-assessment-completed handler suite',
       const expectedEmail = handler.emails.find(
         email =>
           (email.to as Omit<RecipientType, 'role' | 'userId'>).roleId === innovationOwner.roles.innovatorRole.id &&
-          email.templateId === EmailTypeEnum.NEEDS_ASSESSMENT_COMPLETED_TO_INNOVATOR
+          email.templateId === 'NEEDS_ASSESSMENT_COMPLETED_TO_INNOVATOR'
       );
 
       expect(expectedEmail).toBeUndefined();
@@ -331,7 +329,7 @@ describe('Notifications / _handlers / needs-assessment-completed handler suite',
       const expectedEmail = handler.emails.find(
         email =>
           (email.to as Omit<RecipientType, 'role' | 'userId'>).roleId === innovationOwner.roles.innovatorRole.id &&
-          email.templateId === EmailTypeEnum.NEEDS_ASSESSMENT_SUGGESTED_ORG_NOT_SHARED_TO_INNOVATOR
+          email.templateId === 'NEEDS_ASSESSMENT_SUGGESTED_ORG_NOT_SHARED_TO_INNOVATOR'
       );
 
       expect(expectedEmail).toBeUndefined();

@@ -1,20 +1,12 @@
 import { NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { EmailTypeEnum } from '../../_config';
-
 import type { Context } from '@azure/functions';
 import { NotFoundError, UserErrorsEnum } from '@notifications/shared/errors';
 import { BaseHandler } from '../base.handler';
 
 // REVIEW this isn't used
-export class AccessorUnitChangeHandler extends BaseHandler<
-  NotifierTypeEnum.ACCESSOR_UNIT_CHANGE,
-  | EmailTypeEnum.ACCESSOR_UNIT_CHANGE_TO_USER_MOVED
-  | EmailTypeEnum.ACCESSOR_UNIT_CHANGE_TO_QA_OLD_UNIT
-  | EmailTypeEnum.ACCESSOR_UNIT_CHANGE_TO_QA_NEW_UNIT,
-  never
-> {
+export class AccessorUnitChangeHandler extends BaseHandler<NotifierTypeEnum.ACCESSOR_UNIT_CHANGE, 'MIGRATION_OLD'> {
   constructor(
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.ACCESSOR_UNIT_CHANGE],
@@ -47,7 +39,7 @@ export class AccessorUnitChangeHandler extends BaseHandler<
 
     // E-mail to the user (accessor) that moved.
     this.emails.push({
-      templateId: EmailTypeEnum.ACCESSOR_UNIT_CHANGE_TO_USER_MOVED,
+      templateId: 'ACCESSOR_UNIT_CHANGE_TO_USER_MOVED',
       to: userInfo,
       notificationPreferenceType: null,
       params: {
@@ -61,7 +53,7 @@ export class AccessorUnitChangeHandler extends BaseHandler<
     // E-mail to old unit QAs.
     for (const user of oldUnitQAs) {
       this.emails.push({
-        templateId: EmailTypeEnum.ACCESSOR_UNIT_CHANGE_TO_QA_OLD_UNIT,
+        templateId: 'ACCESSOR_UNIT_CHANGE_TO_QA_OLD_UNIT',
         to: user,
         notificationPreferenceType: null,
         params: {
@@ -74,7 +66,7 @@ export class AccessorUnitChangeHandler extends BaseHandler<
     // E-mail to new unit QAs.
     for (const user of newUnitQAs) {
       this.emails.push({
-        templateId: EmailTypeEnum.ACCESSOR_UNIT_CHANGE_TO_QA_NEW_UNIT,
+        templateId: 'ACCESSOR_UNIT_CHANGE_TO_QA_NEW_UNIT',
         to: user,
         notificationPreferenceType: null,
         params: {

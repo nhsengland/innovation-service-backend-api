@@ -2,15 +2,14 @@ import { NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { EmailTypeEnum, ENV } from '../../_config';
+import { ENV } from '../../_config';
 
 import type { Context } from '@azure/functions';
 import { BaseHandler } from '../base.handler';
 
 export class InnovationStopSharingHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_STOP_SHARING,
-  EmailTypeEnum.INNOVATION_STOP_SHARING_TO_ENGAGING_ACCESSORS | EmailTypeEnum.INNOVATION_STOP_SHARING_TO_INNOVATOR,
-  never
+  'MIGRATION_OLD'
 > {
   constructor(
     requestUser: DomainContextType,
@@ -35,7 +34,7 @@ export class InnovationStopSharingHandler extends BaseHandler<
 
     if (owner?.isActive) {
       this.emails.push({
-        templateId: EmailTypeEnum.INNOVATION_STOP_SHARING_TO_INNOVATOR,
+        templateId: 'INNOVATION_STOP_SHARING_TO_INNOVATOR',
         to: owner,
         notificationPreferenceType: null,
         params: {
@@ -53,7 +52,7 @@ export class InnovationStopSharingHandler extends BaseHandler<
 
     for (const user of previousAssignedAccessors) {
       this.emails.push({
-        templateId: EmailTypeEnum.INNOVATION_STOP_SHARING_TO_ENGAGING_ACCESSORS,
+        templateId: 'INNOVATION_STOP_SHARING_TO_ENGAGING_ACCESSORS',
         notificationPreferenceType: null, // Before: 'SUPPORT'
         to: user,
         params: {

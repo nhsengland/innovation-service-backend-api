@@ -11,7 +11,7 @@ import { NotFoundError, OrganisationErrorsEnum } from '@notifications/shared/err
 import { UrlModel } from '@notifications/shared/models';
 import { CompleteScenarioType, MocksHelper, TestsHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
-import { ENV, EmailTypeEnum } from '../../_config';
+import { ENV } from '../../_config';
 import type { RecipientType } from '../../_services/recipients.service';
 import { RecipientsService } from '../../_services/recipients.service';
 
@@ -132,7 +132,7 @@ describe('Notifications / _handlers / innovation-support-status-update suite', (
             scenario.users.ingridAccessor.roles.accessorRole.id
         );
         expect(expectedEmail).toMatchObject({
-          templateId: EmailTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE_TO_ASSIGNED_ACCESSORS,
+          templateId: 'INNOVATION_SUPPORT_STATUS_UPDATE_TO_ASSIGNED_ACCESSORS',
           notificationPreferenceType: null,
           to: DTOsHelper.getRecipientUser(scenario.users.ingridAccessor, 'accessorRole'),
           params: {
@@ -272,7 +272,7 @@ describe('Notifications / _handlers / innovation-support-status-update suite', (
             scenario.users.johnInnovator.roles.innovatorRole.id
         );
         expect(expectedEmail).toEqual({
-          templateId: EmailTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE_TO_INNOVATOR,
+          templateId: 'INNOVATION_SUPPORT_STATUS_UPDATE_TO_INNOVATOR',
           notificationPreferenceType: null,
           to: DTOsHelper.getRecipientUser(scenario.users.johnInnovator, 'innovatorRole'),
           params: {
@@ -294,7 +294,7 @@ describe('Notifications / _handlers / innovation-support-status-update suite', (
             scenario.users.janeInnovator.roles.innovatorRole.id
         );
         expect(expectedEmail).toEqual({
-          templateId: EmailTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE_TO_INNOVATOR,
+          templateId: 'INNOVATION_SUPPORT_STATUS_UPDATE_TO_INNOVATOR',
           notificationPreferenceType: null,
           to: DTOsHelper.getRecipientUser(scenario.users.janeInnovator, 'innovatorRole'),
           params: {
@@ -411,7 +411,7 @@ describe('Notifications / _handlers / innovation-support-status-update suite', (
             scenario.users.johnInnovator.roles.innovatorRole.id
         );
         expect(expectedEmail).toEqual({
-          templateId: EmailTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE_TO_INNOVATOR,
+          templateId: 'INNOVATION_SUPPORT_STATUS_UPDATE_TO_INNOVATOR',
           notificationPreferenceType: null,
           to: DTOsHelper.getRecipientUser(scenario.users.johnInnovator, 'innovatorRole'),
           params: {
@@ -433,7 +433,7 @@ describe('Notifications / _handlers / innovation-support-status-update suite', (
             scenario.users.janeInnovator.roles.innovatorRole.id
         );
         expect(expectedEmail).toEqual({
-          templateId: EmailTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE_TO_INNOVATOR,
+          templateId: 'INNOVATION_SUPPORT_STATUS_UPDATE_TO_INNOVATOR',
           notificationPreferenceType: null,
           to: DTOsHelper.getRecipientUser(scenario.users.janeInnovator, 'innovatorRole'),
           params: {

@@ -1,4 +1,4 @@
-import { ENV, EmailTypeEnum } from '../../_config';
+import { ENV } from '../../_config';
 import { InnovationCollaboratorInviteHandler } from './innovation-collaborator-invite.handler';
 
 import { NotificationContextDetailEnum, NotificationContextTypeEnum } from '@notifications/shared/enums';
@@ -52,7 +52,7 @@ describe('Notifications / _handlers / innovation-collaborator-invite suite', () 
       expect(handler.inApp).toHaveLength(0);
       expect(handler.emails).toMatchObject([
         {
-          templateId: EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_TO_NEW_USER,
+          templateId: 'INNOVATION_COLLABORATOR_INVITE_TO_NEW_USER',
           to: { email: collaborator.email },
           notificationPreferenceType: null,
           params: {
@@ -97,7 +97,7 @@ describe('Notifications / _handlers / innovation-collaborator-invite suite', () 
       expect(handler.inApp).toHaveLength(1);
       expect(handler.emails).toMatchObject([
         {
-          templateId: EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_TO_EXISTING_USER,
+          templateId: 'INNOVATION_COLLABORATOR_INVITE_TO_EXISTING_USER',
           to: mockedInnovationCollaborator,
           notificationPreferenceType: null,
           params: {

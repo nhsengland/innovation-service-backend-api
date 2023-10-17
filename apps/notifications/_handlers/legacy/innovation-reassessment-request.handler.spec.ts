@@ -2,7 +2,7 @@ import { NotificationContextDetailEnum, NotificationContextTypeEnum } from '@not
 import { UrlModel } from '@notifications/shared/models';
 import { CompleteScenarioType, MocksHelper, TestsHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
-import { ENV, EmailTypeEnum } from '../../_config';
+import { ENV } from '../../_config';
 import { RecipientsService } from '../../_services/recipients.service';
 import { InnovationReassessmentRequestHandler } from './innovation-reassessment-request.handler';
 
@@ -55,11 +55,11 @@ describe('Notifications / _handlers / innovation-reassessment-request handler su
 
     it('Should send confirmation email to innovation owner', () => {
       const expectedEmail = handler.emails.find(
-        email => email.templateId === EmailTypeEnum.INNOVATION_REASSESSMENT_REQUEST_TO_INNOVATOR
+        email => email.templateId === 'INNOVATION_REASSESSMENT_REQUEST_TO_INNOVATOR'
       );
 
       expect(expectedEmail).toMatchObject({
-        templateId: EmailTypeEnum.INNOVATION_REASSESSMENT_REQUEST_TO_INNOVATOR,
+        templateId: 'INNOVATION_REASSESSMENT_REQUEST_TO_INNOVATOR',
         to: DTOsHelper.getRecipientUser(innovationOwner, 'innovatorRole'),
         notificationPreferenceType: null,
         params: {
@@ -87,12 +87,12 @@ describe('Notifications / _handlers / innovation-reassessment-request handler su
 
     it('Should send email to all collaborators', () => {
       const expectedEmails = handler.emails.filter(
-        email => email.templateId === EmailTypeEnum.INNOVATION_SUBMITTED_TO_ALL_INNOVATORS
+        email => email.templateId === 'INNOVATION_SUBMITTED_TO_ALL_INNOVATORS'
       );
 
       expect(expectedEmails).toMatchObject([
         {
-          templateId: EmailTypeEnum.INNOVATION_SUBMITTED_TO_ALL_INNOVATORS,
+          templateId: 'INNOVATION_SUBMITTED_TO_ALL_INNOVATORS',
           to: DTOsHelper.getRecipientUser(scenario.users.janeInnovator, 'innovatorRole'),
           notificationPreferenceType: null,
           params: {
@@ -121,12 +121,12 @@ describe('Notifications / _handlers / innovation-reassessment-request handler su
 
     it('Should send email to assessment users', () => {
       const expectedEmails = handler.emails.filter(
-        email => email.templateId === EmailTypeEnum.INNOVATION_REASSESSMENT_REQUEST_TO_NEEDS_ASSESSMENT
+        email => email.templateId === 'INNOVATION_REASSESSMENT_REQUEST_TO_NEEDS_ASSESSMENT'
       );
 
       expect(expectedEmails).toMatchObject([
         {
-          templateId: EmailTypeEnum.INNOVATION_REASSESSMENT_REQUEST_TO_NEEDS_ASSESSMENT,
+          templateId: 'INNOVATION_REASSESSMENT_REQUEST_TO_NEEDS_ASSESSMENT',
           to: DTOsHelper.getRecipientUser(scenario.users.paulNeedsAssessor, 'assessmentRole'),
           notificationPreferenceType: null,
           params: {
@@ -192,11 +192,11 @@ describe('Notifications / _handlers / innovation-reassessment-request handler su
 
     it('Should send confirmation email to innovation collaborator', () => {
       const expectedEmail = handler.emails.find(
-        email => email.templateId === EmailTypeEnum.INNOVATION_REASSESSMENT_REQUEST_TO_INNOVATOR
+        email => email.templateId === 'INNOVATION_REASSESSMENT_REQUEST_TO_INNOVATOR'
       );
 
       expect(expectedEmail).toMatchObject({
-        templateId: EmailTypeEnum.INNOVATION_REASSESSMENT_REQUEST_TO_INNOVATOR,
+        templateId: 'INNOVATION_REASSESSMENT_REQUEST_TO_INNOVATOR',
         to: DTOsHelper.getRecipientUser(scenario.users.adamInnovator, 'innovatorRole'),
         notificationPreferenceType: null,
         params: {
@@ -224,12 +224,12 @@ describe('Notifications / _handlers / innovation-reassessment-request handler su
 
     it('Should send email to innovation owner and all other collaborators', () => {
       const expectedEmails = handler.emails.filter(
-        email => email.templateId === EmailTypeEnum.INNOVATION_SUBMITTED_TO_ALL_INNOVATORS
+        email => email.templateId === 'INNOVATION_SUBMITTED_TO_ALL_INNOVATORS'
       );
 
       expect(expectedEmails).toMatchObject([
         {
-          templateId: EmailTypeEnum.INNOVATION_SUBMITTED_TO_ALL_INNOVATORS,
+          templateId: 'INNOVATION_SUBMITTED_TO_ALL_INNOVATORS',
           to: DTOsHelper.getRecipientUser(innovationOwner, 'innovatorRole'),
           notificationPreferenceType: null,
           params: {
@@ -237,7 +237,7 @@ describe('Notifications / _handlers / innovation-reassessment-request handler su
           }
         },
         {
-          templateId: EmailTypeEnum.INNOVATION_SUBMITTED_TO_ALL_INNOVATORS,
+          templateId: 'INNOVATION_SUBMITTED_TO_ALL_INNOVATORS',
           to: DTOsHelper.getRecipientUser(scenario.users.janeInnovator, 'innovatorRole'),
           notificationPreferenceType: null,
           params: {
@@ -266,12 +266,12 @@ describe('Notifications / _handlers / innovation-reassessment-request handler su
 
     it('Should send email to assessment users', () => {
       const expectedEmails = handler.emails.filter(
-        email => email.templateId === EmailTypeEnum.INNOVATION_REASSESSMENT_REQUEST_TO_NEEDS_ASSESSMENT
+        email => email.templateId === 'INNOVATION_REASSESSMENT_REQUEST_TO_NEEDS_ASSESSMENT'
       );
 
       expect(expectedEmails).toMatchObject([
         {
-          templateId: EmailTypeEnum.INNOVATION_REASSESSMENT_REQUEST_TO_NEEDS_ASSESSMENT,
+          templateId: 'INNOVATION_REASSESSMENT_REQUEST_TO_NEEDS_ASSESSMENT',
           to: DTOsHelper.getRecipientUser(scenario.users.paulNeedsAssessor, 'assessmentRole'),
           notificationPreferenceType: null,
           params: {
@@ -341,7 +341,7 @@ describe('Notifications / _handlers / innovation-reassessment-request handler su
 
     it('Should not send confirmation email', () => {
       const expectedEmail = handler.emails.find(
-        email => email.templateId === EmailTypeEnum.INNOVATION_SUBMITED_CONFIRMATION_TO_INNOVATOR
+        email => email.templateId === 'INNOVATION_SUBMITED_CONFIRMATION_TO_INNOVATOR'
       );
 
       expect(expectedEmail).toBeUndefined();

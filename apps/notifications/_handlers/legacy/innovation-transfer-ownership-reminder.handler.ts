@@ -9,15 +9,14 @@ import type { IdentityProviderService } from '@notifications/shared/services';
 import SHARED_SYMBOLS from '@notifications/shared/services/symbols';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { container, EmailTypeEnum, ENV } from '../../_config';
+import { container, ENV } from '../../_config';
 
 import type { Context } from '@azure/functions';
 import { BaseHandler } from '../base.handler';
 
 export class InnovationTransferOwnershipReminderHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_REMINDER,
-  EmailTypeEnum.INNOVATION_TRANSFER_REMINDER_NEW_USER | EmailTypeEnum.INNOVATION_TRANSFER_REMINDER_EXISTING_USER,
-  Record<string, never>
+  'MIGRATION_OLD'
 > {
   private identityProviderService = container.get<IdentityProviderService>(SHARED_SYMBOLS.IdentityProviderService);
 
@@ -35,7 +34,7 @@ export class InnovationTransferOwnershipReminderHandler extends BaseHandler<
     if (!targetUser) {
       // This means that the user is NOT registered in the service.
       this.emails.push({
-        templateId: EmailTypeEnum.INNOVATION_TRANSFER_REMINDER_NEW_USER,
+        templateId: 'INNOVATION_TRANSFER_REMINDER_NEW_USER',
         to: { email: this.inputData.recipientEmail },
         notificationPreferenceType: null,
         params: {
@@ -52,7 +51,7 @@ export class InnovationTransferOwnershipReminderHandler extends BaseHandler<
 
         if (recipient) {
           this.emails.push({
-            templateId: EmailTypeEnum.INNOVATION_TRANSFER_REMINDER_EXISTING_USER,
+            templateId: 'INNOVATION_TRANSFER_REMINDER_EXISTING_USER',
             to: recipient,
             notificationPreferenceType: null,
             params: {

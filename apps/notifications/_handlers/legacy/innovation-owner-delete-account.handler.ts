@@ -6,16 +6,13 @@ import {
 } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { EmailTypeEnum } from '../../_config';
-
 import type { Context } from '@azure/functions';
 import type { RecipientType } from '../../_services/recipients.service';
 import { BaseHandler } from '../base.handler';
 
 export class InnovatorAccountDeletionHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATOR_ACCOUNT_DELETION_WITH_PENDING_TRANSFER,
-  EmailTypeEnum.ACCOUNT_DELETION_WITH_TRANSFER_TO_COLLABORATOR,
-  Record<string, never>
+  'MIGRATION_OLD'
 > {
   constructor(
     requestUser: DomainContextType,
@@ -56,7 +53,7 @@ export class InnovatorAccountDeletionHandler extends BaseHandler<
   ): Promise<void> {
     for (const recipient of recipients) {
       this.emails.push({
-        templateId: EmailTypeEnum.ACCOUNT_DELETION_WITH_TRANSFER_TO_COLLABORATOR,
+        templateId: 'ACCOUNT_DELETION_WITH_TRANSFER_TO_COLLABORATOR',
         to: recipient,
         notificationPreferenceType: null,
         params: {

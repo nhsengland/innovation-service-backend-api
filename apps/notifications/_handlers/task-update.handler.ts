@@ -12,7 +12,7 @@ import type { IdentityProviderService } from '@notifications/shared/services';
 import SHARED_SYMBOLS from '@notifications/shared/services/symbols';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { container, EmailTypeEnum, ENV } from '../_config';
+import { container, ENV } from '../_config';
 
 import type { Context } from '@azure/functions';
 import type { CurrentCatalogTypes } from '@notifications/shared/schemas/innovation-record';
@@ -21,16 +21,11 @@ import { BaseHandler } from './base.handler';
 
 export class TaskUpdateHandler extends BaseHandler<
   NotifierTypeEnum.TASK_UPDATE,
-  | EmailTypeEnum.TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS
-  | EmailTypeEnum.TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT
-  | EmailTypeEnum.TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT
-  | EmailTypeEnum.TA05_TASK_CANCELLED_TO_INNOVATOR
-  | EmailTypeEnum.TA06_TASK_REOPEN_TO_INNOVATOR,
-  {
-    taskCode: string;
-    taskStatus: '' | InnovationTaskStatusEnum;
-    section: CurrentCatalogTypes.InnovationSections;
-  }
+  | 'TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS'
+  | 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT'
+  | 'TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT'
+  | 'TA05_TASK_CANCELLED_TO_INNOVATOR'
+  | 'TA06_TASK_REOPEN_TO_INNOVATOR'
 > {
   private identityProviderService = container.get<IdentityProviderService>(SHARED_SYMBOLS.IdentityProviderService);
 
@@ -109,13 +104,13 @@ export class TaskUpdateHandler extends BaseHandler<
   ): Promise<void> {
     const requestInfo = await this.identityProviderService.getUserInfo(this.requestUser.identityId);
 
-    let templateId: EmailTypeEnum;
+    let templateId: 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT' | 'TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT';
     switch (task.status) {
       case InnovationTaskStatusEnum.DONE:
-        templateId = EmailTypeEnum.TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT;
+        templateId = 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT';
         break;
       case InnovationTaskStatusEnum.DECLINED:
-        templateId = EmailTypeEnum.TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT;
+        templateId = 'TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT';
         break;
       default:
         throw new NotFoundError(EmailErrorsEnum.EMAIL_TEMPLATE_NOT_FOUND);
@@ -134,7 +129,7 @@ export class TaskUpdateHandler extends BaseHandler<
         // display_name: '', // This will be filled by the email-listener function.
         innovator_name: requestInfo.displayName,
         innovation_name: innovation.name,
-        ...(templateId === EmailTypeEnum.TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT && {
+        ...(templateId === 'TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT' && {
           declined_TASK_reason: this.inputData.comment ?? ''
         }),
         message_url: new UrlModel(ENV.webBaseTransactionalUrl)
@@ -152,13 +147,13 @@ export class TaskUpdateHandler extends BaseHandler<
     innovation: { id: string; owner: RecipientType },
     task: { id: string; status: InnovationTaskStatusEnum; owner: RecipientType }
   ): Promise<void> {
-    let templateId: EmailTypeEnum;
+    let templateId: 'TA06_TASK_REOPEN_TO_INNOVATOR' | 'TA05_TASK_CANCELLED_TO_INNOVATOR';
     switch (task.status) {
       case InnovationTaskStatusEnum.OPEN:
-        templateId = EmailTypeEnum.TA06_TASK_REOPEN_TO_INNOVATOR;
+        templateId = 'TA06_TASK_REOPEN_TO_INNOVATOR';
         break;
       case InnovationTaskStatusEnum.CANCELLED:
-        templateId = EmailTypeEnum.TA05_TASK_CANCELLED_TO_INNOVATOR;
+        templateId = 'TA05_TASK_CANCELLED_TO_INNOVATOR';
         break;
       default:
         throw new NotFoundError(EmailErrorsEnum.EMAIL_TEMPLATE_NOT_FOUND);
@@ -194,11 +189,11 @@ export class TaskUpdateHandler extends BaseHandler<
     innovation: { id: string; owner: RecipientType },
     task: { id: string; status: InnovationTaskStatusEnum; owner: RecipientType; organisationUnit?: { name: string } }
   ): Promise<void> {
-    let templateId: EmailTypeEnum;
+    let templateId: 'TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS';
     switch (task.status) {
       case InnovationTaskStatusEnum.DONE:
       case InnovationTaskStatusEnum.DECLINED:
-        templateId = EmailTypeEnum.TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS;
+        templateId = 'TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS';
         break;
       default:
         throw new NotFoundError(EmailErrorsEnum.EMAIL_TEMPLATE_NOT_FOUND);

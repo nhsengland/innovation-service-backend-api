@@ -10,7 +10,7 @@ import { UrlModel } from '@notifications/shared/models';
 import { CompleteScenarioType, MocksHelper, TestsHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import type { DomainContextType } from '@notifications/shared/types';
-import { ENV, EmailTypeEnum } from '../_config';
+import { ENV } from '../_config';
 import { RecipientsService } from '../_services/recipients.service';
 import { TaskUpdateHandler } from './task-update.handler';
 
@@ -41,171 +41,164 @@ describe.skip('Notifications / _handlers / task-update suite', () => {
       ServiceRoleEnum.ACCESSOR as const,
       InnovationTaskStatusEnum.DONE,
       {
-        toTaskOwner: EmailTypeEnum.TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT
+        toTaskOwner: 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT'
       }
     ],
     [
       ServiceRoleEnum.ACCESSOR as const,
       InnovationTaskStatusEnum.DECLINED,
       {
-        toTaskOwner: EmailTypeEnum.TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT
+        toTaskOwner: 'TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT'
       }
     ],
     [
       ServiceRoleEnum.ASSESSMENT as const,
       InnovationTaskStatusEnum.DONE,
       {
-        toTaskOwner: EmailTypeEnum.TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT
+        toTaskOwner: 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT'
       }
     ],
     [
       ServiceRoleEnum.ASSESSMENT as const,
       InnovationTaskStatusEnum.DECLINED,
       {
-        toTaskOwner: EmailTypeEnum.TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT
+        toTaskOwner: 'TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT'
       }
     ]
-  ])(
-    'Innovation owner updates task of %s to status %s',
-    (
-      taskOwnerRoleType: ServiceRoleEnum.ACCESSOR | ServiceRoleEnum.ASSESSMENT,
-      taskStatus: InnovationTaskStatusEnum,
-      emailTemplates: { toTaskOwner: EmailTypeEnum }
-    ) => {
-      let requestUser: DomainContextType;
-      let handler: TaskUpdateHandler;
+  ])('Innovation owner updates task of %s to status %s', (taskOwnerRoleType, taskStatus, emailTemplates) => {
+    let requestUser: DomainContextType;
+    let handler: TaskUpdateHandler;
 
-      let task: typeof taskByQA | typeof taskByNA;
-      let taskOwnerRoleId: string;
-      // let taskOwnerUnitName: string;
-      let basePath: string;
+    let task: typeof taskByQA | typeof taskByNA;
+    let taskOwnerRoleId: string;
+    // let taskOwnerUnitName: string;
+    let basePath: string;
 
-      let declinedReason: string | undefined;
+    let declinedReason: string | undefined;
 
-      beforeAll(async () => {
-        // mock innovation info
-        jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
-          name: innovation.name,
-          ownerId: scenario.users.johnInnovator.id,
-          ownerIdentityId: scenario.users.johnInnovator.identityId
-        });
-        // mock innovation owner info
-        jest
-          .spyOn(RecipientsService.prototype, 'getUsersRecipient')
-          .mockResolvedValueOnce(DTOsHelper.getRecipientUser(scenario.users.johnInnovator, 'innovatorRole'));
-        // mock request user info
-        jest
-          .spyOn(RecipientsService.prototype, 'getUsersRecipient')
-          .mockResolvedValueOnce(DTOsHelper.getRecipientUser(scenario.users.johnInnovator, 'innovatorRole'));
+    beforeAll(async () => {
+      // mock innovation info
+      jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+        name: innovation.name,
+        ownerId: scenario.users.johnInnovator.id,
+        ownerIdentityId: scenario.users.johnInnovator.identityId
+      });
+      // mock innovation owner info
+      jest
+        .spyOn(RecipientsService.prototype, 'getUsersRecipient')
+        .mockResolvedValueOnce(DTOsHelper.getRecipientUser(scenario.users.johnInnovator, 'innovatorRole'));
+      // mock request user info
+      jest
+        .spyOn(RecipientsService.prototype, 'getUsersRecipient')
+        .mockResolvedValueOnce(DTOsHelper.getRecipientUser(scenario.users.johnInnovator, 'innovatorRole'));
 
-        if (taskOwnerRoleType === ServiceRoleEnum.ACCESSOR) {
-          task = taskByQA;
-          taskOwnerRoleId = taskByQA.owner.roles.qaRole.id;
-          // taskOwnerUnitName = taskByQA.owner.organisations.healthOrg.organisationUnits.healthOrgUnit.name;
-          basePath = 'accessor';
-        } else {
-          task = taskByNA;
-          taskOwnerRoleId = taskByNA.owner.roles.assessmentRole.id;
-          // taskOwnerUnitName = 'needs assessment';
-          basePath = 'assessment';
+      if (taskOwnerRoleType === ServiceRoleEnum.ACCESSOR) {
+        task = taskByQA;
+        taskOwnerRoleId = taskByQA.owner.roles.qaRole.id;
+        // taskOwnerUnitName = taskByQA.owner.organisations.healthOrg.organisationUnits.healthOrgUnit.name;
+        basePath = 'accessor';
+      } else {
+        task = taskByNA;
+        taskOwnerRoleId = taskByNA.owner.roles.assessmentRole.id;
+        // taskOwnerUnitName = 'needs assessment';
+        basePath = 'assessment';
+      }
+
+      // mock task info
+      jest.spyOn(RecipientsService.prototype, 'taskInfoWithOwner').mockResolvedValueOnce({
+        id: task.task.id,
+        displayId: task.task.displayId,
+        status: taskStatus,
+        owner: DTOsHelper.getRecipientUser(task.owner),
+        ...(taskOwnerRoleType === ServiceRoleEnum.ACCESSOR && {
+          organisationUnit: {
+            id: taskByQA.owner.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
+            name: taskByQA.owner.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
+            acronym: taskByQA.owner.organisations.healthOrg.organisationUnits.healthOrgUnit.acronym
+          }
+        })
+      });
+
+      requestUser = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, 'innovatorRole');
+
+      declinedReason = taskStatus === InnovationTaskStatusEnum.DECLINED ? randText({ charCount: 20 }) : undefined;
+
+      handler = new TaskUpdateHandler(
+        requestUser,
+        {
+          innovationId: innovation.id,
+          task: { ...task.task, status: taskStatus },
+          ...(declinedReason && { comment: declinedReason })
+        },
+        MocksHelper.mockContext()
+      );
+
+      await handler.run();
+    });
+
+    it('Should send email to task owner', () => {
+      const expectedEmail = handler.emails.find(email => email.templateId === emailTemplates.toTaskOwner);
+
+      expect(expectedEmail).toMatchObject({
+        templateId: emailTemplates.toTaskOwner,
+        notificationPreferenceType: NotificationCategoryEnum.TASK,
+        to: DTOsHelper.getRecipientUser(task.owner),
+        params: {
+          innovator_name: scenario.users.johnInnovator.name,
+          innovation_name: innovation.name,
+          ...(declinedReason && {
+            declined_TASK_reason: declinedReason
+          }),
+          action_url: new UrlModel(ENV.webBaseTransactionalUrl)
+            .addPath(':basePath/innovations/:innovationId/tasks/:taskId')
+            .setPathParams({
+              basePath,
+              innovationId: innovation.id,
+              taskId: task.task.id
+            })
+            .buildUrl()
         }
-
-        // mock task info
-        jest.spyOn(RecipientsService.prototype, 'taskInfoWithOwner').mockResolvedValueOnce({
-          id: task.task.id,
-          displayId: task.task.displayId,
-          status: taskStatus,
-          owner: DTOsHelper.getRecipientUser(task.owner),
-          ...(taskOwnerRoleType === ServiceRoleEnum.ACCESSOR && {
-            organisationUnit: {
-              id: taskByQA.owner.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
-              name: taskByQA.owner.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
-              acronym: taskByQA.owner.organisations.healthOrg.organisationUnits.healthOrgUnit.acronym
-            }
-          })
-        });
-
-        requestUser = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, 'innovatorRole');
-
-        declinedReason = taskStatus === InnovationTaskStatusEnum.DECLINED ? randText({ charCount: 20 }) : undefined;
-
-        handler = new TaskUpdateHandler(
-          requestUser,
-          {
-            innovationId: innovation.id,
-            task: { ...task.task, status: taskStatus },
-            ...(declinedReason && { comment: declinedReason })
-          },
-          MocksHelper.mockContext()
-        );
-
-        await handler.run();
       });
+    });
 
-      it('Should send email to task owner', () => {
-        const expectedEmail = handler.emails.find(email => email.templateId === emailTemplates.toTaskOwner);
+    it('Should send inApp to task owner', () => {
+      const expectedInApp = handler.inApp.find(inApp => inApp.userRoleIds.includes(taskOwnerRoleId));
 
-        expect(expectedEmail).toMatchObject({
-          templateId: emailTemplates.toTaskOwner,
-          notificationPreferenceType: NotificationCategoryEnum.TASK,
-          to: DTOsHelper.getRecipientUser(task.owner),
-          params: {
-            innovator_name: scenario.users.johnInnovator.name,
-            innovation_name: innovation.name,
-            ...(declinedReason && {
-              declined_TASK_reason: declinedReason
-            }),
-            action_url: new UrlModel(ENV.webBaseTransactionalUrl)
-              .addPath(':basePath/innovations/:innovationId/tasks/:taskId')
-              .setPathParams({
-                basePath,
-                innovationId: innovation.id,
-                taskId: task.task.id
-              })
-              .buildUrl()
-          }
-        });
+      expect(expectedInApp).toMatchObject({
+        innovationId: innovation.id,
+        context: {
+          type: NotificationContextTypeEnum.TASK,
+          detail: NotificationContextDetailEnum.TASK_UPDATE,
+          id: task.task.id
+        },
+        userRoleIds: [taskOwnerRoleId],
+        params: {
+          taskCode: task.task.displayId,
+          taskStatus: taskStatus,
+          section: task.task.section
+        }
       });
+    });
 
-      it('Should send inApp to task owner', () => {
-        const expectedInApp = handler.inApp.find(inApp => inApp.userRoleIds.includes(taskOwnerRoleId));
+    it('Should send confirmation inApp to innovator', () => {
+      const expectedInApp = handler.inApp.find(inApp => inApp.userRoleIds.includes(requestUser.currentRole.id));
 
-        expect(expectedInApp).toMatchObject({
-          innovationId: innovation.id,
-          context: {
-            type: NotificationContextTypeEnum.TASK,
-            detail: NotificationContextDetailEnum.TASK_UPDATE,
-            id: task.task.id
-          },
-          userRoleIds: [taskOwnerRoleId],
-          params: {
-            taskCode: task.task.displayId,
-            taskStatus: taskStatus,
-            section: task.task.section
-          }
-        });
+      expect(expectedInApp).toMatchObject({
+        innovationId: innovation.id,
+        context: {
+          type: NotificationContextTypeEnum.TASK,
+          detail: NotificationContextDetailEnum.TASK_UPDATE,
+          id: task.task.id
+        },
+        userRoleIds: [requestUser.currentRole.id],
+        params: {
+          taskCode: task.task.displayId,
+          taskStatus: taskStatus,
+          section: task.task.section
+        }
       });
-
-      it('Should send confirmation inApp to innovator', () => {
-        const expectedInApp = handler.inApp.find(inApp => inApp.userRoleIds.includes(requestUser.currentRole.id));
-
-        expect(expectedInApp).toMatchObject({
-          innovationId: innovation.id,
-          context: {
-            type: NotificationContextTypeEnum.TASK,
-            detail: NotificationContextDetailEnum.TASK_UPDATE,
-            id: task.task.id
-          },
-          userRoleIds: [requestUser.currentRole.id],
-          params: {
-            taskCode: task.task.displayId,
-            taskStatus: taskStatus,
-            section: task.task.section
-          }
-        });
-      });
-    }
-  );
+    });
+  });
 
   describe.each([
     [ServiceRoleEnum.ACCESSOR as const, InnovationTaskStatusEnum.DONE],
@@ -289,7 +282,7 @@ describe.skip('Notifications / _handlers / task-update suite', () => {
       });
 
       it('Should send email to innovation owner', () => {
-        const emailTemplate = EmailTypeEnum.TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS;
+        const emailTemplate = 'TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS';
         const expectedEmail = handler.emails.find(email => email.templateId === emailTemplate);
 
         expect(expectedEmail).toMatchObject({
@@ -335,127 +328,112 @@ describe.skip('Notifications / _handlers / task-update suite', () => {
   );
 
   describe.each([
-    [
-      ServiceRoleEnum.ACCESSOR as const,
-      InnovationTaskStatusEnum.CANCELLED,
-      EmailTypeEnum.TA05_TASK_CANCELLED_TO_INNOVATOR
-    ],
-    [ServiceRoleEnum.ACCESSOR as const, InnovationTaskStatusEnum.OPEN, EmailTypeEnum.TA06_TASK_REOPEN_TO_INNOVATOR],
-    [
-      ServiceRoleEnum.ASSESSMENT as const,
-      InnovationTaskStatusEnum.CANCELLED,
-      EmailTypeEnum.TA05_TASK_CANCELLED_TO_INNOVATOR
-    ],
-    [ServiceRoleEnum.ASSESSMENT as const, InnovationTaskStatusEnum.OPEN, EmailTypeEnum.TA06_TASK_REOPEN_TO_INNOVATOR]
-  ])(
-    '%s updates task to status %s',
-    (
-      requestUserRoleType: ServiceRoleEnum.ACCESSOR | ServiceRoleEnum.ASSESSMENT,
-      taskStatus: InnovationTaskStatusEnum,
-      emailTemplate: EmailTypeEnum
-    ) => {
-      let requestTestUser:
-        | CompleteScenarioType['users']['aliceQualifyingAccessor']
-        | CompleteScenarioType['users']['paulNeedsAssessor'];
-      let handler: TaskUpdateHandler;
+    [ServiceRoleEnum.ACCESSOR as const, InnovationTaskStatusEnum.CANCELLED, 'TA05_TASK_CANCELLED_TO_INNOVATOR'],
+    [ServiceRoleEnum.ACCESSOR as const, InnovationTaskStatusEnum.OPEN, 'TA06_TASK_REOPEN_TO_INNOVATOR'],
+    [ServiceRoleEnum.ASSESSMENT as const, InnovationTaskStatusEnum.CANCELLED, 'TA05_TASK_CANCELLED_TO_INNOVATOR'],
+    [ServiceRoleEnum.ASSESSMENT as const, InnovationTaskStatusEnum.OPEN, 'TA06_TASK_REOPEN_TO_INNOVATOR']
+  ])('%s updates task to status %s', (requestUserRoleType, taskStatus, emailTemplate) => {
+    let requestTestUser:
+      | CompleteScenarioType['users']['aliceQualifyingAccessor']
+      | CompleteScenarioType['users']['paulNeedsAssessor'];
+    let handler: TaskUpdateHandler;
 
-      let task: typeof taskByQA | typeof taskByNA;
-      let requestUserUnitName: string;
+    let task: typeof taskByQA | typeof taskByNA;
+    let requestUserUnitName: string;
 
-      beforeAll(async () => {
-        // mock innovation info
-        jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
-          name: innovation.name,
-          ownerId: scenario.users.johnInnovator.id,
-          ownerIdentityId: scenario.users.johnInnovator.identityId
-        });
-        // mock innovation owner info
-        jest
-          .spyOn(RecipientsService.prototype, 'getUsersRecipient')
-          .mockResolvedValueOnce(DTOsHelper.getRecipientUser(scenario.users.johnInnovator, 'innovatorRole'));
-        if (requestUserRoleType === ServiceRoleEnum.ACCESSOR) {
-          requestTestUser = scenario.users.aliceQualifyingAccessor;
-          task = taskByQA;
-          requestUserUnitName = taskByQA.owner.organisations.healthOrg.organisationUnits.healthOrgUnit.name;
-        } else {
-          requestTestUser = scenario.users.paulNeedsAssessor;
-          task = taskByNA;
-          requestUserUnitName = 'needs assessment';
-        }
-
-        MocksHelper.mockIdentityServiceGetUserInfo(requestTestUser);
-
-        // mock task info
-        jest.spyOn(RecipientsService.prototype, 'taskInfoWithOwner').mockResolvedValueOnce({
-          id: task.task.id,
-          displayId: task.task.displayId,
-          status: taskStatus,
-          owner: DTOsHelper.getRecipientUser(task.owner),
-          ...(requestUserRoleType === ServiceRoleEnum.ACCESSOR && {
-            organisationUnit: {
-              id: taskByQA.owner.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
-              name: taskByQA.owner.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
-              acronym: taskByQA.owner.organisations.healthOrg.organisationUnits.healthOrgUnit.acronym
-            }
-          })
-        });
-
-        const requestUser = DTOsHelper.getUserRequestContext(requestTestUser);
-
-        handler = new TaskUpdateHandler(
-          requestUser,
-          {
-            innovationId: innovation.id,
-            task: { ...task.task, status: taskStatus }
-          },
-          MocksHelper.mockContext()
-        );
-
-        await handler.run();
+    beforeAll(async () => {
+      // mock innovation info
+      jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+        name: innovation.name,
+        ownerId: scenario.users.johnInnovator.id,
+        ownerIdentityId: scenario.users.johnInnovator.identityId
       });
-      it('Should send email to innovation owner', () => {
-        const expectedEmail = handler.emails.find(email => email.templateId === emailTemplate);
+      // mock innovation owner info
+      jest
+        .spyOn(RecipientsService.prototype, 'getUsersRecipient')
+        .mockResolvedValueOnce(DTOsHelper.getRecipientUser(scenario.users.johnInnovator, 'innovatorRole'));
+      if (requestUserRoleType === ServiceRoleEnum.ACCESSOR) {
+        requestTestUser = scenario.users.aliceQualifyingAccessor;
+        task = taskByQA;
+        requestUserUnitName = taskByQA.owner.organisations.healthOrg.organisationUnits.healthOrgUnit.name;
+      } else {
+        requestTestUser = scenario.users.paulNeedsAssessor;
+        task = taskByNA;
+        requestUserUnitName = 'needs assessment';
+      }
 
-        expect(expectedEmail).toMatchObject({
-          templateId: emailTemplate,
-          notificationPreferenceType: NotificationCategoryEnum.TASK,
-          to: DTOsHelper.getRecipientUser(scenario.users.johnInnovator, 'innovatorRole'),
-          params: {
-            accessor_name: task.owner.name,
-            unit_name: requestUserUnitName,
-            action_url: new UrlModel(ENV.webBaseTransactionalUrl)
-              .addPath('innovator/innovations/:innovationId/tasks/:taskId')
-              .setPathParams({
-                innovationId: innovation.id,
-                taskId: task.task.id
-              })
-              .buildUrl()
+      MocksHelper.mockIdentityServiceGetUserInfo(requestTestUser);
+
+      // mock task info
+      jest.spyOn(RecipientsService.prototype, 'taskInfoWithOwner').mockResolvedValueOnce({
+        id: task.task.id,
+        displayId: task.task.displayId,
+        status: taskStatus,
+        owner: DTOsHelper.getRecipientUser(task.owner),
+        ...(requestUserRoleType === ServiceRoleEnum.ACCESSOR && {
+          organisationUnit: {
+            id: taskByQA.owner.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
+            name: taskByQA.owner.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
+            acronym: taskByQA.owner.organisations.healthOrg.organisationUnits.healthOrgUnit.acronym
           }
-        });
+        })
       });
 
-      it('Should send inApp to innovation owner', () => {
-        const expectedInApp = handler.inApp.find(inApp =>
-          inApp.userRoleIds.includes(scenario.users.johnInnovator.roles.innovatorRole.id)
-        );
+      const requestUser = DTOsHelper.getUserRequestContext(requestTestUser);
 
-        expect(expectedInApp).toMatchObject({
+      handler = new TaskUpdateHandler(
+        requestUser,
+        {
           innovationId: innovation.id,
-          context: {
-            type: NotificationContextTypeEnum.TASK,
-            detail: NotificationContextDetailEnum.TASK_UPDATE,
-            id: task.task.id
-          },
-          userRoleIds: [scenario.users.johnInnovator.roles.innovatorRole.id],
-          params: {
-            taskCode: task.task.displayId,
-            taskStatus: taskStatus,
-            section: task.task.section
-          }
-        });
+          task: { ...task.task, status: taskStatus }
+        },
+        MocksHelper.mockContext()
+      );
+
+      await handler.run();
+    });
+    it('Should send email to innovation owner', () => {
+      const expectedEmail = handler.emails.find(email => email.templateId === emailTemplate);
+
+      expect(expectedEmail).toMatchObject({
+        templateId: emailTemplate,
+        notificationPreferenceType: NotificationCategoryEnum.TASK,
+        to: DTOsHelper.getRecipientUser(scenario.users.johnInnovator, 'innovatorRole'),
+        params: {
+          accessor_name: task.owner.name,
+          unit_name: requestUserUnitName,
+          action_url: new UrlModel(ENV.webBaseTransactionalUrl)
+            .addPath('innovator/innovations/:innovationId/tasks/:taskId')
+            .setPathParams({
+              innovationId: innovation.id,
+              taskId: task.task.id
+            })
+            .buildUrl()
+        }
       });
-    }
-  );
+    });
+
+    it('Should send inApp to innovation owner', () => {
+      const expectedInApp = handler.inApp.find(inApp =>
+        inApp.userRoleIds.includes(scenario.users.johnInnovator.roles.innovatorRole.id)
+      );
+
+      expect(expectedInApp).toMatchObject({
+        innovationId: innovation.id,
+        context: {
+          type: NotificationContextTypeEnum.TASK,
+          detail: NotificationContextDetailEnum.TASK_UPDATE,
+          id: task.task.id
+        },
+        userRoleIds: [scenario.users.johnInnovator.roles.innovatorRole.id],
+        params: {
+          taskCode: task.task.displayId,
+          taskStatus: taskStatus,
+          section: task.task.section
+        }
+      });
+    });
+  });
 
   it('Should not send any email/inApp if the reques user has an invalid type', async () => {
     // mock innovation info

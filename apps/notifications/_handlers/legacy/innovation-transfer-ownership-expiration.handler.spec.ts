@@ -2,7 +2,7 @@ import { NotificationContextDetailEnum, NotificationContextTypeEnum } from '@not
 import { UrlModel } from '@notifications/shared/models';
 import { CompleteScenarioType, MocksHelper, TestsHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
-import { ENV, EmailTypeEnum } from '../../_config';
+import { ENV } from '../../_config';
 import { RecipientsService } from '../../_services/recipients.service';
 import { InnovationTransferOwnershipExpirationHandler } from './innovation-transfer-ownership-expiration.handler';
 
@@ -50,7 +50,7 @@ describe('Notifications / _handlers / innovation-transfer-ownership-expiration h
     it('Should send email to innovation owner', () => {
       expect(handler.emails).toMatchObject([
         {
-          templateId: EmailTypeEnum.INNOVATION_TRANSFER_EXPIRED,
+          templateId: 'INNOVATION_TRANSFER_EXPIRED',
           to: DTOsHelper.getRecipientUser(innovationOwner, 'innovatorRole'),
           notificationPreferenceType: null,
           params: {

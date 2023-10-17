@@ -6,7 +6,6 @@ import { RecipientsService } from '../../_services/recipients.service';
 import { randFutureDate } from '@ngneat/falso';
 import { NotificationContextDetailEnum, NotificationContextTypeEnum } from '@notifications/shared/enums';
 import { CompleteScenarioType, MocksHelper, TestsHelper } from '@notifications/shared/tests';
-import { EmailTypeEnum } from '../../_config';
 
 describe('Notifications / _handlers / innovation-owner-delete-account handler suite', () => {
   let testsHelper: TestsHelper;
@@ -50,7 +49,7 @@ describe('Notifications / _handlers / innovation-owner-delete-account handler su
     it('Should send an email to the collaborators', () => {
       expect(handler.emails).toMatchObject([
         {
-          templateId: EmailTypeEnum.ACCOUNT_DELETION_WITH_TRANSFER_TO_COLLABORATOR,
+          templateId: 'ACCOUNT_DELETION_WITH_TRANSFER_TO_COLLABORATOR',
           to: DTOsHelper.getRecipientUser(scenario.users.janeInnovator),
           notificationPreferenceType: null,
           params: {

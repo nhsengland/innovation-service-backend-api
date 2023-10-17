@@ -12,7 +12,7 @@ import type {
   NotificationLogTypeEnum
 } from '@notifications/shared/enums';
 
-import type { EmailTemplatesType, EmailTypeEnum } from '../_config';
+import type { EmailTemplates, EmailTemplatesType } from '../_config';
 
 import { BaseService } from './base.service';
 import type { EmailService } from './email.service';
@@ -27,8 +27,8 @@ export class DispatchService extends BaseService {
     super();
   }
 
-  async sendEmail<T extends EmailTypeEnum>(
-    type: EmailTypeEnum,
+  async sendEmail<T extends keyof EmailTemplatesType>(
+    type: keyof EmailTemplates,
     to: string,
     params: EmailTemplatesType[T],
     log?: {
