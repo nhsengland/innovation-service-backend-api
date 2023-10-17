@@ -7,8 +7,8 @@ import type { DomainContextType, NotifierTemplatesType } from '@notifications/sh
 
 import { EmailTypeEnum } from '../_config';
 
-import { BaseHandler } from './base.handler';
 import type { Context } from '@azure/functions';
+import { BaseHandler } from './base.handler';
 
 export class InnovationWithdrawnHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_WITHDRAWN,
@@ -19,7 +19,7 @@ export class InnovationWithdrawnHandler extends BaseHandler<
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_WITHDRAWN],
     azureContext: Context
-) {
+  ) {
     super(requestUser, data, azureContext);
   }
 
@@ -37,7 +37,7 @@ export class InnovationWithdrawnHandler extends BaseHandler<
     for (const user of uniqueAssignedUsers) {
       this.emails.push({
         templateId: EmailTypeEnum.INNOVATION_WITHDRAWN_TO_ASSIGNED_USERS,
-        notificationPreferenceType: 'SUPPORT',
+        notificationPreferenceType: null, // Before: 'SUPPORT'
         to: user,
         params: {
           innovation_name: this.inputData.innovation.name

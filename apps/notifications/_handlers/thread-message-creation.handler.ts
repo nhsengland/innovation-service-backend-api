@@ -1,4 +1,5 @@
 import {
+  NotificationCategoryEnum,
   NotificationContextDetailEnum,
   NotificationContextTypeEnum,
   NotifierTypeEnum,
@@ -42,7 +43,7 @@ export class ThreadMessageCreationHandler extends BaseHandler<
     for (const recipient of emailRecipients) {
       this.emails.push({
         templateId: EmailTypeEnum.THREAD_MESSAGE_CREATION_TO_ALL,
-        notificationPreferenceType: 'MESSAGE',
+        notificationPreferenceType: NotificationCategoryEnum.MESSAGE,
         to: recipient,
         params: {
           // display_name: '', // This will be filled by the email-listener function.

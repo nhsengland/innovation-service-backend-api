@@ -1,11 +1,16 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { ThreadMessageCreationHandler } from './thread-message-creation.handler';
+import {
+  NotificationCategoryEnum,
+  NotificationContextDetailEnum,
+  NotificationContextTypeEnum,
+  ServiceRoleEnum
+} from '@notifications/shared/enums';
+import { UrlModel } from '@notifications/shared/models';
 import { MocksHelper, TestsHelper } from '@notifications/shared/tests';
-import { RecipientsService } from '../_services/recipients.service';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { ENV, EmailTypeEnum } from '../_config';
-import { UrlModel } from '@notifications/shared/models';
-import { NotificationContextDetailEnum, NotificationContextTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import { RecipientsService } from '../_services/recipients.service';
+import { ThreadMessageCreationHandler } from './thread-message-creation.handler';
 
 describe('Notifications / _handlers / thread-message-creation suite', () => {
   const testsHelper = new TestsHelper();
@@ -67,7 +72,7 @@ describe('Notifications / _handlers / thread-message-creation suite', () => {
 
       expect(handler.emails).toContainEqual({
         templateId: EmailTypeEnum.THREAD_MESSAGE_CREATION_TO_ALL,
-        notificationPreferenceType: 'MESSAGE',
+        notificationPreferenceType: NotificationCategoryEnum.MESSAGE,
         to: userRecipient,
         params: {
           innovation_name: innovation.name,
@@ -132,11 +137,7 @@ describe('Notifications / _handlers / thread-message-creation suite', () => {
         DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole'),
         'accessor'
       ],
-      [
-        'the collaborators',
-        DTOsHelper.getRecipientUser(scenario.users.janeInnovator, 'innovatorRole'),
-        'innovator'
-      ]
+      ['the collaborators', DTOsHelper.getRecipientUser(scenario.users.janeInnovator, 'innovatorRole'), 'innovator']
     ])('Should send email to %s', async (_s, userRecipient, basePath) => {
       // mock thread info
       jest.spyOn(RecipientsService.prototype, 'threadInfo').mockResolvedValueOnce({
@@ -159,7 +160,7 @@ describe('Notifications / _handlers / thread-message-creation suite', () => {
 
       expect(handler.emails).toContainEqual({
         templateId: EmailTypeEnum.THREAD_MESSAGE_CREATION_TO_ALL,
-        notificationPreferenceType: 'MESSAGE',
+        notificationPreferenceType: NotificationCategoryEnum.MESSAGE,
         to: userRecipient,
         params: {
           innovation_name: innovation.name,
@@ -176,7 +177,7 @@ describe('Notifications / _handlers / thread-message-creation suite', () => {
       });
 
       if (userRecipient.role === ServiceRoleEnum.QUALIFYING_ACCESSOR) {
-        expect(handler.emails).toHaveLength(2) //follower QA and jane collaborator (NA should not receive)
+        expect(handler.emails).toHaveLength(2); //follower QA and jane collaborator (NA should not receive)
       }
     });
   });

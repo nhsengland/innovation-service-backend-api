@@ -45,27 +45,181 @@ paths:
         content:
           application/json:
             schema:
-              type: array
-              items:
-                type: object
-                properties:
-                  notificationType:
-                    type: string
-                    enum:
-                      - TASK
-                      - MESSAGE
-                      - SUPPORT
-                  preference:
-                    type: string
-                    enum:
-                      - NEVER
-                      - INSTANTLY
-                      - DAILY
-                required:
-                  - notificationType
-                  - preference
-                additionalProperties: false
-              minItems: 1
+              type: object
+              properties:
+                preferences:
+                  oneOf:
+                    - type: object
+                      properties:
+                        ASSIGN_NA:
+                          type: string
+                          enum:
+                            - YES
+                            - NO
+                        INNOVATION_MANAGEMENT:
+                          type: string
+                          enum:
+                            - YES
+                            - NO
+                        INNOVATOR_SUBMIT_IR:
+                          type: string
+                          enum:
+                            - YES
+                            - NO
+                        MESSAGE:
+                          type: string
+                          enum:
+                            - YES
+                            - NO
+                        TASK:
+                          type: string
+                          enum:
+                            - YES
+                            - NO
+                      required:
+                        - ASSIGN_NA
+                        - INNOVATION_MANAGEMENT
+                        - INNOVATOR_SUBMIT_IR
+                        - MESSAGE
+                        - TASK
+                      additionalProperties: false
+                      x-required: true
+                    - type: object
+                      properties:
+                        ACCOUNT:
+                          type: string
+                          enum:
+                            - YES
+                            - NO
+                        EXPORT_REQUEST:
+                          type: string
+                          enum:
+                            - YES
+                            - NO
+                        INNOVATION_MANAGEMENT:
+                          type: string
+                          enum:
+                            - YES
+                            - NO
+                        MESSAGE:
+                          type: string
+                          enum:
+                            - YES
+                            - NO
+                        REMINDER:
+                          type: string
+                          enum:
+                            - YES
+                            - NO
+                        SUPPORT:
+                          type: string
+                          enum:
+                            - YES
+                            - NO
+                        TASK:
+                          type: string
+                          enum:
+                            - YES
+                            - NO
+                      required:
+                        - ACCOUNT
+                        - EXPORT_REQUEST
+                        - INNOVATION_MANAGEMENT
+                        - MESSAGE
+                        - REMINDER
+                        - SUPPORT
+                        - TASK
+                      additionalProperties: false
+                      x-required: true
+                    - type: object
+                      properties:
+                        SUGGEST_SUPPORT:
+                          type: string
+                          enum:
+                            - YES
+                            - NO
+                        ACCOUNT:
+                          type: string
+                          enum:
+                            - YES
+                            - NO
+                        EXPORT_REQUEST:
+                          type: string
+                          enum:
+                            - YES
+                            - NO
+                        INNOVATION_MANAGEMENT:
+                          type: string
+                          enum:
+                            - YES
+                            - NO
+                        MESSAGE:
+                          type: string
+                          enum:
+                            - YES
+                            - NO
+                        REMINDER:
+                          type: string
+                          enum:
+                            - YES
+                            - NO
+                        SUPPORT:
+                          type: string
+                          enum:
+                            - YES
+                            - NO
+                        TASK:
+                          type: string
+                          enum:
+                            - YES
+                            - NO
+                      required:
+                        - SUGGEST_SUPPORT
+                        - ACCOUNT
+                        - EXPORT_REQUEST
+                        - INNOVATION_MANAGEMENT
+                        - MESSAGE
+                        - REMINDER
+                        - SUPPORT
+                        - TASK
+                      additionalProperties: false
+                      x-required: true
+                    - type: object
+                      properties:
+                        DOCUMENT:
+                          type: string
+                          enum:
+                            - YES
+                            - NO
+                        MESSAGE:
+                          type: string
+                          enum:
+                            - YES
+                            - NO
+                        REMINDER:
+                          type: string
+                          enum:
+                            - YES
+                            - NO
+                        SUPPORT:
+                          type: string
+                          enum:
+                            - YES
+                            - NO
+                        TASK:
+                          type: string
+                          enum:
+                            - YES
+                            - NO
+                      required:
+                        - DOCUMENT
+                        - MESSAGE
+                        - REMINDER
+                        - SUPPORT
+                        - TASK
+                      additionalProperties: false
+                      x-required: true
+              additionalProperties: false
       responses:
         "204":
           description: The user email preferences were updated successfully

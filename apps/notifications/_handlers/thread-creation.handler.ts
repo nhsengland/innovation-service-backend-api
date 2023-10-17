@@ -1,4 +1,5 @@
 import {
+  NotificationCategoryEnum,
   NotificationContextDetailEnum,
   NotificationContextTypeEnum,
   NotifierTypeEnum,
@@ -75,7 +76,7 @@ export class ThreadCreationHandler extends BaseHandler<
       for (const recipient of innovatorRecipients) {
         this.emails.push({
           templateId: EmailTypeEnum.THREAD_CREATION_TO_INNOVATOR_FROM_ASSIGNED_USER,
-          notificationPreferenceType: 'MESSAGE',
+          notificationPreferenceType: NotificationCategoryEnum.MESSAGE,
           to: recipient,
           params: {
             // display_name: '', // This will be filled by the email-listener function.
@@ -114,7 +115,7 @@ export class ThreadCreationHandler extends BaseHandler<
     for (const recipient of recipients) {
       this.emails.push({
         templateId: EmailTypeEnum.THREAD_CREATION_TO_INNOVATOR_FROM_INNOVATOR,
-        notificationPreferenceType: 'MESSAGE',
+        notificationPreferenceType: NotificationCategoryEnum.MESSAGE,
         to: recipient,
         params: {
           // display_name: '', // This will be filled by the email-listener function.
@@ -153,7 +154,7 @@ export class ThreadCreationHandler extends BaseHandler<
     for (const user of followers) {
       this.emails.push({
         templateId: EmailTypeEnum.THREAD_CREATION_TO_ASSIGNED_USERS,
-        notificationPreferenceType: 'MESSAGE',
+        notificationPreferenceType: NotificationCategoryEnum.MESSAGE,
         to: user,
         params: {
           // display_name: '', // This will be filled by the email-listener function.

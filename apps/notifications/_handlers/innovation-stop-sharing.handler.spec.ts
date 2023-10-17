@@ -1,10 +1,10 @@
-import { CompleteScenarioType, MocksHelper, TestsHelper } from '@notifications/shared/tests';
-import { InnovationStopSharingHandler } from './innovation-stop-sharing.handler';
-import { RecipientsService } from '../_services/recipients.service';
-import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { randText } from '@ngneat/falso';
-import { ENV, EmailTypeEnum } from '../_config';
 import { UrlModel } from '@notifications/shared/models';
+import { CompleteScenarioType, MocksHelper, TestsHelper } from '@notifications/shared/tests';
+import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
+import { ENV, EmailTypeEnum } from '../_config';
+import { RecipientsService } from '../_services/recipients.service';
+import { InnovationStopSharingHandler } from './innovation-stop-sharing.handler';
 
 describe('Notifications / _handlers / innovation-stop-sharing handler suite', () => {
   let testsHelper: TestsHelper;
@@ -129,7 +129,7 @@ describe('Notifications / _handlers / innovation-stop-sharing handler suite', ()
 
     expect(expectedEmail).toMatchObject({
       templateId: EmailTypeEnum.INNOVATION_STOP_SHARING_TO_ENGAGING_ACCESSORS,
-      notificationPreferenceType: 'SUPPORT',
+      notificationPreferenceType: null,
       to: DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole'),
       params: {
         innovation_name: innovation.name,
@@ -170,7 +170,7 @@ describe('Notifications / _handlers / innovation-stop-sharing handler suite', ()
 
     expect(expectedEmail).toMatchObject({
       templateId: EmailTypeEnum.INNOVATION_STOP_SHARING_TO_ENGAGING_ACCESSORS,
-      notificationPreferenceType: 'SUPPORT',
+      notificationPreferenceType: null,
       to: DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole'),
       params: {
         innovation_name: innovation.name,

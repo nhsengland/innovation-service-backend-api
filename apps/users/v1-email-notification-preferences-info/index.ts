@@ -28,13 +28,9 @@ class V1UserEmailNotificationsInfo {
         .checkInnovatorType()
         .verify();
 
-      const emailPreferences = await notificationsService.getUserRoleEmailPreferences(auth.getContext().currentRole.id);
-      context.res = ResponseHelper.Ok<ResponseDTO>(
-        emailPreferences.map(p => ({
-          notificationType: p.notificationType,
-          preference: p.preference
-        }))
-      );
+      const preferences = await notificationsService.getUserRoleEmailPreferences(auth.getContext());
+
+      context.res = ResponseHelper.Ok<ResponseDTO>(preferences);
       return;
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);

@@ -1,25 +1,20 @@
 import { inject, injectable } from 'inversify';
 import type { EntityManager } from 'typeorm';
 
+import { NotificationEntity, NotificationPreferenceEntity, NotificationUserEntity } from '@users/shared/entities';
 import {
-  NotificationEntity,
-  NotificationPreferenceEntity,
-  NotificationUserEntity,
-  UserEntity
-} from '@users/shared/entities';
-import {
-  EmailNotificationPreferenceEnum,
-  EmailNotificationType,
   InnovationStatusEnum,
   NotificationContextDetailEnum,
   NotificationContextTypeEnum,
+  NotificationPreferenceEnum,
+  ServiceRoleEnum,
   UserStatusEnum
 } from '@users/shared/enums';
-import { GenericErrorsEnum, NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
+import { GenericErrorsEnum, NotImplementedError, UnprocessableEntityError } from '@users/shared/errors';
 import type { PaginationQueryParamsType } from '@users/shared/helpers';
 import type { IdentityProviderService } from '@users/shared/services';
 import SHARED_SYMBOLS from '@users/shared/services/symbols';
-import type { DomainContextType } from '@users/shared/types';
+import type { DomainContextType, NotificationPreferences, Role2PreferencesType } from '@users/shared/types';
 
 import { BaseService } from './base.service';
 
@@ -262,39 +257,20 @@ export class NotificationsService extends BaseService {
    * returns the user role email notification preferences
    * @param userRoleId the user role id
    * @param entityManager optional entity manager to run the query (for transactions)
-   * @returns array of notification types and preferences
+   * @returns notification preferences of the user (resolves the default when the user didn't set his)
    */
   async getUserRoleEmailPreferences(
-    userRoleId: string,
+    domainContext: DomainContextType,
     entityManager?: EntityManager
-  ): Promise<
-    {
-      notificationType: EmailNotificationType;
-      preference: EmailNotificationPreferenceEnum;
-    }[]
-  > {
+  ): Promise<NotificationPreferences> {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const userPreferences = await em
       .createQueryBuilder(NotificationPreferenceEntity, 'preference')
-      .where('preference.user_role_id = :userRoleId', { userRoleId })
-      .getMany();
+      .where('preference.user_role_id = :userRoleId', { userRoleId: domainContext.currentRole.id })
+      .getOne();
 
-    const userPreferencesMap = new Map(userPreferences.map(p => [p.notificationType, p.preference]));
-    return [
-      {
-        notificationType: 'TASK',
-        preference: userPreferencesMap.get('TASK') ?? EmailNotificationPreferenceEnum.INSTANTLY
-      },
-      {
-        notificationType: 'SUPPORT',
-        preference: userPreferencesMap.get('SUPPORT') ?? EmailNotificationPreferenceEnum.INSTANTLY
-      },
-      {
-        notificationType: 'MESSAGE',
-        preference: userPreferencesMap.get('MESSAGE') ?? EmailNotificationPreferenceEnum.INSTANTLY
-      }
-    ];
+    return userPreferences?.preferences ?? this.getDefaultNotificationPreferences(domainContext.currentRole.role);
   }
 
   /**
@@ -304,36 +280,71 @@ export class NotificationsService extends BaseService {
    * @param entityManager optional entity manager to run the query (for transactions)
    */
   async upsertUserEmailPreferences(
-    userRoleId: string,
-    preferences: {
-      notificationType: EmailNotificationType;
-      preference: EmailNotificationPreferenceEnum;
-    }[],
+    domainContext: DomainContextType,
+    data: { preferences: NotificationPreferences },
     entityManager?: EntityManager
   ): Promise<void> {
     const em = entityManager ?? this.sqlConnection.manager;
 
-    const dbUser = await em
-      .createQueryBuilder(UserEntity, 'user')
-      .innerJoin('user.serviceRoles', 'serviceRoles')
-      .where('serviceRoles.id = :userRoleId', { userRoleId })
-      .getOne();
-
-    if (!dbUser) {
-      throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND);
-    }
+    const dbPreference = await em
+      .createQueryBuilder(NotificationPreferenceEntity, 'preference')
+      .where('preference.userRoleId = :userRoleId', { userRoleId: domainContext.currentRole.id })
+      .getCount();
 
     const now = new Date();
+    await em.save(
+      NotificationPreferenceEntity,
+      NotificationPreferenceEntity.new({
+        userRoleId: domainContext.currentRole.id,
+        preferences: data.preferences,
+        updatedBy: domainContext.id,
+        updatedAt: now,
+        ...(dbPreference === 0 && { createdBy: domainContext.id, createdAt: now })
+      })
+    );
+  }
 
-    const saveData = preferences.map(p => ({
-      userRoleId: userRoleId,
-      notificationType: p.notificationType,
-      preference: p.preference,
-      createdBy: dbUser.id, // this is only for the first time as BaseEntity defines it as update: false
-      createdAt: now,
-      updatedBy: dbUser.id,
-      updatedAt: now
-    }));
-    await em.save(NotificationPreferenceEntity, saveData);
+  private getDefaultNotificationPreferences(role: ServiceRoleEnum): NotificationPreferences {
+    switch (role) {
+      case ServiceRoleEnum.INNOVATOR:
+        return {
+          DOCUMENT: NotificationPreferenceEnum.YES,
+          MESSAGE: NotificationPreferenceEnum.YES,
+          REMINDER: NotificationPreferenceEnum.YES,
+          SUPPORT: NotificationPreferenceEnum.YES,
+          TASK: NotificationPreferenceEnum.YES
+        } as Role2PreferencesType<ServiceRoleEnum.INNOVATOR>;
+      case ServiceRoleEnum.ACCESSOR:
+        return {
+          ACCOUNT: NotificationPreferenceEnum.YES,
+          EXPORT_REQUEST: NotificationPreferenceEnum.YES,
+          INNOVATION_MANAGEMENT: NotificationPreferenceEnum.YES,
+          MESSAGE: NotificationPreferenceEnum.YES,
+          REMINDER: NotificationPreferenceEnum.YES,
+          SUPPORT: NotificationPreferenceEnum.YES,
+          TASK: NotificationPreferenceEnum.YES
+        } as Role2PreferencesType<ServiceRoleEnum.ACCESSOR>;
+      case ServiceRoleEnum.ASSESSMENT:
+        return {
+          ASSIGN_NA: NotificationPreferenceEnum.YES,
+          INNOVATION_MANAGEMENT: NotificationPreferenceEnum.YES,
+          INNOVATOR_SUBMIT_IR: NotificationPreferenceEnum.YES,
+          MESSAGE: NotificationPreferenceEnum.YES,
+          TASK: NotificationPreferenceEnum.YES
+        } as Role2PreferencesType<ServiceRoleEnum.ASSESSMENT>;
+      case ServiceRoleEnum.QUALIFYING_ACCESSOR:
+        return {
+          ACCOUNT: NotificationPreferenceEnum.YES,
+          EXPORT_REQUEST: NotificationPreferenceEnum.YES,
+          INNOVATION_MANAGEMENT: NotificationPreferenceEnum.YES,
+          MESSAGE: NotificationPreferenceEnum.YES,
+          REMINDER: NotificationPreferenceEnum.YES,
+          SUGGEST_SUPPORT: NotificationPreferenceEnum.YES,
+          SUPPORT: NotificationPreferenceEnum.YES,
+          TASK: NotificationPreferenceEnum.YES
+        } as Role2PreferencesType<ServiceRoleEnum.QUALIFYING_ACCESSOR>;
+      default:
+        throw new NotImplementedError(GenericErrorsEnum.NOT_IMPLEMENTED_ERROR);
+    }
   }
 }

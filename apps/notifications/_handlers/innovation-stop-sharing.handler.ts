@@ -4,8 +4,8 @@ import type { DomainContextType, NotifierTemplatesType } from '@notifications/sh
 
 import { EmailTypeEnum, ENV } from '../_config';
 
-import { BaseHandler } from './base.handler';
 import type { Context } from '@azure/functions';
+import { BaseHandler } from './base.handler';
 
 export class InnovationStopSharingHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_STOP_SHARING,
@@ -16,7 +16,7 @@ export class InnovationStopSharingHandler extends BaseHandler<
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_STOP_SHARING],
     azureContext: Context
-) {
+  ) {
     super(requestUser, data, azureContext);
   }
 
@@ -54,7 +54,7 @@ export class InnovationStopSharingHandler extends BaseHandler<
     for (const user of previousAssignedAccessors) {
       this.emails.push({
         templateId: EmailTypeEnum.INNOVATION_STOP_SHARING_TO_ENGAGING_ACCESSORS,
-        notificationPreferenceType: 'SUPPORT',
+        notificationPreferenceType: null, // Before: 'SUPPORT'
         to: user,
         params: {
           // display_name: '', // This will be filled by the email-listener function.
