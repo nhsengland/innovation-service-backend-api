@@ -17,7 +17,7 @@ describe('Notifications / _handlers / task-creation suite', () => {
   describe('TA01_TASK_CREATION_TO_INNOVATOR', () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
     const task = innovation.tasks.taskByAlice;
-    it('Should send an email to the innovator (owner+collaborators)', async () => {
+    it('Should send an email to the innovators (owner+collaborators)', async () => {
       const requestUser = scenario.users.aliceQualifyingAccessor;
       const handler = new TaskCreationHandler(
         DTOsHelper.getUserRequestContext(requestUser),
