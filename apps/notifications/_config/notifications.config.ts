@@ -148,10 +148,7 @@ export const NOTIFICATIONS_CONFIG = {
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.TASK_CREATION]>({
       innovationId: Joi.string().guid().required(),
       task: Joi.object<NotifierTemplatesType[NotifierTypeEnum.TASK_CREATION]['task']>({
-        id: Joi.string().guid().required(),
-        section: Joi.string()
-          .valid(...CurrentCatalogTypes.InnovationSections)
-          .required()
+        id: Joi.string().guid().required()
       }).required()
     }).required()
   },

@@ -236,7 +236,7 @@ export class TaskUpdateHandler extends BaseHandler<
       innovationId: this.inputData.innovationId,
       context: {
         type: NotificationContextTypeEnum.TASK,
-        detail: NotificationContextDetailEnum.TASK_UPDATE,
+        detail: NotificationContextDetailEnum.TASK_UPDATE as any, // TODO
         id: task.id
       },
       userRoleIds: [task.owner.roleId],
@@ -261,7 +261,7 @@ export class TaskUpdateHandler extends BaseHandler<
       innovationId: innovation.id,
       context: {
         type: NotificationContextTypeEnum.TASK,
-        detail: NotificationContextDetailEnum.TASK_UPDATE,
+        detail: NotificationContextDetailEnum.TASK_UPDATE as any, // TODO
         id: task.id
       },
       userRoleIds: [innovation.owner.roleId],
@@ -284,7 +284,7 @@ export class TaskUpdateHandler extends BaseHandler<
       innovationId: this.inputData.innovationId,
       context: {
         type: NotificationContextTypeEnum.TASK,
-        detail: NotificationContextDetailEnum.TASK_UPDATE,
+        detail: NotificationContextDetailEnum.TASK_UPDATE as any, // TODO
         id: this.inputData.task.id
       },
       userRoleIds: [task.previouslyUpdatedByUserRole.id],

@@ -534,7 +534,7 @@ export class InnovationTasksService extends BaseService {
 
     await this.notifierService.send(domainContext, NotifierTypeEnum.TASK_CREATION, {
       innovationId: innovation.id,
-      task: { id: result.id, section: data.section }
+      task: { id: result.id }
     });
 
     return result;

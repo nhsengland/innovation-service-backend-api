@@ -1,10 +1,4 @@
-import {
-  NotificationCategoryEnum,
-  NotificationContextDetailEnum,
-  NotificationContextTypeEnum,
-  NotifierTypeEnum,
-  ServiceRoleEnum
-} from '@notifications/shared/enums';
+import { NotificationCategoryEnum, NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
@@ -27,7 +21,6 @@ export class TaskCreationHandler extends BaseHandler<
 
   async run(): Promise<this> {
     const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
-    const taskInfo = await this.recipientsService.taskInfoWithOwner(this.inputData.task.id);
     const recipients = await this.recipientsService.getInnovationActiveOwnerAndCollaborators(
       this.inputData.innovationId
     );
@@ -37,7 +30,7 @@ export class TaskCreationHandler extends BaseHandler<
     const unitName =
       this.requestUser.currentRole.role === ServiceRoleEnum.ASSESSMENT
         ? 'needs assessment'
-        : taskInfo.organisationUnit?.name ?? '';
+        : this.requestUser.organisation?.organisationUnit?.name ?? '';
 
     for (const innovator of innovatorRecipients.filter(i => i.isActive)) {
       this.emails.push({
@@ -62,14 +55,14 @@ export class TaskCreationHandler extends BaseHandler<
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       context: {
-        type: NotificationContextTypeEnum.TASK,
-        detail: NotificationContextDetailEnum.TASK_CREATION,
+        type: NotificationCategoryEnum.TASK,
+        detail: 'TA01_TASK_CREATION_TO_INNOVATOR',
         id: this.inputData.task.id
       },
       userRoleIds: innovatorRecipients.map(i => i.roleId),
       params: {
         innovationName: innovation.name,
-        organisationUnitName: unitName,
+        unitName: unitName,
         taskId: this.inputData.task.id
       }
     });

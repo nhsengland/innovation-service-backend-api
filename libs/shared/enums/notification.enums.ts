@@ -10,6 +10,7 @@ export const NotificationTypes = {
   MIGRATION_OLD: ['MIGRATION_OLD'] as const
 };
 export type NotificationTypes = typeof NotificationTypes;
+export const FlatNotificationTypes = Object.values(NotificationTypes).flatMap(v => v.map(v => v));
 export type FlatNotificationTypes = NotificationTypes[keyof NotificationTypes][number];
 
 /**

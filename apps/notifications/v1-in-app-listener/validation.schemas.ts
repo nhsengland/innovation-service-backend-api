@@ -1,8 +1,9 @@
 import Joi from 'joi';
 
 import {
+  FlatNotificationTypes,
   NotificationContextDetailEnum,
-  NotificationContextTypeEnum,
+  NotificationContextTypeEnum
 } from '@notifications/shared/enums';
 
 export type MessageType = {
@@ -32,7 +33,7 @@ export const MessageSchema = Joi.object<MessageType>({
         .valid(...Object.values(NotificationContextTypeEnum))
         .required(),
       detail: Joi.string()
-        .valid(...Object.values(NotificationContextDetailEnum))
+        .valid(...Object.values(NotificationContextDetailEnum), ...FlatNotificationTypes) // TODO remove the old enum probably
         .required(),
       id: Joi.string().guid().required()
     }).required(),

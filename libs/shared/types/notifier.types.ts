@@ -11,7 +11,7 @@ export type NotifierTemplatesType = {
   // Tasks
   [NotifierTypeEnum.TASK_CREATION]: {
     innovationId: string;
-    task: { id: string; section: CurrentCatalogTypes.InnovationSections };
+    task: { id: string };
   };
 
   [NotifierTypeEnum.TASK_UPDATE]: {
