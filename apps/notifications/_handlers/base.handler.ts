@@ -1,6 +1,7 @@
 import type { Context } from '@azure/functions';
 import {
   FlatNotificationTypes,
+  NotificationCategoryEnum,
   NotificationContextTypeEnum,
   NotificationLogTypeEnum,
   NotificationPreferenceEnum,
@@ -47,7 +48,7 @@ type HandlerEmailOutboundType<T> = {
 type HandlerInAppType<T> = Array<{
   innovationId: string;
   context: {
-    type: NotificationContextTypeEnum;
+    type: NotificationContextTypeEnum | NotificationCategoryEnum;
     detail: T extends keyof InAppTemplatesType ? T : any; // legacy for now should be never
     id: string;
   };
