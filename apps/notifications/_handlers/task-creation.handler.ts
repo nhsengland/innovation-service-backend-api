@@ -1,6 +1,5 @@
 import {
   NotificationCategoryEnum,
-  NotificationContextDetailEnum,
   NotificationContextTypeEnum,
   NotifierTypeEnum,
   ServiceRoleEnum
@@ -63,13 +62,13 @@ export class TaskCreationHandler extends BaseHandler<
       innovationId: this.inputData.innovationId,
       context: {
         type: NotificationContextTypeEnum.TASK,
-        detail: NotificationContextDetailEnum.TASK_CREATION,
+        detail: 'TA01_TASK_CREATION_TO_INNOVATOR',
         id: this.inputData.task.id
       },
       userRoleIds: innovatorRecipients.map(i => i.roleId),
       params: {
         innovationName: innovation.name,
-        organisationUnitName: unitName,
+        unitName: unitName,
         taskId: this.inputData.task.id
       }
     });
