@@ -4,13 +4,10 @@ import {
   NotifierTypeEnum,
   ServiceRoleEnum
 } from '@notifications/shared/enums';
-import { BadRequestError, UserErrorsEnum } from '@notifications/shared/errors';
 import { UrlModel } from '@notifications/shared/models';
-import type { IdentityProviderService } from '@notifications/shared/services';
-import SHARED_SYMBOLS from '@notifications/shared/services/symbols';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { container, ENV } from '../_config';
+import { ENV } from '../_config';
 import { EmailTypeEnum } from '../_config/emails.config';
 
 import type { Context } from '@azure/functions';
@@ -18,11 +15,9 @@ import { BaseHandler } from './base.handler';
 
 export class TaskCreationHandler extends BaseHandler<
   NotifierTypeEnum.TASK_CREATION,
-  EmailTypeEnum.TASK_CREATION_TO_INNOVATOR,
-  { section: string }
+  EmailTypeEnum.TA01_TASK_CREATION_TO_INNOVATOR,
+  'TA01_TASK_CREATION_TO_INNOVATOR'
 > {
-  private identityProviderService = container.get<IdentityProviderService>(SHARED_SYMBOLS.IdentityProviderService);
-
   constructor(
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.TASK_CREATION],
@@ -32,45 +27,29 @@ export class TaskCreationHandler extends BaseHandler<
   }
 
   async run(): Promise<this> {
-    if (
-      ![ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR, ServiceRoleEnum.ASSESSMENT].includes(
-        this.requestUser.currentRole.role as ServiceRoleEnum
-      )
-    ) {
-      throw new BadRequestError(UserErrorsEnum.USER_TYPE_INVALID);
-    }
-
-    const requestInfo = await this.identityProviderService.getUserInfo(this.requestUser.identityId);
     const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
-    const actionInfo = await this.recipientsService.taskInfoWithOwner(this.inputData.task.id);
-
-    const collaborators = await this.recipientsService.getInnovationActiveCollaborators(this.inputData.innovationId);
-
-    const recipientsIds = [...collaborators];
-    if (innovation.ownerId) {
-      recipientsIds.push(innovation.ownerId);
-    }
-
-    const innovatorRecipients = await this.recipientsService.getUsersRecipient(
-      recipientsIds,
-      ServiceRoleEnum.INNOVATOR
+    const taskInfo = await this.recipientsService.taskInfoWithOwner(this.inputData.task.id);
+    const recipients = await this.recipientsService.getInnovationActiveOwnerAndCollaborators(
+      this.inputData.innovationId
     );
+
+    const innovatorRecipients = await this.recipientsService.getUsersRecipient(recipients, ServiceRoleEnum.INNOVATOR);
 
     const unitName =
       this.requestUser.currentRole.role === ServiceRoleEnum.ASSESSMENT
         ? 'needs assessment'
-        : actionInfo.organisationUnit?.name ?? '';
+        : taskInfo.organisationUnit?.name ?? '';
 
     for (const innovator of innovatorRecipients.filter(i => i.isActive)) {
       this.emails.push({
-        templateId: EmailTypeEnum.TASK_CREATION_TO_INNOVATOR,
+        templateId: EmailTypeEnum.TA01_TASK_CREATION_TO_INNOVATOR,
         notificationPreferenceType: 'TASK',
         to: innovator,
         params: {
           // display_name: '', // This will be filled by the email-listener function.
-          accessor_name: requestInfo.displayName,
+          innovation_name: innovation.name,
           unit_name: unitName,
-          action_url: new UrlModel(ENV.webBaseTransactionalUrl)
+          task_url: new UrlModel(ENV.webBaseTransactionalUrl)
             .addPath('innovator/innovations/:innovationId/tasks/:taskId')
             .setPathParams({
               innovationId: this.inputData.innovationId,
@@ -90,7 +69,9 @@ export class TaskCreationHandler extends BaseHandler<
       },
       userRoleIds: innovatorRecipients.map(i => i.roleId),
       params: {
-        section: this.inputData.task.section
+        innovationName: innovation.name,
+        organisationUnitName: unitName,
+        taskId: this.inputData.task.id
       }
     });
 

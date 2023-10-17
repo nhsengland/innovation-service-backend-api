@@ -3,10 +3,10 @@ import type { Schema } from 'joi';
 import type { NotifierTypeEnum } from '@notifications/shared/enums';
 // import { GenericErrorsEnum, InternalServerError } from '@notifications/shared/errors';
 
+import type { Context } from '@azure/functions';
 import type { DomainContextType } from '@notifications/shared/types';
 import { EmailTypeEnum, NOTIFICATIONS_CONFIG } from '../_config';
 import type { BaseHandler } from '../_handlers/base.handler';
-import type { Context } from '@azure/functions';
 
 export class HandlersHelper {
   static async runHandler(

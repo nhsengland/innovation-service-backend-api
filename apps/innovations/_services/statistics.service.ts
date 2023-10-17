@@ -13,7 +13,6 @@ import {
   InnovationSectionStatusEnum,
   InnovationSupportStatusEnum,
   InnovationTaskStatusEnum,
-  NotificationContextDetailEnum,
   NotificationContextTypeEnum
 } from '@innovations/shared/enums';
 import { NotFoundError, OrganisationErrorsEnum } from '@innovations/shared/errors';
@@ -145,12 +144,6 @@ export class StatisticsService extends BaseService {
       .andWhere('notification.context_type = :context_type', {
         context_type: NotificationContextTypeEnum.THREAD
       })
-      .andWhere('notification.context_detail IN (:...context_detail)', {
-        context_detail: [
-          NotificationContextDetailEnum.THREAD_MESSAGE_CREATION,
-          NotificationContextDetailEnum.THREAD_CREATION
-        ]
-      })
       .andWhere('users.user_role_id = :roleId', { roleId })
       .andWhere('users.readAt IS NULL')
       .getRawOne();
@@ -247,14 +240,8 @@ export class StatisticsService extends BaseService {
       .innerJoin(
         'innovation_thread',
         'thread',
-        'thread.id = notification.context_id AND notification.context_type = :contextType AND notification.context_detail IN (:...contextDetail)',
-        {
-          contextType: NotificationContextTypeEnum.THREAD,
-          contextDetail: [
-            NotificationContextDetailEnum.THREAD_MESSAGE_CREATION,
-            NotificationContextDetailEnum.THREAD_CREATION
-          ]
-        }
+        'thread.id = notification.context_id AND notification.context_type = :contextType',
+        { contextType: NotificationContextTypeEnum.THREAD }
       )
       .where('users.user_role_id = :roleId', { roleId: roleId })
       .andWhere('users.read_at IS NULL')

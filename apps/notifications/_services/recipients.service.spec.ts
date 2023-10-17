@@ -621,6 +621,17 @@ describe('Notifications / _services / recipients service suite', () => {
     });
   });
 
+  describe('getInnovationActiveOwnerAndCollaborators', () => {
+    it('Should get active owner and collaborators', async () => {
+      const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+
+      const innovators = await sut.getInnovationActiveOwnerAndCollaborators(innovation.id);
+
+      expect(innovators).toHaveLength(2);
+      expect(innovators).toMatchObject([scenario.users.johnInnovator.id, scenario.users.janeInnovator.id]);
+    });
+  });
+
   describe('getInnovationActiveCollaborators', () => {
     it('Should only get active collaborators', async () => {
       const innovation = scenario.users.johnInnovator.innovations.johnInnovation;

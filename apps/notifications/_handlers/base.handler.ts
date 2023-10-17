@@ -10,6 +10,7 @@ import {
 } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { EmailTemplatesType, EmailTypeEnum, container } from '../_config';
+import type { InAppTemplatesType } from '../_config/inapp.config';
 import type { RecipientType, RecipientsService } from '../_services/recipients.service';
 import SYMBOLS from '../_services/symbols';
 
@@ -28,6 +29,7 @@ type HandlerEmailType<T> = Array<{
   options?: {
     includeLocked?: boolean; // send email even if the user is locked
     ignorePreferences?: boolean; // ignore user email preferences when sending the email
+    includeSelf?: boolean; // send email to the user that made the request
   };
 }>;
 
@@ -47,18 +49,22 @@ type HandlerInAppType<T> = Array<{
   context: { type: NotificationContextTypeEnum; detail: NotificationContextDetailEnum; id: string };
   userRoleIds: string[];
   params: T;
+  options?: {
+    includeSelf?: boolean; // send email to the user that made the request
+  };
 }>;
 
 export abstract class BaseHandler<
   InputDataType extends NotifierTypeEnum,
   EmailResponseType extends EmailTypeEnum,
-  InAppResponseType
+  InAppResponseType extends keyof InAppTemplatesType | Record<string, unknown> | never,
+  X = InAppResponseType extends keyof InAppTemplatesType ? InAppTemplatesType[InAppResponseType] : InAppResponseType // TO BE REMOVED
 > {
   requestUser: DomainContextType;
   inputData: NotifierTemplatesType[InputDataType];
 
   emails: HandlerEmailType<EmailTemplatesType[EmailResponseType]> = [];
-  inApp: HandlerInAppType<InAppResponseType> = [];
+  inApp: HandlerInAppType<X> = [];
 
   logger: Context['log'];
 
@@ -143,6 +149,11 @@ export abstract class BaseHandler<
           continue;
         }
 
+        // Ignore if user is the one that made the request
+        if (!recipient.options?.includeSelf && recipient.to.identityId === this.requestUser.identityId) {
+          continue;
+        }
+
         const user = identities.get(recipient.to.identityId);
         if (user) {
           res.push({
@@ -158,7 +169,13 @@ export abstract class BaseHandler<
     return res;
   }
 
-  getInApp(): HandlerInAppType<InAppResponseType> {
+  getInApp(): HandlerInAppType<X> {
+    // filter self from inApp notifications (using roleIds in this case instead of user)
+    this.inApp.forEach(notification => {
+      if (!notification.options?.includeSelf) {
+        notification.userRoleIds = notification.userRoleIds.filter(id => id !== this.requestUser.currentRole.id);
+      }
+    });
     return this.inApp;
   }
 }

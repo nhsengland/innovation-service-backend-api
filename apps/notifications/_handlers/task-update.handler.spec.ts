@@ -40,32 +40,28 @@ describe('Notifications / _handlers / task-update suite', () => {
       ServiceRoleEnum.ACCESSOR as const,
       InnovationTaskStatusEnum.DONE,
       {
-        toTaskOwner: EmailTypeEnum.TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
-        toInnovator: EmailTypeEnum.TASK_DONE_CONFIRMATION
+        toTaskOwner: EmailTypeEnum.TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT
       }
     ],
     [
       ServiceRoleEnum.ACCESSOR as const,
       InnovationTaskStatusEnum.DECLINED,
       {
-        toTaskOwner: EmailTypeEnum.TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT,
-        toInnovator: EmailTypeEnum.TASK_DECLINED_CONFIRMATION
+        toTaskOwner: EmailTypeEnum.TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT
       }
     ],
     [
       ServiceRoleEnum.ASSESSMENT as const,
       InnovationTaskStatusEnum.DONE,
       {
-        toTaskOwner: EmailTypeEnum.TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
-        toInnovator: EmailTypeEnum.TASK_DONE_CONFIRMATION
+        toTaskOwner: EmailTypeEnum.TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT
       }
     ],
     [
       ServiceRoleEnum.ASSESSMENT as const,
       InnovationTaskStatusEnum.DECLINED,
       {
-        toTaskOwner: EmailTypeEnum.TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT,
-        toInnovator: EmailTypeEnum.TASK_DECLINED_CONFIRMATION
+        toTaskOwner: EmailTypeEnum.TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT
       }
     ]
   ])(
@@ -73,14 +69,14 @@ describe('Notifications / _handlers / task-update suite', () => {
     (
       taskOwnerRoleType: ServiceRoleEnum.ACCESSOR | ServiceRoleEnum.ASSESSMENT,
       taskStatus: InnovationTaskStatusEnum,
-      emailTemplates: { toTaskOwner: EmailTypeEnum; toInnovator: EmailTypeEnum }
+      emailTemplates: { toTaskOwner: EmailTypeEnum }
     ) => {
       let requestUser: DomainContextType;
       let handler: TaskUpdateHandler;
 
       let task: typeof taskByQA | typeof taskByNA;
       let taskOwnerRoleId: string;
-      let taskOwnerUnitName: string;
+      // let taskOwnerUnitName: string;
       let basePath: string;
 
       let declinedReason: string | undefined;
@@ -104,12 +100,12 @@ describe('Notifications / _handlers / task-update suite', () => {
         if (taskOwnerRoleType === ServiceRoleEnum.ACCESSOR) {
           task = taskByQA;
           taskOwnerRoleId = taskByQA.owner.roles.qaRole.id;
-          taskOwnerUnitName = taskByQA.owner.organisations.healthOrg.organisationUnits.healthOrgUnit.name;
+          // taskOwnerUnitName = taskByQA.owner.organisations.healthOrg.organisationUnits.healthOrgUnit.name;
           basePath = 'accessor';
         } else {
           task = taskByNA;
           taskOwnerRoleId = taskByNA.owner.roles.assessmentRole.id;
-          taskOwnerUnitName = 'needs assessment';
+          // taskOwnerUnitName = 'needs assessment';
           basePath = 'assessment';
         }
 
@@ -162,27 +158,6 @@ describe('Notifications / _handlers / task-update suite', () => {
               .addPath(':basePath/innovations/:innovationId/tasks/:taskId')
               .setPathParams({
                 basePath,
-                innovationId: innovation.id,
-                taskId: task.task.id
-              })
-              .buildUrl()
-          }
-        });
-      });
-
-      it('Should send confirmation email to innovator', () => {
-        const expectedEmail = handler.emails.find(email => email.templateId === emailTemplates.toInnovator);
-
-        expect(expectedEmail).toMatchObject({
-          templateId: emailTemplates.toInnovator,
-          notificationPreferenceType: 'TASK',
-          to: DTOsHelper.getRecipientUser(scenario.users.johnInnovator, 'innovatorRole'),
-          params: {
-            accessor_name: task.owner.name,
-            unit_name: taskOwnerUnitName,
-            action_url: new UrlModel(ENV.webBaseTransactionalUrl)
-              .addPath('innovator/innovations/:innovationId/tasks/:taskId')
-              .setPathParams({
                 innovationId: innovation.id,
                 taskId: task.task.id
               })
@@ -313,7 +288,7 @@ describe('Notifications / _handlers / task-update suite', () => {
       });
 
       it('Should send email to innovation owner', () => {
-        const emailTemplate = EmailTypeEnum.TASK_RESPONDED_BY_COLLABORATOR_TO_OWNER;
+        const emailTemplate = EmailTypeEnum.TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS;
         const expectedEmail = handler.emails.find(email => email.templateId === emailTemplate);
 
         expect(expectedEmail).toMatchObject({
@@ -359,14 +334,18 @@ describe('Notifications / _handlers / task-update suite', () => {
   );
 
   describe.each([
-    [ServiceRoleEnum.ACCESSOR as const, InnovationTaskStatusEnum.CANCELLED, EmailTypeEnum.TASK_CANCELLED_TO_INNOVATOR],
-    [ServiceRoleEnum.ACCESSOR as const, InnovationTaskStatusEnum.OPEN, EmailTypeEnum.TASK_OPEN_TO_INNOVATOR],
+    [
+      ServiceRoleEnum.ACCESSOR as const,
+      InnovationTaskStatusEnum.CANCELLED,
+      EmailTypeEnum.TA05_TASK_CANCELLED_TO_INNOVATOR
+    ],
+    [ServiceRoleEnum.ACCESSOR as const, InnovationTaskStatusEnum.OPEN, EmailTypeEnum.TA06_TASK_REOPEN_TO_INNOVATOR],
     [
       ServiceRoleEnum.ASSESSMENT as const,
       InnovationTaskStatusEnum.CANCELLED,
-      EmailTypeEnum.TASK_CANCELLED_TO_INNOVATOR
+      EmailTypeEnum.TA05_TASK_CANCELLED_TO_INNOVATOR
     ],
-    [ServiceRoleEnum.ASSESSMENT as const, InnovationTaskStatusEnum.OPEN, EmailTypeEnum.TASK_OPEN_TO_INNOVATOR]
+    [ServiceRoleEnum.ASSESSMENT as const, InnovationTaskStatusEnum.OPEN, EmailTypeEnum.TA06_TASK_REOPEN_TO_INNOVATOR]
   ])(
     '%s updates task to status %s',
     (

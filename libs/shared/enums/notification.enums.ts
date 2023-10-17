@@ -1,3 +1,17 @@
+export const NotificationTypes = {
+  TASK: [
+    'TA01_TASK_CREATION_TO_INNOVATOR',
+    'TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS',
+    'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT',
+    'TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT',
+    'TA05_TASK_CANCELLED_TO_INNOVATOR',
+    'TA06_TASK_REOPEN_TO_INNOVATOR'
+  ] as const,
+  TEST: ['TEST'] as const
+};
+export type NotificationTypes = typeof NotificationTypes;
+export type FlatNotificationTypes = NotificationTypes[keyof NotificationTypes][number];
+
 export enum NotificationContextTypeEnum {
   NEEDS_ASSESSMENT = 'NEEDS_ASSESSMENT',
   INNOVATION = 'INNOVATION',

@@ -132,7 +132,7 @@ describe('Notifications / _handlers / task-creation suite', () => {
         );
 
         expect(expectedEmail).toMatchObject({
-          templateId: EmailTypeEnum.TASK_CREATION_TO_INNOVATOR,
+          templateId: EmailTypeEnum.TA01_TASK_CREATION_TO_INNOVATOR,
           notificationPreferenceType: 'TASK',
           to: DTOsHelper.getRecipientUser(scenario.users.johnInnovator, 'innovatorRole'),
           params: {
@@ -157,7 +157,7 @@ describe('Notifications / _handlers / task-creation suite', () => {
         );
 
         expect(expectedEmail).toMatchObject({
-          templateId: EmailTypeEnum.TASK_CREATION_TO_INNOVATOR,
+          templateId: EmailTypeEnum.TA01_TASK_CREATION_TO_INNOVATOR,
           notificationPreferenceType: 'TASK',
           to: DTOsHelper.getRecipientUser(scenario.users.janeInnovator, 'innovatorRole'),
           params: {

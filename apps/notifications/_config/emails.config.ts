@@ -1,4 +1,15 @@
+// TODO transform enums into const/types (maybe)
+
 export enum EmailTypeEnum {
+  // TASKS
+  TA01_TASK_CREATION_TO_INNOVATOR = '1a89a775-e39a-4be9-8aad-37c0c72574ec',
+  TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS = 'fe7e93c2-db4a-45f0-a169-4acc52e68b67',
+  TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT = 'e1de43a8-a66a-44f2-84ad-62e0eddf5342',
+  TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT = '671d548e-1ed4-4823-b873-1dc9ca405dd1',
+  TA05_TASK_CANCELLED_TO_INNOVATOR = 'f9bcfef5-219c-4f71-82bd-4a3f9d60b807',
+  TA06_TASK_REOPEN_TO_INNOVATOR = 'bc63e28c-b533-49a5-bdd1-35df8ddb1c68',
+
+  // TO BE REMOVED ?
   ACCOUNT_CREATION_TO_INNOVATOR = '62486954-b235-4aa6-8b8d-960191fc6e69',
   ACCOUNT_DELETION_WITH_TRANSFER_TO_COLLABORATOR = 'd09b5182-d995-4db7-b3ba-99fef085bb22',
 
@@ -17,18 +28,6 @@ export enum EmailTypeEnum {
   INNOVATION_SUPPORT_STATUS_UPDATE_TO_ASSIGNED_ACCESSORS = 'f63b1459-c1ee-48b3-b0da-12bb19863d19',
 
   SUPPORT_SUMMARY_UPDATE_TO_INNOVATOR = 'd8f936de-7a0f-4823-a6a3-0a3ce5c3919a',
-
-  TASK_CREATION_TO_INNOVATOR = '384ab7ad-6c0c-4e5d-9b0c-e4502bf07c7e',
-  TASK_OPEN_TO_INNOVATOR = '384ab7ad-6c0c-4e5d-9b0c-e4502bf07c7e',
-  TASK_CANCELLED_TO_INNOVATOR = '1bac0f02-25b1-42c1-843d-c97d58ad3db2',
-  //TASK_COMPLETED_TO_INNOVATOR = '354466bd-1dfc-43d2-a739-82f835875c83',
-  TASK_DECLINED_CONFIRMATION = '3ac886c6-8352-4047-874f-66183d2d2d82',
-  //TASK_SUBMITTED_CONFIRMATION = '5e9f8648-c1ea-4e07-8225-ac0481428be9',
-  TASK_DONE_CONFIRMATION = '5e9f8648-c1ea-4e07-8225-ac0481428be9',
-  TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT = '8e1aba67-18a2-439c-8787-38435e73e6b5',
-  //TASK_SUBMITTED_TO_ACCESSOR_OR_ASSESSMENT = '382c29d3-2263-43dd-b7d7-1e6be73ea098',
-  TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT = '382c29d3-2263-43dd-b7d7-1e6be73ea098',
-  TASK_RESPONDED_BY_COLLABORATOR_TO_OWNER = 'e79e24e3-ee1f-45c5-b892-99c99fe91ef1',
 
   THREAD_CREATION_TO_INNOVATOR_FROM_ASSIGNED_USER = '193601d9-4e46-4129-8f79-0f45e015410d',
   THREAD_CREATION_TO_INNOVATOR_FROM_INNOVATOR = '9016c786-c857-4e96-95d2-15ad18e756da',
@@ -89,6 +88,53 @@ export enum EmailTypeEnum {
  * NOTE: Usually, display_name is optional because email-listener will fill it in.
  */
 export type EmailTemplatesType = {
+  // Tasks
+  [EmailTypeEnum.TA01_TASK_CREATION_TO_INNOVATOR]: {
+    display_name?: string;
+    innovation_name: string;
+    unit_name: string;
+    task_url: string;
+  };
+  [EmailTypeEnum.TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS]: {
+    display_name?: string;
+    task_status: string;
+    innovator_name: string;
+    innovation_name: string;
+    message_url: string;
+  };
+  [EmailTypeEnum.TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT]: {
+    display_name?: string;
+    innovation_name: string;
+    innovator_name: string;
+    message: string;
+    message_url: string;
+    task_url: string;
+  };
+  [EmailTypeEnum.TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT]: {
+    display_name?: string;
+    innovation_name: string;
+    innovator_name: string;
+    message: string;
+    message_url: string;
+  };
+  [EmailTypeEnum.TA05_TASK_CANCELLED_TO_INNOVATOR]: {
+    display_name?: string;
+    innovation_name: string;
+    accessor_name: string;
+    unit_name: string;
+    message: string;
+    message_url: string;
+  };
+  [EmailTypeEnum.TA06_TASK_REOPEN_TO_INNOVATOR]: {
+    display_name?: string;
+    innovation_name: string;
+    accessor_name: string;
+    unit_name: string;
+    message: string;
+    message_url: string;
+  };
+
+  // TODO
   [EmailTypeEnum.ACCOUNT_CREATION_TO_INNOVATOR]: {
     display_name?: string;
     innovation_service_url: string;
@@ -161,56 +207,7 @@ export type EmailTemplatesType = {
     unit_name: string;
     support_summary_url: string;
   };
-  [EmailTypeEnum.TASK_CREATION_TO_INNOVATOR]: {
-    display_name?: string;
-    accessor_name: string;
-    unit_name: string;
-    action_url: string;
-  };
-  [EmailTypeEnum.TASK_OPEN_TO_INNOVATOR]: {
-    display_name?: string;
-    accessor_name: string;
-    unit_name: string;
-    action_url: string;
-  };
-  [EmailTypeEnum.TASK_CANCELLED_TO_INNOVATOR]: {
-    display_name?: string;
-    accessor_name: string;
-    unit_name: string;
-    action_url: string;
-  };
-  [EmailTypeEnum.TASK_DECLINED_CONFIRMATION]: {
-    display_name?: string;
-    accessor_name: string;
-    unit_name: string;
-    action_url: string;
-  };
-  [EmailTypeEnum.TASK_DONE_CONFIRMATION]: {
-    display_name?: string;
-    accessor_name: string;
-    unit_name: string;
-    action_url: string;
-  };
-  [EmailTypeEnum.TASK_RESPONDED_BY_COLLABORATOR_TO_OWNER]: {
-    display_name?: string;
-    collaborator_name: string;
-    accessor_name: string;
-    unit_name: string;
-    action_url: string;
-  };
-  [EmailTypeEnum.TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT]: {
-    display_name?: string;
-    innovator_name: string;
-    innovation_name: string;
-    declined_action_reason: string;
-    action_url: string;
-  };
-  [EmailTypeEnum.TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT]: {
-    display_name?: string;
-    innovator_name: string;
-    innovation_name: string;
-    action_url: string;
-  };
+
   [EmailTypeEnum.THREAD_CREATION_TO_INNOVATOR_FROM_ASSIGNED_USER]: {
     display_name?: string;
     accessor_name: string;

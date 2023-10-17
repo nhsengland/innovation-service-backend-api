@@ -78,17 +78,17 @@ describe('Notifications / _handlers / base handler suite', () => {
     beforeAll(() => {
       defaultReply = [
         {
-          templateId: EmailTypeEnum.TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
+          templateId: EmailTypeEnum.TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
           params: {},
           to: scenario.users.jamieMadroxAccessor.email
         },
         {
-          templateId: EmailTypeEnum.TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
+          templateId: EmailTypeEnum.TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
           params: {},
           to: scenario.users.jamieMadroxAccessor.email
         },
         {
-          templateId: EmailTypeEnum.TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
+          templateId: EmailTypeEnum.TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
           params: {},
           to: scenario.users.paulNeedsAssessor.email
         }
@@ -104,19 +104,19 @@ describe('Notifications / _handlers / base handler suite', () => {
         {
           notificationPreferenceType: 'TASK',
           params: {},
-          templateId: EmailTypeEnum.TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
+          templateId: EmailTypeEnum.TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
           to: DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'aiRole')
         },
         {
           notificationPreferenceType: 'TASK',
           params: {},
-          templateId: EmailTypeEnum.TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
+          templateId: EmailTypeEnum.TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
           to: DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'healthAccessorRole')
         },
         {
           notificationPreferenceType: 'TASK',
           params: {},
-          templateId: EmailTypeEnum.TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
+          templateId: EmailTypeEnum.TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
           to: DTOsHelper.getRecipientUser(scenario.users.paulNeedsAssessor, 'assessmentRole')
         }
       ];
@@ -127,19 +127,19 @@ describe('Notifications / _handlers / base handler suite', () => {
         {
           notificationPreferenceType: 'TASK',
           params: {},
-          templateId: EmailTypeEnum.TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
+          templateId: EmailTypeEnum.TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
           to: DTOsHelper.getRecipientUser(scenario.users.ingridAccessor, 'accessorRole')
         },
         {
           notificationPreferenceType: 'TASK',
           params: {},
-          templateId: EmailTypeEnum.TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
+          templateId: EmailTypeEnum.TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
           to: DTOsHelper.getRecipientUser(scenario.users.ingridAccessor, 'accessorRole')
         },
         {
           notificationPreferenceType: 'TASK',
           params: {},
-          templateId: EmailTypeEnum.TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
+          templateId: EmailTypeEnum.TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
           to: DTOsHelper.getRecipientUser(scenario.users.paulNeedsAssessor, 'assessmentRole')
         }
       ];
@@ -164,7 +164,7 @@ describe('Notifications / _handlers / base handler suite', () => {
         {
           notificationPreferenceType: 'TASK',
           params: {},
-          templateId: EmailTypeEnum.TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
+          templateId: EmailTypeEnum.TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
           to: { email: 'test@example.org' }
         }
       ];
@@ -173,7 +173,7 @@ describe('Notifications / _handlers / base handler suite', () => {
       expect(res).toHaveLength(1);
       expect(res).toMatchObject([
         {
-          templateId: EmailTypeEnum.TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
+          templateId: EmailTypeEnum.TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
           params: {},
           to: 'test@example.org'
         }
@@ -263,7 +263,7 @@ describe('Notifications / _handlers / base handler suite', () => {
         {
           notificationPreferenceType: 'TASK',
           params: {},
-          templateId: EmailTypeEnum.TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
+          templateId: EmailTypeEnum.TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
           to: { email: 'test@example.org', displayname: 'Test User' }
         }
       ];
