@@ -12,7 +12,7 @@ import type { IdentityProviderService } from '@notifications/shared/services';
 import SHARED_SYMBOLS from '@notifications/shared/services/symbols';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { container, EmailTypeEnum, ENV } from '../_config';
+import { container, ENV } from '../_config';
 
 import type { Context } from '@azure/functions';
 import type { CurrentCatalogTypes } from '@notifications/shared/schemas/innovation-record';
@@ -21,18 +21,11 @@ import { BaseHandler } from './base.handler';
 
 export class TaskUpdateHandler extends BaseHandler<
   NotifierTypeEnum.TASK_UPDATE,
-  | EmailTypeEnum.TASK_OPEN_TO_INNOVATOR
-  | EmailTypeEnum.TASK_CANCELLED_TO_INNOVATOR
-  | EmailTypeEnum.TASK_DECLINED_CONFIRMATION
-  | EmailTypeEnum.TASK_DONE_CONFIRMATION
-  | EmailTypeEnum.TASK_RESPONDED_BY_COLLABORATOR_TO_OWNER
-  | EmailTypeEnum.TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT
-  | EmailTypeEnum.TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT,
-  {
-    taskCode: string;
-    taskStatus: '' | InnovationTaskStatusEnum;
-    section: CurrentCatalogTypes.InnovationSections;
-  }
+  | 'TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS'
+  | 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT'
+  | 'TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT'
+  | 'TA05_TASK_CANCELLED_TO_INNOVATOR'
+  | 'TA06_TASK_REOPEN_TO_INNOVATOR'
 > {
   private identityProviderService = container.get<IdentityProviderService>(SHARED_SYMBOLS.IdentityProviderService);
 
@@ -61,16 +54,8 @@ export class TaskUpdateHandler extends BaseHandler<
     switch (this.requestUser.currentRole.role) {
       case ServiceRoleEnum.INNOVATOR:
         if ([InnovationTaskStatusEnum.DONE, InnovationTaskStatusEnum.DECLINED].includes(this.inputData.task.status)) {
-          const requestUser = await this.recipientsService.getUsersRecipient(
-            this.requestUser.id,
-            this.requestUser.currentRole.role
-          );
           await this.prepareEmailForAccessorOrAssessment(innovation, task);
           await this.prepareInAppForAccessorOrAssessment(task);
-          if (requestUser) {
-            await this.prepareConfirmationEmail(requestUser, task);
-            await this.prepareConfirmationInApp(task);
-          }
 
           // if task was submitted or declined by a collaborator notify owner
           if (innovation.owner && this.requestUser.currentRole.id !== innovation.owner.roleId) {
@@ -119,13 +104,13 @@ export class TaskUpdateHandler extends BaseHandler<
   ): Promise<void> {
     const requestInfo = await this.identityProviderService.getUserInfo(this.requestUser.identityId);
 
-    let templateId: EmailTypeEnum;
+    let templateId: 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT' | 'TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT';
     switch (task.status) {
       case InnovationTaskStatusEnum.DONE:
-        templateId = EmailTypeEnum.TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT;
+        templateId = 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT';
         break;
       case InnovationTaskStatusEnum.DECLINED:
-        templateId = EmailTypeEnum.TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT;
+        templateId = 'TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT';
         break;
       default:
         throw new NotFoundError(EmailErrorsEnum.EMAIL_TEMPLATE_NOT_FOUND);
@@ -144,17 +129,17 @@ export class TaskUpdateHandler extends BaseHandler<
         // display_name: '', // This will be filled by the email-listener function.
         innovator_name: requestInfo.displayName,
         innovation_name: innovation.name,
-        ...(templateId === EmailTypeEnum.TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT && {
+        ...(templateId === 'TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT' && {
           declined_TASK_reason: this.inputData.comment ?? ''
         }),
-        action_url: new UrlModel(ENV.webBaseTransactionalUrl)
+        message_url: new UrlModel(ENV.webBaseTransactionalUrl)
           .addPath(path)
           .setPathParams({
             innovationId: innovation.id,
             taskId: task.id
           })
           .buildUrl()
-      }
+      } as any // TODO
     });
   }
 
@@ -162,13 +147,13 @@ export class TaskUpdateHandler extends BaseHandler<
     innovation: { id: string; owner: RecipientType },
     task: { id: string; status: InnovationTaskStatusEnum; owner: RecipientType }
   ): Promise<void> {
-    let templateId: EmailTypeEnum;
+    let templateId: 'TA06_TASK_REOPEN_TO_INNOVATOR' | 'TA05_TASK_CANCELLED_TO_INNOVATOR';
     switch (task.status) {
       case InnovationTaskStatusEnum.OPEN:
-        templateId = EmailTypeEnum.TASK_OPEN_TO_INNOVATOR;
+        templateId = 'TA06_TASK_REOPEN_TO_INNOVATOR';
         break;
       case InnovationTaskStatusEnum.CANCELLED:
-        templateId = EmailTypeEnum.TASK_CANCELLED_TO_INNOVATOR;
+        templateId = 'TA05_TASK_CANCELLED_TO_INNOVATOR';
         break;
       default:
         throw new NotFoundError(EmailErrorsEnum.EMAIL_TEMPLATE_NOT_FOUND);
@@ -189,14 +174,14 @@ export class TaskUpdateHandler extends BaseHandler<
       params: {
         accessor_name: accessor_name,
         unit_name: unit_name,
-        action_url: new UrlModel(ENV.webBaseTransactionalUrl)
+        message_url: new UrlModel(ENV.webBaseTransactionalUrl)
           .addPath('innovator/innovations/:innovationId/tasks/:taskId')
           .setPathParams({
             innovationId: innovation.id,
             taskId: task.id
           })
           .buildUrl()
-      }
+      } as any // TODO
     });
   }
 
@@ -204,11 +189,11 @@ export class TaskUpdateHandler extends BaseHandler<
     innovation: { id: string; owner: RecipientType },
     task: { id: string; status: InnovationTaskStatusEnum; owner: RecipientType; organisationUnit?: { name: string } }
   ): Promise<void> {
-    let templateId: EmailTypeEnum;
+    let templateId: 'TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS';
     switch (task.status) {
       case InnovationTaskStatusEnum.DONE:
       case InnovationTaskStatusEnum.DECLINED:
-        templateId = EmailTypeEnum.TASK_RESPONDED_BY_COLLABORATOR_TO_OWNER;
+        templateId = 'TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS';
         break;
       default:
         throw new NotFoundError(EmailErrorsEnum.EMAIL_TEMPLATE_NOT_FOUND);
@@ -236,50 +221,7 @@ export class TaskUpdateHandler extends BaseHandler<
             taskId: task.id
           })
           .buildUrl()
-      }
-    });
-  }
-
-  private async prepareConfirmationEmail(
-    innovator: RecipientType,
-    task: {
-      id: string;
-      status: InnovationTaskStatusEnum;
-      owner: RecipientType;
-      organisationUnit?: { name: string };
-    }
-  ): Promise<void> {
-    let templateId: EmailTypeEnum;
-    switch (task.status) {
-      case InnovationTaskStatusEnum.DONE:
-        templateId = EmailTypeEnum.TASK_DONE_CONFIRMATION;
-        break;
-      case InnovationTaskStatusEnum.DECLINED:
-        templateId = EmailTypeEnum.TASK_DECLINED_CONFIRMATION;
-        break;
-      default:
-        throw new NotFoundError(EmailErrorsEnum.EMAIL_TEMPLATE_NOT_FOUND);
-    }
-
-    const taskOwnerInfo = await this.identityProviderService.getUserInfo(task.owner.identityId);
-
-    this.emails.push({
-      templateId,
-      notificationPreferenceType: NotificationCategoryEnum.TASK,
-      to: innovator,
-      params: {
-        // display_name: '', // This will be filled by the email-listener function.
-        accessor_name: taskOwnerInfo.displayName,
-        unit_name:
-          task.owner.role === ServiceRoleEnum.ASSESSMENT ? 'needs assessment' : task.organisationUnit?.name || '',
-        action_url: new UrlModel(ENV.webBaseTransactionalUrl)
-          .addPath('innovator/innovations/:innovationId/tasks/:taskId')
-          .setPathParams({
-            innovationId: this.inputData.innovationId,
-            taskId: task.id
-          })
-          .buildUrl()
-      }
+      } as any // TODO
     });
   }
 
@@ -349,28 +291,6 @@ export class TaskUpdateHandler extends BaseHandler<
       params: {
         taskCode: task.displayId,
         taskStatus: task.status, // We use here the supplied task status, NOT the task status from query.
-        section: task.section
-      }
-    });
-  }
-
-  private async prepareConfirmationInApp(task: {
-    id: string;
-    status: InnovationTaskStatusEnum;
-    displayId: string;
-    section: CurrentCatalogTypes.InnovationSections;
-  }): Promise<void> {
-    this.inApp.push({
-      innovationId: this.inputData.innovationId,
-      context: {
-        type: NotificationContextTypeEnum.TASK,
-        detail: NotificationContextDetailEnum.TASK_UPDATE,
-        id: task.id
-      },
-      userRoleIds: [this.requestUser.currentRole.id],
-      params: {
-        taskCode: task.displayId,
-        taskStatus: task.status,
         section: task.section
       }
     });

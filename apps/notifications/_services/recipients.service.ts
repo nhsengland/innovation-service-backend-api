@@ -496,6 +496,15 @@ export class RecipientsService extends BaseService {
   }
 
   /**
+   * returns a list of innovation innovators (owner + collaborators)
+   */
+  async getInnovationActiveOwnerAndCollaborators(innovationId: string): Promise<string[]> {
+    const innovationInfo = await this.innovationInfo(innovationId);
+    const collaborators = await this.getInnovationActiveCollaborators(innovationId);
+    return [...(innovationInfo.ownerId ? [innovationInfo.ownerId] : []), ...collaborators];
+  }
+
+  /**
    * returns a list of active collaborator ids for an innovation
    * @param innovationId the innovation id
    * @returns list of user ids

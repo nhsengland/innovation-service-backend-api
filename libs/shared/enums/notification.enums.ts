@@ -1,3 +1,17 @@
+export const NotificationTypes = {
+  TASK: [
+    'TA01_TASK_CREATION_TO_INNOVATOR',
+    'TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS',
+    'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT',
+    'TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT',
+    'TA05_TASK_CANCELLED_TO_INNOVATOR',
+    'TA06_TASK_REOPEN_TO_INNOVATOR'
+  ] as const,
+  MIGRATION_OLD: ['MIGRATION_OLD'] as const
+};
+export type NotificationTypes = typeof NotificationTypes;
+export type FlatNotificationTypes = NotificationTypes[keyof NotificationTypes][number];
+
 /**
  * @deprecated Use `NotificationCategoryEnum` instead.
  */
@@ -11,6 +25,7 @@ export enum NotificationContextTypeEnum {
   COMMENT = 'COMMENT' // TODO: Deprecated!
 }
 
+// TODO this is likely going to be keyof NotificationTypes
 export enum NotificationCategoryEnum {
   // GENERAL
   // A are only composed by GENERAL ones (not all)
@@ -35,6 +50,7 @@ export enum NotificationPreferenceEnum {
   NO = 'NO'
 }
 
+// TODO This is likely going to be the flatNotificationTypes
 export enum NotificationContextDetailEnum {
   LOCK_USER = 'LOCK_USER',
   THREAD_CREATION = 'THREAD_CREATION',

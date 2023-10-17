@@ -1,4 +1,4 @@
-import { EmailTypeEnum, container } from '../_config'; // inversify container
+import { container } from '../_config'; // inversify container
 
 import { randUuid } from '@ngneat/falso';
 import {
@@ -14,7 +14,7 @@ import { cloneDeep } from 'lodash';
 import { NotificationsTestsHelper } from '../_tests/notifications-test.helper';
 import { BaseHandler } from './base.handler';
 
-class TestHandler extends BaseHandler<any, any, any> {
+class TestHandler extends BaseHandler<any, any> {
   async run(): Promise<this> {
     console.log(container); // just for typescript to not complain about unused variable
     throw new Error('Method not implemented.');
@@ -24,7 +24,7 @@ class TestHandler extends BaseHandler<any, any, any> {
 describe('Notifications / _handlers / base handler suite', () => {
   let testsHelper: NotificationsTestsHelper;
   let scenario: CompleteScenarioType;
-  let baseHandler: BaseHandler<any, any, any>;
+  let baseHandler: BaseHandler<any, any>;
 
   beforeAll(async () => {
     testsHelper = await new NotificationsTestsHelper().init();
@@ -79,17 +79,17 @@ describe('Notifications / _handlers / base handler suite', () => {
     beforeAll(() => {
       defaultReply = [
         {
-          templateId: EmailTypeEnum.TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
+          templateId: 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT',
           params: {},
           to: scenario.users.jamieMadroxAccessor.email
         },
         {
-          templateId: EmailTypeEnum.TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
+          templateId: 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT',
           params: {},
           to: scenario.users.jamieMadroxAccessor.email
         },
         {
-          templateId: EmailTypeEnum.TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
+          templateId: 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT',
           params: {},
           to: scenario.users.paulNeedsAssessor.email
         }
@@ -105,19 +105,19 @@ describe('Notifications / _handlers / base handler suite', () => {
         {
           notificationPreferenceType: NotificationCategoryEnum.TASK,
           params: {},
-          templateId: EmailTypeEnum.TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
+          templateId: 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT',
           to: DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'aiRole')
         },
         {
           notificationPreferenceType: NotificationCategoryEnum.TASK,
           params: {},
-          templateId: EmailTypeEnum.TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
+          templateId: 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT',
           to: DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'healthAccessorRole')
         },
         {
           notificationPreferenceType: NotificationCategoryEnum.TASK,
           params: {},
-          templateId: EmailTypeEnum.TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
+          templateId: 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT',
           to: DTOsHelper.getRecipientUser(scenario.users.paulNeedsAssessor, 'assessmentRole')
         }
       ];
@@ -128,19 +128,19 @@ describe('Notifications / _handlers / base handler suite', () => {
         {
           notificationPreferenceType: NotificationCategoryEnum.TASK,
           params: {},
-          templateId: EmailTypeEnum.TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
+          templateId: 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT',
           to: DTOsHelper.getRecipientUser(scenario.users.ingridAccessor, 'accessorRole')
         },
         {
           notificationPreferenceType: NotificationCategoryEnum.TASK,
           params: {},
-          templateId: EmailTypeEnum.TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
+          templateId: 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT',
           to: DTOsHelper.getRecipientUser(scenario.users.ingridAccessor, 'accessorRole')
         },
         {
           notificationPreferenceType: NotificationCategoryEnum.TASK,
           params: {},
-          templateId: EmailTypeEnum.TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
+          templateId: 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT',
           to: DTOsHelper.getRecipientUser(scenario.users.paulNeedsAssessor, 'assessmentRole')
         }
       ];
@@ -165,7 +165,7 @@ describe('Notifications / _handlers / base handler suite', () => {
         {
           notificationPreferenceType: NotificationCategoryEnum.TASK,
           params: {},
-          templateId: EmailTypeEnum.TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
+          templateId: 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT',
           to: { email: 'test@example.org' }
         }
       ];
@@ -174,7 +174,7 @@ describe('Notifications / _handlers / base handler suite', () => {
       expect(res).toHaveLength(1);
       expect(res).toMatchObject([
         {
-          templateId: EmailTypeEnum.TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
+          templateId: 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT',
           params: {},
           to: 'test@example.org'
         }
@@ -262,7 +262,7 @@ describe('Notifications / _handlers / base handler suite', () => {
         {
           notificationPreferenceType: null,
           params: {},
-          templateId: EmailTypeEnum.TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
+          templateId: 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT',
           to: { email: 'test@example.org', displayname: 'Test User' }
         }
       ];

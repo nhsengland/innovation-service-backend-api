@@ -1,5 +1,6 @@
 import type { Context } from '@azure/functions';
 import {
+  FlatNotificationTypes,
   NotificationContextDetailEnum,
   NotificationContextTypeEnum,
   NotificationLogTypeEnum,
@@ -8,7 +9,8 @@ import {
   ServiceRoleEnum
 } from '@notifications/shared/enums';
 import type { DomainContextType, NotificationPreferences, NotifierTemplatesType } from '@notifications/shared/types';
-import { EmailTemplatesType, EmailTypeEnum, container } from '../_config';
+import { EmailTemplates, EmailTemplatesType, container } from '../_config';
+import type { InAppTemplatesType } from '../_config/inapp.config';
 import type { RecipientType, RecipientsService } from '../_services/recipients.service';
 import SYMBOLS from '../_services/symbols';
 
@@ -16,10 +18,11 @@ type EmailRecipientType = { email: string; displayname?: string };
 type IdentityRecipientType = Omit<RecipientType, 'userRole'>;
 
 type HandlerEmailType<T> = Array<{
-  templateId: EmailTypeEnum;
+  templateId: T extends keyof EmailTemplates ? T : any; // legacy for now
   notificationPreferenceType: keyof NotificationPreferences | null;
   to: EmailRecipientType | Omit<IdentityRecipientType, 'userId' | 'role'>; // maybe review this later and it will probably only require roleId
-  params: T;
+  //params: T extends keyof EmailTemplatesType ? EmailTemplatesType[T] : Record<string, never>;
+  params: T extends keyof EmailTemplatesType ? EmailTemplatesType[T] : any; // legacy for now
   log?: {
     type: NotificationLogTypeEnum;
     params: Record<string, string | number>;
@@ -27,13 +30,15 @@ type HandlerEmailType<T> = Array<{
   options?: {
     includeLocked?: boolean; // send email even if the user is locked
     ignorePreferences?: boolean; // ignore user email preferences when sending the email
+    includeSelf?: boolean; // send email to the user that made the request
   };
 }>;
 
 type HandlerEmailOutboundType<T> = {
-  templateId: EmailTypeEnum;
+  templateId: T extends keyof EmailTemplatesType ? T : any; // legacy for now
   to: string;
-  params: T;
+  // params: T extends keyof EmailTemplatesType ? EmailTemplatesType[T] : Record<string, never>;
+  params: T extends keyof EmailTemplatesType ? EmailTemplatesType[T] : any; // legacy for now
   log?: {
     type: NotificationLogTypeEnum;
     params: Record<string, string | number>;
@@ -45,19 +50,19 @@ type HandlerInAppType<T> = Array<{
   innovationId: string;
   context: { type: NotificationContextTypeEnum; detail: NotificationContextDetailEnum; id: string };
   userRoleIds: string[];
-  params: T;
+  // params: T extends keyof InAppTemplatesType ? InAppTemplatesType[T] : Record<string, never>;
+  params: T extends keyof InAppTemplatesType ? InAppTemplatesType[T] : any; // legacy for now
+  options?: {
+    includeSelf?: boolean; // send email to the user that made the request
+  };
 }>;
 
-export abstract class BaseHandler<
-  InputDataType extends NotifierTypeEnum,
-  EmailResponseType extends EmailTypeEnum,
-  InAppResponseType
-> {
+export abstract class BaseHandler<InputDataType extends NotifierTypeEnum, Notifications extends FlatNotificationTypes> {
   requestUser: DomainContextType;
   inputData: NotifierTemplatesType[InputDataType];
 
-  emails: HandlerEmailType<EmailTemplatesType[EmailResponseType]> = [];
-  inApp: HandlerInAppType<InAppResponseType> = [];
+  emails: HandlerEmailType<Notifications> = [];
+  inApp: HandlerInAppType<Notifications> = [];
 
   logger: Context['log'];
 
@@ -93,8 +98,8 @@ export abstract class BaseHandler<
 
   abstract run(): Promise<this>;
 
-  async getEmails(): Promise<HandlerEmailOutboundType<EmailTemplatesType[EmailResponseType]>[]> {
-    const res: HandlerEmailOutboundType<EmailTemplatesType[EmailResponseType]>[] = [];
+  async getEmails(): Promise<HandlerEmailOutboundType<Notifications>[]> {
+    const res: HandlerEmailOutboundType<Notifications>[] = [];
     // Optimize preference and email fetching by fetching only once
     const uniqueRoles = new Set<string>();
     const uniqueIdentities = new Set<string>();
@@ -139,6 +144,11 @@ export abstract class BaseHandler<
           continue;
         }
 
+        // Ignore if user is the one that made the request
+        if (!recipient.options?.includeSelf && recipient.to.identityId === this.requestUser.identityId) {
+          continue;
+        }
+
         const user = identities.get(recipient.to.identityId);
         if (user) {
           res.push({
@@ -154,7 +164,13 @@ export abstract class BaseHandler<
     return res;
   }
 
-  getInApp(): HandlerInAppType<InAppResponseType> {
+  getInApp(): HandlerInAppType<Notifications> {
+    // filter self from inApp notifications (using roleIds in this case instead of user)
+    this.inApp.forEach(notification => {
+      if (!notification.options?.includeSelf) {
+        notification.userRoleIds = notification.userRoleIds.filter(id => id !== this.requestUser.currentRole.id);
+      }
+    });
     return this.inApp;
   }
 }
