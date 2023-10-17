@@ -129,7 +129,7 @@ describe('Notifications / _handlers / innovation-stop-sharing handler suite', ()
 
     expect(expectedEmail).toMatchObject({
       templateId: EmailTypeEnum.INNOVATION_STOP_SHARING_TO_ENGAGING_ACCESSORS,
-      notificationPreferenceType: 'SUPPORT',
+      notificationPreferenceType: null,
       to: DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole'),
       params: {
         innovation_name: innovation.name,
@@ -170,7 +170,7 @@ describe('Notifications / _handlers / innovation-stop-sharing handler suite', ()
 
     expect(expectedEmail).toMatchObject({
       templateId: EmailTypeEnum.INNOVATION_STOP_SHARING_TO_ENGAGING_ACCESSORS,
-      notificationPreferenceType: 'SUPPORT',
+      notificationPreferenceType: null,
       to: DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole'),
       params: {
         innovation_name: innovation.name,

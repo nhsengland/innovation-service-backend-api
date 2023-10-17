@@ -15,7 +15,6 @@ import {
 import {
   ActivityTypeEnum,
   EmailNotificationPreferenceEnum,
-  EmailNotificationType,
   InnovationCollaboratorStatusEnum,
   InnovationExportRequestStatusEnum,
   InnovationStatusEnum,
@@ -35,7 +34,7 @@ import { inject, injectable } from 'inversify';
 import { BaseService } from './base.service';
 
 import { InnovationCollaboratorEntity } from '@notifications/shared/entities/innovation/innovation-collaborator.entity';
-import type { IdentityUserInfo } from '@notifications/shared/types';
+import type { IdentityUserInfo, NotificationPreferences } from '@notifications/shared/types';
 import type { EntityManager } from 'typeorm';
 
 export type RecipientType = {
@@ -1096,27 +1095,18 @@ export class RecipientsService extends BaseService {
   async getEmailPreferences(
     roleIds: string[],
     entityManager?: EntityManager
-  ): Promise<Map<string, Partial<Record<EmailNotificationType, EmailNotificationPreferenceEnum>>>> {
+  ): Promise<Map<string, NotificationPreferences>> {
     const em = entityManager ?? this.sqlConnection.manager;
 
     if (!roleIds.length) {
       return new Map();
     }
 
-    const res = new Map<string, Partial<Record<EmailNotificationType, EmailNotificationPreferenceEnum>>>();
     const preferences = await em
-      .createQueryBuilder(NotificationPreferenceEntity, 'notificationPreference')
-      .where('notificationPreference.user_role_id IN (:...roleIds)', { roleIds })
+      .createQueryBuilder(NotificationPreferenceEntity, 'preference')
+      .where('preference.user_role_id IN (:...roleIds)', { roleIds })
       .getMany();
 
-    for (const preference of preferences) {
-      if (!res.has(preference.userRoleId)) {
-        res.set(preference.userRoleId, {});
-      }
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      res.get(preference.userRoleId)![preference.notificationType] = preference.preference;
-    }
-
-    return res;
+    return new Map(preferences.map(p => [p.userRoleId, p.preferences]));
   }
 }

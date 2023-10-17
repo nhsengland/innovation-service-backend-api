@@ -60,7 +60,7 @@ describe('Notifications / _handlers / innovation-withdrawn handler suite', () =>
     expect(handler.emails).toMatchObject([
       {
         templateId: EmailTypeEnum.INNOVATION_WITHDRAWN_TO_ASSIGNED_USERS,
-        notificationPreferenceType: 'SUPPORT',
+        notificationPreferenceType: null,
         to: DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'healthAccessorRole'),
         params: {
           innovation_name: innovation.name

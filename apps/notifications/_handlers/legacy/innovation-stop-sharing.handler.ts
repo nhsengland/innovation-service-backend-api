@@ -54,7 +54,7 @@ export class InnovationStopSharingHandler extends BaseHandler<
     for (const user of previousAssignedAccessors) {
       this.emails.push({
         templateId: EmailTypeEnum.INNOVATION_STOP_SHARING_TO_ENGAGING_ACCESSORS,
-        notificationPreferenceType: 'SUPPORT',
+        notificationPreferenceType: null, // Before: 'SUPPORT'
         to: user,
         params: {
           // display_name: '', // This will be filled by the email-listener function.

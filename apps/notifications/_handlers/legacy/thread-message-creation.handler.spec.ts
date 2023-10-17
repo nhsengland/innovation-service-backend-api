@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {
+  NotificationCategoryEnum,
   NotificationContextDetailEnum,
   NotificationContextTypeEnum,
   ServiceRoleEnum
@@ -71,7 +72,7 @@ describe('Notifications / _handlers / thread-message-creation suite', () => {
 
       expect(handler.emails).toContainEqual({
         templateId: EmailTypeEnum.THREAD_MESSAGE_CREATION_TO_ALL,
-        notificationPreferenceType: 'MESSAGE',
+        notificationPreferenceType: NotificationCategoryEnum.MESSAGE,
         to: userRecipient,
         params: {
           innovation_name: innovation.name,
@@ -159,7 +160,7 @@ describe('Notifications / _handlers / thread-message-creation suite', () => {
 
       expect(handler.emails).toContainEqual({
         templateId: EmailTypeEnum.THREAD_MESSAGE_CREATION_TO_ALL,
-        notificationPreferenceType: 'MESSAGE',
+        notificationPreferenceType: NotificationCategoryEnum.MESSAGE,
         to: userRecipient,
         params: {
           innovation_name: innovation.name,

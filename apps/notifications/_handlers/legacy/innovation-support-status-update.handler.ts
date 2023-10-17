@@ -124,7 +124,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
     for (const recipient of recipients) {
       this.emails.push({
         templateId: EmailTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE_TO_INNOVATOR,
-        notificationPreferenceType: 'SUPPORT',
+        notificationPreferenceType: null, // Before: 'SUPPORT'
         to: recipient,
         params: {
           innovation_name: innovation.name,
@@ -158,7 +158,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
     for (const recipient of recipients) {
       this.emails.push({
         templateId: EmailTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE_TO_ASSIGNED_ACCESSORS,
-        notificationPreferenceType: 'SUPPORT',
+        notificationPreferenceType: null, // Before: 'SUPPORT'
         to: recipient,
         params: {
           qa_name: requestUserInfo.displayName,

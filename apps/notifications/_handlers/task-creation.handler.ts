@@ -1,4 +1,5 @@
 import {
+  NotificationCategoryEnum,
   NotificationContextDetailEnum,
   NotificationContextTypeEnum,
   NotifierTypeEnum,
@@ -43,7 +44,7 @@ export class TaskCreationHandler extends BaseHandler<
     for (const innovator of innovatorRecipients.filter(i => i.isActive)) {
       this.emails.push({
         templateId: EmailTypeEnum.TA01_TASK_CREATION_TO_INNOVATOR,
-        notificationPreferenceType: 'TASK',
+        notificationPreferenceType: NotificationCategoryEnum.TASK,
         to: innovator,
         params: {
           // display_name: '', // This will be filled by the email-listener function.

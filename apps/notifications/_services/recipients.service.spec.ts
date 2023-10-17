@@ -8,10 +8,10 @@ import {
   UserRoleEntity
 } from '@notifications/shared/entities';
 import {
-  EmailNotificationPreferenceEnum,
   InnovationCollaboratorStatusEnum,
   InnovationStatusEnum,
   InnovationSupportStatusEnum,
+  NotificationPreferenceEnum,
   ServiceRoleEnum,
   UserStatusEnum
 } from '@notifications/shared/enums';
@@ -20,6 +20,7 @@ import { DomainInnovationsService } from '@notifications/shared/services';
 import { TestsHelper } from '@notifications/shared/tests';
 import { InnovationSupportBuilder } from '@notifications/shared/tests/builders/innovation-support.builder';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
+import type { Role2PreferencesType } from '@notifications/shared/types';
 import type { EntityManager } from 'typeorm';
 import { container } from '../_config';
 import type { RecipientsService } from './recipients.service';
@@ -1101,36 +1102,39 @@ describe('Notifications / _services / recipients service suite', () => {
   });
 
   describe('getEmailPreference', () => {
+    const johnPreferences: Role2PreferencesType<ServiceRoleEnum.INNOVATOR> = {
+      DOCUMENT: NotificationPreferenceEnum.YES,
+      TASK: NotificationPreferenceEnum.YES,
+      MESSAGE: NotificationPreferenceEnum.YES,
+      REMINDER: NotificationPreferenceEnum.NO,
+      SUPPORT: NotificationPreferenceEnum.NO
+    };
+    const adamPreferences: Role2PreferencesType<ServiceRoleEnum.INNOVATOR> = {
+      DOCUMENT: NotificationPreferenceEnum.YES,
+      TASK: NotificationPreferenceEnum.NO,
+      MESSAGE: NotificationPreferenceEnum.YES,
+      REMINDER: NotificationPreferenceEnum.NO,
+      SUPPORT: NotificationPreferenceEnum.NO
+    };
+
     // This is too specific to include in the scenario, don't think it will be used elsewhere
     beforeEach(async () => {
       await em.getRepository(NotificationPreferenceEntity).save([
         {
-          notificationType: 'TASK',
           userRoleId: scenario.users.johnInnovator.roles.innovatorRole.id,
-          preference: EmailNotificationPreferenceEnum.DAILY,
+          preferences: johnPreferences,
           createdAt: new Date(),
-          updatedAt: new Date()
+          updatedAt: new Date(),
+          createdBy: scenario.users.johnInnovator.roles.innovatorRole.id,
+          updatedBy: scenario.users.johnInnovator.roles.innovatorRole.id
         },
         {
-          notificationType: 'MESSAGE',
-          userRoleId: scenario.users.johnInnovator.roles.innovatorRole.id,
-          preference: EmailNotificationPreferenceEnum.INSTANTLY,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        },
-        {
-          notificationType: 'SUPPORT',
-          userRoleId: scenario.users.johnInnovator.roles.innovatorRole.id,
-          preference: EmailNotificationPreferenceEnum.NEVER,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        },
-        {
-          notificationType: 'TASK',
           userRoleId: scenario.users.adamInnovator.roles.innovatorRole.id,
-          preference: EmailNotificationPreferenceEnum.NEVER,
+          preferences: adamPreferences,
           createdAt: new Date(),
-          updatedAt: new Date()
+          updatedAt: new Date(),
+          createdBy: scenario.users.adamInnovator.roles.innovatorRole.id,
+          updatedBy: scenario.users.adamInnovator.roles.innovatorRole.id
         }
       ]);
     });
@@ -1138,11 +1142,7 @@ describe('Notifications / _services / recipients service suite', () => {
     it('Should return the email preference for a valid role', async () => {
       const res = await sut.getEmailPreferences([scenario.users.johnInnovator.roles.innovatorRole.id], em);
       expect(res.size).toBe(1);
-      expect(res.get(scenario.users.johnInnovator.roles.innovatorRole.id)).toMatchObject({
-        TASK: EmailNotificationPreferenceEnum.DAILY,
-        MESSAGE: EmailNotificationPreferenceEnum.INSTANTLY,
-        SUPPORT: EmailNotificationPreferenceEnum.NEVER
-      });
+      expect(res.get(scenario.users.johnInnovator.roles.innovatorRole.id)).toMatchObject(johnPreferences);
     });
 
     it('Should return the email preference for multiple roles', async () => {
@@ -1151,14 +1151,8 @@ describe('Notifications / _services / recipients service suite', () => {
         em
       );
       expect(res.size).toBe(2);
-      expect(res.get(scenario.users.johnInnovator.roles.innovatorRole.id)).toEqual({
-        TASK: EmailNotificationPreferenceEnum.DAILY,
-        MESSAGE: EmailNotificationPreferenceEnum.INSTANTLY,
-        SUPPORT: EmailNotificationPreferenceEnum.NEVER
-      });
-      expect(res.get(scenario.users.adamInnovator.roles.innovatorRole.id)).toEqual({
-        TASK: EmailNotificationPreferenceEnum.NEVER
-      });
+      expect(res.get(scenario.users.johnInnovator.roles.innovatorRole.id)).toEqual(johnPreferences);
+      expect(res.get(scenario.users.adamInnovator.roles.innovatorRole.id)).toEqual(adamPreferences);
     });
 
     it('Should only return the preferences if they are defined', async () => {
@@ -1167,9 +1161,7 @@ describe('Notifications / _services / recipients service suite', () => {
         em
       );
       expect(res.size).toBe(1);
-      expect(res.get(scenario.users.adamInnovator.roles.innovatorRole.id)).toEqual({
-        TASK: EmailNotificationPreferenceEnum.NEVER
-      });
+      expect(res.get(scenario.users.jamieMadroxAccessor.roles.aiRole.id)).toBeUndefined();
     });
 
     it('Should return empty map if no roles provided', async () => {
