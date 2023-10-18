@@ -1,21 +1,17 @@
 import {
   InnovationTaskStatusEnum,
   NotificationCategoryEnum,
-  NotificationContextDetailEnum,
-  NotificationContextTypeEnum,
   NotifierTypeEnum,
   ServiceRoleEnum
 } from '@notifications/shared/enums';
-import { EmailErrorsEnum, NotFoundError } from '@notifications/shared/errors';
-import { UrlModel } from '@notifications/shared/models';
-import type { IdentityProviderService } from '@notifications/shared/services';
-import SHARED_SYMBOLS from '@notifications/shared/services/symbols';
-import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
-
-import { container, ENV } from '../_config';
+import {
+  isInnovatorDomainContextType,
+  type DomainContextType,
+  type NotifierTemplatesType
+} from '@notifications/shared/types';
 
 import type { Context } from '@azure/functions';
-import type { CurrentCatalogTypes } from '@notifications/shared/schemas/innovation-record';
+import { taskUrl, threadUrl } from '../_helpers/url.helper';
 import type { RecipientType } from '../_services/recipients.service';
 import { BaseHandler } from './base.handler';
 
@@ -27,7 +23,7 @@ export class TaskUpdateHandler extends BaseHandler<
   | 'TA05_TASK_CANCELLED_TO_INNOVATOR'
   | 'TA06_TASK_REOPEN_TO_INNOVATOR'
 > {
-  private identityProviderService = container.get<IdentityProviderService>(SHARED_SYMBOLS.IdentityProviderService);
+  //private identityProviderService = container.get<IdentityProviderService>(SHARED_SYMBOLS.IdentityProviderService);
 
   constructor(
     requestUser: DomainContextType,
@@ -39,260 +35,213 @@ export class TaskUpdateHandler extends BaseHandler<
 
   async run(): Promise<this> {
     const innovationInfo = await this.recipientsService.innovationInfo(this.inputData.innovationId);
-    const owner = await this.recipientsService.getUsersRecipient(innovationInfo.ownerId, ServiceRoleEnum.INNOVATOR);
+    const innovators = await this.recipientsService.getInnovationActiveOwnerAndCollaborators(
+      this.inputData.innovationId
+    );
+    const innovatorRecipients = await this.recipientsService.getUsersRecipient(innovators, ServiceRoleEnum.INNOVATOR);
 
-    const taskInfo = await this.recipientsService.taskInfoWithOwner(this.inputData.task.id);
+    if (isInnovatorDomainContextType(this.requestUser)) {
+      await this.TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS(innovationInfo, innovatorRecipients); // TODO fix
+      const taskCreator = (await this.recipientsService.taskInfoWithOwner(this.inputData.task.id)).owner;
 
-    const innovation = { id: this.inputData.innovationId, name: innovationInfo.name, owner: owner };
-
-    const task = {
-      ...taskInfo,
-      status: this.inputData.task.status, // we want here the status provided when triggering the notification
-      section: this.inputData.task.section
-    };
-
-    switch (this.requestUser.currentRole.role) {
-      case ServiceRoleEnum.INNOVATOR:
-        if ([InnovationTaskStatusEnum.DONE, InnovationTaskStatusEnum.DECLINED].includes(this.inputData.task.status)) {
-          await this.prepareEmailForAccessorOrAssessment(innovation, task);
-          await this.prepareInAppForAccessorOrAssessment(task);
-
-          // if task was submitted or declined by a collaborator notify owner
-          if (innovation.owner && this.requestUser.currentRole.id !== innovation.owner.roleId) {
-            await this.prepareInAppForInnovationOwner({ id: innovation.id, owner: innovation.owner }, task);
-            await this.prepareEmailForInnovationOwnerFromCollaborator(
-              { id: innovation.id, owner: innovation.owner },
-              task
-            );
-          }
-        }
-        break;
-      case ServiceRoleEnum.ACCESSOR:
-      case ServiceRoleEnum.QUALIFYING_ACCESSOR:
-      case ServiceRoleEnum.ASSESSMENT:
-        if ([InnovationTaskStatusEnum.OPEN, InnovationTaskStatusEnum.CANCELLED].includes(this.inputData.task.status)) {
-          if (innovation.owner) {
-            await this.prepareEmailForInnovationOwner({ id: innovation.id, owner: innovation.owner }, task);
-            await this.prepareInAppForInnovationOwner({ id: innovation.id, owner: innovation.owner }, task);
-          }
-          // check if task was submitted by a collaborator
-          if (
-            this.inputData.task.previouslyUpdatedByUserRole &&
-            this.inputData.task.previouslyUpdatedByUserRole.id !== innovation.owner?.roleId &&
-            this.inputData.task.previouslyUpdatedByUserRole.role === ServiceRoleEnum.INNOVATOR
-          ) {
-            await this.prepareInAppForCollaborator({
-              ...task,
-              previouslyUpdatedByUserRole: this.inputData.task.previouslyUpdatedByUserRole
-            });
-          }
-        }
-        break;
-
-      default:
-        break;
+      switch (this.inputData.task.status) {
+        case InnovationTaskStatusEnum.DONE:
+          await this.TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT(innovationInfo, taskCreator);
+          break;
+        case InnovationTaskStatusEnum.DECLINED:
+          await this.TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT(innovationInfo, taskCreator);
+          break;
+        default:
+        // do nothing (innovators should not be able to cancel or reopen tasks)
+      }
+    } else {
+      switch (this.inputData.task.status) {
+        case InnovationTaskStatusEnum.CANCELLED:
+          await this.TA05_TASK_CANCELLED_TO_INNOVATOR(innovationInfo, innovatorRecipients);
+          break;
+        case InnovationTaskStatusEnum.OPEN:
+          await this.TA06_TASK_REOPEN_TO_INNOVATOR(innovationInfo, innovatorRecipients);
+          break;
+        default:
+        // do nothing (accessors/assessors should not be able to respond to tasks)
+      }
     }
 
     return this;
   }
 
-  // Private methods.
-
-  private async prepareEmailForAccessorOrAssessment(
+  private async TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS(
     innovation: { id: string; name: string },
-    task: { id: string; status: InnovationTaskStatusEnum; owner: RecipientType }
+    innovators: RecipientType[]
   ): Promise<void> {
-    const requestInfo = await this.identityProviderService.getUserInfo(this.requestUser.identityId);
-
-    let templateId: 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT' | 'TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT';
-    switch (task.status) {
-      case InnovationTaskStatusEnum.DONE:
-        templateId = 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT';
-        break;
-      case InnovationTaskStatusEnum.DECLINED:
-        templateId = 'TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT';
-        break;
-      default:
-        throw new NotFoundError(EmailErrorsEnum.EMAIL_TEMPLATE_NOT_FOUND);
-    }
-
-    const path =
-      task.owner.role === ServiceRoleEnum.ASSESSMENT
-        ? 'assessment/innovations/:innovationId/tasks/:taskId'
-        : 'accessor/innovations/:innovationId/tasks/:taskId';
-
-    this.emails.push({
-      templateId: templateId,
-      to: task.owner,
+    this.addEmails('TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS', innovators, {
       notificationPreferenceType: NotificationCategoryEnum.TASK,
       params: {
-        // display_name: '', // This will be filled by the email-listener function.
-        innovator_name: requestInfo.displayName,
         innovation_name: innovation.name,
-        ...(templateId === 'TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT' && {
-          declined_TASK_reason: this.inputData.comment ?? ''
-        }),
-        message_url: new UrlModel(ENV.webBaseTransactionalUrl)
-          .addPath(path)
-          .setPathParams({
-            innovationId: innovation.id,
-            taskId: task.id
-          })
-          .buildUrl()
-      } as any // TODO
-    });
-  }
-
-  private async prepareEmailForInnovationOwner(
-    innovation: { id: string; owner: RecipientType },
-    task: { id: string; status: InnovationTaskStatusEnum; owner: RecipientType }
-  ): Promise<void> {
-    let templateId: 'TA06_TASK_REOPEN_TO_INNOVATOR' | 'TA05_TASK_CANCELLED_TO_INNOVATOR';
-    switch (task.status) {
-      case InnovationTaskStatusEnum.OPEN:
-        templateId = 'TA06_TASK_REOPEN_TO_INNOVATOR';
-        break;
-      case InnovationTaskStatusEnum.CANCELLED:
-        templateId = 'TA05_TASK_CANCELLED_TO_INNOVATOR';
-        break;
-      default:
-        throw new NotFoundError(EmailErrorsEnum.EMAIL_TEMPLATE_NOT_FOUND);
-    }
-
-    const requestInfo = await this.identityProviderService.getUserInfo(this.requestUser.identityId);
-
-    const accessor_name = requestInfo.displayName;
-    const unit_name =
-      this.requestUser.currentRole.role === ServiceRoleEnum.ASSESSMENT
-        ? 'needs assessment'
-        : this.requestUser.organisation?.organisationUnit?.name ?? '';
-
-    this.emails.push({
-      templateId,
-      notificationPreferenceType: NotificationCategoryEnum.TASK,
-      to: innovation.owner,
-      params: {
-        accessor_name: accessor_name,
-        unit_name: unit_name,
-        message_url: new UrlModel(ENV.webBaseTransactionalUrl)
-          .addPath('innovator/innovations/:innovationId/tasks/:taskId')
-          .setPathParams({
-            innovationId: innovation.id,
-            taskId: task.id
-          })
-          .buildUrl()
-      } as any // TODO
-    });
-  }
-
-  private async prepareEmailForInnovationOwnerFromCollaborator(
-    innovation: { id: string; owner: RecipientType },
-    task: { id: string; status: InnovationTaskStatusEnum; owner: RecipientType; organisationUnit?: { name: string } }
-  ): Promise<void> {
-    let templateId: 'TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS';
-    switch (task.status) {
-      case InnovationTaskStatusEnum.DONE:
-      case InnovationTaskStatusEnum.DECLINED:
-        templateId = 'TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS';
-        break;
-      default:
-        throw new NotFoundError(EmailErrorsEnum.EMAIL_TEMPLATE_NOT_FOUND);
-    }
-
-    const requestInfo = await this.identityProviderService.getUserInfo(this.requestUser.identityId);
-
-    const taskOwnerInfo = await this.recipientsService.usersIdentityInfo(task.owner.identityId);
-    const taskOwnerUnitName =
-      task.owner.role === ServiceRoleEnum.ASSESSMENT ? 'needs assessment' : task.organisationUnit?.name || '';
-
-    this.emails.push({
-      templateId,
-      notificationPreferenceType: NotificationCategoryEnum.TASK,
-      to: innovation.owner,
-      params: {
-        // display_name: '', // This will be filled by the email-listener function.
-        collaborator_name: requestInfo.displayName,
-        accessor_name: taskOwnerInfo?.displayName ?? 'user', // Review what should happen if user is not found
-        unit_name: taskOwnerUnitName,
-        action_url: new UrlModel(ENV.webBaseTransactionalUrl)
-          .addPath('innovator/innovations/:innovationId/tasks/:taskId')
-          .setPathParams({
-            innovationId: innovation.id,
-            taskId: task.id
-          })
-          .buildUrl()
-      } as any // TODO
-    });
-  }
-
-  private async prepareInAppForAccessorOrAssessment(task: {
-    id: string;
-    status: InnovationTaskStatusEnum;
-    displayId: string;
-    section: CurrentCatalogTypes.InnovationSections;
-    owner: RecipientType;
-  }): Promise<void> {
-    this.inApp.push({
-      innovationId: this.inputData.innovationId,
-      context: {
-        type: NotificationContextTypeEnum.TASK,
-        detail: NotificationContextDetailEnum.TASK_UPDATE as any, // TODO
-        id: task.id
-      },
-      userRoleIds: [task.owner.roleId],
-      params: {
-        taskCode: task.displayId,
-        taskStatus: task.status, // We use here the supplied task status, NOT the task status from query.
-        section: task.section
+        innovator_name: await this.getRequestUserName(),
+        task_status: this.translateStatus(this.inputData.task.status),
+        message_url: threadUrl(ServiceRoleEnum.INNOVATOR, innovation.id, this.inputData.threadId)
       }
     });
-  }
 
-  private async prepareInAppForInnovationOwner(
-    innovation: { id: string; owner: RecipientType },
-    task: {
-      id: string;
-      status: InnovationTaskStatusEnum;
-      displayId: string;
-      section: CurrentCatalogTypes.InnovationSections;
-    }
-  ): Promise<void> {
-    this.inApp.push({
-      innovationId: innovation.id,
+    this.addInApp('TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS', innovators, {
       context: {
-        type: NotificationContextTypeEnum.TASK,
-        detail: NotificationContextDetailEnum.TASK_UPDATE as any, // TODO
-        id: task.id
-      },
-      userRoleIds: [innovation.owner.roleId],
-      params: {
-        taskCode: task.displayId,
-        taskStatus: task.status, // We use here the supplied task status, NOT the task status from query.
-        section: task.section
-      }
-    });
-  }
-
-  private async prepareInAppForCollaborator(task: {
-    id: string;
-    status: InnovationTaskStatusEnum;
-    displayId: string;
-    section: CurrentCatalogTypes.InnovationSections;
-    previouslyUpdatedByUserRole: { id: string };
-  }): Promise<void> {
-    this.inApp.push({
-      innovationId: this.inputData.innovationId,
-      context: {
-        type: NotificationContextTypeEnum.TASK,
-        detail: NotificationContextDetailEnum.TASK_UPDATE as any, // TODO
+        type: NotificationCategoryEnum.TASK,
+        detail: 'TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS',
         id: this.inputData.task.id
       },
-      userRoleIds: [task.previouslyUpdatedByUserRole.id],
+      innovationId: this.inputData.innovationId,
       params: {
-        taskCode: task.displayId,
-        taskStatus: task.status, // We use here the supplied task status, NOT the task status from query.
-        section: task.section
+        requestUserName: await this.getRequestUserName(),
+        innovationName: innovation.name,
+        status: this.inputData.task.status,
+        messageId: this.inputData.messageId,
+        threadId: this.inputData.threadId
       }
     });
+  }
+
+  private async TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT(
+    innovation: { id: string; name: string },
+    recipient: RecipientType
+  ): Promise<void> {
+    this.addEmails('TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT', [recipient], {
+      notificationPreferenceType: NotificationCategoryEnum.TASK,
+      params: {
+        innovation_name: innovation.name,
+        innovator_name: await this.getRequestUserName(),
+        message: this.inputData.message,
+        message_url: threadUrl(recipient.role, innovation.id, this.inputData.threadId),
+        task_url: taskUrl(recipient.role, innovation.id, this.inputData.task.id)
+      }
+    });
+
+    this.addInApp('TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT', [recipient], {
+      context: {
+        type: NotificationCategoryEnum.TASK,
+        detail: 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT',
+        id: this.inputData.task.id
+      },
+      innovationId: this.inputData.innovationId,
+      params: {
+        requestUserName: await this.getRequestUserName(),
+        innovationName: innovation.name,
+        status: this.inputData.task.status,
+        messageId: this.inputData.messageId,
+        threadId: this.inputData.threadId
+      }
+    });
+  }
+
+  private async TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT(
+    innovation: { id: string; name: string },
+    recipient: RecipientType
+  ): Promise<void> {
+    this.addEmails('TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT', [recipient], {
+      notificationPreferenceType: NotificationCategoryEnum.TASK,
+      params: {
+        innovation_name: innovation.name,
+        innovator_name: await this.getRequestUserName(),
+        message: this.inputData.message,
+        message_url: threadUrl(recipient.role, innovation.id, this.inputData.threadId)
+      }
+    });
+
+    this.addInApp('TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT', [recipient], {
+      context: {
+        type: NotificationCategoryEnum.TASK,
+        detail: 'TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT',
+        id: this.inputData.task.id
+      },
+      innovationId: this.inputData.innovationId,
+      params: {
+        requestUserName: await this.getRequestUserName(),
+        innovationName: innovation.name,
+        status: this.inputData.task.status,
+        messageId: this.inputData.messageId,
+        threadId: this.inputData.threadId
+      }
+    });
+  }
+
+  private async TA05_TASK_CANCELLED_TO_INNOVATOR(
+    innovation: { id: string; name: string },
+    innovators: RecipientType[]
+  ): Promise<void> {
+    this.addEmails('TA05_TASK_CANCELLED_TO_INNOVATOR', innovators, {
+      notificationPreferenceType: NotificationCategoryEnum.TASK,
+      params: {
+        accessor_name: await this.getRequestUserName(),
+        unit_name: this.getRequestUnitName(),
+        innovation_name: innovation.name,
+        message: this.inputData.message,
+        message_url: threadUrl(ServiceRoleEnum.INNOVATOR, innovation.id, this.inputData.threadId)
+      }
+    });
+
+    this.addInApp('TA05_TASK_CANCELLED_TO_INNOVATOR', innovators, {
+      context: {
+        type: NotificationCategoryEnum.TASK,
+        detail: 'TA05_TASK_CANCELLED_TO_INNOVATOR',
+        id: this.inputData.task.id
+      },
+      innovationId: this.inputData.innovationId,
+      params: {
+        requestUserName: await this.getRequestUserName(),
+        innovationName: innovation.name,
+        unitName: this.getRequestUnitName(),
+        messageId: this.inputData.messageId,
+        threadId: this.inputData.threadId
+      }
+    });
+  }
+
+  private async TA06_TASK_REOPEN_TO_INNOVATOR(
+    innovation: { id: string; name: string },
+    innovators: RecipientType[]
+  ): Promise<void> {
+    this.addEmails('TA06_TASK_REOPEN_TO_INNOVATOR', innovators, {
+      notificationPreferenceType: NotificationCategoryEnum.TASK,
+      params: {
+        accessor_name: await this.getRequestUserName(),
+        unit_name: this.getRequestUnitName(),
+        innovation_name: innovation.name,
+        message: this.inputData.message,
+        message_url: threadUrl(ServiceRoleEnum.INNOVATOR, innovation.id, this.inputData.threadId)
+      }
+    });
+
+    this.addInApp('TA06_TASK_REOPEN_TO_INNOVATOR', innovators, {
+      context: {
+        type: NotificationCategoryEnum.TASK,
+        detail: 'TA06_TASK_REOPEN_TO_INNOVATOR',
+        id: this.inputData.task.id
+      },
+      innovationId: this.inputData.innovationId,
+      params: {
+        requestUserName: await this.getRequestUserName(),
+        innovationName: innovation.name,
+        unitName: this.getRequestUnitName(),
+        messageId: this.inputData.messageId,
+        threadId: this.inputData.threadId
+      }
+    });
+  }
+
+  private translateStatus(status: InnovationTaskStatusEnum): string {
+    switch (status) {
+      case InnovationTaskStatusEnum.CANCELLED:
+        return 'cancelled';
+      case InnovationTaskStatusEnum.DONE:
+        return 'done';
+      case InnovationTaskStatusEnum.DECLINED:
+        return 'declined';
+      case InnovationTaskStatusEnum.OPEN:
+        return 'reopened';
+      default: {
+        const x: never = status;
+        throw new Error(`Status ${x} not supported`); // this will never happen
+      }
+    }
   }
 }

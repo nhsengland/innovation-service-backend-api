@@ -1,10 +1,8 @@
 import { NotificationCategoryEnum, NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
-import { UrlModel } from '@notifications/shared/models';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { ENV } from '../_config';
-
 import type { Context } from '@azure/functions';
+import { taskUrl } from '../_helpers/url.helper';
 import { BaseHandler } from './base.handler';
 
 export class TaskCreationHandler extends BaseHandler<
@@ -26,40 +24,24 @@ export class TaskCreationHandler extends BaseHandler<
     );
 
     const innovatorRecipients = await this.recipientsService.getUsersRecipient(recipients, ServiceRoleEnum.INNOVATOR);
+    const unitName = this.getRequestUnitName();
 
-    const unitName =
-      this.requestUser.currentRole.role === ServiceRoleEnum.ASSESSMENT
-        ? 'needs assessment'
-        : this.requestUser.organisation?.organisationUnit?.name ?? '';
+    this.addEmails('TA01_TASK_CREATION_TO_INNOVATOR', innovatorRecipients, {
+      notificationPreferenceType: NotificationCategoryEnum.TASK,
+      params: {
+        innovation_name: innovation.name,
+        unit_name: unitName,
+        task_url: taskUrl(ServiceRoleEnum.INNOVATOR, this.inputData.innovationId, this.inputData.task.id)
+      }
+    });
 
-    for (const innovator of innovatorRecipients.filter(i => i.isActive)) {
-      this.emails.push({
-        templateId: 'TA01_TASK_CREATION_TO_INNOVATOR',
-        notificationPreferenceType: NotificationCategoryEnum.TASK,
-        to: innovator,
-        params: {
-          // display_name: '', // This will be filled by the email-listener function.
-          innovation_name: innovation.name,
-          unit_name: unitName,
-          task_url: new UrlModel(ENV.webBaseTransactionalUrl)
-            .addPath('innovator/innovations/:innovationId/tasks/:taskId')
-            .setPathParams({
-              innovationId: this.inputData.innovationId,
-              taskId: this.inputData.task.id
-            })
-            .buildUrl()
-        }
-      });
-    }
-
-    this.inApp.push({
+    this.addInApp('TA01_TASK_CREATION_TO_INNOVATOR', innovatorRecipients, {
       innovationId: this.inputData.innovationId,
       context: {
         type: NotificationCategoryEnum.TASK,
         detail: 'TA01_TASK_CREATION_TO_INNOVATOR',
         id: this.inputData.task.id
       },
-      userRoleIds: innovatorRecipients.map(i => i.roleId),
       params: {
         innovationName: innovation.name,
         unitName: unitName,

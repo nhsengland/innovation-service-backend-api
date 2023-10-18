@@ -10,7 +10,6 @@ import {
 } from '@notifications/shared/enums';
 import type { NotifierTemplatesType } from '@notifications/shared/types';
 
-import { CurrentCatalogTypes } from '@notifications/shared/schemas/innovation-record';
 import {
   AccessorUnitChangeHandler,
   ActionCreationHandler,
@@ -159,20 +158,11 @@ export const NOTIFICATIONS_CONFIG = {
       innovationId: Joi.string().guid().required(),
       task: Joi.object<NotifierTemplatesType[NotifierTypeEnum.TASK_UPDATE]['task']>({
         id: Joi.string().guid().required(),
-        section: Joi.string()
-          .valid(...CurrentCatalogTypes.InnovationSections)
-          .required(),
         status: Joi.string()
           .valid(...Object.values(InnovationTaskStatusEnum))
-          .required(),
-        previouslyUpdatedByUserRole: Joi.object({
-          id: Joi.string().guid().required(),
-          role: Joi.string()
-            .valid(...Object.values(ServiceRoleEnum))
-            .required()
-        }).optional()
+          .required()
       }).required(),
-      comment: Joi.string().optional()
+      message: Joi.string().optional()
     }).required()
   },
 
