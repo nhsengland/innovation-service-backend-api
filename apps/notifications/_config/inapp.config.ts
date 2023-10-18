@@ -39,4 +39,8 @@ export type InAppTemplatesType = {
     threadId: string;
     messageId: string;
   };
+  DC01_UPLOADED_DOCUMENT_TO_INNOVATOR: {
+    unitName: string;
+    fileId: string;
+  };
 };

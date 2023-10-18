@@ -2,14 +2,19 @@ import { container } from '../_config';
 
 import { MAX_FILES_ALLOWED } from '@innovations/shared/constants';
 import { InnovationFileEntity } from '@innovations/shared/entities';
-import { InnovationFileContextTypeEnum, InnovationStatusEnum, ServiceRoleEnum } from '@innovations/shared/enums';
+import {
+  InnovationFileContextTypeEnum,
+  InnovationStatusEnum,
+  NotifierTypeEnum,
+  ServiceRoleEnum
+} from '@innovations/shared/enums';
 import {
   ForbiddenError,
   InnovationErrorsEnum,
   NotFoundError,
   UnprocessableEntityError
 } from '@innovations/shared/errors';
-import { FileStorageService } from '@innovations/shared/services';
+import { FileStorageService, NotifierService } from '@innovations/shared/services';
 import { CompleteScenarioType, MocksHelper, TestsHelper } from '@innovations/shared/tests';
 import { InnovationFileBuilder, type TestFileType } from '@innovations/shared/tests/builders/innovation-file.builder';
 import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
@@ -26,6 +31,8 @@ describe('Services / Innovation File service suite', () => {
 
   let sut: InnovationFileService;
   let em: EntityManager;
+
+  const notifierSendSpy = jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
 
   beforeAll(async () => {
     sut = container.get<InnovationFileService>(SYMBOLS.InnovationFileService);
@@ -761,7 +768,7 @@ describe('Services / Innovation File service suite', () => {
         naDomainContext = DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor, 'assessmentRole');
       });
 
-      it('should create a file with context type INNOVATION', async () => {
+      it('should create a file with context type INNOVATION and send a notification', async () => {
         const data = {
           context: { id: innovation.id, type: InnovationFileContextTypeEnum.INNOVATION },
           name: randFileName(),
@@ -790,6 +797,10 @@ describe('Services / Innovation File service suite', () => {
           contextId: data.context.id,
           contextType: data.context.type,
           createdBy: naDomainContext.id
+        });
+        expect(notifierSendSpy).toHaveBeenCalledWith(naDomainContext, NotifierTypeEnum.INNOVATION_DOCUMENT_UPLOADED, {
+          innovationId: innovation.id,
+          file: { id: file.id }
         });
       });
 
@@ -844,7 +855,7 @@ describe('Services / Innovation File service suite', () => {
         qaDomainContext = DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole');
       });
 
-      it('should create a file with context type INNOVATION', async () => {
+      it('should create a file with context type INNOVATION and send notification', async () => {
         const data = {
           context: { id: innovation.id, type: InnovationFileContextTypeEnum.INNOVATION },
           name: randFileName(),
@@ -873,6 +884,10 @@ describe('Services / Innovation File service suite', () => {
           contextId: data.context.id,
           contextType: data.context.type,
           createdBy: qaDomainContext.id
+        });
+        expect(notifierSendSpy).toHaveBeenCalledWith(qaDomainContext, NotifierTypeEnum.INNOVATION_DOCUMENT_UPLOADED, {
+          innovationId: innovation.id,
+          file: { id: file.id }
         });
       });
 

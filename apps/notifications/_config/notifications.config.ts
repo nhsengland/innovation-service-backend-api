@@ -15,6 +15,7 @@ import {
   ActionCreationHandler,
   ActionUpdateHandler,
   DailyDigestHandler,
+  DocumentUploadHandler,
   IdleInnovatorsHandler,
   IdleSupportHandler,
   InnovationCollaboratorInviteHandler,
@@ -45,6 +46,17 @@ import {
 } from '../_handlers';
 
 export const NOTIFICATIONS_CONFIG = {
+  // Documents
+  [NotifierTypeEnum.INNOVATION_DOCUMENT_UPLOADED]: {
+    handler: DocumentUploadHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_DOCUMENT_UPLOADED]>({
+      innovationId: Joi.string().guid().required(),
+      file: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_DOCUMENT_UPLOADED]['file']>({
+        id: Joi.string().guid().required()
+      }).required()
+    }).required()
+  },
+
   [NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION]: {
     handler: InnovatorAccountCreationHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION]>({})

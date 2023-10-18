@@ -1,19 +1,19 @@
 import { inject, injectable } from 'inversify';
 import { basename, extname } from 'path';
 
+import { randomUUID } from 'crypto';
 import type { EntityManager } from 'typeorm';
 
+import { MAX_FILES_ALLOWED } from '@innovations/shared/constants';
 import {
   InnovationDocumentEntity,
   InnovationFileEntity,
   InnovationThreadMessageEntity
 } from '@innovations/shared/entities';
-import type { FileStorageService, IdentityProviderService } from '@innovations/shared/services';
-
-import { MAX_FILES_ALLOWED } from '@innovations/shared/constants';
 import {
   InnovationFileContextTypeEnum,
   InnovationStatusEnum,
+  NotifierTypeEnum,
   ServiceRoleEnum,
   UserStatusEnum
 } from '@innovations/shared/enums';
@@ -27,9 +27,10 @@ import { TranslationHelper, type PaginationQueryParamsType } from '@innovations/
 import { CurrentDocumentConfig } from '@innovations/shared/schemas/innovation-record';
 import { allowFileUploads } from '@innovations/shared/schemas/innovation-record/202304/document.config';
 import type { DocumentType202304 } from '@innovations/shared/schemas/innovation-record/202304/document.types';
+import type { FileStorageService, IdentityProviderService, NotifierService } from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { DomainContextType, IdentityUserInfo } from '@innovations/shared/types';
-import { randomUUID } from 'crypto';
+
 import type {
   InnovationFileOutputContextType,
   InnovationFileOutputType,
@@ -41,7 +42,8 @@ import { BaseService } from './base.service';
 export class InnovationFileService extends BaseService {
   constructor(
     @inject(SHARED_SYMBOLS.FileStorageService) private fileStorageService: FileStorageService,
-    @inject(SHARED_SYMBOLS.IdentityProviderService) private identityProviderService: IdentityProviderService
+    @inject(SHARED_SYMBOLS.IdentityProviderService) private identityProviderService: IdentityProviderService,
+    @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService
   ) {
     super();
   }
@@ -382,6 +384,16 @@ export class InnovationFileService extends BaseService {
         updatedBy: domainContext.id
       })
     );
+
+    if (
+      data.context.type === InnovationFileContextTypeEnum.INNOVATION &&
+      domainContext.currentRole.role !== ServiceRoleEnum.INNOVATOR
+    ) {
+      await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_DOCUMENT_UPLOADED, {
+        innovationId,
+        file: { id: file.id }
+      });
+    }
 
     return { id: file.id };
   }

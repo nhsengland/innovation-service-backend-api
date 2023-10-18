@@ -24,6 +24,12 @@ export type NotifierTemplatesType = {
     threadId: string;
   };
 
+  // Documents
+  [NotifierTypeEnum.INNOVATION_DOCUMENT_UPLOADED]: {
+    innovationId: string;
+    file: { id: string };
+  };
+
   [NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION]: Record<string, never>;
 
   [NotifierTypeEnum.INNOVATOR_ACCOUNT_DELETION_WITH_PENDING_TRANSFER]: {
