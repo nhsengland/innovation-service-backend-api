@@ -181,8 +181,8 @@ export abstract class BaseHandler<InputDataType extends NotifierTypeEnum, Notifi
         templateId: template,
         to: recipient,
         params: data.params,
-        options: data.options,
-        log: data.log
+        ...(data.options && { options: data.options }),
+        ...(data.log && { log: data.log })
       });
     });
   }
@@ -202,7 +202,7 @@ export abstract class BaseHandler<InputDataType extends NotifierTypeEnum, Notifi
       innovationId: data.innovationId,
       params: data.params,
       userRoleIds: userRoleIds,
-      options: data.options
+      ...(data.options && { options: data.options })
     });
   }
 

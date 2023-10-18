@@ -1,7 +1,17 @@
-import { InnovationTaskStatusEnum } from '@notifications/shared/enums';
-import { TestsHelper } from '@notifications/shared/tests';
+import { randText } from '@ngneat/falso';
+import {
+  InnovationTaskStatusEnum,
+  NotificationCategoryEnum,
+  NotificationContextTypeEnum,
+  ServiceRoleEnum
+} from '@notifications/shared/enums';
+import { MocksHelper, TestsHelper } from '@notifications/shared/tests';
+import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
+import { randomUUID } from 'crypto';
+import { taskUrl, threadUrl } from '../_helpers/url.helper';
+import { TaskUpdateHandler } from './task-update.handler';
 
-describe.skip('Notifications / _handlers / task-update suite', () => {
+describe('Notifications / _handlers / task-update suite', () => {
   const testsHelper = new TestsHelper();
   const scenario = testsHelper.getCompleteScenario();
 
@@ -11,43 +21,238 @@ describe.skip('Notifications / _handlers / task-update suite', () => {
 
   const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
   const task = innovation.tasks.taskByAlice;
+  const message = randText();
+  const messageId = randomUUID();
+  const threadId = randomUUID();
 
   describe('Task updated by Innovator', () => {
     const requestUser = scenario.users.johnInnovator;
 
     describe('TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS', () => {
       it.each([InnovationTaskStatusEnum.DONE, InnovationTaskStatusEnum.DECLINED])(
-        'should send an email to the innovator when a task is %s',
-        async () => {
-          fail('todo');
+        'should send an email to the innovators when a task is %s',
+        async status => {
+          const handler = new TaskUpdateHandler(
+            DTOsHelper.getUserRequestContext(requestUser),
+            {
+              innovationId: innovation.id,
+              task: { id: task.id, status: status },
+              message,
+              messageId,
+              threadId
+            },
+            MocksHelper.mockContext()
+          );
+
+          await handler.run();
+          const emails = handler.emails.filter(e => e.templateId === 'TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS');
+          expect(emails.length).toBe(2);
+          expect(emails).toEqual([
+            {
+              templateId: 'TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS',
+              notificationPreferenceType: NotificationCategoryEnum.TASK,
+              to: DTOsHelper.getRecipientUser(scenario.users.johnInnovator, 'innovatorRole'),
+              params: {
+                innovation_name: innovation.name,
+                innovator_name: scenario.users.johnInnovator.name,
+                task_status: handler['translateStatus'](status),
+                message_url: threadUrl(ServiceRoleEnum.INNOVATOR, innovation.id, threadId)
+              }
+            },
+            {
+              templateId: 'TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS',
+              notificationPreferenceType: NotificationCategoryEnum.TASK,
+              to: DTOsHelper.getRecipientUser(scenario.users.janeInnovator, 'innovatorRole'),
+              params: {
+                innovation_name: innovation.name,
+                innovator_name: scenario.users.johnInnovator.name,
+                task_status: handler['translateStatus'](status),
+                message_url: threadUrl(ServiceRoleEnum.INNOVATOR, innovation.id, threadId)
+              }
+            }
+          ]);
         }
       );
 
       it.each([InnovationTaskStatusEnum.DONE, InnovationTaskStatusEnum.DECLINED])(
         'should send an in-app to the innovator when a task is %s',
-        async () => {
-          fail('todo');
+        async status => {
+          const handler = new TaskUpdateHandler(
+            DTOsHelper.getUserRequestContext(requestUser),
+            {
+              innovationId: innovation.id,
+              task: { id: task.id, status: status },
+              message,
+              messageId,
+              threadId
+            },
+            MocksHelper.mockContext()
+          );
+
+          await handler.run();
+          const inapps = handler.inApp.filter(a => a.context.detail === 'TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS');
+          expect(inapps.length).toBe(1);
+          expect(inapps).toEqual([
+            {
+              innovationId: innovation.id,
+              context: {
+                type: NotificationContextTypeEnum.TASK,
+                detail: 'TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS',
+                id: task.id
+              },
+              userRoleIds: [
+                scenario.users.johnInnovator.roles.innovatorRole.id,
+                scenario.users.janeInnovator.roles.innovatorRole.id
+              ],
+              params: {
+                requestUserName: scenario.users.johnInnovator.name,
+                innovationName: innovation.name,
+                status: status,
+                messageId: messageId,
+                threadId: threadId
+              }
+            }
+          ]);
         }
       );
     });
 
     describe('TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT', () => {
       it('should send an email to the creator when a task is done', async () => {
-        fail('todo');
+        const handler = new TaskUpdateHandler(
+          DTOsHelper.getUserRequestContext(requestUser),
+          {
+            innovationId: innovation.id,
+            task: { id: task.id, status: InnovationTaskStatusEnum.DONE },
+            message,
+            messageId,
+            threadId
+          },
+          MocksHelper.mockContext()
+        );
+
+        await handler.run();
+        const emails = handler.emails.filter(e => e.templateId === 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT');
+        expect(emails.length).toBe(1);
+        expect(emails).toEqual([
+          {
+            templateId: 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT',
+            notificationPreferenceType: NotificationCategoryEnum.TASK,
+            to: DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor),
+            params: {
+              innovation_name: innovation.name,
+              innovator_name: scenario.users.johnInnovator.name,
+              message: message,
+              message_url: threadUrl(ServiceRoleEnum.QUALIFYING_ACCESSOR, innovation.id, threadId),
+              task_url: taskUrl(ServiceRoleEnum.QUALIFYING_ACCESSOR, innovation.id, task.id)
+            }
+          }
+        ]);
       });
 
       it('should send an in-app to the creator when a task is done', async () => {
-        fail('todo');
+        const handler = new TaskUpdateHandler(
+          DTOsHelper.getUserRequestContext(requestUser),
+          {
+            innovationId: innovation.id,
+            task: { id: task.id, status: InnovationTaskStatusEnum.DONE },
+            message,
+            messageId,
+            threadId
+          },
+          MocksHelper.mockContext()
+        );
+
+        await handler.run();
+        const inapps = handler.inApp.filter(a => a.context.detail === 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT');
+        expect(inapps.length).toBe(1);
+        expect(inapps).toEqual([
+          {
+            innovationId: innovation.id,
+            context: {
+              type: NotificationContextTypeEnum.TASK,
+              detail: 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT',
+              id: task.id
+            },
+            userRoleIds: [scenario.users.aliceQualifyingAccessor.roles.qaRole.id],
+            params: {
+              requestUserName: scenario.users.johnInnovator.name,
+              innovationName: innovation.name,
+              status: InnovationTaskStatusEnum.DONE,
+              messageId: messageId,
+              threadId: threadId
+            }
+          }
+        ]);
       });
     });
 
     describe('TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT', () => {
       it('should send an email to the creator when a task is declined', async () => {
-        fail('todo');
+        const handler = new TaskUpdateHandler(
+          DTOsHelper.getUserRequestContext(requestUser),
+          {
+            innovationId: innovation.id,
+            task: { id: task.id, status: InnovationTaskStatusEnum.DECLINED },
+            message,
+            messageId,
+            threadId
+          },
+          MocksHelper.mockContext()
+        );
+
+        await handler.run();
+        const emails = handler.emails.filter(e => e.templateId === 'TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT');
+        expect(emails.length).toBe(1);
+        expect(emails).toEqual([
+          {
+            templateId: 'TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT',
+            notificationPreferenceType: NotificationCategoryEnum.TASK,
+            to: DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor),
+            params: {
+              innovation_name: innovation.name,
+              innovator_name: scenario.users.johnInnovator.name,
+              message: message,
+              message_url: threadUrl(ServiceRoleEnum.QUALIFYING_ACCESSOR, innovation.id, threadId)
+            }
+          }
+        ]);
       });
 
       it('should send an in-app to the creator when a task is declined', async () => {
-        fail('todo');
+        const handler = new TaskUpdateHandler(
+          DTOsHelper.getUserRequestContext(requestUser),
+          {
+            innovationId: innovation.id,
+            task: { id: task.id, status: InnovationTaskStatusEnum.DECLINED },
+            message,
+            messageId,
+            threadId
+          },
+          MocksHelper.mockContext()
+        );
+
+        await handler.run();
+        const inapps = handler.inApp.filter(a => a.context.detail === 'TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT');
+        expect(inapps.length).toBe(1);
+        expect(inapps).toEqual([
+          {
+            innovationId: innovation.id,
+            context: {
+              type: NotificationContextTypeEnum.TASK,
+              detail: 'TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT',
+              id: task.id
+            },
+            userRoleIds: [scenario.users.aliceQualifyingAccessor.roles.qaRole.id],
+            params: {
+              requestUserName: scenario.users.johnInnovator.name,
+              innovationName: innovation.name,
+              status: InnovationTaskStatusEnum.DECLINED,
+              messageId: messageId,
+              threadId: threadId
+            }
+          }
+        ]);
       });
     });
   });
@@ -57,21 +262,171 @@ describe.skip('Notifications / _handlers / task-update suite', () => {
 
     describe('TA05_TASK_CANCELLED_TO_INNOVATOR', () => {
       it('should send an email to the innovators when a task is cancelled', async () => {
-        fail('todo');
+        const handler = new TaskUpdateHandler(
+          DTOsHelper.getUserRequestContext(requestUser),
+          {
+            innovationId: innovation.id,
+            task: { id: task.id, status: InnovationTaskStatusEnum.CANCELLED },
+            message,
+            messageId,
+            threadId
+          },
+          MocksHelper.mockContext()
+        );
+
+        await handler.run();
+        const emails = handler.emails.filter(e => e.templateId === 'TA05_TASK_CANCELLED_TO_INNOVATOR');
+        expect(emails.length).toBe(2);
+        expect(emails).toEqual([
+          {
+            templateId: 'TA05_TASK_CANCELLED_TO_INNOVATOR',
+            notificationPreferenceType: NotificationCategoryEnum.TASK,
+            to: DTOsHelper.getRecipientUser(scenario.users.johnInnovator, 'innovatorRole'),
+            params: {
+              accessor_name: scenario.users.aliceQualifyingAccessor.name,
+              unit_name: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
+              innovation_name: innovation.name,
+              message: message,
+              message_url: threadUrl(ServiceRoleEnum.INNOVATOR, innovation.id, threadId)
+            }
+          },
+          {
+            templateId: 'TA05_TASK_CANCELLED_TO_INNOVATOR',
+            notificationPreferenceType: NotificationCategoryEnum.TASK,
+            to: DTOsHelper.getRecipientUser(scenario.users.janeInnovator, 'innovatorRole'),
+            params: {
+              accessor_name: scenario.users.aliceQualifyingAccessor.name,
+              unit_name: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
+              innovation_name: innovation.name,
+              message: message,
+              message_url: threadUrl(ServiceRoleEnum.INNOVATOR, innovation.id, threadId)
+            }
+          }
+        ]);
       });
 
       it('should send an in-app to the innovators when a task is cancelled', async () => {
-        fail('todo');
+        const handler = new TaskUpdateHandler(
+          DTOsHelper.getUserRequestContext(requestUser),
+          {
+            innovationId: innovation.id,
+            task: { id: task.id, status: InnovationTaskStatusEnum.CANCELLED },
+            message,
+            messageId,
+            threadId
+          },
+          MocksHelper.mockContext()
+        );
+
+        await handler.run();
+        const inapps = handler.inApp.filter(a => a.context.detail === 'TA05_TASK_CANCELLED_TO_INNOVATOR');
+        expect(inapps.length).toBe(1);
+        expect(inapps).toEqual([
+          {
+            innovationId: innovation.id,
+            context: {
+              type: NotificationContextTypeEnum.TASK,
+              detail: 'TA05_TASK_CANCELLED_TO_INNOVATOR',
+              id: task.id
+            },
+            userRoleIds: [
+              scenario.users.johnInnovator.roles.innovatorRole.id,
+              scenario.users.janeInnovator.roles.innovatorRole.id
+            ],
+            params: {
+              requestUserName: scenario.users.aliceQualifyingAccessor.name,
+              unitName: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
+              innovationName: innovation.name,
+              messageId: messageId,
+              threadId: threadId
+            }
+          }
+        ]);
       });
     });
 
     describe('TA06_TASK_REOPEN_TO_INNOVATOR', () => {
       it('should send an email to the innovators when a task is reopened', async () => {
-        fail('todo');
+        const handler = new TaskUpdateHandler(
+          DTOsHelper.getUserRequestContext(requestUser),
+          {
+            innovationId: innovation.id,
+            task: { id: task.id, status: InnovationTaskStatusEnum.OPEN },
+            message,
+            messageId,
+            threadId
+          },
+          MocksHelper.mockContext()
+        );
+
+        await handler.run();
+        const emails = handler.emails.filter(e => e.templateId === 'TA06_TASK_REOPEN_TO_INNOVATOR');
+        expect(emails.length).toBe(2);
+        expect(emails).toEqual([
+          {
+            templateId: 'TA06_TASK_REOPEN_TO_INNOVATOR',
+            notificationPreferenceType: NotificationCategoryEnum.TASK,
+            to: DTOsHelper.getRecipientUser(scenario.users.johnInnovator, 'innovatorRole'),
+            params: {
+              accessor_name: scenario.users.aliceQualifyingAccessor.name,
+              unit_name: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
+              innovation_name: innovation.name,
+              message: message,
+              message_url: threadUrl(ServiceRoleEnum.INNOVATOR, innovation.id, threadId)
+            }
+          },
+          {
+            templateId: 'TA06_TASK_REOPEN_TO_INNOVATOR',
+            notificationPreferenceType: NotificationCategoryEnum.TASK,
+            to: DTOsHelper.getRecipientUser(scenario.users.janeInnovator, 'innovatorRole'),
+            params: {
+              accessor_name: scenario.users.aliceQualifyingAccessor.name,
+              unit_name: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
+              innovation_name: innovation.name,
+              message: message,
+              message_url: threadUrl(ServiceRoleEnum.INNOVATOR, innovation.id, threadId)
+            }
+          }
+        ]);
       });
 
       it('should send an in-app to the innovators when a task is reopened', async () => {
-        fail('todo');
+        const handler = new TaskUpdateHandler(
+          DTOsHelper.getUserRequestContext(requestUser),
+          {
+            innovationId: innovation.id,
+            task: { id: task.id, status: InnovationTaskStatusEnum.OPEN },
+            message,
+            messageId,
+            threadId
+          },
+          MocksHelper.mockContext()
+        );
+
+        await handler.run();
+        const inapps = handler.inApp.filter(a => a.context.detail === 'TA06_TASK_REOPEN_TO_INNOVATOR');
+        expect(inapps.length).toBe(1);
+        expect(inapps).toEqual([
+          {
+            innovationId: innovation.id,
+            context: {
+              type: NotificationContextTypeEnum.TASK,
+              detail: 'TA06_TASK_REOPEN_TO_INNOVATOR',
+              id: task.id
+            },
+            userRoleIds: [
+              scenario.users.johnInnovator.roles.innovatorRole.id,
+              scenario.users.janeInnovator.roles.innovatorRole.id
+            ],
+            params: {
+              requestUserName: scenario.users.aliceQualifyingAccessor.name,
+              unitName: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
+              innovationName: innovation.name,
+              messageId: messageId,
+              threadId: threadId
+            }
+          }
+        ]);
       });
     });
   });

@@ -24,11 +24,7 @@ export class TaskCreationHandler extends BaseHandler<
     );
 
     const innovatorRecipients = await this.recipientsService.getUsersRecipient(recipients, ServiceRoleEnum.INNOVATOR);
-
-    const unitName =
-      this.requestUser.currentRole.role === ServiceRoleEnum.ASSESSMENT
-        ? 'needs assessment'
-        : this.requestUser.organisation?.organisationUnit?.name ?? '';
+    const unitName = this.getRequestUnitName();
 
     this.addEmails('TA01_TASK_CREATION_TO_INNOVATOR', innovatorRecipients, {
       notificationPreferenceType: NotificationCategoryEnum.TASK,
