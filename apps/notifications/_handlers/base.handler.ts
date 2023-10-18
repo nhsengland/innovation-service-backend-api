@@ -11,6 +11,7 @@ import {
 import type { DomainContextType, NotificationPreferences, NotifierTemplatesType } from '@notifications/shared/types';
 import { EmailTemplates, EmailTemplatesType, container } from '../_config';
 import type { InAppTemplatesType } from '../_config/inapp.config';
+import { frontendBaseUrl } from '../_helpers/url.helper';
 import type { RecipientType, RecipientsService } from '../_services/recipients.service';
 import SYMBOLS from '../_services/symbols';
 
@@ -85,18 +86,11 @@ export abstract class BaseHandler<InputDataType extends NotifierTypeEnum, Notifi
     return !data || !data[type] || data[type] === NotificationPreferenceEnum.YES;
   }
 
+  /**
+   * @deprecated use the helpers from @notifications/shared/helpers
+   */
   protected frontendBaseUrl(userRole: ServiceRoleEnum): string {
-    switch (userRole) {
-      case ServiceRoleEnum.ASSESSMENT:
-        return 'assessment';
-      case ServiceRoleEnum.ACCESSOR:
-      case ServiceRoleEnum.QUALIFYING_ACCESSOR:
-        return 'accessor';
-      case ServiceRoleEnum.INNOVATOR:
-        return 'innovator';
-      default:
-        return '';
-    }
+    return frontendBaseUrl(userRole);
   }
 
   abstract run(): Promise<this>;
@@ -175,5 +169,72 @@ export abstract class BaseHandler<InputDataType extends NotifierTypeEnum, Notifi
       }
     });
     return this.inApp;
+  }
+
+  protected addEmails<
+    Template extends Notifications extends keyof EmailTemplatesType ? Notifications : never,
+    Type extends Omit<HandlerEmailType<Template>[number], 'templateId' | 'to'>
+  >(template: Template, recipients: (EmailRecipientType | RecipientType)[], data: Type): void {
+    recipients.forEach(recipient => {
+      this.emails.push({
+        notificationPreferenceType: data.notificationPreferenceType,
+        templateId: template,
+        to: recipient,
+        params: data.params,
+        options: data.options,
+        log: data.log
+      });
+    });
+  }
+
+  protected addInApp<
+    Template extends Notifications extends keyof InAppTemplatesType ? Notifications : never,
+    Type extends Omit<HandlerInAppType<Template>[number], 'userRoleIds'>
+  >(_template: Template, recipients: string[] | RecipientType[], data: Type): void {
+    if (!recipients.length) {
+      return;
+    }
+    const userRoleIds =
+      typeof recipients[0] === 'string' ? (recipients as string[]) : (recipients as RecipientType[]).map(r => r.roleId);
+
+    this.inApp.push({
+      context: data.context,
+      innovationId: data.innovationId,
+      params: data.params,
+      userRoleIds: userRoleIds,
+      options: data.options
+    });
+  }
+
+  private _requestUserName: string | null = null;
+  protected async getRequestUserName(): Promise<string> {
+    if (!this._requestUserName) {
+      this._requestUserName = await this.getUserName(this.requestUser.identityId);
+    }
+    return this._requestUserName;
+  }
+
+  protected getRequestUnitName(): string {
+    return this.requestUser.currentRole.role === ServiceRoleEnum.ASSESSMENT
+      ? 'needs assessment'
+      : this.requestUser.organisation?.organisationUnit?.name ?? '';
+  }
+
+  protected async getUserName(identityId: string | null): Promise<string> {
+    const name = identityId ? (await this.recipientsService.usersIdentityInfo(identityId))?.displayName ?? null : null;
+    if (name) {
+      return name;
+    }
+    switch (this.requestUser.currentRole.role) {
+      case ServiceRoleEnum.ACCESSOR:
+      case ServiceRoleEnum.QUALIFYING_ACCESSOR:
+        return 'accessor user';
+      case ServiceRoleEnum.ASSESSMENT:
+        return 'assessment user';
+      case ServiceRoleEnum.INNOVATOR:
+        return 'innovator user';
+      default:
+        return 'user';
+    }
   }
 }

@@ -5,7 +5,6 @@ import type {
   InnovationTaskStatusEnum
 } from '../enums/innovation.enums';
 import type { NotifierTypeEnum } from '../enums/notifier.enums';
-import type { CurrentCatalogTypes } from '../schemas/innovation-record';
 
 export type NotifierTemplatesType = {
   // Tasks
@@ -18,11 +17,11 @@ export type NotifierTemplatesType = {
     innovationId: string;
     task: {
       id: string;
-      section: CurrentCatalogTypes.InnovationSections;
       status: InnovationTaskStatusEnum;
-      previouslyUpdatedByUserRole?: { id: string; role: ServiceRoleEnum };
     };
-    comment?: string;
+    message: string;
+    messageId: string;
+    threadId: string;
   };
 
   [NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION]: Record<string, never>;
