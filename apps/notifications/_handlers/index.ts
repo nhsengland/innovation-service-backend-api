@@ -1,4 +1,5 @@
 export { BaseHandler } from './base.handler';
+export { DocumentUploadHandler } from './documents/document-upload.handler';
 export { AccessorUnitChangeHandler } from './legacy/accessor-unit-change.handler';
 export { DailyDigestHandler } from './legacy/daily-digest.handler';
 export { IdleInnovatorsHandler } from './legacy/idle-innovators.handler';

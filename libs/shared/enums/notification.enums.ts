@@ -7,6 +7,7 @@ export const NotificationTypes = {
     'TA05_TASK_CANCELLED_TO_INNOVATOR',
     'TA06_TASK_REOPEN_TO_INNOVATOR'
   ] as const,
+  DOCUMENT: ['DC01_UPLOADED_DOCUMENT_TO_INNOVATOR'] as const,
   MIGRATION_OLD: ['MIGRATION_OLD'] as const
 };
 export type NotificationTypes = typeof NotificationTypes;

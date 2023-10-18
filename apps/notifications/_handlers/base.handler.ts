@@ -20,7 +20,7 @@ type IdentityRecipientType = Omit<RecipientType, 'userRole'>;
 
 type HandlerEmailType<T> = Array<{
   templateId: T extends keyof EmailTemplates ? T : any; // legacy for now
-  notificationPreferenceType: keyof NotificationPreferences | null;
+  notificationPreferenceType: NotificationCategoryEnum | null;
   to: EmailRecipientType | Omit<IdentityRecipientType, 'userId' | 'role'>; // maybe review this later and it will probably only require roleId
   //params: T extends keyof EmailTemplatesType ? EmailTemplatesType[T] : Record<string, never>;
   params: T extends keyof EmailTemplatesType ? EmailTemplatesType[T] : any; // legacy for now
@@ -82,8 +82,9 @@ export abstract class BaseHandler<InputDataType extends NotifierTypeEnum, Notifi
    * Helper method to verify users email notification preferences.
    * Ex: this.isEmailPreferenceInstantly(NotificationCategoryEnum.TASK, userData);
    */
-  protected isEmailPreferenceInstantly(type: keyof NotificationPreferences, data?: NotificationPreferences): boolean {
-    return !data || !data[type] || data[type] === NotificationPreferenceEnum.YES;
+  protected isEmailPreferenceInstantly(type: NotificationCategoryEnum, data?: NotificationPreferences): boolean {
+    const preference = data as any; // TS can't infer the correct NotificationPreferences
+    return !preference || !preference[type] || preference[type] === NotificationPreferenceEnum.YES;
   }
 
   /**

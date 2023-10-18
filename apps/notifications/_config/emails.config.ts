@@ -9,6 +9,9 @@ export const EmailTemplates = {
   TA05_TASK_CANCELLED_TO_INNOVATOR: 'f9bcfef5-219c-4f71-82bd-4a3f9d60b807',
   TA06_TASK_REOPEN_TO_INNOVATOR: 'bc63e28c-b533-49a5-bdd1-35df8ddb1c68',
 
+  // DOCUMENTS
+  DC01_UPLOADED_DOCUMENT_TO_INNOVATOR: '3821092f-4ca5-483c-ae66-67ba66f46f0c',
+
   // TO BE REMOVED ?
   ACCOUNT_CREATION_TO_INNOVATOR: '62486954-b235-4aa6-8b8d-960191fc6e69',
   ACCOUNT_DELETION_WITH_TRANSFER_TO_COLLABORATOR: 'd09b5182-d995-4db7-b3ba-99fef085bb22',
@@ -133,6 +136,13 @@ export type EmailTemplatesType = {
     unit_name: string;
     message: string;
     message_url: string;
+  };
+
+  // Documents
+  DC01_UPLOADED_DOCUMENT_TO_INNOVATOR: {
+    accessor_name: string;
+    unit_name: string;
+    document_url: string;
   };
 
   // TODO
