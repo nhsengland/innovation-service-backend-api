@@ -8,6 +8,7 @@ import {
 import { MocksHelper, TestsHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { randomUUID } from 'crypto';
+import { testEmails, testInApps } from '../_helpers/tests.helper';
 import { taskUrl, threadUrl } from '../_helpers/url.helper';
 import { TaskUpdateHandler } from './task-update.handler';
 
@@ -347,86 +348,57 @@ describe('Notifications / _handlers / task-update suite', () => {
 
     describe('TA06_TASK_REOPEN_TO_INNOVATOR', () => {
       it('should send an email to the innovators when a task is reopened', async () => {
-        const handler = new TaskUpdateHandler(
-          DTOsHelper.getUserRequestContext(requestUser),
-          {
+        await testEmails(TaskUpdateHandler, 'TA06_TASK_REOPEN_TO_INNOVATOR', {
+          notificationPreferenceType: NotificationCategoryEnum.TASK,
+          requestUser: DTOsHelper.getUserRequestContext(requestUser),
+          inputData: {
             innovationId: innovation.id,
             task: { id: task.id, status: InnovationTaskStatusEnum.OPEN },
             message,
             messageId,
             threadId
           },
-          MocksHelper.mockContext()
-        );
-
-        await handler.run();
-        const emails = handler.emails.filter(e => e.templateId === 'TA06_TASK_REOPEN_TO_INNOVATOR');
-        expect(emails.length).toBe(2);
-        expect(emails).toEqual([
-          {
-            templateId: 'TA06_TASK_REOPEN_TO_INNOVATOR',
-            notificationPreferenceType: NotificationCategoryEnum.TASK,
-            to: DTOsHelper.getRecipientUser(scenario.users.johnInnovator, 'innovatorRole'),
-            params: {
-              accessor_name: scenario.users.aliceQualifyingAccessor.name,
-              unit_name: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
-              innovation_name: innovation.name,
-              message: message,
-              message_url: threadUrl(ServiceRoleEnum.INNOVATOR, innovation.id, threadId)
-            }
-          },
-          {
-            templateId: 'TA06_TASK_REOPEN_TO_INNOVATOR',
-            notificationPreferenceType: NotificationCategoryEnum.TASK,
-            to: DTOsHelper.getRecipientUser(scenario.users.janeInnovator, 'innovatorRole'),
-            params: {
-              accessor_name: scenario.users.aliceQualifyingAccessor.name,
-              unit_name: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
-              innovation_name: innovation.name,
-              message: message,
-              message_url: threadUrl(ServiceRoleEnum.INNOVATOR, innovation.id, threadId)
-            }
+          recipients: [
+            DTOsHelper.getRecipientUser(scenario.users.johnInnovator, 'innovatorRole'),
+            DTOsHelper.getRecipientUser(scenario.users.janeInnovator, 'innovatorRole')
+          ],
+          outputData: {
+            accessor_name: scenario.users.aliceQualifyingAccessor.name,
+            unit_name: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
+            innovation_name: innovation.name,
+            message: message,
+            message_url: threadUrl(ServiceRoleEnum.INNOVATOR, innovation.id, threadId)
           }
-        ]);
+        });
       });
 
       it('should send an in-app to the innovators when a task is reopened', async () => {
-        const handler = new TaskUpdateHandler(
-          DTOsHelper.getUserRequestContext(requestUser),
-          {
+        await testInApps(TaskUpdateHandler, 'TA06_TASK_REOPEN_TO_INNOVATOR', {
+          innovationId: innovation.id,
+          context: {
+            type: NotificationCategoryEnum.TASK,
+            id: task.id
+          },
+          requestUser: DTOsHelper.getUserRequestContext(requestUser),
+          inputData: {
             innovationId: innovation.id,
             task: { id: task.id, status: InnovationTaskStatusEnum.OPEN },
             message,
             messageId,
             threadId
           },
-          MocksHelper.mockContext()
-        );
-
-        await handler.run();
-        const inapps = handler.inApp.filter(a => a.context.detail === 'TA06_TASK_REOPEN_TO_INNOVATOR');
-        expect(inapps.length).toBe(1);
-        expect(inapps).toEqual([
-          {
-            innovationId: innovation.id,
-            context: {
-              type: NotificationContextTypeEnum.TASK,
-              detail: 'TA06_TASK_REOPEN_TO_INNOVATOR',
-              id: task.id
-            },
-            userRoleIds: [
-              scenario.users.johnInnovator.roles.innovatorRole.id,
-              scenario.users.janeInnovator.roles.innovatorRole.id
-            ],
-            params: {
-              requestUserName: scenario.users.aliceQualifyingAccessor.name,
-              unitName: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
-              innovationName: innovation.name,
-              messageId: messageId,
-              threadId: threadId
-            }
+          recipients: [
+            DTOsHelper.getRecipientUser(scenario.users.johnInnovator, 'innovatorRole'),
+            DTOsHelper.getRecipientUser(scenario.users.janeInnovator, 'innovatorRole')
+          ],
+          outputData: {
+            requestUserName: scenario.users.aliceQualifyingAccessor.name,
+            unitName: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
+            innovationName: innovation.name,
+            messageId: messageId,
+            threadId: threadId
           }
-        ]);
+        });
       });
     });
   });
