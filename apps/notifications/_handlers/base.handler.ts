@@ -15,7 +15,7 @@ import { frontendBaseUrl } from '../_helpers/url.helper';
 import type { RecipientType, RecipientsService } from '../_services/recipients.service';
 import SYMBOLS from '../_services/symbols';
 
-type EmailRecipientType = { email: string; displayname?: string };
+export type EmailRecipientType = { email: string; displayname?: string };
 type IdentityRecipientType = Omit<RecipientType, 'userRole'>;
 
 type HandlerEmailType<T> = Array<{
