@@ -12,9 +12,10 @@ import {
 
 import type { NotificationLogTypeEnum } from '@notifications/shared/enums/notification.enums';
 
-import type { EmailTemplatesType, EmailTypeEnum } from '../_config';
+import type { EmailTemplatesType } from '../_config';
 
 import { NotificationLogEntity } from '@notifications/shared/entities/user/notification-log.entity';
+import { EmailTemplates } from '../_config/emails.config';
 import { BaseService } from './base.service';
 
 type apiResponseDTO = {
@@ -76,8 +77,8 @@ export class EmailService extends BaseService {
     this.accessToken = sign({ iss: this.apiIssuer }, this.apiSecret, { algorithm: 'HS256' });
   }
 
-  async sendEmail<T extends EmailTypeEnum>(
-    templateId: T,
+  async sendEmail<T extends keyof EmailTemplatesType>(
+    template: T,
     toEmail: string,
     properties: EmailTemplatesType[T],
     log?: {
@@ -87,6 +88,7 @@ export class EmailService extends BaseService {
   ): Promise<boolean> {
     // Validate if the template exists.
     // const templateId = NotificationTemplates[templateCode].id;
+    const templateId = EmailTemplates[template];
     if (!templateId) {
       throw new UnprocessableEntityError(EmailErrorsEnum.EMAIL_TEMPLATE_NOT_FOUND, {
         details: { templateId }
@@ -147,7 +149,7 @@ export class EmailService extends BaseService {
     }
   }
 
-  private async sendEmailNotifyNHS<T extends EmailTypeEnum>(
+  private async sendEmailNotifyNHS<T extends keyof EmailTemplatesType>(
     apiProperties: apiClientParamsType<EmailTemplatesType[T]>,
     toEmail: string
   ): Promise<void> {

@@ -124,7 +124,7 @@ describe('Innovation Tasks Suite', () => {
 
       expect(notifierSendSpy).toHaveBeenCalledWith(context, NotifierTypeEnum.TASK_CREATION, {
         innovationId: innovation.id,
-        task: { id: task.id, section: 'INNOVATION_DESCRIPTION' }
+        task: { id: task.id }
       });
     });
 

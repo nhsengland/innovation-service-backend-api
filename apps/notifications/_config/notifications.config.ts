@@ -1,4 +1,3 @@
-import type { Schema } from 'joi';
 import Joi from 'joi';
 
 import { TEXTAREA_LENGTH_LIMIT } from '@notifications/shared/constants';
@@ -11,13 +10,12 @@ import {
 } from '@notifications/shared/enums';
 import type { NotifierTemplatesType } from '@notifications/shared/types';
 
-import { CurrentCatalogTypes } from '@notifications/shared/schemas/innovation-record';
 import {
   AccessorUnitChangeHandler,
   ActionCreationHandler,
   ActionUpdateHandler,
-  BaseHandler,
   DailyDigestHandler,
+  DocumentUploadHandler,
   IdleInnovatorsHandler,
   IdleSupportHandler,
   InnovationCollaboratorInviteHandler,
@@ -46,16 +44,19 @@ import {
   ThreadMessageCreationHandler,
   UnitInactivationSupportStatusCompletedHandler
 } from '../_handlers';
-import type { EmailTypeEnum } from './emails.config';
 
-export const NOTIFICATIONS_CONFIG: {
-  [key in NotifierTypeEnum]: {
-    handler: {
-      new (...args: any[]): BaseHandler<NotifierTypeEnum, EmailTypeEnum, Record<string, unknown>>;
-    };
-    joiDefinition: Schema;
-  };
-} = {
+export const NOTIFICATIONS_CONFIG = {
+  // Documents
+  [NotifierTypeEnum.INNOVATION_DOCUMENT_UPLOADED]: {
+    handler: DocumentUploadHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_DOCUMENT_UPLOADED]>({
+      innovationId: Joi.string().guid().required(),
+      file: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_DOCUMENT_UPLOADED]['file']>({
+        id: Joi.string().guid().required()
+      }).required()
+    }).required()
+  },
+
   [NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION]: {
     handler: InnovatorAccountCreationHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION]>({})
@@ -158,10 +159,7 @@ export const NOTIFICATIONS_CONFIG: {
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.TASK_CREATION]>({
       innovationId: Joi.string().guid().required(),
       task: Joi.object<NotifierTemplatesType[NotifierTypeEnum.TASK_CREATION]['task']>({
-        id: Joi.string().guid().required(),
-        section: Joi.string()
-          .valid(...CurrentCatalogTypes.InnovationSections)
-          .required()
+        id: Joi.string().guid().required()
       }).required()
     }).required()
   },
@@ -172,20 +170,11 @@ export const NOTIFICATIONS_CONFIG: {
       innovationId: Joi.string().guid().required(),
       task: Joi.object<NotifierTemplatesType[NotifierTypeEnum.TASK_UPDATE]['task']>({
         id: Joi.string().guid().required(),
-        section: Joi.string()
-          .valid(...CurrentCatalogTypes.InnovationSections)
-          .required(),
         status: Joi.string()
           .valid(...Object.values(InnovationTaskStatusEnum))
-          .required(),
-        previouslyUpdatedByUserRole: Joi.object({
-          id: Joi.string().guid().required(),
-          role: Joi.string()
-            .valid(...Object.values(ServiceRoleEnum))
-            .required()
-        }).optional()
+          .required()
       }).required(),
-      comment: Joi.string().optional()
+      message: Joi.string().optional()
     }).required()
   },
 
@@ -384,4 +373,4 @@ export const NOTIFICATIONS_CONFIG: {
     handler: IdleSupportHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.IDLE_SUPPORT]>({})
   }
-};
+} as const;

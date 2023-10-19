@@ -104,6 +104,7 @@ export class RecipientsService extends BaseService {
     withDeleted = false,
     entityManager?: EntityManager
   ): Promise<{
+    id: string;
     name: string;
     ownerId?: string;
     ownerIdentityId?: string;
@@ -127,6 +128,7 @@ export class RecipientsService extends BaseService {
     }
 
     return {
+      id: innovationId,
       name: dbInnovation.name,
       ownerId: dbInnovation.owner?.id,
       ownerIdentityId: dbInnovation.owner?.identityId
@@ -327,8 +329,7 @@ export class RecipientsService extends BaseService {
     id: string;
     displayId: string;
     status: InnovationTaskStatusEnum;
-    organisationUnit?: { id: string; name: string; acronym: string };
-    owner: RecipientType; // maybe just output the roleId but this is not used in many places so left the shortcut
+    owner: RecipientType;
   }> {
     const dbTask = await this.sqlConnection
       .createQueryBuilder(InnovationTaskEntity, 'task')
@@ -341,16 +342,12 @@ export class RecipientsService extends BaseService {
         'user.status',
         'role.id',
         'role.role',
-        'role.isActive',
-        'unit.id',
-        'unit.name',
-        'unit.acronym'
+        'role.isActive'
       ])
       // Review we are inner joining with user / role and the createdBy might have been deleted, for tasks I don't
       // think it's too much of an error to not send notifications in those cases
       .innerJoin('task.createdByUserRole', 'role')
       .innerJoin('role.user', 'user')
-      .leftJoin('role.organisationUnit', 'unit')
       .where(`task.id = :taskId`, { taskId: taskId })
       .andWhere('user.status = :userActive', { userActive: UserStatusEnum.ACTIVE })
       .getOne();
@@ -363,13 +360,6 @@ export class RecipientsService extends BaseService {
       id: dbTask.id,
       displayId: dbTask.displayId,
       status: dbTask.status,
-      ...(dbTask.createdByUserRole.organisationUnit && {
-        organisationUnit: {
-          id: dbTask.createdByUserRole.organisationUnit.id,
-          name: dbTask.createdByUserRole.organisationUnit.name,
-          acronym: dbTask.createdByUserRole.organisationUnit.acronym
-        }
-      }),
       owner: {
         userId: dbTask.createdByUserRole.user.id,
         identityId: dbTask.createdByUserRole.user.identityId,
@@ -493,6 +483,15 @@ export class RecipientsService extends BaseService {
       status: dbCollaborator.status,
       userId: dbCollaborator.user?.id ?? null
     };
+  }
+
+  /**
+   * returns a list of innovation innovators (owner + collaborators)
+   */
+  async getInnovationActiveOwnerAndCollaborators(innovationId: string): Promise<string[]> {
+    const innovationInfo = await this.innovationInfo(innovationId);
+    const collaborators = await this.getInnovationActiveCollaborators(innovationId);
+    return [...(innovationInfo.ownerId ? [innovationInfo.ownerId] : []), ...collaborators];
   }
 
   /**

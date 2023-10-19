@@ -5,9 +5,31 @@ import type {
   InnovationTaskStatusEnum
 } from '../enums/innovation.enums';
 import type { NotifierTypeEnum } from '../enums/notifier.enums';
-import type { CurrentCatalogTypes } from '../schemas/innovation-record';
 
 export type NotifierTemplatesType = {
+  // Tasks
+  [NotifierTypeEnum.TASK_CREATION]: {
+    innovationId: string;
+    task: { id: string };
+  };
+
+  [NotifierTypeEnum.TASK_UPDATE]: {
+    innovationId: string;
+    task: {
+      id: string;
+      status: InnovationTaskStatusEnum;
+    };
+    message: string;
+    messageId: string;
+    threadId: string;
+  };
+
+  // Documents
+  [NotifierTypeEnum.INNOVATION_DOCUMENT_UPLOADED]: {
+    innovationId: string;
+    file: { id: string };
+  };
+
   [NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION]: Record<string, never>;
 
   [NotifierTypeEnum.INNOVATOR_ACCOUNT_DELETION_WITH_PENDING_TRANSFER]: {
@@ -64,22 +86,6 @@ export type NotifierTemplatesType = {
   [NotifierTypeEnum.INNOVATION_ORGANISATION_UNITS_SUGGESTION]: {
     innovationId: string;
     organisationUnitIds: string[]; // Suggested organisation units.
-  };
-
-  [NotifierTypeEnum.TASK_CREATION]: {
-    innovationId: string;
-    task: { id: string; section: CurrentCatalogTypes.InnovationSections };
-  };
-
-  [NotifierTypeEnum.TASK_UPDATE]: {
-    innovationId: string;
-    task: {
-      id: string;
-      section: CurrentCatalogTypes.InnovationSections;
-      status: InnovationTaskStatusEnum;
-      previouslyUpdatedByUserRole?: { id: string; role: ServiceRoleEnum };
-    };
-    comment?: string;
   };
 
   [NotifierTypeEnum.THREAD_CREATION]: {

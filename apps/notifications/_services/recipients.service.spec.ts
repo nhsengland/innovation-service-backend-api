@@ -407,7 +407,7 @@ describe('Notifications / _services / recipients service suite', () => {
   });
 
   describe('taskInfoWithOwner', () => {
-    it('Should get task info without organisationUnit for Assessment Team', async () => {
+    it('Should get task info for Assessment Team', async () => {
       const dbInnovation = scenario.users.johnInnovator.innovations.johnInnovation;
       const dbTask = dbInnovation.tasks.taskByPaul;
 
@@ -419,10 +419,9 @@ describe('Notifications / _services / recipients service suite', () => {
         status: dbTask.status,
         owner: DTOsHelper.getRecipientUser(scenario.users.paulNeedsAssessor, 'assessmentRole')
       });
-      expect(taskInfo.organisationUnit).toBeUndefined();
     });
 
-    it('Should get task info with organisationUnit for supporting organisation', async () => {
+    it('Should get task info for supporting organisation', async () => {
       const dbInnovation = scenario.users.johnInnovator.innovations.johnInnovation;
       const dbTask = dbInnovation.tasks.taskByAlice;
 
@@ -432,13 +431,7 @@ describe('Notifications / _services / recipients service suite', () => {
         id: dbTask.id,
         displayId: dbTask.displayId,
         status: dbTask.status,
-        owner: DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole'),
-        organisationUnit: {
-          id: scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
-          name: scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
-          acronym:
-            scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.acronym
-        }
+        owner: DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole')
       });
     });
 
@@ -619,6 +612,17 @@ describe('Notifications / _services / recipients service suite', () => {
       await expect(() => sut.innovationCollaborationInfo(randUuid())).rejects.toThrowError(
         new NotFoundError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_NOT_FOUND)
       );
+    });
+  });
+
+  describe('getInnovationActiveOwnerAndCollaborators', () => {
+    it('Should get active owner and collaborators', async () => {
+      const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+
+      const innovators = await sut.getInnovationActiveOwnerAndCollaborators(innovation.id);
+
+      expect(innovators).toHaveLength(2);
+      expect(innovators).toMatchObject([scenario.users.johnInnovator.id, scenario.users.janeInnovator.id]);
     });
   });
 

@@ -3,7 +3,7 @@ import type { Context } from '@azure/functions';
 import type { NotificationLogTypeEnum } from '@notifications/shared/enums';
 import { JoiHelper } from '@notifications/shared/helpers';
 
-import { container, EmailTypeEnum } from '../_config';
+import { container, EmailTemplates } from '../_config';
 
 import type { DispatchService } from '../_services/dispatch.service';
 import SYMBOLS from '../_services/symbols';
@@ -14,7 +14,7 @@ class V1SendEmailListener {
     context: Context,
     requestMessage: {
       data: {
-        type: EmailTypeEnum;
+        type: keyof EmailTemplates;
         to: string;
         params: { [key: string]: string | number };
         log: {

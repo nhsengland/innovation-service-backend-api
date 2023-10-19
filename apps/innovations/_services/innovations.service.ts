@@ -657,6 +657,7 @@ export class InnovationsService extends BaseService {
           if (n.contextType === NotificationContextTypeEnum.THREAD) {
             notificationCounter.messages++;
           }
+          // TODO validate if we need contextDetail or not and if we can leverage the reopen
           if (
             n.contextDetail === NotificationContextDetailEnum.TASK_CREATION ||
             (n.contextDetail === NotificationContextDetailEnum.TASK_UPDATE &&
@@ -1690,31 +1691,4 @@ export class InnovationsService extends BaseService {
 
     return result;
   }
-
-  /*
-   * not used after get list refactor
-  private async getInnovationStatistics(innovation: InnovationEntity): Promise<{ messages: number, actions: number }> {
-
-    const statistics = { messages: 0, actions: 0 };
-
-    for (const notification of (await innovation.notifications)) {
-
-      const notificationUsers = await notification.notificationUsers;
-
-      if (notificationUsers.length === 0) { continue; }
-
-      if (notification.contextType === NotificationContextTypeEnum.THREAD) {
-        statistics.messages++;
-      }
-
-      if (notification.contextDetail === NotificationContextDetailEnum.ACTION_CREATION || (notification.contextDetail === NotificationContextDetailEnum.ACTION_UPDATE && JSON.parse(notification.params).actionStatus === InnovationTaskStatusEnum.REQUESTED)) {
-        statistics.actions++;
-      }
-
-    }
-
-    return statistics;
-
-  }
-  */
 }
