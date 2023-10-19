@@ -11,9 +11,9 @@ import {
 } from '@notifications/shared/types';
 
 import type { Context } from '@azure/functions';
-import { taskUrl, threadUrl } from '../_helpers/url.helper';
-import type { RecipientType } from '../_services/recipients.service';
-import { BaseHandler } from './base.handler';
+import { taskUrl, threadUrl } from '../../_helpers/url.helper';
+import type { RecipientType } from '../../_services/recipients.service';
+import { BaseHandler } from '../base.handler';
 
 export class TaskUpdateHandler extends BaseHandler<
   NotifierTypeEnum.TASK_UPDATE,

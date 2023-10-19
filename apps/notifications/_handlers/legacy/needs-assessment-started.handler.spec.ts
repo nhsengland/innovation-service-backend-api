@@ -37,6 +37,7 @@ describe('Notifications / _handlers / needs-assessment-started handler suite', (
   describe('Innovation owner is active', () => {
     beforeAll(async () => {
       jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+        id: innovation.id,
         name: innovation.name,
         ownerId: innovationOwner.id,
         ownerIdentityId: innovationOwner.identityId
@@ -99,6 +100,7 @@ describe('Notifications / _handlers / needs-assessment-started handler suite', (
   describe('Innovation owner is not active', () => {
     beforeAll(async () => {
       jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+        id: innovation.id,
         name: innovation.name,
         ownerId: innovationOwner.id,
         ownerIdentityId: innovationOwner.identityId

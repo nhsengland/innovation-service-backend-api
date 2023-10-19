@@ -30,6 +30,7 @@ describe('Notifications / _handlers / innovation-transfer-ownership-completed ha
     beforeEach(() => {
       // mock innovation info after transfer for new owner
       jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+        id: innovation.id,
         name: innovation.name,
         ownerId: newInnovationOwner.id,
         ownerIdentityId: newInnovationOwner.identityId
@@ -105,6 +106,7 @@ describe('Notifications / _handlers / innovation-transfer-ownership-completed ha
     beforeEach(() => {
       // mock innovation info with original owner because transfer was cancelled
       jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+        id: innovation.id,
         name: innovation.name,
         ownerId: previousInnovationOwner.id,
         ownerIdentityId: previousInnovationOwner.identityId
@@ -173,6 +175,7 @@ describe('Notifications / _handlers / innovation-transfer-ownership-completed ha
     beforeEach(() => {
       // mock innovation info with original owner because transfer was declined
       jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+        id: innovation.id,
         name: innovation.name,
         ownerId: previousInnovationOwner.id,
         ownerIdentityId: previousInnovationOwner.identityId

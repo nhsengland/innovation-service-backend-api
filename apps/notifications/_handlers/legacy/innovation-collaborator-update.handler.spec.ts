@@ -58,6 +58,7 @@ describe('Notifications / _handlers / innovation-collborator-update handler suit
       beforeAll(() => {
         // mock innovation info
         jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+          id: innovation.id,
           name: innovation.name,
           ownerId: innovationOwner.id,
           ownerIdentityId: innovationOwner.identityId
@@ -162,6 +163,7 @@ describe('Notifications / _handlers / innovation-collborator-update handler suit
     beforeAll(() => {
       // mock innovation info
       jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+        id: innovation.id,
         name: innovation.name,
         ownerId: innovationOwner.id,
         ownerIdentityId: innovationOwner.identityId
@@ -323,6 +325,7 @@ describe('Notifications / _handlers / innovation-collborator-update handler suit
     beforeAll(() => {
       // mock innovation info
       jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+        id: innovation.id,
         name: innovation.name,
         ownerId: innovationOwner.id,
         ownerIdentityId: innovationOwner.identityId
@@ -333,6 +336,7 @@ describe('Notifications / _handlers / innovation-collborator-update handler suit
         .mockResolvedValueOnce(DTOsHelper.getRecipientUser(innovationOwner, 'innovatorRole'));
       // mock innovation info
       jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+        id: innovation.id,
         name: innovation.name,
         ownerId: innovationOwner.id,
         ownerIdentityId: innovationOwner.identityId
@@ -486,6 +490,7 @@ describe('Notifications / _handlers / innovation-collborator-update handler suit
 
       // mock innovation info
       jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+        id: innovation.id,
         name: innovation.name,
         ownerId: innovationOwner.id,
         ownerIdentityId: innovationOwner.identityId
@@ -628,6 +633,7 @@ describe('Notifications / _handlers / innovation-collborator-update handler suit
     beforeEach(() => {
       // mock innovation info
       jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+        id: innovation.id,
         name: innovation.name,
         ownerId: innovationOwner.id,
         ownerIdentityId: innovationOwner.identityId

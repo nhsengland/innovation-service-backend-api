@@ -29,5 +29,5 @@ export { SupportSummaryUpdateHandler } from './legacy/support-summary-update.han
 export { ThreadCreationHandler } from './legacy/thread-creation.handler';
 export { ThreadMessageCreationHandler } from './legacy/thread-message-creation.handler';
 export { UnitInactivationSupportStatusCompletedHandler } from './legacy/unit-inactivation-support-status-completed.handler';
-export { TaskCreationHandler as ActionCreationHandler } from './task-creation.handler';
-export { TaskUpdateHandler as ActionUpdateHandler } from './task-update.handler';
+export { TaskCreationHandler as ActionCreationHandler } from './tasks/task-creation.handler';
+export { TaskUpdateHandler as ActionUpdateHandler } from './tasks/task-update.handler';

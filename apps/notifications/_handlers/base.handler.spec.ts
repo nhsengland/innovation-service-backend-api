@@ -67,7 +67,7 @@ describe('Notifications / _handlers / base handler suite', () => {
       [ServiceRoleEnum.ACCESSOR, 'accessor'],
       [ServiceRoleEnum.QUALIFYING_ACCESSOR, 'accessor'],
       [ServiceRoleEnum.INNOVATOR, 'innovator'],
-      [ServiceRoleEnum.ADMIN, '']
+      [ServiceRoleEnum.ADMIN, 'admin']
     ])('should return the correct frontend base url for role %s', (role: ServiceRoleEnum, res: string) => {
       expect(baseHandler['frontendBaseUrl'](role)).toBe(res);
     });

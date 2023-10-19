@@ -1,8 +1,9 @@
+import { AccessorUnitChangeHandler } from './accessor-unit-change.handler';
+
 import { NotFoundError, UserErrorsEnum } from '@notifications/shared/errors';
 import { CompleteScenarioType, MocksHelper, TestsHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { RecipientType, RecipientsService } from '../../_services/recipients.service';
-import { AccessorUnitChangeHandler } from './accessor-unit-change.handler';
 
 describe('Notifications / _handlers / accessor-unit-change suite', () => {
   let testsHelper: TestsHelper;

@@ -31,6 +31,7 @@ describe('Notifications / _handlers / innovation-support-status-change-request h
 
   beforeEach(() => {
     jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+      id: innovation.id,
       name: innovation.name,
       ownerId: innovationOwner.id,
       ownerIdentityId: innovationOwner.identityId

@@ -25,6 +25,7 @@ describe('Notifications / _handlers / innovation-stop-sharing handler suite', ()
 
   beforeEach(() => {
     jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+      id: innovation.id,
       name: innovation.name,
       ownerId: innovationOwner.id,
       ownerIdentityId: innovationOwner.identityId

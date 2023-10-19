@@ -89,6 +89,7 @@ describe('Notifications / _handlers / innovation-support-status-update suite', (
         support = innovation.supports.supportByHealthOrgUnit;
 
         jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+          id: innovation.id,
           name: innovation.name,
           ownerId: scenario.users.johnInnovator.id,
           ownerIdentityId: scenario.users.johnInnovator.identityId
@@ -229,6 +230,7 @@ describe('Notifications / _handlers / innovation-support-status-update suite', (
         support = innovation.supports.supportByHealthOrgUnit;
 
         jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+          id: innovation.id,
           name: innovation.name,
           ownerId: scenario.users.johnInnovator.id,
           ownerIdentityId: scenario.users.johnInnovator.identityId
@@ -363,6 +365,7 @@ describe('Notifications / _handlers / innovation-support-status-update suite', (
         support = innovation.supports.supportByHealthOrgUnit;
 
         jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+          id: innovation.id,
           name: innovation.name,
           ownerId: scenario.users.johnInnovator.id,
           ownerIdentityId: scenario.users.johnInnovator.identityId

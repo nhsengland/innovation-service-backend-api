@@ -21,6 +21,7 @@ describe('Notifications / _handlers / thread-message-creation suite', () => {
   const thread = innovation.threads.threadByPaulNA;
 
   jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValue({
+    id: innovation.id,
     name: innovation.name,
     ownerId: owner.id,
     ownerIdentityId: owner.identityId
