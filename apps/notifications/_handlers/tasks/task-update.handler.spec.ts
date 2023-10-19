@@ -8,8 +8,8 @@ import {
 import { MocksHelper, TestsHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { randomUUID } from 'crypto';
-import { testEmails, testInApps } from '../_helpers/tests.helper';
-import { taskUrl, threadUrl } from '../_helpers/url.helper';
+import { testEmails, testInApps } from '../../_helpers/tests.helper';
+import { taskUrl, threadUrl } from '../../_helpers/url.helper';
 import { TaskUpdateHandler } from './task-update.handler';
 
 describe('Notifications / _handlers / task-update suite', () => {

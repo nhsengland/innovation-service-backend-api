@@ -3,7 +3,7 @@ import { NotificationCategoryEnum, NotificationContextTypeEnum } from '@notifica
 import { UrlModel } from '@notifications/shared/models';
 import { CompleteScenarioType, MocksHelper, TestsHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
-import { ENV } from '../_config';
+import { ENV } from '../../_config';
 import { TaskCreationHandler } from './task-creation.handler';
 
 describe('Notifications / _handlers / task-creation suite', () => {

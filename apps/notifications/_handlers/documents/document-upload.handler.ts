@@ -1,6 +1,6 @@
 import type { Context } from '@azure/functions';
 
-import { NotificationCategoryEnum, ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
+import { NotificationCategoryEnum, NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { documentUrl } from '../../_helpers/url.helper';

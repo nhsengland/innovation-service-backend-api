@@ -56,6 +56,7 @@ describe('Notifications / _handlers / innovation-organisation-units-suggestion h
       ]);
 
     jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+      id: innovation.id,
       name: innovation.name,
       ownerId: scenario.users.johnInnovator.id,
       ownerIdentityId: scenario.users.johnInnovator.identityId

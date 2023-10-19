@@ -27,6 +27,7 @@ describe('Notifications / _handlers / unit-inactivation-support-status-completed
 
   beforeEach(() => {
     jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+      id: innovation.id,
       name: innovation.name,
       ownerId: innovationOwner.id,
       ownerIdentityId: innovationOwner.identityId

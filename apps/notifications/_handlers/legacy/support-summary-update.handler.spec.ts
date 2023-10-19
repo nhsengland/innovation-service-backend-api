@@ -31,6 +31,7 @@ describe('Notifications / _handlers / support-summary-update handler suite', () 
     );
 
     jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+      id: innovation.id,
       name: innovation.name,
       ownerId: scenario.users.johnInnovator.id,
       ownerIdentityId: scenario.users.johnInnovator.identityId
@@ -74,6 +75,7 @@ describe('Notifications / _handlers / support-summary-update handler suite', () 
     );
 
     jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+      id: innovation.id,
       name: innovation.name,
       ownerId: undefined,
       ownerIdentityId: undefined
@@ -103,6 +105,7 @@ describe('Notifications / _handlers / support-summary-update handler suite', () 
     );
 
     jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+      id: innovation.id,
       name: innovation.name,
       ownerId: scenario.users.johnInnovator.id,
       ownerIdentityId: scenario.users.johnInnovator.identityId
@@ -142,6 +145,7 @@ describe('Notifications / _handlers / support-summary-update handler suite', () 
     );
 
     jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+      id: innovation.id,
       name: innovation.name,
       ownerId: undefined,
       ownerIdentityId: undefined
@@ -169,6 +173,7 @@ describe('Notifications / _handlers / support-summary-update handler suite', () 
     );
 
     jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+      id: innovation.id,
       name: innovation.name,
       ownerId: scenario.users.johnInnovator.id,
       ownerIdentityId: scenario.users.johnInnovator.identityId
@@ -216,6 +221,7 @@ describe('Notifications / _handlers / support-summary-update handler suite', () 
     );
 
     jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+      id: innovation.id,
       name: innovation.name,
       ownerId: scenario.users.johnInnovator.id,
       ownerIdentityId: scenario.users.johnInnovator.identityId
@@ -247,6 +253,7 @@ describe('Notifications / _handlers / support-summary-update handler suite', () 
     );
 
     jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+      id: innovation.id,
       name: innovation.name,
       ownerId: scenario.users.johnInnovator.id,
       ownerIdentityId: scenario.users.johnInnovator.identityId
@@ -290,6 +297,7 @@ describe('Notifications / _handlers / support-summary-update handler suite', () 
     );
 
     jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+      id: innovation.id,
       name: innovation.name,
       ownerId: scenario.users.johnInnovator.id,
       ownerIdentityId: scenario.users.johnInnovator.identityId

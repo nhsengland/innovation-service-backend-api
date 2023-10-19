@@ -1,9 +1,10 @@
+import { DocumentUploadHandler } from './document-upload.handler';
+
 import { NotificationCategoryEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { CompleteScenarioType, MocksHelper, TestsHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 
 import { documentUrl } from '../../_helpers/url.helper';
-import { DocumentUploadHandler } from './document-upload.handler';
 
 describe('Notifications / _handlers / document-upload suite', () => {
   const testsHelper = new TestsHelper();

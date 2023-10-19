@@ -87,7 +87,8 @@ describe('Notifications / _handlers / thread-creation suite', () => {
       } as any);
 
       jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
-        name: scenario.users.johnInnovator.innovations.johnInnovation.name,
+        id: innovation.id,
+        name: innovation.name,
         ownerId: scenario.users.johnInnovator.id,
         ownerIdentityId: scenario.users.johnInnovator.identityId
       });
@@ -178,6 +179,7 @@ describe('Notifications / _handlers / thread-creation suite', () => {
         ]);
 
       jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValue({
+        id: scenario.users.johnInnovator.innovations.johnInnovation.id,
         name: scenario.users.johnInnovator.innovations.johnInnovation.name,
         ownerId: scenario.users.johnInnovator.id,
         ownerIdentityId: scenario.users.johnInnovator.identityId

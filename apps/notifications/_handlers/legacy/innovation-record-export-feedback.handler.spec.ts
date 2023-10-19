@@ -52,6 +52,7 @@ describe('Notifications / _handlers / innovation-record-export-feedback handler 
     beforeEach(() => {
       // mock innovation info
       jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+        id: innovation.id,
         name: innovation.name,
         ownerId: innovationOwner.id,
         ownerIdentityId: innovationOwner.identityId

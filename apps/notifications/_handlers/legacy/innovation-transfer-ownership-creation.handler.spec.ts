@@ -35,6 +35,7 @@ describe('Notifications / _handlers / innovation-transfer-ownership-creation han
   describe('Transfer to user that exists in the service', () => {
     beforeEach(() => {
       jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+        id: innovation.id,
         name: innovation.name,
         ownerId: innovationOwner.id,
         ownerIdentityId: innovationOwner.identityId
@@ -110,6 +111,7 @@ describe('Notifications / _handlers / innovation-transfer-ownership-creation han
   describe('Transfer to user outside the service', () => {
     beforeEach(() => {
       jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+        id: innovation.id,
         name: innovation.name,
         ownerId: innovationOwner.id,
         ownerIdentityId: innovationOwner.identityId

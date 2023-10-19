@@ -2,8 +2,8 @@ import { NotificationCategoryEnum, NotifierTypeEnum, ServiceRoleEnum } from '@no
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import type { Context } from '@azure/functions';
-import { taskUrl } from '../_helpers/url.helper';
-import { BaseHandler } from './base.handler';
+import { taskUrl } from '../../_helpers/url.helper';
+import { BaseHandler } from '../base.handler';
 
 export class TaskCreationHandler extends BaseHandler<
   NotifierTypeEnum.TASK_CREATION,

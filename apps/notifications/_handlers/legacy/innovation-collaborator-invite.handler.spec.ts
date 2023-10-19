@@ -32,6 +32,7 @@ describe('Notifications / _handlers / innovation-collaborator-invite suite', () 
 
       // mocks
       jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValue({
+        id: innovation.id,
         name: innovation.name,
         ownerId: scenario.users.johnInnovator.id,
         ownerIdentityId: scenario.users.johnInnovator.identityId
@@ -75,6 +76,7 @@ describe('Notifications / _handlers / innovation-collaborator-invite suite', () 
 
       // mocks
       jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValue({
+        id: innovation.id,
         name: innovation.name,
         ownerId: innovationOwnerContext.id,
         ownerIdentityId: innovationOwnerContext.identityId
@@ -132,6 +134,7 @@ describe('Notifications / _handlers / innovation-collaborator-invite suite', () 
 
       // This will never happen, but we have to test it anyways.
       jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValue({
+        id: innovation.id,
         name: innovation.name,
         ownerId: undefined,
         ownerIdentityId: undefined
@@ -158,6 +161,7 @@ describe('Notifications / _handlers / innovation-collaborator-invite suite', () 
 
       // This will never happen, but we have to test it anyways.
       jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValue({
+        id: innovation.id,
         name: innovation.name,
         ownerId: undefined,
         ownerIdentityId: randomUUID()
