@@ -14,6 +14,7 @@ import {
   InnovationStatusEnum,
   InnovationSupportStatusEnum,
   InnovationTaskStatusEnum,
+  NotificationCategoryEnum,
   NotificationContextTypeEnum,
   NotifierTypeEnum,
   ServiceRoleEnum,
@@ -244,7 +245,7 @@ export class InnovationTasksService extends BaseService {
 
     let notifications: {
       id: string;
-      contextType: NotificationContextTypeEnum;
+      contextType: NotificationContextTypeEnum | NotificationCategoryEnum;
       contextId: string;
       params: Record<string, unknown>;
     }[] = [];
