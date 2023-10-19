@@ -174,7 +174,9 @@ export const NOTIFICATIONS_CONFIG = {
           .valid(...Object.values(InnovationTaskStatusEnum))
           .required()
       }).required(),
-      message: Joi.string().optional()
+      message: Joi.string().required(),
+      messageId: Joi.string().guid().required(),
+      threadId: Joi.string().guid().required()
     }).required()
   },
 
