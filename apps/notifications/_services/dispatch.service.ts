@@ -7,6 +7,7 @@ import {
   UserRoleEntity
 } from '@notifications/shared/entities';
 import type {
+  NotificationCategoryEnum,
   NotificationContextDetailEnum,
   NotificationContextTypeEnum,
   NotificationLogTypeEnum
@@ -43,7 +44,7 @@ export class DispatchService extends BaseService {
     requestUser: { id: string },
     innovationId: string,
     context: {
-      type: NotificationContextTypeEnum;
+      type: NotificationContextTypeEnum | NotificationCategoryEnum;
       detail: NotificationContextDetailEnum;
       id: string;
     },

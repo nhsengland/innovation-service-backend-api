@@ -29,6 +29,7 @@ import {
   InnovationSupportStatusEnum,
   InnovationTaskStatusEnum,
   InnovationTransferStatusEnum,
+  NotificationCategoryEnum,
   NotificationContextTypeEnum,
   NotifierTypeEnum,
   ServiceRoleEnum,
@@ -510,7 +511,7 @@ export class DomainInnovationsService {
   ): Promise<
     {
       id: string;
-      contextType: NotificationContextTypeEnum;
+      contextType: NotificationContextTypeEnum | NotificationCategoryEnum;
       contextId: string;
       params: Record<string, unknown>;
     }[]
