@@ -20,20 +20,26 @@ export const testEmails = async <
     requestUser: DomainContextType;
     inputData: NotifierTemplatesType[InputDataType];
     recipients: (EmailRecipientType | RecipientType)[];
-    outputData: EmailTemplatesType[Notifications];
+    outputData: EmailTemplatesType[Notifications] | EmailTemplatesType[Notifications][];
+    options?: { includeLocked?: boolean; ignorePreferences?: boolean; includeSelf?: boolean };
   }
 ): Promise<void> => {
+  if (Array.isArray(data.outputData) && data.recipients.length !== data.outputData.length) {
+    fail();
+  }
+
   const handler = new handlerClass(data.requestUser, data.inputData, MocksHelper.mockContext());
   await handler.run();
 
   handler.emails.filter(e => e.templateId === template);
   expect(handler.emails.length).toBe(data.recipients.length);
   expect(handler.emails).toEqual(
-    data.recipients.map(r => ({
+    data.recipients.map((r, i) => ({
       templateId: template,
       notificationPreferenceType: data.notificationPreferenceType,
       to: r,
-      params: data.outputData
+      params: Array.isArray(data.outputData) ? data.outputData[i] : data.outputData,
+      ...(data.options && { options: data.options })
     }))
   );
 };
@@ -55,6 +61,7 @@ export const testInApps = async <
     inputData: NotifierTemplatesType[InputDataType];
     recipients: RecipientType[];
     outputData: InAppTemplatesType[Notifications];
+    options?: { includeSelf?: boolean };
   }
 ): Promise<void> => {
   const handler = new handlerClass(data.requestUser, data.inputData, MocksHelper.mockContext());
@@ -71,7 +78,8 @@ export const testInApps = async <
         id: data.context.id
       },
       userRoleIds: data.recipients.map(r => r.roleId),
-      params: data.outputData
+      params: data.outputData,
+      ...(data.options && { options: data.options })
     }
   ]);
 };
