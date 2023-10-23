@@ -37,6 +37,12 @@ export type NotifierTemplatesType = {
     messageId: string;
   };
 
+  [NotifierTypeEnum.THREAD_ADD_FOLLOWERS]: {
+    innovationId: string;
+    threadId: string;
+    newFollowersRoleIds: string[];
+  };
+
   [NotifierTypeEnum.THREAD_MESSAGE_CREATION]: {
     innovationId: string;
     threadId: string;

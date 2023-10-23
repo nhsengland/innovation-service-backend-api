@@ -14,6 +14,7 @@ export const EmailTemplates = {
 
   // MESSAGES
   ME01_THREAD_CREATION: 'fa83a527-943c-4b52-bba4-9ccee0241979',
+  ME02_THREAD_ADD_FOLLOWERS: 'fa83a527-943c-4b52-bba4-9ccee0241979',
   ME03_THREAD_MESSAGE_CREATION: '8cb941e4-218f-42fd-96b7-a1140b7c2b12',
 
   // TO BE REMOVED ?
@@ -151,6 +152,11 @@ export type EmailTemplatesType = {
 
   // Messages
   ME01_THREAD_CREATION: {
+    innovation_name: string;
+    sender: string;
+    thread_url: string;
+  };
+  ME02_THREAD_ADD_FOLLOWERS: {
     innovation_name: string;
     sender: string;
     thread_url: string;

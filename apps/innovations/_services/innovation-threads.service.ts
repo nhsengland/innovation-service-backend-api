@@ -153,7 +153,7 @@ export class InnovationThreadsService extends BaseService {
       followerUserRoleIds.push(domainContext.currentRole.id);
     }
 
-    await this.addFollowersToThread(thread.thread.id, followerUserRoleIds, entityManager);
+    await this.addFollowersToThread(domainContext, thread.thread.id, followerUserRoleIds, false, entityManager);
 
     if (file) {
       await this.innovationFileService.createFile(
@@ -181,8 +181,10 @@ export class InnovationThreadsService extends BaseService {
   }
 
   async addFollowersToThread(
+    domainContext: DomainContextType,
     threadId: string,
     followerUserRoleIds: string[],
+    sendNotification: boolean,
     entityManager?: EntityManager
   ): Promise<void> {
     const em = entityManager ?? this.sqlConnection.manager;
@@ -190,12 +192,15 @@ export class InnovationThreadsService extends BaseService {
     const dbThread = await em
       .createQueryBuilder(InnovationThreadEntity, 'thread')
       .leftJoinAndSelect('thread.followers', 'followerUserRole')
+      .innerJoinAndSelect('thread.innovation', 'innovation')
       .where('thread.id = :threadId', { threadId })
       .getOne();
 
     if (!dbThread) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND);
     }
+
+    const oldFollowersRoleIds = dbThread.followers.map(f => f.id);
 
     // Remove duplicates
     const uniqueFollowerRoleIds = [...new Set([...followerUserRoleIds, ...dbThread.followers.map(f => f.id)])];
@@ -204,6 +209,14 @@ export class InnovationThreadsService extends BaseService {
       ...dbThread,
       followers: uniqueFollowerRoleIds.map(urId => UserRoleEntity.new({ id: urId }))
     });
+
+    if (sendNotification) {
+      await this.notifierService.send(domainContext, NotifierTypeEnum.THREAD_ADD_FOLLOWERS, {
+        threadId: threadId,
+        innovationId: dbThread.innovation.id,
+        newFollowersRoleIds: followerUserRoleIds.filter(id => !oldFollowersRoleIds.includes(id))
+      });
+    }
   }
 
   async unfollowThread(
@@ -999,7 +1012,7 @@ export class InnovationThreadsService extends BaseService {
 
     // add thread author as follower
     if (domainContext.currentRole.role !== ServiceRoleEnum.INNOVATOR) {
-      await this.addFollowersToThread(thread.id, [domainContext.currentRole.id], transaction);
+      await this.addFollowersToThread(domainContext, thread.id, [domainContext.currentRole.id], false, transaction);
     }
 
     const messages = await thread.messages;

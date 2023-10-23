@@ -40,10 +40,11 @@ import {
   NeedsAssessmentCompletedHandler,
   NeedsAssessmentStartedHandler,
   SupportSummaryUpdateHandler,
-  ThreadCreationHandler,
   UnitInactivationSupportStatusCompletedHandler
 } from '../_handlers';
 import { MessageCreationHandler } from '../_handlers/messages/message-creation.handler';
+import { ThreadAddFollowersHandler } from '../_handlers/messages/thread-add-followers.handler';
+import { ThreadCreationHandler } from '../_handlers/messages/thread-creation.handler';
 
 export const NOTIFICATIONS_CONFIG = {
   // Documents
@@ -58,6 +59,24 @@ export const NOTIFICATIONS_CONFIG = {
   },
 
   // Messages
+  [NotifierTypeEnum.THREAD_CREATION]: {
+    handler: ThreadCreationHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.THREAD_CREATION]>({
+      innovationId: Joi.string().guid().required(),
+      threadId: Joi.string().guid().required(),
+      messageId: Joi.string().guid().required()
+    }).required()
+  },
+
+  [NotifierTypeEnum.THREAD_ADD_FOLLOWERS]: {
+    handler: ThreadAddFollowersHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.THREAD_ADD_FOLLOWERS]>({
+      innovationId: Joi.string().guid().required(),
+      threadId: Joi.string().guid().required(),
+      newFollowersRoleIds: Joi.array().items(Joi.string().guid()).required()
+    }).required()
+  },
+
   [NotifierTypeEnum.THREAD_MESSAGE_CREATION]: {
     handler: MessageCreationHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.THREAD_MESSAGE_CREATION]>({
@@ -187,15 +206,6 @@ export const NOTIFICATIONS_CONFIG = {
       message: Joi.string().required(),
       messageId: Joi.string().guid().required(),
       threadId: Joi.string().guid().required()
-    }).required()
-  },
-
-  [NotifierTypeEnum.THREAD_CREATION]: {
-    handler: ThreadCreationHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.THREAD_CREATION]>({
-      innovationId: Joi.string().guid().required(),
-      threadId: Joi.string().guid().required(),
-      messageId: Joi.string().guid().required()
     }).required()
   },
 

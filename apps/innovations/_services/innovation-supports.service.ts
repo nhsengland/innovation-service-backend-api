@@ -342,7 +342,7 @@ export class InnovationSupportsService extends BaseService {
         }
       );
 
-      await this.assignAccessors(savedSupport, accessors, thread.thread.id, transaction);
+      await this.assignAccessors(domainContext, savedSupport, accessors, thread.thread.id, transaction);
 
       return { id: savedSupport.id };
     });
@@ -555,6 +555,7 @@ export class InnovationSupportsService extends BaseService {
       );
 
       const newAssignedAccessors = await this.assignAccessors(
+        domainContext,
         savedSupport,
         assignedAccessors,
         thread.thread.id,
@@ -640,6 +641,7 @@ export class InnovationSupportsService extends BaseService {
     }
 
     await this.assignAccessors(
+      domainContext,
       support,
       data.accessors.map(item => item.userRoleId),
       thread.id,
@@ -667,6 +669,7 @@ export class InnovationSupportsService extends BaseService {
    * @returns the list of new assigned accessors role ids
    */
   private async assignAccessors(
+    domainContext: DomainContextType,
     support: string | InnovationSupportEntity,
     accessorRoleIds: string[],
     threadId: string, // this will likely become optional in the future
@@ -675,7 +678,7 @@ export class InnovationSupportsService extends BaseService {
     // Force a transaction if one not present
     if (!entityManager) {
       return this.sqlConnection.transaction(async transaction => {
-        return this.assignAccessors(support, accessorRoleIds, threadId, transaction);
+        return this.assignAccessors(domainContext, support, accessorRoleIds, threadId, transaction);
       });
     }
 
@@ -711,7 +714,13 @@ export class InnovationSupportsService extends BaseService {
         support.organisationUnit.id,
         entityManager
       );
-      await this.innovationThreadsService.addFollowersToThread(threadId, accessorRoleIds, entityManager);
+      await this.innovationThreadsService.addFollowersToThread(
+        domainContext,
+        threadId,
+        accessorRoleIds,
+        true,
+        entityManager
+      );
     }
 
     return newAssignedAccessors;
