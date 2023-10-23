@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { NotificationCategoryEnum, NotificationContextTypeEnum } from '@notifications/shared/enums';
+import { TranslationHelper } from '@notifications/shared/helpers';
 import { UrlModel } from '@notifications/shared/models';
 import { CompleteScenarioType, MocksHelper, TestsHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
@@ -111,8 +112,8 @@ describe('Notifications / _handlers / task-creation suite', () => {
       );
 
       await handler.run();
-      expect(handler.emails[0]?.params.unit_name).toBe('needs assessment');
-      expect(handler.inApp[0]?.params.unitName).toBe('needs assessment');
+      expect(handler.emails[0]?.params.unit_name).toBe(TranslationHelper.translate('TEAMS.ASSESSMENT'));
+      expect(handler.inApp[0]?.params.unitName).toBe(TranslationHelper.translate('TEAMS.ASSESSMENT'));
     });
   });
 });

@@ -57,6 +57,16 @@ export const NOTIFICATIONS_CONFIG = {
     }).required()
   },
 
+  // Messages
+  [NotifierTypeEnum.THREAD_MESSAGE_CREATION]: {
+    handler: ThreadMessageCreationHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.THREAD_MESSAGE_CREATION]>({
+      innovationId: Joi.string().guid().required(),
+      threadId: Joi.string().guid().required(),
+      messageId: Joi.string().guid().required()
+    }).required()
+  },
+
   [NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION]: {
     handler: InnovatorAccountCreationHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION]>({})
@@ -183,15 +193,6 @@ export const NOTIFICATIONS_CONFIG = {
   [NotifierTypeEnum.THREAD_CREATION]: {
     handler: ThreadCreationHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.THREAD_CREATION]>({
-      innovationId: Joi.string().guid().required(),
-      threadId: Joi.string().guid().required(),
-      messageId: Joi.string().guid().required()
-    }).required()
-  },
-
-  [NotifierTypeEnum.THREAD_MESSAGE_CREATION]: {
-    handler: ThreadMessageCreationHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.THREAD_MESSAGE_CREATION]>({
       innovationId: Joi.string().guid().required(),
       threadId: Joi.string().guid().required(),
       messageId: Joi.string().guid().required()

@@ -8,6 +8,7 @@ import {
   NotifierTypeEnum,
   ServiceRoleEnum
 } from '@notifications/shared/enums';
+import { TranslationHelper } from '@notifications/shared/helpers';
 import type { DomainContextType, NotificationPreferences, NotifierTemplatesType } from '@notifications/shared/types';
 import { EmailTemplates, EmailTemplatesType, container } from '../_config';
 import type { InAppTemplatesType } from '../_config/inapp.config';
@@ -217,7 +218,7 @@ export abstract class BaseHandler<InputDataType extends NotifierTypeEnum, Notifi
 
   protected getRequestUnitName(): string {
     return this.requestUser.currentRole.role === ServiceRoleEnum.ASSESSMENT
-      ? 'needs assessment'
+      ? TranslationHelper.translate(`TEAMS.${this.requestUser.currentRole.role}`)
       : this.requestUser.organisation?.organisationUnit?.name ?? '';
   }
 

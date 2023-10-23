@@ -30,6 +30,13 @@ export type NotifierTemplatesType = {
     file: { id: string };
   };
 
+  // Messages
+  [NotifierTypeEnum.THREAD_MESSAGE_CREATION]: {
+    innovationId: string;
+    threadId: string;
+    messageId: string;
+  };
+
   [NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION]: Record<string, never>;
 
   [NotifierTypeEnum.INNOVATOR_ACCOUNT_DELETION_WITH_PENDING_TRANSFER]: {
@@ -89,12 +96,6 @@ export type NotifierTemplatesType = {
   };
 
   [NotifierTypeEnum.THREAD_CREATION]: {
-    innovationId: string;
-    threadId: string;
-    messageId: string;
-  };
-
-  [NotifierTypeEnum.THREAD_MESSAGE_CREATION]: {
     innovationId: string;
     threadId: string;
     messageId: string;

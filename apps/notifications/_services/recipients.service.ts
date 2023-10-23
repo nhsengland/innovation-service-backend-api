@@ -1099,4 +1099,22 @@ export class RecipientsService extends BaseService {
 
     return new Map(preferences.map(p => [p.userRoleId, p.preferences]));
   }
+
+  /**
+   * Returns the recipient grouped by their user role
+   * @param recipients the recipients to group by role
+   * @returns recipients grouped by role
+   */
+  getRecipientsByRole(recipients: RecipientType[]): { [key in ServiceRoleEnum]?: RecipientType[] } {
+    return recipients.reduce(
+      (acc, cur) => {
+        if (!acc[cur.role]) {
+          acc[cur.role] = [];
+        }
+        acc[cur.role]!.push(cur);
+        return acc;
+      },
+      {} as { [key in ServiceRoleEnum]?: RecipientType[] }
+    );
+  }
 }

@@ -12,6 +12,9 @@ export const EmailTemplates = {
   // DOCUMENTS
   DC01_UPLOADED_DOCUMENT_TO_INNOVATOR: '3821092f-4ca5-483c-ae66-67ba66f46f0c',
 
+  // MESSAGES
+  ME03_THREAD_MESSAGE_CREATION: '8cb941e4-218f-42fd-96b7-a1140b7c2b12',
+
   // TO BE REMOVED ?
   ACCOUNT_CREATION_TO_INNOVATOR: '62486954-b235-4aa6-8b8d-960191fc6e69',
   ACCOUNT_DELETION_WITH_TRANSFER_TO_COLLABORATOR: 'd09b5182-d995-4db7-b3ba-99fef085bb22',
@@ -143,6 +146,13 @@ export type EmailTemplatesType = {
     accessor_name: string;
     unit_name: string;
     document_url: string;
+  };
+
+  // Messages
+  ME03_THREAD_MESSAGE_CREATION: {
+    innovation_name: string;
+    sender: string;
+    thread_url: string;
   };
 
   // TODO

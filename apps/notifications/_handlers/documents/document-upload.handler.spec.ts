@@ -4,6 +4,7 @@ import { NotificationCategoryEnum, ServiceRoleEnum } from '@notifications/shared
 import { CompleteScenarioType, MocksHelper, TestsHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 
+import { TranslationHelper } from '@notifications/shared/helpers';
 import { documentUrl } from '../../_helpers/url.helper';
 
 describe('Notifications / _handlers / document-upload suite', () => {
@@ -92,8 +93,8 @@ describe('Notifications / _handlers / document-upload suite', () => {
         );
         await handler.run();
 
-        expect(handler.emails[0]?.params.unit_name).toBe('needs assessment');
-        expect(handler.inApp[0]?.params.unitName).toBe('needs assessment');
+        expect(handler.emails[0]?.params.unit_name).toBe(TranslationHelper.translate('TEAMS.ASSESSMENT'));
+        expect(handler.inApp[0]?.params.unitName).toBe(TranslationHelper.translate('TEAMS.ASSESSMENT'));
       });
     });
   });
