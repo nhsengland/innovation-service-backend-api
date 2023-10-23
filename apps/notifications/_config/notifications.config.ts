@@ -41,9 +41,9 @@ import {
   NeedsAssessmentStartedHandler,
   SupportSummaryUpdateHandler,
   ThreadCreationHandler,
-  ThreadMessageCreationHandler,
   UnitInactivationSupportStatusCompletedHandler
 } from '../_handlers';
+import { MessageCreationHandler } from '../_handlers/messages/message-creation.handler';
 
 export const NOTIFICATIONS_CONFIG = {
   // Documents
@@ -59,7 +59,7 @@ export const NOTIFICATIONS_CONFIG = {
 
   // Messages
   [NotifierTypeEnum.THREAD_MESSAGE_CREATION]: {
-    handler: ThreadMessageCreationHandler,
+    handler: MessageCreationHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.THREAD_MESSAGE_CREATION]>({
       innovationId: Joi.string().guid().required(),
       threadId: Joi.string().guid().required(),
