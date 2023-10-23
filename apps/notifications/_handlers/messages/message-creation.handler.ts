@@ -35,8 +35,7 @@ export class MessageCreationHandler extends BaseHandler<
           innovation_name: innovation.name,
           sender: `${senderName} (${displayTag})`,
           thread_url: threadUrl(role as ServiceRoleEnum, innovation.id, this.inputData.threadId)
-        },
-        options: { includeSelf: false }
+        }
       });
     }
 
@@ -49,11 +48,11 @@ export class MessageCreationHandler extends BaseHandler<
       },
       params: {
         innovationName: innovation.name,
-        senderDisplayInformation: `${senderName} (${displayTag})`,
+        senderDisplayInformation:
+          this.requestUser.currentRole.role === ServiceRoleEnum.INNOVATOR ? senderName : displayTag,
         messageId: this.inputData.messageId,
         threadId: this.inputData.threadId
-      },
-      options: { includeSelf: false }
+      }
     });
 
     return this;
