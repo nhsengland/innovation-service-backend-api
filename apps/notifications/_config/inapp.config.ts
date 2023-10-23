@@ -46,6 +46,12 @@ export type InAppTemplatesType = {
     fileId: string;
   };
   // Messages
+  ME01_THREAD_CREATION: {
+    senderDisplayInformation: string;
+    innovationName: string;
+    threadId: string;
+    messageId: string;
+  };
   ME03_THREAD_MESSAGE_CREATION: {
     senderDisplayInformation: string;
     innovationName: string;

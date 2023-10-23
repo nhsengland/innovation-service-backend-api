@@ -8,7 +8,7 @@ export const NotificationTypes = {
     'TA06_TASK_REOPEN_TO_INNOVATOR'
   ] as const,
   DOCUMENT: ['DC01_UPLOADED_DOCUMENT_TO_INNOVATOR'] as const,
-  MESSAGES: ['ME03_THREAD_MESSAGE_CREATION'] as const,
+  MESSAGES: ['ME01_THREAD_CREATION', 'ME03_THREAD_MESSAGE_CREATION'] as const,
   MIGRATION_OLD: ['MIGRATION_OLD'] as const
 };
 export type NotificationTypes = typeof NotificationTypes;
