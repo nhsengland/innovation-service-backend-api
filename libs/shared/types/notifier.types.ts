@@ -31,6 +31,18 @@ export type NotifierTemplatesType = {
   };
 
   // Messages
+  [NotifierTypeEnum.THREAD_CREATION]: {
+    innovationId: string;
+    threadId: string;
+    messageId: string;
+  };
+
+  [NotifierTypeEnum.THREAD_ADD_FOLLOWERS]: {
+    innovationId: string;
+    threadId: string;
+    newFollowersRoleIds: string[];
+  };
+
   [NotifierTypeEnum.THREAD_MESSAGE_CREATION]: {
     innovationId: string;
     threadId: string;
@@ -93,12 +105,6 @@ export type NotifierTemplatesType = {
   [NotifierTypeEnum.INNOVATION_ORGANISATION_UNITS_SUGGESTION]: {
     innovationId: string;
     organisationUnitIds: string[]; // Suggested organisation units.
-  };
-
-  [NotifierTypeEnum.THREAD_CREATION]: {
-    innovationId: string;
-    threadId: string;
-    messageId: string;
   };
 
   [NotifierTypeEnum.INNOVATION_WITHDRAWN]: {
