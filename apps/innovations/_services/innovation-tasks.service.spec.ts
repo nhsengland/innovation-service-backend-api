@@ -1100,7 +1100,7 @@ describe('Innovation Tasks Suite', () => {
       ['INTELLECTUAL_PROPERTY' as const, `Task (${displayId}) update section 5.2 (Intellectual property)`],
       ['REVENUE_MODEL' as const, `Task (${displayId}) update section 6.1 (Revenue model)`],
       ['COST_OF_INNOVATION' as const, `Task (${displayId}) update section 7.1 (Cost of your innovation)`],
-      ['DEPLOYMENT' as const, `Task (${displayId}) update section 8.1 (Cost of your innovation)`]
+      ['DEPLOYMENT' as const, `Task (${displayId}) update section 8.1 (Deployment)`]
     ])('should return the correct subject for %s', async (section, expected) => {
       const res = sut['getSaveTaskSubject'](displayId, section as any);
       expect(res).toBe(expected);
