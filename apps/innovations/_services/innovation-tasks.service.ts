@@ -716,7 +716,7 @@ export class InnovationTasksService extends BaseService {
       case 'COST_OF_INNOVATION':
         return `Task (${displayId}) update section 7.1 (Cost of your innovation)`;
       case 'DEPLOYMENT':
-        return `Task (${displayId}) update section 8.1 (Cost of your innovation)`;
+        return `Task (${displayId}) update section 8.1 (Deployment)`;
       default: {
         const s: never = section;
         throw new NotImplementedError(InnovationErrorsEnum.INNOVATION_SECTION_NOT_FOUND, { details: s });
