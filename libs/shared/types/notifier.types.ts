@@ -49,6 +49,19 @@ export type NotifierTemplatesType = {
     messageId: string;
   };
 
+  // Supports
+  [NotifierTypeEnum.SUPPORT_STATUS_UPDATE]: {
+    innovationId: string;
+    threadId: string;
+    support: {
+      id: string;
+      status: InnovationSupportStatusEnum;
+      message: string;
+      newAssignedAccessorsIds?: string[]; // Newly assigned accessors for Engaging
+    };
+  };
+
+  // OLD
   [NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION]: Record<string, never>;
 
   [NotifierTypeEnum.INNOVATOR_ACCOUNT_DELETION_WITH_PENDING_TRANSFER]: {

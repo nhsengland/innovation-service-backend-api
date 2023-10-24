@@ -63,4 +63,20 @@ export type InAppTemplatesType = {
     threadId: string;
     messageId: string;
   };
+  // Supports
+  ST01_SUPPORT_STATUS_TO_ENGAGING: {
+    unitName: string;
+    innovationName: string;
+    threadId: string;
+  };
+  ST02_SUPPORT_STATUS_TO_OTHER: {
+    unitName: string;
+    innovationName: string;
+    status: string;
+  };
+  ST03_SUPPORT_STATUS_TO_WAITING: {
+    unitName: string;
+    innovationName: string;
+    status: string;
+  };
 };

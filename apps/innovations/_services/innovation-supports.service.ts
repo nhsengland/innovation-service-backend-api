@@ -344,21 +344,18 @@ export class InnovationSupportsService extends BaseService {
 
       await this.assignAccessors(domainContext, savedSupport, accessors, thread.thread.id, transaction);
 
-      return { id: savedSupport.id };
+      return { id: savedSupport.id, threadId: thread.thread.id };
     });
 
-    await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE, {
+    await this.notifierService.send(domainContext, NotifierTypeEnum.SUPPORT_STATUS_UPDATE, {
       innovationId,
-      innovationSupport: {
+      threadId: result.threadId,
+      support: {
         id: result.id,
         status: data.status,
-        statusChanged: true,
         message: data.message,
-        organisationUnitId: organisationUnitId,
-        newAssignedAccessors:
-          data.status === InnovationSupportStatusEnum.ENGAGING
-            ? (data.accessors ?? []).map(item => ({ id: item.id }))
-            : []
+        newAssignedAccessorsIds:
+          data.status === InnovationSupportStatusEnum.ENGAGING ? (data.accessors ?? []).map(item => item.id) : []
       }
     });
 
@@ -487,8 +484,6 @@ export class InnovationSupportsService extends BaseService {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UPDATE_WITH_UNPROCESSABLE_STATUS);
     }
 
-    const previousStatus = dbSupport.status;
-
     const result = await connection.transaction(async transaction => {
       let assignedAccessors: string[] = [];
       if (data.status === InnovationSupportStatusEnum.ENGAGING) {
@@ -562,22 +557,21 @@ export class InnovationSupportsService extends BaseService {
         transaction
       );
 
-      return { id: savedSupport.id, newAssignedAccessors: new Set(newAssignedAccessors) };
+      return { id: savedSupport.id, newAssignedAccessors: new Set(newAssignedAccessors), threadId: thread.thread.id };
     });
 
-    await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE, {
+    await this.notifierService.send(domainContext, NotifierTypeEnum.SUPPORT_STATUS_UPDATE, {
       innovationId,
-      innovationSupport: {
+      threadId: result.threadId,
+      support: {
         id: result.id,
         status: data.status,
-        statusChanged: previousStatus !== data.status,
         message: data.message,
-        organisationUnitId: dbSupport.organisationUnit.id,
-        newAssignedAccessors:
+        newAssignedAccessorsIds:
           data.status === InnovationSupportStatusEnum.ENGAGING
             ? (data.accessors ?? [])
                 .filter(item => result.newAssignedAccessors.has(item.userRoleId))
-                .map(item => ({ id: item.id }))
+                .map(item => item.id)
             : []
       }
     });

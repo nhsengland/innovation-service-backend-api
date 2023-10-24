@@ -9,6 +9,11 @@ export const NotificationTypes = {
   ] as const,
   DOCUMENT: ['DC01_UPLOADED_DOCUMENT_TO_INNOVATOR'] as const,
   MESSAGES: ['ME01_THREAD_CREATION', 'ME02_THREAD_ADD_FOLLOWERS', 'ME03_THREAD_MESSAGE_CREATION'] as const,
+  SUPPORT: [
+    'ST01_SUPPORT_STATUS_TO_ENGAGING',
+    'ST02_SUPPORT_STATUS_TO_OTHER',
+    'ST03_SUPPORT_STATUS_TO_WAITING'
+  ] as const,
   MIGRATION_OLD: ['MIGRATION_OLD'] as const
 };
 export type NotificationTypes = typeof NotificationTypes;

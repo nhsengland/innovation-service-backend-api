@@ -17,6 +17,11 @@ export const EmailTemplates = {
   ME02_THREAD_ADD_FOLLOWERS: 'fa83a527-943c-4b52-bba4-9ccee0241979',
   ME03_THREAD_MESSAGE_CREATION: '8cb941e4-218f-42fd-96b7-a1140b7c2b12',
 
+  // SUPPORTS
+  ST01_SUPPORT_STATUS_TO_ENGAGING: 'fac75d25-040b-4e4a-9225-4ca717620f70',
+  ST02_SUPPORT_STATUS_TO_OTHER: '1e24059f-53e3-445b-a0f8-0ac5f0d13ae2',
+  ST03_SUPPORT_STATUS_TO_WAITING: '5f3900dc-471f-4828-8264-eaff8aae61ad',
+
   // TO BE REMOVED ?
   ACCOUNT_CREATION_TO_INNOVATOR: '62486954-b235-4aa6-8b8d-960191fc6e69',
   ACCOUNT_DELETION_WITH_TRANSFER_TO_COLLABORATOR: 'd09b5182-d995-4db7-b3ba-99fef085bb22',
@@ -165,6 +170,28 @@ export type EmailTemplatesType = {
     innovation_name: string;
     sender: string;
     thread_url: string;
+  };
+
+  // Supports
+  ST01_SUPPORT_STATUS_TO_ENGAGING: {
+    unit_name: string;
+    innovation_name: string;
+    accessors_name: string;
+    message: string;
+    message_url: string;
+  };
+  ST02_SUPPORT_STATUS_TO_OTHER: {
+    unit_name: string;
+    innovation_name: string;
+    message: string;
+    status: string;
+    support_summary_url: string;
+  };
+  ST03_SUPPORT_STATUS_TO_WAITING: {
+    unit_name: string;
+    innovation_name: string;
+    message: string;
+    support_summary_url: string;
   };
 
   // TODO
