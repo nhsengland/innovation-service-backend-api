@@ -12,30 +12,28 @@ describe('Notifications / _handlers / thread-add-followers suite', () => {
   const testsHelper = new TestsHelper();
   const scenario = testsHelper.getCompleteScenario();
 
+  const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+  const thread = innovation.threads.threadByAliceQA;
+  const requestUser = scenario.users.johnInnovator;
+  const recipients = [
+    DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor),
+    DTOsHelper.getRecipientUser(scenario.users.ingridAccessor)
+  ];
+
   beforeAll(async () => {
     await new NotificationsTestsHelper().init();
+
+    jest
+      .spyOn(RecipientsService.prototype, 'threadFollowerRecipients')
+      .mockResolvedValue([
+        DTOsHelper.getRecipientUser(scenario.users.johnInnovator),
+        DTOsHelper.getRecipientUser(scenario.users.janeInnovator),
+        ...recipients
+      ]);
   });
 
   describe('ME02_THREAD_ADD_FOLLOWERS', () => {
-    const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
-    const thread = innovation.threads.threadByAliceQA;
-    const requestUser = scenario.users.johnInnovator;
-    const recipients = [
-      DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor),
-      DTOsHelper.getRecipientUser(scenario.users.ingridAccessor)
-    ];
-
     const displayTag = HandlersHelper.getNotificationDisplayTag(requestUser.roles.innovatorRole.role, {});
-
-    beforeAll(async () => {
-      jest
-        .spyOn(RecipientsService.prototype, 'threadFollowerRecipients')
-        .mockResolvedValue([
-          DTOsHelper.getRecipientUser(scenario.users.johnInnovator),
-          DTOsHelper.getRecipientUser(scenario.users.janeInnovator),
-          ...recipients
-        ]);
-    });
 
     it('should send an email to the new followers of the thread', async () => {
       await testEmails(ThreadAddFollowersHandler, 'ME02_THREAD_ADD_FOLLOWERS', {
