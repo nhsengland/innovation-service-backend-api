@@ -36,6 +36,7 @@ import { inject, injectable } from 'inversify';
 import { BaseService } from './base.service';
 
 import { InnovationCollaboratorEntity } from '@notifications/shared/entities/innovation/innovation-collaborator.entity';
+import { DatesHelper } from '@notifications/shared/helpers';
 import type { IdentityUserInfo } from '@notifications/shared/types';
 import type { EntityManager } from 'typeorm';
 
@@ -817,18 +818,18 @@ export class RecipientsService extends BaseService {
     days: number,
     recurring = 0
   ): Promise<Map<string, { id: string; name: string }[]>> {
-    //const date = DatesHelper.addWorkingDays(new Date(), days);
-    const date = new Date();
+    const date = DatesHelper.addWorkingDays(new Date(), -days);
     const query = this.sqlConnection
       .createQueryBuilder(SupportKPIViewEntity, 'kpi')
       .select(['kpi.innovationId', 'kpi.innovationName', 'kpi.organisationUnitId']);
 
     if (recurring) {
+      date.setHours(23, 59, 59, 999);
       query
-        .where('kpi.assigned_date >= :date', { date: date.toISOString().split('T')[0] })
+        .where('kpi.assigned_date <= :date', { date: date })
         .andWhere('DATEDIFF(day, kpi.assigned_date, :date) % :recurring = 0', { date, recurring });
     } else {
-      query.where('DATEDIFF(day, kpi.assigned_date, :date) = 0', { date: date.toISOString().split('T')[0] });
+      query.where('DATEDIFF(day, kpi.assigned_date, :date) = 0', { date: date });
     }
 
     const dbResult = await query.getMany();
