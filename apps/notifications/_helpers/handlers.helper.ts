@@ -43,4 +43,8 @@ export class HandlersHelper {
         throw new NotImplementedError(GenericErrorsEnum.NOT_IMPLEMENTED_ERROR, { details: r });
     }
   }
+
+  static transformIntoBullet(arr: string[], prefix: '-' | '*' = '*'): string {
+    return arr.map(c => c.padStart(c.length + 2, `${prefix} `) + '\n').join('');
+  }
 }

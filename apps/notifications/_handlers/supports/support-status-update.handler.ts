@@ -7,6 +7,7 @@ import {
 } from '@notifications/shared/enums';
 import { TranslationHelper } from '@notifications/shared/helpers';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
+import { HandlersHelper } from '../../_helpers/handlers.helper';
 import { supportSummaryUrl, threadUrl } from '../../_helpers/url.helper';
 import type { RecipientType } from '../../_services/recipients.service';
 import { BaseHandler } from '../base.handler';
@@ -62,7 +63,7 @@ export class SupportStatusUpdateHandler extends BaseHandler<
     this.addEmails('ST01_SUPPORT_STATUS_TO_ENGAGING', recipients, {
       notificationPreferenceType: NotificationCategoryEnum.SUPPORT,
       params: {
-        accessors_name: accessorNames.join(','),
+        accessors_name: HandlersHelper.transformIntoBullet(accessorNames),
         innovation_name: innovation.name,
         message: this.inputData.support.message,
         unit_name: unitName,

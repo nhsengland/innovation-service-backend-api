@@ -45,6 +45,7 @@ import {
 import { MessageCreationHandler } from '../_handlers/messages/message-creation.handler';
 import { ThreadAddFollowersHandler } from '../_handlers/messages/thread-add-followers.handler';
 import { ThreadCreationHandler } from '../_handlers/messages/thread-creation.handler';
+import { SupportStatusUpdateHandler } from '../_handlers/supports/support-status-update.handler';
 
 export const NOTIFICATIONS_CONFIG = {
   // Documents
@@ -87,9 +88,10 @@ export const NOTIFICATIONS_CONFIG = {
   },
 
   [NotifierTypeEnum.SUPPORT_STATUS_UPDATE]: {
-    handler: InnovationSupportStatusUpdateHandler,
+    handler: SupportStatusUpdateHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.SUPPORT_STATUS_UPDATE]>({
       innovationId: Joi.string().guid().required(),
+      threadId: Joi.string().guid().required(),
       support: Joi.object<NotifierTemplatesType[NotifierTypeEnum.SUPPORT_STATUS_UPDATE]['support']>({
         id: Joi.string().guid().required(),
         status: Joi.string()

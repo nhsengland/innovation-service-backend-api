@@ -4,6 +4,7 @@ import { TranslationHelper } from '@notifications/shared/helpers';
 import { TestsHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { randomUUID } from 'crypto';
+import { HandlersHelper } from '../../_helpers/handlers.helper';
 import { testEmails, testInApps } from '../../_helpers/tests.helper';
 import { supportSummaryUrl, threadUrl } from '../../_helpers/url.helper';
 import { SupportStatusUpdateHandler } from './support-status-update.handler';
@@ -46,7 +47,7 @@ describe('Notifications / _handlers / support-status-update suite', () => {
         },
         recipients: recipients,
         outputData: {
-          accessors_name: support.accessors.map(a => a.name).join(','),
+          accessors_name: HandlersHelper.transformIntoBullet(support.accessors.map(a => a.name)),
           innovation_name: innovation.name,
           message: message,
           unit_name: requestUser.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
