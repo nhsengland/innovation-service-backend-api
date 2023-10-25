@@ -45,6 +45,6 @@ export class HandlersHelper {
   }
 
   static transformIntoBullet(arr: string[], prefix: '-' | '*' = '*'): string {
-    return arr.map(c => c.padStart(c.length + 2, `${prefix} `) + '\n').join('');
+    return arr.map(str => `${prefix} ${str} \n`).join('');
   }
 }

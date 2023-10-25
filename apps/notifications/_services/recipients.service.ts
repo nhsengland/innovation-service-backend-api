@@ -1037,6 +1037,9 @@ export class RecipientsService extends BaseService {
    * @returns an array with the identityIds of all the users
    */
   async usersIds2IdentityIds(userIds: string[]): Promise<Map<string, string>> {
+    if (!userIds.length) {
+      return new Map();
+    }
     const users = await this.sqlConnection
       .createQueryBuilder(UserEntity, 'user')
       .select(['user.id', 'user.identityId'])

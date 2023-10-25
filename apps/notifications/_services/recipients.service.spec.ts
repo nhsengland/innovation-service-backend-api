@@ -1032,6 +1032,10 @@ describe('Notifications / _services / recipients service suite', () => {
     it('Should return empty array when no valid user ids are sent', async () => {
       expect(await sut.usersIds2IdentityIds([randUuid()])).toMatchObject(new Map());
     });
+
+    it('Should return empty array when an empty array is sent', async () => {
+      expect(await sut.usersIds2IdentityIds([randUuid()])).toMatchObject(new Map());
+    });
   });
 
   describe('usersBagToRecipients', () => {
