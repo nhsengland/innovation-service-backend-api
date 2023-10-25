@@ -830,7 +830,7 @@ export class RecipientsService extends BaseService {
     if (recurring) {
       date.setHours(23, 59, 59, 999);
       query
-        .where('kpi.assigned_date <= :date', { date: date })
+        .where('kpi.assigned_date <= :fullDate', { fullDate: date })
         .andWhere('DATEDIFF(day, kpi.assigned_date, :date) % :recurring = 0', {
           date: date.toISOString().split('T')[0],
           recurring
