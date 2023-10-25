@@ -20,6 +20,7 @@ import {
   InnovationCollaboratorStatusEnum,
   InnovationExportRequestStatusEnum,
   InnovationStatusEnum,
+  InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
   InnovationTaskStatusEnum,
   InnovationTransferStatusEnum,
@@ -35,6 +36,7 @@ import { inject, injectable } from 'inversify';
 
 import { BaseService } from './base.service';
 
+import { InnovationSupportLogEntity } from '@notifications/shared/entities';
 import { InnovationCollaboratorEntity } from '@notifications/shared/entities/innovation/innovation-collaborator.entity';
 import { DatesHelper } from '@notifications/shared/helpers';
 import type { IdentityUserInfo } from '@notifications/shared/types';
@@ -891,6 +893,28 @@ export class RecipientsService extends BaseService {
         unitName: request.createdByUserRole.organisationUnit?.name
       }
     };
+  }
+
+  async getUnitSuggestionsByInnovation(innovationId: string): Promise<{ unitId: string; orgId: string }[]> {
+    const suggestions = await this.sqlConnection
+      .createQueryBuilder(InnovationSupportLogEntity, 'log')
+      .innerJoinAndSelect('log.suggestedOrganisationUnits', 'suggestedUnits')
+      .where('log.innovation_id = :innovationId', { innovationId })
+      .andWhere('log.type IN (:...suggestionTypes)', {
+        suggestionTypes: [
+          InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION,
+          InnovationSupportLogTypeEnum.ASSESSMENT_SUGGESTION
+        ]
+      })
+      .getMany();
+
+    const suggestedUnits = new Set(
+      suggestions.flatMap(
+        s => (s.suggestedOrganisationUnits ?? [])?.map(su => ({ unitId: su.id, orgId: su.organisationId }))
+      )
+    );
+
+    return Array.from(suggestedUnits.values());
   }
 
   /**

@@ -1169,7 +1169,7 @@ export class InnovationsService extends BaseService {
 
     const innovation = await em
       .createQueryBuilder(InnovationEntity, 'innovation')
-      .select(['innovation.id', 'organisationShares.id'])
+      .select(['innovation.id', 'innovation.status', 'organisationShares.id'])
       .leftJoin('innovation.organisationShares', 'organisationShares')
       .where('innovation.id = :innovationId', { innovationId })
       .getOne();
@@ -1178,10 +1178,12 @@ export class InnovationsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
     }
 
-    const newShares = new Set(organisationShares);
-    const deletedShares = innovation.organisationShares
-      .filter(organisation => !newShares.has(organisation.id))
-      .map(organisation => organisation.id);
+    const oldShares = innovation.organisationShares.map(o => o.id);
+    const oldSharesSet = new Set(oldShares);
+    const sharesSet = new Set(organisationShares);
+
+    const addedShares = organisationShares.filter(s => !oldSharesSet.has(s));
+    const deletedShares = oldShares.filter(s => !sharesSet.has(s));
 
     await em.transaction(async transaction => {
       // Delete shares
@@ -1235,6 +1237,13 @@ export class InnovationsService extends BaseService {
       );
       await transaction.save(InnovationEntity, innovation);
     });
+
+    if (addedShares.length > 0 && innovation.status === InnovationStatusEnum.IN_PROGRESS) {
+      this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_DELAYED_SHARE, {
+        innovationId: innovation.id,
+        newSharedOrgIds: addedShares
+      });
+    }
   }
 
   async submitInnovation(
