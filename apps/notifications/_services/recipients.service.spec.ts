@@ -1021,6 +1021,23 @@ describe('Notifications / _services / recipients service suite', () => {
     });
   });
 
+  describe('usersIds2IdentityIds', () => {
+    it('Should return an array with the identity ids of the given user ids', async () => {
+      const users = [scenario.users.johnInnovator, scenario.users.aliceQualifyingAccessor];
+      expect(await sut.usersIds2IdentityIds(users.map(u => u.id))).toMatchObject(
+        new Map(users.map(u => [u.id, u.identityId]))
+      );
+    });
+
+    it('Should return empty array when no valid user ids are sent', async () => {
+      expect(await sut.usersIds2IdentityIds([randUuid()])).toMatchObject(new Map());
+    });
+
+    it('Should return empty array when an empty array is sent', async () => {
+      expect(await sut.usersIds2IdentityIds([randUuid()])).toMatchObject(new Map());
+    });
+  });
+
   describe('usersBagToRecipients', () => {
     it('Should return an array of recipients from a users bag of same type', async () => {
       const res = await sut.usersBagToRecipients([

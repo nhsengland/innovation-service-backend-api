@@ -1026,13 +1026,27 @@ export class RecipientsService extends BaseService {
    * @returns the identityId
    */
   async userId2IdentityId(userId: string): Promise<string | null> {
-    const user = await this.sqlConnection
-      .createQueryBuilder(UserEntity, 'user')
-      .select('user.identityId')
-      .where('user.id = :userId', { userId })
-      .getOne();
+    const identityIdMap = await this.usersIds2IdentityIds([userId]);
 
-    return user?.identityId ?? null;
+    return identityIdMap.get(userId) ?? null;
+  }
+
+  /**
+   * convert a given array with userIds in a Map with id and identity id
+   * @param userIds the userIds to be converted to identityIds
+   * @returns an array with the identityIds of all the users
+   */
+  async usersIds2IdentityIds(userIds: string[]): Promise<Map<string, string>> {
+    if (!userIds.length) {
+      return new Map();
+    }
+    const users = await this.sqlConnection
+      .createQueryBuilder(UserEntity, 'user')
+      .select(['user.id', 'user.identityId'])
+      .where('user.id IN (:...userIds)', { userIds })
+      .getMany();
+
+    return new Map(users.map(u => [u.id, u.identityId]));
   }
 
   /**

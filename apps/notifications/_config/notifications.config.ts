@@ -45,6 +45,7 @@ import {
 import { MessageCreationHandler } from '../_handlers/messages/message-creation.handler';
 import { ThreadAddFollowersHandler } from '../_handlers/messages/thread-add-followers.handler';
 import { ThreadCreationHandler } from '../_handlers/messages/thread-creation.handler';
+import { SupportStatusUpdateHandler } from '../_handlers/supports/support-status-update.handler';
 
 export const NOTIFICATIONS_CONFIG = {
   // Documents
@@ -86,6 +87,23 @@ export const NOTIFICATIONS_CONFIG = {
     }).required()
   },
 
+  [NotifierTypeEnum.SUPPORT_STATUS_UPDATE]: {
+    handler: SupportStatusUpdateHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.SUPPORT_STATUS_UPDATE]>({
+      innovationId: Joi.string().guid().required(),
+      threadId: Joi.string().guid().required(),
+      support: Joi.object<NotifierTemplatesType[NotifierTypeEnum.SUPPORT_STATUS_UPDATE]['support']>({
+        id: Joi.string().guid().required(),
+        status: Joi.string()
+          .valid(...Object.values(InnovationSupportStatusEnum))
+          .required(),
+        message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).trim().required(),
+        newAssignedAccessorsIds: Joi.array().items(Joi.string().guid())
+      }).required()
+    }).required()
+  },
+
+  // OLD
   [NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION]: {
     handler: InnovatorAccountCreationHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION]>({})
