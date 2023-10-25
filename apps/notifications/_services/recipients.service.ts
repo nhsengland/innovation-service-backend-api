@@ -825,13 +825,18 @@ export class RecipientsService extends BaseService {
       .createQueryBuilder(SupportKPIViewEntity, 'kpi')
       .select(['kpi.innovationId', 'kpi.innovationName', 'kpi.organisationUnitId']);
 
+    // for some unknown reason passing date shows the right query, works locally connected to the stage DB but not
+    // in stage. Resorted to using the date.toISOString().split('T')[0] to get the date in the right format for the query
     if (recurring) {
       date.setHours(23, 59, 59, 999);
       query
         .where('kpi.assigned_date <= :date', { date: date })
-        .andWhere('DATEDIFF(day, kpi.assigned_date, :date) % :recurring = 0', { date, recurring });
+        .andWhere('DATEDIFF(day, kpi.assigned_date, :date) % :recurring = 0', {
+          date: date.toISOString().split('T')[0],
+          recurring
+        });
     } else {
-      query.where('DATEDIFF(day, kpi.assigned_date, :date) = 0', { date: date });
+      query.where('DATEDIFF(day, kpi.assigned_date, :date) = 0', { date: date.toISOString().split('T')[0] });
     }
 
     const dbResult = await query.getMany();
