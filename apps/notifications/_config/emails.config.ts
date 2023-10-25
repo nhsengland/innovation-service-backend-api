@@ -84,6 +84,8 @@ export enum EmailTypeEnum {
   INNOVATION_COLLABORATOR_LEAVES_TO_OTHER_COLLABORATORS = '8db47a7d-6d3a-4ab6-8ebb-abec69397b93',
   INNOVATION_COLLABORATOR_LEAVES_TO_COLLABORATOR = '319228ec-121d-430c-8024-b938343232ba',
 
+  OS03_INNOVATION_DELAYED_SHARED_SUGGESTION = 'b5845d01-f66e-455c-8f11-6e011394da95',
+
   AU04_SUPPORT_KPI_REMINDER = 'e1f0a2bc-3b15-4733-ba89-c0d5c9fec38a',
   AU05_SUPPORT_KPI_OVERDUE = '5fe24d48-8def-457d-a81f-56750f38c508'
 }
@@ -437,6 +439,12 @@ export type EmailTemplatesType = {
   };
 
   // REVIEW in future
+  [EmailTypeEnum.OS03_INNOVATION_DELAYED_SHARED_SUGGESTION]: {
+    display_name?: string;
+    innovation_name: string;
+    innovation_overview_url: string;
+  };
+
   [EmailTypeEnum.AU04_SUPPORT_KPI_REMINDER]: {
     display_name?: string;
     innovation_name: string;

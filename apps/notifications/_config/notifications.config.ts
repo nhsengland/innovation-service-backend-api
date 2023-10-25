@@ -46,6 +46,7 @@ import {
   ThreadMessageCreationHandler,
   UnitInactivationSupportStatusCompletedHandler
 } from '../_handlers';
+import { InnovationDelayedSharedSuggestionHandler } from '../_handlers/innovation-delayed-shared-suggestion.handler';
 import { UnitKPIHandler } from '../_handlers/unit-kpi.handler';
 import type { EmailTypeEnum } from './emails.config';
 
@@ -368,6 +369,14 @@ export const NOTIFICATIONS_CONFIG: {
       innovationId: Joi.string().guid().required(),
       unitId: Joi.string().guid().required()
     }).required()
+  },
+
+  [NotifierTypeEnum.INNOVATION_DELAYED_SHARE]: {
+    handler: InnovationDelayedSharedSuggestionHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_DELAYED_SHARE]>({
+      innovationId: Joi.string().guid().required(),
+      newSharedOrgIds: Joi.array().items(Joi.string().guid().required()).required()
+    })
   },
 
   // Recurrent notifications.
