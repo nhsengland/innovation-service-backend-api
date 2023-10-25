@@ -9,6 +9,7 @@ import {
   NotificationEntity,
   NotificationPreferenceEntity,
   OrganisationUnitEntity,
+  SupportKPIViewEntity,
   UserEntity,
   UserRoleEntity
 } from '@notifications/shared/entities';
@@ -804,6 +805,40 @@ export class RecipientsService extends BaseService {
         isActive: true
       }
     }));
+  }
+
+  /**
+   * returns a the innovations suggested but not picked by organisation units according to the days and recurring
+   * @param days number of days to trigger the notification
+   * @param recurring if it should trigger recurring notifications
+   * @returns Map of organisation unit id and list of innovation ids
+   */
+  async suggestedInnovationsWithoutUnitAction(
+    days: number,
+    recurring = 0
+  ): Promise<Map<string, { id: string; name: string }[]>> {
+    //const date = DatesHelper.addWorkingDays(new Date(), days);
+    const date = new Date();
+    const query = this.sqlConnection
+      .createQueryBuilder(SupportKPIViewEntity, 'kpi')
+      .select(['kpi.innovationId', 'kpi.innovationName', 'kpi.organisationUnitId']);
+
+    if (recurring) {
+      query
+        .where('kpi.assigned_date >= :date', { date: date.toISOString().split('T')[0] })
+        .andWhere('DATEDIFF(day, kpi.assigned_date, :date) % :recurring = 0', { date, recurring });
+    } else {
+      query.where('DATEDIFF(day, kpi.assigned_date, :date) = 0', { date: date.toISOString().split('T')[0] });
+    }
+
+    const dbResult = await query.getMany();
+    return dbResult.reduce((acc, item) => {
+      if (!acc.has(item.organisationUnitId)) {
+        acc.set(item.organisationUnitId, []);
+      }
+      acc.get(item.organisationUnitId)?.push({ id: item.innovationId, name: item.innovationName });
+      return acc;
+    }, new Map<string, { id: string; name: string }[]>());
   }
 
   /**

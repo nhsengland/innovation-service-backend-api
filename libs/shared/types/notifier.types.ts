@@ -190,4 +190,5 @@ export type NotifierTemplatesType = {
   [NotifierTypeEnum.DAILY_DIGEST]: Record<string, never>;
   [NotifierTypeEnum.INCOMPLETE_INNOVATION_RECORD]: Record<string, never>;
   [NotifierTypeEnum.IDLE_SUPPORT]: Record<string, never>;
+  [NotifierTypeEnum.UNIT_KPI]: Record<string, never>;
 };
