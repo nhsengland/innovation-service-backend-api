@@ -99,7 +99,11 @@ export class SupportStatusUpdateHandler extends BaseHandler<
         message: this.inputData.support.message,
         unit_name: unitName,
         status: this.translateSupportStatus(this.inputData.support.status),
-        support_summary_url: supportSummaryUrl(ServiceRoleEnum.INNOVATOR, innovation.id)
+        support_summary_url: supportSummaryUrl(
+          ServiceRoleEnum.INNOVATOR,
+          innovation.id,
+          this.requestUser.organisation?.organisationUnit?.id
+        )
       }
     });
 
@@ -131,7 +135,11 @@ export class SupportStatusUpdateHandler extends BaseHandler<
         innovation_name: innovation.name,
         unit_name: unitName,
         message: this.inputData.support.message,
-        support_summary_url: supportSummaryUrl(ServiceRoleEnum.INNOVATOR, innovation.id)
+        support_summary_url: supportSummaryUrl(
+          ServiceRoleEnum.INNOVATOR,
+          innovation.id,
+          this.requestUser.organisation?.organisationUnit?.id
+        )
       }
     });
 
