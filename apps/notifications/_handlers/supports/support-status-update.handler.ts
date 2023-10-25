@@ -113,6 +113,7 @@ export class SupportStatusUpdateHandler extends BaseHandler<
       params: {
         innovationName: innovation.name,
         status: this.translateSupportStatus(this.inputData.support.status),
+        unitId: this.requestUser.organisation?.organisationUnit?.id ?? '',
         unitName: unitName
       }
     });
@@ -144,6 +145,7 @@ export class SupportStatusUpdateHandler extends BaseHandler<
       params: {
         innovationName: innovation.name,
         status: this.translateSupportStatus(this.inputData.support.status),
+        unitId: this.requestUser.organisation?.organisationUnit?.id ?? '',
         unitName: unitName
       }
     });

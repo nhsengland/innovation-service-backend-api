@@ -29,6 +29,7 @@ describe('Notifications / _handlers / support-status-update suite', () => {
   const threadId = randomUUID();
 
   const requestUser = scenario.users.aliceQualifyingAccessor;
+  const requestUserUnit = requestUser.organisations.healthOrg.organisationUnits.healthOrgUnit;
 
   describe('ST01_SUPPORT_STATUS_TO_ENGAGING', () => {
     it('should send an email to the innovators', async () => {
@@ -50,7 +51,7 @@ describe('Notifications / _handlers / support-status-update suite', () => {
           accessors_name: HandlersHelper.transformIntoBullet(support.accessors.map(a => a.name)),
           innovation_name: innovation.name,
           message: message,
-          unit_name: requestUser.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
+          unit_name: requestUserUnit.name,
           message_url: threadUrl(ServiceRoleEnum.INNOVATOR, innovation.id, threadId)
         }
       });
@@ -75,7 +76,7 @@ describe('Notifications / _handlers / support-status-update suite', () => {
         outputData: {
           innovationName: innovation.name,
           threadId: threadId,
-          unitName: requestUser.organisations.healthOrg.organisationUnits.healthOrgUnit.name
+          unitName: requestUserUnit.name
         }
       });
     });
@@ -101,7 +102,7 @@ describe('Notifications / _handlers / support-status-update suite', () => {
             recipients: recipients,
             outputData: {
               innovation_name: innovation.name,
-              unit_name: requestUser.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
+              unit_name: requestUserUnit.name,
               message: message,
               status: TranslationHelper.translate(`SUPPORT_STATUS.${supportStatus}`).toLowerCase(),
               support_summary_url: supportSummaryUrl(ServiceRoleEnum.INNOVATOR, innovation.id)
@@ -126,7 +127,8 @@ describe('Notifications / _handlers / support-status-update suite', () => {
             recipients: recipients,
             outputData: {
               innovationName: innovation.name,
-              unitName: requestUser.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
+              unitId: requestUserUnit.id,
+              unitName: requestUserUnit.name,
               status: TranslationHelper.translate(`SUPPORT_STATUS.${supportStatus}`).toLowerCase()
             }
           });
@@ -152,7 +154,7 @@ describe('Notifications / _handlers / support-status-update suite', () => {
         recipients: recipients,
         outputData: {
           innovation_name: innovation.name,
-          unit_name: requestUser.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
+          unit_name: requestUserUnit.name,
           message: message,
           support_summary_url: supportSummaryUrl(ServiceRoleEnum.INNOVATOR, innovation.id)
         }
@@ -176,7 +178,8 @@ describe('Notifications / _handlers / support-status-update suite', () => {
         recipients: recipients,
         outputData: {
           innovationName: innovation.name,
-          unitName: requestUser.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
+          unitId: requestUserUnit.id,
+          unitName: requestUserUnit.name,
           status: TranslationHelper.translate(`SUPPORT_STATUS.${InnovationSupportStatusEnum.WAITING}`).toLowerCase()
         }
       });

@@ -70,11 +70,13 @@ export type InAppTemplatesType = {
     threadId: string;
   };
   ST02_SUPPORT_STATUS_TO_OTHER: {
+    unitId: string;
     unitName: string;
     innovationName: string;
     status: string;
   };
   ST03_SUPPORT_STATUS_TO_WAITING: {
+    unitId: string;
     unitName: string;
     innovationName: string;
     status: string;
