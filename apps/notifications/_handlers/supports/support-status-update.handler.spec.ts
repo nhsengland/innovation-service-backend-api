@@ -105,7 +105,7 @@ describe('Notifications / _handlers / support-status-update suite', () => {
               unit_name: requestUserUnit.name,
               message: message,
               status: TranslationHelper.translate(`SUPPORT_STATUS.${supportStatus}`).toLowerCase(),
-              support_summary_url: supportSummaryUrl(ServiceRoleEnum.INNOVATOR, innovation.id)
+              support_summary_url: supportSummaryUrl(ServiceRoleEnum.INNOVATOR, innovation.id, requestUserUnit.id)
             }
           });
         });
@@ -156,7 +156,7 @@ describe('Notifications / _handlers / support-status-update suite', () => {
           innovation_name: innovation.name,
           unit_name: requestUserUnit.name,
           message: message,
-          support_summary_url: supportSummaryUrl(ServiceRoleEnum.INNOVATOR, innovation.id)
+          support_summary_url: supportSummaryUrl(ServiceRoleEnum.INNOVATOR, innovation.id, requestUserUnit.id)
         }
       });
     });

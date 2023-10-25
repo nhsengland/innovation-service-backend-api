@@ -317,7 +317,7 @@ export class InnovationSupportsService extends BaseService {
         savedSupport.id,
         ThreadContextTypeEnum.SUPPORT,
         transaction,
-        true
+        false
       );
 
       await this.domainService.innovations.addActivityLog(

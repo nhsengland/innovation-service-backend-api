@@ -26,12 +26,17 @@ export const documentUrl = (role: ServiceRoleEnum, innovationId: string, documen
     .buildUrl();
 };
 
-export const supportSummaryUrl = (role: ServiceRoleEnum, innovationId: string): string => {
+export const supportSummaryUrl = (role: ServiceRoleEnum, innovationId: string, unitId?: string): string => {
   const baseUrl = frontendBaseUrl(role);
-  return new UrlModel(ENV.webBaseTransactionalUrl)
+  const urlModel = new UrlModel(ENV.webBaseTransactionalUrl)
     .addPath(':baseUrl/innovations/:innovationId/support-summary')
-    .setPathParams({ baseUrl, innovationId })
-    .buildUrl();
+    .setPathParams({ baseUrl, innovationId });
+
+  if (unitId) {
+    urlModel.setQueryParams({ unitId });
+  }
+
+  return urlModel.buildUrl();
 };
 
 export const frontendBaseUrl = (role: ServiceRoleEnum): string => {
