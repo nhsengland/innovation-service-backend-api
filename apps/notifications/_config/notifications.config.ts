@@ -46,6 +46,7 @@ import {
   ThreadMessageCreationHandler,
   UnitInactivationSupportStatusCompletedHandler
 } from '../_handlers';
+import { UnitKPIHandler } from '../_handlers/unit-kpi.handler';
 import type { EmailTypeEnum } from './emails.config';
 
 export const NOTIFICATIONS_CONFIG: {
@@ -383,5 +384,10 @@ export const NOTIFICATIONS_CONFIG: {
   [NotifierTypeEnum.IDLE_SUPPORT]: {
     handler: IdleSupportHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.IDLE_SUPPORT]>({})
+  },
+
+  [NotifierTypeEnum.UNIT_KPI]: {
+    handler: UnitKPIHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.UNIT_KPI]>({})
   }
 };

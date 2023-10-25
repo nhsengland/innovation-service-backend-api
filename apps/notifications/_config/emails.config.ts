@@ -82,7 +82,10 @@ export enum EmailTypeEnum {
   INNOVATION_COLLABORATOR_INVITE_CANCELLED_TO_COLLABORATOR = 'c53845c8-5d7e-4653-b9e6-d8ca5fa99713',
   INNOVATION_COLLABORATOR_REMOVED_TO_COLLABORATOR = 'dd8762c8-3113-49ff-b25d-0aa42425f140',
   INNOVATION_COLLABORATOR_LEAVES_TO_OTHER_COLLABORATORS = '8db47a7d-6d3a-4ab6-8ebb-abec69397b93',
-  INNOVATION_COLLABORATOR_LEAVES_TO_COLLABORATOR = '319228ec-121d-430c-8024-b938343232ba'
+  INNOVATION_COLLABORATOR_LEAVES_TO_COLLABORATOR = '319228ec-121d-430c-8024-b938343232ba',
+
+  AU04_SUPPORT_KPI_REMINDER = 'e1f0a2bc-3b15-4733-ba89-c0d5c9fec38a',
+  AU05_SUPPORT_KPI_OVERDUE = '5fe24d48-8def-457d-a81f-56750f38c508'
 }
 
 /**
@@ -431,5 +434,18 @@ export type EmailTemplatesType = {
   [EmailTypeEnum.INNOVATION_COLLABORATOR_LEAVES_TO_COLLABORATOR]: {
     display_name?: string;
     innovation_name: string;
+  };
+
+  // REVIEW in future
+  [EmailTypeEnum.AU04_SUPPORT_KPI_REMINDER]: {
+    display_name?: string;
+    innovation_name: string;
+    innovation_overview_url: string;
+  };
+
+  [EmailTypeEnum.AU05_SUPPORT_KPI_OVERDUE]: {
+    display_name?: string;
+    innovation_name: string;
+    innovation_overview_url: string;
   };
 };
