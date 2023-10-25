@@ -24,10 +24,10 @@ export class UnitKPIHandler extends BaseHandler<
   private unitQAs: Map<string, RecipientType[]> = new Map<string, RecipientType[]>();
 
   async run(): Promise<this> {
-    //const reminderInnovations = await this.recipientsService.suggestedInnovationsWithoutUnitAction(4);
+    const reminderInnovations = await this.recipientsService.suggestedInnovationsWithoutUnitAction(4);
     const overdueInnovations = await this.recipientsService.suggestedInnovationsWithoutUnitAction(6, 7);
 
-    //await this.sendNotifications(reminderInnovations, EmailTypeEnum.AU04_SUPPORT_KPI_REMINDER);
+    await this.sendNotifications(reminderInnovations, EmailTypeEnum.AU04_SUPPORT_KPI_REMINDER);
     await this.sendNotifications(overdueInnovations, EmailTypeEnum.AU05_SUPPORT_KPI_OVERDUE);
 
     return this;
