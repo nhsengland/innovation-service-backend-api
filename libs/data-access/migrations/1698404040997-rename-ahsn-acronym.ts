@@ -11,7 +11,7 @@ export class RenameAHSNAcronym1698404040997 implements MigrationInterface {
       UPDATE organisation_unit SET acronym='NWC' WHERE name='Health Innovation North West Coast';
       UPDATE organisation_unit SET acronym='WM' WHERE name='Health Innovation West Midlands';
       UPDATE organisation_unit SET acronym='WE', name='Health Innovation West of England' WHERE name='West of England AHSN';
-      UPDATE organisation_unit SET acronym='HIM SL' WHERE name='Health Innovation Network South London';
+      UPDATE organisation_unit SET acronym='HIN SL' WHERE name='Health Innovation Network South London';
       UPDATE organisation_unit SET acronym='OTV' WHERE name='Health Innovation Oxford and Thames Valley';
       UPDATE organisation_unit SET acronym='YH' WHERE name='Health Innovation Yorkshire and Humber';
       UPDATE organisation_unit SET acronym='KSS' WHERE name='Health Innovation Kent Surrey Sussex';
