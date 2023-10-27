@@ -61,11 +61,11 @@ describe('Innovation Tasks Suite', () => {
 
   afterEach(async () => {
     await testsHelper.releaseQueryRunnerEntityManager();
-    activityLogSpy.mockReset();
-    notifierSendSpy.mockReset();
-    createThreadOrMessageSpy.mockReset();
-    createThreadMessage.mockReset();
-    linkMessageSpy.mockReset();
+    activityLogSpy.mockClear();
+    notifierSendSpy.mockClear();
+    createThreadOrMessageSpy.mockClear();
+    createThreadMessage.mockClear();
+    linkMessageSpy.mockClear();
   });
 
   describe('createTask', () => {

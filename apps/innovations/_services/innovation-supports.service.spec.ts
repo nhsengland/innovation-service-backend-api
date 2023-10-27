@@ -64,10 +64,10 @@ describe('Innovations / _services / innovation-supports suite', () => {
 
   afterEach(async () => {
     await testsHelper.releaseQueryRunnerEntityManager();
-    activityLogSpy.mockReset();
-    supportLogSpy.mockReset();
-    notifierSendSpy.mockReset();
-    threadMessageMock.mockReset();
+    activityLogSpy.mockClear();
+    supportLogSpy.mockClear();
+    notifierSendSpy.mockClear();
+    threadMessageMock.mockClear();
   });
 
   describe('getInnovationSupportsList', () => {
