@@ -520,7 +520,7 @@ export class InnovationSupportsService extends BaseService {
         savedSupport.id,
         ThreadContextTypeEnum.SUPPORT,
         transaction,
-        true
+        false
       );
 
       if (!thread.message) {
