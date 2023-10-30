@@ -488,8 +488,9 @@ export class InnovationAssessmentsService extends BaseService {
       return { assessment: { id: assessmentClone.id }, reassessment: { id: reassessment.id } };
     });
 
-    await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_REASSESSMENT_REQUEST, {
-      innovationId: innovationId
+    await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_SUBMITTED, {
+      innovationId: innovationId,
+      reassessment: true
     });
 
     return {
