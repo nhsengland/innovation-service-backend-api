@@ -5,8 +5,8 @@ import { CompleteScenarioType, MocksHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 
 import { TranslationHelper } from '@notifications/shared/helpers';
-import { NotificationsTestsHelper } from 'apps/notifications/_tests/notifications-test.helper';
 import { documentUrl } from '../../_helpers/url.helper';
+import { NotificationsTestsHelper } from '../../_tests/notifications-test.helper';
 
 describe('Notifications / _handlers / document-upload suite', () => {
   const testsHelper = new NotificationsTestsHelper();

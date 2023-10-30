@@ -1,13 +1,14 @@
+import { SupportStatusUpdateHandler } from './support-status-update.handler';
+
 import { randText } from '@ngneat/falso';
 import { InnovationSupportStatusEnum, NotificationCategoryEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { TranslationHelper } from '@notifications/shared/helpers';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
-import { NotificationsTestsHelper } from 'apps/notifications/_tests/notifications-test.helper';
 import { randomUUID } from 'crypto';
 import { HandlersHelper } from '../../_helpers/handlers.helper';
 import { testEmails, testInApps } from '../../_helpers/tests.helper';
 import { supportSummaryUrl, threadUrl } from '../../_helpers/url.helper';
-import { SupportStatusUpdateHandler } from './support-status-update.handler';
+import { NotificationsTestsHelper } from '../../_tests/notifications-test.helper';
 
 describe('Notifications / _handlers / support-status-update suite', () => {
   const testsHelper = new NotificationsTestsHelper();
