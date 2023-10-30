@@ -20,13 +20,16 @@ export class InnovationSubmittedHandler extends BaseHandler<
   async run(): Promise<this> {
     const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
 
-    await this.notifyInnovators(innovation);
-    await this.notifyAssessors(innovation);
+    await this.NA01_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_INNOVATOR(innovation);
+    await this.NA02_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_ASSESSMENT(innovation);
 
     return this;
   }
 
-  async notifyInnovators(innovation: { name: string; id: string }): Promise<void> {
+  async NA01_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_INNOVATOR(innovation: {
+    name: string;
+    id: string;
+  }): Promise<void> {
     const innovators = await this.recipientsService.getInnovationActiveOwnerAndCollaborators(
       this.inputData.innovationId
     );
@@ -61,7 +64,10 @@ export class InnovationSubmittedHandler extends BaseHandler<
     });
   }
 
-  async notifyAssessors(innovation: { name: string; id: string }): Promise<void> {
+  async NA02_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_ASSESSMENT(innovation: {
+    name: string;
+    id: string;
+  }): Promise<void> {
     const recipients = await this.recipientsService.needsAssessmentUsers();
     this.notify('NA02_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_ASSESSMENT', recipients, {
       email: {
