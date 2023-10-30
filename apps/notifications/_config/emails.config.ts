@@ -22,6 +22,11 @@ export const EmailTemplates = {
   ST02_SUPPORT_STATUS_TO_OTHER: '1e24059f-53e3-445b-a0f8-0ac5f0d13ae2',
   ST03_SUPPORT_STATUS_TO_WAITING: '5f3900dc-471f-4828-8264-eaff8aae61ad',
 
+  // REVIEW in future
+  OS03_INNOVATION_DELAYED_SHARED_SUGGESTION: 'b5845d01-f66e-455c-8f11-6e011394da95',
+  AU04_SUPPORT_KPI_REMINDER: 'e1f0a2bc-3b15-4733-ba89-c0d5c9fec38a',
+  AU05_SUPPORT_KPI_OVERDUE: '5fe24d48-8def-457d-a81f-56750f38c508',
+
   // TO BE REMOVED ?
   ACCOUNT_CREATION_TO_INNOVATOR: '62486954-b235-4aa6-8b8d-960191fc6e69',
   ACCOUNT_DELETION_WITH_TRANSFER_TO_COLLABORATOR: 'd09b5182-d995-4db7-b3ba-99fef085bb22',
@@ -192,6 +197,25 @@ export type EmailTemplatesType = {
     innovation_name: string;
     message: string;
     support_summary_url: string;
+  };
+
+  // REVIEW in future
+  OS03_INNOVATION_DELAYED_SHARED_SUGGESTION: {
+    display_name?: string;
+    innovation_name: string;
+    innovation_overview_url: string;
+  };
+
+  AU04_SUPPORT_KPI_REMINDER: {
+    display_name?: string;
+    innovation_name: string;
+    innovation_overview_url: string;
+  };
+
+  AU05_SUPPORT_KPI_OVERDUE: {
+    display_name?: string;
+    innovation_name: string;
+    innovation_overview_url: string;
   };
 
   // TODO

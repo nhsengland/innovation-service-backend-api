@@ -212,8 +212,14 @@ export type NotifierTemplatesType = {
     unitId: string;
   };
 
+  [NotifierTypeEnum.INNOVATION_DELAYED_SHARE]: {
+    innovationId: string;
+    newSharedOrgIds: string[];
+  };
+
   // Recurrent notifications.
   [NotifierTypeEnum.DAILY_DIGEST]: Record<string, never>;
   [NotifierTypeEnum.INCOMPLETE_INNOVATION_RECORD]: Record<string, never>;
   [NotifierTypeEnum.IDLE_SUPPORT]: Record<string, never>;
+  [NotifierTypeEnum.UNIT_KPI]: Record<string, never>;
 };
