@@ -1,5 +1,4 @@
 import { NotificationCategoryEnum } from '@notifications/shared/enums';
-import { TestsHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { HandlersHelper } from '../../_helpers/handlers.helper';
 import { testEmails, testInApps } from '../../_helpers/tests.helper';
@@ -9,7 +8,7 @@ import { NotificationsTestsHelper } from '../../_tests/notifications-test.helper
 import { ThreadAddFollowersHandler } from './thread-add-followers.handler';
 
 describe('Notifications / _handlers / thread-add-followers suite', () => {
-  const testsHelper = new TestsHelper();
+  const testsHelper = new NotificationsTestsHelper();
   const scenario = testsHelper.getCompleteScenario();
 
   const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
@@ -21,7 +20,7 @@ describe('Notifications / _handlers / thread-add-followers suite', () => {
   ];
 
   beforeAll(async () => {
-    await new NotificationsTestsHelper().init();
+    await testsHelper.init();
 
     jest
       .spyOn(RecipientsService.prototype, 'threadFollowerRecipients')

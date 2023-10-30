@@ -1,8 +1,8 @@
 import { randText } from '@ngneat/falso';
 import { InnovationSupportStatusEnum, NotificationCategoryEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { TranslationHelper } from '@notifications/shared/helpers';
-import { TestsHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
+import { NotificationsTestsHelper } from 'apps/notifications/_tests/notifications-test.helper';
 import { randomUUID } from 'crypto';
 import { HandlersHelper } from '../../_helpers/handlers.helper';
 import { testEmails, testInApps } from '../../_helpers/tests.helper';
@@ -10,7 +10,7 @@ import { supportSummaryUrl, threadUrl } from '../../_helpers/url.helper';
 import { SupportStatusUpdateHandler } from './support-status-update.handler';
 
 describe('Notifications / _handlers / support-status-update suite', () => {
-  const testsHelper = new TestsHelper();
+  const testsHelper = new NotificationsTestsHelper();
   const scenario = testsHelper.getCompleteScenario();
 
   const recipients = [
@@ -19,7 +19,7 @@ describe('Notifications / _handlers / support-status-update suite', () => {
   ];
 
   beforeAll(async () => {
-    await new TestsHelper().init();
+    await testsHelper.init();
   });
 
   const innovation = scenario.users.johnInnovator.innovations.johnInnovation;

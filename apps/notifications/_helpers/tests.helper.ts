@@ -31,9 +31,9 @@ export const testEmails = async <
   const handler = new handlerClass(data.requestUser, data.inputData, MocksHelper.mockContext());
   await handler.run();
 
-  handler.emails.filter(e => e.templateId === template);
-  expect(handler.emails.length).toBe(data.recipients.length);
-  expect(handler.emails).toEqual(
+  const emails = handler.emails.filter(e => e.templateId === template);
+  expect(emails.length).toBe(data.recipients.length);
+  expect(emails).toEqual(
     data.recipients.map((r, i) => ({
       templateId: template,
       notificationPreferenceType: data.notificationPreferenceType,
@@ -67,9 +67,9 @@ export const testInApps = async <
   const handler = new handlerClass(data.requestUser, data.inputData, MocksHelper.mockContext());
   await handler.run();
 
-  handler.inApp.filter(a => a.context.detail === template);
-  expect(handler.inApp.length).toBe(1); // maybe this will change in the future
-  expect(handler.inApp).toEqual([
+  const inApps = handler.inApp.filter(a => a.context.detail === template);
+  expect(inApps.length).toBe(1); // maybe this will change in the future
+  expect(inApps).toEqual([
     {
       innovationId: data.innovationId,
       context: {

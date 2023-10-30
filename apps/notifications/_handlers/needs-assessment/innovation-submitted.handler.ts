@@ -1,7 +1,7 @@
 import type { Context } from '@azure/functions';
 import { NotificationCategoryEnum, NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
-import { innovationOverviewUrl } from 'apps/notifications/_helpers/url.helper';
+import { innovationOverviewUrl } from '../../_helpers/url.helper';
 import { BaseHandler } from '../base.handler';
 
 export class InnovationSubmittedHandler extends BaseHandler<
@@ -38,6 +38,9 @@ export class InnovationSubmittedHandler extends BaseHandler<
         params: {
           innovation_name: innovation.name,
           needs_assessment: this.inputData.reassessment ? 'reassessment' : 'assessment'
+        },
+        options: {
+          includeSelf: true
         }
       },
       inApp: {
@@ -50,6 +53,9 @@ export class InnovationSubmittedHandler extends BaseHandler<
         params: {
           needsAssessment: this.inputData.reassessment ? 'reassessment' : 'assessment',
           innovationName: innovation.name
+        },
+        options: {
+          includeSelf: true
         }
       }
     });

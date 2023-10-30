@@ -17,7 +17,7 @@ describe('Notifications / _handlers / task-update suite', () => {
   const scenario = testsHelper.getCompleteScenario();
 
   beforeAll(async () => {
-    await new TestsHelper().init();
+    await testsHelper.init();
   });
 
   const innovation = scenario.users.johnInnovator.innovations.johnInnovation;

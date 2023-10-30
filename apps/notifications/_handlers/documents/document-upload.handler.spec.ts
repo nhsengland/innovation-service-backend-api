@@ -1,18 +1,19 @@
 import { DocumentUploadHandler } from './document-upload.handler';
 
 import { NotificationCategoryEnum, ServiceRoleEnum } from '@notifications/shared/enums';
-import { CompleteScenarioType, MocksHelper, TestsHelper } from '@notifications/shared/tests';
+import { CompleteScenarioType, MocksHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 
 import { TranslationHelper } from '@notifications/shared/helpers';
+import { NotificationsTestsHelper } from 'apps/notifications/_tests/notifications-test.helper';
 import { documentUrl } from '../../_helpers/url.helper';
 
 describe('Notifications / _handlers / document-upload suite', () => {
-  const testsHelper = new TestsHelper();
+  const testsHelper = new NotificationsTestsHelper();
   const scenario: CompleteScenarioType = testsHelper.getCompleteScenario();
 
   beforeAll(async () => {
-    await new TestsHelper().init();
+    await testsHelper.init();
   });
 
   describe('DC01_UPLOADED_DOCUMENT_TO_INNOVATOR', () => {
