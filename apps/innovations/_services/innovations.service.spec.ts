@@ -61,8 +61,8 @@ describe('Innovations / _services / innovations suite', () => {
 
   afterEach(async () => {
     await testsHelper.releaseQueryRunnerEntityManager();
-    activityLogSpy.mockReset();
-    notifierSendSpy.mockReset();
+    activityLogSpy.mockClear();
+    notifierSendSpy.mockClear();
   });
 
   describe.skip('getInnovationsList', () => {

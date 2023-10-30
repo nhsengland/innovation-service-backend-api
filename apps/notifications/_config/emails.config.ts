@@ -21,6 +21,9 @@ export const EmailTemplates = {
   ST01_SUPPORT_STATUS_TO_ENGAGING: 'fac75d25-040b-4e4a-9225-4ca717620f70',
   ST02_SUPPORT_STATUS_TO_OTHER: '1e24059f-53e3-445b-a0f8-0ac5f0d13ae2',
   ST03_SUPPORT_STATUS_TO_WAITING: '5f3900dc-471f-4828-8264-eaff8aae61ad',
+  ST04_SUPPORT_NEW_ASSIGNED_ACCESSORS_TO_INNOVATOR: '2916606e-ef89-4ec0-b654-decdb3dd1de8',
+  ST05_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_NEW_QA: 'f33f5c16-3349-4eb0-b4da-a47806f12838',
+  ST06_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_OLD_QA: 'cdb8e3b2-1f83-4ced-8fcb-3cf801262ae8',
 
   // NEEDS ASSESSMENT
   NA01_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_INNOVATOR: 'fadfc3e8-d48e-446e-a81d-d573d774b725',
@@ -200,6 +203,21 @@ export type EmailTemplatesType = {
     innovation_name: string;
     message: string;
     support_summary_url: string;
+  };
+  ST04_SUPPORT_NEW_ASSIGNED_ACCESSORS_TO_INNOVATOR: {
+    unit_name: string;
+    innovation_name: string;
+    accessors_name: string;
+    message: string;
+    message_url: string;
+  };
+  ST05_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_NEW_QA: {
+    innovation_name: string;
+    qa_name: string;
+    innovation_overview_url: string;
+  };
+  ST06_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_OLD_QA: {
+    innovation_name: string;
   };
 
   // NEEDS ASSESSMENT

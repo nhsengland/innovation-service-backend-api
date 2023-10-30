@@ -60,6 +60,14 @@ export type NotifierTemplatesType = {
       newAssignedAccessorsIds?: string[]; // Newly assigned accessors for Engaging
     };
   };
+  [NotifierTypeEnum.SUPPORT_NEW_ASSIGN_ACCESSORS]: {
+    innovationId: string;
+    threadId: string;
+    supportId: string;
+    message: string;
+    newAssignedAccessorsRoleIds: string[];
+    removedAssignedAccessorsRoleIds: string[];
+  };
 
   // Needs Assessment
   [NotifierTypeEnum.INNOVATION_SUBMITTED]: {

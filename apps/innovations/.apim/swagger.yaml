@@ -3049,6 +3049,7 @@ paths:
                     additionalProperties: false
                   minItems: 1
               required:
+                - message
                 - accessors
               additionalProperties: false
       responses:
