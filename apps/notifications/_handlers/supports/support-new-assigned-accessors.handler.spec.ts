@@ -1,6 +1,5 @@
 import { randText } from '@ngneat/falso';
 import { NotificationCategoryEnum, ServiceRoleEnum } from '@notifications/shared/enums';
-import { TestsHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { randomUUID } from 'crypto';
 import { HandlersHelper } from '../../_helpers/handlers.helper';
@@ -23,7 +22,7 @@ describe('Notifications / _handlers / support-new-assigned-accessors suite', () 
   ];
 
   beforeAll(async () => {
-    await new TestsHelper().init();
+    await testsHelper.init();
   });
 
   const innovation = scenario.users.johnInnovator.innovations.johnInnovation;

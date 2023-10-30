@@ -33,7 +33,9 @@ export class SupportNewAssignedAccessorsHandler extends BaseHandler<
     await this.ST04_SUPPORT_NEW_ASSIGNED_ACCESSORS_TO_INNOVATOR(
       innovation,
       unitName,
-      accessorsRecipients.map(r => r.identityId)
+      accessorsRecipients
+        .filter(r => this.inputData.newAssignedAccessorsRoleIds.includes(r.roleId))
+        .map(r => r.identityId)
     );
     await this.ST05_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_NEW_QA(innovation, accessorsRecipients);
     await this.ST06_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_OLD_QA(innovation, accessorsRecipients);
