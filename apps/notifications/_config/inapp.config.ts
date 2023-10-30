@@ -81,4 +81,15 @@ export type InAppTemplatesType = {
     innovationName: string;
     status: string;
   };
+  ST04_SUPPORT_NEW_ASSIGNED_ACCESSORS_TO_INNOVATOR: {
+    unitName: string;
+    innovationName: string;
+    threadId: string;
+  };
+  ST05_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_NEW_QA: {
+    innovationName: string;
+  };
+  ST06_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_OLD_QA: {
+    innovationName: string;
+  };
 };
