@@ -39,6 +39,14 @@ export const supportSummaryUrl = (role: ServiceRoleEnum, innovationId: string, u
   return urlModel.buildUrl();
 };
 
+export const innovationOverviewUrl = (role: ServiceRoleEnum, innovationId: string): string => {
+  const baseUrl = frontendBaseUrl(role);
+  return new UrlModel(ENV.webBaseTransactionalUrl)
+    .addPath(':baseUrl/innovations/:innovationId/overview')
+    .setPathParams({ baseUrl, innovationId })
+    .buildUrl();
+};
+
 export const frontendBaseUrl = (role: ServiceRoleEnum): string => {
   switch (role) {
     case ServiceRoleEnum.ASSESSMENT:

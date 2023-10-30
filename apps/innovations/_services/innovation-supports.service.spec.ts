@@ -14,7 +14,8 @@ import {
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
   InnovationTaskStatusEnum,
-  NotificationContextTypeEnum
+  NotificationContextTypeEnum,
+  NotifierTypeEnum
 } from '@innovations/shared/enums';
 import {
   BadRequestError,
@@ -821,9 +822,16 @@ describe('Innovations / _services / innovation-supports suite', () => {
         userRoleId: scenario.users.ingridAccessor.roles.accessorRole.id
       }
     ];
+    const message = randText();
 
     it('should update to new accessors', async () => {
-      await sut.updateInnovationSupportAccessors(context, innovation.id, support.id, { accessors: newAccessors }, em);
+      await sut.updateInnovationSupportAccessors(
+        context,
+        innovation.id,
+        support.id,
+        { accessors: newAccessors, message },
+        em
+      );
       const supportRoles = (
         await em
           .createQueryBuilder(InnovationSupportEntity, 'support')
@@ -857,29 +865,64 @@ describe('Innovations / _services / innovation-supports suite', () => {
       );
     });
 
-    it("shouldn't add a message to the thread if one not provided", async () => {
-      await sut.updateInnovationSupportAccessors(context, innovation.id, support.id, { accessors: newAccessors }, em);
+    it('should send a notification when changing the assigned', async () => {
+      await sut.updateInnovationSupportAccessors(
+        context,
+        innovation.id,
+        support.id,
+        { accessors: newAccessors, message: message },
+        em
+      );
 
-      expect(threadMessageMock).toHaveBeenCalledTimes(0);
+      expect(notifierSendSpy).toHaveBeenCalledTimes(1);
+      expect(notifierSendSpy).toHaveBeenCalledWith(context, NotifierTypeEnum.SUPPORT_NEW_ASSIGN_ACCESSORS, {
+        innovationId: innovation.id,
+        supportId: support.id,
+        threadId: innovation.threads.threadByAliceQA.id,
+        message,
+        newAssignedAccessorsRoleIds: newAccessors.map(a => a.userRoleId),
+        removedAssignedAccessorsRoleIds: [
+          scenario.users.aliceQualifyingAccessor.roles.qaRole.id,
+          scenario.users.jamieMadroxAccessor.roles.healthAccessorRole.id
+        ]
+      });
     });
 
     it('should fail with not found if support not found', async () => {
       await expect(
-        sut.updateInnovationSupportAccessors(context, innovation.id, randUuid(), { accessors: newAccessors }, em)
+        sut.updateInnovationSupportAccessors(
+          context,
+          innovation.id,
+          randUuid(),
+          { accessors: newAccessors, message },
+          em
+        )
       ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND));
     });
 
     it('should fail with not found if thread not found', async () => {
       await em.update(InnovationThreadEntity, { contextId: support.id }, { deletedAt: new Date() });
       await expect(
-        sut.updateInnovationSupportAccessors(context, innovation.id, support.id, { accessors: newAccessors }, em)
+        sut.updateInnovationSupportAccessors(
+          context,
+          innovation.id,
+          support.id,
+          { accessors: newAccessors, message },
+          em
+        )
       ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND));
     });
 
     it('should fail with unprocessable if innovation status not engaging', async () => {
       await em.update(InnovationSupportEntity, { id: support.id }, { status: InnovationSupportStatusEnum.WAITING });
       await expect(
-        sut.updateInnovationSupportAccessors(context, innovation.id, support.id, { accessors: newAccessors }, em)
+        sut.updateInnovationSupportAccessors(
+          context,
+          innovation.id,
+          support.id,
+          { accessors: newAccessors, message },
+          em
+        )
       ).rejects.toThrowError(
         new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UPDATE_WITH_UNPROCESSABLE_STATUS)
       );
@@ -887,7 +930,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
 
     it('should fail with unprocessable if accessors is empty', async () => {
       await expect(
-        sut.updateInnovationSupportAccessors(context, innovation.id, support.id, { accessors: [] })
+        sut.updateInnovationSupportAccessors(context, innovation.id, support.id, { accessors: [], message })
       ).rejects.toThrowError(new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD));
     });
   });

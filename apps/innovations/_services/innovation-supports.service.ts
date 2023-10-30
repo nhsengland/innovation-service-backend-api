@@ -549,7 +549,7 @@ export class InnovationSupportsService extends BaseService {
         }
       );
 
-      const newAssignedAccessors = await this.assignAccessors(
+      const { newAssignedAccessors } = await this.assignAccessors(
         domainContext,
         savedSupport,
         assignedAccessors,
@@ -594,7 +594,7 @@ export class InnovationSupportsService extends BaseService {
     innovationId: string,
     supportId: string,
     data: {
-      message?: string;
+      message: string;
       accessors: { id: string; userRoleId: string }[];
     },
     entityManager?: EntityManager
@@ -634,7 +634,7 @@ export class InnovationSupportsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND);
     }
 
-    await this.assignAccessors(
+    const accessorsChanges = await this.assignAccessors(
       domainContext,
       support,
       data.accessors.map(item => item.userRoleId),
@@ -642,17 +642,24 @@ export class InnovationSupportsService extends BaseService {
       entityManager
     );
 
-    if (data.message) {
-      await this.innovationThreadsService.createThreadMessage(
-        domainContext,
-        thread.id,
-        data.message,
-        false,
-        false,
-        undefined,
-        entityManager
-      );
-    }
+    await this.innovationThreadsService.createThreadMessage(
+      domainContext,
+      thread.id,
+      data.message,
+      false,
+      false,
+      undefined,
+      entityManager
+    );
+
+    await this.notifierService.send(domainContext, NotifierTypeEnum.SUPPORT_NEW_ASSIGN_ACCESSORS, {
+      innovationId: innovationId,
+      supportId: supportId,
+      threadId: thread.id,
+      message: data.message,
+      newAssignedAccessorsRoleIds: accessorsChanges.newAssignedAccessors,
+      removedAssignedAccessorsRoleIds: accessorsChanges.removedAssignedAccessors
+    });
   }
 
   /**
@@ -668,7 +675,7 @@ export class InnovationSupportsService extends BaseService {
     accessorRoleIds: string[],
     threadId: string, // this will likely become optional in the future
     entityManager?: EntityManager
-  ): Promise<string[]> {
+  ): Promise<{ newAssignedAccessors: string[]; removedAssignedAccessors: string[] }> {
     // Force a transaction if one not present
     if (!entityManager) {
       return this.sqlConnection.transaction(async transaction => {
@@ -690,8 +697,10 @@ export class InnovationSupportsService extends BaseService {
       support = dbSupport;
     }
 
-    const previousUsersRoleIds = new Set(support.userRoles.map(item => item.id));
-    const newAssignedAccessors = accessorRoleIds.filter(item => !previousUsersRoleIds.has(item));
+    const previousUsersRoleIds = support.userRoles.map(item => item.id);
+    const previousUsersRoleIdsSet = new Set(previousUsersRoleIds);
+    const newAssignedAccessors = accessorRoleIds.filter(item => !previousUsersRoleIdsSet.has(item));
+    const removedAssignedAccessors = previousUsersRoleIds.filter(r => !accessorRoleIds.includes(r));
 
     await entityManager.save(InnovationSupportEntity, {
       id: support.id,
@@ -717,7 +726,7 @@ export class InnovationSupportsService extends BaseService {
       );
     }
 
-    return newAssignedAccessors;
+    return { newAssignedAccessors, removedAssignedAccessors };
   }
 
   async changeInnovationSupportStatusRequest(
