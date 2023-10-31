@@ -2,7 +2,7 @@ import { NotificationCategoryEnum, NotifierTypeEnum, ServiceRoleEnum } from '@no
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import type { Context } from '@azure/functions';
-import { assessmentUrl } from '../../_helpers/url.helper';
+import { taskUrl } from '../../_helpers/url.helper';
 import { BaseHandler } from '../base.handler';
 
 export class TaskCreationHandler extends BaseHandler<
@@ -31,7 +31,7 @@ export class TaskCreationHandler extends BaseHandler<
       params: {
         innovation_name: innovation.name,
         unit_name: unitName,
-        task_url: assessmentUrl(ServiceRoleEnum.INNOVATOR, this.inputData.innovationId, this.inputData.task.id)
+        task_url: taskUrl(ServiceRoleEnum.INNOVATOR, this.inputData.innovationId, this.inputData.task.id)
       }
     });
 

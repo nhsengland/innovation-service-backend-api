@@ -1,12 +1,12 @@
-import { randUuid } from '@ngneat/falso';
+import { randText, randUuid } from '@ngneat/falso';
 import { NotificationCategoryEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { testEmails, testInApps } from '../../_helpers/tests.helper';
-import { assessmentUrl, dataSharingPreferencesUrl } from '../../_helpers/url.helper';
+import { threadUrl } from '../../_helpers/url.helper';
 import { NotificationsTestsHelper } from '../../_tests/notifications-test.helper';
-import { AssessmentCompleteHandler } from './assessment-complete.handler';
+import { NeedsAssessmentStartedHandler } from './needs-assessment-started.handler';
 
-describe('Notifications / _handlers / needs assessment complete suite', () => {
+describe('Notifications / _handlers / needs assessment start suite', () => {
   const testsHelper = new NotificationsTestsHelper();
   const scenario = testsHelper.getCompleteScenario();
 
@@ -16,28 +16,27 @@ describe('Notifications / _handlers / needs assessment complete suite', () => {
 
   const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
 
-  describe('when assessment completes', () => {
+  describe('when assessment starts', () => {
     const recipients = [scenario.users.johnInnovator, scenario.users.janeInnovator].map(user =>
       DTOsHelper.getRecipientUser(user)
     );
     const inputData = {
       innovationId: innovation.id,
-      assessmentId: randUuid()
+      assessmentId: randUuid(),
+      message: randText(),
+      messageId: randUuid(),
+      threadId: randUuid()
     };
 
-    describe('NA04_NEEDS_ASSESSMENT_COMPLETE_TO_INNOVATOR', () => {
+    describe('NA03_NEEDS_ASSESSMENT_STARTED_TO_INNOVATOR', () => {
       it('should send an email to the innovator', async () => {
-        await testEmails(AssessmentCompleteHandler, 'NA04_NEEDS_ASSESSMENT_COMPLETE_TO_INNOVATOR', {
+        await testEmails(NeedsAssessmentStartedHandler, 'NA03_NEEDS_ASSESSMENT_STARTED_TO_INNOVATOR', {
           notificationPreferenceType: NotificationCategoryEnum.NEEDS_ASSESSMENT,
           inputData: inputData,
           outputData: {
             innovation_name: innovation.name,
-            data_sharing_preferences_url: dataSharingPreferencesUrl(ServiceRoleEnum.INNOVATOR, inputData.innovationId),
-            needs_assessment_url: assessmentUrl(
-              ServiceRoleEnum.INNOVATOR,
-              inputData.innovationId,
-              inputData.assessmentId
-            )
+            message: inputData.message,
+            message_url: threadUrl(ServiceRoleEnum.INNOVATOR, inputData.innovationId, inputData.threadId)
           },
           requestUser: DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
           recipients: recipients
@@ -45,7 +44,7 @@ describe('Notifications / _handlers / needs assessment complete suite', () => {
       });
 
       it('should send an inapp to the innovator', async () => {
-        await testInApps(AssessmentCompleteHandler, 'NA04_NEEDS_ASSESSMENT_COMPLETE_TO_INNOVATOR', {
+        await testInApps(NeedsAssessmentStartedHandler, 'NA03_NEEDS_ASSESSMENT_STARTED_TO_INNOVATOR', {
           innovationId: inputData.innovationId,
           context: {
             type: NotificationCategoryEnum.NEEDS_ASSESSMENT,
@@ -54,7 +53,8 @@ describe('Notifications / _handlers / needs assessment complete suite', () => {
           inputData: inputData,
           outputData: {
             innovationName: innovation.name,
-            assessmentId: inputData.assessmentId
+            threadId: inputData.threadId,
+            messageId: inputData.threadId
           },
           requestUser: DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
           recipients: recipients

@@ -4,7 +4,7 @@ import type { DomainContextType, NotifierTemplatesType } from '@notifications/sh
 import { assessmentUrl, dataSharingPreferencesUrl } from '../../_helpers/url.helper';
 import { BaseHandler } from '../base.handler';
 
-export class AssessmentCompleteHandler extends BaseHandler<
+export class NeedsAssessmentCompleteHandler extends BaseHandler<
   NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED,
   'NA04_NEEDS_ASSESSMENT_COMPLETE_TO_INNOVATOR'
 > {

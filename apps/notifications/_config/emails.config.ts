@@ -30,8 +30,8 @@ export const EmailTemplates = {
   NA02_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_ASSESSMENT: 'a963bf8d-50a4-4637-8ce1-40bd6bb73de2',
   NA03_NEEDS_ASSESSMENT_STARTED_TO_INNOVATOR: 'c9d63a7a-951b-4529-ac00-53e9b17c2919',
   NA04_NEEDS_ASSESSMENT_COMPLETE_TO_INNOVATOR: '32a777de-3591-4e96-a2f4-181725f8fe2b',
-  // NA06_NEEDS_ASSESSOR_REMOVED: '5845a1b4-3be6-4f27-a562-3275c82e73a5',
-  // NA07_NEEDS_ASSESSOR_ASSIGNED: '28d9f470-3357-496d-aad4-28d7a2e0c2ab',
+  NA06_NEEDS_ASSESSOR_REMOVED: '5845a1b4-3be6-4f27-a562-3275c82e73a5',
+  NA07_NEEDS_ASSESSOR_ASSIGNED: '28d9f470-3357-496d-aad4-28d7a2e0c2ab',
 
   // REVIEW in future
   OS03_INNOVATION_DELAYED_SHARED_SUGGESTION: 'b5845d01-f66e-455c-8f11-6e011394da95',
@@ -249,16 +249,16 @@ export type EmailTemplatesType = {
     needs_assessment_url: string;
     data_sharing_preferences_url: string;
   };
-  // NA05_NEEDS_ASSESSOR_REMOVED: {
-  //   display_name?: string;
-  //   innovation_name: string;
-  //   innovation_overview_url: string;
-  // };
-  // NA06_NEEDS_ASSESSOR_ASSIGNED: {
-  //   display_name?: string;
-  //   innovation_name: string;
-  //   innovation_overview_url: string;
-  // };
+  NA06_NEEDS_ASSESSOR_REMOVED: {
+    display_name?: string;
+    innovation_name: string;
+    innovation_overview_url: string;
+  };
+  NA07_NEEDS_ASSESSOR_ASSIGNED: {
+    display_name?: string;
+    innovation_name: string;
+    innovation_overview_url: string;
+  };
 
   // REVIEW in future
   OS03_INNOVATION_DELAYED_SHARED_SUGGESTION: {

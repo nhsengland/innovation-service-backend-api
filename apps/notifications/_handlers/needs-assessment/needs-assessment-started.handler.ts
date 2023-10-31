@@ -4,7 +4,7 @@ import type { DomainContextType, NotifierTemplatesType } from '@notifications/sh
 import { threadUrl } from '../../_helpers/url.helper';
 import { BaseHandler } from '../base.handler';
 
-export class AssessmentStartedHandler extends BaseHandler<
+export class NeedsAssessmentStartedHandler extends BaseHandler<
   NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED,
   'NA03_NEEDS_ASSESSMENT_STARTED_TO_INNOVATOR'
 > {
