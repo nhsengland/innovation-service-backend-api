@@ -66,7 +66,8 @@ export enum NotificationCategoryEnum {
 
   // OTHER BUCKET (THIS NEEDS TO BE REVISED)
   INNOVATION = 'INNOVATION',
-  NEEDS_ASSESSMENT = 'NEEDS_ASSESSMENT'
+  NEEDS_ASSESSMENT = 'NEEDS_ASSESSMENT',
+  AUTOMATIC = 'AUTOMATIC'
 }
 
 export enum NotificationPreferenceEnum {

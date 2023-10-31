@@ -111,10 +111,19 @@ export type InAppTemplatesType = {
   };
   NA05_NEEDS_ASSESSOR_REMOVED: {
     innovationName: string;
-    innovationId: string;
   };
   NA06_NEEDS_ASSESSOR_ASSIGNED: {
     innovationName: string;
-    innovationId: string;
+  };
+
+  // FUTURE
+  OS03_INNOVATION_DELAYED_SHARED_SUGGESTION: {
+    innovationName: string;
+  };
+  AU04_SUPPORT_KPI_REMINDER: {
+    innovationName: string;
+  };
+  AU05_SUPPORT_KPI_OVERDUE: {
+    innovationName: string;
   };
 };

@@ -1,10 +1,8 @@
-import type { NotifierTypeEnum } from '@notifications/shared/enums';
+import { NotificationCategoryEnum, ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { ENV } from '../../_config';
-
 import type { Context } from '@azure/functions';
-import { UrlModel } from '@notifications/shared/models';
+import { innovationOverviewUrl } from '../../_helpers/url.helper';
 import { BaseHandler } from '../base.handler';
 
 export class InnovationDelayedSharedSuggestionHandler extends BaseHandler<
@@ -29,29 +27,27 @@ export class InnovationDelayedSharedSuggestionHandler extends BaseHandler<
       unitsToNotify.map(u => u.unitId)
     );
 
-    this.addEmails('OS03_INNOVATION_DELAYED_SHARED_SUGGESTION', recipients, {
-      params: {
-        innovation_name: innovation.name,
-        innovation_overview_url: 
-      }
-    })
-
-    for (const recipient of recipients) {
-      this.emails.push({
-        templateId: OS03_INNOVATION_DELAYED_SHARED_SUGGESTION,
-        to: recipient,
-        notificationPreferenceType: null,
+    this.notify('OS03_INNOVATION_DELAYED_SHARED_SUGGESTION', recipients, {
+      email: {
+        notificationPreferenceType: NotificationCategoryEnum.SUGGEST_SUPPORT,
         params: {
           innovation_name: innovation.name,
-          innovation_overview_url: new UrlModel(ENV.webBaseTransactionalUrl)
-            .addPath('accessor/innovations/:innovationId/overview')
-            .setPathParams({
-              innovationId: this.inputData.innovationId
-            })
-            .buildUrl()
+          innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, this.inputData.innovationId)
         }
-      });
-    }
+      },
+      inApp: {
+        innovationId: innovation.id,
+        context: {
+          type: NotificationCategoryEnum.SUGGEST_SUPPORT,
+          id: innovation.id, // TODO,
+          detail: 'OS03_INNOVATION_DELAYED_SHARED_SUGGESTION'
+        },
+        params: {
+          innovationName: innovation.name,
+          innovationId: innovation.id
+        }
+      }
+    });
 
     return this;
   }

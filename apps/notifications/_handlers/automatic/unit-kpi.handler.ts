@@ -1,10 +1,8 @@
-import type { NotifierTypeEnum } from '@notifications/shared/enums';
+import { NotificationCategoryEnum, ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { ENV } from '../../_config';
-
 import type { Context } from '@azure/functions';
-import { UrlModel } from '@notifications/shared/models';
+import { innovationOverviewUrl } from '../../_helpers/url.helper';
 import type { RecipientType } from '../../_services/recipients.service';
 import { BaseHandler } from '../base.handler';
 
@@ -41,43 +39,30 @@ export class UnitKPIHandler extends BaseHandler<
       if (!this.unitQAs.has(unitId)) {
         this.unitQAs.set(unitId, await this.recipientsService.organisationUnitsQualifyingAccessors([unitId]));
       }
-      const qas = this.unitQAs.get(unitId)!;
+      const qas = this.unitQAs.get(unitId) ?? [];
 
       for (const innovation of innovations) {
-        // TODO fix here
-
-        // send email
-        for (const recipient of qas) {
-          this.emails.push({
+        this.notify(templateId, qas, {
+          email: {
             templateId: templateId,
-            to: recipient,
-            notificationPreferenceType: null, // CHANGE THIS
+            notificationPreferenceType: NotificationCategoryEnum.AUTOMATIC,
             params: {
               innovation_name: innovation.name,
-              innovation_overview_url: new UrlModel(ENV.webBaseTransactionalUrl)
-                .addPath('accessor/innovations/:innovationId/overview')
-                .setPathParams({
-                  innovationId: innovation.id
-                })
-                .buildUrl()
+              innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, innovation.id)
             }
-          });
-        }
-
-        /* inApp is delayed until we merge this into develop
-        this.inApp.push({
-          context: {
-            detail: templateId as any,
-            id: innovation.id,
-            type: 'AUTOMATIC' as any
           },
-          innovationId: innovation.id,
-          userRoleIds: qas.map(x => x.roleId),
-          params: {
-            innovationName: innovation.name
+          inApp: {
+            innovationId: innovation.id,
+            context: {
+              type: NotificationCategoryEnum.AUTOMATIC,
+              id: innovation.id,
+              detail: templateId
+            },
+            params: {
+              innovationName: innovation.name
+            }
           }
         });
-        */
       }
     }
   }
