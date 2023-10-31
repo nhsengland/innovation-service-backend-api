@@ -27,7 +27,7 @@ describe('Notifications / _handlers / innovation-submitted suite', () => {
             innovationId: innovation.id,
             reassessment: false
           },
-          notificationPreferenceType: NotificationCategoryEnum.INNOVATION,
+          notificationPreferenceType: NotificationCategoryEnum.NEEDS_ASSESSMENT,
           outputData: {
             innovation_name: innovation.name,
             needs_assessment: 'assessment'
@@ -43,7 +43,7 @@ describe('Notifications / _handlers / innovation-submitted suite', () => {
       it('should send an in-app notification to the innovator', async () => {
         await testInApps(InnovationSubmittedHandler, 'NA01_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_INNOVATOR', {
           context: {
-            type: NotificationCategoryEnum.INNOVATION,
+            type: NotificationCategoryEnum.NEEDS_ASSESSMENT,
             id: innovation.id
           },
           innovationId: innovation.id,
@@ -70,7 +70,7 @@ describe('Notifications / _handlers / innovation-submitted suite', () => {
             innovationId: innovation.id,
             reassessment: false
           },
-          notificationPreferenceType: NotificationCategoryEnum.INNOVATION,
+          notificationPreferenceType: NotificationCategoryEnum.NEEDS_ASSESSMENT,
           outputData: {
             innovation_name: innovation.name,
             innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ASSESSMENT, innovation.id),
@@ -84,7 +84,7 @@ describe('Notifications / _handlers / innovation-submitted suite', () => {
       it('should send an in-app notification to the innovator', async () => {
         await testInApps(InnovationSubmittedHandler, 'NA02_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_ASSESSMENT', {
           context: {
-            type: NotificationCategoryEnum.INNOVATION,
+            type: NotificationCategoryEnum.NEEDS_ASSESSMENT,
             id: innovation.id
           },
           innovationId: innovation.id,
@@ -111,7 +111,7 @@ describe('Notifications / _handlers / innovation-submitted suite', () => {
             innovationId: innovation.id,
             reassessment: true
           },
-          notificationPreferenceType: NotificationCategoryEnum.INNOVATION,
+          notificationPreferenceType: NotificationCategoryEnum.NEEDS_ASSESSMENT,
           outputData: {
             innovation_name: innovation.name,
             needs_assessment: 'reassessment'
@@ -127,7 +127,7 @@ describe('Notifications / _handlers / innovation-submitted suite', () => {
       it('should send an in-app notification to the innovator', async () => {
         await testInApps(InnovationSubmittedHandler, 'NA01_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_INNOVATOR', {
           context: {
-            type: NotificationCategoryEnum.INNOVATION,
+            type: NotificationCategoryEnum.NEEDS_ASSESSMENT,
             id: innovation.id
           },
           innovationId: innovation.id,
@@ -154,7 +154,7 @@ describe('Notifications / _handlers / innovation-submitted suite', () => {
             innovationId: innovation.id,
             reassessment: true
           },
-          notificationPreferenceType: NotificationCategoryEnum.INNOVATION,
+          notificationPreferenceType: NotificationCategoryEnum.NEEDS_ASSESSMENT,
           outputData: {
             innovation_name: innovation.name,
             innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ASSESSMENT, innovation.id),
@@ -168,7 +168,7 @@ describe('Notifications / _handlers / innovation-submitted suite', () => {
       it('should send an in-app notification to the innovator', async () => {
         await testInApps(InnovationSubmittedHandler, 'NA02_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_ASSESSMENT', {
           context: {
-            type: NotificationCategoryEnum.INNOVATION,
+            type: NotificationCategoryEnum.NEEDS_ASSESSMENT,
             id: innovation.id
           },
           innovationId: innovation.id,

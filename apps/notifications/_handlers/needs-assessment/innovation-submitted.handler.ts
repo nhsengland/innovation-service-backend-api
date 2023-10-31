@@ -37,7 +37,7 @@ export class InnovationSubmittedHandler extends BaseHandler<
 
     this.notify('NA01_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_INNOVATOR', recipients, {
       email: {
-        notificationPreferenceType: NotificationCategoryEnum.INNOVATION,
+        notificationPreferenceType: NotificationCategoryEnum.NEEDS_ASSESSMENT,
         params: {
           innovation_name: innovation.name,
           needs_assessment: this.inputData.reassessment ? 'reassessment' : 'assessment'
@@ -48,7 +48,7 @@ export class InnovationSubmittedHandler extends BaseHandler<
       },
       inApp: {
         context: {
-          type: NotificationCategoryEnum.INNOVATION,
+          type: NotificationCategoryEnum.NEEDS_ASSESSMENT,
           id: innovation.id,
           detail: 'NA01_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_INNOVATOR'
         },
@@ -71,7 +71,7 @@ export class InnovationSubmittedHandler extends BaseHandler<
     const recipients = await this.recipientsService.needsAssessmentUsers();
     this.notify('NA02_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_ASSESSMENT', recipients, {
       email: {
-        notificationPreferenceType: NotificationCategoryEnum.INNOVATION,
+        notificationPreferenceType: NotificationCategoryEnum.NEEDS_ASSESSMENT,
         params: {
           innovation_name: innovation.name,
           innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ASSESSMENT, innovation.id),
@@ -80,7 +80,7 @@ export class InnovationSubmittedHandler extends BaseHandler<
       },
       inApp: {
         context: {
-          type: NotificationCategoryEnum.INNOVATION,
+          type: NotificationCategoryEnum.NEEDS_ASSESSMENT,
           id: innovation.id,
           detail: 'NA02_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_ASSESSMENT'
         },
