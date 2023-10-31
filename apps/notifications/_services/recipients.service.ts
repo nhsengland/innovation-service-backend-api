@@ -43,6 +43,7 @@ export type RecipientType = {
   userId: string;
   identityId: string;
   isActive: boolean;
+  unitId?: string;
 };
 
 type RoleFilter = {
@@ -227,7 +228,11 @@ export class RecipientsService extends BaseService {
    * @returns a list of user recipients
    * @throws {NotFoundError} if the support is not found when using innovationSupportId
    */
-  async innovationAssignedRecipients(innovationId: string, entityManager?: EntityManager): Promise<RecipientType[]> {
+  async innovationAssignedRecipients(
+    innovationId: string,
+    filters: { supportStatus?: InnovationSupportStatusEnum[] },
+    entityManager?: EntityManager
+  ): Promise<RecipientType[]> {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const query = em
@@ -249,6 +254,10 @@ export class RecipientsService extends BaseService {
       .andWhere('user.status != :userDeleted', { userDeleted: UserStatusEnum.DELETED }) // Filter deleted users
       .andWhere('support.innovation_id = :innovationId', { innovationId: innovationId });
 
+    if (filters.supportStatus) {
+      query.andWhere('support.status IN (:...supportStatus)', { supportStatus: filters.supportStatus });
+    }
+
     const dbInnovationSupports = await query.getMany();
 
     const res: RecipientType[] = [];
@@ -261,7 +270,8 @@ export class RecipientsService extends BaseService {
             role: userRole.role,
             userId: userRole.user.id,
             identityId: userRole.user.identityId,
-            isActive: userRole.isActive && userRole.user.status === UserStatusEnum.ACTIVE
+            isActive: userRole.isActive && userRole.user.status === UserStatusEnum.ACTIVE,
+            unitId: support.organisationUnit.id
           });
         }
       }
@@ -311,6 +321,7 @@ export class RecipientsService extends BaseService {
               role: userRole.role,
               userId: userRole.user.id,
               identityId: userRole.user.identityId,
+              unitId: support.organisationUnit.id,
               isActive: userRole.isActive && userRole.user.status === UserStatusEnum.ACTIVE
             });
           }
@@ -342,11 +353,13 @@ export class RecipientsService extends BaseService {
         'user.status',
         'role.id',
         'role.role',
-        'role.isActive'
+        'role.isActive',
+        'ownerUnit.id'
       ])
       // Review we are inner joining with user / role and the createdBy might have been deleted, for tasks I don't
       // think it's too much of an error to not send notifications in those cases
       .innerJoin('task.createdByUserRole', 'role')
+      .leftJoin('role.organisationUnit', 'ownerUnit')
       .innerJoin('role.user', 'user')
       .where(`task.id = :taskId`, { taskId: taskId })
       .andWhere('user.status = :userActive', { userActive: UserStatusEnum.ACTIVE })
@@ -365,6 +378,7 @@ export class RecipientsService extends BaseService {
         identityId: dbTask.createdByUserRole.user.identityId,
         roleId: dbTask.createdByUserRole.id,
         role: dbTask.createdByUserRole.role,
+        unitId: dbTask.createdByUserRole.organisationUnit?.id,
         isActive: dbTask.createdByUserRole.isActive && dbTask.createdByUserRole.user.status === UserStatusEnum.ACTIVE
       }
     };
@@ -389,10 +403,12 @@ export class RecipientsService extends BaseService {
         'author.status',
         'authorUserRole.id',
         'authorUserRole.role',
-        'authorUserRole.isActive'
+        'authorUserRole.isActive',
+        'authorUnit.id'
       ])
       .innerJoin('thread.author', 'author')
       .innerJoin('thread.authorUserRole', 'authorUserRole')
+      .leftJoin('authorUserRole.organisationUnit', 'authorUnit')
       .where('thread.id = :threadId', { threadId })
       .getOne();
 
@@ -409,6 +425,7 @@ export class RecipientsService extends BaseService {
           identityId: dbThread.author.identityId,
           roleId: dbThread.authorUserRole.id,
           role: dbThread.authorUserRole.role,
+          unitId: dbThread.authorUserRole.organisationUnit?.id,
           isActive: dbThread.author.status === UserStatusEnum.ACTIVE && dbThread.authorUserRole.isActive
         }
       })
@@ -427,6 +444,7 @@ export class RecipientsService extends BaseService {
       identityId: item.identityId,
       roleId: item.userRole.id,
       role: item.userRole.role,
+      unitId: item.organisationUnit?.id,
       isActive: !item.locked
     }));
   }
@@ -936,8 +954,17 @@ export class RecipientsService extends BaseService {
 
     const userRoles = await em
       .createQueryBuilder(UserRoleEntity, 'userRole')
-      .select(['userRole.id', 'userRole.isActive', 'userRole.role', 'user.id', 'user.identityId', 'user.status'])
+      .select([
+        'userRole.id',
+        'userRole.isActive',
+        'userRole.role',
+        'user.id',
+        'user.identityId',
+        'user.status',
+        'unit.id'
+      ])
       .innerJoin('userRole.user', 'user')
+      .leftJoin('userRole.organisationUnit', 'unit')
       .where('userRole.id IN (:...userRoleIds)', { userRoleIds })
       .getMany();
 
@@ -946,6 +973,7 @@ export class RecipientsService extends BaseService {
       role: r.role,
       userId: r.user.id,
       identityId: r.user.identityId,
+      unitId: r.organisationUnit?.id,
       isActive: r.isActive && r.user.status === UserStatusEnum.ACTIVE
     }));
   }
@@ -983,8 +1011,17 @@ export class RecipientsService extends BaseService {
 
     const query = em
       .createQueryBuilder(UserRoleEntity, 'userRole')
-      .select(['userRole.id', 'userRole.isActive', 'userRole.role', 'user.id', 'user.identityId', 'user.status'])
-      .innerJoin('userRole.user', 'user');
+      .select([
+        'userRole.id',
+        'userRole.isActive',
+        'userRole.role',
+        'user.id',
+        'user.identityId',
+        'user.status',
+        'unit.id'
+      ])
+      .innerJoin('userRole.user', 'user')
+      .leftJoin('userRole.organisationUnit', 'unit');
 
     if (userIds?.length) {
       query.where('userRole.user_id IN (:...userIds)', { userIds });
@@ -1018,6 +1055,7 @@ export class RecipientsService extends BaseService {
       role: r.role,
       userId: r.user.id,
       identityId: r.user.identityId,
+      unitId: r.organisationUnit?.id,
       isActive: r.isActive && r.user.status === UserStatusEnum.ACTIVE
     }));
 

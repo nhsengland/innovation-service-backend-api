@@ -25,6 +25,10 @@ export const NotificationTypes = {
     // 'NA06_NEEDS_ASSESSOR_REMOVED',
     // 'NA07_NEEDS_ASSESSOR_ASSIGNED'
   ] as const,
+  SUPPORT_SUMMARY: [
+    'SS01_SUPPORT_SUMMARY_UPDATE_TO_INNOVATORS',
+    'SS02_SUPPORT_SUMMARY_UPDATE_TO_OTHER_ENGAGING_ACCESSORS'
+  ] as const,
   MIGRATION_OLD: ['MIGRATION_OLD'] as const
 };
 export type NotificationTypes = typeof NotificationTypes;
@@ -65,7 +69,8 @@ export enum NotificationCategoryEnum {
 
   // OTHER BUCKET (THIS NEEDS TO BE REVISED)
   INNOVATION = 'INNOVATION',
-  NEEDS_ASSESSMENT = 'NEEDS_ASSESSMENT'
+  NEEDS_ASSESSMENT = 'NEEDS_ASSESSMENT',
+  SUPPORT_SUMMARY = 'SUPPORT_SUMMARY'
 }
 
 export enum NotificationPreferenceEnum {

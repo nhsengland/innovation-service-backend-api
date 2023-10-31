@@ -137,8 +137,6 @@ describe('Notifications / _handlers / support-summary-update handler suite', () 
       DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
       {
         innovationId: innovation.id,
-        organisationUnitId:
-          scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
         supportId: innovation.supports.supportByHealthOrgUnit.id
       },
       MocksHelper.mockContext()
