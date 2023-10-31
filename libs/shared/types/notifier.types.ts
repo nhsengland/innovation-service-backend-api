@@ -75,6 +75,12 @@ export type NotifierTemplatesType = {
     reassessment: boolean;
   };
 
+  // Support Summary
+  [NotifierTypeEnum.SUPPORT_SUMMARY_UPDATE]: {
+    innovationId: string;
+    supportId: string;
+  };
+
   // OLD
   [NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION]: Record<string, never>;
 
@@ -122,12 +128,6 @@ export type NotifierTemplatesType = {
       organisationUnitId: string;
       newAssignedAccessors?: { id: string }[]; // Newly assigned accessors
     };
-  };
-
-  [NotifierTypeEnum.SUPPORT_SUMMARY_UPDATE]: {
-    innovationId: string;
-    organisationUnitId: string;
-    supportId: string;
   };
 
   [NotifierTypeEnum.INNOVATION_ORGANISATION_UNITS_SUGGESTION]: {

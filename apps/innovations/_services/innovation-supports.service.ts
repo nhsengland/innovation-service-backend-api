@@ -1023,7 +1023,6 @@ export class InnovationSupportsService extends BaseService {
 
     await this.notifierService.send(domainContext, NotifierTypeEnum.SUPPORT_SUMMARY_UPDATE, {
       innovationId,
-      organisationUnitId: unitId,
       supportId: support.id
     });
   }

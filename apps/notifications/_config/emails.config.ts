@@ -32,6 +32,9 @@ export const EmailTemplates = {
   // NA04_NEEDS_ASSESSMENT_COMPLETE_TO_INNOVATOR: '32a777de-3591-4e96-a2f4-181725f8fe2b',
   // NA06_NEEDS_ASSESSOR_REMOVED: '5845a1b4-3be6-4f27-a562-3275c82e73a5',
   // NA07_NEEDS_ASSESSOR_ASSIGNED: '28d9f470-3357-496d-aad4-28d7a2e0c2ab',
+  // SUPPORT SUMMARY
+  SS01_SUPPORT_SUMMARY_UPDATE_TO_INNOVATORS: 'a890bf57-5bf8-407a-85cf-934f133cbcf7',
+  SS02_SUPPORT_SUMMARY_UPDATE_TO_OTHER_ENGAGING_ACCESSORS: 'a890bf57-5bf8-407a-85cf-934f133cbcf7',
 
   // REVIEW in future
   OS03_INNOVATION_DELAYED_SHARED_SUGGESTION: 'b5845d01-f66e-455c-8f11-6e011394da95',
@@ -259,6 +262,18 @@ export type EmailTemplatesType = {
   //   innovation_name: string;
   //   innovation_overview_url: string;
   // };
+
+  // Support Summary
+  SS01_SUPPORT_SUMMARY_UPDATE_TO_INNOVATORS: {
+    unit_name: string;
+    innovation_name: string;
+    support_summary_update_url: string;
+  };
+  SS02_SUPPORT_SUMMARY_UPDATE_TO_OTHER_ENGAGING_ACCESSORS: {
+    unit_name: string;
+    innovation_name: string;
+    support_summary_update_url: string;
+  };
 
   // REVIEW in future
   OS03_INNOVATION_DELAYED_SHARED_SUGGESTION: {

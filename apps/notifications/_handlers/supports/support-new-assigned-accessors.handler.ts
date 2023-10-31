@@ -1,9 +1,9 @@
 import type { Context } from '@azure/functions';
 import { NotificationCategoryEnum, ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
-import type { RecipientType } from 'apps/notifications/_services/recipients.service';
 import { HandlersHelper } from '../../_helpers/handlers.helper';
 import { innovationOverviewUrl, threadUrl } from '../../_helpers/url.helper';
+import type { RecipientType } from '../../_services/recipients.service';
 import { BaseHandler } from '../base.handler';
 
 export class SupportNewAssignedAccessorsHandler extends BaseHandler<
