@@ -1,17 +1,16 @@
 import type { NotifierTypeEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { EmailTypeEnum, ENV } from '../_config';
+import { ENV } from '../../_config';
 
 import type { Context } from '@azure/functions';
 import { UrlModel } from '@notifications/shared/models';
-import type { RecipientType } from '../_services/recipients.service';
-import { BaseHandler } from './base.handler';
+import type { RecipientType } from '../../_services/recipients.service';
+import { BaseHandler } from '../base.handler';
 
 export class UnitKPIHandler extends BaseHandler<
   NotifierTypeEnum.UNIT_KPI,
-  EmailTypeEnum.AU04_SUPPORT_KPI_REMINDER | EmailTypeEnum.AU05_SUPPORT_KPI_OVERDUE,
-  { innovationName: string }
+  'AU04_SUPPORT_KPI_REMINDER' | 'AU05_SUPPORT_KPI_OVERDUE'
 > {
   constructor(
     requestUser: DomainContextType,
@@ -27,15 +26,15 @@ export class UnitKPIHandler extends BaseHandler<
     const reminderInnovations = await this.recipientsService.suggestedInnovationsWithoutUnitAction(4);
     const overdueInnovations = await this.recipientsService.suggestedInnovationsWithoutUnitAction(6, 7);
 
-    await this.sendNotifications(reminderInnovations, EmailTypeEnum.AU04_SUPPORT_KPI_REMINDER);
-    await this.sendNotifications(overdueInnovations, EmailTypeEnum.AU05_SUPPORT_KPI_OVERDUE);
+    await this.sendNotifications(reminderInnovations, 'AU04_SUPPORT_KPI_REMINDER');
+    await this.sendNotifications(overdueInnovations, 'AU05_SUPPORT_KPI_OVERDUE');
 
     return this;
   }
 
   private async sendNotifications(
     map: Map<string, { id: string; name: string }[]>,
-    templateId: EmailTypeEnum
+    templateId: 'AU04_SUPPORT_KPI_REMINDER' | 'AU05_SUPPORT_KPI_OVERDUE'
   ): Promise<void> {
     // Resolve unit QAs
     for (const [unitId, innovations] of map) {
@@ -45,6 +44,8 @@ export class UnitKPIHandler extends BaseHandler<
       const qas = this.unitQAs.get(unitId)!;
 
       for (const innovation of innovations) {
+        // TODO fix here
+
         // send email
         for (const recipient of qas) {
           this.emails.push({

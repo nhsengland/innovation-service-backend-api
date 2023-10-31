@@ -1,11 +1,11 @@
 import type { NotifierTypeEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { ENV } from '../_config';
+import { ENV } from '../../_config';
 
 import type { Context } from '@azure/functions';
 import { UrlModel } from '@notifications/shared/models';
-import { BaseHandler } from './base.handler';
+import { BaseHandler } from '../base.handler';
 
 export class InnovationDelayedSharedSuggestionHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_DELAYED_SHARE,

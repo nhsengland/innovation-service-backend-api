@@ -42,13 +42,13 @@ import {
   SupportSummaryUpdateHandler,
   UnitInactivationSupportStatusCompletedHandler
 } from '../_handlers';
-import { InnovationDelayedSharedSuggestionHandler } from '../_handlers/innovation-delayed-shared-suggestion.handler';
+import { UnitKPIHandler } from '../_handlers/automatic/unit-kpi.handler';
 import { MessageCreationHandler } from '../_handlers/messages/message-creation.handler';
 import { ThreadAddFollowersHandler } from '../_handlers/messages/thread-add-followers.handler';
 import { ThreadCreationHandler } from '../_handlers/messages/thread-creation.handler';
+import { InnovationDelayedSharedSuggestionHandler } from '../_handlers/suggestions/innovation-delayed-shared-suggestion.handler';
 import { SupportNewAssignedAccessorsHandler } from '../_handlers/supports/support-new-assigned-accessors.handler';
 import { SupportStatusUpdateHandler } from '../_handlers/supports/support-status-update.handler';
-import { UnitKPIHandler } from '../_handlers/unit-kpi.handler';
 
 export const NOTIFICATIONS_CONFIG = {
   // Documents
