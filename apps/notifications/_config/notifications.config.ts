@@ -37,8 +37,6 @@ import {
   InnovatorAccountDeletionHandler,
   LockUserHandler,
   NeedsAssessmentAssessorUpdateHandler,
-  NeedsAssessmentCompletedHandler,
-  NeedsAssessmentStartedHandler,
   SupportSummaryUpdateHandler,
   UnitInactivationSupportStatusCompletedHandler
 } from '../_handlers';
@@ -46,6 +44,8 @@ import { UnitKPIHandler } from '../_handlers/automatic/unit-kpi.handler';
 import { MessageCreationHandler } from '../_handlers/messages/message-creation.handler';
 import { ThreadAddFollowersHandler } from '../_handlers/messages/thread-add-followers.handler';
 import { ThreadCreationHandler } from '../_handlers/messages/thread-creation.handler';
+import { AssessmentCompleteHandler } from '../_handlers/needs-assessment/assessment-complete.handler';
+import { AssessmentStartedHandler } from '../_handlers/needs-assessment/assessment-started.handler';
 import { InnovationDelayedSharedSuggestionHandler } from '../_handlers/suggestions/innovation-delayed-shared-suggestion.handler';
 import { SupportNewAssignedAccessorsHandler } from '../_handlers/supports/support-new-assigned-accessors.handler';
 import { SupportStatusUpdateHandler } from '../_handlers/supports/support-status-update.handler';
@@ -118,6 +118,26 @@ export const NOTIFICATIONS_CONFIG = {
     }).required()
   },
 
+  // Assessment
+  [NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED]: {
+    handler: AssessmentStartedHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED]>({
+      innovationId: Joi.string().guid().required(),
+      assessmentId: Joi.string().guid().required(),
+      message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.s).trim().required(),
+      messageId: Joi.string().guid().required(),
+      threadId: Joi.string().guid().required()
+    }).required()
+  },
+
+  [NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED]: {
+    handler: AssessmentCompleteHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED]>({
+      innovationId: Joi.string().guid().required(),
+      assessmentId: Joi.string().guid().required()
+    }).required()
+  },
+
   // OLD
   [NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION]: {
     handler: InnovatorAccountCreationHandler,
@@ -153,24 +173,6 @@ export const NOTIFICATIONS_CONFIG = {
     handler: InnovationSubmittedHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_SUBMITED]>({
       innovationId: Joi.string().guid().required()
-    }).required()
-  },
-
-  [NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED]: {
-    handler: NeedsAssessmentCompletedHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED]>({
-      innovationId: Joi.string().guid().required(),
-      assessmentId: Joi.string().guid().required(),
-      organisationUnitIds: Joi.array().items(Joi.string().guid()).required()
-    }).required()
-  },
-
-  [NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED]: {
-    handler: NeedsAssessmentStartedHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED]>({
-      innovationId: Joi.string().guid().required(),
-      assessmentId: Joi.string().guid().required(),
-      threadId: Joi.string().guid().required()
     }).required()
   },
 

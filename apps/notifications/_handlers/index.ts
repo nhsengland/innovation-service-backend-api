@@ -22,8 +22,6 @@ export { InnovationWithdrawnHandler } from './legacy/innovation-withdrawn.handle
 export { InnovatorAccountCreationHandler } from './legacy/innovator-account-creation.handler';
 export { LockUserHandler } from './legacy/lock-user.handler';
 export { NeedsAssessmentAssessorUpdateHandler } from './legacy/needs-assessment-assessor-update.handler';
-export { NeedsAssessmentCompletedHandler } from './legacy/needs-assessment-completed.handler';
-export { NeedsAssessmentStartedHandler } from './legacy/needs-assessment-started.handler';
 export { SupportSummaryUpdateHandler } from './legacy/support-summary-update.handler';
 export { ThreadCreationHandler } from './legacy/thread-creation.handler';
 export { ThreadMessageCreationHandler } from './legacy/thread-message-creation.handler';

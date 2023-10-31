@@ -86,7 +86,6 @@ export type NotifierTemplatesType = {
   [NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED]: {
     innovationId: string;
     assessmentId: string;
-    organisationUnitIds: string[]; // Suggested organisation units.
   };
 
   // OLD
@@ -99,12 +98,6 @@ export type NotifierTemplatesType = {
   // Old one with typo
   [NotifierTypeEnum.INNOVATION_SUBMITED]: {
     innovationId: string;
-  };
-
-  [NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED]: {
-    innovationId: string;
-    assessmentId: string;
-    organisationUnitIds: string[]; // Suggested organisation units.
   };
 
   [NotifierTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE]: {
