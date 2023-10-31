@@ -12,12 +12,12 @@ export const ParamsSchema = Joi.object<ParamsType>({
 }).required();
 
 export type BodyType = {
-  message?: string;
+  message: string;
   accessors: { id: string; userRoleId: string }[];
 };
 
 export const BodySchema = Joi.object<BodyType>({
-  message: Joi.string().allow(null, '').max(TEXTAREA_LENGTH_LIMIT.xl).trim().optional(),
+  message: Joi.string().allow(null, '').max(TEXTAREA_LENGTH_LIMIT.xl).trim().required(),
   accessors: Joi.array()
     .items(
       Joi.object({

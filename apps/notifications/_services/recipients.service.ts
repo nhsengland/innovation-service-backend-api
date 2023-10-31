@@ -996,6 +996,25 @@ export class RecipientsService extends BaseService {
     }
   }
 
+  async getRecipientsByRoleId(userRoleIds: string[], entityManager?: EntityManager): Promise<RecipientType[]> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const userRoles = await em
+      .createQueryBuilder(UserRoleEntity, 'userRole')
+      .select(['userRole.id', 'userRole.isActive', 'userRole.role', 'user.id', 'user.identityId', 'user.status'])
+      .innerJoin('userRole.user', 'user')
+      .where('userRole.id IN (:...userRoleIds)', { userRoleIds })
+      .getMany();
+
+    return userRoles.map(r => ({
+      roleId: r.id,
+      role: r.role,
+      userId: r.user.id,
+      identityId: r.user.identityId,
+      isActive: r.isActive && r.user.status === UserStatusEnum.ACTIVE
+    }));
+  }
+
   /**
    * helper function to get roles by all combination of possible filters
    * @param filters optional filters

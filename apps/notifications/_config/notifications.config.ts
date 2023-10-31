@@ -46,6 +46,7 @@ import { InnovationDelayedSharedSuggestionHandler } from '../_handlers/innovatio
 import { MessageCreationHandler } from '../_handlers/messages/message-creation.handler';
 import { ThreadAddFollowersHandler } from '../_handlers/messages/thread-add-followers.handler';
 import { ThreadCreationHandler } from '../_handlers/messages/thread-creation.handler';
+import { SupportNewAssignedAccessorsHandler } from '../_handlers/supports/support-new-assigned-accessors.handler';
 import { SupportStatusUpdateHandler } from '../_handlers/supports/support-status-update.handler';
 import { UnitKPIHandler } from '../_handlers/unit-kpi.handler';
 
@@ -80,6 +81,7 @@ export const NOTIFICATIONS_CONFIG = {
     }).required()
   },
 
+  // Support
   [NotifierTypeEnum.THREAD_MESSAGE_CREATION]: {
     handler: MessageCreationHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.THREAD_MESSAGE_CREATION]>({
@@ -102,6 +104,17 @@ export const NOTIFICATIONS_CONFIG = {
         message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).trim().required(),
         newAssignedAccessorsIds: Joi.array().items(Joi.string().guid())
       }).required()
+    }).required()
+  },
+  [NotifierTypeEnum.SUPPORT_NEW_ASSIGN_ACCESSORS]: {
+    handler: SupportNewAssignedAccessorsHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.SUPPORT_NEW_ASSIGN_ACCESSORS]>({
+      innovationId: Joi.string().guid().required(),
+      supportId: Joi.string().guid().required(),
+      threadId: Joi.string().guid().required(),
+      message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).trim().required(),
+      newAssignedAccessorsRoleIds: Joi.array().items(Joi.string().guid()),
+      removedAssignedAccessorsRoleIds: Joi.array().items(Joi.string().guid())
     }).required()
   },
 
