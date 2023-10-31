@@ -655,7 +655,6 @@ export class DomainInnovationsService {
       });
     });
 
-    console.error(thread.followers);
     followers.push(
       ...thread.followers.map(followerRole => ({
         id: followerRole.user.id,
