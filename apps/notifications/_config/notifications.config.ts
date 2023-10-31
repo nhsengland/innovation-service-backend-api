@@ -141,6 +141,14 @@ export const NOTIFICATIONS_CONFIG = {
     ).required()
   },
 
+  [NotifierTypeEnum.INNOVATION_SUBMITTED]: {
+    handler: InnovationSubmittedHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_SUBMITTED]>({
+      innovationId: Joi.string().guid().required(),
+      reassessment: Joi.boolean().strict().required()
+    }).required()
+  },
+
   [NotifierTypeEnum.INNOVATION_SUBMITED]: {
     handler: InnovationSubmittedHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_SUBMITED]>({

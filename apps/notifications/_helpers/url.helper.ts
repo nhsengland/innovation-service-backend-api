@@ -2,6 +2,14 @@ import { ServiceRoleEnum } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
 import { ENV } from '../_config';
 
+export const innovationOverviewUrl = (role: ServiceRoleEnum, innovationId: string): string => {
+  const baseUrl = frontendBaseUrl(role);
+  return new UrlModel(ENV.webBaseTransactionalUrl)
+    .addPath(':baseUrl/innovations/:innovationId/overview')
+    .setPathParams({ baseUrl, innovationId })
+    .buildUrl();
+};
+
 export const taskUrl = (role: ServiceRoleEnum, innovationId: string, taskId: string): string => {
   const baseUrl = frontendBaseUrl(role);
   return new UrlModel(ENV.webBaseTransactionalUrl)
@@ -37,14 +45,6 @@ export const supportSummaryUrl = (role: ServiceRoleEnum, innovationId: string, u
   }
 
   return urlModel.buildUrl();
-};
-
-export const innovationOverviewUrl = (role: ServiceRoleEnum, innovationId: string): string => {
-  const baseUrl = frontendBaseUrl(role);
-  return new UrlModel(ENV.webBaseTransactionalUrl)
-    .addPath(':baseUrl/innovations/:innovationId/overview')
-    .setPathParams({ baseUrl, innovationId })
-    .buildUrl();
 };
 
 export const frontendBaseUrl = (role: ServiceRoleEnum): string => {

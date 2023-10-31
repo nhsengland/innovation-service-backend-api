@@ -208,6 +208,16 @@ export abstract class BaseHandler<InputDataType extends NotifierTypeEnum, Notifi
     });
   }
 
+  protected notify<
+    Template extends Parameters<BaseHandler<InputDataType, Notifications>['addEmails']>[0] &
+      Parameters<BaseHandler<InputDataType, Notifications>['addInApp']>[0],
+    EmailType extends Omit<HandlerEmailType<Template>[number], 'templateId' | 'to'>,
+    InAppType extends Omit<HandlerInAppType<Template>[number], 'userRoleIds'>
+  >(template: Template, recipients: RecipientType[], data: { email: EmailType; inApp: InAppType }): void {
+    this.addEmails(template, recipients, data.email);
+    this.addInApp(template, recipients, data.inApp);
+  }
+
   private _requestUserName: string | null = null;
   protected async getRequestUserName(): Promise<string> {
     if (!this._requestUserName) {

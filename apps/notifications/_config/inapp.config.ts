@@ -92,4 +92,29 @@ export type InAppTemplatesType = {
   ST06_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_OLD_QA: {
     innovationName: string;
   };
+  // Needs assessment
+  NA01_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_INNOVATOR: {
+    innovationName: string;
+    needsAssessment: 'assessment' | 'reassessment';
+  };
+  NA02_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_ASSESSMENT: {
+    innovationName: string;
+    needsAssessment: 'assessment' | 'reassessment';
+  };
+  NA03_NEEDS_ASSESSMENT_STARTED_TO_INNOVATOR: {
+    innovationName: string;
+    messageId: string;
+    threadId: string;
+  };
+  NA04_NEEDS_ASSESSMENT_COMPLETE_TO_INNOVATOR: {
+    innovationName: string;
+  };
+  NA05_NEEDS_ASSESSOR_REMOVED: {
+    innovationName: string;
+    innovationId: string;
+  };
+  NA06_NEEDS_ASSESSOR_ASSIGNED: {
+    innovationName: string;
+    innovationId: string;
+  };
 };

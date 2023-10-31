@@ -36,7 +36,7 @@ paths:
                         - INSTANTLY
                         - DAILY
     put:
-      description: "Updates the user email preferences "
+      description: Updates the user email preferences
       operationId: v1-email-notification-preferences-upsert
       tags:
         - "[v1] Email Preferences"
@@ -223,6 +223,16 @@ paths:
       responses:
         "204":
           description: The user email preferences were updated successfully
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+        "500":
+          description: Internal server error
   /v1/invites:
     get:
       description: Get collaboration invites list
@@ -237,7 +247,7 @@ paths:
                 type: array
                 items:
                   type: object
-  "/v1/me/announcements/{announcementId}/read":
+  /v1/me/announcements/{announcementId}/read:
     patch:
       operationId: v1-me-announcement-read
       description: Mark an announcement as read.
@@ -501,7 +511,7 @@ paths:
                   total:
                     type: number
                     description: The total of active notifications
-  "/v1/notifications/{notificationId}":
+  /v1/notifications/{notificationId}:
     delete:
       description: Returns the id of the deleted notification
       operationId: v1-notifications-delete
@@ -737,7 +747,7 @@ paths:
                         params:
                           type: object
                           description: The notification params
-  "/v1/organisations/{organisationId}":
+  /v1/organisations/{organisationId}:
     get:
       description: Get organisation info.
       operationId: v1-organisation-info
@@ -757,7 +767,7 @@ paths:
           description: The user is not authorized to get this information.
         "500":
           description: An error occurred while getting this information.
-  "/v1/organisations/{organisationId}/units/{organisationUnitId}":
+  /v1/organisations/{organisationId}/units/{organisationUnitId}:
     get:
       description: Get organisation unitinfo.
       operationId: v1-organisation-unit-info

@@ -12,7 +12,7 @@ describe('Notifications / _handlers / task-creation suite', () => {
   const scenario: CompleteScenarioType = testsHelper.getCompleteScenario();
 
   beforeAll(async () => {
-    await new TestsHelper().init();
+    await testsHelper.init();
   });
 
   describe('TA01_TASK_CREATION_TO_INNOVATOR', () => {

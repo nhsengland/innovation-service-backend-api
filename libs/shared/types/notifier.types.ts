@@ -69,6 +69,12 @@ export type NotifierTemplatesType = {
     removedAssignedAccessorsRoleIds: string[];
   };
 
+  // Needs Assessment
+  [NotifierTypeEnum.INNOVATION_SUBMITTED]: {
+    innovationId: string;
+    reassessment: boolean;
+  };
+
   // OLD
   [NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION]: Record<string, never>;
 
@@ -76,6 +82,7 @@ export type NotifierTemplatesType = {
     innovations: { id: string; name: string; transferExpireDate: string }[];
   };
 
+  // Old one with typo
   [NotifierTypeEnum.INNOVATION_SUBMITED]: {
     innovationId: string;
   };
