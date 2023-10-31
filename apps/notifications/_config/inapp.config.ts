@@ -127,4 +127,16 @@ export type InAppTemplatesType = {
   AU05_SUPPORT_KPI_OVERDUE: {
     innovationName: string;
   };
+
+  // Support Summary
+  SS01_SUPPORT_SUMMARY_UPDATE_TO_INNOVATORS: {
+    innovationName: string;
+    unitName: string;
+    unitId: string;
+  };
+  SS02_SUPPORT_SUMMARY_UPDATE_TO_OTHER_ENGAGING_ACCESSORS: {
+    innovationName: string;
+    unitName: string;
+    unitId: string;
+  };
 };

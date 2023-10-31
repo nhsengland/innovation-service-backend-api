@@ -152,6 +152,15 @@ export const NOTIFICATIONS_CONFIG = {
     }).required()
   },
 
+  // Support Summary
+  [NotifierTypeEnum.SUPPORT_SUMMARY_UPDATE]: {
+    handler: SupportSummaryUpdateHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.SUPPORT_SUMMARY_UPDATE]>({
+      innovationId: Joi.string().guid().required(),
+      supportId: Joi.string().guid().required()
+    }).required()
+  },
+
   // OLD
   [NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION]: {
     handler: InnovatorAccountCreationHandler,
@@ -206,15 +215,6 @@ export const NOTIFICATIONS_CONFIG = {
         newAssignedAccessors: Joi.array().items(Joi.object({ id: Joi.string().guid().required() })),
         message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).trim().required()
       }).required()
-    }).required()
-  },
-
-  [NotifierTypeEnum.SUPPORT_SUMMARY_UPDATE]: {
-    handler: SupportSummaryUpdateHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.SUPPORT_SUMMARY_UPDATE]>({
-      innovationId: Joi.string().guid().required(),
-      organisationUnitId: Joi.string().guid().required(),
-      supportId: Joi.string().guid().required()
     }).required()
   },
 

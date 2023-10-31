@@ -21,10 +21,10 @@ export { InnovationTransferOwnershipReminderHandler } from './legacy/innovation-
 export { InnovationWithdrawnHandler } from './legacy/innovation-withdrawn.handler';
 export { InnovatorAccountCreationHandler } from './legacy/innovator-account-creation.handler';
 export { LockUserHandler } from './legacy/lock-user.handler';
-export { SupportSummaryUpdateHandler } from './legacy/support-summary-update.handler';
 export { ThreadCreationHandler } from './legacy/thread-creation.handler';
 export { ThreadMessageCreationHandler } from './legacy/thread-message-creation.handler';
 export { UnitInactivationSupportStatusCompletedHandler } from './legacy/unit-inactivation-support-status-completed.handler';
 export { InnovationSubmittedHandler } from './needs-assessment/innovation-submitted.handler';
+export { SupportSummaryUpdateHandler } from './support-summary/support-summary-update.handler';
 export { TaskCreationHandler as ActionCreationHandler } from './tasks/task-creation.handler';
 export { TaskUpdateHandler as ActionUpdateHandler } from './tasks/task-update.handler';

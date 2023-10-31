@@ -299,7 +299,11 @@ describe('Notifications / _services / recipients service suite', () => {
 
   describe('innovationAssignedRecipients', () => {
     it('Returns a list of recipients for the innovation', async () => {
-      const res = await sut.innovationAssignedRecipients(scenario.users.johnInnovator.innovations.johnInnovation.id);
+      const res = await sut.innovationAssignedRecipients(
+        scenario.users.johnInnovator.innovations.johnInnovation.id,
+        {},
+        em
+      );
       expect(res).toHaveLength(3);
       expect(res).toMatchObject([
         DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole'),
@@ -319,6 +323,7 @@ describe('Notifications / _services / recipients service suite', () => {
 
       const res = await sut.innovationAssignedRecipients(
         scenario.users.adamInnovator.innovations.adamInnovation.id,
+        {},
         em
       );
       expect(res).toHaveLength(3);
@@ -332,6 +337,7 @@ describe('Notifications / _services / recipients service suite', () => {
     it('Returns empty array if no recipients found', async () => {
       const res = await sut.innovationAssignedRecipients(
         scenario.users.ottoOctaviusInnovator.innovations.brainComputerInterfaceInnovation.id,
+        {},
         em
       );
       expect(res).toHaveLength(0);
@@ -341,6 +347,7 @@ describe('Notifications / _services / recipients service suite', () => {
       await testsHelper.deactivateUser(scenario.users.samAccessor.id, em);
       const res = await sut.innovationAssignedRecipients(
         scenario.users.johnInnovator.innovations.johnInnovation.id,
+        {},
         em
       );
       expect(res).toHaveLength(3);
@@ -355,6 +362,7 @@ describe('Notifications / _services / recipients service suite', () => {
       await testsHelper.deactivateUserRole(scenario.users.jamieMadroxAccessor.roles.healthAccessorRole.id, em);
       const res = await sut.innovationAssignedRecipients(
         scenario.users.johnInnovator.innovations.johnInnovation.id,
+        {},
         em
       );
       expect(res).toHaveLength(3);
@@ -369,6 +377,7 @@ describe('Notifications / _services / recipients service suite', () => {
       await testsHelper.deleteUser(scenario.users.samAccessor.id, em);
       const res = await sut.innovationAssignedRecipients(
         scenario.users.johnInnovator.innovations.johnInnovation.id,
+        {},
         em
       );
       expect(res).toHaveLength(2);
@@ -536,7 +545,10 @@ describe('Notifications / _services / recipients service suite', () => {
           id: scenario.users.aliceQualifyingAccessor.roles.qaRole.id,
           role: scenario.users.aliceQualifyingAccessor.roles.qaRole.role
         },
-        organisationUnit: null
+        organisationUnit: {
+          id: scenario.users.aliceQualifyingAccessor.roles.qaRole.organisationUnit!.id,
+          acronym: scenario.users.aliceQualifyingAccessor.roles.qaRole.organisationUnit!.acronym
+        }
       }
     ]);
 

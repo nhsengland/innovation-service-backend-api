@@ -75,6 +75,24 @@ export type NotifierTemplatesType = {
     reassessment: boolean;
   };
 
+  // Support Summary
+  [NotifierTypeEnum.SUPPORT_SUMMARY_UPDATE]: {
+    innovationId: string;
+    supportId: string;
+  };
+
+  // OLD
+  [NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION]: Record<string, never>;
+
+  [NotifierTypeEnum.INNOVATOR_ACCOUNT_DELETION_WITH_PENDING_TRANSFER]: {
+    innovations: { id: string; name: string; transferExpireDate: string }[];
+  };
+
+  // Old one with typo
+  [NotifierTypeEnum.INNOVATION_SUBMITED]: {
+    innovationId: string;
+  };
+
   [NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED]: {
     innovationId: string;
     assessmentId: string; // not really used
@@ -117,12 +135,6 @@ export type NotifierTemplatesType = {
       organisationUnitId: string;
       newAssignedAccessors?: { id: string }[]; // Newly assigned accessors
     };
-  };
-
-  [NotifierTypeEnum.SUPPORT_SUMMARY_UPDATE]: {
-    innovationId: string;
-    organisationUnitId: string;
-    supportId: string;
   };
 
   [NotifierTypeEnum.INNOVATION_ORGANISATION_UNITS_SUGGESTION]: {
