@@ -33,7 +33,7 @@ export const SQLDB_DEFAULT_CONNECTION: DataSourceOptions = Object.freeze({
     options: {
       enableArithAbort: true,
       trustServerCertificate: true,
-      useUCT: true
+      useUTC: true
     }
   },
   cli: { migrationsDir: `${join(__dirname, '..', '..')}/data-access/migrations` },

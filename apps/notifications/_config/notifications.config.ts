@@ -42,9 +42,11 @@ import {
   SupportSummaryUpdateHandler,
   UnitInactivationSupportStatusCompletedHandler
 } from '../_handlers';
+import { UnitKPIHandler } from '../_handlers/automatic/unit-kpi.handler';
 import { MessageCreationHandler } from '../_handlers/messages/message-creation.handler';
 import { ThreadAddFollowersHandler } from '../_handlers/messages/thread-add-followers.handler';
 import { ThreadCreationHandler } from '../_handlers/messages/thread-creation.handler';
+import { InnovationDelayedSharedSuggestionHandler } from '../_handlers/suggestions/innovation-delayed-shared-suggestion.handler';
 import { SupportNewAssignedAccessorsHandler } from '../_handlers/supports/support-new-assigned-accessors.handler';
 import { SupportStatusUpdateHandler } from '../_handlers/supports/support-status-update.handler';
 
@@ -410,6 +412,14 @@ export const NOTIFICATIONS_CONFIG = {
     }).required()
   },
 
+  [NotifierTypeEnum.INNOVATION_DELAYED_SHARE]: {
+    handler: InnovationDelayedSharedSuggestionHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_DELAYED_SHARE]>({
+      innovationId: Joi.string().guid().required(),
+      newSharedOrgIds: Joi.array().items(Joi.string().guid().required()).required()
+    })
+  },
+
   // Recurrent notifications.
   [NotifierTypeEnum.DAILY_DIGEST]: {
     handler: DailyDigestHandler,
@@ -424,5 +434,10 @@ export const NOTIFICATIONS_CONFIG = {
   [NotifierTypeEnum.IDLE_SUPPORT]: {
     handler: IdleSupportHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.IDLE_SUPPORT]>({})
+  },
+
+  [NotifierTypeEnum.UNIT_KPI]: {
+    handler: UnitKPIHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.UNIT_KPI]>({})
   }
 } as const;

@@ -214,6 +214,9 @@ export abstract class BaseHandler<InputDataType extends NotifierTypeEnum, Notifi
     EmailType extends Omit<HandlerEmailType<Template>[number], 'templateId' | 'to'>,
     InAppType extends Omit<HandlerInAppType<Template>[number], 'userRoleIds'>
   >(template: Template, recipients: RecipientType[], data: { email: EmailType; inApp: InAppType }): void {
+    if (!recipients.length) {
+      return;
+    }
     this.addEmails(template, recipients, data.email);
     this.addInApp(template, recipients, data.inApp);
   }

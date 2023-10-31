@@ -33,6 +33,11 @@ export const EmailTemplates = {
   // NA06_NEEDS_ASSESSOR_REMOVED: '5845a1b4-3be6-4f27-a562-3275c82e73a5',
   // NA07_NEEDS_ASSESSOR_ASSIGNED: '28d9f470-3357-496d-aad4-28d7a2e0c2ab',
 
+  // REVIEW in future
+  OS03_INNOVATION_DELAYED_SHARED_SUGGESTION: 'b5845d01-f66e-455c-8f11-6e011394da95',
+  AU04_SUPPORT_KPI_REMINDER: 'e1f0a2bc-3b15-4733-ba89-c0d5c9fec38a',
+  AU05_SUPPORT_KPI_OVERDUE: '5fe24d48-8def-457d-a81f-56750f38c508',
+
   // TO BE REMOVED ?
   ACCOUNT_CREATION_TO_INNOVATOR: '62486954-b235-4aa6-8b8d-960191fc6e69',
   ACCOUNT_DELETION_WITH_TRANSFER_TO_COLLABORATOR: 'd09b5182-d995-4db7-b3ba-99fef085bb22',
@@ -254,6 +259,25 @@ export type EmailTemplatesType = {
   //   innovation_name: string;
   //   innovation_overview_url: string;
   // };
+
+  // REVIEW in future
+  OS03_INNOVATION_DELAYED_SHARED_SUGGESTION: {
+    display_name?: string;
+    innovation_name: string;
+    innovation_overview_url: string;
+  };
+
+  AU04_SUPPORT_KPI_REMINDER: {
+    display_name?: string;
+    innovation_name: string;
+    innovation_overview_url: string;
+  };
+
+  AU05_SUPPORT_KPI_OVERDUE: {
+    display_name?: string;
+    innovation_name: string;
+    innovation_overview_url: string;
+  };
 
   // TODO
   ACCOUNT_CREATION_TO_INNOVATOR: {
