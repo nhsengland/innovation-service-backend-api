@@ -5,7 +5,7 @@ servers:
   - url: https://nhse-${ENV}-innovation-service-innovation-functions.azurewebsites.net/api
 openapi: 3.0.3
 paths:
-  "/v1/{innovationId}/activities":
+  /v1/{innovationId}/activities:
     get:
       operationId: v1-innovation-activities-log-list
       description: Get activities log list of an Innovation
@@ -130,7 +130,7 @@ paths:
                               type: string
         "500":
           description: An error occurred while processing the request.
-  "/v1/{innovationId}/all-sections":
+  /v1/{innovationId}/all-sections:
     get:
       description: Get an innovation sections list details.
       tags:
@@ -158,7 +158,7 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
-  "/v1/{innovationId}/assessments/{assessmentId}":
+  /v1/{innovationId}/assessments/{assessmentId}:
     patch:
       summary: Update the assigned assessor of an innovation.
       description: Update the assigned assessor of an innovation.
@@ -430,7 +430,7 @@ paths:
           description: Not found. Innovation or assessment not found.
         "500":
           description: Internal server error.
-  "/v1/{innovationId}/assessments":
+  /v1/{innovationId}/assessments:
     post:
       summary: Create an innovation assessment
       description: Create an innovation assessment.
@@ -482,7 +482,7 @@ paths:
           description: The innovation does not exist.
         "500":
           description: An error occurred while creating the innovation assessment.
-  "/v1/{innovationId}/assessments/{assessmentId}/exemption":
+  /v1/{innovationId}/assessments/{assessmentId}/exemption:
     get:
       description: Get an assessment kpi exemption.
       operationId: v1-innovation-assessment-kpi-exemption-info
@@ -579,7 +579,7 @@ paths:
           description: The user is not authorized to access this resource.
         "500":
           description: An error occurred while processing the request.
-  "/v1/collaborators/{collaboratorId}/check":
+  /v1/collaborators/{collaboratorId}/check:
     get:
       description: Check collaborator
       operationId: v1-innovation-collaboration-check
@@ -608,7 +608,7 @@ paths:
                     description: Status of the collaborator invite
         "404":
           description: Not Found
-  "/v1/{innovationId}/collaborators":
+  /v1/{innovationId}/collaborators:
     post:
       description: Create (invites) a new collaborator for the innovations.
       operationId: v1-innovation-collaborator-create
@@ -709,7 +709,7 @@ paths:
           description: The user is not authorized to access this resource.
         "500":
           description: An error occurred while processing the request.
-  "/v1/{innovationId}/collaborators/{collaboratorId}":
+  /v1/{innovationId}/collaborators/{collaboratorId}:
     get:
       description: Get a collaborator information.
       operationId: v1-innovation-collaborator-info
@@ -1633,7 +1633,7 @@ paths:
                     description: Unique identifier for innovation object
         "400":
           description: Invalid innovation payload
-  "/v1/{innovationId}/evidence":
+  /v1/{innovationId}/evidence:
     post:
       description: Create an innovation evidence entry.
       tags:
@@ -1705,7 +1705,7 @@ paths:
           description: Not found
         "500":
           description: Internal server error
-  "/v1/{innovationId}/evidence/{evidenceId}":
+  /v1/{innovationId}/evidence/{evidenceId}:
     delete:
       description: Delete an innovation evidence entry.
       tags:
@@ -1806,7 +1806,7 @@ paths:
           description: Not found
         "500":
           description: Internal server error
-  "/v1/{innovationId}/evidences/{evidenceId}":
+  /v1/{innovationId}/evidences/{evidenceId}:
     get:
       description: Get an innovation evidence info.
       tags:
@@ -1886,7 +1886,7 @@ paths:
           description: Not found
         "500":
           description: Internal server error
-  "/v1/{innovationId}/files":
+  /v1/{innovationId}/files:
     post:
       description: Create a new innovation file.
       operationId: v1-innovation-file-create
@@ -2168,7 +2168,7 @@ paths:
           description: The user is not authorized to access this resource.
         "500":
           description: An error occurred while processing the request.
-  "/v1/{innovationId}/files/{fileId}":
+  /v1/{innovationId}/files/{fileId}:
     delete:
       operationId: v1-innovation-file-delete
       description: Delete an innovation file.
@@ -2286,7 +2286,7 @@ paths:
           description: The user is not authorized to access this resource.
         "500":
           description: An error occurred while processing the request.
-  "/v1/{innovationId}/files/upload-url":
+  /v1/{innovationId}/files/upload-url:
     post:
       operationId: v1-innovation-file-upload-url
       description: Get the upload url for an innovation file.
@@ -2330,7 +2330,7 @@ paths:
           description: Invalid payload
         "404":
           description: Innovation not found
-  "/v1/{innovationId}":
+  /v1/{innovationId}:
     get:
       operationId: v1-innovation-info
       description: Get innovation information.
@@ -2349,7 +2349,7 @@ paths:
           description: Success
         "400":
           description: Invalid innovation payload
-  "/v1/{innovationId}/notifications/dismiss":
+  /v1/{innovationId}/notifications/dismiss:
     patch:
       operationId: v1-innovation-notifications-dismiss
       description: Dismisses innovation notifications.
@@ -2395,7 +2395,7 @@ paths:
           description: Success
         "400":
           description: Invalid payload
-  "/v1/{innovationId}/pause":
+  /v1/{innovationId}/pause:
     patch:
       summary: Pause an innovation
       description: Pause an innovation.
@@ -2434,7 +2434,7 @@ paths:
                   id:
                     type: string
                     description: Innovation ID
-  "/v1/{innovationId}/pdf":
+  /v1/{innovationId}/pdf:
     post:
       description: Generate PDF for an innovation
       tags:
@@ -2465,7 +2465,7 @@ paths:
           description: Ok.
         "400":
           description: Bad request.
-  "/v1/{innovationId}/reassessments":
+  /v1/{innovationId}/reassessments:
     post:
       operationId: v1-innovation-reassessment-request-create
       description: Create a reassessment request for an innovation.
@@ -2514,7 +2514,7 @@ paths:
           description: Unprocessable entity
         "500":
           description: Internal server error
-  "/v1/{innovationId}/sections/{sectionKey}":
+  /v1/{innovationId}/sections/{sectionKey}:
     get:
       description: Get an innovation section info.
       tags:
@@ -2658,7 +2658,7 @@ paths:
           description: Not found.
         "500":
           description: Internal server error.
-  "/v1/{innovationId}/sections/{sectionKey}/submit":
+  /v1/{innovationId}/sections/{sectionKey}/submit:
     patch:
       description: Submit an innovation section.
       tags:
@@ -2690,7 +2690,7 @@ paths:
       responses:
         "200":
           description: Innovation section submit response.
-  "/v1/{innovationId}/sections":
+  /v1/{innovationId}/sections:
     get:
       description: Get an innovation sections list.
       tags:
@@ -2746,7 +2746,7 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
-  "/v1/{innovationId}/shares":
+  /v1/{innovationId}/shares:
     get:
       description: Get all the shares for an innovation.
       tags:
@@ -2852,7 +2852,7 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
-  "/v1/{innovationId}/statistics":
+  /v1/{innovationId}/statistics:
     get:
       description: Get an innovation statistics
       tags:
@@ -2886,7 +2886,7 @@ paths:
           description: Ok.
         "400":
           description: Bad request.
-  "/v1/{innovationId}/submissions":
+  /v1/{innovationId}/submissions:
     get:
       operationId: v1-innovation-submission-states
       description: Get innovation submission states.
@@ -2903,7 +2903,7 @@ paths:
           description: Success
         "400":
           description: Invalid innovation payload
-  "/v1/{innovationId}/submit":
+  /v1/{innovationId}/submit:
     patch:
       summary: Submit an innovation
       description: Submit an innovation for assessment.
@@ -2941,7 +2941,7 @@ paths:
           description: Not found.
         "500":
           description: Internal server error.
-  "/v1/{innovationId}/suggestions":
+  /v1/{innovationId}/suggestions:
     get:
       description: Get suggestions list of an Innovation
       operationId: v1-innovation-suggestions
@@ -2960,7 +2960,7 @@ paths:
           description: Bad Request
         "404":
           description: Not Found
-  "/v1/{innovationId}/supports/available-status":
+  /v1/{innovationId}/supports/available-status:
     get:
       description: Get available status for a support
       operationId: v1-innovation-support-available-status
@@ -3001,7 +3001,7 @@ paths:
           description: Not found
         "500":
           description: Internal server error
-  "/v1/{innovationId}/supports/{supportId}/accessors":
+  /v1/{innovationId}/supports/{supportId}/accessors:
     put:
       description: Assigns accessors to a support.
       operationId: v1-innovation-support-change-accessors
@@ -3065,7 +3065,7 @@ paths:
                     format: uuid
                 required:
                   - id
-  "/v1/{innovationId}/supports/{supportId}/change-request":
+  /v1/{innovationId}/supports/{supportId}/change-request:
     post:
       description: Request Change Support for a given innovation.
       operationId: v1-innovation-support-change-request
@@ -3114,7 +3114,7 @@ paths:
                     format: uuid
                 required:
                   - id
-  "/v1/{innovationId}/supports":
+  /v1/{innovationId}/supports:
     post:
       description: Create support in innovation.
       operationId: v1-innovation-support-create
@@ -3153,7 +3153,7 @@ paths:
           description: Success
         "404":
           description: Not found
-  "/v1/{innovationId}/supports/{supportId}":
+  /v1/{innovationId}/supports/{supportId}:
     get:
       description: Get supporting information for an Innovation
       operationId: v1-innovation-support-info
@@ -3241,7 +3241,7 @@ paths:
                     format: uuid
                 required:
                   - id
-  "/v1/{innovationId}/support-logs":
+  /v1/{innovationId}/support-logs:
     post:
       description: Create support logs for an Innovation
       operationId: v1-innovation-support-logs-create
@@ -3261,7 +3261,7 @@ paths:
           description: Unauthorised
         "404":
           description: Not Found
-  "/v1/{innovationId}/support-summary":
+  /v1/{innovationId}/support-summary:
     get:
       operationId: v1-innovation-support-summary-list
       description: Get support summary list
@@ -3311,7 +3311,7 @@ paths:
           description: The user is not authorized to access this resource.
         "500":
           description: An error occurred while processing the request.
-  "/v1/{innovationId}/support-summary/progress-update":
+  /v1/{innovationId}/support-summary/progress-update:
     post:
       description: Create support summary progress update.
       operationId: v1-innovation-support-summary-progress-create
@@ -3386,7 +3386,7 @@ paths:
           description: The user is not authorized to access this resource.
         "500":
           description: An error occurred while processing the request.
-  "/v1/{innovationId}/support-summary/progress-update/{progressId}":
+  /v1/{innovationId}/support-summary/progress-update/{progressId}:
     delete:
       description: Delete support summary progress update.
       operationId: v1-innovation-support-summary-progress-delete
@@ -3416,7 +3416,7 @@ paths:
           description: The user is not authorized to access this resource.
         "500":
           description: An error occurred while processing the request.
-  "/v1/{innovationId}/support-summary/units/{unitId}":
+  /v1/{innovationId}/support-summary/units/{unitId}:
     get:
       operationId: v1-innovation-support-summary-unit-info
       description: Get support summary unit info
@@ -3494,7 +3494,7 @@ paths:
           description: The user is not authorized to access this resource.
         "500":
           description: An error occurred while processing the request.
-  "/v1/{innovationId}/tasks":
+  /v1/{innovationId}/tasks:
     post:
       description: Create a new innovation task.
       operationId: v1-innovation-task-create
@@ -3562,7 +3562,7 @@ paths:
           description: The innovation could not be found.
         "500":
           description: An unexpected error occurred while creating the innovation task.
-  "/v1/{innovationId}/tasks/{taskId}":
+  /v1/{innovationId}/tasks/{taskId}:
     get:
       description: Get an innovation task.
       operationId: v1-innovation-task-info
@@ -3820,7 +3820,7 @@ paths:
           description: The user is not authorized to access this resource.
         "500":
           description: An error occurred while processing the request.
-  "/v1/{innovationId}/threads":
+  /v1/{innovationId}/threads:
     post:
       summary: Create a new editable thread
       description: Create a new editable thread.
@@ -3991,7 +3991,7 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
-  "/v1/{innovationId}/threads/{threadId}/followers":
+  /v1/{innovationId}/threads/{threadId}/followers:
     get:
       summary: Get Innovation Thread Followers
       description: Get Innovation Thread Followers
@@ -4089,7 +4089,7 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
-  "/v1/{innovationId}/threads/{threadId}":
+  /v1/{innovationId}/threads/{threadId}:
     get:
       summary: Get Innovation Thread Info
       description: Get Innovation Thread Info
@@ -4140,7 +4140,7 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
-  "/v1/{innovationId}/threads/{threadId}/messages":
+  /v1/{innovationId}/threads/{threadId}/messages:
     post:
       description: Creates a new message in a thread.
       operationId: v1-innovation-thread-message-create
@@ -4308,7 +4308,7 @@ paths:
           description: Not found
         "500":
           description: Internal server error
-  "/v1/{innovationId}/threads/{threadId}/messages/{messageId}":
+  /v1/{innovationId}/threads/{threadId}/messages/{messageId}:
     get:
       summary: Get a thread message info
       description: Get a thread message info
@@ -4415,7 +4415,7 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
-  "/v1/{innovationId}/threads/{threadId}/unfollow":
+  /v1/{innovationId}/threads/{threadId}/unfollow:
     patch:
       summary: Unfollow Innovation Thread
       description: Unfollow Innovation Thread
@@ -4446,7 +4446,7 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
-  "/v1/transfers/{transferId}/check":
+  /v1/transfers/{transferId}/check:
     get:
       description: Get details of pending innovations transfers
       operationId: v1-innovation-transfer-check
@@ -4507,7 +4507,7 @@ paths:
                 type: array
                 items:
                   type: object
-  "/v1/transfers/{transferId}":
+  /v1/transfers/{transferId}:
     get:
       description: Get an innovation transfer
       operationId: getInnovationTransfer
@@ -4558,7 +4558,7 @@ paths:
           description: The innovation transfer does not exist
         "500":
           description: An error occurred while updating the innovation transfer status
-  "/v1/{innovationId}/withdraw":
+  /v1/{innovationId}/withdraw:
     patch:
       summary: Withdraw an innovation
       description: Withdraw an innovation.
@@ -4596,7 +4596,7 @@ paths:
                   id:
                     type: string
                     description: Innovation ID
-  "/v1/{innovationId}/export-requests":
+  /v1/{innovationId}/export-requests:
     post:
       operationId: v1-innovations-export-requests-create
       description: Create export request.
@@ -4736,7 +4736,7 @@ paths:
           description: The user is not authorized to access this resource.
         "500":
           description: An error occurred while processing the request.
-  "/v1/{innovationId}/export-requests/{requestId}":
+  /v1/{innovationId}/export-requests/{requestId}:
     get:
       operationId: v1-innovations-export-request-info
       description: Get export request info.

@@ -1,5 +1,4 @@
 import { NotificationCategoryEnum, ServiceRoleEnum } from '@notifications/shared/enums';
-import { TestsHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { HandlersHelper } from '../../_helpers/handlers.helper';
 import { testEmails, testInApps } from '../../_helpers/tests.helper';
@@ -9,11 +8,11 @@ import { NotificationsTestsHelper } from '../../_tests/notifications-test.helper
 import { MessageCreationHandler } from './message-creation.handler';
 
 describe('Notifications / _handlers / message-creation suite', () => {
-  const testsHelper = new TestsHelper();
+  const testsHelper = new NotificationsTestsHelper();
   const scenario = testsHelper.getCompleteScenario();
 
   beforeAll(async () => {
-    await new NotificationsTestsHelper().init();
+    await testsHelper.init();
   });
 
   const innovation = scenario.users.johnInnovator.innovations.johnInnovation;

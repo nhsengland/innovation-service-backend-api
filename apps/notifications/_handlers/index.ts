@@ -12,7 +12,6 @@ export { InnovationReassessmentRequestHandler } from './legacy/innovation-reasse
 export { InnovationRecordExportFeedbackHandler } from './legacy/innovation-record-export-feedback.handler';
 export { InnovationRecordExportRequestHandler } from './legacy/innovation-record-export-request.handler';
 export { InnovationStopSharingHandler } from './legacy/innovation-stop-sharing.handler';
-export { InnovationSubmittedHandler } from './legacy/innovation-submitted.handler';
 export { InnovationSupportStatusChangeRequestHandler } from './legacy/innovation-support-status-change-request.handler';
 export { InnovationSupportStatusUpdateHandler } from './legacy/innovation-support-status-update.handler';
 export { InnovationTransferOwnershipCompletedHandler } from './legacy/innovation-transfer-ownership-completed.handler';
@@ -29,5 +28,6 @@ export { SupportSummaryUpdateHandler } from './legacy/support-summary-update.han
 export { ThreadCreationHandler } from './legacy/thread-creation.handler';
 export { ThreadMessageCreationHandler } from './legacy/thread-message-creation.handler';
 export { UnitInactivationSupportStatusCompletedHandler } from './legacy/unit-inactivation-support-status-completed.handler';
+export { InnovationSubmittedHandler } from './needs-assessment/innovation-submitted.handler';
 export { TaskCreationHandler as ActionCreationHandler } from './tasks/task-creation.handler';
 export { TaskUpdateHandler as ActionUpdateHandler } from './tasks/task-update.handler';

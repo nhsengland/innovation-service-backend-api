@@ -17,6 +17,14 @@ export const NotificationTypes = {
     'ST05_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_NEW_QA',
     'ST06_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_OLD_QA'
   ] as const,
+  NEEDS_ASSESSMENT: [
+    'NA01_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_INNOVATOR',
+    'NA02_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_ASSESSMENT'
+    // 'NA03_NEEDS_ASSESSMENT_STARTED_TO_INNOVATOR',
+    // 'NA04_NEEDS_ASSESSMENT_COMPLETE_TO_INNOVATOR',
+    // 'NA06_NEEDS_ASSESSOR_REMOVED',
+    // 'NA07_NEEDS_ASSESSOR_ASSIGNED'
+  ] as const,
   MIGRATION_OLD: ['MIGRATION_OLD'] as const
 };
 export type NotificationTypes = typeof NotificationTypes;
@@ -38,7 +46,7 @@ export enum NotificationContextTypeEnum {
 
 // TODO this is likely going to be keyof NotificationTypes
 export enum NotificationCategoryEnum {
-  // GENERAL
+  // GENERALS
   // A are only composed by GENERAL ones (not all)
   TASK = 'TASK',
   MESSAGE = 'MESSAGE',
@@ -48,12 +56,16 @@ export enum NotificationCategoryEnum {
   ACCOUNT = 'ACCOUNT',
   REMINDER = 'REMINDER',
   // NA
-  INNOVATOR_SUBMIT_IR = 'INNOVATOR_SUBMIT_IR',
-  ASSIGN_NA = 'ASSIGN_NA',
+  INNOVATOR_SUBMIT_IR = 'INNOVATOR_SUBMIT_IR', // INNOVATIONS - all related
+  ASSIGN_NA = 'ASSIGN_NA', // ASSESSMENTS - all related
   // QA
   SUGGEST_SUPPORT = 'SUGGEST_SUPPORT',
   // I
-  DOCUMENT = 'DOCUMENT'
+  DOCUMENT = 'DOCUMENT',
+
+  // OTHER BUCKET (THIS NEEDS TO BE REVISED)
+  INNOVATION = 'INNOVATION',
+  NEEDS_ASSESSMENT = 'NEEDS_ASSESSMENT'
 }
 
 export enum NotificationPreferenceEnum {

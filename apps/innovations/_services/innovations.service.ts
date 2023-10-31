@@ -1293,8 +1293,11 @@ export class InnovationsService extends BaseService {
       return update;
     });
 
-    // Add notification with Innovation submited for needs assessment
-    await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_SUBMITED, { innovationId });
+    // Add notification with Innovation submitted for needs assessment
+    await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_SUBMITTED, {
+      innovationId,
+      reassessment: false
+    });
 
     return {
       id: innovationId,
