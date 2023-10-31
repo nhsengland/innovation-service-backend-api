@@ -22,7 +22,6 @@ export class SupportNewAssignedAccessorsHandler extends BaseHandler<
 
   async run(): Promise<this> {
     const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
-    const unitName = this.getRequestUnitName();
 
     // Joining recipients from added/removed QA/A
     const accessorsRecipients = await this.recipientsService.getRecipientsByRoleId([
@@ -30,15 +29,22 @@ export class SupportNewAssignedAccessorsHandler extends BaseHandler<
       ...this.inputData.removedAssignedAccessorsRoleIds
     ]);
 
-    await this.ST04_SUPPORT_NEW_ASSIGNED_ACCESSORS_TO_INNOVATOR(
-      innovation,
-      unitName,
-      accessorsRecipients
-        .filter(r => this.inputData.newAssignedAccessorsRoleIds.includes(r.roleId))
-        .map(r => r.identityId)
-    );
-    await this.ST05_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_NEW_QA(innovation, accessorsRecipients);
-    await this.ST06_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_OLD_QA(innovation, accessorsRecipients);
+    if (this.inputData.newAssignedAccessorsRoleIds.length > 0) {
+      const unitName = this.getRequestUnitName();
+
+      await this.ST04_SUPPORT_NEW_ASSIGNED_ACCESSORS_TO_INNOVATOR(
+        innovation,
+        unitName,
+        accessorsRecipients
+          .filter(r => this.inputData.newAssignedAccessorsRoleIds.includes(r.roleId))
+          .map(r => r.identityId)
+      );
+      await this.ST05_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_NEW_QA(innovation, accessorsRecipients);
+    }
+
+    if (this.inputData.removedAssignedAccessorsRoleIds.length > 0) {
+      await this.ST06_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_OLD_QA(innovation, accessorsRecipients);
+    }
 
     return this;
   }
