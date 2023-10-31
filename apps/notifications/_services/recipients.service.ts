@@ -9,6 +9,7 @@ import {
   NotificationEntity,
   NotificationPreferenceEntity,
   OrganisationUnitEntity,
+  SupportKPIViewEntity,
   UserEntity,
   UserRoleEntity
 } from '@notifications/shared/entities';
@@ -18,6 +19,7 @@ import {
   InnovationCollaboratorStatusEnum,
   InnovationExportRequestStatusEnum,
   InnovationStatusEnum,
+  InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
   InnovationTaskStatusEnum,
   InnovationTransferStatusEnum,
@@ -33,7 +35,9 @@ import { inject, injectable } from 'inversify';
 
 import { BaseService } from './base.service';
 
+import { InnovationSupportLogEntity } from '@notifications/shared/entities';
 import { InnovationCollaboratorEntity } from '@notifications/shared/entities/innovation/innovation-collaborator.entity';
+import { DatesHelper } from '@notifications/shared/helpers';
 import type { IdentityUserInfo, NotificationPreferences } from '@notifications/shared/types';
 import type { EntityManager } from 'typeorm';
 
@@ -823,6 +827,45 @@ export class RecipientsService extends BaseService {
   }
 
   /**
+   * returns a the innovations suggested but not picked by organisation units according to the days and recurring
+   * @param days number of days to trigger the notification
+   * @param recurring if it should trigger recurring notifications
+   * @returns Map of organisation unit id and list of innovation ids
+   */
+  async suggestedInnovationsWithoutUnitAction(
+    days: number,
+    recurring = 0
+  ): Promise<Map<string, { id: string; name: string }[]>> {
+    const date = DatesHelper.addWorkingDays(new Date(), -days);
+    const query = this.sqlConnection
+      .createQueryBuilder(SupportKPIViewEntity, 'kpi')
+      .select(['kpi.innovationId', 'kpi.innovationName', 'kpi.organisationUnitId']);
+
+    // for some unknown reason passing date shows the right query, works locally connected to the stage DB but not
+    // in stage. Resorted to using the date.toISOString().split('T')[0] to get the date in the right format for the query
+    if (recurring) {
+      date.setHours(23, 59, 59, 999);
+      query
+        .where('kpi.assigned_date <= :fullDate', { fullDate: date })
+        .andWhere('DATEDIFF(day, kpi.assigned_date, :date) % :recurring = 0', {
+          date: date.toISOString().split('T')[0],
+          recurring
+        });
+    } else {
+      query.where('DATEDIFF(day, kpi.assigned_date, :date) = 0', { date: date.toISOString().split('T')[0] });
+    }
+
+    const dbResult = await query.getMany();
+    return dbResult.reduce((acc, item) => {
+      if (!acc.has(item.organisationUnitId)) {
+        acc.set(item.organisationUnitId, []);
+      }
+      acc.get(item.organisationUnitId)?.push({ id: item.innovationId, name: item.innovationName });
+      return acc;
+    }, new Map<string, { id: string; name: string }[]>());
+  }
+
+  /**
    * returns the exportRequest info
    * @param requestId the request id
    * @returns the exportRequest info
@@ -871,6 +914,28 @@ export class RecipientsService extends BaseService {
         unitName: request.createdByUserRole.organisationUnit?.name
       }
     };
+  }
+
+  async getUnitSuggestionsByInnovation(innovationId: string): Promise<{ unitId: string; orgId: string }[]> {
+    const suggestions = await this.sqlConnection
+      .createQueryBuilder(InnovationSupportLogEntity, 'log')
+      .innerJoinAndSelect('log.suggestedOrganisationUnits', 'suggestedUnits')
+      .where('log.innovation_id = :innovationId', { innovationId })
+      .andWhere('log.type IN (:...suggestionTypes)', {
+        suggestionTypes: [
+          InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION,
+          InnovationSupportLogTypeEnum.ASSESSMENT_SUGGESTION
+        ]
+      })
+      .getMany();
+
+    const suggestedUnits = new Set(
+      suggestions.flatMap(
+        s => (s.suggestedOrganisationUnits ?? [])?.map(su => ({ unitId: su.id, orgId: su.organisationId }))
+      )
+    );
+
+    return Array.from(suggestedUnits.values());
   }
 
   /**
