@@ -75,6 +75,20 @@ export type NotifierTemplatesType = {
     reassessment: boolean;
   };
 
+  [NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED]: {
+    innovationId: string;
+    assessmentId: string; // not really used
+    message: string;
+    messageId: string;
+    threadId: string;
+  };
+
+  [NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED]: {
+    innovationId: string;
+    assessmentId: string;
+    organisationUnitIds: string[]; // Suggested organisation units.
+  };
+
   // OLD
   [NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION]: Record<string, never>;
 
@@ -85,18 +99,6 @@ export type NotifierTemplatesType = {
   // Old one with typo
   [NotifierTypeEnum.INNOVATION_SUBMITED]: {
     innovationId: string;
-  };
-
-  [NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED]: {
-    innovationId: string;
-    assessmentId: string;
-    threadId: string;
-  };
-
-  [NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED]: {
-    innovationId: string;
-    assessmentId: string;
-    organisationUnitIds: string[]; // Suggested organisation units.
   };
 
   [NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED]: {

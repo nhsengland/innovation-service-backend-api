@@ -199,7 +199,9 @@ export class InnovationAssessmentsService extends BaseService {
       await this.notifierService.send(domainContext, NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED, {
         innovationId,
         assessmentId: assessment.id,
-        threadId: thread.thread.id
+        threadId: thread.thread.id,
+        messageId: thread.message.id,
+        message: data.message
       });
 
       return { id: assessment['id'] };
