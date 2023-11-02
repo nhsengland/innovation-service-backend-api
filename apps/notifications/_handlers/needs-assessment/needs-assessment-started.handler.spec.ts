@@ -54,7 +54,7 @@ describe('Notifications / _handlers / needs assessment start suite', () => {
           outputData: {
             innovationName: innovation.name,
             threadId: inputData.threadId,
-            messageId: inputData.threadId
+            messageId: inputData.messageId
           },
           requestUser: DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
           recipients: recipients
