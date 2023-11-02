@@ -779,7 +779,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
 
       jest.spyOn(InnovationThreadsService.prototype, 'createThreadOrMessage').mockResolvedValue({
         thread: dbThread!,
-        message: undefined
+        message: undefined as any
       });
 
       await expect(() =>

@@ -377,8 +377,7 @@ export class InnovationAssessmentsService extends BaseService {
     if (data.isSubmission && !dbAssessment.finishedAt) {
       await this.notifierService.send(domainContext, NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED, {
         innovationId: innovationId,
-        assessmentId: assessmentId,
-        organisationUnitIds: data.suggestedOrganisationUnitsIds || []
+        assessmentId: assessmentId
       });
     }
 
