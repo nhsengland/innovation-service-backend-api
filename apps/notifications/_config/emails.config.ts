@@ -37,10 +37,13 @@ export const EmailTemplates = {
   SS01_SUPPORT_SUMMARY_UPDATE_TO_INNOVATORS: 'a890bf57-5bf8-407a-85cf-934f133cbcf7',
   SS02_SUPPORT_SUMMARY_UPDATE_TO_OTHER_ENGAGING_ACCESSORS: 'a890bf57-5bf8-407a-85cf-934f133cbcf7',
 
-  // REVIEW in future
-  OS03_INNOVATION_DELAYED_SHARED_SUGGESTION: 'b5845d01-f66e-455c-8f11-6e011394da95',
+  // AUTOMATIC
+  AU01_INNOVATOR_INCOMPLETE_RECORD: '37d20809-05ba-4878-9bbc-49689cc4fe51',
   AU04_SUPPORT_KPI_REMINDER: 'e1f0a2bc-3b15-4733-ba89-c0d5c9fec38a',
   AU05_SUPPORT_KPI_OVERDUE: '5fe24d48-8def-457d-a81f-56750f38c508',
+
+  // REVIEW in future
+  OS03_INNOVATION_DELAYED_SHARED_SUGGESTION: 'b5845d01-f66e-455c-8f11-6e011394da95',
 
   // TO BE REMOVED ?
   ACCOUNT_CREATION_TO_INNOVATOR: '62486954-b235-4aa6-8b8d-960191fc6e69',
@@ -124,20 +127,17 @@ export type EmailTemplates = typeof EmailTemplates;
 export type EmailTemplatesType = {
   // Tasks
   TA01_TASK_CREATION_TO_INNOVATOR: {
-    display_name?: string;
     innovation_name: string;
     unit_name: string;
     task_url: string;
   };
   TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS: {
-    display_name?: string;
     task_status: string;
     innovator_name: string;
     innovation_name: string;
     message_url: string;
   };
   TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT: {
-    display_name?: string;
     innovation_name: string;
     innovator_name: string;
     message: string;
@@ -145,14 +145,12 @@ export type EmailTemplatesType = {
     task_url: string;
   };
   TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT: {
-    display_name?: string;
     innovation_name: string;
     innovator_name: string;
     message: string;
     message_url: string;
   };
   TA05_TASK_CANCELLED_TO_INNOVATOR: {
-    display_name?: string;
     innovation_name: string;
     accessor_name: string;
     unit_name: string;
@@ -160,7 +158,6 @@ export type EmailTemplatesType = {
     message_url: string;
   };
   TA06_TASK_REOPEN_TO_INNOVATOR: {
-    display_name?: string;
     innovation_name: string;
     accessor_name: string;
     unit_name: string;
@@ -231,35 +228,29 @@ export type EmailTemplatesType = {
 
   // NEEDS ASSESSMENT
   NA01_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_INNOVATOR: {
-    display_name?: string;
     innovation_name: string;
     needs_assessment: 'assessment' | 'reassessment';
   };
   NA02_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_ASSESSMENT: {
-    display_name?: string;
     innovation_name: string;
     needs_assessment: 'assessment' | 'reassessment';
     innovation_overview_url: string;
   };
   NA03_NEEDS_ASSESSMENT_STARTED_TO_INNOVATOR: {
-    display_name?: string;
     innovation_name: string;
     message: string;
     message_url: string;
   };
   NA04_NEEDS_ASSESSMENT_COMPLETE_TO_INNOVATOR: {
-    display_name?: string;
     innovation_name: string;
     needs_assessment_url: string;
     data_sharing_preferences_url: string;
   };
   NA06_NEEDS_ASSESSOR_REMOVED: {
-    display_name?: string;
     innovation_name: string;
     innovation_overview_url: string;
   };
   NA07_NEEDS_ASSESSOR_ASSIGNED: {
-    display_name?: string;
     innovation_name: string;
     innovation_overview_url: string;
   };
@@ -278,19 +269,20 @@ export type EmailTemplatesType = {
 
   // REVIEW in future
   OS03_INNOVATION_DELAYED_SHARED_SUGGESTION: {
-    display_name?: string;
     innovation_name: string;
     innovation_overview_url: string;
   };
 
+  AU01_INNOVATOR_INCOMPLETE_RECORD: {
+    innovation_record_url: string;
+  };
+
   AU04_SUPPORT_KPI_REMINDER: {
-    display_name?: string;
     innovation_name: string;
     innovation_overview_url: string;
   };
 
   AU05_SUPPORT_KPI_OVERDUE: {
-    display_name?: string;
     innovation_name: string;
     innovation_overview_url: string;
   };

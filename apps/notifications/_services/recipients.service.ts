@@ -716,8 +716,8 @@ export class RecipientsService extends BaseService {
     const dbInnovations = await em
       .createQueryBuilder(InnovationEntity, 'innovations')
       .select(['innovations.id', 'innovations.name', 'owner.id', 'owner.identityId', 'roles.id', 'roles.role'])
-      .leftJoin('innovations.owner', 'owner')
-      .leftJoin('owner.serviceRoles', 'roles')
+      .innerJoin('innovations.owner', 'owner')
+      .innerJoin('owner.serviceRoles', 'roles')
       .where(`innovations.status = '${InnovationStatusEnum.CREATED}'`)
       .andWhere('roles.role = :role', { role: ServiceRoleEnum.INNOVATOR })
       .andWhere('DATEDIFF(DAY, innovations.created_at, DATEADD(DAY, -1, GETDATE())) != 0')

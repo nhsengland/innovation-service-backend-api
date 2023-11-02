@@ -117,14 +117,17 @@ export type InAppTemplatesType = {
     innovationName: string;
   };
 
-  // FUTURE
-  OS03_INNOVATION_DELAYED_SHARED_SUGGESTION: {
-    innovationName: string;
-  };
+  // Automatic
+  AU01_INNOVATOR_INCOMPLETE_RECORD: Record<string, never>;
   AU04_SUPPORT_KPI_REMINDER: {
     innovationName: string;
   };
   AU05_SUPPORT_KPI_OVERDUE: {
+    innovationName: string;
+  };
+
+  // FUTURE
+  OS03_INNOVATION_DELAYED_SHARED_SUGGESTION: {
     innovationName: string;
   };
 
