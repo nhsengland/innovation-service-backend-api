@@ -9,7 +9,7 @@ import { MocksHelper, TestsHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { randomUUID } from 'crypto';
 import { testEmails, testInApps } from '../../_helpers/tests.helper';
-import { taskUrl, threadUrl } from '../../_helpers/url.helper';
+import { assessmentUrl, threadUrl } from '../../_helpers/url.helper';
 import { TaskUpdateHandler } from './task-update.handler';
 
 describe('Notifications / _handlers / task-update suite', () => {
@@ -145,7 +145,7 @@ describe('Notifications / _handlers / task-update suite', () => {
               innovator_name: scenario.users.johnInnovator.name,
               message: message,
               message_url: threadUrl(ServiceRoleEnum.QUALIFYING_ACCESSOR, innovation.id, threadId),
-              task_url: taskUrl(ServiceRoleEnum.QUALIFYING_ACCESSOR, innovation.id, task.id)
+              task_url: assessmentUrl(ServiceRoleEnum.QUALIFYING_ACCESSOR, innovation.id, task.id)
             }
           }
         ]);

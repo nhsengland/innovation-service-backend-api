@@ -199,7 +199,9 @@ export class InnovationAssessmentsService extends BaseService {
       await this.notifierService.send(domainContext, NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED, {
         innovationId,
         assessmentId: assessment.id,
-        threadId: thread.thread.id
+        threadId: thread.thread.id,
+        messageId: thread.message.id,
+        message: data.message
       });
 
       return { id: assessment['id'] };
@@ -375,8 +377,7 @@ export class InnovationAssessmentsService extends BaseService {
     if (data.isSubmission && !dbAssessment.finishedAt) {
       await this.notifierService.send(domainContext, NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED, {
         innovationId: innovationId,
-        assessmentId: assessmentId,
-        organisationUnitIds: data.suggestedOrganisationUnitsIds || []
+        assessmentId: assessmentId
       });
     }
 

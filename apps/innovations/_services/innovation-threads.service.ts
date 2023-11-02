@@ -66,12 +66,12 @@ export class InnovationThreadsService extends BaseService {
     sendNotification: boolean
   ): Promise<{
     thread: InnovationThreadEntity;
-    message: InnovationThreadMessageEntity | undefined;
+    message: InnovationThreadMessageEntity;
   }> {
     const thread = await this.getThreadByContextId(contextType, contextId, transaction);
 
     if (!thread) {
-      const t = await this.createThread(
+      return this.createThread(
         domainContext,
         innovationId,
         subject,
@@ -82,13 +82,6 @@ export class InnovationThreadsService extends BaseService {
         transaction,
         false
       );
-
-      const messages = await t.thread.messages;
-
-      return {
-        thread: t.thread,
-        message: messages.find((_: any) => true)
-      };
     }
 
     const result = await this.createThreadMessage(

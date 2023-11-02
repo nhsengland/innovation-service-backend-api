@@ -36,9 +36,6 @@ import {
   InnovatorAccountCreationHandler,
   InnovatorAccountDeletionHandler,
   LockUserHandler,
-  NeedsAssessmentAssessorUpdateHandler,
-  NeedsAssessmentCompletedHandler,
-  NeedsAssessmentStartedHandler,
   SupportSummaryUpdateHandler,
   UnitInactivationSupportStatusCompletedHandler
 } from '../_handlers';
@@ -46,6 +43,9 @@ import { UnitKPIHandler } from '../_handlers/automatic/unit-kpi.handler';
 import { MessageCreationHandler } from '../_handlers/messages/message-creation.handler';
 import { ThreadAddFollowersHandler } from '../_handlers/messages/thread-add-followers.handler';
 import { ThreadCreationHandler } from '../_handlers/messages/thread-creation.handler';
+import { NeedsAssessmentAssessorUpdateHandler } from '../_handlers/needs-assessment/needs-assessment-assessor-update.handler';
+import { NeedsAssessmentCompleteHandler } from '../_handlers/needs-assessment/needs-assessment-complete.handler';
+import { NeedsAssessmentStartedHandler } from '../_handlers/needs-assessment/needs-assessment-started.handler';
 import { InnovationDelayedSharedSuggestionHandler } from '../_handlers/suggestions/innovation-delayed-shared-suggestion.handler';
 import { SupportNewAssignedAccessorsHandler } from '../_handlers/supports/support-new-assigned-accessors.handler';
 import { SupportStatusUpdateHandler } from '../_handlers/supports/support-status-update.handler';
@@ -118,6 +118,40 @@ export const NOTIFICATIONS_CONFIG = {
     }).required()
   },
 
+  // Assessment
+  [NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED]: {
+    handler: NeedsAssessmentStartedHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED]>({
+      innovationId: Joi.string().guid().required(),
+      assessmentId: Joi.string().guid().required(),
+      message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.s).trim().required(),
+      messageId: Joi.string().guid().required(),
+      threadId: Joi.string().guid().required()
+    }).required()
+  },
+
+  [NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED]: {
+    handler: NeedsAssessmentCompleteHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED]>({
+      innovationId: Joi.string().guid().required(),
+      assessmentId: Joi.string().guid().required()
+    }).required()
+  },
+
+  [NotifierTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE]: {
+    handler: NeedsAssessmentAssessorUpdateHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE]>({
+      innovationId: Joi.string().guid().required(),
+      assessmentId: Joi.string().guid().required(),
+      previousAssessor: Joi.object({
+        id: Joi.string().guid().required()
+      }).required(),
+      newAssessor: Joi.object({
+        id: Joi.string().guid().required()
+      }).required()
+    }).required()
+  },
+
   // Support Summary
   [NotifierTypeEnum.SUPPORT_SUMMARY_UPDATE]: {
     handler: SupportSummaryUpdateHandler,
@@ -162,38 +196,6 @@ export const NOTIFICATIONS_CONFIG = {
     handler: InnovationSubmittedHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_SUBMITED]>({
       innovationId: Joi.string().guid().required()
-    }).required()
-  },
-
-  [NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED]: {
-    handler: NeedsAssessmentCompletedHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED]>({
-      innovationId: Joi.string().guid().required(),
-      assessmentId: Joi.string().guid().required(),
-      organisationUnitIds: Joi.array().items(Joi.string().guid()).required()
-    }).required()
-  },
-
-  [NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED]: {
-    handler: NeedsAssessmentStartedHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED]>({
-      innovationId: Joi.string().guid().required(),
-      assessmentId: Joi.string().guid().required(),
-      threadId: Joi.string().guid().required()
-    }).required()
-  },
-
-  [NotifierTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE]: {
-    handler: NeedsAssessmentAssessorUpdateHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE]>({
-      innovationId: Joi.string().guid().required(),
-      assessmentId: Joi.string().guid().required(),
-      previousAssessor: Joi.object({
-        id: Joi.string().guid().required()
-      }).required(),
-      newAssessor: Joi.object({
-        id: Joi.string().guid().required()
-      }).required()
     }).required()
   },
 

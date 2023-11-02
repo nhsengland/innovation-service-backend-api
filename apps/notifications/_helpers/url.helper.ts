@@ -10,6 +10,14 @@ export const innovationOverviewUrl = (role: ServiceRoleEnum, innovationId: strin
     .buildUrl();
 };
 
+export const assessmentUrl = (role: ServiceRoleEnum, innovationId: string, assessmentId: string): string => {
+  const baseUrl = frontendBaseUrl(role);
+  return new UrlModel(ENV.webBaseTransactionalUrl)
+    .addPath(':baseUrl/innovations/:innovationId/assessments/:assessmentId')
+    .setPathParams({ baseUrl, innovationId, assessmentId })
+    .buildUrl();
+};
+
 export const taskUrl = (role: ServiceRoleEnum, innovationId: string, taskId: string): string => {
   const baseUrl = frontendBaseUrl(role);
   return new UrlModel(ENV.webBaseTransactionalUrl)
@@ -45,6 +53,14 @@ export const supportSummaryUrl = (role: ServiceRoleEnum, innovationId: string, u
   }
 
   return urlModel.buildUrl();
+};
+
+export const dataSharingPreferencesUrl = (role: ServiceRoleEnum, innovationId: string): string => {
+  const baseUrl = frontendBaseUrl(role);
+  return new UrlModel(ENV.webBaseTransactionalUrl)
+    .addPath(':baseUrl/innovations/:innovationId/support')
+    .setPathParams({ baseUrl, innovationId })
+    .buildUrl();
 };
 
 export const frontendBaseUrl = (role: ServiceRoleEnum): string => {

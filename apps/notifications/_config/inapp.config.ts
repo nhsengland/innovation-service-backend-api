@@ -108,11 +108,12 @@ export type InAppTemplatesType = {
   };
   NA04_NEEDS_ASSESSMENT_COMPLETE_TO_INNOVATOR: {
     innovationName: string;
+    assessmentId: string;
   };
-  NA05_NEEDS_ASSESSOR_REMOVED: {
+  NA06_NEEDS_ASSESSOR_REMOVED: {
     innovationName: string;
   };
-  NA06_NEEDS_ASSESSOR_ASSIGNED: {
+  NA07_NEEDS_ASSESSOR_ASSIGNED: {
     innovationName: string;
   };
 
