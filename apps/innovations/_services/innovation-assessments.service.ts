@@ -351,6 +351,14 @@ export class InnovationAssessmentsService extends BaseService {
             },
             { organisations: organisations.map(item => item.name) }
           );
+
+          if (data.summary && !data.isSubmission && dbAssessment.finishedAt) {
+            await this.notifierService.send(domainContext, NotifierTypeEnum.ORGANISATION_UNITS_SUGGESTION, {
+              innovationId,
+              unitsIds: data.suggestedOrganisationUnitsIds!,
+              comment: data.summary
+            });
+          }
         }
       } else {
         // it's draft
