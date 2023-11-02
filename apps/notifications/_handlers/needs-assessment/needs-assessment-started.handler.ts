@@ -41,7 +41,7 @@ export class NeedsAssessmentStartedHandler extends BaseHandler<
         innovationId: this.inputData.innovationId,
         params: {
           innovationName: innovation.name,
-          messageId: this.inputData.threadId,
+          messageId: this.inputData.messageId,
           threadId: this.inputData.threadId
         }
       }

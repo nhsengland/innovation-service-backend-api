@@ -37,7 +37,7 @@ export class NeedsAssessmentAssessorUpdateHandler extends BaseHandler<
     return this;
   }
 
-  notifyNA(
+  private notifyNA(
     template: 'NA06_NEEDS_ASSESSOR_REMOVED' | 'NA07_NEEDS_ASSESSOR_ASSIGNED',
     recipient: RecipientType | null,
     innovationName: string
