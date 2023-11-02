@@ -47,6 +47,7 @@ import { NeedsAssessmentAssessorUpdateHandler } from '../_handlers/needs-assessm
 import { NeedsAssessmentCompleteHandler } from '../_handlers/needs-assessment/needs-assessment-complete.handler';
 import { NeedsAssessmentStartedHandler } from '../_handlers/needs-assessment/needs-assessment-started.handler';
 import { InnovationDelayedSharedSuggestionHandler } from '../_handlers/suggestions/innovation-delayed-shared-suggestion.handler';
+import { OrganisationUnitsSuggestionHandler } from '../_handlers/suggestions/organisation-units-suggestion.handler';
 import { SupportNewAssignedAccessorsHandler } from '../_handlers/supports/support-new-assigned-accessors.handler';
 import { SupportStatusUpdateHandler } from '../_handlers/supports/support-status-update.handler';
 
@@ -158,6 +159,16 @@ export const NOTIFICATIONS_CONFIG = {
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.SUPPORT_SUMMARY_UPDATE]>({
       innovationId: Joi.string().guid().required(),
       supportId: Joi.string().guid().required()
+    }).required()
+  },
+
+  // Organisation Suggestions
+  [NotifierTypeEnum.ORGANISATION_UNITS_SUGGESTION]: {
+    handler: OrganisationUnitsSuggestionHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.ORGANISATION_UNITS_SUGGESTION]>({
+      innovationId: Joi.string().guid().required(),
+      unitsIds: Joi.array().items(Joi.string().guid().required()).min(1).required(),
+      comment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).trim().required()
     }).required()
   },
 

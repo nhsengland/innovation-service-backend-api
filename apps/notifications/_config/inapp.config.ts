@@ -118,9 +118,6 @@ export type InAppTemplatesType = {
   };
 
   // FUTURE
-  OS03_INNOVATION_DELAYED_SHARED_SUGGESTION: {
-    innovationName: string;
-  };
   AU04_SUPPORT_KPI_REMINDER: {
     innovationName: string;
   };
@@ -138,5 +135,15 @@ export type InAppTemplatesType = {
     innovationName: string;
     unitName: string;
     unitId: string;
+  };
+
+  // Organisation Suggestions
+  OS01_UNITS_SUGGESTION_TO_SUGGESTED_UNITS_QA: {
+    innovationName: string;
+    senderDisplayInformation: string;
+  };
+  OS02_UNITS_SUGGESTION_NOT_SHARED_TO_INNOVATOR: Record<string, never>;
+  OS03_INNOVATION_DELAYED_SHARED_SUGGESTION: {
+    innovationName: string;
   };
 };

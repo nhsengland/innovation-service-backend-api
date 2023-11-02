@@ -81,6 +81,13 @@ export type NotifierTemplatesType = {
     supportId: string;
   };
 
+  // Organisation Suggestions
+  [NotifierTypeEnum.ORGANISATION_UNITS_SUGGESTION]: {
+    innovationId: string;
+    unitsIds: string[];
+    comment: string;
+  };
+
   // OLD
   [NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION]: Record<string, never>;
 

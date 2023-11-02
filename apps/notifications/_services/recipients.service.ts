@@ -740,6 +740,22 @@ export class RecipientsService extends BaseService {
       }));
   }
 
+  async getInnovationSupports(
+    innovationId: string,
+    entityManager?: EntityManager
+  ): Promise<{ id: string; unitId: string; status: InnovationSupportStatusEnum }[]> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const supports = await em
+      .createQueryBuilder(InnovationSupportEntity, 'support')
+      .select(['support.id', 'support.status', 'unit.id'])
+      .innerJoin('support.organisationUnit', 'unit')
+      .where('support.innovation_id = :innovationId', { innovationId })
+      .getMany();
+
+    return supports.map(s => ({ id: s.id, status: s.status, unitId: s.organisationUnit.id }));
+  }
+
   /**
    *
    * @param days number of idle days to check
