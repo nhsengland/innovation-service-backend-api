@@ -443,9 +443,10 @@ export class InnovationSupportsService extends BaseService {
       data?.organisationUnits &&
       data?.organisationUnits.length > 0
     ) {
-      await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_ORGANISATION_UNITS_SUGGESTION, {
+      await this.notifierService.send(domainContext, NotifierTypeEnum.ORGANISATION_UNITS_SUGGESTION, {
         innovationId,
-        organisationUnitIds: data.organisationUnits
+        unitsIds: data.organisationUnits,
+        comment: data.description
       });
     }
 

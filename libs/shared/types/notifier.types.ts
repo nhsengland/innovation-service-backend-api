@@ -81,6 +81,17 @@ export type NotifierTemplatesType = {
     supportId: string;
   };
 
+  // Organisation Suggestions
+  [NotifierTypeEnum.ORGANISATION_UNITS_SUGGESTION]: {
+    innovationId: string;
+    unitsIds: string[];
+    comment: string;
+  };
+  [NotifierTypeEnum.INNOVATION_DELAYED_SHARE]: {
+    innovationId: string;
+    newSharedOrgIds: string[];
+  };
+
   // OLD
   [NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION]: Record<string, never>;
 
@@ -232,11 +243,6 @@ export type NotifierTemplatesType = {
   [NotifierTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED]: {
     innovationId: string;
     unitId: string;
-  };
-
-  [NotifierTypeEnum.INNOVATION_DELAYED_SHARE]: {
-    innovationId: string;
-    newSharedOrgIds: string[];
   };
 
   // Recurrent notifications.

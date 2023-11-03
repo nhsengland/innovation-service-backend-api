@@ -42,10 +42,7 @@ export class InnovationDelayedSharedSuggestionHandler extends BaseHandler<
           id: innovation.id, // TODO,
           detail: 'OS03_INNOVATION_DELAYED_SHARED_SUGGESTION'
         },
-        params: {
-          innovationName: innovation.name,
-          innovationId: innovation.id
-        }
+        params: { innovationName: innovation.name }
       }
     });
 
