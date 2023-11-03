@@ -59,7 +59,7 @@ describe('Notifications / _handlers / organisation-units-suggestion suite', () =
           organisation_unit: requestUserUnit.name,
           comment: comment,
           innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, innovation.id),
-          showKPI: (r.unitId === healthOrgAiUnit.id ? 'yes' : 'no') as any
+          showKPI: (r.unitId === healthOrgAiUnit.id ? 'yes' : 'yes') as any // TODO: If KPIs are optional for some this can be changed
         }))
       });
     });

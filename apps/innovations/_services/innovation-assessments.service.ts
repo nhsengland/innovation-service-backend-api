@@ -269,24 +269,6 @@ export class InnovationAssessmentsService extends BaseService {
       }
 
       if (data.suggestedOrganisationUnitsIds) {
-        const currentOrgSuggestionsIds = assessment.organisationUnits.map(u => u.id);
-        const newSuggestions = data.suggestedOrganisationUnitsIds.filter(
-          unitId => !currentOrgSuggestionsIds.includes(unitId)
-        );
-
-        if (newSuggestions.length > 0) {
-          await this.domainService.innovations.addSupportLog(
-            transaction,
-            { id: domainContext.id, roleId: domainContext.currentRole.id },
-            innovationId,
-            {
-              type: InnovationSupportLogTypeEnum.ASSESSMENT_SUGGESTION,
-              description: 'NA suggested units',
-              suggestedOrganisationUnits: newSuggestions
-            }
-          );
-        }
-
         assessment.organisationUnits = data.suggestedOrganisationUnitsIds.map(id => OrganisationUnitEntity.new({ id }));
       }
 
@@ -329,15 +311,15 @@ export class InnovationAssessmentsService extends BaseService {
           );
         }
 
-        // Add suggested organisations (NOT units) names to activity log.
-        if ((data.suggestedOrganisationUnitsIds ?? []).length > 0) {
+        if (data.suggestedOrganisationUnitsIds && data.suggestedOrganisationUnitsIds.length > 0) {
+          const currentUnitSuggestionsIds = assessment.organisationUnits.map(u => u.id);
+
+          // Add suggested organisations (NOT units) names to activity log.
           const organisations = await this.sqlConnection
             .createQueryBuilder(OrganisationEntity, 'organisation')
             .distinct()
             .innerJoin('organisation.organisationUnits', 'organisationUnits')
-            .where('organisationUnits.id IN (:...ids)', {
-              ids: assessment.organisationUnits.map(ou => ou.id)
-            })
+            .where('organisationUnits.id IN (:...ids)', { ids: currentUnitSuggestionsIds })
             .andWhere('organisation.inactivated_at IS NULL')
             .andWhere('organisationUnits.inactivated_at IS NULL')
             .getMany();
@@ -352,11 +334,25 @@ export class InnovationAssessmentsService extends BaseService {
             { organisations: organisations.map(item => item.name) }
           );
 
-          if (data.summary && !data.isSubmission && dbAssessment.finishedAt) {
+          const newSuggestions = data.suggestedOrganisationUnitsIds.filter(
+            id => !currentUnitSuggestionsIds.includes(id)
+          );
+          if (newSuggestions.length > 0) {
+            await this.domainService.innovations.addSupportLog(
+              transaction,
+              { id: domainContext.id, roleId: domainContext.currentRole.id },
+              innovationId,
+              {
+                type: InnovationSupportLogTypeEnum.ASSESSMENT_SUGGESTION,
+                description: 'NA suggested units',
+                suggestedOrganisationUnits: newSuggestions
+              }
+            );
+
             await this.notifierService.send(domainContext, NotifierTypeEnum.ORGANISATION_UNITS_SUGGESTION, {
               innovationId,
               unitsIds: data.suggestedOrganisationUnitsIds!,
-              comment: data.summary
+              comment: data.summary ?? ''
             });
           }
         }

@@ -48,46 +48,59 @@ export class OrganisationUnitsSuggestionHandler extends BaseHandler<
       unitName: this.requestUser.organisation?.organisationUnit?.name
     });
 
-    const innovationSupportsMap = new Map(
-      (await this.recipientsService.getInnovationSupports(innovation.id)).map(s => [s.unitId, s])
-    );
-
-    const params = {
-      innovation_name: innovation.name,
-      comment: this.inputData.comment,
-      organisation_unit: unitName,
-      innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, innovation.id)
-    };
-
-    // Show KPI information for units that haven't started a support
-    this.addEmails(
-      'OS01_UNITS_SUGGESTION_TO_SUGGESTED_UNITS_QA',
-      recipients.filter(r => !innovationSupportsMap.has(r.unitId!)),
-      {
+    this.notify('OS01_UNITS_SUGGESTION_TO_SUGGESTED_UNITS_QA', recipients, {
+      email: {
         notificationPreferenceType: NotificationCategoryEnum.SUGGEST_SUPPORT,
-        params: { ...params, showKPI: 'yes' }
-      }
-    );
-
-    // Don't show KPIs information when the unit is already supporting
-    this.addEmails(
-      'OS01_UNITS_SUGGESTION_TO_SUGGESTED_UNITS_QA',
-      recipients.filter(r => innovationSupportsMap.has(r.unitId!)),
-      {
-        notificationPreferenceType: NotificationCategoryEnum.SUGGEST_SUPPORT,
-        params: { ...params, showKPI: 'no' }
-      }
-    );
-
-    this.addInApp('OS01_UNITS_SUGGESTION_TO_SUGGESTED_UNITS_QA', recipients, {
-      context: {
-        type: NotificationCategoryEnum.SUGGEST_SUPPORT,
-        detail: 'OS01_UNITS_SUGGESTION_TO_SUGGESTED_UNITS_QA',
-        id: this.inputData.innovationId
+        params: {
+          innovation_name: innovation.name,
+          comment: this.inputData.comment,
+          organisation_unit: unitName,
+          innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, innovation.id),
+          showKPI: 'yes'
+        }
       },
-      innovationId: innovation.id,
-      params: { innovationName: innovation.name, senderDisplayInformation: senderTag }
+      inApp: {
+        context: {
+          type: NotificationCategoryEnum.SUGGEST_SUPPORT,
+          detail: 'OS01_UNITS_SUGGESTION_TO_SUGGESTED_UNITS_QA',
+          id: this.inputData.innovationId
+        },
+        innovationId: innovation.id,
+        params: { innovationName: innovation.name, senderDisplayInformation: senderTag }
+      }
     });
+
+    // // In case KPI becomes Optional
+    // const innovationSupportsMap = new Map(
+    //   (await this.recipientsService.getInnovationSupports(innovation.id)).map(s => [s.unitId, s])
+    // );
+
+    // const params = {
+    //   innovation_name: innovation.name,
+    //   comment: this.inputData.comment,
+    //   organisation_unit: unitName,
+    //   innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, innovation.id)
+    // };
+
+    // // Show KPI information for units that haven't started a support
+    // this.addEmails(
+    //   'OS01_UNITS_SUGGESTION_TO_SUGGESTED_UNITS_QA',
+    //   recipients.filter(r => !innovationSupportsMap.has(r.unitId!)),
+    //   {
+    //     notificationPreferenceType: NotificationCategoryEnum.SUGGEST_SUPPORT,
+    //     params: { ...params, showKPI: 'yes' }
+    //   }
+    // );
+
+    // // Don't show KPIs information when the unit is already supporting
+    // this.addEmails(
+    //   'OS01_UNITS_SUGGESTION_TO_SUGGESTED_UNITS_QA',
+    //   recipients.filter(r => innovationSupportsMap.has(r.unitId!)),
+    //   {
+    //     notificationPreferenceType: NotificationCategoryEnum.SUGGEST_SUPPORT,
+    //     params: { ...params, showKPI: 'no' }
+    //   }
+    // );
   }
 
   private async OS02_UNITS_SUGGESTION_NOT_SHARED_TO_INNOVATOR(innovation: { id: string; name: string }): Promise<void> {
