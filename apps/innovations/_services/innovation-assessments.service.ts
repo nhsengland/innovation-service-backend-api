@@ -268,6 +268,7 @@ export class InnovationAssessmentsService extends BaseService {
         assessment.assignTo = UserEntity.new({ id: domainContext.id });
       }
 
+      const currentUnitSuggestionsIds = (assessment.organisationUnits ?? []).map(u => u.id);
       if (data.suggestedOrganisationUnitsIds) {
         assessment.organisationUnits = data.suggestedOrganisationUnitsIds.map(id => OrganisationUnitEntity.new({ id }));
       }
@@ -311,9 +312,7 @@ export class InnovationAssessmentsService extends BaseService {
           );
         }
 
-        if (data.suggestedOrganisationUnitsIds && data.suggestedOrganisationUnitsIds.length > 0) {
-          const currentUnitSuggestionsIds = assessment.organisationUnits.map(u => u.id);
-
+        if (data.suggestedOrganisationUnitsIds?.length) {
           // Add suggested organisations (NOT units) names to activity log.
           const organisations = await this.sqlConnection
             .createQueryBuilder(OrganisationEntity, 'organisation')
