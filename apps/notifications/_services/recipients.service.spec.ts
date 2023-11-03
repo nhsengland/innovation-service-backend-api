@@ -690,6 +690,32 @@ describe('Notifications / _services / recipients service suite', () => {
     });
   });
 
+  describe('getInnovationSupports', () => {
+    it('should return the supports information for the innovation', async () => {
+      const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+
+      const supports = await sut.getInnovationSupports(innovation.id);
+
+      expect(supports).toEqual([
+        {
+          id: innovation.supports.supportByHealthOrgUnit.id,
+          status: innovation.supports.supportByHealthOrgUnit.status,
+          unitId: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id
+        },
+        {
+          id: innovation.supports.supportByHealthOrgAiUnit.id,
+          status: innovation.supports.supportByHealthOrgAiUnit.status,
+          unitId: scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id
+        },
+        {
+          id: innovation.supports.supportByMedTechOrgUnit.id,
+          status: innovation.supports.supportByMedTechOrgUnit.status,
+          unitId: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id
+        }
+      ]);
+    });
+  });
+
   describe('organisationUnitInfo', () => {
     it('returns the organisation unit with organisation info', async () => {
       const res = await sut.organisationUnitInfo(scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id);

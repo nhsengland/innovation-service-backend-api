@@ -43,7 +43,9 @@ export const EmailTemplates = {
   AU04_SUPPORT_KPI_REMINDER: 'e1f0a2bc-3b15-4733-ba89-c0d5c9fec38a',
   AU05_SUPPORT_KPI_OVERDUE: '5fe24d48-8def-457d-a81f-56750f38c508',
 
-  // REVIEW in future
+  // ORGANISATION SUGGESTIONS
+  OS01_UNITS_SUGGESTION_TO_SUGGESTED_UNITS_QA: '193dac47-da6c-49a0-8db7-ee951cf5d38d',
+  OS02_UNITS_SUGGESTION_NOT_SHARED_TO_INNOVATOR: '8c2d13c8-8e1b-4876-9e01-747db83483eb',
   OS03_INNOVATION_DELAYED_SHARED_SUGGESTION: 'b5845d01-f66e-455c-8f11-6e011394da95',
 
   // TO BE REMOVED ?
@@ -268,7 +270,18 @@ export type EmailTemplatesType = {
     support_summary_update_url: string;
   };
 
-  // REVIEW in future
+  // Organisation Suggestions
+  OS01_UNITS_SUGGESTION_TO_SUGGESTED_UNITS_QA: {
+    innovation_name: string;
+    organisation_unit: string;
+    comment: string;
+    innovation_overview_url: string;
+    showKPI: 'yes' | 'no'; // If it is used more this could be a NotifyOptionalContent
+  };
+  OS02_UNITS_SUGGESTION_NOT_SHARED_TO_INNOVATOR: {
+    innovation_name: string;
+    data_sharing_preferences_url: string;
+  };
   OS03_INNOVATION_DELAYED_SHARED_SUGGESTION: {
     innovation_name: string;
     innovation_overview_url: string;
