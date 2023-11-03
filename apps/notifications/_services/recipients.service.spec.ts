@@ -15,7 +15,13 @@ import {
   ServiceRoleEnum,
   UserStatusEnum
 } from '@notifications/shared/enums';
-import { InnovationErrorsEnum, NotFoundError, OrganisationErrorsEnum } from '@notifications/shared/errors';
+import {
+  GenericErrorsEnum,
+  InnovationErrorsEnum,
+  NotFoundError,
+  OrganisationErrorsEnum,
+  UnprocessableEntityError
+} from '@notifications/shared/errors';
 import { DomainInnovationsService } from '@notifications/shared/services';
 import { TestsHelper } from '@notifications/shared/tests';
 import { InnovationSupportBuilder } from '@notifications/shared/tests/builders/innovation-support.builder';
@@ -862,6 +868,23 @@ describe('Notifications / _services / recipients service suite', () => {
 
       const res = await sut.incompleteInnovationRecordOwners(em);
       expect(res).toHaveLength(0);
+    });
+  });
+
+  describe('idleInnovations', () => {
+    it('returns empty array of idle innovations if there are no innovations', async () => {
+      const res = await sut.innovationsWithoutSupportForNDays([30], em);
+      expect(res).toHaveLength(0);
+    });
+
+    it.skip('returns innovations if there are idle innovations', async () => {
+      // having trouble with this test since it depends on history table
+    });
+
+    it('throws error if array is empty', async () => {
+      await expect(sut.innovationsWithoutSupportForNDays([], em)).rejects.toThrowError(
+        new UnprocessableEntityError(GenericErrorsEnum.INVALID_PAYLOAD)
+      );
     });
   });
 

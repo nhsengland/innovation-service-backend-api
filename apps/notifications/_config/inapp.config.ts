@@ -119,6 +119,9 @@ export type InAppTemplatesType = {
 
   // Automatic
   AU01_INNOVATOR_INCOMPLETE_RECORD: Record<string, never>;
+  AU03_INNOVATOR_IDLE_SUPPORT: {
+    innovationName: string;
+  };
   AU04_SUPPORT_KPI_REMINDER: {
     innovationName: string;
   };

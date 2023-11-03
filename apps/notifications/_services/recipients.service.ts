@@ -28,7 +28,13 @@ import {
   ServiceRoleEnum,
   UserStatusEnum
 } from '@notifications/shared/enums';
-import { InnovationErrorsEnum, NotFoundError, OrganisationErrorsEnum } from '@notifications/shared/errors';
+import {
+  GenericErrorsEnum,
+  InnovationErrorsEnum,
+  NotFoundError,
+  OrganisationErrorsEnum,
+  UnprocessableEntityError
+} from '@notifications/shared/errors';
 import type { DomainService, IdentityProviderService } from '@notifications/shared/services';
 import SHARED_SYMBOLS from '@notifications/shared/services/symbols';
 import { inject, injectable } from 'inversify';
@@ -39,7 +45,7 @@ import { InnovationSupportLogEntity } from '@notifications/shared/entities';
 import { InnovationCollaboratorEntity } from '@notifications/shared/entities/innovation/innovation-collaborator.entity';
 import { DatesHelper } from '@notifications/shared/helpers';
 import type { IdentityUserInfo, NotificationPreferences } from '@notifications/shared/types';
-import type { EntityManager } from 'typeorm';
+import { Brackets, type EntityManager } from 'typeorm';
 
 export type RecipientType = {
   roleId: string;
@@ -741,7 +747,58 @@ export class RecipientsService extends BaseService {
   }
 
   /**
+   * returns a list of innovations that aren't receiving any support (ENGAGING/WAITING) for n days
    *
+   * view innovation service lastSupportStatusTransitionFromEngaging in case this changes to keep consistency
+   *
+   * @param days number of days to check (ex: 1 month 30 | 7 months 210)
+   */
+  async innovationsWithoutSupportForNDays(
+    days: number[],
+    entityManager?: EntityManager
+  ): Promise<{ id: string; name: string }[]> {
+    if (!days.length) {
+      throw new UnprocessableEntityError(GenericErrorsEnum.INVALID_PAYLOAD, { details: { error: 'days is required' } });
+    }
+
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const x = await em.query(`SELECT innovationId,MAX(statusChangedAt) as statusChangedAt
+    FROM last_support_status_view_entity
+    GROUP BY innovationId`);
+
+    console.log(x);
+
+    const query = em
+      .createQueryBuilder(InnovationEntity, 'innovation')
+      .select(['innovation.id', 'innovation.name'])
+      .innerJoin(
+        `(SELECT innovationId,MAX(statusChangedAt) as statusChangedAt
+        FROM last_support_status_view_entity
+        GROUP BY innovationId)`,
+        'lastEngagement',
+        'lastEngagement.innovationId = innovation.id'
+      )
+      .leftJoin('innovation.innovationSupports', 'supports', 'supports.status IN (:...engagingStatus)', {
+        engagingStatus: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.WAITING]
+      })
+      .where('innovation.status = :innovationStatus', { innovationStatus: InnovationStatusEnum.IN_PROGRESS })
+      .andWhere('supports.id IS NULL')
+      .andWhere(
+        new Brackets(qb => {
+          const [first, ...reminder] = days;
+          qb.where(`DATEDIFF(DAY, lastEngagement.statusChangedAt, DATEADD(DAY, -1, GETDATE())) = ${first}`);
+          reminder?.forEach(day => {
+            qb.orWhere(`DATEDIFF(DAY, lastEngagement.statusChangedAt, DATEADD(DAY, -1, GETDATE())) = ${day}`);
+          });
+        })
+      );
+
+    return (await query.getMany()).map(innovation => ({ id: innovation.id, name: innovation.name }));
+  }
+
+  /**
+   * @deprecated no longer used
    * @param days number of idle days to check
    * @param daysMod split notifications by daysMod
    */

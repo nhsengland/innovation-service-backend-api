@@ -18,6 +18,14 @@ export const innovationRecordUrl = (role: ServiceRoleEnum, innovationId: string)
     .buildUrl();
 };
 
+export const howToProceedUrl = (role: ServiceRoleEnum.INNOVATOR, innovationId: string): string => {
+  const baseUrl = frontendBaseUrl(role);
+  return new UrlModel(ENV.webBaseTransactionalUrl)
+    .addPath(':baseUrl/innovations/:innovationId/record')
+    .setPathParams({ baseUrl, innovationId })
+    .buildUrl();
+};
+
 export const assessmentUrl = (role: ServiceRoleEnum, innovationId: string, assessmentId: string): string => {
   const baseUrl = frontendBaseUrl(role);
   return new UrlModel(ENV.webBaseTransactionalUrl)
