@@ -827,7 +827,7 @@ describe('Notifications / _services / recipients service suite', () => {
           scenario.users.johnInnovator.innovations.johnInnovation.id
         ]);
 
-        const res = await sut.incompleteInnovationRecordOwners(em);
+        const res = await sut.incompleteInnovations(em);
         expect(res).toHaveLength(resLength);
       }
     );
@@ -847,7 +847,7 @@ describe('Notifications / _services / recipients service suite', () => {
         .getRepository(InnovationEntity)
         .update({ id: scenario.users.johnInnovator.innovations.johnInnovation.id }, { owner: null });
 
-      const res = await sut.incompleteInnovationRecordOwners(em);
+      const res = await sut.incompleteInnovations(em);
       expect(res).toHaveLength(0);
     });
 
@@ -866,7 +866,7 @@ describe('Notifications / _services / recipients service suite', () => {
         .getRepository(UserRoleEntity)
         .update({ id: scenario.users.johnInnovator.roles.innovatorRole.id }, { isActive: false });
 
-      const res = await sut.incompleteInnovationRecordOwners(em);
+      const res = await sut.incompleteInnovations(em);
       expect(res).toHaveLength(0);
     });
   });

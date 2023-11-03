@@ -14,16 +14,14 @@ describe('Notifications / _handlers / incomplete record suite', () => {
     await testsHelper.init();
   });
 
-  jest.spyOn(RecipientsService.prototype, 'incompleteInnovationRecordOwners').mockResolvedValue([
+  jest.spyOn(RecipientsService.prototype, 'incompleteInnovations').mockResolvedValue([
     {
       innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
-      innovationName: scenario.users.johnInnovator.innovations.johnInnovation.name,
-      recipient: DTOsHelper.getRecipientUser(scenario.users.johnInnovator)
+      innovationName: scenario.users.johnInnovator.innovations.johnInnovation.name
     },
     {
       innovationId: scenario.users.ottoOctaviusInnovator.innovations.chestHarnessInnovation.id,
-      innovationName: scenario.users.ottoOctaviusInnovator.innovations.chestHarnessInnovation.name,
-      recipient: DTOsHelper.getRecipientUser(scenario.users.ottoOctaviusInnovator)
+      innovationName: scenario.users.ottoOctaviusInnovator.innovations.chestHarnessInnovation.name
     }
   ]);
 
@@ -37,6 +35,17 @@ describe('Notifications / _handlers / incomplete record suite', () => {
           templateId: 'AU01_INNOVATOR_INCOMPLETE_RECORD',
           notificationPreferenceType: 'AUTOMATIC',
           to: DTOsHelper.getRecipientUser(scenario.users.johnInnovator),
+          params: {
+            innovation_record_url: innovationRecordUrl(
+              ServiceRoleEnum.INNOVATOR,
+              scenario.users.johnInnovator.innovations.johnInnovation.id
+            )
+          }
+        },
+        {
+          templateId: 'AU01_INNOVATOR_INCOMPLETE_RECORD',
+          notificationPreferenceType: 'AUTOMATIC',
+          to: DTOsHelper.getRecipientUser(scenario.users.janeInnovator),
           params: {
             innovation_record_url: innovationRecordUrl(
               ServiceRoleEnum.INNOVATOR,
@@ -64,7 +73,10 @@ describe('Notifications / _handlers / incomplete record suite', () => {
             type: 'AUTOMATIC',
             id: scenario.users.johnInnovator.innovations.johnInnovation.id
           },
-          userRoleIds: [scenario.users.johnInnovator.roles.innovatorRole.id],
+          userRoleIds: [
+            scenario.users.johnInnovator.roles.innovatorRole.id,
+            scenario.users.janeInnovator.roles.innovatorRole.id
+          ],
           innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
           params: {}
         },

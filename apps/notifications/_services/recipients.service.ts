@@ -715,32 +715,21 @@ export class RecipientsService extends BaseService {
    * @param entityManager optionally pass an entity manager
    * @returns list of recipient owners with innovation id and name
    */
-  async incompleteInnovationRecordOwners(
+  async incompleteInnovations(
     entityManager?: EntityManager
-  ): Promise<{ recipient: RecipientType; innovationId: string; innovationName: string }[]> {
+  ): Promise<{ innovationId: string; innovationName: string }[]> {
     const em = entityManager ?? /* c8 ignore next */ this.sqlConnection.manager;
     const dbInnovations = await em
       .createQueryBuilder(InnovationEntity, 'innovations')
-      .select(['innovations.id', 'innovations.name', 'owner.id', 'owner.identityId', 'roles.id', 'roles.role'])
-      .innerJoin('innovations.owner', 'owner')
-      .innerJoin('owner.serviceRoles', 'roles')
+      .select(['innovations.id', 'innovations.name'])
       .where(`innovations.status = '${InnovationStatusEnum.CREATED}'`)
-      .andWhere('roles.role = :role', { role: ServiceRoleEnum.INNOVATOR })
       .andWhere('DATEDIFF(DAY, innovations.created_at, DATEADD(DAY, -1, GETDATE())) != 0')
       .andWhere('DATEDIFF(DAY, innovations.created_at, DATEADD(DAY, -1, GETDATE())) % 30 = 0')
-      .andWhere('owner.status = :userActive AND roles.isActive = 1', { userActive: UserStatusEnum.ACTIVE })
       .getMany();
 
     return dbInnovations
       .filter((innovation): innovation is InnovationEntity & { owner: UserEntity } => !!innovation.owner)
       .map(innovation => ({
-        recipient: {
-          userId: innovation.owner.id,
-          identityId: innovation.owner.identityId,
-          roleId: innovation.owner.serviceRoles[0]?.id ?? /* c8 ignore next */ '',
-          role: innovation.owner.serviceRoles[0]?.role ?? /* c8 ignore next */ ServiceRoleEnum.INNOVATOR,
-          isActive: innovation.owner.serviceRoles[0] ? true : /* c8 ignore next */ false
-        },
         innovationId: innovation.id,
         innovationName: innovation.name
       }));

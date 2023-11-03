@@ -17,23 +17,24 @@ export class IncompleteRecordHandler extends BaseHandler<
   }
 
   async run(): Promise<this> {
-    const idleInnovators = await this.recipientsService.incompleteInnovationRecordOwners();
-
-    for (const innovator of idleInnovators) {
-      this.notify('AU01_INNOVATOR_INCOMPLETE_RECORD', [innovator.recipient], {
+    const innovations = await this.recipientsService.incompleteInnovations();
+    for (const innovation of innovations) {
+      const innovators = await this.recipientsService.getInnovationActiveOwnerAndCollaborators(innovation.innovationId);
+      const recipients = await this.recipientsService.getUsersRecipient(innovators, ServiceRoleEnum.INNOVATOR);
+      this.notify('AU01_INNOVATOR_INCOMPLETE_RECORD', recipients, {
         email: {
           notificationPreferenceType: NotificationCategoryEnum.AUTOMATIC,
           params: {
-            innovation_record_url: innovationRecordUrl(ServiceRoleEnum.INNOVATOR, innovator.innovationId)
+            innovation_record_url: innovationRecordUrl(ServiceRoleEnum.INNOVATOR, innovation.innovationId)
           }
         },
         inApp: {
           context: {
             detail: 'AU01_INNOVATOR_INCOMPLETE_RECORD',
             type: NotificationCategoryEnum.AUTOMATIC,
-            id: innovator.innovationId
+            id: innovation.innovationId
           },
-          innovationId: innovator.innovationId,
+          innovationId: innovation.innovationId,
           params: {}
         }
       });
