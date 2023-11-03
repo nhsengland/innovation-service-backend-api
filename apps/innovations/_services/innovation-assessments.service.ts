@@ -333,9 +333,9 @@ export class InnovationAssessmentsService extends BaseService {
             { organisations: organisations.map(item => item.name) }
           );
 
-          const newSuggestions = data.suggestedOrganisationUnitsIds.filter(
-            id => !currentUnitSuggestionsIds.includes(id)
-          );
+          const newSuggestions = dbAssessment.finishedAt
+            ? data.suggestedOrganisationUnitsIds.filter(id => !currentUnitSuggestionsIds.includes(id))
+            : data.suggestedOrganisationUnitsIds;
           if (newSuggestions.length > 0) {
             await this.domainService.innovations.addSupportLog(
               transaction,
@@ -350,7 +350,7 @@ export class InnovationAssessmentsService extends BaseService {
 
             await this.notifierService.send(domainContext, NotifierTypeEnum.ORGANISATION_UNITS_SUGGESTION, {
               innovationId,
-              unitsIds: data.suggestedOrganisationUnitsIds!,
+              unitsIds: newSuggestions,
               comment: data.summary ?? ''
             });
           }
