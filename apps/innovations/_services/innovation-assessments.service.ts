@@ -333,10 +333,10 @@ export class InnovationAssessmentsService extends BaseService {
             { organisations: organisations.map(item => item.name) }
           );
 
-          const newSuggestions = data.suggestedOrganisationUnitsIds.filter(
-            id => !currentUnitSuggestionsIds.includes(id)
-          );
-          if (newSuggestions.length > 0 || !dbAssessment.finishedAt) {
+          const newSuggestions = dbAssessment.finishedAt
+            ? data.suggestedOrganisationUnitsIds.filter(id => !currentUnitSuggestionsIds.includes(id))
+            : data.suggestedOrganisationUnitsIds;
+          if (newSuggestions.length > 0) {
             await this.domainService.innovations.addSupportLog(
               transaction,
               { id: domainContext.id, roleId: domainContext.currentRole.id },
@@ -344,15 +344,13 @@ export class InnovationAssessmentsService extends BaseService {
               {
                 type: InnovationSupportLogTypeEnum.ASSESSMENT_SUGGESTION,
                 description: 'NA suggested units',
-                suggestedOrganisationUnits: dbAssessment.finishedAt
-                  ? newSuggestions
-                  : data.suggestedOrganisationUnitsIds
+                suggestedOrganisationUnits: newSuggestions
               }
             );
 
             await this.notifierService.send(domainContext, NotifierTypeEnum.ORGANISATION_UNITS_SUGGESTION, {
               innovationId,
-              unitsIds: dbAssessment.finishedAt ? newSuggestions : data.suggestedOrganisationUnitsIds,
+              unitsIds: newSuggestions,
               comment: data.summary ?? ''
             });
           }
