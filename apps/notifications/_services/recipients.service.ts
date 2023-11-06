@@ -727,12 +727,10 @@ export class RecipientsService extends BaseService {
       .andWhere('DATEDIFF(DAY, innovations.created_at, DATEADD(DAY, -1, GETDATE())) % 30 = 0')
       .getMany();
 
-    return dbInnovations
-      .filter((innovation): innovation is InnovationEntity & { owner: UserEntity } => !!innovation.owner)
-      .map(innovation => ({
-        innovationId: innovation.id,
-        innovationName: innovation.name
-      }));
+    return dbInnovations.map(innovation => ({
+      innovationId: innovation.id,
+      innovationName: innovation.name
+    }));
   }
 
   async getInnovationSupports(

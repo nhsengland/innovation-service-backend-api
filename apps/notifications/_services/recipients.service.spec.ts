@@ -833,67 +833,26 @@ describe('Notifications / _services / recipients service suite', () => {
     it.skip('placeholder', () => {});
   });
 
-  describe('incompleteInnovationRecordOwners', () => {
+  describe('incompleteInnovations', () => {
     it.each([
       ["doesn't return", '0 days', 0, 0],
       ['returns', '30 days', 30, 1],
       ['returns', '60 days', 60, 1],
       ["doesn't return", '31 days', 31, 0],
       ["doesn't return", '45 days', 45, 0]
-    ])(
-      '%s incomplete innovation records with owner if innovation incomplete for %s',
-      async (_result, _ndays, days, resLength) => {
-        const innovationDate = new Date();
-        innovationDate.setDate(innovationDate.getDate() - days - 1);
-
-        // Set innovation to created and the date to n+1 days ago (raw query because we require updating createdAt)
-        await em.query('UPDATE innovation SET status = @0, created_at = @1 WHERE id = @2', [
-          InnovationStatusEnum.CREATED,
-          innovationDate,
-          scenario.users.johnInnovator.innovations.johnInnovation.id
-        ]);
-
-        const res = await sut.incompleteInnovations(em);
-        expect(res).toHaveLength(resLength);
-      }
-    );
-
-    it('returns empty array of incomplete innovation records with owner recipients if there is no owner', async () => {
+    ])('%s incomplete innovation records if innovation incomplete for %s', async (_result, _ndays, days, resLength) => {
       const innovationDate = new Date();
-      innovationDate.setDate(innovationDate.getDate() - 31);
+      innovationDate.setDate(innovationDate.getDate() - days - 1);
 
-      // Set innovation to created and the date to 31 days ago (raw query because we require updating createdAt)
+      // Set innovation to created and the date to n+1 days ago (raw query because we require updating createdAt)
       await em.query('UPDATE innovation SET status = @0, created_at = @1 WHERE id = @2', [
         InnovationStatusEnum.CREATED,
         innovationDate,
         scenario.users.johnInnovator.innovations.johnInnovation.id
       ]);
 
-      await em
-        .getRepository(InnovationEntity)
-        .update({ id: scenario.users.johnInnovator.innovations.johnInnovation.id }, { owner: null });
-
       const res = await sut.incompleteInnovations(em);
-      expect(res).toHaveLength(0);
-    });
-
-    it('returns empty array of incomplete innovation records with owner recipients if the owner is inactive', async () => {
-      const innovationDate = new Date();
-      innovationDate.setDate(innovationDate.getDate() - 31);
-
-      // Set innovation to created and the date to 31 days ago (raw query because we require updating createdAt)
-      await em.query('UPDATE innovation SET status = @0, created_at = @1 WHERE id = @2', [
-        InnovationStatusEnum.CREATED,
-        innovationDate,
-        scenario.users.johnInnovator.innovations.johnInnovation.id
-      ]);
-
-      await em
-        .getRepository(UserRoleEntity)
-        .update({ id: scenario.users.johnInnovator.roles.innovatorRole.id }, { isActive: false });
-
-      const res = await sut.incompleteInnovations(em);
-      expect(res).toHaveLength(0);
+      expect(res).toHaveLength(resLength);
     });
   });
 
