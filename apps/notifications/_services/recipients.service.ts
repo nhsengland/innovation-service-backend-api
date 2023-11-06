@@ -766,12 +766,6 @@ export class RecipientsService extends BaseService {
 
     const em = entityManager ?? this.sqlConnection.manager;
 
-    const x = await em.query(`SELECT innovationId,MAX(statusChangedAt) as statusChangedAt
-    FROM last_support_status_view_entity
-    GROUP BY innovationId`);
-
-    console.log(x);
-
     const query = em
       .createQueryBuilder(InnovationEntity, 'innovation')
       .select(['innovation.id', 'innovation.name'])
