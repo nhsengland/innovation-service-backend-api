@@ -106,7 +106,7 @@ export type catalogMainPurpose = (typeof catalogMainPurpose)[number];
 
 export const catalogInvolvedAACProgrammes = [
   'No',
-  'Academic Health Science Network',
+  'Health Innovation Network',
   'Artificial Intelligence in Health and Care Award',
   'Clinical Entrepreneur Programme',
   'Early Access to Medicines Scheme',
