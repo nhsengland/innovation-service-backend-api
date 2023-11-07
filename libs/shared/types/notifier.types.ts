@@ -98,6 +98,10 @@ export type NotifierTemplatesType = {
     exportRequestId: string;
     comment: string;
   };
+  [NotifierTypeEnum.EXPORT_REQUEST_FEEDBACK]: {
+    innovationId: string;
+    exportRequestId: string;
+  };
 
   // OLD
   [NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION]: Record<string, never>;

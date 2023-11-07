@@ -40,6 +40,7 @@ import {
 import { IdleSupportHandler } from '../_handlers/automatic/idle-support.handler';
 import { IncompleteRecordHandler } from '../_handlers/automatic/incomplete-record.handler';
 import { UnitKPIHandler } from '../_handlers/automatic/unit-kpi.handler';
+import { ExportRequestFeedbackHandler } from '../_handlers/innovations/export-request-feedback.handler';
 import { ExportRequestSubmittedHandler } from '../_handlers/innovations/export-request-submitted.handler';
 import { MessageCreationHandler } from '../_handlers/messages/message-creation.handler';
 import { ThreadAddFollowersHandler } from '../_handlers/messages/thread-add-followers.handler';
@@ -180,6 +181,14 @@ export const NOTIFICATIONS_CONFIG = {
       innovationId: Joi.string().guid().required(),
       exportRequestId: Joi.string().guid().required(),
       comment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.s).required()
+    }).required()
+  },
+
+  [NotifierTypeEnum.EXPORT_REQUEST_FEEDBACK]: {
+    handler: ExportRequestFeedbackHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.EXPORT_REQUEST_FEEDBACK]>({
+      innovationId: Joi.string().guid().required(),
+      exportRequestId: Joi.string().guid().required()
     }).required()
   },
 

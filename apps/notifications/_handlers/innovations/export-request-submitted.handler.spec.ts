@@ -10,7 +10,7 @@ import { RecipientsService } from '../../_services/recipients.service';
 import { NotificationsTestsHelper } from '../../_tests/notifications-test.helper';
 import { ExportRequestSubmittedHandler } from './export-request-submitted.handler';
 
-describe('Notifications / _handlers / innovation-submitted suite', () => {
+describe('Notifications / _handlers / export-request-submitted suite', () => {
   const testsHelper = new NotificationsTestsHelper();
   const scenario = testsHelper.getCompleteScenario();
 

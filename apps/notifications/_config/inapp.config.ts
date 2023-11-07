@@ -157,4 +157,12 @@ export type InAppTemplatesType = {
     innovationName: string;
     exportRequestId: string;
   };
+  RE02_EXPORT_REQUEST_APPROVED: {
+    innovationName: string;
+    exportRequestId: string;
+  };
+  RE03_EXPORT_REQUEST_REJECTED: {
+    innovationName: string;
+    exportRequestId: string;
+  };
 };

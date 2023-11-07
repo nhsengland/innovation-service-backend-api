@@ -50,6 +50,8 @@ export const EmailTemplates = {
 
   // INNOVATION (MANAGEMENT?)
   RE01_EXPORT_REQUEST_SUBMITTED: 'b5f4e789-bdfc-496a-9b27-dbf6c2259ebc',
+  RE02_EXPORT_REQUEST_APPROVED: '209f1bff-efdf-4631-8b2a-2f3982ff498d',
+  RE03_EXPORT_REQUEST_REJECTED: 'ed2fd3b2-a5a6-472b-86c9-7a837638fc41',
 
   // TO BE REMOVED ?
   ACCOUNT_CREATION_TO_INNOVATOR: '62486954-b235-4aa6-8b8d-960191fc6e69',
@@ -316,6 +318,16 @@ export type EmailTemplatesType = {
     innovation_name: string;
     comment: string;
     request_url: string;
+  };
+  RE02_EXPORT_REQUEST_APPROVED: {
+    innovator_name: string;
+    innovation_name: string;
+    innovation_record_url: string;
+  };
+  RE03_EXPORT_REQUEST_REJECTED: {
+    innovator_name: string;
+    innovation_name: string;
+    reject_comment: string;
   };
 
   // TODO
