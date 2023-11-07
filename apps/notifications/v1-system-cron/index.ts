@@ -15,7 +15,7 @@ class V1SystemSchedule {
 
     await notifierService.sendSystemNotification(NotifierTypeEnum.INCOMPLETE_INNOVATION_RECORD, {});
 
-    await notifierService.sendSystemNotification(NotifierTypeEnum.IDLE_SUPPORT, {});
+    await notifierService.sendSystemNotification(NotifierTypeEnum.IDLE_SUPPORT_INNOVATOR, {});
 
     await notifierService.sendSystemNotification(NotifierTypeEnum.UNIT_KPI, {});
   }

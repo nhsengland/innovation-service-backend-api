@@ -4,7 +4,7 @@ import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { innovationRecordUrl } from '../../_helpers/url.helper';
 import { RecipientsService } from '../../_services/recipients.service';
 import { NotificationsTestsHelper } from '../../_tests/notifications-test.helper';
-import { IdleSupportHandler } from './idle-support.handler';
+import { IdleSupportHandler } from './idle-support-innovator.handler';
 
 describe('Notifications / _handlers / idle support handler suite', () => {
   const testsHelper = new NotificationsTestsHelper();

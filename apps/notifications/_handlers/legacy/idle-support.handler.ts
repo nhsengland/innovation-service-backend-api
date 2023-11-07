@@ -7,7 +7,7 @@ import type { Context } from '@azure/functions';
 import { UrlModel } from '@notifications/shared/models';
 import { BaseHandler } from '../base.handler';
 
-export class IdleSupportHandler extends BaseHandler<NotifierTypeEnum.IDLE_SUPPORT, 'MIGRATION_OLD'> {
+export class IdleSupportHandler extends BaseHandler<NotifierTypeEnum.IDLE_SUPPORT_INNOVATOR, 'MIGRATION_OLD'> {
   constructor(
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.DAILY_DIGEST],

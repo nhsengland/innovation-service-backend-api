@@ -4,10 +4,13 @@ import type { DomainContextType, NotifierTemplatesType } from '@notifications/sh
 import { howToProceedUrl, innovationRecordUrl } from '../../_helpers/url.helper';
 import { BaseHandler } from '../base.handler';
 
-export class IdleSupportHandler extends BaseHandler<NotifierTypeEnum.IDLE_SUPPORT, 'AU03_INNOVATOR_IDLE_SUPPORT'> {
+export class IdleSupportHandler extends BaseHandler<
+  NotifierTypeEnum.IDLE_SUPPORT_INNOVATOR,
+  'AU03_INNOVATOR_IDLE_SUPPORT'
+> {
   constructor(
     requestUser: DomainContextType,
-    data: NotifierTemplatesType[NotifierTypeEnum.UNIT_KPI],
+    data: NotifierTemplatesType[NotifierTypeEnum.IDLE_SUPPORT_INNOVATOR],
     azureContext: Context
   ) {
     super(requestUser, data, azureContext);
