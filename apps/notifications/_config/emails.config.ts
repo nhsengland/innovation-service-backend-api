@@ -53,6 +53,9 @@ export const EmailTemplates = {
   RE02_EXPORT_REQUEST_APPROVED: '209f1bff-efdf-4631-8b2a-2f3982ff498d',
   RE03_EXPORT_REQUEST_REJECTED: 'ed2fd3b2-a5a6-472b-86c9-7a837638fc41',
 
+  // ADMIN
+  AP03_USER_LOCKED_TO_LOCKED_USER: '95751f8f-ba65-436c-baa6-dabca6ca7acf',
+
   // TO BE REMOVED ?
   ACCOUNT_CREATION_TO_INNOVATOR: '62486954-b235-4aa6-8b8d-960191fc6e69',
   ACCOUNT_DELETION_WITH_TRANSFER_TO_COLLABORATOR: 'd09b5182-d995-4db7-b3ba-99fef085bb22',
@@ -92,7 +95,6 @@ export const EmailTemplates = {
   INNOVATION_TRANSFER_REMINDER_EXISTING_USER: '6c704f8b-a991-4b41-95ae-3399ab9c2f2f',
   INNOVATION_TRANSFER_REMINDER_NEW_USER: '594b3cc0-8aa8-4bfa-955e-0f4cd2409cad',
   INNOVATION_TRANSFER_EXPIRED: '24c454fa-039c-4ff0-a268-cc5ba550ea93',
-  LOCK_USER_TO_LOCKED_USER: '1ad73192-dc28-4606-a4f3-9dd73aedfd42',
 
   ACCESSOR_UNIT_CHANGE_TO_USER_MOVED: '29d6e362-5ecd-4bac-8707-a4d92e9e6762',
   ACCESSOR_UNIT_CHANGE_TO_QA_OLD_UNIT: 'ac1c44d2-f65c-49cf-bbbf-d1263a7666d9',
@@ -326,6 +328,9 @@ export type EmailTemplatesType = {
     reject_comment: string;
   };
 
+  // Admin
+  AP03_USER_LOCKED_TO_LOCKED_USER: {};
+
   // TODO
   ACCOUNT_CREATION_TO_INNOVATOR: {
     display_name?: string;
@@ -481,7 +486,6 @@ export type EmailTemplatesType = {
     innovation_name: string;
     innovation_url: string;
   };
-  LOCK_USER_TO_LOCKED_USER: { display_name?: string };
   ACCESSOR_UNIT_CHANGE_TO_USER_MOVED: {
     display_name?: string;
     old_organisation: string;

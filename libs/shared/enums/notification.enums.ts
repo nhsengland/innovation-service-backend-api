@@ -46,6 +46,7 @@ export const NotificationTypes = {
     'RE02_EXPORT_REQUEST_APPROVED',
     'RE03_EXPORT_REQUEST_REJECTED'
   ] as const,
+  ADMIN: ['AP02_INNOVATOR_LOCKED_TO_ASSIGNED_USERS', 'AP03_USER_LOCKED_TO_LOCKED_USER'] as const,
   MIGRATION_OLD: ['MIGRATION_OLD'] as const
 };
 export type NotificationTypes = typeof NotificationTypes;
@@ -88,7 +89,8 @@ export enum NotificationCategoryEnum {
   INNOVATION = 'INNOVATION',
   NEEDS_ASSESSMENT = 'NEEDS_ASSESSMENT',
   SUPPORT_SUMMARY = 'SUPPORT_SUMMARY',
-  AUTOMATIC = 'AUTOMATIC'
+  AUTOMATIC = 'AUTOMATIC',
+  ADMIN = 'ADMIN'
 }
 
 export enum NotificationPreferenceEnum {
