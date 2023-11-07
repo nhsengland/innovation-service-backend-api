@@ -46,7 +46,11 @@ export const NotificationTypes = {
     'RE02_EXPORT_REQUEST_APPROVED',
     'RE03_EXPORT_REQUEST_REJECTED'
   ] as const,
-  ADMIN: ['AP02_INNOVATOR_LOCKED_TO_ASSIGNED_USERS', 'AP03_USER_LOCKED_TO_LOCKED_USER'] as const,
+  ADMIN: [
+    'AP02_INNOVATOR_LOCKED_TO_ASSIGNED_USERS',
+    'AP03_USER_LOCKED_TO_LOCKED_USER',
+    'AP07_UNIT_INACTIVATED_TO_ENGAGING_INNOVATIONS'
+  ] as const,
   MIGRATION_OLD: ['MIGRATION_OLD'] as const
 };
 export type NotificationTypes = typeof NotificationTypes;

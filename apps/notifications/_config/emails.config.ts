@@ -55,6 +55,7 @@ export const EmailTemplates = {
 
   // ADMIN
   AP03_USER_LOCKED_TO_LOCKED_USER: '95751f8f-ba65-436c-baa6-dabca6ca7acf',
+  AP07_UNIT_INACTIVATED_TO_ENGAGING_INNOVATIONS: '9e18194c-99fd-408e-89a6-47616e647c27',
 
   // TO BE REMOVED ?
   ACCOUNT_CREATION_TO_INNOVATOR: '62486954-b235-4aa6-8b8d-960191fc6e69',
@@ -330,6 +331,11 @@ export type EmailTemplatesType = {
 
   // Admin
   AP03_USER_LOCKED_TO_LOCKED_USER: {};
+  AP07_UNIT_INACTIVATED_TO_ENGAGING_INNOVATIONS: {
+    unit_name: string;
+    innovation_name: string;
+    support_url: string;
+  };
 
   // TODO
   ACCOUNT_CREATION_TO_INNOVATOR: {

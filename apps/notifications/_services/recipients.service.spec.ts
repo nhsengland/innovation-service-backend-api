@@ -155,6 +155,31 @@ describe('Notifications / _services / recipients service suite', () => {
     });
   });
 
+  describe('innovationInfo', () => {
+    const innovations = [
+      scenario.users.johnInnovator.innovations.johnInnovation,
+      scenario.users.adamInnovator.innovations.adamInnovation
+    ];
+
+    it('Should get innovations info', async () => {
+      const innovationsMap = await sut.getInnovationsInfo(innovations.map(i => i.id));
+      expect(innovationsMap).toMatchObject(new Map(innovations.map(i => [i.id, { name: i.name, ownerId: i.ownerId }])));
+    });
+
+    it('Should return deleted innovations if withDeleted', async () => {
+      const dbInnovation = scenario.users.johnInnovator.innovations.johnInnovation;
+      await em.getRepository(InnovationEntity).softRemove({ id: dbInnovation.id });
+
+      const innovationsMap = await sut.getInnovationsInfo(
+        innovations.map(i => i.id),
+        true,
+        em
+      );
+
+      expect(innovationsMap).toMatchObject(new Map(innovations.map(i => [i.id, { name: i.name, ownerId: i.ownerId }])));
+    });
+  });
+
   describe('getInnovationCollaborators', () => {
     const expectedCollaborators = [
       {
