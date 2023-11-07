@@ -248,6 +248,7 @@ export type NotifierTemplatesType = {
   // Recurrent notifications.
   [NotifierTypeEnum.DAILY_DIGEST]: Record<string, never>;
   [NotifierTypeEnum.INCOMPLETE_INNOVATION_RECORD]: Record<string, never>;
+  [NotifierTypeEnum.IDLE_SUPPORT_ACCESSOR]: Record<string, never>;
   [NotifierTypeEnum.IDLE_SUPPORT_INNOVATOR]: Record<string, never>;
   [NotifierTypeEnum.UNIT_KPI]: Record<string, never>;
 };

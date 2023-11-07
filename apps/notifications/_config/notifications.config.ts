@@ -37,7 +37,8 @@ import {
   SupportSummaryUpdateHandler,
   UnitInactivationSupportStatusCompletedHandler
 } from '../_handlers';
-import { IdleSupportHandler } from '../_handlers/automatic/idle-support-innovator.handler';
+import { IdleSupportAccessorHandler } from '../_handlers/automatic/idle-support-accessor.handler';
+import { IdleSupportInnovatorHandler } from '../_handlers/automatic/idle-support-innovator.handler';
 import { IncompleteRecordHandler } from '../_handlers/automatic/incomplete-record.handler';
 import { UnitKPIHandler } from '../_handlers/automatic/unit-kpi.handler';
 import { MessageCreationHandler } from '../_handlers/messages/message-creation.handler';
@@ -445,8 +446,13 @@ export const NOTIFICATIONS_CONFIG = {
   },
 
   [NotifierTypeEnum.IDLE_SUPPORT_INNOVATOR]: {
-    handler: IdleSupportHandler,
+    handler: IdleSupportInnovatorHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.IDLE_SUPPORT_INNOVATOR]>({})
+  },
+
+  [NotifierTypeEnum.IDLE_SUPPORT_ACCESSOR]: {
+    handler: IdleSupportAccessorHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.IDLE_SUPPORT_ACCESSOR]>({})
   },
 
   [NotifierTypeEnum.UNIT_KPI]: {

@@ -4,7 +4,7 @@ import type { DomainContextType, NotifierTemplatesType } from '@notifications/sh
 import { howToProceedUrl, innovationRecordUrl } from '../../_helpers/url.helper';
 import { BaseHandler } from '../base.handler';
 
-export class IdleSupportHandler extends BaseHandler<
+export class IdleSupportInnovatorHandler extends BaseHandler<
   NotifierTypeEnum.IDLE_SUPPORT_INNOVATOR,
   'AU03_INNOVATOR_IDLE_SUPPORT'
 > {

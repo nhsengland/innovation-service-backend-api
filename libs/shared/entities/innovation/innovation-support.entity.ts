@@ -6,6 +6,7 @@ import {
   ManyToMany,
   ManyToOne,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn
 } from 'typeorm';
 
@@ -17,6 +18,7 @@ import { InnovationEntity } from './innovation.entity';
 
 import { InnovationSupportStatusEnum } from '../../enums/innovation.enums';
 import { UserRoleEntity } from '../user/user-role.entity';
+import { SupportLastActivityUpdateView } from '../views/support-last-activity-update.view.entity';
 
 @Entity('innovation_support')
 export class InnovationSupportEntity extends BaseEntity {
@@ -52,6 +54,9 @@ export class InnovationSupportEntity extends BaseEntity {
 
   @OneToMany(() => InnovationTaskEntity, record => record.innovationSupport, { lazy: true })
   tasks: Promise<InnovationTaskEntity[]>;
+
+  @OneToOne(() => SupportLastActivityUpdateView, record => record.support)
+  lastActivityUpdate: SupportLastActivityUpdateView;
 
   static new(data: Partial<InnovationSupportEntity>): InnovationSupportEntity {
     const instance = new InnovationSupportEntity();

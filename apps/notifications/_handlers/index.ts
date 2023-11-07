@@ -2,7 +2,6 @@ export { BaseHandler } from './base.handler';
 export { DocumentUploadHandler } from './documents/document-upload.handler';
 export { AccessorUnitChangeHandler } from './legacy/accessor-unit-change.handler';
 export { DailyDigestHandler } from './legacy/daily-digest.handler';
-export { IdleSupportHandler } from './legacy/idle-support.handler';
 export { InnovationCollaboratorInviteHandler } from './legacy/innovation-collaborator-invite.handler';
 export { InnovationCollaboratorUpdateHandler } from './legacy/innovation-collaborator-update.handler';
 export { InnovationOrganisationUnitsSuggestionHandler } from './legacy/innovation-organisation-units-suggestion.handler';
