@@ -20,8 +20,6 @@ import {
   InnovationCollaboratorUpdateHandler,
   InnovationOrganisationUnitsSuggestionHandler,
   InnovationReassessmentRequestHandler,
-  InnovationRecordExportFeedbackHandler,
-  InnovationRecordExportRequestHandler,
   InnovationStopSharingHandler,
   InnovationSubmittedHandler,
   InnovationSupportStatusChangeRequestHandler,
@@ -336,22 +334,6 @@ export const NOTIFICATIONS_CONFIG = {
       innovationName: Joi.string().required(),
       transferId: Joi.string().guid().required(),
       recipientEmail: Joi.string().required()
-    }).required()
-  },
-
-  [NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST]: {
-    handler: InnovationRecordExportRequestHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST]>({
-      innovationId: Joi.string().guid().required(),
-      requestId: Joi.string().guid().required()
-    }).required()
-  },
-
-  [NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK]: {
-    handler: InnovationRecordExportFeedbackHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK]>({
-      innovationId: Joi.string().guid().required(),
-      requestId: Joi.string().guid().required()
     }).required()
   },
 

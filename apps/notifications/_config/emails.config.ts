@@ -105,10 +105,6 @@ export const EmailTemplates = {
   INNOVATOR_INCOMPLETE_RECORD: 'afb9c395-b7ff-4a4f-adee-e0c3bec2e9f3',
   QA_A_IDLE_SUPPORT: '420a22ac-b052-4180-8a48-daf787db3f7f',
 
-  INNOVATION_RECORD_EXPORT_REQUEST_TO_INNOVATOR: '783f53f1-6df9-4549-968e-9977648e03f1',
-  INNOVATION_RECORD_EXPORT_APPROVED_TO_REQUEST_CREATOR: 'bfb0b9b9-3bd2-40de-9b98-aa3431832e1e',
-  INNOVATION_RECORD_EXPORT_REJECTED_TO_REQUEST_CREATOR: '0f74588b-747c-4ebd-96d6-727c8bf18941',
-
   ACCESSOR_TO_QA_SUPPORT_CHANGE_REQUEST: '09ad791a-faa2-4c51-ba9c-3198430e6f5f',
 
   INNOVATION_STOP_SHARING_TO_ENGAGING_ACCESSORS: '31ae3d58-1c49-4efd-baf1-73aff9bb3368',
@@ -527,27 +523,6 @@ export type EmailTemplatesType = {
     innovation_name: string;
     innovator_name: string;
     message_url: string;
-  };
-  INNOVATION_RECORD_EXPORT_REQUEST_TO_INNOVATOR: {
-    display_name?: string;
-    accessor_name: string;
-    unit_name: string;
-    innovation_name: string;
-    pdf_request_comment: string;
-    pdf_export_url: string;
-  };
-  INNOVATION_RECORD_EXPORT_APPROVED_TO_REQUEST_CREATOR: {
-    display_name?: string;
-    innovation_name: string;
-    innovator_name: string;
-    innovation_url: string;
-  };
-  INNOVATION_RECORD_EXPORT_REJECTED_TO_REQUEST_CREATOR: {
-    display_name?: string;
-    innovation_name: string;
-    innovator_name: string;
-    innovation_url: string;
-    pdf_rejection_comment: null | string;
   };
   ACCESSOR_TO_QA_SUPPORT_CHANGE_REQUEST: {
     display_name?: string;

@@ -199,16 +199,6 @@ export type NotifierTemplatesType = {
     recipientEmail: string;
   };
 
-  [NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST]: {
-    innovationId: string;
-    requestId: string;
-  };
-
-  [NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK]: {
-    innovationId: string;
-    requestId: string;
-  };
-
   [NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_CHANGE_REQUEST]: {
     innovationId: string;
     supportId: string;
