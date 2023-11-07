@@ -35,6 +35,7 @@ export const NotificationTypes = {
     'OS02_UNITS_SUGGESTION_NOT_SHARED_TO_INNOVATOR',
     'OS03_INNOVATION_DELAYED_SHARED_SUGGESTION'
   ] as const,
+  INNOVATION: ['RE01_EXPORT_REQUEST_SUBMITTED'] as const,
   MIGRATION_OLD: ['MIGRATION_OLD'] as const
 };
 export type NotificationTypes = typeof NotificationTypes;

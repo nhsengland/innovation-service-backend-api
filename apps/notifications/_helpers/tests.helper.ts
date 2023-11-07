@@ -4,8 +4,7 @@ import { MocksHelper } from '@notifications/shared/tests';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import type { EmailTemplatesType } from '../_config';
 import type { InAppTemplatesType } from '../_config/inapp.config';
-import type { BaseHandler } from '../_handlers';
-import type { EmailRecipientType } from '../_handlers/base.handler';
+import type { BaseHandler, EmailRecipientType } from '../_handlers/base.handler';
 import type { RecipientType } from '../_services/recipients.service';
 
 export const testEmails = async <

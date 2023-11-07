@@ -146,4 +146,11 @@ export type InAppTemplatesType = {
   OS03_INNOVATION_DELAYED_SHARED_SUGGESTION: {
     innovationName: string;
   };
+
+  // Innovation (management?)
+  RE01_EXPORT_REQUEST_SUBMITTED: {
+    unitName: string;
+    innovationName: string;
+    exportRequestId: string;
+  };
 };

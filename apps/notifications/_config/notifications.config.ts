@@ -40,6 +40,7 @@ import {
   UnitInactivationSupportStatusCompletedHandler
 } from '../_handlers';
 import { UnitKPIHandler } from '../_handlers/automatic/unit-kpi.handler';
+import { ExportRequestSubmittedHandler } from '../_handlers/innovations/export-request-submitted.handler';
 import { MessageCreationHandler } from '../_handlers/messages/message-creation.handler';
 import { ThreadAddFollowersHandler } from '../_handlers/messages/thread-add-followers.handler';
 import { ThreadCreationHandler } from '../_handlers/messages/thread-creation.handler';
@@ -169,6 +170,16 @@ export const NOTIFICATIONS_CONFIG = {
       innovationId: Joi.string().guid().required(),
       unitsIds: Joi.array().items(Joi.string().guid().required()).min(1).required(),
       comment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).trim().required()
+    }).required()
+  },
+
+  // Innovations
+  [NotifierTypeEnum.EXPORT_REQUEST_SUBMITTED]: {
+    handler: ExportRequestSubmittedHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.EXPORT_REQUEST_SUBMITTED]>({
+      innovationId: Joi.string().guid().required(),
+      exportRequestId: Joi.string().guid().required(),
+      comment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.s).required()
     }).required()
   },
 

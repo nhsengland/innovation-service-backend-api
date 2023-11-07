@@ -69,9 +69,10 @@ describe('Innovations / _services / innovation export request suite', () => {
           status: InnovationExportRequestStatusEnum.PENDING,
           createdByUserRole: { id: domainContext.currentRole.id }
         });
-        expect(notifierSendSpy).toHaveBeenCalledWith(domainContext, NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST, {
+        expect(notifierSendSpy).toHaveBeenCalledWith(domainContext, NotifierTypeEnum.EXPORT_REQUEST_SUBMITTED, {
           innovationId: innovation.id,
-          requestId: request.id
+          exportRequestId: request.id,
+          comment: data.requestReason
         });
       }
     );

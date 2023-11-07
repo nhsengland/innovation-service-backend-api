@@ -42,6 +42,9 @@ export const EmailTemplates = {
   OS02_UNITS_SUGGESTION_NOT_SHARED_TO_INNOVATOR: '8c2d13c8-8e1b-4876-9e01-747db83483eb',
   OS03_INNOVATION_DELAYED_SHARED_SUGGESTION: 'b5845d01-f66e-455c-8f11-6e011394da95',
 
+  // INNOVATION (MANAGEMENT?)
+  RE01_EXPORT_REQUEST_SUBMITTED: 'b5f4e789-bdfc-496a-9b27-dbf6c2259ebc',
+
   // REVIEW in future
   AU04_SUPPORT_KPI_REMINDER: 'e1f0a2bc-3b15-4733-ba89-c0d5c9fec38a',
   AU05_SUPPORT_KPI_OVERDUE: '5fe24d48-8def-457d-a81f-56750f38c508',
@@ -296,6 +299,14 @@ export type EmailTemplatesType = {
     display_name?: string;
     innovation_name: string;
     innovation_overview_url: string;
+  };
+
+  // Innovation (management?)
+  RE01_EXPORT_REQUEST_SUBMITTED: {
+    sender: string;
+    innovation_name: string;
+    comment: string;
+    request_url: string;
   };
 
   // REVIEW in future

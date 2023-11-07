@@ -92,6 +92,13 @@ export type NotifierTemplatesType = {
     newSharedOrgIds: string[];
   };
 
+  // Innovation (management?)
+  [NotifierTypeEnum.EXPORT_REQUEST_SUBMITTED]: {
+    innovationId: string;
+    exportRequestId: string;
+    comment: string;
+  };
+
   // OLD
   [NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION]: Record<string, never>;
 
