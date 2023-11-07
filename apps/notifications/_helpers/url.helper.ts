@@ -79,6 +79,14 @@ export const dataSharingPreferencesUrl = (role: ServiceRoleEnum, innovationId: s
     .buildUrl();
 };
 
+export const exportRequestUrl = (role: ServiceRoleEnum, innovationId: string, requestId: string): string => {
+  const baseUrl = frontendBaseUrl(role);
+  return new UrlModel(ENV.webBaseTransactionalUrl)
+    .addPath(':baseUrl/innovations/:innovationId/record/export-requests/:requestId')
+    .setPathParams({ baseUrl, innovationId, requestId })
+    .buildUrl();
+};
+
 export const frontendBaseUrl = (role: ServiceRoleEnum): string => {
   switch (role) {
     case ServiceRoleEnum.ASSESSMENT:

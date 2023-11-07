@@ -48,6 +48,11 @@ export const EmailTemplates = {
   OS02_UNITS_SUGGESTION_NOT_SHARED_TO_INNOVATOR: '8c2d13c8-8e1b-4876-9e01-747db83483eb',
   OS03_INNOVATION_DELAYED_SHARED_SUGGESTION: 'b5845d01-f66e-455c-8f11-6e011394da95',
 
+  // INNOVATION (MANAGEMENT?)
+  RE01_EXPORT_REQUEST_SUBMITTED: 'b5f4e789-bdfc-496a-9b27-dbf6c2259ebc',
+  RE02_EXPORT_REQUEST_APPROVED: '209f1bff-efdf-4631-8b2a-2f3982ff498d',
+  RE03_EXPORT_REQUEST_REJECTED: 'ed2fd3b2-a5a6-472b-86c9-7a837638fc41',
+
   // TO BE REMOVED ?
   ACCOUNT_CREATION_TO_INNOVATOR: '62486954-b235-4aa6-8b8d-960191fc6e69',
   ACCOUNT_DELETION_WITH_TRANSFER_TO_COLLABORATOR: 'd09b5182-d995-4db7-b3ba-99fef085bb22',
@@ -99,10 +104,6 @@ export const EmailTemplates = {
   UNIT_INACTIVATION_SUPPORT_COMPLETED: '1fbe19f7-2be8-4959-b53c-debe5add86a6',
   INNOVATOR_INCOMPLETE_RECORD: 'afb9c395-b7ff-4a4f-adee-e0c3bec2e9f3',
   QA_A_IDLE_SUPPORT: '420a22ac-b052-4180-8a48-daf787db3f7f',
-
-  INNOVATION_RECORD_EXPORT_REQUEST_TO_INNOVATOR: '783f53f1-6df9-4549-968e-9977648e03f1',
-  INNOVATION_RECORD_EXPORT_APPROVED_TO_REQUEST_CREATOR: 'bfb0b9b9-3bd2-40de-9b98-aa3431832e1e',
-  INNOVATION_RECORD_EXPORT_REJECTED_TO_REQUEST_CREATOR: '0f74588b-747c-4ebd-96d6-727c8bf18941',
 
   ACCESSOR_TO_QA_SUPPORT_CHANGE_REQUEST: '09ad791a-faa2-4c51-ba9c-3198430e6f5f',
 
@@ -307,6 +308,24 @@ export type EmailTemplatesType = {
     innovation_overview_url: string;
   };
 
+  // Innovation (management?)
+  RE01_EXPORT_REQUEST_SUBMITTED: {
+    sender: string;
+    innovation_name: string;
+    comment: string;
+    request_url: string;
+  };
+  RE02_EXPORT_REQUEST_APPROVED: {
+    innovator_name: string;
+    innovation_name: string;
+    innovation_record_url: string;
+  };
+  RE03_EXPORT_REQUEST_REJECTED: {
+    innovator_name: string;
+    innovation_name: string;
+    reject_comment: string;
+  };
+
   // TODO
   ACCOUNT_CREATION_TO_INNOVATOR: {
     display_name?: string;
@@ -504,27 +523,6 @@ export type EmailTemplatesType = {
     innovation_name: string;
     innovator_name: string;
     message_url: string;
-  };
-  INNOVATION_RECORD_EXPORT_REQUEST_TO_INNOVATOR: {
-    display_name?: string;
-    accessor_name: string;
-    unit_name: string;
-    innovation_name: string;
-    pdf_request_comment: string;
-    pdf_export_url: string;
-  };
-  INNOVATION_RECORD_EXPORT_APPROVED_TO_REQUEST_CREATOR: {
-    display_name?: string;
-    innovation_name: string;
-    innovator_name: string;
-    innovation_url: string;
-  };
-  INNOVATION_RECORD_EXPORT_REJECTED_TO_REQUEST_CREATOR: {
-    display_name?: string;
-    innovation_name: string;
-    innovator_name: string;
-    innovation_url: string;
-    pdf_rejection_comment: null | string;
   };
   ACCESSOR_TO_QA_SUPPORT_CHANGE_REQUEST: {
     display_name?: string;

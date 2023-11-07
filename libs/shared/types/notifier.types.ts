@@ -92,6 +92,17 @@ export type NotifierTemplatesType = {
     newSharedOrgIds: string[];
   };
 
+  // Innovation (management?)
+  [NotifierTypeEnum.EXPORT_REQUEST_SUBMITTED]: {
+    innovationId: string;
+    exportRequestId: string;
+    comment: string;
+  };
+  [NotifierTypeEnum.EXPORT_REQUEST_FEEDBACK]: {
+    innovationId: string;
+    exportRequestId: string;
+  };
+
   // OLD
   [NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION]: Record<string, never>;
 
@@ -186,16 +197,6 @@ export type NotifierTemplatesType = {
     innovationName: string;
     transferId: string;
     recipientEmail: string;
-  };
-
-  [NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST]: {
-    innovationId: string;
-    requestId: string;
-  };
-
-  [NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK]: {
-    innovationId: string;
-    requestId: string;
   };
 
   [NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_CHANGE_REQUEST]: {
