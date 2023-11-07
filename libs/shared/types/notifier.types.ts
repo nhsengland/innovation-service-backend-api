@@ -232,7 +232,7 @@ export type NotifierTemplatesType = {
 
   // Admin module.
   [NotifierTypeEnum.LOCK_USER]: {
-    user: { identityId: string };
+    identityId: string;
   };
 
   [NotifierTypeEnum.ACCESSOR_UNIT_CHANGE]: {

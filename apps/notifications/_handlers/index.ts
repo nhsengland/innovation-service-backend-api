@@ -17,7 +17,6 @@ export { InnovationTransferOwnershipExpirationHandler } from './legacy/innovatio
 export { InnovationTransferOwnershipReminderHandler } from './legacy/innovation-transfer-ownership-reminder.handler';
 export { InnovationWithdrawnHandler } from './legacy/innovation-withdrawn.handler';
 export { InnovatorAccountCreationHandler } from './legacy/innovator-account-creation.handler';
-export { LockUserHandler } from './legacy/lock-user.handler';
 export { ThreadCreationHandler } from './legacy/thread-creation.handler';
 export { ThreadMessageCreationHandler } from './legacy/thread-message-creation.handler';
 export { UnitInactivationSupportStatusCompletedHandler } from './legacy/unit-inactivation-support-status-completed.handler';

@@ -165,4 +165,9 @@ export type InAppTemplatesType = {
     innovationName: string;
     exportRequestId: string;
   };
+
+  // Admin
+  AP02_INNOVATOR_LOCKED_TO_ASSIGNED_USERS: {
+    innovationName: string;
+  };
 };

@@ -84,7 +84,7 @@ describe('Admin / _services / users service suite', () => {
         await sut.updateUser(userAdminContext, userInnovator.id, { accountEnabled: false }, em);
 
         expect(notifierSendSpy).toHaveBeenCalledWith(userAdminContext, NotifierTypeEnum.LOCK_USER, {
-          user: { identityId: userInnovator.identityId }
+          identityId: userInnovator.identityId
         });
       });
     });
@@ -109,7 +109,6 @@ describe('Admin / _services / users service suite', () => {
           .createQueryBuilder(UserRoleEntity, 'userRole')
           .where('userRole.id = :userRoleId', { userRoleId: user.roles.qaRole.id })
           .getOne();
-
 
         expect(updatedUserRole?.role).toBe(ServiceRoleEnum.ACCESSOR);
       });

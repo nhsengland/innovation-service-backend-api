@@ -31,10 +31,10 @@ import {
   InnovationWithdrawnHandler,
   InnovatorAccountCreationHandler,
   InnovatorAccountDeletionHandler,
-  LockUserHandler,
   SupportSummaryUpdateHandler,
   UnitInactivationSupportStatusCompletedHandler
 } from '../_handlers';
+import { LockUserHandler } from '../_handlers/admin/lock-user.handler';
 import { IdleSupportHandler } from '../_handlers/automatic/idle-support.handler';
 import { IncompleteRecordHandler } from '../_handlers/automatic/incomplete-record.handler';
 import { UnitKPIHandler } from '../_handlers/automatic/unit-kpi.handler';
@@ -187,6 +187,14 @@ export const NOTIFICATIONS_CONFIG = {
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.EXPORT_REQUEST_FEEDBACK]>({
       innovationId: Joi.string().guid().required(),
       exportRequestId: Joi.string().guid().required()
+    }).required()
+  },
+
+  // Admin
+  [NotifierTypeEnum.LOCK_USER]: {
+    handler: LockUserHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.LOCK_USER]>({
+      identityId: Joi.string().guid().required()
     }).required()
   },
 
@@ -397,16 +405,6 @@ export const NOTIFICATIONS_CONFIG = {
   },
 
   // Admin module.
-
-  [NotifierTypeEnum.LOCK_USER]: {
-    handler: LockUserHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.LOCK_USER]>({
-      user: Joi.object<NotifierTemplatesType[NotifierTypeEnum.LOCK_USER]['user']>({
-        identityId: Joi.string().guid().required()
-      }).required()
-    }).required()
-  },
-
   [NotifierTypeEnum.ACCESSOR_UNIT_CHANGE]: {
     handler: AccessorUnitChangeHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.ACCESSOR_UNIT_CHANGE]>({
