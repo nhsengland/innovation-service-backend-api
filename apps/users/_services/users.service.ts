@@ -149,7 +149,7 @@ export class UsersService extends BaseService {
           },
           currentRole: { id: userRole.id, role: ServiceRoleEnum.INNOVATOR }
         },
-        NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION,
+        NotifierTypeEnum.ACCOUNT_CREATION,
         {}
       );
 

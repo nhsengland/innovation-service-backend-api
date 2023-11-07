@@ -51,6 +51,7 @@ export const NotificationTypes = {
     'AP03_USER_LOCKED_TO_LOCKED_USER',
     'AP07_UNIT_INACTIVATED_TO_ENGAGING_INNOVATIONS'
   ] as const,
+  ACCOUNT: ['CA01_ACCOUNT_CREATION_OF_INNOVATOR', 'CA02_ACCOUNT_CREATION_OF_COLLABORATOR'] as const,
   MIGRATION_OLD: ['MIGRATION_OLD'] as const
 };
 export type NotificationTypes = typeof NotificationTypes;

@@ -6,7 +6,7 @@ import { dataSharingPreferencesUrl } from '../../_helpers/url.helper';
 import { NotificationsTestsHelper } from '../../_tests/notifications-test.helper';
 import { UnitInactivatedHandler } from './unit-inactivated.handler';
 
-describe('Notifications / _handlers / lock-user suite', () => {
+describe('Notifications / _handlers / unit-inactivated suite', () => {
   const testsHelper = new NotificationsTestsHelper();
   const scenario = testsHelper.getCompleteScenario();
 
