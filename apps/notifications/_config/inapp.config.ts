@@ -170,4 +170,8 @@ export type InAppTemplatesType = {
   AP02_INNOVATOR_LOCKED_TO_ASSIGNED_USERS: {
     innovationName: string;
   };
+  AP07_UNIT_INACTIVATED_TO_ENGAGING_INNOVATIONS: {
+    unitName: string;
+    innovationName: string;
+  };
 };

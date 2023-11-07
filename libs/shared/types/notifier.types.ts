@@ -103,6 +103,15 @@ export type NotifierTemplatesType = {
     exportRequestId: string;
   };
 
+  // Admin
+  [NotifierTypeEnum.LOCK_USER]: {
+    identityId: string;
+  };
+  [NotifierTypeEnum.UNIT_INACTIVATED]: {
+    unitId: string;
+    completedInnovationIds: string[];
+  };
+
   // OLD
   [NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION]: Record<string, never>;
 
@@ -231,9 +240,6 @@ export type NotifierTemplatesType = {
   };
 
   // Admin module.
-  [NotifierTypeEnum.LOCK_USER]: {
-    identityId: string;
-  };
 
   [NotifierTypeEnum.ACCESSOR_UNIT_CHANGE]: {
     user: { id: string; identityId: string };

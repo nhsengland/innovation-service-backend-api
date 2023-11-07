@@ -228,14 +228,10 @@ describe('Admin / _services / organisations service suite', () => {
 
           await sut.inactivateUnit(domainContext, unit.id, em);
 
-          expect(notifierSendSpy).toHaveBeenCalledWith(
-            domainContext,
-            NotifierTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED,
-            {
-              innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
-              unitId: unit.id
-            }
-          );
+          expect(notifierSendSpy).toHaveBeenCalledWith(domainContext, NotifierTypeEnum.UNIT_INACTIVATED, {
+            unitId: unit.id,
+            completedInnovationIds: [scenario.users.johnInnovator.innovations.johnInnovation.id]
+          });
         });
 
         it('should create support log entry for each completed support', async () => {

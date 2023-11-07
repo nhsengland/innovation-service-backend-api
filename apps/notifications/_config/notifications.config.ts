@@ -35,6 +35,7 @@ import {
   UnitInactivationSupportStatusCompletedHandler
 } from '../_handlers';
 import { LockUserHandler } from '../_handlers/admin/lock-user.handler';
+import { UnitInactivatedHandler } from '../_handlers/admin/unit-inactivated.handler';
 import { IdleSupportHandler } from '../_handlers/automatic/idle-support.handler';
 import { IncompleteRecordHandler } from '../_handlers/automatic/incomplete-record.handler';
 import { UnitKPIHandler } from '../_handlers/automatic/unit-kpi.handler';
@@ -195,6 +196,13 @@ export const NOTIFICATIONS_CONFIG = {
     handler: LockUserHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.LOCK_USER]>({
       identityId: Joi.string().guid().required()
+    }).required()
+  },
+  [NotifierTypeEnum.UNIT_INACTIVATED]: {
+    handler: UnitInactivatedHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.UNIT_INACTIVATED]>({
+      unitId: Joi.string().guid().required(),
+      completedInnovationIds: Joi.array().items(Joi.string().guid().required()).required()
     }).required()
   },
 

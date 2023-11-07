@@ -199,12 +199,16 @@ export class OrganisationsService extends BaseService {
             unitId
           }
         );
+      }
 
-        await this.notifierService.send(domainContext, NotifierTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED, {
-          innovationId: support.innovation.id,
-          unitId
+      // Notify owners with supports to close
+      if (supportsToClose.length > 0) {
+        await this.notifierService.send(domainContext, NotifierTypeEnum.UNIT_INACTIVATED, {
+          unitId,
+          completedInnovationIds: supportsToClose.map(s => s.innovation.id)
         });
       }
+
       return { unitId };
     });
 

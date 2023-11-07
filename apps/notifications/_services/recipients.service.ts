@@ -147,6 +147,30 @@ export class RecipientsService extends BaseService {
   }
 
   /**
+   * Returns a Map with innovationInfo for the innovationIds provided in the params
+   */
+  async getInnovationsInfo(
+    innovationIds: string[],
+    withDeleted?: boolean,
+    entityManager?: EntityManager
+  ): Promise<Map<string, { id: string; name: string; ownerId?: string }>> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const query = em
+      .createQueryBuilder(InnovationEntity, 'innovation')
+      .select(['innovation.id', 'innovation.name', 'owner.id'])
+      .leftJoin('innovation.owner', 'owner')
+      .where('innovation.id IN (:...innovationIds)', { innovationIds });
+    if (withDeleted) {
+      query.withDeleted();
+    }
+
+    const innovations = await query.getMany();
+
+    return new Map(innovations.map(i => [i.id, { id: i.id, name: i.name, ownerId: i.owner?.id }]));
+  }
+
+  /**
    * gets the innovation collaborators
    *
    * Note: this is currently private because it wasn't required outside this service after refactor
