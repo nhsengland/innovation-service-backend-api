@@ -1662,6 +1662,7 @@ export class InnovationsService extends BaseService {
     return innovationSections.some(x => x.status !== InnovationSectionStatusEnum.SUBMITTED);
   }
 
+  // view recipients service innovationsWithoutSupportForNDays to maintain consistency
   private async lastSupportStatusTransitionFromEngaging(innovationId: string): Promise<Date | null> {
     const result = await this.sqlConnection
       .createQueryBuilder(LastSupportStatusViewEntity, 'lastSupportStatus')
