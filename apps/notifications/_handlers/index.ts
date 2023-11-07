@@ -7,8 +7,6 @@ export { InnovationCollaboratorUpdateHandler } from './legacy/innovation-collabo
 export { InnovationOrganisationUnitsSuggestionHandler } from './legacy/innovation-organisation-units-suggestion.handler';
 export { InnovatorAccountDeletionHandler } from './legacy/innovation-owner-delete-account.handler';
 export { InnovationReassessmentRequestHandler } from './legacy/innovation-reassessment-request.handler';
-export { InnovationRecordExportFeedbackHandler } from './legacy/innovation-record-export-feedback.handler';
-export { InnovationRecordExportRequestHandler } from './legacy/innovation-record-export-request.handler';
 export { InnovationStopSharingHandler } from './legacy/innovation-stop-sharing.handler';
 export { InnovationSupportStatusChangeRequestHandler } from './legacy/innovation-support-status-change-request.handler';
 export { InnovationSupportStatusUpdateHandler } from './legacy/innovation-support-status-update.handler';
@@ -18,7 +16,6 @@ export { InnovationTransferOwnershipExpirationHandler } from './legacy/innovatio
 export { InnovationTransferOwnershipReminderHandler } from './legacy/innovation-transfer-ownership-reminder.handler';
 export { InnovationWithdrawnHandler } from './legacy/innovation-withdrawn.handler';
 export { InnovatorAccountCreationHandler } from './legacy/innovator-account-creation.handler';
-export { LockUserHandler } from './legacy/lock-user.handler';
 export { ThreadCreationHandler } from './legacy/thread-creation.handler';
 export { ThreadMessageCreationHandler } from './legacy/thread-message-creation.handler';
 export { UnitInactivationSupportStatusCompletedHandler } from './legacy/unit-inactivation-support-status-completed.handler';

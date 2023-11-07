@@ -92,6 +92,26 @@ export type NotifierTemplatesType = {
     newSharedOrgIds: string[];
   };
 
+  // Innovation (management?)
+  [NotifierTypeEnum.EXPORT_REQUEST_SUBMITTED]: {
+    innovationId: string;
+    exportRequestId: string;
+    comment: string;
+  };
+  [NotifierTypeEnum.EXPORT_REQUEST_FEEDBACK]: {
+    innovationId: string;
+    exportRequestId: string;
+  };
+
+  // Admin
+  [NotifierTypeEnum.LOCK_USER]: {
+    identityId: string;
+  };
+  [NotifierTypeEnum.UNIT_INACTIVATED]: {
+    unitId: string;
+    completedInnovationIds: string[];
+  };
+
   // OLD
   [NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION]: Record<string, never>;
 
@@ -188,16 +208,6 @@ export type NotifierTemplatesType = {
     recipientEmail: string;
   };
 
-  [NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST]: {
-    innovationId: string;
-    requestId: string;
-  };
-
-  [NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK]: {
-    innovationId: string;
-    requestId: string;
-  };
-
   [NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_CHANGE_REQUEST]: {
     innovationId: string;
     supportId: string;
@@ -230,9 +240,6 @@ export type NotifierTemplatesType = {
   };
 
   // Admin module.
-  [NotifierTypeEnum.LOCK_USER]: {
-    user: { identityId: string };
-  };
 
   [NotifierTypeEnum.ACCESSOR_UNIT_CHANGE]: {
     user: { id: string; identityId: string };

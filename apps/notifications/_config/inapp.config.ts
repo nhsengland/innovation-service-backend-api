@@ -156,4 +156,28 @@ export type InAppTemplatesType = {
   OS03_INNOVATION_DELAYED_SHARED_SUGGESTION: {
     innovationName: string;
   };
+
+  // Innovation (management?)
+  RE01_EXPORT_REQUEST_SUBMITTED: {
+    unitName: string;
+    innovationName: string;
+    exportRequestId: string;
+  };
+  RE02_EXPORT_REQUEST_APPROVED: {
+    innovationName: string;
+    exportRequestId: string;
+  };
+  RE03_EXPORT_REQUEST_REJECTED: {
+    innovationName: string;
+    exportRequestId: string;
+  };
+
+  // Admin
+  AP02_INNOVATOR_LOCKED_TO_ASSIGNED_USERS: {
+    innovationName: string;
+  };
+  AP07_UNIT_INACTIVATED_TO_ENGAGING_INNOVATIONS: {
+    unitName: string;
+    innovationName: string;
+  };
 };

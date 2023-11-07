@@ -20,8 +20,6 @@ import {
   InnovationCollaboratorUpdateHandler,
   InnovationOrganisationUnitsSuggestionHandler,
   InnovationReassessmentRequestHandler,
-  InnovationRecordExportFeedbackHandler,
-  InnovationRecordExportRequestHandler,
   InnovationStopSharingHandler,
   InnovationSubmittedHandler,
   InnovationSupportStatusChangeRequestHandler,
@@ -33,14 +31,17 @@ import {
   InnovationWithdrawnHandler,
   InnovatorAccountCreationHandler,
   InnovatorAccountDeletionHandler,
-  LockUserHandler,
   SupportSummaryUpdateHandler,
   UnitInactivationSupportStatusCompletedHandler
 } from '../_handlers';
+import { LockUserHandler } from '../_handlers/admin/lock-user.handler';
+import { UnitInactivatedHandler } from '../_handlers/admin/unit-inactivated.handler';
 import { IdleSupportAccessorHandler } from '../_handlers/automatic/idle-support-accessor.handler';
 import { IdleSupportInnovatorHandler } from '../_handlers/automatic/idle-support-innovator.handler';
 import { IncompleteRecordHandler } from '../_handlers/automatic/incomplete-record.handler';
 import { UnitKPIHandler } from '../_handlers/automatic/unit-kpi.handler';
+import { ExportRequestFeedbackHandler } from '../_handlers/innovations/export-request-feedback.handler';
+import { ExportRequestSubmittedHandler } from '../_handlers/innovations/export-request-submitted.handler';
 import { MessageCreationHandler } from '../_handlers/messages/message-creation.handler';
 import { ThreadAddFollowersHandler } from '../_handlers/messages/thread-add-followers.handler';
 import { ThreadCreationHandler } from '../_handlers/messages/thread-creation.handler';
@@ -170,6 +171,39 @@ export const NOTIFICATIONS_CONFIG = {
       innovationId: Joi.string().guid().required(),
       unitsIds: Joi.array().items(Joi.string().guid().required()).min(1).required(),
       comment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).trim().required()
+    }).required()
+  },
+
+  // Innovations
+  [NotifierTypeEnum.EXPORT_REQUEST_SUBMITTED]: {
+    handler: ExportRequestSubmittedHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.EXPORT_REQUEST_SUBMITTED]>({
+      innovationId: Joi.string().guid().required(),
+      exportRequestId: Joi.string().guid().required(),
+      comment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.s).required()
+    }).required()
+  },
+
+  [NotifierTypeEnum.EXPORT_REQUEST_FEEDBACK]: {
+    handler: ExportRequestFeedbackHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.EXPORT_REQUEST_FEEDBACK]>({
+      innovationId: Joi.string().guid().required(),
+      exportRequestId: Joi.string().guid().required()
+    }).required()
+  },
+
+  // Admin
+  [NotifierTypeEnum.LOCK_USER]: {
+    handler: LockUserHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.LOCK_USER]>({
+      identityId: Joi.string().guid().required()
+    }).required()
+  },
+  [NotifierTypeEnum.UNIT_INACTIVATED]: {
+    handler: UnitInactivatedHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.UNIT_INACTIVATED]>({
+      unitId: Joi.string().guid().required(),
+      completedInnovationIds: Joi.array().items(Joi.string().guid().required()).required()
     }).required()
   },
 
@@ -320,22 +354,6 @@ export const NOTIFICATIONS_CONFIG = {
     }).required()
   },
 
-  [NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST]: {
-    handler: InnovationRecordExportRequestHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST]>({
-      innovationId: Joi.string().guid().required(),
-      requestId: Joi.string().guid().required()
-    }).required()
-  },
-
-  [NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK]: {
-    handler: InnovationRecordExportFeedbackHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK]>({
-      innovationId: Joi.string().guid().required(),
-      requestId: Joi.string().guid().required()
-    }).required()
-  },
-
   [NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_CHANGE_REQUEST]: {
     handler: InnovationSupportStatusChangeRequestHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_CHANGE_REQUEST]>({
@@ -396,16 +414,6 @@ export const NOTIFICATIONS_CONFIG = {
   },
 
   // Admin module.
-
-  [NotifierTypeEnum.LOCK_USER]: {
-    handler: LockUserHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.LOCK_USER]>({
-      user: Joi.object<NotifierTemplatesType[NotifierTypeEnum.LOCK_USER]['user']>({
-        identityId: Joi.string().guid().required()
-      }).required()
-    }).required()
-  },
-
   [NotifierTypeEnum.ACCESSOR_UNIT_CHANGE]: {
     handler: AccessorUnitChangeHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.ACCESSOR_UNIT_CHANGE]>({
