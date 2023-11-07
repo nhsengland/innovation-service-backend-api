@@ -422,6 +422,19 @@ describe('Notifications / _services / recipients service suite', () => {
         DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'healthAccessorRole')
       ]);
     });
+
+    it('Returns a list of recipients for the innovation filtered by unitId', async () => {
+      const res = await sut.innovationAssignedRecipients(
+        scenario.users.johnInnovator.innovations.johnInnovation.id,
+        { unitId: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id },
+        em
+      );
+      expect(res).toHaveLength(2);
+      expect(res).toMatchObject([
+        DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole'),
+        DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'healthAccessorRole')
+      ]);
+    });
   });
 
   describe('userInnovationsWithAssignedRecipients', () => {
@@ -905,7 +918,7 @@ describe('Notifications / _services / recipients service suite', () => {
 
   describe('idleEngagingSupports', () => {
     it('returns empty array of idle innovations if there are no innovations', async () => {
-      const res = await sut.idleEngagingSupports(30, em);
+      const res = await sut.idleEngagingSupports(30, 30, em);
       expect(res).toHaveLength(0);
     });
 
@@ -919,7 +932,7 @@ describe('Notifications / _services / recipients service suite', () => {
         innovation: { id: innovation.id },
         organisationUnit: { id: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id }
       });
-      const res = await sut.idleEngagingSupports(30, em);
+      const res = await sut.idleEngagingSupports(30, 30, em);
       expect(res).toHaveLength(1);
     });
 
@@ -941,7 +954,7 @@ describe('Notifications / _services / recipients service suite', () => {
         innovation: { id: innovation.id },
         organisationUnit: { id: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id }
       });
-      const res = await sut.idleEngagingSupports(30, em);
+      const res = await sut.idleEngagingSupports(30, 30, em);
       expect(res).toHaveLength(1);
     });
 
@@ -963,7 +976,7 @@ describe('Notifications / _services / recipients service suite', () => {
         innovation: { id: innovation.id },
         organisationUnit: { id: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id }
       });
-      const res = await sut.idleEngagingSupports(30, em);
+      const res = await sut.idleEngagingSupports(30, 30, em);
       expect(res).toHaveLength(1);
     });
 
@@ -981,7 +994,7 @@ describe('Notifications / _services / recipients service suite', () => {
         [date30DaysAgo, innovation.id, scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id]
       );
 
-      const res = await sut.idleEngagingSupports(30, em);
+      const res = await sut.idleEngagingSupports(30, 30, em);
       expect(res).toHaveLength(1);
     });
   });

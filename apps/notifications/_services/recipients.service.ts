@@ -152,6 +152,9 @@ export class RecipientsService extends BaseService {
     withDeleted?: boolean,
     entityManager?: EntityManager
   ): Promise<Map<string, { id: string; name: string; ownerId?: string }>> {
+    if (!innovationIds.length) {
+      return new Map();
+    }
     const em = entityManager ?? this.sqlConnection.manager;
 
     const query = em
@@ -256,13 +259,16 @@ export class RecipientsService extends BaseService {
   /**
    * returns the innovation assigned recipients to an innovation/support.
    * @param innovationId the innovation id
+   * @param filters optionally filter:
+   * - supportStatus: filter by support status
+   * - unitId: filter by unit id
    * @param entityManager optionally pass an entity manager
    * @returns a list of user recipients
    * @throws {NotFoundError} if the support is not found when using innovationSupportId
    */
   async innovationAssignedRecipients(
     innovationId: string,
-    filters: { supportStatus?: InnovationSupportStatusEnum[] },
+    filters: { supportStatus?: InnovationSupportStatusEnum[]; unitId?: string },
     entityManager?: EntityManager
   ): Promise<RecipientType[]> {
     const em = entityManager ?? this.sqlConnection.manager;
@@ -288,6 +294,10 @@ export class RecipientsService extends BaseService {
 
     if (filters.supportStatus) {
       query.andWhere('support.status IN (:...supportStatus)', { supportStatus: filters.supportStatus });
+    }
+
+    if (filters.unitId) {
+      query.andWhere('organisationUnit.id = :unitId', { unitId: filters.unitId });
     }
 
     const dbInnovationSupports = await query.getMany();
@@ -821,18 +831,21 @@ export class RecipientsService extends BaseService {
    */
   async idleEngagingSupports(
     days = 90,
+    repeat = 30,
     entityManager?: EntityManager
-  ): Promise<{ innovationId: string; unitId: string }[]> {
+  ): Promise<{ innovationId: string; unitId: string; supportId: string }[]> {
     const em = entityManager ?? this.sqlConnection.manager;
     const query = em
       .createQueryBuilder(InnovationSupportEntity, 'support')
       .select(['support.id', 'lastActivityUpdate.innovationId', 'lastActivityUpdate.organisationUnitId'])
       .innerJoin('support.lastActivityUpdate', 'lastActivityUpdate')
       .where('support.status = :status', { status: InnovationSupportStatusEnum.ENGAGING })
-      .andWhere('DATEDIFF(day, lastActivityUpdate.lastUpdate, GETDATE()) = :days', { days });
+      .andWhere('DATEDIFF(day, lastActivityUpdate.lastUpdate, GETDATE()) >= :days', { days })
+      .andWhere('DATEDIFF(day, lastActivityUpdate.lastUpdate, GETDATE()) % :repeat = 0', { repeat });
 
     const rows = await query.getMany();
     return rows.map(row => ({
+      supportId: row.id,
       innovationId: row.lastActivityUpdate.innovationId,
       unitId: row.lastActivityUpdate.organisationUnitId
     }));
