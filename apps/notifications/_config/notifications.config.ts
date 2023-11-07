@@ -16,8 +16,6 @@ import {
   ActionUpdateHandler,
   DailyDigestHandler,
   DocumentUploadHandler,
-  IdleInnovatorsHandler,
-  IdleSupportHandler,
   InnovationCollaboratorInviteHandler,
   InnovationCollaboratorUpdateHandler,
   InnovationOrganisationUnitsSuggestionHandler,
@@ -39,6 +37,8 @@ import {
   SupportSummaryUpdateHandler,
   UnitInactivationSupportStatusCompletedHandler
 } from '../_handlers';
+import { IdleSupportHandler } from '../_handlers/automatic/idle-support.handler';
+import { IncompleteRecordHandler } from '../_handlers/automatic/incomplete-record.handler';
 import { UnitKPIHandler } from '../_handlers/automatic/unit-kpi.handler';
 import { ExportRequestSubmittedHandler } from '../_handlers/innovations/export-request-submitted.handler';
 import { MessageCreationHandler } from '../_handlers/messages/message-creation.handler';
@@ -451,7 +451,7 @@ export const NOTIFICATIONS_CONFIG = {
   },
 
   [NotifierTypeEnum.INCOMPLETE_INNOVATION_RECORD]: {
-    handler: IdleInnovatorsHandler,
+    handler: IncompleteRecordHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INCOMPLETE_INNOVATION_RECORD]>({})
   },
 

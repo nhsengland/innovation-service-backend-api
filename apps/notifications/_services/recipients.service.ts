@@ -28,7 +28,13 @@ import {
   ServiceRoleEnum,
   UserStatusEnum
 } from '@notifications/shared/enums';
-import { InnovationErrorsEnum, NotFoundError, OrganisationErrorsEnum } from '@notifications/shared/errors';
+import {
+  GenericErrorsEnum,
+  InnovationErrorsEnum,
+  NotFoundError,
+  OrganisationErrorsEnum,
+  UnprocessableEntityError
+} from '@notifications/shared/errors';
 import type { DomainService, IdentityProviderService } from '@notifications/shared/services';
 import SHARED_SYMBOLS from '@notifications/shared/services/symbols';
 import { inject, injectable } from 'inversify';
@@ -39,7 +45,7 @@ import { InnovationSupportLogEntity } from '@notifications/shared/entities';
 import { InnovationCollaboratorEntity } from '@notifications/shared/entities/innovation/innovation-collaborator.entity';
 import { DatesHelper } from '@notifications/shared/helpers';
 import type { IdentityUserInfo, NotificationPreferences } from '@notifications/shared/types';
-import type { EntityManager } from 'typeorm';
+import { Brackets, type EntityManager } from 'typeorm';
 
 export type RecipientType = {
   roleId: string;
@@ -709,35 +715,22 @@ export class RecipientsService extends BaseService {
    * @param entityManager optionally pass an entity manager
    * @returns list of recipient owners with innovation id and name
    */
-  async incompleteInnovationRecordOwners(
+  async incompleteInnovations(
     entityManager?: EntityManager
-  ): Promise<{ recipient: RecipientType; innovationId: string; innovationName: string }[]> {
+  ): Promise<{ innovationId: string; innovationName: string }[]> {
     const em = entityManager ?? /* c8 ignore next */ this.sqlConnection.manager;
     const dbInnovations = await em
       .createQueryBuilder(InnovationEntity, 'innovations')
-      .select(['innovations.id', 'innovations.name', 'owner.id', 'owner.identityId', 'roles.id', 'roles.role'])
-      .leftJoin('innovations.owner', 'owner')
-      .leftJoin('owner.serviceRoles', 'roles')
+      .select(['innovations.id', 'innovations.name'])
       .where(`innovations.status = '${InnovationStatusEnum.CREATED}'`)
-      .andWhere('roles.role = :role', { role: ServiceRoleEnum.INNOVATOR })
       .andWhere('DATEDIFF(DAY, innovations.created_at, DATEADD(DAY, -1, GETDATE())) != 0')
       .andWhere('DATEDIFF(DAY, innovations.created_at, DATEADD(DAY, -1, GETDATE())) % 30 = 0')
-      .andWhere('owner.status = :userActive AND roles.isActive = 1', { userActive: UserStatusEnum.ACTIVE })
       .getMany();
 
-    return dbInnovations
-      .filter((innovation): innovation is InnovationEntity & { owner: UserEntity } => !!innovation.owner)
-      .map(innovation => ({
-        recipient: {
-          userId: innovation.owner.id,
-          identityId: innovation.owner.identityId,
-          roleId: innovation.owner.serviceRoles[0]?.id ?? /* c8 ignore next */ '',
-          role: innovation.owner.serviceRoles[0]?.role ?? /* c8 ignore next */ ServiceRoleEnum.INNOVATOR,
-          isActive: innovation.owner.serviceRoles[0] ? true : /* c8 ignore next */ false
-        },
-        innovationId: innovation.id,
-        innovationName: innovation.name
-      }));
+    return dbInnovations.map(innovation => ({
+      innovationId: innovation.id,
+      innovationName: innovation.name
+    }));
   }
 
   async getInnovationSupports(
@@ -757,7 +750,52 @@ export class RecipientsService extends BaseService {
   }
 
   /**
+   * returns a list of innovations that aren't receiving any support (ENGAGING/WAITING) for n days
    *
+   * view innovation service lastSupportStatusTransitionFromEngaging in case this changes to keep consistency
+   *
+   * @param days number of days to check (ex: 1 month 30 | 7 months 210)
+   */
+  async innovationsWithoutSupportForNDays(
+    days: number[],
+    entityManager?: EntityManager
+  ): Promise<{ id: string; name: string }[]> {
+    if (!days.length) {
+      throw new UnprocessableEntityError(GenericErrorsEnum.INVALID_PAYLOAD, { details: { error: 'days is required' } });
+    }
+
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const query = em
+      .createQueryBuilder(InnovationEntity, 'innovation')
+      .select(['innovation.id', 'innovation.name'])
+      .innerJoin(
+        `(SELECT innovationId,MAX(statusChangedAt) as statusChangedAt
+        FROM last_support_status_view_entity
+        GROUP BY innovationId)`,
+        'lastEngagement',
+        'lastEngagement.innovationId = innovation.id'
+      )
+      .leftJoin('innovation.innovationSupports', 'supports', 'supports.status IN (:...engagingStatus)', {
+        engagingStatus: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.WAITING]
+      })
+      .where('innovation.status = :innovationStatus', { innovationStatus: InnovationStatusEnum.IN_PROGRESS })
+      .andWhere('supports.id IS NULL')
+      .andWhere(
+        new Brackets(qb => {
+          const [first, ...reminder] = days;
+          qb.where(`DATEDIFF(DAY, lastEngagement.statusChangedAt, DATEADD(DAY, -1, GETDATE())) = ${first}`);
+          reminder?.forEach(day => {
+            qb.orWhere(`DATEDIFF(DAY, lastEngagement.statusChangedAt, DATEADD(DAY, -1, GETDATE())) = ${day}`);
+          });
+        })
+      );
+
+    return (await query.getMany()).map(innovation => ({ id: innovation.id, name: innovation.name }));
+  }
+
+  /**
+   * @deprecated no longer used
    * @param days number of idle days to check
    * @param daysMod split notifications by daysMod
    */
