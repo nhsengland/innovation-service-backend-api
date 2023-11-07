@@ -905,6 +905,35 @@ export class RecipientsService extends BaseService {
   }
 
   /**
+   * Get the collaboration invites of a user
+   */
+  async getUserCollaborations(
+    userId: string,
+    status?: InnovationExportRequestStatusEnum[],
+    entityManager?: EntityManager
+  ): Promise<{ collaborationId: string; status: string; innovationId: string; innovationName: string }[]> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const query = em
+      .createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
+      .select(['collaborator.id', 'collaborator.status', 'collaborator.invitedAt', 'innovation.id', 'innovation.name'])
+      .innerJoin('collaborator.innovation', 'innovation')
+      .where('collaborator.user_id = :userId', { userId });
+
+    if (status?.length) {
+      query.andWhere('collaborator.status IN (:...status)', { status });
+    }
+
+    const collaborations = await query.getMany();
+    return collaborations.map(c => ({
+      collaborationId: c.id,
+      status: c.status,
+      innovationId: c.innovation.id,
+      innovationName: c.innovation.name
+    }));
+  }
+
+  /**
    * returns a the innovations suggested but not picked by organisation units according to the days and recurring
    * @param days number of days to trigger the notification
    * @param recurring if it should trigger recurring notifications

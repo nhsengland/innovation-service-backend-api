@@ -282,6 +282,20 @@ describe('Notifications / _services / recipients service suite', () => {
     });
   });
 
+  describe('getUserCollaborations', () => {
+    it('should return the collaborations of a user', async () => {
+      const collaborators = await sut.getUserCollaborations(scenario.users.janeInnovator.id);
+      expect(collaborators).toMatchObject([
+        {
+          collaborationId: scenario.users.johnInnovator.innovations.johnInnovation.collaborators.janeCollaborator.id,
+          status: scenario.users.johnInnovator.innovations.johnInnovation.collaborators.janeCollaborator.status,
+          innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
+          innovationName: scenario.users.johnInnovator.innovations.johnInnovation.name
+        }
+      ]);
+    });
+  });
+
   describe('innovationSharedOrganisationsWithUnits', () => {
     it('Should return not found if innovation not found', async () => {
       await expect(() => sut.innovationSharedOrganisationsWithUnits(randUuid())).rejects.toThrowError(
