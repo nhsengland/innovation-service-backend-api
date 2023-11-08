@@ -852,10 +852,10 @@ export class RecipientsService extends BaseService {
   }
 
   /**
-   * Get the collaboration invites of a user
+   * Get the collaboration invites of a user by email
    */
   async getUserCollaborations(
-    userId: string,
+    email: string,
     status?: InnovationExportRequestStatusEnum[],
     entityManager?: EntityManager
   ): Promise<{ collaborationId: string; status: string; innovationId: string; innovationName: string }[]> {
@@ -865,7 +865,7 @@ export class RecipientsService extends BaseService {
       .createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
       .select(['collaborator.id', 'collaborator.status', 'collaborator.invitedAt', 'innovation.id', 'innovation.name'])
       .innerJoin('collaborator.innovation', 'innovation')
-      .where('collaborator.user_id = :userId', { userId });
+      .where('collaborator.email = :email', { email });
 
     if (status?.length) {
       query.andWhere('collaborator.status IN (:...status)', { status });
