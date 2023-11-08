@@ -289,7 +289,7 @@ describe('Notifications / _services / recipients service suite', () => {
 
   describe('getUserCollaborations', () => {
     it('should return the collaborations of a user', async () => {
-      const collaborators = await sut.getUserCollaborations(scenario.users.janeInnovator.id);
+      const collaborators = await sut.getUserCollaborations(scenario.users.janeInnovator.email);
       expect(collaborators).toMatchObject([
         {
           collaborationId: scenario.users.johnInnovator.innovations.johnInnovation.collaborators.janeCollaborator.id,

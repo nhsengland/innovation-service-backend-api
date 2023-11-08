@@ -26,11 +26,11 @@ export class AccountCreationHandler extends BaseHandler<
   async run(): Promise<this> {
     // This is currently only accounting with innovator accounts creation.
     const recipient = await this.recipientsService.getUsersRecipient(this.requestUser.id, ServiceRoleEnum.INNOVATOR);
-    if (!recipient) {
+    const identityInfo = await this.recipientsService.usersIdentityInfo(this.requestUser.identityId);
+    if (!recipient || !identityInfo) {
       return this;
     }
-
-    const collaborations = await this.recipientsService.getUserCollaborations(this.requestUser.id, [
+    const collaborations = await this.recipientsService.getUserCollaborations(identityInfo.email, [
       InnovationExportRequestStatusEnum.PENDING
     ]);
 
