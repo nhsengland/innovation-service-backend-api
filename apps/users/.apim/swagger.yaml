@@ -732,6 +732,7 @@ paths:
                             - TRANSFER_EXPIRED
                             - TRANSFER_REMINDER
                             - INNOVATION_ORGANISATION_SUGGESTION_NOT_SHARED
+                            - INNOVATION_DELAYED_SHARED_SUGGESTION
                           description: The notification context detail
                         contextId:
                           type: string

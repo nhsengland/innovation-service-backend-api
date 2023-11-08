@@ -1281,7 +1281,7 @@ export class InnovationsService extends BaseService {
 
     await connection.transaction(async transaction => {
       const now = new Date();
-      const update = transaction.update(
+      const update = await transaction.update(
         InnovationEntity,
         { id: innovationId },
         {
