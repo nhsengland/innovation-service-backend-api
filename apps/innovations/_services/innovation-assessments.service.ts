@@ -378,6 +378,13 @@ export class InnovationAssessmentsService extends BaseService {
       return { id: savedAssessment.id };
     });
 
+    if (data.isSubmission && !dbAssessment.finishedAt) {
+      await this.notifierService.send(domainContext, NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED, {
+        innovationId: innovationId,
+        assessmentId: assessmentId
+      });
+    }
+
     return { id: result.id };
   }
 
