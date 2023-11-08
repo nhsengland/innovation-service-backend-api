@@ -327,7 +327,7 @@ export type EmailTemplatesType = {
   AU06_ACCESSOR_IDLE_WAITING: {
     innovation_name: string;
     innovation_overview_url: string;
-    thread_url: string; // TODO: Review current template is not that one
+    thread_url: string;
   };
 
   // Innovation (management?)
