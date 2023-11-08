@@ -43,6 +43,7 @@ export const EmailTemplates = {
   AU03_INNOVATOR_IDLE_SUPPORT: '53d609ef-30d4-4718-b20b-229924fa1e11',
   AU04_SUPPORT_KPI_REMINDER: 'e1f0a2bc-3b15-4733-ba89-c0d5c9fec38a',
   AU05_SUPPORT_KPI_OVERDUE: '5fe24d48-8def-457d-a81f-56750f38c508',
+  AU06_ACCESSOR_IDLE_WAITING: '34f06061-18a1-4b5c-9c35-1759192ff055',
 
   // ORGANISATION SUGGESTIONS
   OS01_UNITS_SUGGESTION_TO_SUGGESTED_UNITS_QA: '193dac47-da6c-49a0-8db7-ee951cf5d38d',
@@ -322,6 +323,12 @@ export type EmailTemplatesType = {
   AU05_SUPPORT_KPI_OVERDUE: {
     innovation_name: string;
     innovation_overview_url: string;
+  };
+
+  AU06_ACCESSOR_IDLE_WAITING: {
+    innovation_name: string;
+    innovation_overview_url: string;
+    thread_url: string;
   };
 
   // Innovation (management?)

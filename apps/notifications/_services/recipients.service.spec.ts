@@ -1013,6 +1013,32 @@ describe('Notifications / _services / recipients service suite', () => {
     });
   });
 
+  describe('idleWaitingSupports', () => {
+    it('returns empty array of idle supports if there are no innovations', async () => {
+      const res = await sut.idleWaitingSupports(30, em);
+      expect(res).toHaveLength(0);
+    });
+
+    it('returns innovations if waiting and last updated 30 days ago', async () => {
+      const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+      const support = innovation.supports.supportByHealthOrgUnit;
+      const date30DaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      await em.update(
+        InnovationSupportEntity,
+        { id: support.id },
+        { updatedAt: date30DaysAgo, status: InnovationSupportStatusEnum.WAITING }
+      );
+      const res = await sut.idleWaitingSupports(30, em);
+      expect(res).toMatchObject([
+        {
+          supportId: support.id,
+          innovationId: innovation.id,
+          unitId: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id
+        }
+      ]);
+    });
+  });
+
   describe('getExportRequestInfo', () => {
     const request = scenario.users.johnInnovator.innovations.johnInnovation.exportRequests.requestByAlice;
 
