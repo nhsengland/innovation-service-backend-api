@@ -171,8 +171,7 @@ export class DomainInnovationsService {
       affectedUsers: {
         userId: string;
         userType: ServiceRoleEnum;
-        organisationId?: string;
-        organisationUnitId?: string;
+        unitId?: string;
       }[];
     }[]
   > {
@@ -181,16 +180,7 @@ export class DomainInnovationsService {
     }
     const em = entityManager ?? this.sqlConnection.manager;
 
-    const toReturn: {
-      id: string;
-      name: string;
-      affectedUsers: {
-        userId: string;
-        userType: ServiceRoleEnum;
-        organisationId?: string;
-        organisationUnitId?: string;
-      }[];
-    }[] = [];
+    const toReturn: Awaited<ReturnType<DomainInnovationsService['withdrawInnovations']>> = [];
 
     const dbInnovations = await this.innovationRepository
       .createQueryBuilder('innovations')
@@ -241,8 +231,7 @@ export class DomainInnovationsService {
         const affectedUsers: {
           userId: string;
           userType: ServiceRoleEnum;
-          organisationId?: string;
-          organisationUnitId?: string;
+          unitId?: string;
         }[] = [];
 
         if (dbInnovation.status === InnovationStatusEnum.NEEDS_ASSESSMENT) {
@@ -386,8 +375,7 @@ export class DomainInnovationsService {
               .map(su => ({
                 userId: su.user.id,
                 userType: su.role as unknown as ServiceRoleEnum,
-                organisationId: su.organisationId,
-                organisationUnitId: su.organisationUnitId
+                unitId: su.organisationUnitId
               }))
           )
         );
@@ -413,7 +401,7 @@ export class DomainInnovationsService {
         toReturn.push({
           id: dbInnovation.id,
           name: dbInnovation.name,
-          affectedUsers: [...new Map(affectedUsers.map(item => [item['userId'], item])).values()] // remove duplicates
+          affectedUsers
         });
       }
     } catch (error) {

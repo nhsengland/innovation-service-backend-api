@@ -14,7 +14,6 @@ export { InnovationTransferOwnershipCompletedHandler } from './legacy/innovation
 export { InnovationTransferOwnershipCreationHandler } from './legacy/innovation-transfer-ownership-creation.handler';
 export { InnovationTransferOwnershipExpirationHandler } from './legacy/innovation-transfer-ownership-expiration.handler';
 export { InnovationTransferOwnershipReminderHandler } from './legacy/innovation-transfer-ownership-reminder.handler';
-export { InnovationWithdrawnHandler } from './legacy/innovation-withdrawn.handler';
 export { InnovatorAccountCreationHandler } from './legacy/innovator-account-creation.handler';
 export { ThreadCreationHandler } from './legacy/thread-creation.handler';
 export { ThreadMessageCreationHandler } from './legacy/thread-message-creation.handler';

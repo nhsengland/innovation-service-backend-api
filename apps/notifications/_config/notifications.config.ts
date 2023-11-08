@@ -28,7 +28,6 @@ import {
   InnovationTransferOwnershipCreationHandler,
   InnovationTransferOwnershipExpirationHandler,
   InnovationTransferOwnershipReminderHandler,
-  InnovationWithdrawnHandler,
   InnovatorAccountCreationHandler,
   InnovatorAccountDeletionHandler,
   SupportSummaryUpdateHandler,
@@ -37,6 +36,7 @@ import {
 import { AccountCreationHandler } from '../_handlers/account/account-creation.handler';
 import { LockUserHandler } from '../_handlers/admin/lock-user.handler';
 import { UnitInactivatedHandler } from '../_handlers/admin/unit-inactivated.handler';
+import { InnovationWithdrawnHandler } from '../_handlers/admin/withdraw-innovation/innovation-withdrawn.handler';
 import { IdleSupportAccessorHandler } from '../_handlers/automatic/idle-support-accessor.handler';
 import { IdleSupportInnovatorHandler } from '../_handlers/automatic/idle-support-innovator.handler';
 import { IncompleteRecordHandler } from '../_handlers/automatic/incomplete-record.handler';
@@ -184,12 +184,32 @@ export const NOTIFICATIONS_CONFIG = {
       comment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.s).required()
     }).required()
   },
-
   [NotifierTypeEnum.EXPORT_REQUEST_FEEDBACK]: {
     handler: ExportRequestFeedbackHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.EXPORT_REQUEST_FEEDBACK]>({
       innovationId: Joi.string().guid().required(),
       exportRequestId: Joi.string().guid().required()
+    }).required()
+  },
+  [NotifierTypeEnum.INNOVATION_WITHDRAWN]: {
+    handler: InnovationWithdrawnHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_WITHDRAWN]>({
+      innovation: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_WITHDRAWN]['innovation']>({
+        id: Joi.string().guid().required(),
+        name: Joi.string().required(),
+        affectedUsers: Joi.array()
+          .items(
+            Joi.object({
+              userId: Joi.string().guid().required(),
+              userType: Joi.string()
+                .valid(...Object.values(ServiceRoleEnum))
+                .required(),
+              unitId: Joi.string().guid()
+            })
+          )
+          .min(1)
+          .required()
+      }).required()
     }).required()
   },
 
@@ -302,28 +322,6 @@ export const NOTIFICATIONS_CONFIG = {
       message: Joi.string().required(),
       messageId: Joi.string().guid().required(),
       threadId: Joi.string().guid().required()
-    }).required()
-  },
-
-  [NotifierTypeEnum.INNOVATION_WITHDRAWN]: {
-    handler: InnovationWithdrawnHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_WITHDRAWN]>({
-      innovation: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_WITHDRAWN]['innovation']>({
-        id: Joi.string().guid().required(),
-        name: Joi.string().required(),
-        affectedUsers: Joi.array()
-          .items(
-            Joi.object({
-              userId: Joi.string().guid().required(),
-              userType: Joi.string()
-                .valid(...Object.values(ServiceRoleEnum))
-                .required(),
-              organisationId: Joi.string().guid(),
-              organisationUnitId: Joi.string().guid()
-            })
-          )
-          .required()
-      }).required()
     }).required()
   },
 
