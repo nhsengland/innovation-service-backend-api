@@ -2,12 +2,12 @@ import type { Context } from '@azure/functions';
 import { NotificationCategoryEnum, ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
 import { groupBy } from '@notifications/shared/helpers/misc.helper';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
-import { supportStatusUrl, supportSummaryUrl, threadsUrl } from '../../_helpers/url.helper';
+import { innovationOverviewUrl, supportStatusUrl, supportSummaryUrl, threadsUrl } from '../../_helpers/url.helper';
 import { BaseHandler } from '../base.handler';
 
 export class IdleSupportAccessorHandler extends BaseHandler<
   NotifierTypeEnum.IDLE_SUPPORT_ACCESSOR,
-  'AU02_ACCESSOR_IDLE_ENGAGING_SUPPORT'
+  'AU02_ACCESSOR_IDLE_ENGAGING_SUPPORT' | 'AU06_ACCESSOR_IDLE_WAITING'
 > {
   constructor(
     requestUser: DomainContextType,
@@ -19,6 +19,7 @@ export class IdleSupportAccessorHandler extends BaseHandler<
 
   async run(): Promise<this> {
     await this.AU02_ACCESSOR_IDLE_ENGAGING_SUPPORT();
+    await this.AU06_ACCESSOR_IDLE_WAITING();
 
     return this;
   }
@@ -51,6 +52,47 @@ export class IdleSupportAccessorHandler extends BaseHandler<
           inApp: {
             context: {
               detail: 'AU02_ACCESSOR_IDLE_ENGAGING_SUPPORT',
+              id: support.supportId,
+              type: NotificationCategoryEnum.AUTOMATIC
+            },
+            innovationId,
+            params: {
+              innovationName: innovation.name,
+              supportId: support.supportId
+            }
+          }
+        });
+      }
+    }
+  }
+
+  private async AU06_ACCESSOR_IDLE_WAITING(): Promise<void> {
+    const idleSupports = await this.recipientsService.idleWaitingSupports(30);
+    const idleInnovationsMap = groupBy(idleSupports, 'innovationId');
+    const innovationsInfo = await this.recipientsService.getInnovationsInfo([...idleInnovationsMap.keys()]);
+    for (const [innovationId, supports] of idleInnovationsMap) {
+      const innovation = innovationsInfo.get(innovationId);
+      if (!innovation) {
+        continue;
+      }
+
+      for (const support of supports) {
+        const recipients = await this.recipientsService.innovationAssignedRecipients(innovationId, {
+          unitId: support.unitId
+        });
+
+        this.notify('AU06_ACCESSOR_IDLE_WAITING', recipients, {
+          email: {
+            notificationPreferenceType: NotificationCategoryEnum.AUTOMATIC,
+            params: {
+              innovation_name: innovation.name,
+              innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, innovationId),
+              thread_url: threadsUrl(ServiceRoleEnum.ACCESSOR, innovationId)
+            }
+          },
+          inApp: {
+            context: {
+              detail: 'AU06_ACCESSOR_IDLE_WAITING',
               id: support.supportId,
               type: NotificationCategoryEnum.AUTOMATIC
             },

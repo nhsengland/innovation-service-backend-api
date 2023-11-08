@@ -132,6 +132,10 @@ export type InAppTemplatesType = {
   AU05_SUPPORT_KPI_OVERDUE: {
     innovationName: string;
   };
+  AU06_ACCESSOR_IDLE_WAITING: {
+    innovationName: string;
+    supportId: string; // really not required atm
+  };
 
   // Support Summary
   SS01_SUPPORT_SUMMARY_UPDATE_TO_INNOVATORS: {
