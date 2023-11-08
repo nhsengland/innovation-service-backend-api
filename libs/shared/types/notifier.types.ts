@@ -102,6 +102,17 @@ export type NotifierTemplatesType = {
     innovationId: string;
     exportRequestId: string;
   };
+  [NotifierTypeEnum.INNOVATION_WITHDRAWN]: {
+    innovation: {
+      id: string;
+      name: string;
+      affectedUsers: {
+        userId: string;
+        userType: ServiceRoleEnum;
+        unitId?: string;
+      }[];
+    };
+  };
 
   // Admin
   [NotifierTypeEnum.LOCK_USER]: {
@@ -174,19 +185,6 @@ export type NotifierTemplatesType = {
   [NotifierTypeEnum.INNOVATION_ORGANISATION_UNITS_SUGGESTION]: {
     innovationId: string;
     organisationUnitIds: string[]; // Suggested organisation units.
-  };
-
-  [NotifierTypeEnum.INNOVATION_WITHDRAWN]: {
-    innovation: {
-      id: string;
-      name: string;
-      affectedUsers: {
-        userId: string;
-        userType: ServiceRoleEnum;
-        organisationId?: string;
-        organisationUnitId?: string;
-      }[];
-    };
   };
 
   [NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_CREATION]: {

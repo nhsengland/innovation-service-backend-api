@@ -54,6 +54,7 @@ export const EmailTemplates = {
   RE01_EXPORT_REQUEST_SUBMITTED: 'b5f4e789-bdfc-496a-9b27-dbf6c2259ebc',
   RE02_EXPORT_REQUEST_APPROVED: '209f1bff-efdf-4631-8b2a-2f3982ff498d',
   RE03_EXPORT_REQUEST_REJECTED: 'ed2fd3b2-a5a6-472b-86c9-7a837638fc41',
+  WI01_INNOVATION_WITHDRAWN: '29d46f19-a64e-47e8-8c8b-f9bf6822b246',
 
   // ADMIN
   AP03_USER_LOCKED_TO_LOCKED_USER: '95751f8f-ba65-436c-baa6-dabca6ca7acf',
@@ -346,6 +347,9 @@ export type EmailTemplatesType = {
     innovator_name: string;
     innovation_name: string;
     reject_comment: string;
+  };
+  WI01_INNOVATION_WITHDRAWN: {
+    innovation_name: string;
   };
 
   // Admin

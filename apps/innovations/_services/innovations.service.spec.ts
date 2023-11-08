@@ -382,9 +382,7 @@ describe('Innovations / _services / innovations suite', () => {
         {
           userId: scenario.users.aliceQualifyingAccessor.id,
           userType: scenario.users.aliceQualifyingAccessor.roles.qaRole.role,
-          organisationId: scenario.users.aliceQualifyingAccessor.organisations.healthOrg.id,
-          organisationUnitId:
-            scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.id
+          unitId: scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.id
         }
       ];
 
