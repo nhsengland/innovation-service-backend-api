@@ -67,7 +67,7 @@ export class IdleSupportAccessorHandler extends BaseHandler<
   }
 
   private async AU06_ACCESSOR_IDLE_WAITING(): Promise<void> {
-    const idleSupports = await this.recipientsService.idleWaitingSupports(30);
+    const idleSupports = await this.recipientsService.idleWaitingSupports(90);
     const idleInnovationsMap = groupBy(idleSupports, 'innovationId');
     const innovationsInfo = await this.recipientsService.getInnovationsInfo([...idleInnovationsMap.keys()]);
     for (const [innovationId, supports] of idleInnovationsMap) {
