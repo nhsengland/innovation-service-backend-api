@@ -114,7 +114,7 @@ describe('Users / _services / users service suite', () => {
     it('should send a notification', async () => {
       await sut.createUserInnovator({ identityId: randUuid() }, em);
 
-      expect(notifierSendSpy).toHaveBeenCalledWith(expect.anything(), NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION, {});
+      expect(notifierSendSpy).toHaveBeenCalledWith(expect.anything(), NotifierTypeEnum.ACCOUNT_CREATION, {});
     });
 
     it('should throw an error if the user already exists', async () => {

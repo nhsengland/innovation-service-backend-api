@@ -107,6 +107,11 @@ export const exportRequestUrl = (role: ServiceRoleEnum, innovationId: string, re
     .buildUrl();
 };
 
+export const dashboardUrl = (role: ServiceRoleEnum): string => {
+  const baseUrl = frontendBaseUrl(role);
+  return new UrlModel(ENV.webBaseTransactionalUrl).addPath(':baseUrl').setPathParams({ baseUrl }).buildUrl();
+};
+
 export const frontendBaseUrl = (role: ServiceRoleEnum): string => {
   switch (role) {
     case ServiceRoleEnum.ASSESSMENT:

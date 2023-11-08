@@ -58,6 +58,10 @@ export const EmailTemplates = {
   AP03_USER_LOCKED_TO_LOCKED_USER: '95751f8f-ba65-436c-baa6-dabca6ca7acf',
   AP07_UNIT_INACTIVATED_TO_ENGAGING_INNOVATIONS: '9e18194c-99fd-408e-89a6-47616e647c27',
 
+  // ACCOUNT
+  CA01_ACCOUNT_CREATION_OF_INNOVATOR: 'd4bd42fa-a3a2-4eb3-ab71-844caba26044',
+  CA02_ACCOUNT_CREATION_OF_COLLABORATOR: '7dbfa868-126c-4eee-828c-be6f8831342c',
+
   // TO BE REMOVED ?
   ACCOUNT_CREATION_TO_INNOVATOR: '62486954-b235-4aa6-8b8d-960191fc6e69',
   ACCOUNT_DELETION_WITH_TRANSFER_TO_COLLABORATOR: 'd09b5182-d995-4db7-b3ba-99fef085bb22',
@@ -343,6 +347,16 @@ export type EmailTemplatesType = {
     unit_name: string;
     innovation_name: string;
     support_url: string;
+  };
+
+  // Account
+  CA01_ACCOUNT_CREATION_OF_INNOVATOR: {
+    dashboard_url: string;
+  };
+  CA02_ACCOUNT_CREATION_OF_COLLABORATOR: {
+    multiple_innovations: 'yes' | 'no';
+    innovations_name: string;
+    dashboard_url: string;
   };
 
   // TODO

@@ -34,6 +34,7 @@ import {
   SupportSummaryUpdateHandler,
   UnitInactivationSupportStatusCompletedHandler
 } from '../_handlers';
+import { AccountCreationHandler } from '../_handlers/account/account-creation.handler';
 import { LockUserHandler } from '../_handlers/admin/lock-user.handler';
 import { UnitInactivatedHandler } from '../_handlers/admin/unit-inactivated.handler';
 import { IdleSupportAccessorHandler } from '../_handlers/automatic/idle-support-accessor.handler';
@@ -205,6 +206,12 @@ export const NOTIFICATIONS_CONFIG = {
       unitId: Joi.string().guid().required(),
       completedInnovationIds: Joi.array().items(Joi.string().guid().required()).required()
     }).required()
+  },
+
+  // Account
+  [NotifierTypeEnum.ACCOUNT_CREATION]: {
+    handler: AccountCreationHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION]>({})
   },
 
   // OLD

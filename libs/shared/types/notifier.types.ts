@@ -112,6 +112,9 @@ export type NotifierTemplatesType = {
     completedInnovationIds: string[];
   };
 
+  // Account
+  [NotifierTypeEnum.ACCOUNT_CREATION]: {};
+
   // OLD
   [NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION]: Record<string, never>;
 
