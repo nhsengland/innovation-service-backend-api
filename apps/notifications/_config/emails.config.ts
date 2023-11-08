@@ -39,6 +39,7 @@ export const EmailTemplates = {
 
   // AUTOMATIC
   AU01_INNOVATOR_INCOMPLETE_RECORD: '37d20809-05ba-4878-9bbc-49689cc4fe51',
+  AU02_ACCESSOR_IDLE_ENGAGING_SUPPORT: '99b47245-0b38-476a-8389-fd8ccecca0b0',
   AU03_INNOVATOR_IDLE_SUPPORT: '53d609ef-30d4-4718-b20b-229924fa1e11',
   AU04_SUPPORT_KPI_REMINDER: 'e1f0a2bc-3b15-4733-ba89-c0d5c9fec38a',
   AU05_SUPPORT_KPI_OVERDUE: '5fe24d48-8def-457d-a81f-56750f38c508',
@@ -297,6 +298,13 @@ export type EmailTemplatesType = {
 
   AU01_INNOVATOR_INCOMPLETE_RECORD: {
     innovation_record_url: string;
+  };
+
+  AU02_ACCESSOR_IDLE_ENGAGING_SUPPORT: {
+    innovation_name: string;
+    thread_url: string;
+    support_summary_url: string;
+    support_status_url: string;
   };
 
   AU03_INNOVATOR_IDLE_SUPPORT: {

@@ -1,5 +1,4 @@
 import {
-  ActivityLogEntity,
   InnovationEntity,
   InnovationExportRequestEntity,
   InnovationSupportEntity,
@@ -14,7 +13,6 @@ import {
   UserRoleEntity
 } from '@notifications/shared/entities';
 import {
-  ActivityTypeEnum,
   EmailNotificationPreferenceEnum,
   InnovationCollaboratorStatusEnum,
   InnovationExportRequestStatusEnum,
@@ -154,6 +152,9 @@ export class RecipientsService extends BaseService {
     withDeleted?: boolean,
     entityManager?: EntityManager
   ): Promise<Map<string, { id: string; name: string; ownerId?: string }>> {
+    if (!innovationIds.length) {
+      return new Map();
+    }
     const em = entityManager ?? this.sqlConnection.manager;
 
     const query = em
@@ -258,13 +259,16 @@ export class RecipientsService extends BaseService {
   /**
    * returns the innovation assigned recipients to an innovation/support.
    * @param innovationId the innovation id
+   * @param filters optionally filter:
+   * - supportStatus: filter by support status
+   * - unitId: filter by unit id
    * @param entityManager optionally pass an entity manager
    * @returns a list of user recipients
    * @throws {NotFoundError} if the support is not found when using innovationSupportId
    */
   async innovationAssignedRecipients(
     innovationId: string,
-    filters: { supportStatus?: InnovationSupportStatusEnum[] },
+    filters: { supportStatus?: InnovationSupportStatusEnum[]; unitId?: string },
     entityManager?: EntityManager
   ): Promise<RecipientType[]> {
     const em = entityManager ?? this.sqlConnection.manager;
@@ -290,6 +294,10 @@ export class RecipientsService extends BaseService {
 
     if (filters.supportStatus) {
       query.andWhere('support.status IN (:...supportStatus)', { supportStatus: filters.supportStatus });
+    }
+
+    if (filters.unitId) {
+      query.andWhere('organisationUnit.id = :unitId', { unitId: filters.unitId });
     }
 
     const dbInnovationSupports = await query.getMany();
@@ -819,88 +827,27 @@ export class RecipientsService extends BaseService {
   }
 
   /**
-   * @deprecated no longer used
    * @param days number of idle days to check
-   * @param daysMod split notifications by daysMod
    */
-  async idleSupports(
+  async idleEngagingSupports(
     days = 90,
-    daysMod = 10
-  ): Promise<
-    {
-      innovationId: string;
-      innovationName: string;
-      ownerIdentityId: string;
-      unitId: string;
-      recipient: RecipientType;
-    }[]
-  > {
-    const query = this.sqlConnection
-      .createQueryBuilder(ActivityLogEntity, 'activityLog')
-      .select('innovation.id', 'innovationId')
-      .addSelect('innovation.name', 'innovationName')
-      .addSelect('owner.external_id', 'ownerIdentityId')
-      .addSelect('userRole.organisation_unit_id', 'unitId')
-      .addSelect('qas.id', 'qaRoleId')
-      .addSelect('qas.role', 'qaRole')
-      .addSelect('qaUser.id', 'qaUserId')
-      .addSelect('qaUser.external_id', 'qaUserIdentityId')
+    repeat = 30,
+    entityManager?: EntityManager
+  ): Promise<{ innovationId: string; unitId: string; supportId: string }[]> {
+    const em = entityManager ?? this.sqlConnection.manager;
+    const query = em
+      .createQueryBuilder(InnovationSupportEntity, 'support')
+      .select(['support.id', 'lastActivityUpdate.innovationId', 'lastActivityUpdate.organisationUnitId'])
+      .innerJoin('support.lastActivityUpdate', 'lastActivityUpdate')
+      .where('support.status = :status', { status: InnovationSupportStatusEnum.ENGAGING })
+      .andWhere('DATEDIFF(day, lastActivityUpdate.lastUpdate, GETDATE()) >= :days', { days })
+      .andWhere('DATEDIFF(day, lastActivityUpdate.lastUpdate, GETDATE()) % :repeat = 0', { repeat });
 
-      // Joins
-      .innerJoin('activityLog.userRole', 'userRole')
-      .innerJoin('activityLog.innovation', 'innovation')
-      .innerJoin(
-        'innovation.innovationSupports',
-        'supports',
-        'supports.organisation_unit_id = userRole.organisation_unit_id'
-      )
-      .innerJoin('user_role', 'qas', 'qas.organisation_unit_id = userRole.organisation_unit_id')
-      .innerJoin('user', 'qaUser', 'qaUser.id = qas.user_id')
-      .leftJoin('innovation.owner', 'owner', 'owner.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED }) // currently owner can be deleted and innovation active ...
-
-      // Conditions
-      .where('activityLog.type IN (:...types)', {
-        types: [ActivityTypeEnum.TASKS, ActivityTypeEnum.THREADS, ActivityTypeEnum.SUPPORT]
-      })
-
-      // only active supports
-      .andWhere('innovation.status != :innovationStatus', { innovationStatus: InnovationStatusEnum.PAUSED })
-      .andWhere('supports.status = :engagingStatus', { engagingStatus: InnovationSupportStatusEnum.ENGAGING })
-
-      .andWhere('userRole.organisation_unit_id IS NOT NULL') // only A/QAs activity
-      .andWhere('qas.role = :role', { role: ServiceRoleEnum.QUALIFYING_ACCESSOR }) // only notify QAs
-
-      // filter locked/deleted
-      .andWhere('qas.is_active = 1')
-      .andWhere('qaUser.status = :userActive', { userActive: UserStatusEnum.ACTIVE })
-
-      // group by
-      .groupBy('innovation.id')
-      .addGroupBy('innovation.name')
-      .addGroupBy('owner.external_id')
-      .addGroupBy('userRole.organisation_unit_id')
-      .addGroupBy('qas.id')
-      .addGroupBy('qas.role')
-      .addGroupBy('qaUser.id')
-      .addGroupBy('qaUser.external_id')
-
-      // having
-      .having('DATEDIFF(day, MAX(activityLog.created_at), GETDATE()) > :days', { days })
-      .andHaving('(DATEDIFF(day, MAX(activityLog.created_at), GETDATE()) - :days) % :daysMod = 0', { days, daysMod });
-
-    const rows = await query.getRawMany();
+    const rows = await query.getMany();
     return rows.map(row => ({
-      innovationId: row.innovationId,
-      innovationName: row.innovationName,
-      ownerIdentityId: row.ownerIdentityId,
-      unitId: row.unitId,
-      recipient: {
-        roleId: row.qaRoleId,
-        role: row.qaRole,
-        userId: row.qaUserId,
-        identityId: row.qaUserIdentityId,
-        isActive: true
-      }
+      supportId: row.id,
+      innovationId: row.lastActivityUpdate.innovationId,
+      unitId: row.lastActivityUpdate.organisationUnitId
     }));
   }
 

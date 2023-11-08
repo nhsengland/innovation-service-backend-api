@@ -1,13 +1,18 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { randUuid } from '@ngneat/falso';
 import {
+  ActivityLogEntity,
   InnovationEntity,
+  InnovationSupportEntity,
+  InnovationSupportLogEntity,
   NotificationPreferenceEntity,
   OrganisationUnitEntity,
   UserEntity,
   UserRoleEntity
 } from '@notifications/shared/entities';
 import {
+  ActivityEnum,
+  ActivityTypeEnum,
   InnovationCollaboratorStatusEnum,
   InnovationStatusEnum,
   InnovationSupportStatusEnum,
@@ -423,6 +428,19 @@ describe('Notifications / _services / recipients service suite', () => {
       const res = await sut.innovationAssignedRecipients(
         scenario.users.johnInnovator.innovations.johnInnovation.id,
         {},
+        em
+      );
+      expect(res).toHaveLength(2);
+      expect(res).toMatchObject([
+        DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole'),
+        DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'healthAccessorRole')
+      ]);
+    });
+
+    it('Returns a list of recipients for the innovation filtered by unitId', async () => {
+      const res = await sut.innovationAssignedRecipients(
+        scenario.users.johnInnovator.innovations.johnInnovation.id,
+        { unitId: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id },
         em
       );
       expect(res).toHaveLength(2);
@@ -912,8 +930,87 @@ describe('Notifications / _services / recipients service suite', () => {
     });
   });
 
-  describe('idleSupports', () => {
-    it.skip('placeholder', () => {});
+  describe('idleEngagingSupports', () => {
+    it('returns empty array of idle innovations if there are no innovations', async () => {
+      const res = await sut.idleEngagingSupports(30, 30, em);
+      expect(res).toHaveLength(0);
+    });
+
+    it('returns innovations if last status was updated 30 days ago', async () => {
+      const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+      const support = innovation.supports.supportByHealthOrgUnit;
+      const date30DaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      await em.update(InnovationSupportEntity, { id: support.id }, { updatedAt: date30DaysAgo });
+      // there's no activity log await em.delete(ActivityLogEntity, { innovation: { id: innovation.id } });
+      await em.delete(InnovationSupportLogEntity, {
+        innovation: { id: innovation.id },
+        organisationUnit: { id: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id }
+      });
+      const res = await sut.idleEngagingSupports(30, 30, em);
+      expect(res).toHaveLength(1);
+    });
+
+    it('returns innovations if last task was created 30 days ago', async () => {
+      const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+      const support = innovation.supports.supportByHealthOrgUnit;
+      const date30DaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const date31DaysAgo = new Date(Date.now() - 31 * 24 * 60 * 60 * 1000);
+      await em.update(InnovationSupportEntity, { id: support.id }, { updatedAt: date31DaysAgo });
+      await em.insert(ActivityLogEntity, {
+        innovation: { id: innovation.id },
+        type: ActivityTypeEnum.TASKS,
+        activity: ActivityEnum.TASK_CREATION,
+        userRole: { id: scenario.users.aliceQualifyingAccessor.roles.qaRole.id },
+        createdAt: date30DaysAgo,
+        updatedAt: date30DaysAgo
+      });
+      await em.delete(InnovationSupportLogEntity, {
+        innovation: { id: innovation.id },
+        organisationUnit: { id: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id }
+      });
+      const res = await sut.idleEngagingSupports(30, 30, em);
+      expect(res).toHaveLength(1);
+    });
+
+    it('returns innovations if last message was created 30 days ago', async () => {
+      const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+      const support = innovation.supports.supportByHealthOrgUnit;
+      const date30DaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const date31DaysAgo = new Date(Date.now() - 31 * 24 * 60 * 60 * 1000);
+      await em.update(InnovationSupportEntity, { id: support.id }, { updatedAt: date31DaysAgo });
+      await em.insert(ActivityLogEntity, {
+        innovation: { id: innovation.id },
+        type: ActivityTypeEnum.THREADS,
+        activity: ActivityEnum.THREAD_CREATION,
+        userRole: { id: scenario.users.aliceQualifyingAccessor.roles.qaRole.id },
+        createdAt: date30DaysAgo,
+        updatedAt: date30DaysAgo
+      });
+      await em.delete(InnovationSupportLogEntity, {
+        innovation: { id: innovation.id },
+        organisationUnit: { id: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id }
+      });
+      const res = await sut.idleEngagingSupports(30, 30, em);
+      expect(res).toHaveLength(1);
+    });
+
+    it('returns innovations if last support log was updated 30 days ago', async () => {
+      const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+      const support = innovation.supports.supportByHealthOrgUnit;
+      const date30DaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const date31DaysAgo = new Date(Date.now() - 31 * 24 * 60 * 60 * 1000);
+      await em.update(InnovationSupportEntity, { id: support.id }, { updatedAt: date31DaysAgo });
+      // No activity logs await em.delete(ActivityLogEntity, { innovation: { id: innovation.id } });
+
+      // needs to be raw query because we need to update createdAt
+      await em.query(
+        'UPDATE innovation_support_log SET created_at = @0, updated_at = @0 WHERE innovation_id = @1 and organisation_unit_id = @2',
+        [date30DaysAgo, innovation.id, scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id]
+      );
+
+      const res = await sut.idleEngagingSupports(30, 30, em);
+      expect(res).toHaveLength(1);
+    });
   });
 
   describe('getExportRequestInfo', () => {

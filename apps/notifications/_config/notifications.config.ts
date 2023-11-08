@@ -37,7 +37,8 @@ import {
 import { AccountCreationHandler } from '../_handlers/account/account-creation.handler';
 import { LockUserHandler } from '../_handlers/admin/lock-user.handler';
 import { UnitInactivatedHandler } from '../_handlers/admin/unit-inactivated.handler';
-import { IdleSupportHandler } from '../_handlers/automatic/idle-support.handler';
+import { IdleSupportAccessorHandler } from '../_handlers/automatic/idle-support-accessor.handler';
+import { IdleSupportInnovatorHandler } from '../_handlers/automatic/idle-support-innovator.handler';
 import { IncompleteRecordHandler } from '../_handlers/automatic/incomplete-record.handler';
 import { UnitKPIHandler } from '../_handlers/automatic/unit-kpi.handler';
 import { ExportRequestFeedbackHandler } from '../_handlers/innovations/export-request-feedback.handler';
@@ -459,9 +460,14 @@ export const NOTIFICATIONS_CONFIG = {
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INCOMPLETE_INNOVATION_RECORD]>({})
   },
 
-  [NotifierTypeEnum.IDLE_SUPPORT]: {
-    handler: IdleSupportHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.IDLE_SUPPORT]>({})
+  [NotifierTypeEnum.IDLE_SUPPORT_INNOVATOR]: {
+    handler: IdleSupportInnovatorHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.IDLE_SUPPORT_INNOVATOR]>({})
+  },
+
+  [NotifierTypeEnum.IDLE_SUPPORT_ACCESSOR]: {
+    handler: IdleSupportAccessorHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.IDLE_SUPPORT_ACCESSOR]>({})
   },
 
   [NotifierTypeEnum.UNIT_KPI]: {

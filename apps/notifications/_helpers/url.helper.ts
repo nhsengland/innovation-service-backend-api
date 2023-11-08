@@ -42,6 +42,14 @@ export const taskUrl = (role: ServiceRoleEnum, innovationId: string, taskId: str
     .buildUrl();
 };
 
+export const threadsUrl = (role: ServiceRoleEnum, innovationId: string): string => {
+  const baseUrl = frontendBaseUrl(role);
+  return new UrlModel(ENV.webBaseTransactionalUrl)
+    .addPath(':baseUrl/innovations/:innovationId/threads')
+    .setPathParams({ baseUrl, innovationId })
+    .buildUrl();
+};
+
 export const threadUrl = (role: ServiceRoleEnum, innovationId: string, threadId: string): string => {
   const baseUrl = frontendBaseUrl(role);
   return new UrlModel(ENV.webBaseTransactionalUrl)
@@ -55,6 +63,18 @@ export const documentUrl = (role: ServiceRoleEnum, innovationId: string, documen
   return new UrlModel(ENV.webBaseTransactionalUrl)
     .addPath(':baseUrl/innovations/:innovationId/documents/:documentId')
     .setPathParams({ baseUrl, innovationId, documentId })
+    .buildUrl();
+};
+
+export const supportStatusUrl = (
+  role: ServiceRoleEnum.ACCESSOR | ServiceRoleEnum.QUALIFYING_ACCESSOR,
+  innovationId: string,
+  supportId: string
+): string => {
+  const baseUrl = frontendBaseUrl(role);
+  return new UrlModel(ENV.webBaseTransactionalUrl)
+    .addPath(':baseUrl/innovations/:innovationId/support/:supportId')
+    .setPathParams({ baseUrl, innovationId, supportId })
     .buildUrl();
 };
 
