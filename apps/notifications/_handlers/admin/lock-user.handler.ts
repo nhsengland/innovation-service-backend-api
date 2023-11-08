@@ -60,7 +60,8 @@ export class LockUserHandler extends BaseHandler<
   private async AP03_USER_LOCKED_TO_LOCKED_USER(recipient: RecipientType): Promise<void> {
     this.addEmails('AP03_USER_LOCKED_TO_LOCKED_USER', [recipient], {
       notificationPreferenceType: NotificationCategoryEnum.ADMIN,
-      params: {}
+      params: {},
+      options: { includeLocked: true }
     });
   }
 }

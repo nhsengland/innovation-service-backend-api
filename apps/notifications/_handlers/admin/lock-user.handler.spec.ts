@@ -88,7 +88,8 @@ describe('Notifications / _handlers / lock-user suite', () => {
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         recipients: [DTOsHelper.getRecipientUser(lockedUser)],
         inputData: { identityId: lockedUser.identityId },
-        outputData: {}
+        outputData: {},
+        options: { includeLocked: true }
       });
     });
 
@@ -98,7 +99,8 @@ describe('Notifications / _handlers / lock-user suite', () => {
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         recipients: [],
         inputData: { identityId: randUuid() },
-        outputData: {}
+        outputData: {},
+        options: { includeLocked: true }
       });
     });
   });
