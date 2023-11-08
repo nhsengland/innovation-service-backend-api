@@ -169,6 +169,9 @@ export type InAppTemplatesType = {
     innovationName: string;
     exportRequestId: string;
   };
+  WI01_INNOVATION_WITHDRAWN: {
+    innovationName: string;
+  };
 
   // Admin
   AP02_INNOVATOR_LOCKED_TO_ASSIGNED_USERS: {
