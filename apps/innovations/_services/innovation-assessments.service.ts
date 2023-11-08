@@ -314,15 +314,16 @@ export class InnovationAssessmentsService extends BaseService {
 
         if (data.suggestedOrganisationUnitsIds?.length) {
           // Add suggested organisations (NOT units) names to activity log.
-          const organisations = await this.sqlConnection
+          const organisations = await transaction
             .createQueryBuilder(OrganisationEntity, 'organisation')
             .distinct()
             .innerJoin('organisation.organisationUnits', 'organisationUnits')
-            .where('organisationUnits.id IN (:...ids)', { ids: currentUnitSuggestionsIds })
+            .where('organisationUnits.id IN (:...ids)', { ids: data.suggestedOrganisationUnitsIds })
             .andWhere('organisation.inactivated_at IS NULL')
             .andWhere('organisationUnits.inactivated_at IS NULL')
             .getMany();
 
+          // There's a bug open for this for discussion but maybe only add ActivityLog if there were suggestions changed.
           await this.domainService.innovations.addActivityLog(
             transaction,
             {
