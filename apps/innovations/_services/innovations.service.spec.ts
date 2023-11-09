@@ -455,12 +455,11 @@ describe('Innovations / _services / innovations suite', () => {
 
       expect(notifierSendSpy).toHaveBeenLastCalledWith(context, NotifierTypeEnum.INNOVATION_STOP_SHARING, {
         innovationId: innovation.id,
-        previousAssignedAccessors: expect.arrayContaining([
+        affectedUsers: expect.arrayContaining([
           {
             id: scenario.users.aliceQualifyingAccessor.id,
-            organisationUnitId:
-              scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
-            userType: ServiceRoleEnum.QUALIFYING_ACCESSOR
+            role: ServiceRoleEnum.QUALIFYING_ACCESSOR,
+            unitId: scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.id
           }
         ]),
         message: message

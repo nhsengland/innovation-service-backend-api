@@ -1370,8 +1370,8 @@ export class InnovationsService extends BaseService {
     const previousAssignedAccessors = dbSupports.flatMap(support =>
       support.userRoles.map(item => ({
         id: item.user.id,
-        organisationUnitId: item.organisationUnitId,
-        userType: item.role
+        role: item.role,
+        unitId: item.organisationUnitId
       }))
     );
 
@@ -1445,7 +1445,7 @@ export class InnovationsService extends BaseService {
 
     await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_STOP_SHARING, {
       innovationId,
-      previousAssignedAccessors: previousAssignedAccessors,
+      affectedUsers: previousAssignedAccessors,
       message: data.message
     });
 

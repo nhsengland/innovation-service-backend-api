@@ -20,7 +20,6 @@ import {
   InnovationCollaboratorUpdateHandler,
   InnovationOrganisationUnitsSuggestionHandler,
   InnovationReassessmentRequestHandler,
-  InnovationStopSharingHandler,
   InnovationSubmittedHandler,
   InnovationSupportStatusChangeRequestHandler,
   InnovationSupportStatusUpdateHandler,
@@ -35,6 +34,7 @@ import {
 } from '../_handlers';
 import { AccountCreationHandler } from '../_handlers/account/account-creation.handler';
 import { LockUserHandler } from '../_handlers/admin/lock-user.handler';
+import { InnovationStopSharingHandler } from '../_handlers/admin/stop-sharing-innovation/innovation-stop-sharing.handler';
 import { UnitInactivatedHandler } from '../_handlers/admin/unit-inactivated.handler';
 import { InnovationWithdrawnHandler } from '../_handlers/admin/withdraw-innovation/innovation-withdrawn.handler';
 import { IdleSupportAccessorHandler } from '../_handlers/automatic/idle-support-accessor.handler';
@@ -375,18 +375,18 @@ export const NOTIFICATIONS_CONFIG = {
     handler: InnovationStopSharingHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_STOP_SHARING]>({
       innovationId: Joi.string().guid().required(),
-      previousAssignedAccessors: Joi.array()
+      affectedUsers: Joi.array()
         .items(
           Joi.object({
             id: Joi.string().guid().required(),
-            userType: Joi.string()
+            role: Joi.string()
               .valid(...Object.values(ServiceRoleEnum))
               .required(),
-            organisationUnitId: Joi.string().guid().required()
+            unitId: Joi.string().guid().optional()
           })
         )
         .required(),
-      message: Joi.string().required()
+      message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xs).trim().required()
     }).required()
   },
 

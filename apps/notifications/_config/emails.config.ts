@@ -55,6 +55,8 @@ export const EmailTemplates = {
   RE02_EXPORT_REQUEST_APPROVED: '209f1bff-efdf-4631-8b2a-2f3982ff498d',
   RE03_EXPORT_REQUEST_REJECTED: 'ed2fd3b2-a5a6-472b-86c9-7a837638fc41',
   WI01_INNOVATION_WITHDRAWN: '29d46f19-a64e-47e8-8c8b-f9bf6822b246',
+  SH01_INNOVATION_STOPPED_SHARED_TO_ASSIGNED_USERS: 'ab51f9eb-8826-4ab4-8e8b-97acd8e2edf7',
+  SH03_INNOVATION_STOPPED_SHARED_TO_SELF: '42d32a18-95dc-4b0e-9d82-35a96e9c033d',
 
   // ADMIN
   AP03_USER_LOCKED_TO_LOCKED_USER: '95751f8f-ba65-436c-baa6-dabca6ca7acf',
@@ -350,6 +352,15 @@ export type EmailTemplatesType = {
   };
   WI01_INNOVATION_WITHDRAWN: {
     innovation_name: string;
+  };
+  SH01_INNOVATION_STOPPED_SHARED_TO_ASSIGNED_USERS: {
+    innovation_name: string;
+    innovator_name: string;
+    comment: string;
+  };
+  SH03_INNOVATION_STOPPED_SHARED_TO_SELF: {
+    innovation_name: string;
+    innovation_overview_url: string;
   };
 
   // Admin
