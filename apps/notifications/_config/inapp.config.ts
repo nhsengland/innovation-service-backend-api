@@ -176,6 +176,12 @@ export type InAppTemplatesType = {
   WI01_INNOVATION_WITHDRAWN: {
     innovationName: string;
   };
+  SH01_INNOVATION_STOPPED_SHARED_TO_ASSIGNED_USERS: {
+    innovationName: string;
+  };
+  SH03_INNOVATION_STOPPED_SHARED_TO_SELF: {
+    innovationName: string;
+  };
 
   // Admin
   AP02_INNOVATOR_LOCKED_TO_ASSIGNED_USERS: {

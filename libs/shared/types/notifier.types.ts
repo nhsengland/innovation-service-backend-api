@@ -218,12 +218,12 @@ export type NotifierTemplatesType = {
 
   [NotifierTypeEnum.INNOVATION_STOP_SHARING]: {
     innovationId: string;
-    previousAssignedAccessors: {
-      id: string;
-      userType: ServiceRoleEnum;
-      organisationUnitId: string;
-    }[];
     message: string;
+    affectedUsers: {
+      id: string;
+      role: ServiceRoleEnum;
+      unitId?: string;
+    }[];
   };
 
   [NotifierTypeEnum.INNOVATION_REASSESSMENT_REQUEST]: {
