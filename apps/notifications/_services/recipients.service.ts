@@ -5,7 +5,6 @@ import {
   InnovationTaskEntity,
   InnovationThreadEntity,
   InnovationTransferEntity,
-  NotificationEntity,
   NotificationPreferenceEntity,
   OrganisationUnitEntity,
   SupportKPIViewEntity,
@@ -13,7 +12,6 @@ import {
   UserRoleEntity
 } from '@notifications/shared/entities';
 import {
-  EmailNotificationPreferenceEnum,
   InnovationCollaboratorStatusEnum,
   InnovationExportRequestStatusEnum,
   InnovationStatusEnum,
@@ -21,7 +19,6 @@ import {
   InnovationSupportStatusEnum,
   InnovationTaskStatusEnum,
   InnovationTransferStatusEnum,
-  NotificationContextTypeEnum,
   OrganisationTypeEnum,
   ServiceRoleEnum,
   UserStatusEnum
@@ -650,96 +647,6 @@ export class RecipientsService extends BaseService {
       },
       em
     );
-  }
-
-  /**
-   * Fetch daily digest users, this means users with notification preferences DAILY group by notification type (Tasks, comments or support).
-   */
-  async dailyDigestUsersWithCounts(): Promise<
-    {
-      recipient: RecipientType;
-      tasksCount: number;
-      messagesCount: number;
-      supportsCount: number;
-    }[]
-  > {
-    // Start date to yesterday at midnight.
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - 1);
-    startDate.setHours(0, 0, 0, 0);
-
-    // End date to today at midnight.
-    const endDate = new Date();
-    endDate.setHours(0, 0, 0, 0);
-
-    const dbUsers: {
-      userId: string;
-      userIdentityId: string;
-      userRole: ServiceRoleEnum;
-      userRoleId: string;
-      tasksCount: number;
-      messagesCount: number;
-      supportsCount: number;
-    }[] =
-      (await this.sqlConnection
-        .createQueryBuilder(NotificationEntity, 'notification')
-        .select('user.id', 'userId')
-        .addSelect('user.external_id', 'userIdentityId')
-        .addSelect('userRole.role', 'userRole')
-        .addSelect('userRole.id', 'userRoleId')
-        .addSelect(
-          `COUNT(CASE WHEN notification.context_type = '${NotificationContextTypeEnum.TASK}' then 1 else null end)`,
-          'tasksCount'
-        )
-        .addSelect(
-          `COUNT(CASE WHEN notification.context_type = '${NotificationContextTypeEnum.THREAD}' then 1 else null end)`,
-          'messagesCount'
-        )
-        .addSelect(
-          `COUNT(CASE WHEN notification.context_type = '${NotificationContextTypeEnum.SUPPORT}' then 1 else null end)`,
-          'supportsCount'
-        )
-        .innerJoin('notification.notificationUsers', 'notificationUsers')
-        .innerJoin('notificationUsers.userRole', 'userRole')
-        .innerJoin('userRole.user', 'user')
-        .innerJoin(
-          'notification_preference',
-          'notificationPreferences',
-          'userRole.id = notificationPreferences.user_role_id'
-        )
-        .where('notification.created_at >= :startDate AND notification.created_at < :endDate', {
-          startDate: startDate.toISOString(),
-          endDate: endDate.toISOString()
-        })
-        .andWhere('notificationPreferences.preference = :preference', {
-          preference: EmailNotificationPreferenceEnum.DAILY
-        })
-        .andWhere('user.status = :userActive AND userRole.is_active = 1 AND user.deleted_at IS NULL', {
-          userActive: UserStatusEnum.ACTIVE
-        })
-        .groupBy('user.id')
-        .addGroupBy('user.external_id')
-        .addGroupBy('userRole.role')
-        .addGroupBy('userRole.id')
-        .getRawMany()) || [];
-
-    return dbUsers
-      .filter(item => item.tasksCount + item.messagesCount + item.supportsCount > 0)
-      .map(item => ({
-        id: item.userId,
-        identityId: item.userIdentityId,
-        userRole: item.userRole,
-        recipient: {
-          userId: item.userId,
-          identityId: item.userIdentityId,
-          roleId: item.userRoleId,
-          role: item.userRole,
-          isActive: true
-        },
-        tasksCount: item.tasksCount,
-        messagesCount: item.messagesCount,
-        supportsCount: item.supportsCount
-      }));
   }
 
   /**

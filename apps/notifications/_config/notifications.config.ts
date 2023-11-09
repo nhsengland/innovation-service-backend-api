@@ -14,7 +14,6 @@ import {
   AccessorUnitChangeHandler,
   ActionCreationHandler,
   ActionUpdateHandler,
-  DailyDigestHandler,
   DocumentUploadHandler,
   InnovationCollaboratorInviteHandler,
   InnovationCollaboratorUpdateHandler,
@@ -448,11 +447,6 @@ export const NOTIFICATIONS_CONFIG = {
   },
 
   // Recurrent notifications.
-  [NotifierTypeEnum.DAILY_DIGEST]: {
-    handler: DailyDigestHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.DAILY_DIGEST]>({})
-  },
-
   [NotifierTypeEnum.INCOMPLETE_INNOVATION_RECORD]: {
     handler: IncompleteRecordHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INCOMPLETE_INNOVATION_RECORD]>({})
