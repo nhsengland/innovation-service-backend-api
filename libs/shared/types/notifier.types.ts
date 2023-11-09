@@ -124,7 +124,7 @@ export type NotifierTemplatesType = {
   };
 
   // Account
-  [NotifierTypeEnum.ACCOUNT_CREATION]: {};
+  [NotifierTypeEnum.ACCOUNT_CREATION]: Record<string, never>;
 
   // OLD
   [NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION]: Record<string, never>;
@@ -197,18 +197,6 @@ export type NotifierTemplatesType = {
     transferId: string;
   };
 
-  [NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_EXPIRATION]: {
-    innovationId: string;
-    transferId: string;
-  };
-
-  [NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_REMINDER]: {
-    innovationId: string;
-    innovationName: string;
-    transferId: string;
-    recipientEmail: string;
-  };
-
   [NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_CHANGE_REQUEST]: {
     innovationId: string;
     supportId: string;
@@ -258,4 +246,16 @@ export type NotifierTemplatesType = {
   [NotifierTypeEnum.IDLE_SUPPORT_ACCESSOR]: Record<string, never>;
   [NotifierTypeEnum.IDLE_SUPPORT_INNOVATOR]: Record<string, never>;
   [NotifierTypeEnum.UNIT_KPI]: Record<string, never>;
+
+  // Automatic / Transfer
+  [NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_EXPIRATION]: {
+    innovationId: string;
+    innovationName: string;
+  };
+
+  [NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_REMINDER]: {
+    innovationId: string;
+    innovationName: string;
+    recipientEmail: string;
+  };
 };

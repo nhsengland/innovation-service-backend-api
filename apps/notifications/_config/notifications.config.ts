@@ -343,8 +343,7 @@ export const NOTIFICATIONS_CONFIG = {
   [NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_EXPIRATION]: {
     handler: InnovationTransferOwnershipExpirationHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_EXPIRATION]>({
-      innovationId: Joi.string().guid().required(),
-      transferId: Joi.string().guid().required()
+      innovationId: Joi.string().guid().required()
     }).required()
   },
 
@@ -353,7 +352,6 @@ export const NOTIFICATIONS_CONFIG = {
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_REMINDER]>({
       innovationId: Joi.string().guid().required(),
       innovationName: Joi.string().required(),
-      transferId: Joi.string().guid().required(),
       recipientEmail: Joi.string().required()
     }).required()
   },

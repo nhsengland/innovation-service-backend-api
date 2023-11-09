@@ -44,6 +44,10 @@ export const EmailTemplates = {
   AU04_SUPPORT_KPI_REMINDER: 'e1f0a2bc-3b15-4733-ba89-c0d5c9fec38a',
   AU05_SUPPORT_KPI_OVERDUE: '5fe24d48-8def-457d-a81f-56750f38c508',
   AU06_ACCESSOR_IDLE_WAITING: '34f06061-18a1-4b5c-9c35-1759192ff055',
+  // AUTOMATIC / TRANSFER
+  AU07_TRANSFER_ONE_WEEK_REMINDER_NEW_USER: 'eae90e2b-4f1f-45d5-a7b3-6af9e328a786',
+  AU08_TRANSFER_ONE_WEEK_REMINDER_EXISTING_USER: 'd1a40cf5-85ae-4b0d-ba53-28b0bc374284',
+  AU09_TRANSFER_EXPIRED: '46ea9d9c-46fc-44da-b526-d6a59c6738f7',
 
   // ORGANISATION SUGGESTIONS
   OS01_UNITS_SUGGESTION_TO_SUGGESTED_UNITS_QA: '193dac47-da6c-49a0-8db7-ee951cf5d38d',
@@ -300,6 +304,7 @@ export type EmailTemplatesType = {
     innovation_overview_url: string;
   };
 
+  // Automatic
   AU01_INNOVATOR_INCOMPLETE_RECORD: {
     innovation_record_url: string;
   };
@@ -331,6 +336,22 @@ export type EmailTemplatesType = {
     innovation_name: string;
     innovation_overview_url: string;
     thread_url: string;
+  };
+
+  // Automatic / Transfer
+  AU07_TRANSFER_ONE_WEEK_REMINDER_NEW_USER: {
+    innovation_name: string;
+    create_account_url: string;
+  };
+
+  AU08_TRANSFER_ONE_WEEK_REMINDER_EXISTING_USER: {
+    innovation_name: string;
+    dashboard_url: string;
+  };
+
+  AU09_TRANSFER_EXPIRED: {
+    innovation_name: string;
+    manage_innovation_url: string;
   };
 
   // Innovation (management?)
