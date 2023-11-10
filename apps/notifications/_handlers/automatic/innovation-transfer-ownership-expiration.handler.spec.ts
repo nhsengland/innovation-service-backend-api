@@ -19,10 +19,6 @@ describe('Notifications / _handlers / innovation-transfer-ownership-expiration h
     await testsHelper.init();
   });
 
-  beforeAll(async () => {
-    await testsHelper.init();
-  });
-
   describe('Innovation owner is found', () => {
     beforeAll(async () => {
       jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
