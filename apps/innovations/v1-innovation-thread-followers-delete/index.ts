@@ -10,6 +10,7 @@ import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
 
+import { ForbiddenError, InnovationErrorsEnum } from '@innovations/shared/errors';
 import type { InnovationThreadsService } from '../_services/innovation-threads.service';
 import SYMBOLS from '../_services/symbols';
 import type { ParamsType } from './validation.schemas';
@@ -25,12 +26,17 @@ class V1InnovationThreadFollowersDelete {
     try {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
-      await authorizationService
+      const auth = await authorizationService
         .validate(context)
         .setInnovation(params.innovationId)
         .checkAccessorType()
         .checkAssessmentType()
         .verify();
+      const domainContext = auth.getContext();
+
+      if (domainContext.currentRole.id !== params.roleId) {
+        throw new ForbiddenError(InnovationErrorsEnum.INNOVATION_THREAD_CANT_UNFOLLOW_OTHER_USERS);
+      }
 
       await threadsService.unfollowThread(params.roleId, params.threadId);
 
