@@ -1,7 +1,7 @@
 import { ServiceRoleEnum } from '@notifications/shared/enums';
 import { MocksHelper, type CompleteScenarioType } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
-import { innovationRecordUrl } from '../../_helpers/url.helper';
+import { howToProceedUrl, innovationRecordUrl } from '../../_helpers/url.helper';
 import { RecipientsService } from '../../_services/recipients.service';
 import { NotificationsTestsHelper } from '../../_tests/notifications-test.helper';
 import { IdleSupportInnovatorHandler } from './idle-support-innovator.handler';
@@ -41,7 +41,7 @@ describe('Notifications / _handlers / idle support handler suite', () => {
               ServiceRoleEnum.INNOVATOR,
               scenario.users.johnInnovator.innovations.johnInnovation.id
             ),
-            how_to_proceed_page_url: innovationRecordUrl(
+            how_to_proceed_page_url: howToProceedUrl(
               ServiceRoleEnum.INNOVATOR,
               scenario.users.johnInnovator.innovations.johnInnovation.id
             )
@@ -57,7 +57,7 @@ describe('Notifications / _handlers / idle support handler suite', () => {
               ServiceRoleEnum.INNOVATOR,
               scenario.users.johnInnovator.innovations.johnInnovation.id
             ),
-            how_to_proceed_page_url: innovationRecordUrl(
+            how_to_proceed_page_url: howToProceedUrl(
               ServiceRoleEnum.INNOVATOR,
               scenario.users.johnInnovator.innovations.johnInnovation.id
             )
@@ -73,7 +73,7 @@ describe('Notifications / _handlers / idle support handler suite', () => {
               ServiceRoleEnum.INNOVATOR,
               scenario.users.ottoOctaviusInnovator.innovations.chestHarnessInnovation.id
             ),
-            how_to_proceed_page_url: innovationRecordUrl(
+            how_to_proceed_page_url: howToProceedUrl(
               ServiceRoleEnum.INNOVATOR,
               scenario.users.ottoOctaviusInnovator.innovations.chestHarnessInnovation.id
             )
