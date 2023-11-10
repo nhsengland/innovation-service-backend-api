@@ -5,8 +5,8 @@
       "type": "httpTrigger",
       "direction": "in",
       "name": "req",
-      "methods": ["patch"],
-      "route": "v1/{innovationId}/threads/{threadId}/unfollow"
+      "methods": ["delete"],
+      "route": "v1/{innovationId}/threads/{threadId}/followers/{roleId}"
     },
     {
       "type": "http",

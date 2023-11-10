@@ -36,7 +36,8 @@ describe('v1-innovation-thread-unfollow', () => {
         .setAuth(scenario.users.aliceQualifyingAccessor)
         .setParams<ParamsType>({
           innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
-          threadId: randUuid()
+          threadId: randUuid(),
+          roleId: scenario.users.aliceQualifyingAccessor.roles.qaRole.id
         })
         .call<never>(azureFunction);
 
@@ -60,7 +61,8 @@ describe('v1-innovation-thread-unfollow', () => {
         .setAuth(user)
         .setParams<ParamsType>({
           innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
-          threadId: randUuid()
+          threadId: randUuid(),
+          roleId: randUuid()
         })
         .call<ErrorResponseType>(azureFunction);
 

@@ -84,7 +84,7 @@ describe('Innovations / _services / innovation-threads suite', () => {
         followers: [UserRoleEntity.new({ id: scenario.users.aliceQualifyingAccessor.roles.qaRole.id })]
       });
 
-      await sut.unfollowThread(DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor), thread.id, em);
+      await sut.unfollowThread(thread.id, scenario.users.aliceQualifyingAccessor.roles.qaRole.id, em);
 
       const dbThread = await em
         .createQueryBuilder(InnovationThreadEntity, 'thread')
@@ -97,19 +97,13 @@ describe('Innovations / _services / innovation-threads suite', () => {
 
     it('should throw an error if the user is not a follower', async () => {
       await expect(
-        sut.unfollowThread(DTOsHelper.getUserRequestContext(scenario.users.sarahQualifyingAccessor), thread.id, em)
+        sut.unfollowThread(thread.id, scenario.users.sarahQualifyingAccessor.roles.qaRole.id, em)
       ).rejects.toThrowError(new BadRequestError(InnovationErrorsEnum.INNOVATION_THREAD_USER_IS_NOT_FOLLOWER));
-    });
-
-    it('should throw an error if the user is an innovator', async () => {
-      await expect(
-        sut.unfollowThread(DTOsHelper.getUserRequestContext(scenario.users.johnInnovator), thread.id, em)
-      ).rejects.toThrowError(new BadRequestError(InnovationErrorsEnum.INNOVATION_THREAD_INNOVATORS_CANNOT_UNFOLLOW));
     });
 
     it(`should throw an error if the thread doesn't exist`, async () => {
       await expect(
-        sut.unfollowThread(DTOsHelper.getUserRequestContext(scenario.users.johnInnovator), randUuid(), em)
+        sut.unfollowThread(randUuid(), scenario.users.sarahQualifyingAccessor.roles.qaRole.id, em)
       ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND));
     });
   });
