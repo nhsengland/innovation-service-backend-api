@@ -92,6 +92,11 @@ export type InAppTemplatesType = {
   ST06_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_OLD_QA: {
     innovationName: string;
   };
+  ST07_SUPPORT_STATUS_CHANGE_REQUEST: {
+    accessorName: string;
+    innovationName: string;
+    proposedStatus: string;
+  };
   // Needs assessment
   NA01_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_INNOVATOR: {
     innovationName: string;

@@ -21,7 +21,6 @@ import {
   InnovationOrganisationUnitsSuggestionHandler,
   InnovationReassessmentRequestHandler,
   InnovationSubmittedHandler,
-  InnovationSupportStatusChangeRequestHandler,
   InnovationSupportStatusUpdateHandler,
   InnovationTransferOwnershipCompletedHandler,
   InnovationTransferOwnershipCreationHandler,
@@ -52,6 +51,7 @@ import { NeedsAssessmentStartedHandler } from '../_handlers/needs-assessment/nee
 import { InnovationDelayedSharedSuggestionHandler } from '../_handlers/suggestions/innovation-delayed-shared-suggestion.handler';
 import { OrganisationUnitsSuggestionHandler } from '../_handlers/suggestions/organisation-units-suggestion.handler';
 import { SupportNewAssignedAccessorsHandler } from '../_handlers/supports/support-new-assigned-accessors.handler';
+import { SupportStatusChangeRequestHandler } from '../_handlers/supports/support-status-change-request.handler';
 import { SupportStatusUpdateHandler } from '../_handlers/supports/support-status-update.handler';
 
 export const NOTIFICATIONS_CONFIG = {
@@ -360,7 +360,7 @@ export const NOTIFICATIONS_CONFIG = {
   },
 
   [NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_CHANGE_REQUEST]: {
-    handler: InnovationSupportStatusChangeRequestHandler,
+    handler: SupportStatusChangeRequestHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_CHANGE_REQUEST]>({
       innovationId: Joi.string().guid().required(),
       supportId: Joi.string().guid().required(),

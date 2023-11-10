@@ -1,5 +1,7 @@
 // TODO transform enums into const/types (maybe)
 
+import type { InnovationSupportStatusEnum } from '@notifications/shared/enums';
+
 export const EmailTemplates = {
   // TASKS
   TA01_TASK_CREATION_TO_INNOVATOR: '1a89a775-e39a-4be9-8aad-37c0c72574ec',
@@ -24,6 +26,7 @@ export const EmailTemplates = {
   ST04_SUPPORT_NEW_ASSIGNED_ACCESSORS_TO_INNOVATOR: '2916606e-ef89-4ec0-b654-decdb3dd1de8',
   ST05_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_NEW_QA: 'f33f5c16-3349-4eb0-b4da-a47806f12838',
   ST06_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_OLD_QA: 'cdb8e3b2-1f83-4ced-8fcb-3cf801262ae8',
+  ST07_SUPPORT_STATUS_CHANGE_REQUEST: '7502777a-a1e7-4a63-bbfa-04eac9bca2ea',
 
   // NEEDS ASSESSMENT
   NA01_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_INNOVATOR: 'fadfc3e8-d48e-446e-a81d-d573d774b725',
@@ -240,6 +243,13 @@ export type EmailTemplatesType = {
   };
   ST06_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_OLD_QA: {
     innovation_name: string;
+  };
+  ST07_SUPPORT_STATUS_CHANGE_REQUEST: {
+    accessor_name: string;
+    innovation_name: string;
+    proposed_status: InnovationSupportStatusEnum;
+    request_comment: string;
+    innovation_overview_url: string;
   };
 
   // NEEDS ASSESSMENT
