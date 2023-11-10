@@ -1,5 +1,6 @@
 import type { Context } from '@azure/functions';
 import { NotificationCategoryEnum, ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
+import { TranslationHelper } from '@notifications/shared/helpers';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { innovationOverviewUrl } from '../../_helpers/url.helper';
 import { BaseHandler } from '../base.handler';
@@ -32,7 +33,9 @@ export class SupportStatusChangeRequestHandler extends BaseHandler<
             accessor_name: accessor,
             innovation_name: innovation.name,
             innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, innovation.id),
-            proposed_status: this.inputData.proposedStatus,
+            proposed_status: TranslationHelper.translate(
+              `SUPPORT_STATUS.${this.inputData.proposedStatus}`
+            ).toLowerCase(),
             request_comment: this.inputData.requestStatusUpdateComment
           }
         },

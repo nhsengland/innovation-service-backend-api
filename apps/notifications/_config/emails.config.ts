@@ -1,7 +1,5 @@
 // TODO transform enums into const/types (maybe)
 
-import type { InnovationSupportStatusEnum } from '@notifications/shared/enums';
-
 export const EmailTemplates = {
   // TASKS
   TA01_TASK_CREATION_TO_INNOVATOR: '1a89a775-e39a-4be9-8aad-37c0c72574ec',
@@ -251,7 +249,7 @@ export type EmailTemplatesType = {
   ST07_SUPPORT_STATUS_CHANGE_REQUEST: {
     accessor_name: string;
     innovation_name: string;
-    proposed_status: InnovationSupportStatusEnum;
+    proposed_status: string;
     request_comment: string;
     innovation_overview_url: string;
   };
