@@ -4075,9 +4075,46 @@ paths:
                   type: array
                   items:
                     type: string
+                    format: uuid
               required:
                 - followerUserRoleIds
               additionalProperties: false
+      responses:
+        "204":
+          description: Success
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+  /v1/{innovationId}/threads/{threadId}/followers/{roleId}:
+    delete:
+      description: Innovation Thread delete follower
+      tags:
+        - Innovation Thread
+      operationId: v1-innovation-thread-followers-delete
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: threadId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: roleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         "204":
           description: Success
@@ -4407,37 +4444,6 @@ paths:
                     description: Message Id
         "400":
           description: Bad Request
-        "401":
-          description: Unauthorized
-        "403":
-          description: Forbidden
-        "404":
-          description: Not Found
-        "500":
-          description: Internal Server Error
-  /v1/{innovationId}/threads/{threadId}/unfollow:
-    patch:
-      summary: Unfollow Innovation Thread
-      description: Unfollow Innovation Thread
-      tags:
-        - Innovation Thread
-      operationId: v1-innovation-thread-unfollow
-      parameters:
-        - name: innovationId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: threadId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "204":
-          description: Success
         "401":
           description: Unauthorized
         "403":

@@ -213,11 +213,7 @@ export class InnovationThreadsService extends BaseService {
     }
   }
 
-  async unfollowThread(
-    domainContext: DomainContextType,
-    threadId: string,
-    entityManager?: EntityManager
-  ): Promise<void> {
+  async unfollowThread(threadId: string, roleId: string, entityManager?: EntityManager): Promise<void> {
     const manager = entityManager ?? this.sqlConnection.manager;
 
     const dbThread = await manager
@@ -225,20 +221,15 @@ export class InnovationThreadsService extends BaseService {
       .leftJoinAndSelect('thread.followers', 'follower')
       .where('thread.id = :threadId', { threadId })
       .getOne();
-
     if (!dbThread) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND);
     }
 
-    if (!dbThread.followers.map(ur => ur.id).includes(domainContext.currentRole.id)) {
+    if (!dbThread.followers.map(ur => ur.id).includes(roleId)) {
       throw new BadRequestError(InnovationErrorsEnum.INNOVATION_THREAD_USER_IS_NOT_FOLLOWER);
     }
 
-    if (domainContext.currentRole.role === ServiceRoleEnum.INNOVATOR) {
-      throw new BadRequestError(InnovationErrorsEnum.INNOVATION_THREAD_INNOVATORS_CANNOT_UNFOLLOW);
-    }
-
-    await this.removeFollowers(dbThread.id, [domainContext.currentRole.id], manager);
+    await this.removeFollowers(dbThread.id, [roleId], manager);
   }
 
   async removeFollowers(threadId: string, unfollowersRolesIds: string[], entityManager?: EntityManager): Promise<void> {

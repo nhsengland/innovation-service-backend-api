@@ -36,7 +36,8 @@ describe('v1-innovation-thread-unfollow', () => {
         .setAuth(scenario.users.aliceQualifyingAccessor)
         .setParams<ParamsType>({
           innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
-          threadId: randUuid()
+          threadId: randUuid(),
+          roleId: scenario.users.aliceQualifyingAccessor.roles.qaRole.id
         })
         .call<never>(azureFunction);
 
@@ -46,25 +47,44 @@ describe('v1-innovation-thread-unfollow', () => {
     });
   });
 
-  describe('Access', () => {
-    it.each([
-      ['Admin', 403, scenario.users.allMighty],
-      ['QA', 204, scenario.users.aliceQualifyingAccessor],
-      ['A', 204, scenario.users.ingridAccessor],
-      ['NA', 204, scenario.users.paulNeedsAssessor],
-      ['Innovator owner', 403, scenario.users.johnInnovator],
-      ['Innovator collaborator', 403, scenario.users.janeInnovator],
-      ['Innovator other', 403, scenario.users.ottoOctaviusInnovator]
-    ])('access with user %s should give %i', async (_role: string, status: number, user: TestUserType) => {
+  describe('403', () => {
+    it('should throw a ForbiddenError when the request user is unfollowing other users', async () => {
       const result = await new AzureHttpTriggerBuilder()
-        .setAuth(user)
+        .setAuth(scenario.users.aliceQualifyingAccessor)
         .setParams<ParamsType>({
           innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
-          threadId: randUuid()
+          threadId: randUuid(),
+          roleId: scenario.users.jamieMadroxAccessor.roles.aiRole.id
         })
         .call<ErrorResponseType>(azureFunction);
 
-      expect(result.status).toBe(status);
+      expect(result.status).toBe(403);
     });
+  });
+
+  describe('Access', () => {
+    it.each([
+      ['Admin', 403, scenario.users.allMighty, 'admin'],
+      ['QA', 204, scenario.users.aliceQualifyingAccessor, 'qaRole'],
+      ['A', 204, scenario.users.ingridAccessor, 'accessorRole'],
+      ['NA', 204, scenario.users.paulNeedsAssessor, 'assessmentRole'],
+      ['Innovator owner', 403, scenario.users.johnInnovator, 'innovatorRole'],
+      ['Innovator collaborator', 403, scenario.users.janeInnovator, 'innovatorRole'],
+      ['Innovator other', 403, scenario.users.ottoOctaviusInnovator, 'innovatorRole']
+    ])(
+      'access with user %s should give %i',
+      async (_role: string, status: number, user: TestUserType, role: string) => {
+        const result = await new AzureHttpTriggerBuilder()
+          .setAuth(user)
+          .setParams<ParamsType>({
+            innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
+            threadId: randUuid(),
+            roleId: user.roles[role]!.id
+          })
+          .call<ErrorResponseType>(azureFunction);
+
+        expect(result.status).toBe(status);
+      }
+    );
   });
 });

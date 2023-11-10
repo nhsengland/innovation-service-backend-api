@@ -10,12 +10,13 @@ import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
 
+import { ForbiddenError, InnovationErrorsEnum } from '@innovations/shared/errors';
 import type { InnovationThreadsService } from '../_services/innovation-threads.service';
 import SYMBOLS from '../_services/symbols';
 import type { ParamsType } from './validation.schemas';
 import { ParamsSchema } from './validation.schemas';
 
-class V1InnovationThreadUnfollow {
+class V1InnovationThreadFollowersDelete {
   @JwtDecoder()
   @Audit({ action: ActionEnum.UPDATE, target: TargetEnum.THREAD, identifierParam: 'threadId' })
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
@@ -23,18 +24,21 @@ class V1InnovationThreadUnfollow {
     const threadsService = container.get<InnovationThreadsService>(SYMBOLS.InnovationThreadsService);
 
     try {
-      const pathParams = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
+      const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
       const auth = await authorizationService
         .validate(context)
-        .setInnovation(pathParams.innovationId)
+        .setInnovation(params.innovationId)
         .checkAccessorType()
         .checkAssessmentType()
         .verify();
-
       const domainContext = auth.getContext();
 
-      await threadsService.unfollowThread(domainContext, pathParams.threadId);
+      if (domainContext.currentRole.id !== params.roleId) {
+        throw new ForbiddenError(InnovationErrorsEnum.INNOVATION_THREAD_CANT_UNFOLLOW_OTHER_USERS);
+      }
+
+      await threadsService.unfollowThread(params.roleId, params.threadId);
 
       context.res = ResponseHelper.NoContent();
       return;
@@ -46,14 +50,13 @@ class V1InnovationThreadUnfollow {
 }
 
 export default openApi(
-  V1InnovationThreadUnfollow.httpTrigger as AzureFunction,
-  '/v1/{innovationId}/threads/{threadId}/unfollow',
+  V1InnovationThreadFollowersDelete.httpTrigger as AzureFunction,
+  '/v1/{innovationId}/threads/{threadId}/followers/{roleId}',
   {
-    patch: {
-      summary: 'Unfollow Innovation Thread',
-      description: 'Unfollow Innovation Thread',
+    delete: {
+      description: 'Innovation Thread delete follower',
       tags: ['Innovation Thread'],
-      operationId: 'v1-innovation-thread-unfollow',
+      operationId: 'v1-innovation-thread-followers-delete',
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       responses: {
         204: { description: 'Success' },
