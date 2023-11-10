@@ -121,7 +121,7 @@ export const dashboardUrl = (role: ServiceRoleEnum): string => {
 };
 
 export const createAccountUrl = (): string => {
-  return new UrlModel(ENV.webBaseTransactionalUrl).addPath(':signup').buildUrl();
+  return new UrlModel(ENV.webBaseTransactionalUrl).addPath('signup').buildUrl();
 };
 
 export const frontendBaseUrl = (role: ServiceRoleEnum): string => {

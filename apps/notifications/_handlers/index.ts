@@ -7,7 +7,6 @@ export { InnovationCollaboratorInviteHandler } from './legacy/innovation-collabo
 export { InnovationCollaboratorUpdateHandler } from './legacy/innovation-collaborator-update.handler';
 export { InnovationOrganisationUnitsSuggestionHandler } from './legacy/innovation-organisation-units-suggestion.handler';
 export { InnovationReassessmentRequestHandler } from './legacy/innovation-reassessment-request.handler';
-export { InnovationSupportStatusChangeRequestHandler } from './legacy/innovation-support-status-change-request.handler';
 export { InnovationSupportStatusUpdateHandler } from './legacy/innovation-support-status-update.handler';
 export { InnovationTransferOwnershipCompletedHandler } from './legacy/innovation-transfer-ownership-completed.handler';
 export { InnovationTransferOwnershipCreationHandler } from './legacy/innovation-transfer-ownership-creation.handler';
