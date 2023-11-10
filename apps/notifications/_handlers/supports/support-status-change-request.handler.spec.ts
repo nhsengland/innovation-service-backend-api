@@ -1,5 +1,6 @@
 import { randText } from '@ngneat/falso';
 import { InnovationSupportStatusEnum, NotificationCategoryEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import { TranslationHelper } from '@notifications/shared/helpers';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { testEmails, testInApps } from '../../_helpers/tests.helper';
 import { innovationOverviewUrl } from '../../_helpers/url.helper';
@@ -37,7 +38,7 @@ describe('Notifications / _handlers / support-new-assigned-accessors suite', () 
           accessor_name: requestUser.name,
           innovation_name: innovation.name,
           innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, innovation.id),
-          proposed_status: InnovationSupportStatusEnum.UNSUITABLE,
+          proposed_status: TranslationHelper.translate(`SUPPORT_STATUS.UNSUITABLE`).toLowerCase(),
           request_comment: message
         }
       });
