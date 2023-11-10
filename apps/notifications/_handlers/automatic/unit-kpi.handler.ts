@@ -21,11 +21,17 @@ export class UnitKPIHandler extends BaseHandler<
   private unitQAs: Map<string, RecipientType[]> = new Map<string, RecipientType[]>();
 
   async run(): Promise<this> {
-    const reminderInnovations = await this.recipientsService.suggestedInnovationsWithoutUnitAction(4);
-    const overdueInnovations = await this.recipientsService.suggestedInnovationsWithoutUnitAction(6, 7);
+    const date = new Date();
+    const dayOfWeek = date.getDay();
 
-    await this.sendNotifications(reminderInnovations, 'AU04_SUPPORT_KPI_REMINDER');
-    await this.sendNotifications(overdueInnovations, 'AU05_SUPPORT_KPI_OVERDUE');
+    // Run only on weekdays
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+      const reminderInnovations = await this.recipientsService.suggestedInnovationsWithoutUnitAction(4);
+      const overdueInnovations = await this.recipientsService.suggestedInnovationsWithoutUnitAction(6, 7);
+
+      await this.sendNotifications(reminderInnovations, 'AU04_SUPPORT_KPI_REMINDER');
+      await this.sendNotifications(overdueInnovations, 'AU05_SUPPORT_KPI_OVERDUE');
+    }
 
     return this;
   }

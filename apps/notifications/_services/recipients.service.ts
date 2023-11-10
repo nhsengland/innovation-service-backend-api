@@ -834,15 +834,20 @@ export class RecipientsService extends BaseService {
     // for some unknown reason passing date shows the right query, works locally connected to the stage DB but not
     // in stage. Resorted to using the date.toISOString().split('T')[0] to get the date in the right format for the query
     if (recurring) {
+      // We want all dates before the date provided where the weekday is the same as the date provided
+
+      // this is a hack to know the day of the week of assigned_date with 2 being Monday, Saturday and Sunday
+      const weekday = `CASE DATEPART(DW, kpi.assigned_date) WHEN 3 THEN 3 WHEN 4 THEN 4 WHEN 5 THEN 5 WHEN 6 THEN 6 ELSE 2 END`;
       date.setHours(23, 59, 59, 999);
-      query
-        .where('kpi.assigned_date <= :fullDate', { fullDate: date })
-        .andWhere('DATEDIFF(day, kpi.assigned_date, :date) % :recurring = 0', {
-          date: date.toISOString().split('T')[0],
-          recurring
-        });
+      query.where('kpi.assigned_date <= :fullDate', { fullDate: date }).andWhere(`${weekday} = DATEPART(DW, :date)`, {
+        date: date.toISOString().split('T')[0]
+      });
     } else {
-      query.where('DATEDIFF(day, kpi.assigned_date, :date) = 0', { date: date.toISOString().split('T')[0] });
+      // We want all dates that are the same as the date provided (or previous day if it's a weekend)
+      query.where(
+        'DATEDIFF(day, "kpi"."assigned_date", :date) = 0 OR (DATEPART(DW, :date) = 2 AND DATEDIFF(day, "kpi"."assigned_date", :date) IN (1,2))',
+        { date: date.toISOString().split('T')[0] }
+      );
     }
 
     const dbResult = await query.getMany();
