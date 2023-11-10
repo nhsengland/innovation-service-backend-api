@@ -141,6 +141,13 @@ export type InAppTemplatesType = {
     innovationName: string;
     supportId: string; // really not required atm
   };
+  // Automatic / Transfer
+  AU08_TRANSFER_ONE_WEEK_REMINDER_EXISTING_USER: {
+    innovationName: string;
+  };
+  AU09_TRANSFER_EXPIRED: {
+    innovationName: string;
+  };
 
   // Support Summary
   SS01_SUPPORT_SUMMARY_UPDATE_TO_INNOVATORS: {

@@ -86,7 +86,7 @@ export class DomainInnovationsService {
 
     const transfersToExpire = await em
       .createQueryBuilder(InnovationTransferEntity, 'transfers')
-      .select(['transfers.id', 'innovation.id'])
+      .select(['transfers.id', 'innovation.id', 'innovation.name'])
       .innerJoin('transfers.innovation', 'innovation')
       .where('DATEDIFF(day, transfers.created_at, GETDATE()) > :date', {
         date: EXPIRATION_DATES.transfersDays
@@ -111,7 +111,7 @@ export class DomainInnovationsService {
         // Send the notifications
         await this.notifierService.sendSystemNotification(NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_EXPIRATION, {
           innovationId: dbTransfer.innovation.id,
-          transferId: dbTransfer.id
+          innovationName: dbTransfer.innovation.name
         });
       }
     }
@@ -153,7 +153,6 @@ export class DomainInnovationsService {
         await this.notifierService.sendSystemNotification(NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_REMINDER, {
           innovationId: dbTransfer.innovation.id,
           innovationName: dbTransfer.innovation.name,
-          transferId: dbTransfer.id,
           recipientEmail: dbTransfer.email
         });
       }

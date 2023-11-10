@@ -1,20 +1,13 @@
-import { ENV } from '../../_config';
-
-import {
-  NotificationContextDetailEnum,
-  NotificationContextTypeEnum,
-  NotifierTypeEnum,
-  ServiceRoleEnum
-} from '@notifications/shared/enums';
-import { UrlModel } from '@notifications/shared/models';
+import { NotificationCategoryEnum, NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import type { Context } from '@azure/functions';
+import { manageInnovationUrl } from '../../_helpers/url.helper';
 import { BaseHandler } from '../base.handler';
 
 export class InnovationTransferOwnershipExpirationHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_EXPIRATION,
-  'MIGRATION_OLD'
+  'AU09_TRANSFER_EXPIRED'
 > {
   constructor(
     requestUser: DomainContextType,
@@ -37,27 +30,25 @@ export class InnovationTransferOwnershipExpirationHandler extends BaseHandler<
     const targetUser = await this.recipientsService.getUsersRecipient(innovation.ownerId, ServiceRoleEnum.INNOVATOR);
 
     if (targetUser) {
-      this.emails.push({
-        templateId: 'INNOVATION_TRANSFER_EXPIRED',
-        to: targetUser,
-        notificationPreferenceType: null,
-        params: {
-          innovation_name: innovation.name,
-          innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
-            .addPath(`/innovator/innovations/${this.inputData.innovationId}/overview`)
-            .buildUrl()
-        }
-      });
-
-      this.inApp.push({
-        innovationId: this.inputData.innovationId,
-        context: {
-          type: NotificationContextTypeEnum.INNOVATION,
-          detail: NotificationContextDetailEnum.TRANSFER_EXPIRED,
-          id: this.inputData.transferId
+      this.notify('AU09_TRANSFER_EXPIRED', [targetUser], {
+        email: {
+          notificationPreferenceType: NotificationCategoryEnum.AUTOMATIC,
+          params: {
+            innovation_name: innovation.name,
+            manage_innovation_url: manageInnovationUrl(ServiceRoleEnum.INNOVATOR, this.inputData.innovationId)
+          }
         },
-        userRoleIds: [targetUser.roleId],
-        params: {}
+        inApp: {
+          context: {
+            detail: 'AU09_TRANSFER_EXPIRED',
+            id: this.inputData.innovationId,
+            type: NotificationCategoryEnum.AUTOMATIC
+          },
+          innovationId: this.inputData.innovationId,
+          params: {
+            innovationName: innovation.name
+          }
+        }
       });
     }
 

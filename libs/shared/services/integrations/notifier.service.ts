@@ -11,7 +11,7 @@ import { QueuesEnum, StorageQueueService } from './storage-queue.service';
 //           It used to be F4D75573-47CF-EC11-B656-0050F25A2AF6
 
 // This should be reviewed in the future, notifications currently require a sender (additionally it used to be F4D75573-47CF-EC11-B656-0050F25A2AF6)
-const SYSTEM_CRON_SENDER: AdminDomainContextType = {
+export const SYSTEM_CRON_SENDER: AdminDomainContextType = {
   currentRole: { id: '00000000-0000-0000-0000-000000000000', role: ServiceRoleEnum.ADMIN },
   id: '00000000-0000-0000-0000-000000000000',
   identityId: '00000000-0000-0000-0000-000000000000'

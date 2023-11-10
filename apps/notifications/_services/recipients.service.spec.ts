@@ -886,10 +886,6 @@ describe('Notifications / _services / recipients service suite', () => {
     });
   });
 
-  describe('dailyDigestUsersWithCounts', () => {
-    it.skip('placeholder', () => {});
-  });
-
   describe('incompleteInnovations', () => {
     it.each([
       ["doesn't return", '0 days', 0, 0],

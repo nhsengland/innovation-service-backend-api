@@ -14,7 +14,6 @@ import {
   AccessorUnitChangeHandler,
   ActionCreationHandler,
   ActionUpdateHandler,
-  DailyDigestHandler,
   DocumentUploadHandler,
   InnovationCollaboratorInviteHandler,
   InnovationCollaboratorUpdateHandler,
@@ -344,8 +343,7 @@ export const NOTIFICATIONS_CONFIG = {
   [NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_EXPIRATION]: {
     handler: InnovationTransferOwnershipExpirationHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_EXPIRATION]>({
-      innovationId: Joi.string().guid().required(),
-      transferId: Joi.string().guid().required()
+      innovationId: Joi.string().guid().required()
     }).required()
   },
 
@@ -354,7 +352,6 @@ export const NOTIFICATIONS_CONFIG = {
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_REMINDER]>({
       innovationId: Joi.string().guid().required(),
       innovationName: Joi.string().required(),
-      transferId: Joi.string().guid().required(),
       recipientEmail: Joi.string().required()
     }).required()
   },
@@ -448,11 +445,6 @@ export const NOTIFICATIONS_CONFIG = {
   },
 
   // Recurrent notifications.
-  [NotifierTypeEnum.DAILY_DIGEST]: {
-    handler: DailyDigestHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.DAILY_DIGEST]>({})
-  },
-
   [NotifierTypeEnum.INCOMPLETE_INNOVATION_RECORD]: {
     handler: IncompleteRecordHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INCOMPLETE_INNOVATION_RECORD]>({})
