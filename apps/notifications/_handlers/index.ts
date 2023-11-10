@@ -6,7 +6,6 @@ export { AccessorUnitChangeHandler } from './legacy/accessor-unit-change.handler
 export { InnovationCollaboratorInviteHandler } from './legacy/innovation-collaborator-invite.handler';
 export { InnovationCollaboratorUpdateHandler } from './legacy/innovation-collaborator-update.handler';
 export { InnovationOrganisationUnitsSuggestionHandler } from './legacy/innovation-organisation-units-suggestion.handler';
-export { InnovatorAccountDeletionHandler } from './legacy/innovation-owner-delete-account.handler';
 export { InnovationReassessmentRequestHandler } from './legacy/innovation-reassessment-request.handler';
 export { InnovationSupportStatusChangeRequestHandler } from './legacy/innovation-support-status-change-request.handler';
 export { InnovationSupportStatusUpdateHandler } from './legacy/innovation-support-status-update.handler';

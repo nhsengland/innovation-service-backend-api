@@ -27,21 +27,21 @@ import {
   InnovationTransferOwnershipExpirationHandler,
   InnovationTransferOwnershipReminderHandler,
   InnovatorAccountCreationHandler,
-  InnovatorAccountDeletionHandler,
   SupportSummaryUpdateHandler,
   UnitInactivationSupportStatusCompletedHandler
 } from '../_handlers';
 import { AccountCreationHandler } from '../_handlers/account/account-creation.handler';
 import { LockUserHandler } from '../_handlers/admin/lock-user.handler';
-import { InnovationStopSharingHandler } from '../_handlers/admin/stop-sharing-innovation/innovation-stop-sharing.handler';
 import { UnitInactivatedHandler } from '../_handlers/admin/unit-inactivated.handler';
-import { InnovationWithdrawnHandler } from '../_handlers/admin/withdraw-innovation/innovation-withdrawn.handler';
 import { IdleSupportAccessorHandler } from '../_handlers/automatic/idle-support-accessor.handler';
 import { IdleSupportInnovatorHandler } from '../_handlers/automatic/idle-support-innovator.handler';
 import { IncompleteRecordHandler } from '../_handlers/automatic/incomplete-record.handler';
 import { UnitKPIHandler } from '../_handlers/automatic/unit-kpi.handler';
+import { AccountDeletionHandler } from '../_handlers/innovations/delete-account/account-deletion.handler';
 import { ExportRequestFeedbackHandler } from '../_handlers/innovations/export-request-feedback.handler';
 import { ExportRequestSubmittedHandler } from '../_handlers/innovations/export-request-submitted.handler';
+import { InnovationStopSharingHandler } from '../_handlers/innovations/stop-sharing-innovation/innovation-stop-sharing.handler';
+import { InnovationWithdrawnHandler } from '../_handlers/innovations/withdraw-innovation/innovation-withdrawn.handler';
 import { MessageCreationHandler } from '../_handlers/messages/message-creation.handler';
 import { ThreadAddFollowersHandler } from '../_handlers/messages/thread-add-followers.handler';
 import { ThreadCreationHandler } from '../_handlers/messages/thread-creation.handler';
@@ -211,6 +211,21 @@ export const NOTIFICATIONS_CONFIG = {
       }).required()
     }).required()
   },
+  [NotifierTypeEnum.ACCOUNT_DELETION]: {
+    handler: AccountDeletionHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.ACCOUNT_DELETION]>({
+      innovations: Joi.array()
+        .items(
+          Joi.object({
+            id: Joi.string().guid().required(),
+            name: Joi.string().required(),
+            transferExpireDate: Joi.date().required()
+          })
+        )
+        .min(1)
+        .required()
+    }).required()
+  },
 
   // Admin
   [NotifierTypeEnum.LOCK_USER]: {
@@ -237,23 +252,6 @@ export const NOTIFICATIONS_CONFIG = {
   [NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION]: {
     handler: InnovatorAccountCreationHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION]>({})
-  },
-
-  [NotifierTypeEnum.INNOVATOR_ACCOUNT_DELETION_WITH_PENDING_TRANSFER]: {
-    handler: InnovatorAccountDeletionHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATOR_ACCOUNT_DELETION_WITH_PENDING_TRANSFER]>(
-      {
-        innovations: Joi.array()
-          .items(
-            Joi.object({
-              id: Joi.string().guid().required(),
-              name: Joi.string().required(),
-              transferExpireDate: Joi.date().required()
-            })
-          )
-          .required()
-      }
-    ).required()
   },
 
   [NotifierTypeEnum.INNOVATION_SUBMITTED]: {

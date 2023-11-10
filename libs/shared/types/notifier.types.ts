@@ -125,13 +125,12 @@ export type NotifierTemplatesType = {
 
   // Account
   [NotifierTypeEnum.ACCOUNT_CREATION]: Record<string, never>;
+  [NotifierTypeEnum.ACCOUNT_DELETION]: {
+    innovations: { id: string; name: string; transferExpireDate: string }[];
+  };
 
   // OLD
   [NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION]: Record<string, never>;
-
-  [NotifierTypeEnum.INNOVATOR_ACCOUNT_DELETION_WITH_PENDING_TRANSFER]: {
-    innovations: { id: string; name: string; transferExpireDate: string }[];
-  };
 
   // Old one with typo
   [NotifierTypeEnum.INNOVATION_SUBMITED]: {
@@ -153,10 +152,6 @@ export type NotifierTemplatesType = {
 
   // OLD
   [NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION]: Record<string, never>;
-
-  [NotifierTypeEnum.INNOVATOR_ACCOUNT_DELETION_WITH_PENDING_TRANSFER]: {
-    innovations: { id: string; name: string; transferExpireDate: string }[];
-  };
 
   // Old one with typo
   [NotifierTypeEnum.INNOVATION_SUBMITED]: {
