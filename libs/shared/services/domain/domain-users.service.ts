@@ -379,13 +379,9 @@ export class DomainUsersService {
 
         // Send notification to collaborators if there are innovations with pending transfer
         if (innovationsWithPendingTransfer.length > 0) {
-          await this.notifierService.send(
-            domainContext,
-            NotifierTypeEnum.INNOVATOR_ACCOUNT_DELETION_WITH_PENDING_TRANSFER,
-            {
-              innovations: innovationsWithPendingTransfer
-            }
-          );
+          await this.notifierService.send(domainContext, NotifierTypeEnum.ACCOUNT_DELETION, {
+            innovations: innovationsWithPendingTransfer
+          });
         }
       }
 

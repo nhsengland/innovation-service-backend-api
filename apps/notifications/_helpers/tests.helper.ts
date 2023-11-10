@@ -15,7 +15,7 @@ export const testEmails = async <
   handlerClass: T,
   template: Notifications,
   data: {
-    notificationPreferenceType: NotificationCategoryEnum;
+    notificationPreferenceType: NotificationCategoryEnum | null;
     requestUser: DomainContextType;
     inputData: NotifierTemplatesType[InputDataType];
     recipients: (EmailRecipientType | RecipientType)[];

@@ -61,6 +61,7 @@ export const EmailTemplates = {
   WI01_INNOVATION_WITHDRAWN: '29d46f19-a64e-47e8-8c8b-f9bf6822b246',
   SH01_INNOVATION_STOPPED_SHARED_TO_ASSIGNED_USERS: 'ab51f9eb-8826-4ab4-8e8b-97acd8e2edf7',
   SH03_INNOVATION_STOPPED_SHARED_TO_SELF: '42d32a18-95dc-4b0e-9d82-35a96e9c033d',
+  DA01_OWNER_DELETED_ACCOUNT_WITH_PENDING_TRANSFER_TO_COLLABORATOR: '5c8f9de0-09d3-4e33-8986-387fb5c29224',
 
   // ADMIN
   AP03_USER_LOCKED_TO_LOCKED_USER: '95751f8f-ba65-436c-baa6-dabca6ca7acf',
@@ -381,6 +382,11 @@ export type EmailTemplatesType = {
   };
   SH03_INNOVATION_STOPPED_SHARED_TO_SELF: {
     innovation_name: string;
+    innovation_overview_url: string;
+  };
+  DA01_OWNER_DELETED_ACCOUNT_WITH_PENDING_TRANSFER_TO_COLLABORATOR: {
+    innovation_name: string;
+    expiry_date: string;
     innovation_overview_url: string;
   };
 

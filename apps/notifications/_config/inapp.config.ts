@@ -189,6 +189,9 @@ export type InAppTemplatesType = {
   SH03_INNOVATION_STOPPED_SHARED_TO_SELF: {
     innovationName: string;
   };
+  DA01_OWNER_DELETED_ACCOUNT_WITH_PENDING_TRANSFER_TO_COLLABORATOR: {
+    innovationName: string;
+  };
 
   // Admin
   AP02_INNOVATOR_LOCKED_TO_ASSIGNED_USERS: {
