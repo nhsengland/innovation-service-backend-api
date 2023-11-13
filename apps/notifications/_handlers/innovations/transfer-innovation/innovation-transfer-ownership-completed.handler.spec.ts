@@ -3,8 +3,8 @@ import { UrlModel } from '@notifications/shared/models';
 import { IdentityProviderService } from '@notifications/shared/services';
 import { CompleteScenarioType, MocksHelper, TestsHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
-import { ENV } from '../../_config';
-import { RecipientsService } from '../../_services/recipients.service';
+import { ENV } from '../../../_config';
+import { RecipientsService } from '../../../_services/recipients.service';
 import { InnovationTransferOwnershipCompletedHandler } from './innovation-transfer-ownership-completed.handler';
 
 describe('Notifications / _handlers / innovation-transfer-ownership-completed handler suite', () => {

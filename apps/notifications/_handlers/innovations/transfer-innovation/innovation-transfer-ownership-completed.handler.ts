@@ -3,11 +3,11 @@ import type { IdentityProviderService } from '@notifications/shared/services';
 import SHARED_SYMBOLS from '@notifications/shared/services/symbols';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { ENV, container } from '../../_config';
+import { ENV, container } from '../../../_config';
 
 import type { Context } from '@azure/functions';
 import { UrlModel } from '@notifications/shared/models';
-import { BaseHandler } from '../base.handler';
+import { BaseHandler } from '../../base.handler';
 
 export class InnovationTransferOwnershipCompletedHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_COMPLETED,
