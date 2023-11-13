@@ -824,7 +824,7 @@ export class RecipientsService extends BaseService {
    */
   async suggestedInnovationsWithoutUnitAction(
     days: number,
-    recurring = 0
+    recurring = false
   ): Promise<Map<string, { id: string; name: string }[]>> {
     const date = DatesHelper.addWorkingDays(new Date(), -days);
     const query = this.sqlConnection
@@ -839,9 +839,9 @@ export class RecipientsService extends BaseService {
       // this is a hack to know the day of the week of assigned_date with 2 being Monday, Saturday and Sunday
       const weekday = `CASE DATEPART(DW, kpi.assigned_date) WHEN 3 THEN 3 WHEN 4 THEN 4 WHEN 5 THEN 5 WHEN 6 THEN 6 ELSE 2 END`;
       date.setHours(23, 59, 59, 999);
-      query.where('kpi.assigned_date <= :fullDate', { fullDate: date }).andWhere(`${weekday} = DATEPART(DW, :date)`, {
-        date: date.toISOString().split('T')[0]
-      });
+      query
+        .where('kpi.assigned_date <= :fullDate', { fullDate: date })
+        .andWhere(`${weekday} = DATEPART(DW, :date)`, { date: date.toISOString().split('T')[0] });
     } else {
       // We want all dates that are the same as the date provided (or previous day if it's a weekend)
       query.where(
