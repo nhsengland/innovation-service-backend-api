@@ -1,17 +1,25 @@
-import { InnovationTransferStatusEnum, NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
-import type { IdentityProviderService } from '@notifications/shared/services';
-import SHARED_SYMBOLS from '@notifications/shared/services/symbols';
+import {
+  InnovationTransferStatusEnum,
+  NotificationCategoryEnum,
+  NotifierTypeEnum,
+  ServiceRoleEnum
+} from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { ENV, container } from '../../../_config';
-
 import type { Context } from '@azure/functions';
-import { UrlModel } from '@notifications/shared/models';
+import type { IdentityProviderService } from '@notifications/shared/services';
+import SHARED_SYMBOLS from '@notifications/shared/services/symbols';
+import { container } from '../../../_config';
+import { manageInnovationUrl } from '../../../_helpers/url.helper';
+import type { RecipientType } from '../../../_services/recipients.service';
 import { BaseHandler } from '../../base.handler';
 
 export class InnovationTransferOwnershipCompletedHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_COMPLETED,
-  'MIGRATION_OLD'
+  | 'TO06_TRANSFER_OWNERSHIP_ACCEPTS_PREVIOUS_OWNER'
+  | 'TO07_TRANSFER_OWNERSHIP_ACCEPTS_ASSIGNED_ACCESSORS'
+  | 'TO08_TRANSFER_OWNERSHIP_DECLINES_PREVIOUS_OWNER'
+  | 'TO09_TRANSFER_OWNERSHIP_CANCELED_NEW_OWNER'
 > {
   private identityProviderService = container.get<IdentityProviderService>(SHARED_SYMBOLS.IdentityProviderService);
 
@@ -25,70 +33,162 @@ export class InnovationTransferOwnershipCompletedHandler extends BaseHandler<
 
   async run(): Promise<this> {
     const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
-    const innovationOwnerInfo = await this.recipientsService.usersIdentityInfo(innovation.ownerIdentityId);
+    const ownerInfo = await this.recipientsService.usersIdentityInfo(innovation.ownerIdentityId);
+    const ownerName = ownerInfo?.displayName ?? (await this.getUserName(null, ServiceRoleEnum.INNOVATOR));
     const transfer = await this.recipientsService.innovationTransferInfoWithOwner(this.inputData.transferId);
-    const transferOwner = await this.recipientsService.getUsersRecipient(transfer.ownerId, ServiceRoleEnum.INNOVATOR);
 
     switch (transfer.status) {
-      case InnovationTransferStatusEnum.COMPLETED:
-        if (transferOwner) {
-          const innovatorIdentity = await this.recipientsService.usersIdentityInfo(transferOwner?.identityId);
+      case InnovationTransferStatusEnum.COMPLETED: {
+        const oldOwner = await this.recipientsService.getUsersRecipient(transfer.ownerId, ServiceRoleEnum.INNOVATOR);
+        const oldOwnerName = await this.getUserName(oldOwner?.identityId, ServiceRoleEnum.INNOVATOR);
+        if (oldOwner) {
+          this.TO06_TRANSFER_OWNERSHIP_ACCEPTS_PREVIOUS_OWNER(innovation, oldOwner, ownerName);
+        }
+        await this.TO07_TRANSFER_OWNERSHIP_ACCEPTS_ASSIGNED_ACCESSORS(innovation, oldOwnerName, ownerName);
 
-          this.emails.push({
-            templateId: 'INNOVATION_TRANSFER_COMPLETED_TO_ORIGINAL_OWNER',
-            to: transferOwner,
-            notificationPreferenceType: null,
-            params: {
-              innovator_name: innovatorIdentity?.displayName ?? 'user', // Review what should happen if user is not found
-              innovation_name: innovation.name,
-              new_innovator_name: innovationOwnerInfo?.displayName ?? 'user', // Review what should happen if user is not found
-              new_innovator_email: innovationOwnerInfo?.email ?? 'user email' //Review what should happen if user is not found
-            }
-          });
+        break;
+      }
+
+      case InnovationTransferStatusEnum.CANCELED: {
+        await this.TO09_TRANSFER_OWNERSHIP_CANCELED_NEW_OWNER(innovation, transfer.email, ownerName);
+        break;
+      }
+
+      case InnovationTransferStatusEnum.DECLINED: {
+        const oldOwner = await this.recipientsService.getUsersRecipient(transfer.ownerId, ServiceRoleEnum.INNOVATOR);
+        if (oldOwner) {
+          await this.TO08_TRANSFER_OWNERSHIP_DECLINES_PREVIOUS_OWNER(innovation, oldOwner, transfer.email);
         }
         break;
-
-      case InnovationTransferStatusEnum.CANCELED:
-        // If the transfer canceled is a preference we need to figure out if the email is a user or not but that would
-        // require extra work and not needed now.
-        // 1. get the user info by email
-        // 2. if user is found then use the user info to get the role and send to role
-        // 3. if user is not found then use the email as the recipient
-        this.emails.push({
-          templateId: 'INNOVATION_TRANSFER_CANCELLED_TO_NEW_OWNER',
-          to: { email: transfer.email },
-          notificationPreferenceType: null,
-          params: {
-            innovator_name: innovationOwnerInfo?.displayName ?? 'user', //Review what should happen if user is not found
-            innovation_name: innovation.name
-          }
-        });
-        break;
-
-      case InnovationTransferStatusEnum.DECLINED:
-        // Review seems odd to use transferOwner for one thing but innovator_name for the body of the email
-        if (transferOwner) {
-          const targetUser = await this.identityProviderService.getUserInfoByEmail(transfer.email);
-          this.emails.push({
-            templateId: 'INNOVATION_TRANSFER_DECLINED_TO_ORIGINAL_OWNER',
-            to: transferOwner,
-            notificationPreferenceType: null,
-            params: {
-              innovator_name: innovationOwnerInfo?.displayName ?? 'user', // Review what should happen if user is not found
-              new_innovator_name: targetUser?.displayName || transfer.email,
-              innovation_name: innovation.name,
-              innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
-                .addPath('innovator/innovations/:innovationId')
-                .setPathParams({ innovationId: this.inputData.innovationId })
-                .buildUrl()
-            }
-          });
-        }
-        break;
+      }
       default:
         break;
     }
 
     return this;
+  }
+
+  private TO06_TRANSFER_OWNERSHIP_ACCEPTS_PREVIOUS_OWNER(
+    innovation: { id: string; name: string },
+    oldOwner: RecipientType,
+    newOwner: string
+  ): void {
+    this.notify('TO06_TRANSFER_OWNERSHIP_ACCEPTS_PREVIOUS_OWNER', [oldOwner], {
+      email: {
+        notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+        params: {
+          innovation_name: innovation.name,
+          new_innovation_owner: newOwner
+        }
+      },
+      inApp: {
+        context: {
+          detail: 'TO06_TRANSFER_OWNERSHIP_ACCEPTS_PREVIOUS_OWNER',
+          id: innovation.id,
+          type: NotificationCategoryEnum.INNOVATION_MANAGEMENT
+        },
+        innovationId: innovation.id,
+        params: {
+          innovationName: innovation.name,
+          newInnovationOwner: newOwner
+        }
+      }
+    });
+  }
+
+  private async TO07_TRANSFER_OWNERSHIP_ACCEPTS_ASSIGNED_ACCESSORS(
+    innovation: { id: string; name: string },
+    oldOwner: string,
+    newOwner: string
+  ): Promise<void> {
+    const assignedQAs = await this.recipientsService.innovationAssignedRecipients(innovation.id, {});
+    this.addInApp('TO07_TRANSFER_OWNERSHIP_ACCEPTS_ASSIGNED_ACCESSORS', assignedQAs, {
+      context: {
+        detail: 'TO07_TRANSFER_OWNERSHIP_ACCEPTS_ASSIGNED_ACCESSORS',
+        id: innovation.id,
+        type: NotificationCategoryEnum.INNOVATION_MANAGEMENT
+      },
+      innovationId: innovation.id,
+      params: {
+        innovationName: innovation.name,
+        newInnovationOwnerName: newOwner,
+        oldInnovationOwnerName: oldOwner
+      }
+    });
+  }
+
+  private async TO08_TRANSFER_OWNERSHIP_DECLINES_PREVIOUS_OWNER(
+    innovation: { id: string; name: string },
+    owner: RecipientType,
+    targetEmail: string
+  ): Promise<void> {
+    const targetIdentity = await this.identityProviderService.getUserInfoByEmail(targetEmail);
+    const newOwner = await this.getUserName(targetIdentity?.identityId, ServiceRoleEnum.INNOVATOR);
+    this.notify('TO08_TRANSFER_OWNERSHIP_DECLINES_PREVIOUS_OWNER', [owner], {
+      email: {
+        notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+        params: {
+          innovation_name: innovation.name,
+          manage_innovation_url: manageInnovationUrl(ServiceRoleEnum.INNOVATOR, innovation.id),
+          new_innovation_owner: newOwner
+        }
+      },
+      inApp: {
+        context: {
+          detail: 'TO08_TRANSFER_OWNERSHIP_DECLINES_PREVIOUS_OWNER',
+          id: innovation.id,
+          type: NotificationCategoryEnum.INNOVATION_MANAGEMENT
+        },
+        innovationId: innovation.id,
+        params: {
+          innovationName: innovation.name
+        }
+      }
+    });
+  }
+
+  private async TO09_TRANSFER_OWNERSHIP_CANCELED_NEW_OWNER(
+    innovation: { id: string; name: string },
+    targetEmail: string,
+    oldOwnerName: string
+  ): Promise<void> {
+    const targetIdentity = await this.identityProviderService.getUserInfoByEmail(targetEmail);
+    const targetUser = targetIdentity
+      ? await this.recipientsService.identityId2UserId(targetIdentity.identityId)
+      : null;
+    const recipient = await this.recipientsService.getUsersRecipient(targetUser, ServiceRoleEnum.INNOVATOR);
+
+    if (recipient) {
+      this.notify('TO09_TRANSFER_OWNERSHIP_CANCELED_NEW_OWNER', [recipient], {
+        email: {
+          notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+          params: {
+            innovation_name: innovation.name,
+            innovator_name: oldOwnerName
+          }
+        },
+        inApp: {
+          context: {
+            detail: 'TO09_TRANSFER_OWNERSHIP_CANCELED_NEW_OWNER',
+            id: innovation.id,
+            type: NotificationCategoryEnum.INNOVATION_MANAGEMENT
+          },
+          innovationId: innovation.id,
+          params: {
+            innovationName: innovation.name,
+            innovationOwner: oldOwnerName
+          }
+        }
+      });
+    } else {
+      // TODO maybe a new notification - empty displayName as a workaround using the same one
+      this.addEmails('TO09_TRANSFER_OWNERSHIP_CANCELED_NEW_OWNER', [{ email: targetEmail, displayname: '' }], {
+        notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+        params: {
+          innovation_name: innovation.name,
+          innovator_name: oldOwnerName
+        }
+      });
+    }
   }
 }

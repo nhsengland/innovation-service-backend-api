@@ -1,261 +1,299 @@
-import { InnovationTransferStatusEnum } from '@notifications/shared/enums';
-import { UrlModel } from '@notifications/shared/models';
-import { IdentityProviderService } from '@notifications/shared/services';
-import { CompleteScenarioType, MocksHelper, TestsHelper } from '@notifications/shared/tests';
+import { InnovationTransferStatusEnum, NotificationCategoryEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import { MocksHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
-import { ENV } from '../../../_config';
+import { testEmails, testInApps } from '../../../_helpers/tests.helper';
+import { manageInnovationUrl } from '../../../_helpers/url.helper';
 import { RecipientsService } from '../../../_services/recipients.service';
+import { NotificationsTestsHelper } from '../../../_tests/notifications-test.helper';
 import { InnovationTransferOwnershipCompletedHandler } from './innovation-transfer-ownership-completed.handler';
 
 describe('Notifications / _handlers / innovation-transfer-ownership-completed handler suite', () => {
-  let testsHelper: TestsHelper;
-  let scenario: CompleteScenarioType;
+  const testsHelper = new NotificationsTestsHelper();
+  const scenario = testsHelper.getCompleteScenario();
 
-  let handler: InnovationTransferOwnershipCompletedHandler;
-
-  let innovation: CompleteScenarioType['users']['adamInnovator']['innovations']['adamInnovation'];
-  let previousInnovationOwner: CompleteScenarioType['users']['adamInnovator'];
-  let newInnovationOwner: CompleteScenarioType['users']['janeInnovator'];
+  const innovation = scenario.users.adamInnovator.innovations.adamInnovation;
+  const previousInnovationOwner = scenario.users.adamInnovator;
+  const newInnovationOwner = scenario.users.janeInnovator;
+  const assignedAccessors = [
+    DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor),
+    DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'healthAccessorRole')
+  ];
 
   beforeAll(async () => {
-    testsHelper = await new TestsHelper().init();
-    scenario = testsHelper.getCompleteScenario();
-
-    innovation = scenario.users.adamInnovator.innovations.adamInnovation;
-    previousInnovationOwner = scenario.users.adamInnovator;
-    newInnovationOwner = scenario.users.janeInnovator;
+    await testsHelper.init();
   });
+
+  const innovationInfoMock = jest.spyOn(RecipientsService.prototype, 'innovationInfo');
+  const transferMock = jest.spyOn(RecipientsService.prototype, 'innovationTransferInfoWithOwner');
 
   describe('Innovation transfer completed to state COMPLETED', () => {
     beforeEach(() => {
-      // mock innovation info after transfer for new owner
-      jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+      innovationInfoMock.mockResolvedValueOnce({
         id: innovation.id,
         name: innovation.name,
         ownerId: newInnovationOwner.id,
         ownerIdentityId: newInnovationOwner.identityId
       });
-
-      // mock transfer info
-      jest.spyOn(RecipientsService.prototype, 'innovationTransferInfoWithOwner').mockResolvedValueOnce({
-        id: innovation.transfer.id,
-        email: innovation.transfer.email,
+      transferMock.mockResolvedValueOnce({
+        id: innovation.id,
+        email: newInnovationOwner.email,
         status: InnovationTransferStatusEnum.COMPLETED,
         ownerId: previousInnovationOwner.id
       });
-
-      // mock transfer owner recipient
-      jest
-        .spyOn(RecipientsService.prototype, 'getUsersRecipient')
-        .mockResolvedValueOnce(DTOsHelper.getRecipientUser(previousInnovationOwner, 'innovatorRole'));
-
-      handler = new InnovationTransferOwnershipCompletedHandler(
-        DTOsHelper.getUserRequestContext(newInnovationOwner, 'innovatorRole'),
-        {
-          innovationId: innovation.id,
-          transferId: innovation.transfer.id
-        },
-        MocksHelper.mockContext()
-      );
     });
 
-    it('Should send email to transfer creator', async () => {
-      await handler.run();
-
-      expect(handler.emails).toMatchObject([
-        {
-          templateId: 'INNOVATION_TRANSFER_COMPLETED_TO_ORIGINAL_OWNER',
-          to: DTOsHelper.getRecipientUser(previousInnovationOwner, 'innovatorRole'),
-          notificationPreferenceType: null,
-          params: {
-            innovator_name: previousInnovationOwner.name,
-            innovation_name: innovation.name,
-            new_innovator_name: newInnovationOwner.name,
-            new_innovator_email: newInnovationOwner.email
+    describe('TO06_TRANSFER_OWNERSHIP_ACCEPTS_PREVIOUS_OWNER', () => {
+      it('Should send email to transfer creator', async () => {
+        await testEmails(
+          InnovationTransferOwnershipCompletedHandler,
+          'TO06_TRANSFER_OWNERSHIP_ACCEPTS_PREVIOUS_OWNER',
+          {
+            notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+            inputData: {
+              innovationId: innovation.id,
+              transferId: innovation.transfer.id
+            },
+            outputData: {
+              innovation_name: innovation.name,
+              new_innovation_owner: newInnovationOwner.name
+            },
+            recipients: [DTOsHelper.getRecipientUser(previousInnovationOwner)],
+            requestUser: DTOsHelper.getUserRequestContext(newInnovationOwner)
           }
-        }
-      ]);
+        );
+      });
+
+      it('Should send inapp to transfer creator', async () => {
+        await testInApps(
+          InnovationTransferOwnershipCompletedHandler,
+          'TO06_TRANSFER_OWNERSHIP_ACCEPTS_PREVIOUS_OWNER',
+          {
+            context: {
+              id: innovation.id,
+              type: NotificationCategoryEnum.INNOVATION_MANAGEMENT
+            },
+            innovationId: innovation.id,
+            inputData: {
+              innovationId: innovation.id,
+              transferId: innovation.transfer.id
+            },
+            outputData: {
+              innovationName: innovation.name,
+              newInnovationOwner: newInnovationOwner.name
+            },
+            recipients: [DTOsHelper.getRecipientUser(previousInnovationOwner)],
+            requestUser: DTOsHelper.getUserRequestContext(newInnovationOwner)
+          }
+        );
+      });
     });
 
-    it('Should correct innovator names when they are not found', async () => {
-      // mock innovators info  not found
-      jest
-        .spyOn(RecipientsService.prototype, 'usersIdentityInfo')
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce(null);
-
-      await handler.run();
-
-      expect(handler.emails).toMatchObject([
-        {
-          templateId: 'INNOVATION_TRANSFER_COMPLETED_TO_ORIGINAL_OWNER',
-          to: DTOsHelper.getRecipientUser(previousInnovationOwner, 'innovatorRole'),
-          notificationPreferenceType: null,
-          params: {
-            innovator_name: 'user',
-            innovation_name: innovation.name,
-            new_innovator_name: 'user',
-            new_innovator_email: 'user email'
+    describe('TO07_TRANSFER_OWNERSHIP_ACCEPTS_ASSIGNED_ACCESSORS', () => {
+      it('Should not send email to assigned accessors', async () => {
+        await testEmails(
+          InnovationTransferOwnershipCompletedHandler,
+          'TO07_TRANSFER_OWNERSHIP_ACCEPTS_ASSIGNED_ACCESSORS',
+          {
+            notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+            inputData: {
+              innovationId: innovation.id,
+              transferId: innovation.transfer.id
+            },
+            outputData: {},
+            recipients: [],
+            requestUser: DTOsHelper.getUserRequestContext(newInnovationOwner)
           }
-        }
-      ]);
+        );
+      });
+
+      it('Should send inapp to assigned accessors', async () => {
+        await testInApps(
+          InnovationTransferOwnershipCompletedHandler,
+          'TO07_TRANSFER_OWNERSHIP_ACCEPTS_ASSIGNED_ACCESSORS',
+          {
+            context: {
+              id: innovation.id,
+              type: NotificationCategoryEnum.INNOVATION_MANAGEMENT
+            },
+            innovationId: innovation.id,
+            inputData: {
+              innovationId: innovation.id,
+              transferId: innovation.transfer.id
+            },
+            outputData: {
+              innovationName: innovation.name,
+              newInnovationOwnerName: newInnovationOwner.name,
+              oldInnovationOwnerName: previousInnovationOwner.name
+            },
+            recipients: assignedAccessors,
+            requestUser: DTOsHelper.getUserRequestContext(newInnovationOwner)
+          }
+        );
+      });
     });
   });
 
-  describe('Innovation transfer completed to status CANCELED', () => {
+  describe('Innovation transfer completed to state DECLINED', () => {
     beforeEach(() => {
-      // mock innovation info with original owner because transfer was cancelled
-      jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+      innovationInfoMock.mockResolvedValueOnce({
         id: innovation.id,
         name: innovation.name,
         ownerId: previousInnovationOwner.id,
         ownerIdentityId: previousInnovationOwner.identityId
       });
-
-      // mock transfer info
-      jest.spyOn(RecipientsService.prototype, 'innovationTransferInfoWithOwner').mockResolvedValueOnce({
-        id: innovation.transfer.id,
-        email: innovation.transfer.email,
-        status: InnovationTransferStatusEnum.CANCELED,
-        ownerId: previousInnovationOwner.id
-      });
-
-      // mock transfer owner recipient
-      jest
-        .spyOn(RecipientsService.prototype, 'getUsersRecipient')
-        .mockResolvedValueOnce(DTOsHelper.getRecipientUser(previousInnovationOwner, 'innovatorRole'));
-
-      handler = new InnovationTransferOwnershipCompletedHandler(
-        DTOsHelper.getUserRequestContext(newInnovationOwner, 'innovatorRole'),
-        {
-          innovationId: innovation.id,
-          transferId: innovation.transfer.id
-        },
-        MocksHelper.mockContext()
-      );
-    });
-
-    it('Should send email to transfer creator', async () => {
-      await handler.run();
-
-      expect(handler.emails).toMatchObject([
-        {
-          templateId: 'INNOVATION_TRANSFER_CANCELLED_TO_NEW_OWNER',
-          to: { email: innovation.transfer.email },
-          notificationPreferenceType: null,
-          params: {
-            innovator_name: previousInnovationOwner.name,
-            innovation_name: innovation.name
-          }
-        }
-      ]);
-    });
-
-    it('Should correct innovator names when they are not found', async () => {
-      // mock innovators info  not found
-      jest.spyOn(RecipientsService.prototype, 'usersIdentityInfo').mockResolvedValueOnce(null);
-
-      await handler.run();
-
-      expect(handler.emails).toMatchObject([
-        {
-          templateId: 'INNOVATION_TRANSFER_CANCELLED_TO_NEW_OWNER',
-          to: { email: innovation.transfer.email },
-          notificationPreferenceType: null,
-          params: {
-            innovator_name: 'user',
-            innovation_name: innovation.name
-          }
-        }
-      ]);
-    });
-  });
-
-  describe('Innovation transfer completed to status DECLINED', () => {
-    beforeEach(() => {
-      // mock innovation info with original owner because transfer was declined
-      jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+      transferMock.mockResolvedValueOnce({
         id: innovation.id,
-        name: innovation.name,
-        ownerId: previousInnovationOwner.id,
-        ownerIdentityId: previousInnovationOwner.identityId
-      });
-
-      // mock transfer info
-      jest.spyOn(RecipientsService.prototype, 'innovationTransferInfoWithOwner').mockResolvedValueOnce({
-        id: innovation.transfer.id,
-        email: innovation.transfer.email,
+        email: newInnovationOwner.email,
         status: InnovationTransferStatusEnum.DECLINED,
         ownerId: previousInnovationOwner.id
       });
-
-      // mock transfer owner recipient
-      jest
-        .spyOn(RecipientsService.prototype, 'getUsersRecipient')
-        .mockResolvedValueOnce(DTOsHelper.getRecipientUser(previousInnovationOwner, 'innovatorRole'));
-
-      handler = new InnovationTransferOwnershipCompletedHandler(
-        DTOsHelper.getUserRequestContext(newInnovationOwner, 'innovatorRole'),
-        {
-          innovationId: innovation.id,
-          transferId: innovation.transfer.id
-        },
-        MocksHelper.mockContext()
-      );
     });
-
-    it('Should send email to transfer creator', async () => {
-      // mock target user identity info
-      jest.spyOn(IdentityProviderService.prototype, 'getUserInfoByEmail').mockResolvedValueOnce({
-        identityId: newInnovationOwner.identityId,
-        displayName: newInnovationOwner.name,
-        email: newInnovationOwner.email,
-        phone: null
+    describe('TO08_TRANSFER_OWNERSHIP_DECLINES_PREVIOUS_OWNER', () => {
+      it('Should send email to transfer creator', async () => {
+        await testEmails(
+          InnovationTransferOwnershipCompletedHandler,
+          'TO08_TRANSFER_OWNERSHIP_DECLINES_PREVIOUS_OWNER',
+          {
+            notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+            inputData: {
+              innovationId: innovation.id,
+              transferId: innovation.transfer.id
+            },
+            outputData: {
+              innovation_name: innovation.name,
+              new_innovation_owner: newInnovationOwner.name,
+              manage_innovation_url: manageInnovationUrl(ServiceRoleEnum.INNOVATOR, innovation.id)
+            },
+            recipients: [DTOsHelper.getRecipientUser(previousInnovationOwner)],
+            requestUser: DTOsHelper.getUserRequestContext(newInnovationOwner)
+          }
+        );
       });
 
-      await handler.run();
-
-      expect(handler.emails).toMatchObject([
-        {
-          templateId: 'INNOVATION_TRANSFER_DECLINED_TO_ORIGINAL_OWNER',
-          to: DTOsHelper.getRecipientUser(previousInnovationOwner, 'innovatorRole'),
-          notificationPreferenceType: null,
-          params: {
-            innovator_name: previousInnovationOwner.name,
-            new_innovator_name: newInnovationOwner.name,
-            innovation_name: innovation.name,
-            innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
-              .addPath('innovator/innovations/:innovationId')
-              .setPathParams({ innovationId: innovation.id })
-              .buildUrl()
+      it('Should send inapp to transfer creator', async () => {
+        await testInApps(
+          InnovationTransferOwnershipCompletedHandler,
+          'TO08_TRANSFER_OWNERSHIP_DECLINES_PREVIOUS_OWNER',
+          {
+            context: {
+              id: innovation.id,
+              type: NotificationCategoryEnum.INNOVATION_MANAGEMENT
+            },
+            innovationId: innovation.id,
+            inputData: {
+              innovationId: innovation.id,
+              transferId: innovation.transfer.id
+            },
+            outputData: {
+              innovationName: innovation.name
+            },
+            recipients: [DTOsHelper.getRecipientUser(previousInnovationOwner)],
+            requestUser: DTOsHelper.getUserRequestContext(newInnovationOwner)
           }
-        }
-      ]);
+        );
+      });
+    });
+  });
+
+  describe('Innovation transfer completed to state CANCELED', () => {
+    describe('target user exists', () => {
+      beforeEach(() => {
+        innovationInfoMock.mockResolvedValueOnce({
+          id: innovation.id,
+          name: innovation.name,
+          ownerId: previousInnovationOwner.id,
+          ownerIdentityId: previousInnovationOwner.identityId
+        });
+        transferMock.mockResolvedValueOnce({
+          id: innovation.id,
+          email: newInnovationOwner.email,
+          status: InnovationTransferStatusEnum.CANCELED,
+          ownerId: previousInnovationOwner.id
+        });
+      });
+
+      describe('TO09_TRANSFER_OWNERSHIP_CANCELED_NEW_OWNER', () => {
+        it('Should send email to transfer creator', async () => {
+          await testEmails(InnovationTransferOwnershipCompletedHandler, 'TO09_TRANSFER_OWNERSHIP_CANCELED_NEW_OWNER', {
+            notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+            inputData: {
+              innovationId: innovation.id,
+              transferId: innovation.transfer.id
+            },
+            outputData: {
+              innovation_name: innovation.name,
+              innovator_name: previousInnovationOwner.name
+            },
+            recipients: [DTOsHelper.getRecipientUser(newInnovationOwner)],
+            requestUser: DTOsHelper.getUserRequestContext(previousInnovationOwner)
+          });
+        });
+
+        it('Should send inapp to transfer creator', async () => {
+          await testInApps(InnovationTransferOwnershipCompletedHandler, 'TO09_TRANSFER_OWNERSHIP_CANCELED_NEW_OWNER', {
+            context: {
+              id: innovation.id,
+              type: NotificationCategoryEnum.INNOVATION_MANAGEMENT
+            },
+            innovationId: innovation.id,
+            inputData: {
+              innovationId: innovation.id,
+              transferId: innovation.transfer.id
+            },
+            outputData: {
+              innovationName: innovation.name,
+              innovationOwner: previousInnovationOwner.name
+            },
+            recipients: [DTOsHelper.getRecipientUser(newInnovationOwner)],
+            requestUser: DTOsHelper.getUserRequestContext(previousInnovationOwner)
+          });
+        });
+      });
     });
 
-    it('Should correct innovator names when they are not found', async () => {
-      // mock innovators info  not found
-      jest.spyOn(RecipientsService.prototype, 'usersIdentityInfo').mockResolvedValueOnce(null);
-      jest.spyOn(IdentityProviderService.prototype, 'getUserInfoByEmail').mockResolvedValueOnce(null);
+    describe("target user doesn't exist", () => {
+      beforeEach(() => {
+        innovationInfoMock.mockResolvedValueOnce({
+          id: innovation.id,
+          name: innovation.name,
+          ownerId: previousInnovationOwner.id,
+          ownerIdentityId: previousInnovationOwner.identityId
+        });
+        transferMock.mockResolvedValueOnce({
+          id: innovation.id,
+          email: 'test@example.org',
+          status: InnovationTransferStatusEnum.CANCELED,
+          ownerId: previousInnovationOwner.id
+        });
+      });
 
-      await handler.run();
+      describe('TO09_TRANSFER_OWNERSHIP_CANCELED_NEW_OWNER', () => {
+        it('Should send email to transfer creator', async () => {
+          await testEmails(InnovationTransferOwnershipCompletedHandler, 'TO09_TRANSFER_OWNERSHIP_CANCELED_NEW_OWNER', {
+            notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+            inputData: {
+              innovationId: innovation.id,
+              transferId: innovation.transfer.id
+            },
+            outputData: {
+              innovation_name: innovation.name,
+              innovator_name: previousInnovationOwner.name
+            },
+            recipients: [{ email: 'test@example.org', displayname: '' }],
+            requestUser: DTOsHelper.getUserRequestContext(previousInnovationOwner)
+          });
+        });
 
-      expect(handler.emails).toMatchObject([
-        {
-          templateId: 'INNOVATION_TRANSFER_DECLINED_TO_ORIGINAL_OWNER',
-          to: DTOsHelper.getRecipientUser(previousInnovationOwner, 'innovatorRole'),
-          notificationPreferenceType: null,
-          params: {
-            innovator_name: 'user',
-            new_innovator_name: innovation.transfer.email,
-            innovation_name: innovation.name,
-            innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
-              .addPath('innovator/innovations/:innovationId')
-              .setPathParams({ innovationId: innovation.id })
-              .buildUrl()
-          }
-        }
-      ]);
+        it('Should not send inapp to transfer creator', async () => {
+          const handler = new InnovationTransferOwnershipCompletedHandler(
+            DTOsHelper.getUserRequestContext(previousInnovationOwner),
+            { innovationId: innovation.id, transferId: innovation.transfer.id },
+            MocksHelper.mockContext()
+          );
+          await handler.run();
+          expect(handler.inApp.length).toBe(0);
+        });
+      });
     });
   });
 });
