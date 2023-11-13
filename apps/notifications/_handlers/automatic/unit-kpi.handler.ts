@@ -27,7 +27,7 @@ export class UnitKPIHandler extends BaseHandler<
     // Run only on weekdays
     if (dayOfWeek !== 0 && dayOfWeek !== 6) {
       const reminderInnovations = await this.recipientsService.suggestedInnovationsWithoutUnitAction(4);
-      const overdueInnovations = await this.recipientsService.suggestedInnovationsWithoutUnitAction(6, 7);
+      const overdueInnovations = await this.recipientsService.suggestedInnovationsWithoutUnitAction(6, true);
 
       await this.sendNotifications(reminderInnovations, 'AU04_SUPPORT_KPI_REMINDER');
       await this.sendNotifications(overdueInnovations, 'AU05_SUPPORT_KPI_OVERDUE');
