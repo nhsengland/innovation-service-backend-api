@@ -63,6 +63,8 @@ export const EmailTemplates = {
   SH01_INNOVATION_STOPPED_SHARED_TO_ASSIGNED_USERS: 'ab51f9eb-8826-4ab4-8e8b-97acd8e2edf7',
   SH03_INNOVATION_STOPPED_SHARED_TO_SELF: '42d32a18-95dc-4b0e-9d82-35a96e9c033d',
   DA01_OWNER_DELETED_ACCOUNT_WITH_PENDING_TRANSFER_TO_COLLABORATOR: '5c8f9de0-09d3-4e33-8986-387fb5c29224',
+  MC01_COLLABORATOR_INVITE_EXISTING_USER: '62b406b3-a17e-4724-8d0d-ff0de839a829',
+  MC02_COLLABORATOR_INVITE_NEW_USER: '0b672a10-7a5f-443f-a5ba-536bb0ba32c8',
 
   // ADMIN
   AP03_USER_LOCKED_TO_LOCKED_USER: '95751f8f-ba65-436c-baa6-dabca6ca7acf',
@@ -138,8 +140,6 @@ export const EmailTemplates = {
   INNOVATION_REASSESSMENT_REQUEST_TO_INNOVATOR: 'e5db6887-d578-4d95-9e75-b0682754d95c',
   INNOVATION_REASSESSMENT_REQUEST_TO_NEEDS_ASSESSMENT: 'cb539125-7753-4cce-884e-d612fab03d7b',
 
-  INNOVATION_COLLABORATOR_INVITE_TO_EXISTING_USER: '1cc8087b-ed20-4b55-bdeb-c5cf3d870203',
-  INNOVATION_COLLABORATOR_INVITE_TO_NEW_USER: 'bcaef4c6-dbcd-4ea5-be77-8422b4f37241',
   INNOVATION_COLLABORATOR_INVITE_ACCEPTED_TO_OWNER: '56fd8e9d-5860-4e8f-ad18-47a0710a7292',
   INNOVATION_COLLABORATOR_INVITE_DECLINED_TO_OWNER: '3437f816-e829-46aa-9be2-dafaa6f26fc1',
   INNOVATION_COLLABORATOR_LEAVES_TO_OWNER: 'a9efa7d2-4321-4703-9dad-f583196c989d',
@@ -403,6 +403,16 @@ export type EmailTemplatesType = {
     innovation_name: string;
     expiry_date: string;
     innovation_overview_url: string;
+  };
+  MC01_COLLABORATOR_INVITE_EXISTING_USER: {
+    innovator_name: string;
+    innovation_name: string;
+    invitation_url: string;
+  };
+  MC02_COLLABORATOR_INVITE_NEW_USER: {
+    innovator_name: string;
+    innovation_name: string;
+    create_account_url: string;
   };
   // Innovation Management / Transfer
   TO01_TRANSFER_OWNERSHIP_NEW_USER: {
@@ -674,17 +684,6 @@ export type EmailTemplatesType = {
     innovation_url: string;
   };
 
-  INNOVATION_COLLABORATOR_INVITE_TO_EXISTING_USER: {
-    display_name?: string;
-    innovator_name: string;
-    innovation_name: string;
-    transfer_url: string;
-  };
-  INNOVATION_COLLABORATOR_INVITE_TO_NEW_USER: {
-    innovator_name: string;
-    innovation_name: string;
-    transfer_url: string;
-  };
   INNOVATION_COLLABORATOR_INVITE_CANCELLED_TO_COLLABORATOR: {
     innovator_name: string;
     innovation_name: string;

@@ -108,9 +108,9 @@ export class InnovationCollaboratorsService extends BaseService {
       collaboratorId = dbCollaborator.id;
     }
 
-    await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_COLLABORATOR_INVITE, {
-      innovationCollaboratorId: collaboratorId,
-      innovationId: innovationId
+    await this.notifierService.send(domainContext, NotifierTypeEnum.COLLABORATOR_INVITE, {
+      innovationId: innovationId,
+      collaboratorId: collaboratorId
     });
 
     return { id: collaboratorId };

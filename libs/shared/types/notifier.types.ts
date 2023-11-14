@@ -113,6 +113,10 @@ export type NotifierTemplatesType = {
       }[];
     };
   };
+  [NotifierTypeEnum.COLLABORATOR_INVITE]: {
+    innovationId: string;
+    collaboratorId: string;
+  };
 
   // Admin
   [NotifierTypeEnum.LOCK_USER]: {
@@ -211,11 +215,6 @@ export type NotifierTemplatesType = {
 
   [NotifierTypeEnum.INNOVATION_REASSESSMENT_REQUEST]: {
     innovationId: string;
-  };
-
-  [NotifierTypeEnum.INNOVATION_COLLABORATOR_INVITE]: {
-    innovationId: string;
-    innovationCollaboratorId: string;
   };
 
   [NotifierTypeEnum.INNOVATION_COLLABORATOR_UPDATE]: {
