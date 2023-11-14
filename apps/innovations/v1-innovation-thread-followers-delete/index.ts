@@ -38,7 +38,7 @@ class V1InnovationThreadFollowersDelete {
         throw new ForbiddenError(InnovationErrorsEnum.INNOVATION_THREAD_CANT_UNFOLLOW_OTHER_USERS);
       }
 
-      await threadsService.unfollowThread(params.roleId, params.threadId);
+      await threadsService.unfollowThread(params.threadId, params.roleId);
 
       context.res = ResponseHelper.NoContent();
       return;
