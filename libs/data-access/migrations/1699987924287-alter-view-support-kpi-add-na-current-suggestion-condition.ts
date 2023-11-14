@@ -2,7 +2,7 @@ import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 // This view is used to calculate the KPI for the support team, this can be improved once we don't need to query the
 // activity log
-export class createViewSupportKPI1698162171281 implements MigrationInterface {
+export class alterViewSupportKPIAddNACurrentSuggestedCondition1699987924287 implements MigrationInterface {
   async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
     CREATE OR ALTER VIEW [innovation_support_kpi_view] AS
