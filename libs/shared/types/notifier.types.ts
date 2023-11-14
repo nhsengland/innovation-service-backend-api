@@ -117,6 +117,10 @@ export type NotifierTemplatesType = {
     innovationId: string;
     collaboratorId: string;
   };
+  [NotifierTypeEnum.COLLABORATOR_UPDATE]: {
+    innovationId: string;
+    collaborator: { id: string; status: InnovationCollaboratorStatusEnum };
+  };
 
   // Admin
   [NotifierTypeEnum.LOCK_USER]: {

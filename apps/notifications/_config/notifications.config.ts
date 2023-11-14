@@ -36,6 +36,7 @@ import { IdleSupportInnovatorHandler } from '../_handlers/automatic/idle-support
 import { IncompleteRecordHandler } from '../_handlers/automatic/incomplete-record.handler';
 import { UnitKPIHandler } from '../_handlers/automatic/unit-kpi.handler';
 import { CollaboratorInviteHandler } from '../_handlers/innovations/collaborators/collaborator-invite.handler';
+import { CollaboratorUpdateHandler } from '../_handlers/innovations/collaborators/collaborator-update.handler';
 import { AccountDeletionHandler } from '../_handlers/innovations/delete-account/account-deletion.handler';
 import { ExportRequestFeedbackHandler } from '../_handlers/innovations/export-request-feedback.handler';
 import { ExportRequestSubmittedHandler } from '../_handlers/innovations/export-request-submitted.handler';
@@ -231,6 +232,18 @@ export const NOTIFICATIONS_CONFIG = {
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.COLLABORATOR_INVITE]>({
       innovationId: Joi.string().guid().required(),
       collaboratorId: Joi.string().guid().required()
+    }).required()
+  },
+  [NotifierTypeEnum.COLLABORATOR_UPDATE]: {
+    handler: CollaboratorUpdateHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.COLLABORATOR_UPDATE]>({
+      innovationId: Joi.string().guid().required(),
+      collaborator: Joi.object({
+        id: Joi.string().guid().required(),
+        status: Joi.string()
+          .valid(...Object.values(InnovationCollaboratorStatusEnum))
+          .required()
+      })
     }).required()
   },
 

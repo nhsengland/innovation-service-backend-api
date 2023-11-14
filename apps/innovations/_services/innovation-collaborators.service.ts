@@ -382,12 +382,9 @@ export class InnovationCollaboratorsService extends BaseService {
     );
 
     if (data.status) {
-      await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_COLLABORATOR_UPDATE, {
+      await this.notifierService.send(domainContext, NotifierTypeEnum.COLLABORATOR_UPDATE, {
         innovationId: innovationId,
-        innovationCollaborator: {
-          id: collaborator.id,
-          status: data.status
-        }
+        collaborator: { id: collaborator.id, status: data.status }
       });
     }
 
