@@ -65,6 +65,12 @@ export const EmailTemplates = {
   DA01_OWNER_DELETED_ACCOUNT_WITH_PENDING_TRANSFER_TO_COLLABORATOR: '5c8f9de0-09d3-4e33-8986-387fb5c29224',
   MC01_COLLABORATOR_INVITE_EXISTING_USER: '62b406b3-a17e-4724-8d0d-ff0de839a829',
   MC02_COLLABORATOR_INVITE_NEW_USER: '0b672a10-7a5f-443f-a5ba-536bb0ba32c8',
+  MC03_COLLABORATOR_UPDATE_CANCEL_INVITE: 'c902dcbd-72be-43bc-aff6-ea5348a5b9ab',
+  MC04_COLLABORATOR_UPDATE_ACCEPTS_INVITE: '074e8c8f-c9ee-4eb2-9fda-f920812150e4',
+  MC05_COLLABORATOR_UPDATE_DECLINES_INVITE: '07962b87-8780-4bfc-905b-2cd297a6c81f',
+  MC06_COLLABORATOR_UPDATE_REMOVED_COLLABORATOR: '7c36488d-ad13-4120-9caa-c25afe3622b7',
+  MC07_COLLABORATOR_UPDATE_COLLABORATOR_LEFT_TO_INNOVATORS: 'f74d0f2a-233d-4761-9975-ef77cfaa88a9',
+  MC08_COLLABORATOR_UPDATE_COLLABORATOR_LEFT_TO_SELF: 'd938e2af-be92-46e9-8269-c6a7af1819bf',
 
   // ADMIN
   AP03_USER_LOCKED_TO_LOCKED_USER: '95751f8f-ba65-436c-baa6-dabca6ca7acf',
@@ -138,15 +144,7 @@ export const EmailTemplates = {
   INNOVATION_STOP_SHARING_TO_INNOVATOR: '61a309c7-dacd-45e0-b7a8-2bc1d01ce1e7',
 
   INNOVATION_REASSESSMENT_REQUEST_TO_INNOVATOR: 'e5db6887-d578-4d95-9e75-b0682754d95c',
-  INNOVATION_REASSESSMENT_REQUEST_TO_NEEDS_ASSESSMENT: 'cb539125-7753-4cce-884e-d612fab03d7b',
-
-  INNOVATION_COLLABORATOR_INVITE_ACCEPTED_TO_OWNER: '56fd8e9d-5860-4e8f-ad18-47a0710a7292',
-  INNOVATION_COLLABORATOR_INVITE_DECLINED_TO_OWNER: '3437f816-e829-46aa-9be2-dafaa6f26fc1',
-  INNOVATION_COLLABORATOR_LEAVES_TO_OWNER: 'a9efa7d2-4321-4703-9dad-f583196c989d',
-  INNOVATION_COLLABORATOR_INVITE_CANCELLED_TO_COLLABORATOR: 'c53845c8-5d7e-4653-b9e6-d8ca5fa99713',
-  INNOVATION_COLLABORATOR_REMOVED_TO_COLLABORATOR: 'dd8762c8-3113-49ff-b25d-0aa42425f140',
-  INNOVATION_COLLABORATOR_LEAVES_TO_OTHER_COLLABORATORS: '8db47a7d-6d3a-4ab6-8ebb-abec69397b93',
-  INNOVATION_COLLABORATOR_LEAVES_TO_COLLABORATOR: '319228ec-121d-430c-8024-b938343232ba'
+  INNOVATION_REASSESSMENT_REQUEST_TO_NEEDS_ASSESSMENT: 'cb539125-7753-4cce-884e-d612fab03d7b'
 } as const;
 export type EmailTemplates = typeof EmailTemplates;
 
@@ -414,6 +412,30 @@ export type EmailTemplatesType = {
     innovation_name: string;
     create_account_url: string;
   };
+  MC03_COLLABORATOR_UPDATE_CANCEL_INVITE: {
+    innovator_name: string;
+    innovation_name: string;
+  };
+  MC04_COLLABORATOR_UPDATE_ACCEPTS_INVITE: {
+    innovator_name: string;
+    innovation_name: string;
+    manage_collaborators_url: string;
+  };
+  MC05_COLLABORATOR_UPDATE_DECLINES_INVITE: {
+    innovator_name: string;
+    innovation_name: string;
+    manage_collaborators_url: string;
+  };
+  MC06_COLLABORATOR_UPDATE_REMOVED_COLLABORATOR: {
+    innovator_name: string;
+    innovation_name: string;
+  };
+  MC07_COLLABORATOR_UPDATE_COLLABORATOR_LEFT_TO_INNOVATORS: {
+    innovator_name: string;
+    innovation_name: string;
+    manage_collaborators_url: string;
+  };
+  MC08_COLLABORATOR_UPDATE_COLLABORATOR_LEFT_TO_SELF: { innovation_name: string };
   // Innovation Management / Transfer
   TO01_TRANSFER_OWNERSHIP_NEW_USER: {
     innovator_name: string;
@@ -682,41 +704,5 @@ export type EmailTemplatesType = {
     display_name?: string;
     innovation_name: string;
     innovation_url: string;
-  };
-
-  INNOVATION_COLLABORATOR_INVITE_CANCELLED_TO_COLLABORATOR: {
-    innovator_name: string;
-    innovation_name: string;
-  };
-  INNOVATION_COLLABORATOR_INVITE_ACCEPTED_TO_OWNER: {
-    display_name?: string;
-    collaborator_name: string;
-    innovation_name: string;
-  };
-  INNOVATION_COLLABORATOR_INVITE_DECLINED_TO_OWNER: {
-    innovator_name: string;
-    collaborator_name: string;
-    innovation_name: string;
-  };
-  INNOVATION_COLLABORATOR_LEAVES_TO_OWNER: {
-    display_name?: string;
-    collaborator_name: string;
-    innovation_name: string;
-    innovation_url: string;
-  };
-  INNOVATION_COLLABORATOR_REMOVED_TO_COLLABORATOR: {
-    display_name?: string;
-    innovator_name: string;
-    innovation_name: string;
-  };
-  INNOVATION_COLLABORATOR_LEAVES_TO_OTHER_COLLABORATORS: {
-    display_name?: string;
-    collaborator_name: string;
-    innovation_name: string;
-    innovation_url: string;
-  };
-  INNOVATION_COLLABORATOR_LEAVES_TO_COLLABORATOR: {
-    display_name?: string;
-    innovation_name: string;
   };
 };

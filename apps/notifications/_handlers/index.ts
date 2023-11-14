@@ -2,13 +2,12 @@ export { InnovationTransferOwnershipExpirationHandler } from './automatic/innova
 export { InnovationTransferOwnershipReminderHandler } from './automatic/innovation-transfer-ownership-reminder.handler';
 export { BaseHandler } from './base.handler';
 export { DocumentUploadHandler } from './documents/document-upload.handler';
+export { InnovationTransferOwnershipCompletedHandler } from './innovations/transfer-innovation/innovation-transfer-ownership-completed.handler';
+export { InnovationTransferOwnershipCreationHandler } from './innovations/transfer-innovation/innovation-transfer-ownership-creation.handler';
 export { AccessorUnitChangeHandler } from './legacy/accessor-unit-change.handler';
-export { InnovationCollaboratorUpdateHandler } from './legacy/innovation-collaborator-update.handler';
 export { InnovationOrganisationUnitsSuggestionHandler } from './legacy/innovation-organisation-units-suggestion.handler';
 export { InnovationReassessmentRequestHandler } from './legacy/innovation-reassessment-request.handler';
 export { InnovationSupportStatusUpdateHandler } from './legacy/innovation-support-status-update.handler';
-export { InnovationTransferOwnershipCompletedHandler } from './innovations/transfer-innovation/innovation-transfer-ownership-completed.handler';
-export { InnovationTransferOwnershipCreationHandler } from './innovations/transfer-innovation/innovation-transfer-ownership-creation.handler';
 export { InnovatorAccountCreationHandler } from './legacy/innovator-account-creation.handler';
 export { ThreadCreationHandler } from './legacy/thread-creation.handler';
 export { ThreadMessageCreationHandler } from './legacy/thread-message-creation.handler';

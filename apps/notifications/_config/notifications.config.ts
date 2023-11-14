@@ -15,7 +15,6 @@ import {
   ActionCreationHandler,
   ActionUpdateHandler,
   DocumentUploadHandler,
-  InnovationCollaboratorUpdateHandler,
   InnovationOrganisationUnitsSuggestionHandler,
   InnovationReassessmentRequestHandler,
   InnovationSubmittedHandler,
@@ -36,6 +35,7 @@ import { IdleSupportInnovatorHandler } from '../_handlers/automatic/idle-support
 import { IncompleteRecordHandler } from '../_handlers/automatic/incomplete-record.handler';
 import { UnitKPIHandler } from '../_handlers/automatic/unit-kpi.handler';
 import { CollaboratorInviteHandler } from '../_handlers/innovations/collaborators/collaborator-invite.handler';
+import { CollaboratorUpdateHandler } from '../_handlers/innovations/collaborators/collaborator-update.handler';
 import { AccountDeletionHandler } from '../_handlers/innovations/delete-account/account-deletion.handler';
 import { ExportRequestFeedbackHandler } from '../_handlers/innovations/export-request-feedback.handler';
 import { ExportRequestSubmittedHandler } from '../_handlers/innovations/export-request-submitted.handler';
@@ -233,6 +233,18 @@ export const NOTIFICATIONS_CONFIG = {
       collaboratorId: Joi.string().guid().required()
     }).required()
   },
+  [NotifierTypeEnum.COLLABORATOR_UPDATE]: {
+    handler: CollaboratorUpdateHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.COLLABORATOR_UPDATE]>({
+      innovationId: Joi.string().guid().required(),
+      collaborator: Joi.object({
+        id: Joi.string().guid().required(),
+        status: Joi.string()
+          .valid(...Object.values(InnovationCollaboratorStatusEnum))
+          .required()
+      })
+    }).required()
+  },
 
   // Admin
   [NotifierTypeEnum.LOCK_USER]: {
@@ -396,19 +408,6 @@ export const NOTIFICATIONS_CONFIG = {
     handler: InnovationReassessmentRequestHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_REASSESSMENT_REQUEST]>({
       innovationId: Joi.string().guid().required()
-    }).required()
-  },
-
-  [NotifierTypeEnum.INNOVATION_COLLABORATOR_UPDATE]: {
-    handler: InnovationCollaboratorUpdateHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_COLLABORATOR_UPDATE]>({
-      innovationId: Joi.string().guid().required(),
-      innovationCollaborator: Joi.object({
-        id: Joi.string().guid().required(),
-        status: Joi.string()
-          .valid(...Object.values(InnovationCollaboratorStatusEnum))
-          .required()
-      })
     }).required()
   },
 

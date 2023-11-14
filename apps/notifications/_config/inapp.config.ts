@@ -203,6 +203,35 @@ export type InAppTemplatesType = {
     collaboratorId: string;
   };
   MC02_COLLABORATOR_INVITE_NEW_USER: Record<string, never>;
+  MC03_COLLABORATOR_UPDATE_CANCEL_INVITE: {
+    requestUserName: string;
+    innovationName: string;
+    collaboratorId: string;
+  };
+  MC04_COLLABORATOR_UPDATE_ACCEPTS_INVITE: {
+    requestUserName: string;
+    innovationName: string;
+    collaboratorId: string;
+  };
+  MC05_COLLABORATOR_UPDATE_DECLINES_INVITE: {
+    requestUserName: string;
+    innovationName: string;
+    collaboratorId: string;
+  };
+  MC06_COLLABORATOR_UPDATE_REMOVED_COLLABORATOR: {
+    requestUserName: string;
+    innovationName: string;
+    collaboratorId: string;
+  };
+  MC07_COLLABORATOR_UPDATE_COLLABORATOR_LEFT_TO_INNOVATORS: {
+    requestUserName: string;
+    innovationName: string;
+    collaboratorId: string;
+  };
+  MC08_COLLABORATOR_UPDATE_COLLABORATOR_LEFT_TO_SELF: {
+    innovationName: string;
+    collaboratorId: string;
+  };
   // Innovation Management / Transfer
   TO02_TRANSFER_OWNERSHIP_EXISTING_USER: {
     innovationName: string;

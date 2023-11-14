@@ -123,6 +123,14 @@ export const collaboratorInfoUrl = (role: ServiceRoleEnum, innovationId: string,
     .buildUrl();
 };
 
+export const manageCollaboratorsUrl = (innovationId: string): string => {
+  const baseUrl = frontendBaseUrl(ServiceRoleEnum.INNOVATOR);
+  return new UrlModel(ENV.webBaseTransactionalUrl)
+    .addPath(':baseUrl/innovations/:innovationId/manage/innovation/collaborators')
+    .setPathParams({ baseUrl, innovationId })
+    .buildUrl();
+};
+
 export const dashboardUrl = (role: ServiceRoleEnum): string => {
   const baseUrl = frontendBaseUrl(role);
   return new UrlModel(ENV.webBaseTransactionalUrl).addPath(':baseUrl').setPathParams({ baseUrl }).buildUrl();
