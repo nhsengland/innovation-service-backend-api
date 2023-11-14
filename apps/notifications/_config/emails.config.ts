@@ -133,8 +133,6 @@ export const EmailTemplates = {
   INNOVATION_REASSESSMENT_REQUEST_TO_INNOVATOR: 'e5db6887-d578-4d95-9e75-b0682754d95c',
   INNOVATION_REASSESSMENT_REQUEST_TO_NEEDS_ASSESSMENT: 'cb539125-7753-4cce-884e-d612fab03d7b',
 
-  INNOVATION_COLLABORATOR_INVITE_TO_EXISTING_USER: '1cc8087b-ed20-4b55-bdeb-c5cf3d870203',
-  INNOVATION_COLLABORATOR_INVITE_TO_NEW_USER: 'bcaef4c6-dbcd-4ea5-be77-8422b4f37241',
   INNOVATION_COLLABORATOR_INVITE_ACCEPTED_TO_OWNER: '56fd8e9d-5860-4e8f-ad18-47a0710a7292',
   INNOVATION_COLLABORATOR_INVITE_DECLINED_TO_OWNER: '3437f816-e829-46aa-9be2-dafaa6f26fc1',
   INNOVATION_COLLABORATOR_LEAVES_TO_OWNER: 'a9efa7d2-4321-4703-9dad-f583196c989d',
@@ -655,17 +653,6 @@ export type EmailTemplatesType = {
     innovation_url: string;
   };
 
-  INNOVATION_COLLABORATOR_INVITE_TO_EXISTING_USER: {
-    display_name?: string;
-    innovator_name: string;
-    innovation_name: string;
-    transfer_url: string;
-  };
-  INNOVATION_COLLABORATOR_INVITE_TO_NEW_USER: {
-    innovator_name: string;
-    innovation_name: string;
-    transfer_url: string;
-  };
   INNOVATION_COLLABORATOR_INVITE_CANCELLED_TO_COLLABORATOR: {
     innovator_name: string;
     innovation_name: string;

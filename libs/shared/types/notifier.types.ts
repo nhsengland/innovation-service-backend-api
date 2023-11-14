@@ -217,11 +217,6 @@ export type NotifierTemplatesType = {
     innovationId: string;
   };
 
-  [NotifierTypeEnum.INNOVATION_COLLABORATOR_INVITE]: {
-    innovationId: string;
-    innovationCollaboratorId: string;
-  };
-
   [NotifierTypeEnum.INNOVATION_COLLABORATOR_UPDATE]: {
     innovationId: string;
     innovationCollaborator: { id: string; status: InnovationCollaboratorStatusEnum };
