@@ -944,7 +944,7 @@ export class RecipientsService extends BaseService {
    * @returns the recipient for notifications
    */
   async getUsersRecipient(
-    userId: undefined | string,
+    userId: undefined | null | string,
     roles: ServiceRoleEnum | ServiceRoleEnum[],
     extraFilters?: RoleFilter,
     entityManager?: EntityManager
@@ -972,7 +972,7 @@ export class RecipientsService extends BaseService {
     entityManager?: EntityManager
   ): Promise<null | RecipientType | RecipientType[]>;
   async getUsersRecipient(
-    userIds: undefined | string | string[],
+    userIds: null | undefined | string | string[],
     roles: ServiceRoleEnum | ServiceRoleEnum[],
     extraFilters?: RoleFilter,
     entityManager?: EntityManager

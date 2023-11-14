@@ -202,6 +202,27 @@ export type InAppTemplatesType = {
     innovationName: string;
   };
   MC02_COLLABORATOR_INVITE_NEW_USER: Record<string, never>;
+  // Innovation Management / Transfer
+  TO02_TRANSFER_OWNERSHIP_EXISTING_USER: {
+    innovationName: string;
+    transferId: string;
+  };
+  TO06_TRANSFER_OWNERSHIP_ACCEPTS_PREVIOUS_OWNER: {
+    innovationName: string;
+    newInnovationOwner: string;
+  };
+  TO07_TRANSFER_OWNERSHIP_ACCEPTS_ASSIGNED_ACCESSORS: {
+    oldInnovationOwnerName: string;
+    innovationName: string;
+    newInnovationOwnerName: string;
+  };
+  TO08_TRANSFER_OWNERSHIP_DECLINES_PREVIOUS_OWNER: {
+    innovationName: string;
+  };
+  TO09_TRANSFER_OWNERSHIP_CANCELED_NEW_OWNER: {
+    innovationName: string;
+    innovationOwner: string;
+  };
 
   // Admin
   AP02_INNOVATOR_LOCKED_TO_ASSIGNED_USERS: {

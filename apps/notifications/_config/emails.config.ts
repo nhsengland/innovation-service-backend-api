@@ -74,6 +74,13 @@ export const EmailTemplates = {
   CA01_ACCOUNT_CREATION_OF_INNOVATOR: 'd4bd42fa-a3a2-4eb3-ab71-844caba26044',
   CA02_ACCOUNT_CREATION_OF_COLLABORATOR: '7dbfa868-126c-4eee-828c-be6f8831342c',
 
+  //
+  TO01_TRANSFER_OWNERSHIP_NEW_USER: '5cc9990c-6a46-4cba-9062-2a461835d549',
+  TO02_TRANSFER_OWNERSHIP_EXISTING_USER: '76e80593-d2f5-46f8-aa73-c29786fa1ac6',
+  TO06_TRANSFER_OWNERSHIP_ACCEPTS_PREVIOUS_OWNER: '340c2591-ef26-493a-90a2-55589255f502',
+  TO08_TRANSFER_OWNERSHIP_DECLINES_PREVIOUS_OWNER: '497528ab-d996-4c96-a960-41614b99e594',
+  TO09_TRANSFER_OWNERSHIP_CANCELED_NEW_OWNER: 'e8486284-950f-47c6-b1e8-7291391ec265',
+
   // TO BE REMOVED ?
   ACCOUNT_CREATION_TO_INNOVATOR: '62486954-b235-4aa6-8b8d-960191fc6e69',
   ACCOUNT_DELETION_WITH_TRANSFER_TO_COLLABORATOR: 'd09b5182-d995-4db7-b3ba-99fef085bb22',
@@ -407,9 +414,33 @@ export type EmailTemplatesType = {
     innovation_name: string;
     create_account_url: string;
   };
+  // Innovation Management / Transfer
+  TO01_TRANSFER_OWNERSHIP_NEW_USER: {
+    innovator_name: string;
+    innovation_name: string;
+    create_account_url: string;
+  };
+  TO02_TRANSFER_OWNERSHIP_EXISTING_USER: {
+    innovator_name: string;
+    innovation_name: string;
+    dashboard_url: string;
+  };
+  TO06_TRANSFER_OWNERSHIP_ACCEPTS_PREVIOUS_OWNER: {
+    innovation_name: string;
+    new_innovation_owner: string;
+  };
+  TO08_TRANSFER_OWNERSHIP_DECLINES_PREVIOUS_OWNER: {
+    innovation_name: string;
+    new_innovation_owner: string;
+    manage_innovation_url: string;
+  };
+  TO09_TRANSFER_OWNERSHIP_CANCELED_NEW_OWNER: {
+    innovator_name: string;
+    innovation_name: string;
+  };
 
   // Admin
-  AP03_USER_LOCKED_TO_LOCKED_USER: {};
+  AP03_USER_LOCKED_TO_LOCKED_USER: Record<string, never>;
   AP07_UNIT_INACTIVATED_TO_ENGAGING_INNOVATIONS: {
     unit_name: string;
     innovation_name: string;
