@@ -115,6 +115,14 @@ export const exportRequestUrl = (role: ServiceRoleEnum, innovationId: string, re
     .buildUrl();
 };
 
+export const collaboratorInfoUrl = (role: ServiceRoleEnum, innovationId: string, collaboratorId: string): string => {
+  const baseUrl = frontendBaseUrl(role);
+  return new UrlModel(ENV.webBaseTransactionalUrl)
+    .addPath(':baseUrl/innovations/:innovationId/collaborations/:collaboratorId')
+    .setPathParams({ baseUrl, innovationId, collaboratorId })
+    .buildUrl();
+};
+
 export const dashboardUrl = (role: ServiceRoleEnum): string => {
   const baseUrl = frontendBaseUrl(role);
   return new UrlModel(ENV.webBaseTransactionalUrl).addPath(':baseUrl').setPathParams({ baseUrl }).buildUrl();

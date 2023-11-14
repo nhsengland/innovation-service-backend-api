@@ -63,6 +63,8 @@ export const EmailTemplates = {
   SH01_INNOVATION_STOPPED_SHARED_TO_ASSIGNED_USERS: 'ab51f9eb-8826-4ab4-8e8b-97acd8e2edf7',
   SH03_INNOVATION_STOPPED_SHARED_TO_SELF: '42d32a18-95dc-4b0e-9d82-35a96e9c033d',
   DA01_OWNER_DELETED_ACCOUNT_WITH_PENDING_TRANSFER_TO_COLLABORATOR: '5c8f9de0-09d3-4e33-8986-387fb5c29224',
+  MC01_COLLABORATOR_INVITE_EXISTING_USER: '62b406b3-a17e-4724-8d0d-ff0de839a829',
+  MC02_COLLABORATOR_INVITE_NEW_USER: '0b672a10-7a5f-443f-a5ba-536bb0ba32c8',
 
   // ADMIN
   AP03_USER_LOCKED_TO_LOCKED_USER: '95751f8f-ba65-436c-baa6-dabca6ca7acf',
@@ -396,6 +398,16 @@ export type EmailTemplatesType = {
     innovation_name: string;
     expiry_date: string;
     innovation_overview_url: string;
+  };
+  MC01_COLLABORATOR_INVITE_EXISTING_USER: {
+    innovator_name: string;
+    innovation_name: string;
+    invitation_url: string;
+  };
+  MC02_COLLABORATOR_INVITE_NEW_USER: {
+    innovator_name: string;
+    innovation_name: string;
+    create_account_url: string;
   };
 
   // Admin

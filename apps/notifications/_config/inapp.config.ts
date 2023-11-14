@@ -197,6 +197,11 @@ export type InAppTemplatesType = {
   DA01_OWNER_DELETED_ACCOUNT_WITH_PENDING_TRANSFER_TO_COLLABORATOR: {
     innovationName: string;
   };
+  MC01_COLLABORATOR_INVITE_EXISTING_USER: {
+    requestUserName: string;
+    innovationName: string;
+  };
+  MC02_COLLABORATOR_INVITE_NEW_USER: Record<string, never>;
 
   // Admin
   AP02_INNOVATOR_LOCKED_TO_ASSIGNED_USERS: {

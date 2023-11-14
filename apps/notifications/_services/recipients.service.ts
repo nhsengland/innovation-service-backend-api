@@ -192,7 +192,7 @@ export class RecipientsService extends BaseService {
 
     const query = em
       .createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
-      .select(['collaborator.email', 'collaborator.status', 'user.id', 'user.status'])
+      .select(['collaborator.email', 'collaborator.status', 'collaborator.invitedAt', 'user.id', 'user.status'])
       .leftJoin('collaborator.user', 'user')
       .where('collaborator.innovation_id = :innovationId', { innovationId });
 
@@ -525,7 +525,7 @@ export class RecipientsService extends BaseService {
   }> {
     const dbCollaborator = await this.sqlConnection
       .createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
-      .select(['collaborator.id', 'collaborator.email', 'collaborator.status', 'user.id'])
+      .select(['collaborator.id', 'collaborator.email', 'collaborator.invitedAt', 'collaborator.status', 'user.id'])
       .leftJoin('collaborator.user', 'user')
       .where('collaborator.id = :collaboratorId', { collaboratorId: innovationCollaboratorId })
       .getOne();

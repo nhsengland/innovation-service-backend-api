@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { DataSource } from 'typeorm';
 
-import { randProductDescription, randSoonDate, randText, randUuid } from '@ngneat/falso';
+import { randEmail, randProductDescription, randSoonDate, randText, randUuid } from '@ngneat/falso';
 import {
   InnovationCollaboratorStatusEnum,
   InnovationExportRequestStatusEnum,
@@ -220,6 +220,7 @@ export class CompleteScenarioBuilder {
       // Add elisaPendingCollaborator as a pending collaborator on johnInnovation
       const elisaPendingCollaborator = await new InnovationCollaboratorBuilder(entityManager)
         .setInnovation(johnInnovation.id)
+        .setEmail(randEmail())
         .setStatus(InnovationCollaboratorStatusEnum.PENDING)
         .save();
 
