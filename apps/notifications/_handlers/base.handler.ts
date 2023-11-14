@@ -235,12 +235,13 @@ export abstract class BaseHandler<InputDataType extends NotifierTypeEnum, Notifi
       : this.requestUser.organisation?.organisationUnit?.name ?? '';
   }
 
-  protected async getUserName(identityId: string | null): Promise<string> {
+  protected async getUserName(identityId?: string | null, role?: ServiceRoleEnum): Promise<string> {
     const name = identityId ? (await this.recipientsService.usersIdentityInfo(identityId))?.displayName ?? null : null;
     if (name) {
       return name;
     }
-    switch (this.requestUser.currentRole.role) {
+    role = role ?? this.requestUser.currentRole.role;
+    switch (role) {
       case ServiceRoleEnum.ACCESSOR:
       case ServiceRoleEnum.QUALIFYING_ACCESSOR:
         return 'accessor user';
