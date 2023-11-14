@@ -223,7 +223,7 @@ export type InAppTemplatesType = {
     innovationName: string;
     collaboratorId: string;
   };
-  MC07_COLLABORATOR_UPDATE_COLLABORATOR_LEFT_TO_OWNER: {
+  MC07_COLLABORATOR_UPDATE_COLLABORATOR_LEFT_TO_INNOVATORS: {
     requestUserName: string;
     innovationName: string;
     collaboratorId: string;

@@ -15,7 +15,6 @@ import {
   ActionCreationHandler,
   ActionUpdateHandler,
   DocumentUploadHandler,
-  InnovationCollaboratorUpdateHandler,
   InnovationOrganisationUnitsSuggestionHandler,
   InnovationReassessmentRequestHandler,
   InnovationSubmittedHandler,
@@ -409,19 +408,6 @@ export const NOTIFICATIONS_CONFIG = {
     handler: InnovationReassessmentRequestHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_REASSESSMENT_REQUEST]>({
       innovationId: Joi.string().guid().required()
-    }).required()
-  },
-
-  [NotifierTypeEnum.INNOVATION_COLLABORATOR_UPDATE]: {
-    handler: InnovationCollaboratorUpdateHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_COLLABORATOR_UPDATE]>({
-      innovationId: Joi.string().guid().required(),
-      innovationCollaborator: Joi.object({
-        id: Joi.string().guid().required(),
-        status: Joi.string()
-          .valid(...Object.values(InnovationCollaboratorStatusEnum))
-          .required()
-      })
     }).required()
   },
 

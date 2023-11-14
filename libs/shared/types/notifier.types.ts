@@ -221,11 +221,6 @@ export type NotifierTemplatesType = {
     innovationId: string;
   };
 
-  [NotifierTypeEnum.INNOVATION_COLLABORATOR_UPDATE]: {
-    innovationId: string;
-    innovationCollaborator: { id: string; status: InnovationCollaboratorStatusEnum };
-  };
-
   // Admin module.
 
   [NotifierTypeEnum.ACCESSOR_UNIT_CHANGE]: {

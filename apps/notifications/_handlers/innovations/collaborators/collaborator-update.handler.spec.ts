@@ -200,15 +200,18 @@ describe('Notifications / _handlers / collaborator-update suite', () => {
     });
   });
 
-  describe('MC07_COLLABORATOR_UPDATE_COLLABORATOR_LEFT_TO_OWNER', () => {
+  describe('MC07_COLLABORATOR_UPDATE_COLLABORATOR_LEFT_TO_INNOVATORS', () => {
     const requestUser = scenario.users.janeInnovator;
-    const collaborator = innovation.collaborators.janeCollaborator;
+    const collaborator = innovation.collaborators.adamCollaborator;
 
-    it('should send an email to owner', async () => {
-      await testEmails(CollaboratorUpdateHandler, 'MC07_COLLABORATOR_UPDATE_COLLABORATOR_LEFT_TO_OWNER', {
+    it('should send an email to innovators', async () => {
+      await testEmails(CollaboratorUpdateHandler, 'MC07_COLLABORATOR_UPDATE_COLLABORATOR_LEFT_TO_INNOVATORS', {
         notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
-        recipients: [DTOsHelper.getRecipientUser(scenario.users.johnInnovator)],
+        recipients: [
+          DTOsHelper.getRecipientUser(scenario.users.johnInnovator),
+          DTOsHelper.getRecipientUser(scenario.users.janeInnovator)
+        ],
         inputData: {
           innovationId: innovation.id,
           collaborator: { id: collaborator.id, status: InnovationCollaboratorStatusEnum.LEFT }
@@ -221,12 +224,15 @@ describe('Notifications / _handlers / collaborator-update suite', () => {
       });
     });
 
-    it('should send an in-app to the owner', async () => {
-      await testInApps(CollaboratorUpdateHandler, 'MC07_COLLABORATOR_UPDATE_COLLABORATOR_LEFT_TO_OWNER', {
+    it('should send an in-app to the innovators', async () => {
+      await testInApps(CollaboratorUpdateHandler, 'MC07_COLLABORATOR_UPDATE_COLLABORATOR_LEFT_TO_INNOVATORS', {
         context: { id: collaborator.id, type: NotificationCategoryEnum.INNOVATION_MANAGEMENT },
         innovationId: innovation.id,
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
-        recipients: [DTOsHelper.getRecipientUser(scenario.users.johnInnovator)],
+        recipients: [
+          DTOsHelper.getRecipientUser(scenario.users.johnInnovator),
+          DTOsHelper.getRecipientUser(scenario.users.janeInnovator)
+        ],
         inputData: {
           innovationId: innovation.id,
           collaborator: { id: collaborator.id, status: InnovationCollaboratorStatusEnum.LEFT }

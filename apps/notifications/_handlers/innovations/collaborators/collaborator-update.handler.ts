@@ -15,7 +15,7 @@ export class CollaboratorUpdateHandler extends BaseHandler<
   | 'MC04_COLLABORATOR_UPDATE_ACCEPTS_INVITE'
   | 'MC05_COLLABORATOR_UPDATE_DECLINES_INVITE'
   | 'MC06_COLLABORATOR_UPDATE_REMOVED_COLLABORATOR'
-  | 'MC07_COLLABORATOR_UPDATE_COLLABORATOR_LEFT_TO_OWNER'
+  | 'MC07_COLLABORATOR_UPDATE_COLLABORATOR_LEFT_TO_INNOVATORS'
   | 'MC08_COLLABORATOR_UPDATE_COLLABORATOR_LEFT_TO_SELF'
 > {
   constructor(
@@ -44,7 +44,7 @@ export class CollaboratorUpdateHandler extends BaseHandler<
         await this.MC05_COLLABORATOR_UPDATE_DECLINES_INVITE(innovation, requestUserName);
         break;
       case InnovationCollaboratorStatusEnum.LEFT:
-        await this.MC07_COLLABORATOR_UPDATE_COLLABORATOR_LEFT_TO_OWNER(innovation, requestUserName);
+        await this.MC07_COLLABORATOR_UPDATE_COLLABORATOR_LEFT_TO_INNOVATORS(innovation, requestUserName);
         await this.MC08_COLLABORATOR_UPDATE_COLLABORATOR_LEFT_TO_SELF(innovation);
         break;
     }
@@ -183,37 +183,36 @@ export class CollaboratorUpdateHandler extends BaseHandler<
     }
   }
 
-  private async MC07_COLLABORATOR_UPDATE_COLLABORATOR_LEFT_TO_OWNER(
+  private async MC07_COLLABORATOR_UPDATE_COLLABORATOR_LEFT_TO_INNOVATORS(
     innovation: { id: string; name: string; ownerId?: string },
     requestUserName: string
   ): Promise<void> {
-    const owner = await this.recipientsService.getUsersRecipient(innovation.ownerId, ServiceRoleEnum.INNOVATOR);
+    const innovators = await this.recipientsService.getInnovationActiveOwnerAndCollaborators(innovation.id);
+    const recipients = await this.recipientsService.getUsersRecipient(innovators, ServiceRoleEnum.INNOVATOR);
 
-    if (owner) {
-      this.notify('MC07_COLLABORATOR_UPDATE_COLLABORATOR_LEFT_TO_OWNER', [owner], {
-        email: {
-          notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
-          params: {
-            innovation_name: innovation.name,
-            innovator_name: requestUserName,
-            manage_collaborators_url: manageCollaboratorsUrl(innovation.id)
-          }
-        },
-        inApp: {
-          context: {
-            id: this.inputData.collaborator.id,
-            type: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
-            detail: 'MC07_COLLABORATOR_UPDATE_COLLABORATOR_LEFT_TO_OWNER'
-          },
-          innovationId: innovation.id,
-          params: {
-            collaboratorId: this.inputData.collaborator.id,
-            innovationName: innovation.name,
-            requestUserName: requestUserName
-          }
+    this.notify('MC07_COLLABORATOR_UPDATE_COLLABORATOR_LEFT_TO_INNOVATORS', recipients, {
+      email: {
+        notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+        params: {
+          innovation_name: innovation.name,
+          innovator_name: requestUserName,
+          manage_collaborators_url: manageCollaboratorsUrl(innovation.id)
         }
-      });
-    }
+      },
+      inApp: {
+        context: {
+          id: this.inputData.collaborator.id,
+          type: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+          detail: 'MC07_COLLABORATOR_UPDATE_COLLABORATOR_LEFT_TO_INNOVATORS'
+        },
+        innovationId: innovation.id,
+        params: {
+          collaboratorId: this.inputData.collaborator.id,
+          innovationName: innovation.name,
+          requestUserName: requestUserName
+        }
+      }
+    });
   }
 
   private async MC08_COLLABORATOR_UPDATE_COLLABORATOR_LEFT_TO_SELF(innovation: {
