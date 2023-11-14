@@ -200,6 +200,7 @@ export type InAppTemplatesType = {
   MC01_COLLABORATOR_INVITE_EXISTING_USER: {
     requestUserName: string;
     innovationName: string;
+    collaboratorId: string;
   };
   MC02_COLLABORATOR_INVITE_NEW_USER: Record<string, never>;
   // Innovation Management / Transfer

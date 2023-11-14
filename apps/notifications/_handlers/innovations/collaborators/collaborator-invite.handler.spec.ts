@@ -41,7 +41,11 @@ describe('Notifications / _handlers / collaborator-invite suite', () => {
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         recipients: [DTOsHelper.getRecipientUser(scenario.users.janeInnovator)],
         inputData: { innovationId: innovation.id, collaboratorId: innovation.collaborators.janeCollaborator.id },
-        outputData: { innovationName: innovation.name, requestUserName: requestUser.name }
+        outputData: {
+          innovationName: innovation.name,
+          requestUserName: requestUser.name,
+          collaboratorId: collaborator.id
+        }
       });
     });
   });

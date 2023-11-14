@@ -55,7 +55,7 @@ export class CollaboratorInviteHandler extends BaseHandler<
             detail: 'MC01_COLLABORATOR_INVITE_EXISTING_USER'
           },
           innovationId: innovation.id,
-          params: { innovationName: innovation.name, requestUserName: requestUserName }
+          params: { innovationName: innovation.name, requestUserName: requestUserName, collaboratorId: collaborator.id }
         }
       });
     }
