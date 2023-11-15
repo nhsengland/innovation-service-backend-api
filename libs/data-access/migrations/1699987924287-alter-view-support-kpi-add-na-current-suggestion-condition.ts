@@ -71,16 +71,6 @@ export class alterViewSupportKPIAddNACurrentSuggestedCondition1699987924287 impl
     )
     SELECT * from unit_kpi_date k
   `);
-
-    await queryRunner.query(`
-    CREATE NONCLUSTERED INDEX idx_activity_log_activity_innovation_id_created_at
-      ON [dbo].[activity_log] ([activity],[innovation_id])
-      INCLUDE ([created_at]);
-
-    CREATE NONCLUSTERED INDEX idx_innovation_support_log_type_innovation_id_created_at
-      ON [dbo].[innovation_support_log] ([type],[innovation_id])
-      INCLUDE ([created_at]);
-    `);
   }
 
   async down(_queryRunner: QueryRunner): Promise<void> {}
