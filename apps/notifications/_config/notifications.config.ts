@@ -11,41 +11,41 @@ import {
 import type { NotifierTemplatesType } from '@notifications/shared/types';
 
 import {
+  AccountCreationHandler,
+  AccountDeletionHandler,
+  CollaboratorInviteHandler,
+  CollaboratorUpdateHandler,
   DocumentUploadHandler,
+  ExportRequestFeedbackHandler,
+  ExportRequestSubmittedHandler,
+  IdleSupportAccessorHandler,
+  IdleSupportInnovatorHandler,
+  IncompleteRecordHandler,
+  InnovationDelayedSharedSuggestionHandler,
+  InnovationStopSharingHandler,
   InnovationSubmittedHandler,
   InnovationTransferOwnershipCompletedHandler,
   InnovationTransferOwnershipCreationHandler,
   InnovationTransferOwnershipExpirationHandler,
   InnovationTransferOwnershipReminderHandler,
+  InnovationWithdrawnHandler,
+  LockUserHandler,
+  MessageCreationHandler,
+  NeedsAssessmentAssessorUpdateHandler,
+  NeedsAssessmentCompleteHandler,
+  NeedsAssessmentStartedHandler,
+  OrganisationUnitsSuggestionHandler,
+  SupportNewAssignedAccessorsHandler,
+  SupportStatusChangeRequestHandler,
+  SupportStatusUpdateHandler,
   SupportSummaryUpdateHandler,
   TaskCreationHandler,
-  TaskUpdateHandler
+  TaskUpdateHandler,
+  ThreadAddFollowersHandler,
+  ThreadCreationHandler,
+  UnitInactivatedHandler,
+  UnitKPIHandler
 } from '../_handlers';
-import { AccountCreationHandler } from '../_handlers/account/account-creation.handler';
-import { LockUserHandler } from '../_handlers/admin/lock-user.handler';
-import { UnitInactivatedHandler } from '../_handlers/admin/unit-inactivated.handler';
-import { IdleSupportAccessorHandler } from '../_handlers/automatic/idle-support-accessor.handler';
-import { IdleSupportInnovatorHandler } from '../_handlers/automatic/idle-support-innovator.handler';
-import { IncompleteRecordHandler } from '../_handlers/automatic/incomplete-record.handler';
-import { UnitKPIHandler } from '../_handlers/automatic/unit-kpi.handler';
-import { CollaboratorInviteHandler } from '../_handlers/innovations/collaborators/collaborator-invite.handler';
-import { CollaboratorUpdateHandler } from '../_handlers/innovations/collaborators/collaborator-update.handler';
-import { AccountDeletionHandler } from '../_handlers/innovations/delete-account/account-deletion.handler';
-import { ExportRequestFeedbackHandler } from '../_handlers/innovations/export-request/export-request-feedback.handler';
-import { ExportRequestSubmittedHandler } from '../_handlers/innovations/export-request/export-request-submitted.handler';
-import { InnovationStopSharingHandler } from '../_handlers/innovations/stop-sharing-innovation/innovation-stop-sharing.handler';
-import { InnovationWithdrawnHandler } from '../_handlers/innovations/withdraw-innovation/innovation-withdrawn.handler';
-import { MessageCreationHandler } from '../_handlers/messages/message-creation.handler';
-import { ThreadAddFollowersHandler } from '../_handlers/messages/thread-add-followers.handler';
-import { ThreadCreationHandler } from '../_handlers/messages/thread-creation.handler';
-import { NeedsAssessmentAssessorUpdateHandler } from '../_handlers/needs-assessment/needs-assessment-assessor-update.handler';
-import { NeedsAssessmentCompleteHandler } from '../_handlers/needs-assessment/needs-assessment-complete.handler';
-import { NeedsAssessmentStartedHandler } from '../_handlers/needs-assessment/needs-assessment-started.handler';
-import { InnovationDelayedSharedSuggestionHandler } from '../_handlers/suggestions/innovation-delayed-shared-suggestion.handler';
-import { OrganisationUnitsSuggestionHandler } from '../_handlers/suggestions/organisation-units-suggestion.handler';
-import { SupportNewAssignedAccessorsHandler } from '../_handlers/supports/support-new-assigned-accessors.handler';
-import { SupportStatusChangeRequestHandler } from '../_handlers/supports/support-status-change-request.handler';
-import { SupportStatusUpdateHandler } from '../_handlers/supports/support-status-update.handler';
 
 export const NOTIFICATIONS_CONFIG = {
   // Account
