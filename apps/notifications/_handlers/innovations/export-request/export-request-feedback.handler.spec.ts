@@ -5,10 +5,10 @@ import {
   ServiceRoleEnum
 } from '@notifications/shared/enums';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
-import { testEmails, testInApps } from '../../_helpers/tests.helper';
-import { innovationRecordUrl } from '../../_helpers/url.helper';
-import { RecipientsService } from '../../_services/recipients.service';
-import { NotificationsTestsHelper } from '../../_tests/notifications-test.helper';
+import { testEmails, testInApps } from '../../../_helpers/tests.helper';
+import { innovationRecordUrl } from '../../../_helpers/url.helper';
+import { RecipientsService } from '../../../_services/recipients.service';
+import { NotificationsTestsHelper } from '../../../_tests/notifications-test.helper';
 import { ExportRequestFeedbackHandler } from './export-request-feedback.handler';
 
 describe('Notifications / _handlers / export-request-feedback suite', () => {

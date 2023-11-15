@@ -6,12 +6,12 @@ import { innovationOverviewUrl } from '../../_helpers/url.helper';
 import { BaseHandler } from '../base.handler';
 
 export class SupportStatusChangeRequestHandler extends BaseHandler<
-  NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_CHANGE_REQUEST,
+  NotifierTypeEnum.SUPPORT_STATUS_CHANGE_REQUEST,
   'ST07_SUPPORT_STATUS_CHANGE_REQUEST'
 > {
   constructor(
     requestUser: DomainContextType,
-    data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_CHANGE_REQUEST],
+    data: NotifierTemplatesType[NotifierTypeEnum.SUPPORT_STATUS_CHANGE_REQUEST],
     azureContext: Context
   ) {
     super(requestUser, data, azureContext);

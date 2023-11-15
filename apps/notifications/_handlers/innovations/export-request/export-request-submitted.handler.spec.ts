@@ -3,11 +3,11 @@ import { NotificationCategoryEnum, ServiceRoleEnum } from '@notifications/shared
 import { MocksHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { randomUUID } from 'crypto';
-import { HandlersHelper } from '../../_helpers/handlers.helper';
-import { testEmails, testInApps } from '../../_helpers/tests.helper';
-import { exportRequestUrl } from '../../_helpers/url.helper';
-import { RecipientsService } from '../../_services/recipients.service';
-import { NotificationsTestsHelper } from '../../_tests/notifications-test.helper';
+import { HandlersHelper } from '../../../_helpers/handlers.helper';
+import { testEmails, testInApps } from '../../../_helpers/tests.helper';
+import { exportRequestUrl } from '../../../_helpers/url.helper';
+import { RecipientsService } from '../../../_services/recipients.service';
+import { NotificationsTestsHelper } from '../../../_tests/notifications-test.helper';
 import { ExportRequestSubmittedHandler } from './export-request-submitted.handler';
 
 describe('Notifications / _handlers / export-request-submitted suite', () => {
