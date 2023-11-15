@@ -74,8 +74,7 @@ export const NotificationTypes = {
     'AU07_TRANSFER_ONE_WEEK_REMINDER_NEW_USER',
     'AU08_TRANSFER_ONE_WEEK_REMINDER_EXISTING_USER',
     'AU09_TRANSFER_EXPIRED'
-  ] as const,
-  MIGRATION_OLD: ['MIGRATION_OLD'] as const
+  ] as const
 };
 export type NotificationTypes = typeof NotificationTypes;
 export const FlatNotificationTypes = Object.values(NotificationTypes).flatMap(v => v.map(v => v));

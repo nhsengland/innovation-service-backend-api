@@ -35,7 +35,6 @@ const jestBaseConfig: Config = {
     'demo.service.ts',
     'node_modules'
   ],
-  modulePathIgnorePatterns: ['apps/notifications/_handlers/legacy'],
   testTimeout: 15000,
   workerIdleMemoryLimit: '1Gb'
 };

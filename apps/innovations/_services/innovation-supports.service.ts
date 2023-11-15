@@ -737,7 +737,7 @@ export class InnovationSupportsService extends BaseService {
     status: InnovationSupportStatusEnum,
     requestReason: string
   ): Promise<boolean> {
-    await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_CHANGE_REQUEST, {
+    await this.notifierService.send(domainContext, NotifierTypeEnum.SUPPORT_STATUS_CHANGE_REQUEST, {
       innovationId,
       supportId,
       proposedStatus: status,
