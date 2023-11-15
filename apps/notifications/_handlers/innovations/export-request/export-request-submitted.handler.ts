@@ -1,9 +1,9 @@
 import type { Context } from '@azure/functions';
 import { NotificationCategoryEnum, ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
-import { HandlersHelper } from '../../_helpers/handlers.helper';
-import { exportRequestUrl } from '../../_helpers/url.helper';
-import { BaseHandler } from '../base.handler';
+import { HandlersHelper } from '../../../_helpers/handlers.helper';
+import { exportRequestUrl } from '../../../_helpers/url.helper';
+import { BaseHandler } from '../../base.handler';
 
 export class ExportRequestSubmittedHandler extends BaseHandler<
   NotifierTypeEnum.EXPORT_REQUEST_SUBMITTED,

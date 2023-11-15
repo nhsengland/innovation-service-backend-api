@@ -6,9 +6,9 @@ import {
   type NotifierTypeEnum
 } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
-import { innovationRecordUrl } from '../../_helpers/url.helper';
-import type { RecipientType } from '../../_services/recipients.service';
-import { BaseHandler } from '../base.handler';
+import { innovationRecordUrl } from '../../../_helpers/url.helper';
+import type { RecipientType } from '../../../_services/recipients.service';
+import { BaseHandler } from '../../base.handler';
 
 export class ExportRequestFeedbackHandler extends BaseHandler<
   NotifierTypeEnum.EXPORT_REQUEST_FEEDBACK,
