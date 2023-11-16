@@ -1,4 +1,4 @@
-import type { NotificationPreferenceEnum, ServiceRoleEnum } from '../enums';
+import { NotificationCategoryType, NotificationPreferenceEnum, ServiceRoleEnum } from '../enums';
 
 export const NaNotificationCategories = ['TASK', 'MESSAGES', 'NEEDS_ASSESSMENT', 'INNOVATION_MANAGEMENT'] as const;
 type NaNotificationCategories = (typeof NaNotificationCategories)[number];
@@ -42,3 +42,10 @@ export type Role2PreferencesType<T extends ServiceRoleEnum> = T extends ServiceR
   : T extends ServiceRoleEnum.INNOVATOR
   ? Record<INotificationCategories, NotificationPreferenceEnum>
   : never;
+
+export const generatePreferencesObject = <T extends ServiceRoleEnum>(
+  arr: ReadonlyArray<NotificationCategoryType>,
+  value = NotificationPreferenceEnum.YES
+): Role2PreferencesType<T> => {
+  return arr.reduce((acc, c) => ({ ...acc, [c]: value }), {}) as Role2PreferencesType<T>;
+};

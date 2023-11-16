@@ -1,9 +1,9 @@
 import azureFunction from '.';
 
-import { NotificationPreferenceEnum } from '@users/shared/enums';
+import type { ServiceRoleEnum } from '@users/shared/enums';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@users/shared/tests';
 import type { TestUserType } from '@users/shared/tests/builders/user.builder';
-import type { ErrorResponseType } from '@users/shared/types';
+import { NaNotificationCategories, generatePreferencesObject, type ErrorResponseType } from '@users/shared/types';
 import { NotificationsService } from '../_services/notifications.service';
 import type { ResponseDTO } from './transformation.dtos';
 
@@ -23,13 +23,7 @@ beforeAll(async () => {
   await testsHelper.init();
 });
 
-const expected = {
-  ASSIGN_NA: NotificationPreferenceEnum.NO,
-  INNOVATION_MANAGEMENT: NotificationPreferenceEnum.YES,
-  INNOVATOR_SUBMIT_IR: NotificationPreferenceEnum.YES,
-  MESSAGE: NotificationPreferenceEnum.NO,
-  TASK: NotificationPreferenceEnum.YES
-};
+const expected = generatePreferencesObject<ServiceRoleEnum.ASSESSMENT>(NaNotificationCategories);
 const mock = jest.spyOn(NotificationsService.prototype, 'getUserRoleEmailPreferences').mockResolvedValue(expected);
 
 afterEach(() => {

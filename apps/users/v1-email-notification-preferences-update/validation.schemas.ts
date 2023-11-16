@@ -1,6 +1,18 @@
-import { NotificationPreferenceEnum, ServiceRoleEnum } from '@users/shared/enums';
-import type { NotificationPreferences, Role2PreferencesType } from '@users/shared/types';
+import { NotificationCategoryType, NotificationPreferenceEnum, ServiceRoleEnum } from '@users/shared/enums';
+import {
+  ANotificationCategories,
+  INotificationCategories,
+  NaNotificationCategories,
+  QANotificationCategories,
+  type NotificationPreferences,
+  type Role2PreferencesType
+} from '@users/shared/types';
 import Joi from 'joi';
+
+// Helper
+const getPreferenceValidationsByRoleCategories = (arr: ReadonlyArray<NotificationCategoryType>) => {
+  return arr.reduce((acc, c) => ({ ...acc, [c]: PreferenceValueSchema }), {});
+};
 
 export type BodyType = {
   preferences: NotificationPreferences;
@@ -13,48 +25,27 @@ export const BodySchema = Joi.object<BodyType>({
   preferences: Joi.when('$role', [
     {
       is: ServiceRoleEnum.ASSESSMENT,
-      then: Joi.object<Role2PreferencesType<ServiceRoleEnum.ASSESSMENT>>({
-        ASSIGN_NA: PreferenceValueSchema,
-        INNOVATION_MANAGEMENT: PreferenceValueSchema,
-        INNOVATOR_SUBMIT_IR: PreferenceValueSchema,
-        MESSAGE: PreferenceValueSchema,
-        TASK: PreferenceValueSchema
-      }).required()
+      then: Joi.object<Role2PreferencesType<ServiceRoleEnum.ASSESSMENT>>(
+        getPreferenceValidationsByRoleCategories(NaNotificationCategories)
+      ).required()
     },
     {
       is: ServiceRoleEnum.ACCESSOR,
-      then: Joi.object<Role2PreferencesType<ServiceRoleEnum.ACCESSOR>>({
-        ACCOUNT: PreferenceValueSchema,
-        EXPORT_REQUEST: PreferenceValueSchema,
-        INNOVATION_MANAGEMENT: PreferenceValueSchema,
-        MESSAGE: PreferenceValueSchema,
-        REMINDER: PreferenceValueSchema,
-        SUPPORT: PreferenceValueSchema,
-        TASK: PreferenceValueSchema
-      }).required()
+      then: Joi.object<Role2PreferencesType<ServiceRoleEnum.ACCESSOR>>(
+        getPreferenceValidationsByRoleCategories(ANotificationCategories)
+      ).required()
     },
     {
       is: ServiceRoleEnum.QUALIFYING_ACCESSOR,
-      then: Joi.object<Role2PreferencesType<ServiceRoleEnum.QUALIFYING_ACCESSOR>>({
-        SUGGEST_SUPPORT: PreferenceValueSchema,
-        ACCOUNT: PreferenceValueSchema,
-        EXPORT_REQUEST: PreferenceValueSchema,
-        INNOVATION_MANAGEMENT: PreferenceValueSchema,
-        MESSAGE: PreferenceValueSchema,
-        REMINDER: PreferenceValueSchema,
-        SUPPORT: PreferenceValueSchema,
-        TASK: PreferenceValueSchema
-      }).required()
+      then: Joi.object<Role2PreferencesType<ServiceRoleEnum.QUALIFYING_ACCESSOR>>(
+        getPreferenceValidationsByRoleCategories(QANotificationCategories)
+      ).required()
     },
     {
       is: ServiceRoleEnum.INNOVATOR,
-      then: Joi.object<Role2PreferencesType<ServiceRoleEnum.INNOVATOR>>({
-        DOCUMENT: PreferenceValueSchema,
-        MESSAGE: PreferenceValueSchema,
-        REMINDER: PreferenceValueSchema,
-        SUPPORT: PreferenceValueSchema,
-        TASK: PreferenceValueSchema
-      }).required(),
+      then: Joi.object<Role2PreferencesType<ServiceRoleEnum.INNOVATOR>>(
+        getPreferenceValidationsByRoleCategories(INotificationCategories)
+      ).required(),
       otherwise: Joi.forbidden()
     }
   ])
