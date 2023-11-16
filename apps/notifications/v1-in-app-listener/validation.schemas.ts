@@ -26,7 +26,7 @@ export const MessageSchema = Joi.object<MessageType>({
 
     context: Joi.object<MessageType['data']['context']>({
       type: Joi.string()
-        .valid(...Object.values(NotificationCategoryType))
+        .valid(...NotificationCategoryType)
         .required(),
       detail: Joi.string()
         .valid(...FlatNotificationTypes)

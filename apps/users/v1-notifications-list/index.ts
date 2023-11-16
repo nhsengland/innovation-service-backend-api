@@ -113,7 +113,7 @@ export default openApi(V1UserNotifications.httpTrigger as AzureFunction, '/v1/no
                       },
                       contextType: {
                         type: 'string',
-                        enum: Object.keys(NotificationCategoryType),
+                        enum: NotificationCategoryType,
                         description: 'The notification context category'
                       },
                       contextDetail: {

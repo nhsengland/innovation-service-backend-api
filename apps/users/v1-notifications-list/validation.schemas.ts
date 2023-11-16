@@ -21,7 +21,7 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
       .items(
         Joi.string()
           .allow('')
-          .valid(...Object.values(NotificationCategoryType))
+          .valid(...NotificationCategoryType)
       )
       .optional()
       .default([])
