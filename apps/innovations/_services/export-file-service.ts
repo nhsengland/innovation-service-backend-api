@@ -173,12 +173,14 @@ export class ExportFileService extends BaseService {
   //#region CSV helpers
   /**
    * converts an array of arrays to a csv string
+   *
+   * from https://github.com/vanillaes/csv/blob/main/index.js
+   *
    * @param array data to convert
    * @param options options
    *   - eof: add a new line at the end of the file
    * @returns csv string
    */
-  // from https://github.com/vanillaes/csv/blob/main/index.js
   private csvToString(array: string[][], options = { eof: true }): string {
     const ctx = Object.create(null);
     ctx.options = options;
