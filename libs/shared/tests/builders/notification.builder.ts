@@ -2,13 +2,13 @@
 import type { EntityManager } from 'typeorm';
 import { InnovationEntity, NotificationEntity, UserRoleEntity } from '../../entities';
 import { NotificationUserEntity } from '../../entities/user/notification-user.entity';
-import type { NotificationCategoryType, NotificationContextDetailEnum } from '../../enums';
+import type { FlatNotificationTypes, NotificationCategoryType } from '../../enums';
 import { BaseBuilder } from './base.builder';
 import type { TestUserType } from './user.builder';
 
 export type TestNotificationType = {
   id: string;
-  context: { detail: NotificationContextDetailEnum; type: NotificationCategoryType; id: string };
+  context: { detail: FlatNotificationTypes; type: NotificationCategoryType; id: string };
   createdAt: Date;
   notificationUsers: Map<string, { id: number; readAt: Date | null }>;
   params: Record<string, unknown>;
@@ -24,7 +24,7 @@ export class NotificationBuilder extends BaseBuilder {
     super(entityManager);
   }
 
-  setContext(type: NotificationCategoryType, detail: NotificationContextDetailEnum, id: string): this {
+  setContext(type: NotificationCategoryType, detail: FlatNotificationTypes, id: string): this {
     this.notification.contextType = type;
     this.notification.contextDetail = detail;
     this.notification.contextId = id;

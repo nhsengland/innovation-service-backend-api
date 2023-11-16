@@ -5,7 +5,7 @@ import { BaseEntity } from '../base.entity';
 import { InnovationEntity } from '../innovation/innovation.entity';
 import { NotificationUserEntity } from './notification-user.entity';
 
-import { NotificationCategoryType, NotificationContextDetailEnum } from '../../enums/notification.enums';
+import { FlatNotificationTypes, NotificationCategoryType } from '../../enums/notification.enums';
 
 @Entity('notification')
 export class NotificationEntity extends BaseEntity {
@@ -19,7 +19,7 @@ export class NotificationEntity extends BaseEntity {
   contextType: NotificationCategoryType;
 
   @Column({ name: 'context_detail' })
-  contextDetail: NotificationContextDetailEnum;
+  contextDetail: FlatNotificationTypes;
 
   @Column({ type: 'uuid', name: 'context_id' })
   contextId: string;

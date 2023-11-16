@@ -2,7 +2,6 @@ import { randUuid } from '@ngneat/falso';
 
 import V1SendInAppListener from '.'; // Must be imported first to start inversify configurations.
 
-import { NotificationContextDetailEnum } from '@notifications/shared/enums';
 import { AzureQueueTriggerBuilder, CompleteScenarioType, TestsHelper } from '@notifications/shared/tests';
 
 import { DispatchService } from '../_services/dispatch.service';
@@ -30,7 +29,7 @@ describe('Notifications / v1-in-app-listener / index suite', () => {
         innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
         context: {
           type: 'NEEDS_ASSESSMENT',
-          detail: NotificationContextDetailEnum.INNOVATION_SUBMISSION,
+          detail: 'NA01_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_INNOVATOR',
           id: scenario.users.johnInnovator.innovations.johnInnovation.id
         },
         userRoleIds: [scenario.users.johnInnovator.roles['innovatorRole']?.id],
@@ -53,7 +52,7 @@ describe('Notifications / v1-in-app-listener / index suite', () => {
           innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
           context: {
             type: 'NEEDS_ASSESSMENT',
-            detail: NotificationContextDetailEnum.INNOVATION_SUBMISSION,
+            detail: 'NA01_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_INNOVATOR',
             id: scenario.users.johnInnovator.innovations.johnInnovation.id
           },
           userRoleIds: [scenario.users.johnInnovator.roles['innovatorRole']?.id],

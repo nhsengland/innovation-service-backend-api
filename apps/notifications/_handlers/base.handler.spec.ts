@@ -1,12 +1,7 @@
 import { container } from '../_config'; // inversify container
 
 import { randUuid } from '@ngneat/falso';
-import {
-  NotificationCategoryType,
-  NotificationContextDetailEnum,
-  NotificationPreferenceEnum,
-  ServiceRoleEnum
-} from '@notifications/shared/enums';
+import { NotificationCategoryType, NotificationPreferenceEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { CompleteScenarioType, MocksHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { cloneDeep } from 'lodash';
@@ -275,7 +270,7 @@ describe('Notifications / _handlers / base handler suite', () => {
         {
           context: {
             type: 'TASK' as NotificationCategoryType,
-            detail: NotificationContextDetailEnum.TASK_CREATION,
+            detail: 'TA01_TASK_CREATION_TO_INNOVATOR',
             id: randUuid()
           },
           innovationId: randUuid(),
