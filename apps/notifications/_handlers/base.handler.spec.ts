@@ -39,26 +39,25 @@ describe('Notifications / _handlers / base handler suite', () => {
     jest.restoreAllMocks();
   });
 
-  // describe('isEmailPreferenceInstantly', () => {
-  //   it('should return true when the email preference is instant', () => {
-  //     expect(
-  //       baseHandler['isEmailPreferenceInstantly']('TASK', { TASK: EmailNotificationPreferenceEnum.INSTANTLY })
-  //     ).toBe(true);
-  //   });
+  describe('isEmailPreferenceInstantly', () => {
+    it('should return true when the email preference is yes', () => {
+      expect(baseHandler['isEmailPreferenceInstantly']('TASK', { TASK: NotificationPreferenceEnum.YES } as any)).toBe(
+        true
+      );
+    });
 
-  //   it.each([[EmailNotificationPreferenceEnum.DAILY], [EmailNotificationPreferenceEnum.NEVER]])(
-  //     'should return false when the email preference is %s',
-  //     (preference: EmailNotificationPreferenceEnum) => {
-  //       expect(baseHandler['isEmailPreferenceInstantly']('TASK', { TASK: preference })).toBe(false);
-  //     }
-  //   );
+    it('should return false when the email preference is no', () => {
+      expect(baseHandler['isEmailPreferenceInstantly']('TASK', { TASK: NotificationPreferenceEnum.NO } as any)).toBe(
+        false
+      );
+    });
 
-  //   it('should return true when the email preference is not set', () => {
-  //     expect(
-  //       baseHandler['isEmailPreferenceInstantly']('TASK', { MESSAGE: EmailNotificationPreferenceEnum.NEVER })
-  //     ).toBe(true);
-  //   });
-  // });
+    it('should return true when the email preference is not defined', () => {
+      expect(
+        baseHandler['isEmailPreferenceInstantly']('DOCUMENTS', { TASK: NotificationPreferenceEnum.NO } as any)
+      ).toBe(true);
+    });
+  });
 
   describe('frontendBaseUrl', () => {
     it.each([

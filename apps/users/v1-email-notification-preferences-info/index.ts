@@ -2,7 +2,6 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@users/shared/decorators';
-import { EmailNotificationPreferenceEnum, EmailNotificationType } from '@users/shared/enums';
 import { ResponseHelper } from '@users/shared/helpers';
 import type { AuthorizationService } from '@users/shared/services';
 import SHARED_SYMBOLS from '@users/shared/services/symbols';
@@ -50,22 +49,8 @@ export default openApi(V1UserEmailNotificationsInfo.httpTrigger as AzureFunction
         content: {
           'application/json': {
             schema: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  notificationType: {
-                    type: 'string',
-                    description: 'The type of notification',
-                    enum: Object.values(EmailNotificationType)
-                  },
-                  preference: {
-                    type: 'string',
-                    description: 'The preference of the notification',
-                    enum: Object.values(EmailNotificationPreferenceEnum)
-                  }
-                }
-              }
+              type: 'object',
+              properties: {}
             }
           }
         }

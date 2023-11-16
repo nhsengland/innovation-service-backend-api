@@ -142,21 +142,6 @@ export enum NotificationContextDetailEnum {
   INNOVATION_DELAYED_SHARED_SUGGESTION = 'INNOVATION_DELAYED_SHARED_SUGGESTION'
 }
 
-/**
- * @deprecated Use `NotificationCategoryEnum` instead.
- */
-export const EmailNotificationType = ['TASK', 'MESSAGE', 'SUPPORT'] as const;
-/**
- * @deprecated Use `NotificationCategoryEnum` instead.
- */
-export type EmailNotificationType = (typeof EmailNotificationType)[number];
-
-export enum EmailNotificationPreferenceEnum {
-  NEVER = 'NEVER',
-  INSTANTLY = 'INSTANTLY',
-  DAILY = 'DAILY'
-}
-
 export enum NotificationLogTypeEnum {
   QA_A_IDLE_SUPPORT = 'QA_A_IDLE_SUPPORT'
 }
