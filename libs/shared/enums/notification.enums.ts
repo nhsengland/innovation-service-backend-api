@@ -80,33 +80,6 @@ export type NotificationCategoryType = keyof NotificationTypes;
 export const NotificationDetailType = Object.values(NotificationTypes).flatMap(v => v.map(v => v));
 export type NotificationDetailType = NotificationTypes[keyof NotificationTypes][number];
 
-// TODO this is likely going to be keyof NotificationTypes
-export enum NotificationCategoryEnum {
-  // GENERALS
-  // A are only composed by GENERAL ones (not all)
-  TASK = 'TASK',
-  MESSAGE = 'MESSAGE',
-  INNOVATION_MANAGEMENT = 'INNOVATION_MANAGEMENT',
-  SUPPORT = 'SUPPORT',
-  EXPORT_REQUEST = 'EXPORT_REQUEST',
-  ACCOUNT = 'ACCOUNT',
-  REMINDER = 'REMINDER',
-  // NA
-  INNOVATOR_SUBMIT_IR = 'INNOVATOR_SUBMIT_IR', // INNOVATIONS - all related
-  ASSIGN_NA = 'ASSIGN_NA', // ASSESSMENTS - all related
-  // QA
-  SUGGEST_SUPPORT = 'SUGGEST_SUPPORT',
-  // I
-  DOCUMENT = 'DOCUMENT',
-
-  // OTHER BUCKET (THIS NEEDS TO BE REVISED)
-  INNOVATION = 'INNOVATION',
-  NEEDS_ASSESSMENT = 'NEEDS_ASSESSMENT',
-  SUPPORT_SUMMARY = 'SUPPORT_SUMMARY',
-  AUTOMATIC = 'AUTOMATIC',
-  ADMIN = 'ADMIN'
-}
-
 export enum NotificationPreferenceEnum {
   YES = 'YES',
   NO = 'NO'

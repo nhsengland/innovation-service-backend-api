@@ -1,44 +1,30 @@
-import { NotificationCategoryEnum, type NotificationPreferenceEnum, type ServiceRoleEnum } from '../enums';
+import type { NotificationPreferenceEnum, ServiceRoleEnum } from '../enums';
 
-export const NaNotificationCategories = [
-  NotificationCategoryEnum.INNOVATOR_SUBMIT_IR,
-  NotificationCategoryEnum.ASSIGN_NA,
-  NotificationCategoryEnum.TASK,
-  NotificationCategoryEnum.MESSAGE,
-  NotificationCategoryEnum.INNOVATION_MANAGEMENT
-] as const;
+export const NaNotificationCategories = ['TASK', 'MESSAGES', 'NEEDS_ASSESSMENT', 'INNOVATION_MANAGEMENT'] as const;
 type NaNotificationCategories = (typeof NaNotificationCategories)[number];
 
 export const ANotificationCategories = [
-  NotificationCategoryEnum.SUPPORT,
-  NotificationCategoryEnum.TASK,
-  NotificationCategoryEnum.MESSAGE,
-  NotificationCategoryEnum.INNOVATION_MANAGEMENT,
-  NotificationCategoryEnum.EXPORT_REQUEST,
-  NotificationCategoryEnum.ACCOUNT,
-  NotificationCategoryEnum.REMINDER
+  'TASK',
+  'SUPPORT',
+  'MESSAGES',
+  'ADMIN',
+  'AUTOMATIC',
+  'INNOVATION_MANAGEMENT'
 ] as const;
 type ANotificationCategories = (typeof ANotificationCategories)[number];
 
 export const QANotificationCategories = [
-  NotificationCategoryEnum.SUGGEST_SUPPORT,
-  NotificationCategoryEnum.SUPPORT,
-  NotificationCategoryEnum.TASK,
-  NotificationCategoryEnum.MESSAGE,
-  NotificationCategoryEnum.INNOVATION_MANAGEMENT,
-  NotificationCategoryEnum.EXPORT_REQUEST,
-  NotificationCategoryEnum.ACCOUNT,
-  NotificationCategoryEnum.REMINDER
+  'TASK',
+  'SUPPORT',
+  'MESSAGES',
+  'ORGANISATION_SUGGESTIONS',
+  'ADMIN',
+  'AUTOMATIC',
+  'INNOVATION_MANAGEMENT'
 ] as const;
 type QANotificationCategories = (typeof QANotificationCategories)[number];
 
-export const INotificationCategories = [
-  NotificationCategoryEnum.SUPPORT,
-  NotificationCategoryEnum.TASK,
-  NotificationCategoryEnum.MESSAGE,
-  NotificationCategoryEnum.DOCUMENT,
-  NotificationCategoryEnum.REMINDER
-] as const;
+export const INotificationCategories = ['TASK', 'SUPPORT', 'MESSAGES', 'DOCUMENTS', 'AUTOMATIC'] as const;
 type INotificationCategories = (typeof INotificationCategories)[number];
 
 export type NotificationPreferences =

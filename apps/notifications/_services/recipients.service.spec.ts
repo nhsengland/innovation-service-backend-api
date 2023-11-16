@@ -1291,17 +1291,17 @@ describe('Notifications / _services / recipients service suite', () => {
 
   describe('getEmailPreference', () => {
     const johnPreferences: Role2PreferencesType<ServiceRoleEnum.INNOVATOR> = {
-      DOCUMENT: NotificationPreferenceEnum.YES,
+      DOCUMENTS: NotificationPreferenceEnum.YES,
       TASK: NotificationPreferenceEnum.YES,
-      MESSAGE: NotificationPreferenceEnum.YES,
-      REMINDER: NotificationPreferenceEnum.NO,
+      MESSAGES: NotificationPreferenceEnum.YES,
+      AUTOMATIC: NotificationPreferenceEnum.NO,
       SUPPORT: NotificationPreferenceEnum.NO
     };
     const adamPreferences: Role2PreferencesType<ServiceRoleEnum.INNOVATOR> = {
-      DOCUMENT: NotificationPreferenceEnum.YES,
+      DOCUMENTS: NotificationPreferenceEnum.YES,
       TASK: NotificationPreferenceEnum.NO,
-      MESSAGE: NotificationPreferenceEnum.YES,
-      REMINDER: NotificationPreferenceEnum.NO,
+      MESSAGES: NotificationPreferenceEnum.YES,
+      AUTOMATIC: NotificationPreferenceEnum.NO,
       SUPPORT: NotificationPreferenceEnum.NO
     };
 
