@@ -11,7 +11,6 @@ import { TranslationHelper } from '@notifications/shared/helpers';
 import type { DomainContextType, NotificationPreferences, NotifierTemplatesType } from '@notifications/shared/types';
 import { EmailTemplates, EmailTemplatesType, container } from '../_config';
 import type { InAppTemplatesType } from '../_config/inapp.config';
-import { frontendBaseUrl } from '../_helpers/url.helper';
 import type { RecipientType, RecipientsService } from '../_services/recipients.service';
 import SYMBOLS from '../_services/symbols';
 
@@ -83,19 +82,11 @@ export abstract class BaseHandler<
 
   /**
    * Helper method to verify users email notification preferences.
-   * Ex: this.isEmailPreferenceInstantly(TASK, userData);
+   * Ex: this.shouldSendEmail(TASK, userData);
    */
-  // TODO: check if we can remove any
-  protected isEmailPreferenceInstantly(type: NotificationCategoryType, data?: NotificationPreferences): boolean {
+  protected shouldSendEmail(type: NotificationCategoryType, data?: NotificationPreferences): boolean {
     const preference = data as any; // TS can't infer the correct NotificationPreferences
     return !preference || !preference[type] || preference[type] === NotificationPreferenceEnum.YES;
-  }
-
-  /**
-   * @deprecated use the helpers from @notifications/shared/helpers
-   */
-  protected frontendBaseUrl(userRole: ServiceRoleEnum): string {
-    return frontendBaseUrl(userRole);
   }
 
   abstract run(): Promise<this>;
@@ -138,10 +129,7 @@ export abstract class BaseHandler<
           recipient.notificationPreferenceType && // if preference is set
           !recipient.options?.ignorePreferences && // and ignore is not set
           // and don't have preference for this type
-          !this.isEmailPreferenceInstantly(
-            recipient.notificationPreferenceType,
-            emailPreferences.get(recipient.to.roleId)
-          )
+          !this.shouldSendEmail(recipient.notificationPreferenceType, emailPreferences.get(recipient.to.roleId))
         ) {
           continue;
         }

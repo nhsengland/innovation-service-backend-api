@@ -1,7 +1,7 @@
 import { container } from '../_config'; // inversify container
 
 import { randUuid } from '@ngneat/falso';
-import { NotificationCategoryType, NotificationPreferenceEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import { NotificationCategoryType, NotificationPreferenceEnum } from '@notifications/shared/enums';
 import { CompleteScenarioType, MocksHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { cloneDeep } from 'lodash';
@@ -36,33 +36,19 @@ describe('Notifications / _handlers / base handler suite', () => {
 
   describe('isEmailPreferenceInstantly', () => {
     it('should return true when the email preference is yes', () => {
-      expect(baseHandler['isEmailPreferenceInstantly']('TASK', { TASK: NotificationPreferenceEnum.YES } as any)).toBe(
-        true
-      );
+      expect(baseHandler['shouldSendEmail']('TASK', { TASK: NotificationPreferenceEnum.YES } as any)).toBe(true);
     });
 
     it('should return false when the email preference is no', () => {
-      expect(baseHandler['isEmailPreferenceInstantly']('TASK', { TASK: NotificationPreferenceEnum.NO } as any)).toBe(
-        false
-      );
+      expect(baseHandler['shouldSendEmail']('TASK', { TASK: NotificationPreferenceEnum.NO } as any)).toBe(false);
+    });
+
+    it('should return true when the email preference for DOCUMENTS is not defined', () => {
+      expect(baseHandler['shouldSendEmail']('DOCUMENTS', { TASK: NotificationPreferenceEnum.NO } as any)).toBe(true);
     });
 
     it('should return true when the email preference is not defined', () => {
-      expect(
-        baseHandler['isEmailPreferenceInstantly']('DOCUMENTS', { TASK: NotificationPreferenceEnum.NO } as any)
-      ).toBe(true);
-    });
-  });
-
-  describe('frontendBaseUrl', () => {
-    it.each([
-      [ServiceRoleEnum.ASSESSMENT, 'assessment'],
-      [ServiceRoleEnum.ACCESSOR, 'accessor'],
-      [ServiceRoleEnum.QUALIFYING_ACCESSOR, 'accessor'],
-      [ServiceRoleEnum.INNOVATOR, 'innovator'],
-      [ServiceRoleEnum.ADMIN, 'admin']
-    ])('should return the correct frontend base url for role %s', (role: ServiceRoleEnum, res: string) => {
-      expect(baseHandler['frontendBaseUrl'](role)).toBe(res);
+      expect(baseHandler['shouldSendEmail']('INNOVATION_MANAGEMENT')).toBe(true);
     });
   });
 

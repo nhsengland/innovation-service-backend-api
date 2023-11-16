@@ -5,7 +5,7 @@ import { NotificationPreferenceEnum, ServiceRoleEnum } from '@users/shared/enums
 import { GenericErrorsEnum, UnprocessableEntityError } from '@users/shared/errors';
 import { TestsHelper } from '@users/shared/tests';
 import { DTOsHelper } from '@users/shared/tests/helpers/dtos.helper';
-import type { Role2PreferencesType } from '@users/shared/types';
+import { NaNotificationCategories, QANotificationCategories, generatePreferencesObject } from '@users/shared/types';
 import type { EntityManager } from 'typeorm';
 import type { NotificationsService } from './notifications.service';
 import SYMBOLS from './symbols';
@@ -359,15 +359,9 @@ describe('Users / _services / notifications service suite', () => {
   });
 
   describe('getUserRoleEmailPreferences', () => {
-    const mockNaPreferences = {
-      ASSIGN_NA: NotificationPreferenceEnum.NO,
-      INNOVATION_MANAGEMENT: NotificationPreferenceEnum.YES,
-      INNOVATOR_SUBMIT_IR: NotificationPreferenceEnum.YES,
-      MESSAGE: NotificationPreferenceEnum.NO,
-      TASK: NotificationPreferenceEnum.YES
-    };
-
     it('should get the email preferences for the specified role', async () => {
+      const mockNaPreferences = generatePreferencesObject<ServiceRoleEnum.ASSESSMENT>(NaNotificationCategories);
+
       //create preference
       await em.getRepository(NotificationPreferenceEntity).save({
         notificationType: 'TASK',
@@ -393,27 +387,14 @@ describe('Users / _services / notifications service suite', () => {
         em
       );
 
-      expect(result).toMatchObject({
-        ACCOUNT: NotificationPreferenceEnum.YES,
-        EXPORT_REQUEST: NotificationPreferenceEnum.YES,
-        INNOVATION_MANAGEMENT: NotificationPreferenceEnum.YES,
-        MESSAGE: NotificationPreferenceEnum.YES,
-        REMINDER: NotificationPreferenceEnum.YES,
-        SUGGEST_SUPPORT: NotificationPreferenceEnum.YES,
-        SUPPORT: NotificationPreferenceEnum.YES,
-        TASK: NotificationPreferenceEnum.YES
-      } as Role2PreferencesType<ServiceRoleEnum.QUALIFYING_ACCESSOR>);
+      expect(result).toMatchObject(
+        generatePreferencesObject<ServiceRoleEnum.QUALIFYING_ACCESSOR>(QANotificationCategories)
+      );
     });
   });
 
   describe('upsertEmailPreferences', () => {
-    const mockNaPreferences = {
-      ASSIGN_NA: NotificationPreferenceEnum.NO,
-      INNOVATION_MANAGEMENT: NotificationPreferenceEnum.YES,
-      INNOVATOR_SUBMIT_IR: NotificationPreferenceEnum.YES,
-      MESSAGE: NotificationPreferenceEnum.NO,
-      TASK: NotificationPreferenceEnum.YES
-    };
+    const mockNaPreferences = generatePreferencesObject<ServiceRoleEnum.ASSESSMENT>(NaNotificationCategories);
 
     it(`should create email preferences if they don't exist`, async () => {
       await sut.upsertUserEmailPreferences(
@@ -443,7 +424,7 @@ describe('Users / _services / notifications service suite', () => {
         updatedBy: scenario.users.paulNeedsAssessor.roles.assessmentRole.id
       });
 
-      const expected = { ...mockNaPreferences, ASSIGN_NA: NotificationPreferenceEnum.YES };
+      const expected = { ...mockNaPreferences, MESSAGES: NotificationPreferenceEnum.NO };
 
       await sut.upsertUserEmailPreferences(
         DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor, 'assessmentRole'),

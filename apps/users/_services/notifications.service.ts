@@ -6,7 +6,6 @@ import {
   InnovationStatusEnum,
   NotificationCategoryType,
   NotificationDetailType,
-  NotificationPreferenceEnum,
   ServiceRoleEnum,
   UserStatusEnum
 } from '@users/shared/enums';
@@ -14,7 +13,16 @@ import { GenericErrorsEnum, NotImplementedError, UnprocessableEntityError } from
 import type { PaginationQueryParamsType } from '@users/shared/helpers';
 import type { IdentityProviderService } from '@users/shared/services';
 import SHARED_SYMBOLS from '@users/shared/services/symbols';
-import type { DomainContextType, NotificationPreferences, Role2PreferencesType } from '@users/shared/types';
+import {
+  ANotificationCategories,
+  INotificationCategories,
+  NaNotificationCategories,
+  QANotificationCategories,
+  generatePreferencesObject,
+  type DomainContextType,
+  type NotificationPreferences,
+  type Role2PreferencesType
+} from '@users/shared/types';
 
 import { BaseService } from './base.service';
 
@@ -307,42 +315,15 @@ export class NotificationsService extends BaseService {
   private getDefaultNotificationPreferences(role: ServiceRoleEnum): NotificationPreferences {
     switch (role) {
       case ServiceRoleEnum.INNOVATOR:
-        return {
-          DOCUMENT: NotificationPreferenceEnum.YES,
-          MESSAGE: NotificationPreferenceEnum.YES,
-          REMINDER: NotificationPreferenceEnum.YES,
-          SUPPORT: NotificationPreferenceEnum.YES,
-          TASK: NotificationPreferenceEnum.YES
-        } as Role2PreferencesType<ServiceRoleEnum.INNOVATOR>;
+        return generatePreferencesObject(INotificationCategories) as Role2PreferencesType<ServiceRoleEnum.INNOVATOR>;
       case ServiceRoleEnum.ACCESSOR:
-        return {
-          ACCOUNT: NotificationPreferenceEnum.YES,
-          EXPORT_REQUEST: NotificationPreferenceEnum.YES,
-          INNOVATION_MANAGEMENT: NotificationPreferenceEnum.YES,
-          MESSAGE: NotificationPreferenceEnum.YES,
-          REMINDER: NotificationPreferenceEnum.YES,
-          SUPPORT: NotificationPreferenceEnum.YES,
-          TASK: NotificationPreferenceEnum.YES
-        } as Role2PreferencesType<ServiceRoleEnum.ACCESSOR>;
+        return generatePreferencesObject(ANotificationCategories) as Role2PreferencesType<ServiceRoleEnum.ACCESSOR>;
       case ServiceRoleEnum.ASSESSMENT:
-        return {
-          ASSIGN_NA: NotificationPreferenceEnum.YES,
-          INNOVATION_MANAGEMENT: NotificationPreferenceEnum.YES,
-          INNOVATOR_SUBMIT_IR: NotificationPreferenceEnum.YES,
-          MESSAGE: NotificationPreferenceEnum.YES,
-          TASK: NotificationPreferenceEnum.YES
-        } as Role2PreferencesType<ServiceRoleEnum.ASSESSMENT>;
+        return generatePreferencesObject(NaNotificationCategories) as Role2PreferencesType<ServiceRoleEnum.ASSESSMENT>;
       case ServiceRoleEnum.QUALIFYING_ACCESSOR:
-        return {
-          ACCOUNT: NotificationPreferenceEnum.YES,
-          EXPORT_REQUEST: NotificationPreferenceEnum.YES,
-          INNOVATION_MANAGEMENT: NotificationPreferenceEnum.YES,
-          MESSAGE: NotificationPreferenceEnum.YES,
-          REMINDER: NotificationPreferenceEnum.YES,
-          SUGGEST_SUPPORT: NotificationPreferenceEnum.YES,
-          SUPPORT: NotificationPreferenceEnum.YES,
-          TASK: NotificationPreferenceEnum.YES
-        } as Role2PreferencesType<ServiceRoleEnum.QUALIFYING_ACCESSOR>;
+        return generatePreferencesObject(
+          QANotificationCategories
+        ) as Role2PreferencesType<ServiceRoleEnum.QUALIFYING_ACCESSOR>;
       default:
         throw new NotImplementedError(GenericErrorsEnum.NOT_IMPLEMENTED_ERROR);
     }
