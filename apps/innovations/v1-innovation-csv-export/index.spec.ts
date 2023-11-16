@@ -3,7 +3,7 @@ import azureFunction from '.';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@innovations/shared/tests';
 import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@innovations/shared/types';
-import { randBinary, randText } from '@ngneat/falso';
+import { randText } from '@ngneat/falso';
 import { ExportFileService } from '../_services/export-file-service';
 import type { BodyType, ParamsType } from './validation.schemas';
 
@@ -23,14 +23,14 @@ beforeAll(async () => {
   await testsHelper.init();
 });
 
-const pdf = randBinary();
-const generatePDFMock = jest.spyOn(ExportFileService.prototype, 'create').mockResolvedValue(pdf);
+const csv = randText();
+const generateCSVMock = jest.spyOn(ExportFileService.prototype, 'create').mockResolvedValue(csv);
 
 afterEach(() => {
   jest.clearAllMocks();
 });
 
-describe('v1-innovation-pdf-export Suite', () => {
+describe('v1-innovation-csv-export Suite', () => {
   const body = [
     {
       sections: [
@@ -46,7 +46,7 @@ describe('v1-innovation-pdf-export Suite', () => {
     }
   ];
   describe('200', () => {
-    it('should return the pdf', async () => {
+    it('should return the csv', async () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.johnInnovator)
         .setParams<ParamsType>({
@@ -55,12 +55,13 @@ describe('v1-innovation-pdf-export Suite', () => {
         .setBody<BodyType>(body)
         .call<unknown>(azureFunction);
 
-      expect(result.body).toStrictEqual(pdf);
-      expect(generatePDFMock).toHaveBeenCalledTimes(1);
-      expect(generatePDFMock).toHaveBeenCalledWith(
-        'pdf',
+      expect(result.body).toStrictEqual(csv);
+      expect(generateCSVMock).toHaveBeenCalledTimes(1);
+      expect(generateCSVMock).toHaveBeenCalledWith(
+        'csv',
         scenario.users.johnInnovator.innovations.johnInnovation.name,
-        body
+        body,
+        { withIndex: false }
       );
     });
   });
@@ -81,7 +82,7 @@ describe('v1-innovation-pdf-export Suite', () => {
         .call<ErrorResponseType>(azureFunction);
 
       if (status === 200) {
-        expect(result.body).toStrictEqual(pdf);
+        expect(result.body).toStrictEqual(csv);
       } else {
         expect(result.status).toBe(status);
       }

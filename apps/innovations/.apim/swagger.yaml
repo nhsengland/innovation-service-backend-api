@@ -1633,6 +1633,37 @@ paths:
                     description: Unique identifier for innovation object
         "400":
           description: Invalid innovation payload
+  /v1/{innovationId}/csv:
+    post:
+      description: Generate CSV for an innovation
+      tags:
+        - "[v1] Innovations"
+      operationId: v1-innovation-csv-export
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                innovationId:
+                  type: string
+                  format: uuid
+              required:
+                - innovationId
+              additionalProperties: false
+      responses:
+        "200":
+          description: Ok.
+        "400":
+          description: Bad request.
   /v1/{innovationId}/evidence:
     post:
       description: Create an innovation evidence entry.
@@ -2439,7 +2470,7 @@ paths:
       description: Generate PDF for an innovation
       tags:
         - "[v1] Innovations"
-      operationId: v1-innovation-pdf
+      operationId: v1-innovation-pdf-export
       parameters:
         - name: innovationId
           in: path
