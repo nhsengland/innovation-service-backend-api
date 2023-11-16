@@ -1,6 +1,6 @@
 import Joi from 'joi';
 
-import { FlatNotificationTypes, NotificationCategoryType } from '@innovations/shared/enums';
+import { NotificationCategoryType, NotificationDetailType } from '@innovations/shared/enums';
 
 export type ParamsType = {
   innovationId: string;
@@ -12,7 +12,7 @@ export const ParamsSchema = Joi.object<ParamsType>({
 export type BodyType = {
   notificationIds: string[];
   contextTypes: NotificationCategoryType[];
-  contextDetails: FlatNotificationTypes[];
+  contextDetails: NotificationDetailType[];
   contextIds: string[];
 };
 export const BodySchema = Joi.object<BodyType>({
@@ -21,7 +21,7 @@ export const BodySchema = Joi.object<BodyType>({
     .items(Joi.string().valid(...NotificationCategoryType))
     .default([]),
   contextDetails: Joi.array()
-    .items(Joi.string().valid(...FlatNotificationTypes))
+    .items(Joi.string().valid(...NotificationDetailType))
     .default([]),
   contextIds: Joi.array().items(Joi.string().guid()).default([])
 }).required();

@@ -1,6 +1,6 @@
 import Joi from 'joi';
 
-import { FlatNotificationTypes, NotificationCategoryType } from '@notifications/shared/enums';
+import { NotificationCategoryType, NotificationDetailType } from '@notifications/shared/enums';
 
 export type MessageType = {
   data: {
@@ -8,7 +8,7 @@ export type MessageType = {
     innovationId: string;
     context: {
       type: NotificationCategoryType;
-      detail: FlatNotificationTypes;
+      detail: NotificationDetailType;
       id: string;
     };
     userRoleIds: string[];
@@ -29,7 +29,7 @@ export const MessageSchema = Joi.object<MessageType>({
         .valid(...NotificationCategoryType)
         .required(),
       detail: Joi.string()
-        .valid(...FlatNotificationTypes)
+        .valid(...NotificationDetailType)
         .required(),
       id: Joi.string().guid().required()
     }).required(),

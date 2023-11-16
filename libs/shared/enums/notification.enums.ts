@@ -75,10 +75,10 @@ export const NotificationTypes = {
   ] as const
 };
 export type NotificationTypes = typeof NotificationTypes;
-export const FlatNotificationTypes = Object.values(NotificationTypes).flatMap(v => v.map(v => v));
-export type FlatNotificationTypes = NotificationTypes[keyof NotificationTypes][number];
 export const NotificationCategoryType = Object.keys(NotificationTypes).map(v => v);
 export type NotificationCategoryType = keyof NotificationTypes;
+export const NotificationDetailType = Object.values(NotificationTypes).flatMap(v => v.map(v => v));
+export type NotificationDetailType = NotificationTypes[keyof NotificationTypes][number];
 
 // TODO this is likely going to be keyof NotificationTypes
 export enum NotificationCategoryEnum {

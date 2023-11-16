@@ -1,4 +1,4 @@
-import type { FlatNotificationTypes, InnovationStatusEnum, NotificationCategoryType } from '@users/shared/enums';
+import type { InnovationStatusEnum, NotificationCategoryType, NotificationDetailType } from '@users/shared/enums';
 
 export type ResponseDTO = {
   count: number;
@@ -6,7 +6,7 @@ export type ResponseDTO = {
     id: string;
     innovation: { id: string; name: string; status: InnovationStatusEnum; ownerName: string };
     contextType: NotificationCategoryType;
-    contextDetail: FlatNotificationTypes;
+    contextDetail: NotificationDetailType;
     contextId: string;
     createdAt: Date;
     readAt: Date | null;

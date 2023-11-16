@@ -1,7 +1,7 @@
 import type { Context } from '@azure/functions';
 import {
-  FlatNotificationTypes,
   NotificationCategoryType,
+  NotificationDetailType,
   NotificationLogTypeEnum,
   NotificationPreferenceEnum,
   NotifierTypeEnum,
@@ -61,7 +61,10 @@ type HandlerInAppType<T> = Array<{
   };
 }>;
 
-export abstract class BaseHandler<InputDataType extends NotifierTypeEnum, Notifications extends FlatNotificationTypes> {
+export abstract class BaseHandler<
+  InputDataType extends NotifierTypeEnum,
+  Notifications extends NotificationDetailType
+> {
   requestUser: DomainContextType;
   inputData: NotifierTemplatesType[InputDataType];
 

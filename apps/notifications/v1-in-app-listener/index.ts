@@ -1,6 +1,6 @@
 import type { Context } from '@azure/functions';
 
-import type { FlatNotificationTypes, NotificationCategoryType } from '@notifications/shared/enums';
+import type { NotificationCategoryType, NotificationDetailType } from '@notifications/shared/enums';
 import { JoiHelper } from '@notifications/shared/helpers';
 
 import { container } from '../_config';
@@ -18,7 +18,7 @@ class V1SendInAppListener {
         innovationId: string;
         context: {
           type: NotificationCategoryType;
-          detail: FlatNotificationTypes;
+          detail: NotificationDetailType;
           id: string;
         };
         userRoleIds: string[];

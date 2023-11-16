@@ -3,9 +3,9 @@ import type { EntityManager } from 'typeorm';
 
 import { NotificationEntity, NotificationPreferenceEntity, NotificationUserEntity } from '@users/shared/entities';
 import {
-  FlatNotificationTypes,
   InnovationStatusEnum,
   NotificationCategoryType,
+  NotificationDetailType,
   NotificationPreferenceEnum,
   ServiceRoleEnum,
   UserStatusEnum
@@ -68,7 +68,7 @@ export class NotificationsService extends BaseService {
       id: string;
       innovation: { id: string; name: string; status: InnovationStatusEnum; ownerName: string };
       contextType: NotificationCategoryType;
-      contextDetail: FlatNotificationTypes;
+      contextDetail: NotificationDetailType;
       contextId: string;
       createdAt: Date;
       readAt: Date | null;
