@@ -17,24 +17,8 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    notificationType:
-                      type: string
-                      description: The type of notification
-                      enum:
-                        - TASK
-                        - MESSAGE
-                        - SUPPORT
-                    preference:
-                      type: string
-                      description: The preference of the notification
-                      enum:
-                        - NEVER
-                        - INSTANTLY
-                        - DAILY
+                type: object
+                properties: {}
     put:
       description: Updates the user email preferences
       operationId: v1-email-notification-preferences-upsert
@@ -568,13 +552,16 @@ paths:
                   items:
                     type: string
                     enum:
-                      - NEEDS_ASSESSMENT
-                      - INNOVATION
-                      - SUPPORT
                       - TASK
-                      - THREAD
-                      - DATA_SHARING
-                      - COMMENT
+                      - DOCUMENTS
+                      - MESSAGES
+                      - SUPPORT
+                      - NEEDS_ASSESSMENT
+                      - ORGANISATION_SUGGESTIONS
+                      - INNOVATION_MANAGEMENT
+                      - ADMIN
+                      - ACCOUNT
+                      - AUTOMATIC
                   description: The context types
                   default: []
                 dismissAll:
@@ -636,13 +623,16 @@ paths:
               type: string
               enum:
                 - ""
-                - NEEDS_ASSESSMENT
-                - INNOVATION
-                - SUPPORT
                 - TASK
-                - THREAD
-                - DATA_SHARING
-                - COMMENT
+                - DOCUMENTS
+                - MESSAGES
+                - SUPPORT
+                - NEEDS_ASSESSMENT
+                - ORGANISATION_SUGGESTIONS
+                - INNOVATION_MANAGEMENT
+                - ADMIN
+                - ACCOUNT
+                - AUTOMATIC
             description: The context types to filter by
             default: []
         - name: unreadOnly
@@ -696,43 +686,83 @@ paths:
                         contextType:
                           type: string
                           enum:
-                            - NEEDS_ASSESSMENT
-                            - INNOVATION
-                            - SUPPORT
-                            - TASK
-                            - THREAD
-                            - DATA_SHARING
-                            - COMMENT
-                          description: The notification context type
+                            - "0"
+                            - "1"
+                            - "2"
+                            - "3"
+                            - "4"
+                            - "5"
+                            - "6"
+                            - "7"
+                            - "8"
+                            - "9"
+                          description: The notification context category
                         contextDetail:
                           type: string
                           enum:
-                            - LOCK_USER
-                            - THREAD_CREATION
-                            - THREAD_MESSAGE_CREATION
-                            - COMMENT_CREATION
-                            - COMMENT_REPLY
-                            - TASK_CREATION
-                            - TASK_UPDATE
-                            - NEEDS_ASSESSMENT_STARTED
-                            - NEEDS_ASSESSMENT_COMPLETED
-                            - NEEDS_ASSESSMENT_COMPLETED_TO_INNOVATOR
-                            - NEEDS_ASSESSMENT_ORGANISATION_SUGGESTION
-                            - INNOVATION_SUBMISSION
-                            - INNOVATION_SUBMISSION_TO_INNOVATORS
-                            - INNOVATION_SUBMISSION_REASSESSMENT
-                            - SUPPORT_STATUS_UPDATE
-                            - SUPPORT_SUMMARY_UPDATE
-                            - INNOVATION_REASSESSMENT_REQUEST
-                            - INNOVATION_STOP_SHARING
-                            - INNOVATION_WITHDRAWN
-                            - COLLABORATOR_INVITE
-                            - COLLABORATOR_UPDATE
-                            - TRANSFER_PENDING
-                            - TRANSFER_EXPIRED
-                            - TRANSFER_REMINDER
-                            - INNOVATION_ORGANISATION_SUGGESTION_NOT_SHARED
-                            - INNOVATION_DELAYED_SHARED_SUGGESTION
+                            - TA01_TASK_CREATION_TO_INNOVATOR
+                            - TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS
+                            - TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT
+                            - TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT
+                            - TA05_TASK_CANCELLED_TO_INNOVATOR
+                            - TA06_TASK_REOPEN_TO_INNOVATOR
+                            - DC01_UPLOADED_DOCUMENT_TO_INNOVATOR
+                            - ME01_THREAD_CREATION
+                            - ME02_THREAD_ADD_FOLLOWERS
+                            - ME03_THREAD_MESSAGE_CREATION
+                            - ST01_SUPPORT_STATUS_TO_ENGAGING
+                            - ST02_SUPPORT_STATUS_TO_OTHER
+                            - ST03_SUPPORT_STATUS_TO_WAITING
+                            - ST04_SUPPORT_NEW_ASSIGNED_ACCESSORS_TO_INNOVATOR
+                            - ST05_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_NEW_QA
+                            - ST06_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_OLD_QA
+                            - ST07_SUPPORT_STATUS_CHANGE_REQUEST
+                            - SS01_SUPPORT_SUMMARY_UPDATE_TO_INNOVATORS
+                            - SS02_SUPPORT_SUMMARY_UPDATE_TO_OTHER_ENGAGING_ACCESSORS
+                            - NA01_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_INNOVATOR
+                            - NA02_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_ASSESSMENT
+                            - NA03_NEEDS_ASSESSMENT_STARTED_TO_INNOVATOR
+                            - NA04_NEEDS_ASSESSMENT_COMPLETE_TO_INNOVATOR
+                            - NA06_NEEDS_ASSESSOR_REMOVED
+                            - NA07_NEEDS_ASSESSOR_ASSIGNED
+                            - OS01_UNITS_SUGGESTION_TO_SUGGESTED_UNITS_QA
+                            - OS02_UNITS_SUGGESTION_NOT_SHARED_TO_INNOVATOR
+                            - OS03_INNOVATION_DELAYED_SHARED_SUGGESTION
+                            - RE01_EXPORT_REQUEST_SUBMITTED
+                            - RE02_EXPORT_REQUEST_APPROVED
+                            - RE03_EXPORT_REQUEST_REJECTED
+                            - WI01_INNOVATION_WITHDRAWN
+                            - SH01_INNOVATION_STOPPED_SHARED_TO_ASSIGNED_USERS
+                            - SH03_INNOVATION_STOPPED_SHARED_TO_SELF
+                            - DA01_OWNER_DELETED_ACCOUNT_WITH_PENDING_TRANSFER_TO_COLLABORATOR
+                            - MC01_COLLABORATOR_INVITE_EXISTING_USER
+                            - MC02_COLLABORATOR_INVITE_NEW_USER
+                            - MC03_COLLABORATOR_UPDATE_CANCEL_INVITE
+                            - MC04_COLLABORATOR_UPDATE_ACCEPTS_INVITE
+                            - MC05_COLLABORATOR_UPDATE_DECLINES_INVITE
+                            - MC06_COLLABORATOR_UPDATE_REMOVED_COLLABORATOR
+                            - MC07_COLLABORATOR_UPDATE_COLLABORATOR_LEFT_TO_INNOVATORS
+                            - MC08_COLLABORATOR_UPDATE_COLLABORATOR_LEFT_TO_SELF
+                            - TO01_TRANSFER_OWNERSHIP_NEW_USER
+                            - TO02_TRANSFER_OWNERSHIP_EXISTING_USER
+                            - TO06_TRANSFER_OWNERSHIP_ACCEPTS_PREVIOUS_OWNER
+                            - TO07_TRANSFER_OWNERSHIP_ACCEPTS_ASSIGNED_ACCESSORS
+                            - TO08_TRANSFER_OWNERSHIP_DECLINES_PREVIOUS_OWNER
+                            - TO09_TRANSFER_OWNERSHIP_CANCELED_NEW_OWNER
+                            - AP02_INNOVATOR_LOCKED_TO_ASSIGNED_USERS
+                            - AP03_USER_LOCKED_TO_LOCKED_USER
+                            - AP07_UNIT_INACTIVATED_TO_ENGAGING_INNOVATIONS
+                            - CA01_ACCOUNT_CREATION_OF_INNOVATOR
+                            - CA02_ACCOUNT_CREATION_OF_COLLABORATOR
+                            - AU01_INNOVATOR_INCOMPLETE_RECORD
+                            - AU02_ACCESSOR_IDLE_ENGAGING_SUPPORT
+                            - AU03_INNOVATOR_IDLE_SUPPORT
+                            - AU04_SUPPORT_KPI_REMINDER
+                            - AU05_SUPPORT_KPI_OVERDUE
+                            - AU06_ACCESSOR_IDLE_WAITING
+                            - AU07_TRANSFER_ONE_WEEK_REMINDER_NEW_USER
+                            - AU08_TRANSFER_ONE_WEEK_REMINDER_EXISTING_USER
+                            - AU09_TRANSFER_EXPIRED
                           description: The notification context detail
                         contextId:
                           type: string

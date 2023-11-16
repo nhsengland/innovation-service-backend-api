@@ -89,7 +89,7 @@ paths:
           description: The user is not authorized to create an organisation.
         "500":
           description: An error occurred while creating the organisation.
-  "/v1/organisations/{organisationId}":
+  /v1/organisations/{organisationId}:
     patch:
       description: Update an organisation.
       operationId: v1-admin-organisation-update
@@ -130,7 +130,7 @@ paths:
           description: The organisation unit does not exist.
         "500":
           description: An error occurred while updating the organisation unit.
-  "/v1/tou/{touId}":
+  /v1/tou/{touId}:
     get:
       description: Get terms of use.
       operationId: v1-admin-terms-of-use
@@ -352,7 +352,7 @@ paths:
           description: The user is not authorized to get terms of use.
         "500":
           description: An error occurred while listing the terms of use.
-  "/v1/organisations/{organisationId}/units/{organisationUnitId}/activate":
+  /v1/organisations/{organisationId}/units/{organisationUnitId}/activate:
     patch:
       description: Activate an organisation unit.
       operationId: v1-admin-unit-activate
@@ -399,7 +399,7 @@ paths:
           description: The organisation unit does not exist.
         "500":
           description: An error occurred while activating the organisation unit.
-  "/v1/organisations/{organisationId}/units":
+  /v1/organisations/{organisationId}/units:
     post:
       description: Create an organisation unit.
       operationId: v1-admin-unit-create
@@ -448,7 +448,7 @@ paths:
           description: The user is not authorized to create an organisation unit.
         "500":
           description: An error occurred while creating the organisation unit.
-  "/v1/organisations/{organisationId}/units/{organisationUnitId}/inactivate":
+  /v1/organisations/{organisationId}/units/{organisationUnitId}/inactivate:
     patch:
       description: Inactivate an organisation unit.
       operationId: v1-admin-unit-inactivate
@@ -484,7 +484,7 @@ paths:
           description: The organisation unit does not exist.
         "500":
           description: An error occurred while inactivating the organisation unit.
-  "/v1/organisations/{organisationId}/units/{organisationUnitId}":
+  /v1/organisations/{organisationId}/units/{organisationUnitId}:
     patch:
       description: Update an organisation unit.
       operationId: v1-admin-unit-update
@@ -601,7 +601,7 @@ paths:
           description: The user is not authorized to create a user.
         "500":
           description: An error occurred while creating the user.
-  "/v1/users/{userIdOrEmail}":
+  /v1/users/{userIdOrEmail}:
     get:
       operationId: v1-admin-user-info
       description: Get user info.
@@ -663,7 +663,7 @@ paths:
           description: The user is not authorized to access this resource.
         "500":
           description: An error occurred while processing the request.
-  "/v1/users/{userId}/innovations":
+  /v1/users/{userId}/innovations:
     get:
       description: Retrieves the user owned innovations.
       operationId: v1-admin-user-innovations
@@ -696,7 +696,7 @@ paths:
                       type: string
         "400":
           description: Bad request
-  "/v1/users/{userId}/roles/{roleId}":
+  /v1/users/{userId}/roles/{roleId}:
     patch:
       description: Update user role.
       operationId: v1-admin-user-role-update
@@ -744,7 +744,7 @@ paths:
           description: The user is not authorized to access this resource.
         "500":
           description: An error occurred while processing the request.
-  "/v1/users/{userId}/roles":
+  /v1/users/{userId}/roles:
     post:
       description: Create user roles.
       operationId: v1-admin-user-roles-create
@@ -812,7 +812,7 @@ paths:
           description: The user is not authorized to access this resource.
         "500":
           description: An error occurred while processing the request.
-  "/v1/users/{userId}":
+  /v1/users/{userId}:
     patch:
       description: Update a user.
       operationId: v1-admin-user-update
@@ -871,7 +871,7 @@ paths:
           description: The user does not exist.
         "500":
           description: An error occurred while locking a user.
-  "/v1/users/{userId}/validate":
+  /v1/users/{userId}/validate:
     get:
       description: Get validation information.
       operationId: v1-admin-validate
@@ -1022,7 +1022,7 @@ paths:
                     expiresAt:
                       type: string
                       format: date-time
-  "/v1/announcements/{announcementId}":
+  /v1/announcements/{announcementId}:
     delete:
       description: Delete an announcement.
       operationId: v1-announcement-delete
@@ -1167,7 +1167,7 @@ paths:
           description: Not authorized
         "500":
           description: An error occurred
-  "/v1/demo/innovation/{innovationId}":
+  /v1/demo/innovation/{innovationId}:
     post:
       description: Create an innovation IR demo data (depends on environment)
       operationId: v1-innovation-create-demo
@@ -1186,7 +1186,7 @@ paths:
           description: Invalid innovation payload
         "422":
           description: Unprocessable entity
-  "/v1/organisation-unit/{unit}/statistics":
+  /v1/organisation-unit/{unit}/statistics:
     get:
       description: Get an organisation unit statistics
       tags:
