@@ -1,9 +1,4 @@
-import {
-  InnovationTaskStatusEnum,
-  NotificationCategoryEnum,
-  NotifierTypeEnum,
-  ServiceRoleEnum
-} from '@notifications/shared/enums';
+import { InnovationTaskStatusEnum, NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import {
   isInnovatorDomainContextType,
   type DomainContextType,
@@ -75,7 +70,7 @@ export class TaskUpdateHandler extends BaseHandler<
     innovators: RecipientType[]
   ): Promise<void> {
     this.addEmails('TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS', innovators, {
-      notificationPreferenceType: NotificationCategoryEnum.TASK,
+      notificationPreferenceType: 'TASK',
       params: {
         innovation_name: innovation.name,
         innovator_name: await this.getRequestUserName(),
@@ -86,7 +81,7 @@ export class TaskUpdateHandler extends BaseHandler<
 
     this.addInApp('TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS', innovators, {
       context: {
-        type: NotificationCategoryEnum.TASK,
+        type: 'TASK',
         detail: 'TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS',
         id: this.inputData.task.id
       },
@@ -106,7 +101,7 @@ export class TaskUpdateHandler extends BaseHandler<
     recipient: RecipientType
   ): Promise<void> {
     this.addEmails('TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT', [recipient], {
-      notificationPreferenceType: NotificationCategoryEnum.TASK,
+      notificationPreferenceType: 'TASK',
       params: {
         innovation_name: innovation.name,
         innovator_name: await this.getRequestUserName(),
@@ -118,7 +113,7 @@ export class TaskUpdateHandler extends BaseHandler<
 
     this.addInApp('TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT', [recipient], {
       context: {
-        type: NotificationCategoryEnum.TASK,
+        type: 'TASK',
         detail: 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT',
         id: this.inputData.task.id
       },
@@ -138,7 +133,7 @@ export class TaskUpdateHandler extends BaseHandler<
     recipient: RecipientType
   ): Promise<void> {
     this.addEmails('TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT', [recipient], {
-      notificationPreferenceType: NotificationCategoryEnum.TASK,
+      notificationPreferenceType: 'TASK',
       params: {
         innovation_name: innovation.name,
         innovator_name: await this.getRequestUserName(),
@@ -149,7 +144,7 @@ export class TaskUpdateHandler extends BaseHandler<
 
     this.addInApp('TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT', [recipient], {
       context: {
-        type: NotificationCategoryEnum.TASK,
+        type: 'TASK',
         detail: 'TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT',
         id: this.inputData.task.id
       },
@@ -169,7 +164,7 @@ export class TaskUpdateHandler extends BaseHandler<
     innovators: RecipientType[]
   ): Promise<void> {
     this.addEmails('TA05_TASK_CANCELLED_TO_INNOVATOR', innovators, {
-      notificationPreferenceType: NotificationCategoryEnum.TASK,
+      notificationPreferenceType: 'TASK',
       params: {
         accessor_name: await this.getRequestUserName(),
         unit_name: this.getRequestUnitName(),
@@ -181,7 +176,7 @@ export class TaskUpdateHandler extends BaseHandler<
 
     this.addInApp('TA05_TASK_CANCELLED_TO_INNOVATOR', innovators, {
       context: {
-        type: NotificationCategoryEnum.TASK,
+        type: 'TASK',
         detail: 'TA05_TASK_CANCELLED_TO_INNOVATOR',
         id: this.inputData.task.id
       },
@@ -201,7 +196,7 @@ export class TaskUpdateHandler extends BaseHandler<
     innovators: RecipientType[]
   ): Promise<void> {
     this.addEmails('TA06_TASK_REOPEN_TO_INNOVATOR', innovators, {
-      notificationPreferenceType: NotificationCategoryEnum.TASK,
+      notificationPreferenceType: 'TASK',
       params: {
         accessor_name: await this.getRequestUserName(),
         unit_name: this.getRequestUnitName(),
@@ -213,7 +208,7 @@ export class TaskUpdateHandler extends BaseHandler<
 
     this.addInApp('TA06_TASK_REOPEN_TO_INNOVATOR', innovators, {
       context: {
-        type: NotificationCategoryEnum.TASK,
+        type: 'TASK',
         detail: 'TA06_TASK_REOPEN_TO_INNOVATOR',
         id: this.inputData.task.id
       },

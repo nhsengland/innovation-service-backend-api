@@ -1,10 +1,5 @@
 import type { Context } from '@azure/functions';
-import {
-  InnovationSupportStatusEnum,
-  NotificationCategoryEnum,
-  ServiceRoleEnum,
-  type NotifierTypeEnum
-} from '@notifications/shared/enums';
+import { InnovationSupportStatusEnum, ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
 import { TranslationHelper } from '@notifications/shared/helpers';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { HandlersHelper } from '../../_helpers/handlers.helper';
@@ -61,7 +56,7 @@ export class SupportStatusUpdateHandler extends BaseHandler<
     const unitName = this.getRequestUnitName();
 
     this.addEmails('ST01_SUPPORT_STATUS_TO_ENGAGING', recipients, {
-      notificationPreferenceType: NotificationCategoryEnum.SUPPORT,
+      notificationPreferenceType: 'SUPPORT',
       params: {
         accessors_name: HandlersHelper.transformIntoBullet(accessorNames),
         innovation_name: innovation.name,
@@ -73,7 +68,7 @@ export class SupportStatusUpdateHandler extends BaseHandler<
 
     this.addInApp('ST01_SUPPORT_STATUS_TO_ENGAGING', recipients, {
       context: {
-        type: NotificationCategoryEnum.SUPPORT,
+        type: 'SUPPORT',
         detail: 'ST01_SUPPORT_STATUS_TO_ENGAGING',
         id: this.inputData.support.id
       },
@@ -93,7 +88,7 @@ export class SupportStatusUpdateHandler extends BaseHandler<
     const unitName = this.getRequestUnitName();
 
     this.addEmails('ST02_SUPPORT_STATUS_TO_OTHER', recipients, {
-      notificationPreferenceType: NotificationCategoryEnum.SUPPORT,
+      notificationPreferenceType: 'SUPPORT',
       params: {
         innovation_name: innovation.name,
         message: this.inputData.support.message,
@@ -109,7 +104,7 @@ export class SupportStatusUpdateHandler extends BaseHandler<
 
     this.addInApp('ST02_SUPPORT_STATUS_TO_OTHER', recipients, {
       context: {
-        type: NotificationCategoryEnum.SUPPORT,
+        type: 'SUPPORT',
         detail: 'ST02_SUPPORT_STATUS_TO_OTHER',
         id: this.inputData.support.id
       },
@@ -130,7 +125,7 @@ export class SupportStatusUpdateHandler extends BaseHandler<
     const unitName = this.getRequestUnitName();
 
     this.addEmails('ST03_SUPPORT_STATUS_TO_WAITING', recipients, {
-      notificationPreferenceType: NotificationCategoryEnum.SUPPORT,
+      notificationPreferenceType: 'SUPPORT',
       params: {
         innovation_name: innovation.name,
         unit_name: unitName,
@@ -145,7 +140,7 @@ export class SupportStatusUpdateHandler extends BaseHandler<
 
     this.addInApp('ST03_SUPPORT_STATUS_TO_WAITING', recipients, {
       context: {
-        type: NotificationCategoryEnum.SUPPORT,
+        type: 'SUPPORT',
         detail: 'ST03_SUPPORT_STATUS_TO_WAITING',
         id: this.inputData.support.id
       },

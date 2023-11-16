@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { NotificationCategoryEnum, NotificationContextTypeEnum } from '@notifications/shared/enums';
 import { TranslationHelper } from '@notifications/shared/helpers';
 import { UrlModel } from '@notifications/shared/models';
 import { CompleteScenarioType, MocksHelper, TestsHelper } from '@notifications/shared/tests';
@@ -34,7 +33,7 @@ describe('Notifications / _handlers / task-creation suite', () => {
       expect(handler.emails).toEqual([
         {
           templateId: 'TA01_TASK_CREATION_TO_INNOVATOR',
-          notificationPreferenceType: NotificationCategoryEnum.TASK,
+          notificationPreferenceType: 'TASK',
           to: DTOsHelper.getRecipientUser(scenario.users.johnInnovator, 'innovatorRole'),
           params: {
             innovation_name: innovation.name,
@@ -50,7 +49,7 @@ describe('Notifications / _handlers / task-creation suite', () => {
         },
         {
           templateId: 'TA01_TASK_CREATION_TO_INNOVATOR',
-          notificationPreferenceType: NotificationCategoryEnum.TASK,
+          notificationPreferenceType: 'TASK',
           to: DTOsHelper.getRecipientUser(scenario.users.janeInnovator, 'innovatorRole'),
           params: {
             innovation_name: innovation.name,
@@ -83,7 +82,7 @@ describe('Notifications / _handlers / task-creation suite', () => {
         {
           innovationId: innovation.id,
           context: {
-            type: NotificationContextTypeEnum.TASK,
+            type: 'TASK',
             detail: 'TA01_TASK_CREATION_TO_INNOVATOR',
             id: task.id
           },

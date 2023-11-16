@@ -1,5 +1,5 @@
 import type { Context } from '@azure/functions';
-import { NotificationCategoryEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
+import type { NotifierTypeEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { BaseHandler } from '../../base.handler';
 
@@ -32,7 +32,7 @@ export class InnovationWithdrawnHandler extends BaseHandler<
     this.addInApp('WI01_INNOVATION_WITHDRAWN', assignedUsers, {
       context: {
         id: this.inputData.innovation.id,
-        type: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+        type: 'INNOVATION_MANAGEMENT',
         detail: 'WI01_INNOVATION_WITHDRAWN'
       },
       innovationId: this.inputData.innovation.id,
@@ -41,7 +41,7 @@ export class InnovationWithdrawnHandler extends BaseHandler<
 
     const uniqueAssignedUsers = [...new Map(assignedUsers.map(item => [item['userId'], item])).values()];
     this.addEmails('WI01_INNOVATION_WITHDRAWN', uniqueAssignedUsers, {
-      notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+      notificationPreferenceType: 'INNOVATION_MANAGEMENT',
       params: { innovation_name: this.inputData.innovation.name }
     });
   }

@@ -1,4 +1,4 @@
-import { NotificationCategoryEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import { ServiceRoleEnum } from '@notifications/shared/enums';
 import { MocksHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { testEmails, testInApps } from '../../../_helpers/tests.helper';
@@ -22,7 +22,7 @@ describe('Notifications / _handlers / collaborator-invite suite', () => {
 
     it('should send an email to the new collaborator (existing user)', async () => {
       await testEmails(CollaboratorInviteHandler, 'MC01_COLLABORATOR_INVITE_EXISTING_USER', {
-        notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+        notificationPreferenceType: 'INNOVATION_MANAGEMENT',
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         recipients: [DTOsHelper.getRecipientUser(scenario.users.janeInnovator)],
         inputData: { innovationId: innovation.id, collaboratorId: collaborator.id },
@@ -36,7 +36,7 @@ describe('Notifications / _handlers / collaborator-invite suite', () => {
 
     it('should send an in-app to the new collaborator (existing user)', async () => {
       await testInApps(CollaboratorInviteHandler, 'MC01_COLLABORATOR_INVITE_EXISTING_USER', {
-        context: { id: collaborator.id, type: NotificationCategoryEnum.INNOVATION_MANAGEMENT },
+        context: { id: collaborator.id, type: 'INNOVATION_MANAGEMENT' },
         innovationId: innovation.id,
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         recipients: [DTOsHelper.getRecipientUser(scenario.users.janeInnovator)],
@@ -64,7 +64,7 @@ describe('Notifications / _handlers / collaborator-invite suite', () => {
       expect(handler.emails).toStrictEqual([
         {
           templateId: 'MC02_COLLABORATOR_INVITE_NEW_USER',
-          notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+          notificationPreferenceType: 'INNOVATION_MANAGEMENT',
           to: { email: collaborator.email },
           params: {
             innovator_name: requestUser.name,

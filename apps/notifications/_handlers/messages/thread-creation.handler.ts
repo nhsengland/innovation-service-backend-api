@@ -1,5 +1,5 @@
 import type { Context } from '@azure/functions';
-import { NotificationCategoryEnum, ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
+import { ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { HandlersHelper } from '../../_helpers/handlers.helper';
 import { threadUrl } from '../../_helpers/url.helper';
@@ -27,7 +27,7 @@ export class ThreadCreationHandler extends BaseHandler<NotifierTypeEnum.THREAD_C
 
     for (const [role, roleRecipients] of Object.entries(recipientsByRole)) {
       this.addEmails('ME01_THREAD_CREATION', roleRecipients, {
-        notificationPreferenceType: NotificationCategoryEnum.MESSAGE,
+        notificationPreferenceType: 'MESSAGES',
         params: {
           innovation_name: innovation.name,
           sender: `${senderName} (${displayTag})`,
@@ -39,7 +39,7 @@ export class ThreadCreationHandler extends BaseHandler<NotifierTypeEnum.THREAD_C
     this.addInApp('ME01_THREAD_CREATION', recipients, {
       innovationId: this.inputData.innovationId,
       context: {
-        type: NotificationCategoryEnum.MESSAGE,
+        type: 'MESSAGES',
         detail: 'ME01_THREAD_CREATION',
         id: this.inputData.threadId
       },

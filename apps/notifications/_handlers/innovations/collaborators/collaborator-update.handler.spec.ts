@@ -1,4 +1,4 @@
-import { InnovationCollaboratorStatusEnum, NotificationCategoryEnum } from '@notifications/shared/enums';
+import { InnovationCollaboratorStatusEnum } from '@notifications/shared/enums';
 import { MocksHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { testEmails, testInApps } from '../../../_helpers/tests.helper';
@@ -23,7 +23,7 @@ describe('Notifications / _handlers / collaborator-update suite', () => {
 
     it('should send an email to the collaborator (existing user)', async () => {
       await testEmails(CollaboratorUpdateHandler, 'MC03_COLLABORATOR_UPDATE_CANCEL_INVITE', {
-        notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+        notificationPreferenceType: 'INNOVATION_MANAGEMENT',
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         recipients: [DTOsHelper.getRecipientUser(scenario.users.adamInnovator)],
         inputData: {
@@ -39,7 +39,7 @@ describe('Notifications / _handlers / collaborator-update suite', () => {
 
     it('should send an in-app to the collaborator (existing user)', async () => {
       await testInApps(CollaboratorUpdateHandler, 'MC03_COLLABORATOR_UPDATE_CANCEL_INVITE', {
-        context: { id: collaboratorExistingUser.id, type: NotificationCategoryEnum.INNOVATION_MANAGEMENT },
+        context: { id: collaboratorExistingUser.id, type: 'INNOVATION_MANAGEMENT' },
         innovationId: innovation.id,
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         recipients: [DTOsHelper.getRecipientUser(scenario.users.adamInnovator)],
@@ -69,7 +69,7 @@ describe('Notifications / _handlers / collaborator-update suite', () => {
       expect(handler.emails).toStrictEqual([
         {
           templateId: 'MC03_COLLABORATOR_UPDATE_CANCEL_INVITE',
-          notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+          notificationPreferenceType: 'INNOVATION_MANAGEMENT',
           to: { email: collaborationNewUser.email },
           params: {
             innovator_name: requestUser.name,
@@ -87,7 +87,7 @@ describe('Notifications / _handlers / collaborator-update suite', () => {
 
     it('should send an email to owner', async () => {
       await testEmails(CollaboratorUpdateHandler, 'MC04_COLLABORATOR_UPDATE_ACCEPTS_INVITE', {
-        notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+        notificationPreferenceType: 'INNOVATION_MANAGEMENT',
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         recipients: [DTOsHelper.getRecipientUser(scenario.users.johnInnovator)],
         inputData: {
@@ -104,7 +104,7 @@ describe('Notifications / _handlers / collaborator-update suite', () => {
 
     it('should send an in-app to the owner', async () => {
       await testInApps(CollaboratorUpdateHandler, 'MC04_COLLABORATOR_UPDATE_ACCEPTS_INVITE', {
-        context: { id: collaborator.id, type: NotificationCategoryEnum.INNOVATION_MANAGEMENT },
+        context: { id: collaborator.id, type: 'INNOVATION_MANAGEMENT' },
         innovationId: innovation.id,
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         recipients: [DTOsHelper.getRecipientUser(scenario.users.johnInnovator)],
@@ -127,7 +127,7 @@ describe('Notifications / _handlers / collaborator-update suite', () => {
 
     it('should send an email to owner', async () => {
       await testEmails(CollaboratorUpdateHandler, 'MC05_COLLABORATOR_UPDATE_DECLINES_INVITE', {
-        notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+        notificationPreferenceType: 'INNOVATION_MANAGEMENT',
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         recipients: [DTOsHelper.getRecipientUser(scenario.users.johnInnovator)],
         inputData: {
@@ -144,7 +144,7 @@ describe('Notifications / _handlers / collaborator-update suite', () => {
 
     it('should send an in-app to the owner', async () => {
       await testInApps(CollaboratorUpdateHandler, 'MC05_COLLABORATOR_UPDATE_DECLINES_INVITE', {
-        context: { id: collaborator.id, type: NotificationCategoryEnum.INNOVATION_MANAGEMENT },
+        context: { id: collaborator.id, type: 'INNOVATION_MANAGEMENT' },
         innovationId: innovation.id,
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         recipients: [DTOsHelper.getRecipientUser(scenario.users.johnInnovator)],
@@ -167,7 +167,7 @@ describe('Notifications / _handlers / collaborator-update suite', () => {
 
     it('should send an email to the removed collaborator', async () => {
       await testEmails(CollaboratorUpdateHandler, 'MC06_COLLABORATOR_UPDATE_REMOVED_COLLABORATOR', {
-        notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+        notificationPreferenceType: 'INNOVATION_MANAGEMENT',
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         recipients: [DTOsHelper.getRecipientUser(scenario.users.janeInnovator)],
         inputData: {
@@ -183,7 +183,7 @@ describe('Notifications / _handlers / collaborator-update suite', () => {
 
     it('should send an in-app to the removed collaborator', async () => {
       await testInApps(CollaboratorUpdateHandler, 'MC06_COLLABORATOR_UPDATE_REMOVED_COLLABORATOR', {
-        context: { id: collaborator.id, type: NotificationCategoryEnum.INNOVATION_MANAGEMENT },
+        context: { id: collaborator.id, type: 'INNOVATION_MANAGEMENT' },
         innovationId: innovation.id,
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         recipients: [DTOsHelper.getRecipientUser(scenario.users.janeInnovator)],
@@ -206,7 +206,7 @@ describe('Notifications / _handlers / collaborator-update suite', () => {
 
     it('should send an email to innovators', async () => {
       await testEmails(CollaboratorUpdateHandler, 'MC07_COLLABORATOR_UPDATE_COLLABORATOR_LEFT_TO_INNOVATORS', {
-        notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+        notificationPreferenceType: 'INNOVATION_MANAGEMENT',
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         recipients: [
           DTOsHelper.getRecipientUser(scenario.users.johnInnovator),
@@ -226,7 +226,7 @@ describe('Notifications / _handlers / collaborator-update suite', () => {
 
     it('should send an in-app to the innovators', async () => {
       await testInApps(CollaboratorUpdateHandler, 'MC07_COLLABORATOR_UPDATE_COLLABORATOR_LEFT_TO_INNOVATORS', {
-        context: { id: collaborator.id, type: NotificationCategoryEnum.INNOVATION_MANAGEMENT },
+        context: { id: collaborator.id, type: 'INNOVATION_MANAGEMENT' },
         innovationId: innovation.id,
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         recipients: [
@@ -252,7 +252,7 @@ describe('Notifications / _handlers / collaborator-update suite', () => {
 
     it('should send an email receipt to the collaborator who lefted', async () => {
       await testEmails(CollaboratorUpdateHandler, 'MC08_COLLABORATOR_UPDATE_COLLABORATOR_LEFT_TO_SELF', {
-        notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+        notificationPreferenceType: 'INNOVATION_MANAGEMENT',
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         recipients: [DTOsHelper.getRecipientUser(scenario.users.janeInnovator)],
         inputData: {
@@ -266,7 +266,7 @@ describe('Notifications / _handlers / collaborator-update suite', () => {
 
     it('should send an in-app receipt to the collaborator who lefted', async () => {
       await testInApps(CollaboratorUpdateHandler, 'MC08_COLLABORATOR_UPDATE_COLLABORATOR_LEFT_TO_SELF', {
-        context: { id: collaborator.id, type: NotificationCategoryEnum.INNOVATION_MANAGEMENT },
+        context: { id: collaborator.id, type: 'INNOVATION_MANAGEMENT' },
         innovationId: innovation.id,
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         recipients: [DTOsHelper.getRecipientUser(scenario.users.janeInnovator)],

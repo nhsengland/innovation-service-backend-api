@@ -1,5 +1,5 @@
 import type { Context } from '@azure/functions';
-import { NotificationCategoryEnum, ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
+import { ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { HandlersHelper } from '../../_helpers/handlers.helper';
 import { innovationOverviewUrl, threadUrl } from '../../_helpers/url.helper';
@@ -64,7 +64,7 @@ export class SupportNewAssignedAccessorsHandler extends BaseHandler<
     accessorsInfo.forEach(a => accessorNames.push(a.displayName));
 
     this.addEmails('ST04_SUPPORT_NEW_ASSIGNED_ACCESSORS_TO_INNOVATOR', recipients, {
-      notificationPreferenceType: NotificationCategoryEnum.SUPPORT,
+      notificationPreferenceType: 'SUPPORT',
       params: {
         accessors_name: HandlersHelper.transformIntoBullet(accessorNames),
         innovation_name: innovation.name,
@@ -76,7 +76,7 @@ export class SupportNewAssignedAccessorsHandler extends BaseHandler<
 
     this.addInApp('ST04_SUPPORT_NEW_ASSIGNED_ACCESSORS_TO_INNOVATOR', recipients, {
       context: {
-        type: NotificationCategoryEnum.SUPPORT,
+        type: 'SUPPORT',
         detail: 'ST04_SUPPORT_NEW_ASSIGNED_ACCESSORS_TO_INNOVATOR',
         id: this.inputData.supportId
       },
@@ -97,7 +97,7 @@ export class SupportNewAssignedAccessorsHandler extends BaseHandler<
     const requestUserName = await this.getRequestUserName();
 
     this.addEmails('ST05_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_NEW_QA', addedRecipients, {
-      notificationPreferenceType: NotificationCategoryEnum.SUPPORT,
+      notificationPreferenceType: 'SUPPORT',
       params: {
         innovation_name: innovation.name,
         qa_name: requestUserName,
@@ -107,7 +107,7 @@ export class SupportNewAssignedAccessorsHandler extends BaseHandler<
 
     this.addInApp('ST05_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_NEW_QA', addedRecipients, {
       context: {
-        type: NotificationCategoryEnum.SUPPORT,
+        type: 'SUPPORT',
         detail: 'ST05_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_NEW_QA',
         id: this.inputData.supportId
       },
@@ -123,13 +123,13 @@ export class SupportNewAssignedAccessorsHandler extends BaseHandler<
     const removedRecipients = recipients.filter(r => this.inputData.removedAssignedAccessorsRoleIds.includes(r.roleId));
 
     this.addEmails('ST06_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_OLD_QA', removedRecipients, {
-      notificationPreferenceType: NotificationCategoryEnum.SUPPORT,
+      notificationPreferenceType: 'SUPPORT',
       params: { innovation_name: innovation.name }
     });
 
     this.addInApp('ST06_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_OLD_QA', removedRecipients, {
       context: {
-        type: NotificationCategoryEnum.SUPPORT,
+        type: 'SUPPORT',
         detail: 'ST06_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_OLD_QA',
         id: this.inputData.supportId
       },

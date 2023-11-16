@@ -1,4 +1,4 @@
-import { NotificationCategoryEnum, NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import { NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import type { Context } from '@azure/functions';
@@ -32,7 +32,7 @@ export class InnovationTransferOwnershipExpirationHandler extends BaseHandler<
     if (targetUser) {
       this.notify('AU09_TRANSFER_EXPIRED', [targetUser], {
         email: {
-          notificationPreferenceType: NotificationCategoryEnum.AUTOMATIC,
+          notificationPreferenceType: 'AUTOMATIC',
           params: {
             innovation_name: innovation.name,
             manage_innovation_url: manageInnovationUrl(ServiceRoleEnum.INNOVATOR, this.inputData.innovationId)
@@ -42,7 +42,7 @@ export class InnovationTransferOwnershipExpirationHandler extends BaseHandler<
           context: {
             detail: 'AU09_TRANSFER_EXPIRED',
             id: this.inputData.innovationId,
-            type: NotificationCategoryEnum.AUTOMATIC
+            type: 'AUTOMATIC'
           },
           innovationId: this.inputData.innovationId,
           params: {

@@ -1,6 +1,6 @@
 import type { Context } from '@azure/functions';
 
-import type { NotificationContextDetailEnum, NotificationContextTypeEnum } from '@notifications/shared/enums';
+import type { NotificationCategoryType, NotificationDetailType } from '@notifications/shared/enums';
 import { JoiHelper } from '@notifications/shared/helpers';
 
 import { container } from '../_config';
@@ -17,8 +17,8 @@ class V1SendInAppListener {
         requestUser: { id: string };
         innovationId: string;
         context: {
-          type: NotificationContextTypeEnum;
-          detail: NotificationContextDetailEnum;
+          type: NotificationCategoryType;
+          detail: NotificationDetailType;
           id: string;
         };
         userRoleIds: string[];

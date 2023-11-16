@@ -1,5 +1,5 @@
 import { randFutureDate } from '@ngneat/falso';
-import { NotificationCategoryEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import { ServiceRoleEnum } from '@notifications/shared/enums';
 import { MocksHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { testEmails, testInApps } from '../../../_helpers/tests.helper';
@@ -40,7 +40,7 @@ describe('Notifications / _handlers / account-deletion suite', () => {
 
       it('should send an in-app to assigned users', async () => {
         await testInApps(AccountDeletionHandler, 'DA01_OWNER_DELETED_ACCOUNT_WITH_PENDING_TRANSFER_TO_COLLABORATOR', {
-          context: { type: NotificationCategoryEnum.INNOVATION_MANAGEMENT, id: requestUser.id },
+          context: { type: 'INNOVATION_MANAGEMENT', id: requestUser.id },
           innovationId: innovation.id,
           requestUser: DTOsHelper.getUserRequestContext(requestUser),
           recipients: [DTOsHelper.getRecipientUser(scenario.users.janeInnovator)],

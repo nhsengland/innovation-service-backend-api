@@ -1,4 +1,4 @@
-import { NotificationCategoryEnum, ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
+import { ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import type { Context } from '@azure/functions';
@@ -29,7 +29,7 @@ export class InnovationDelayedSharedSuggestionHandler extends BaseHandler<
 
     this.notify('OS03_INNOVATION_DELAYED_SHARED_SUGGESTION', recipients, {
       email: {
-        notificationPreferenceType: NotificationCategoryEnum.SUGGEST_SUPPORT,
+        notificationPreferenceType: 'ORGANISATION_SUGGESTIONS',
         params: {
           innovation_name: innovation.name,
           innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, this.inputData.innovationId)
@@ -38,7 +38,7 @@ export class InnovationDelayedSharedSuggestionHandler extends BaseHandler<
       inApp: {
         innovationId: innovation.id,
         context: {
-          type: NotificationCategoryEnum.SUGGEST_SUPPORT,
+          type: 'ORGANISATION_SUGGESTIONS',
           id: innovation.id, // TODO,
           detail: 'OS03_INNOVATION_DELAYED_SHARED_SUGGESTION'
         },

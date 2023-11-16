@@ -1,10 +1,10 @@
-import { NotificationContextTypeEnum } from '@users/shared/enums';
+import { NotificationCategoryType } from '@users/shared/enums';
 import Joi from 'joi';
 
 export type BodyType = {
   notificationIds: string[];
   contextIds: string[];
-  contextTypes: NotificationContextTypeEnum[];
+  contextTypes: NotificationCategoryType[];
   dismissAll: boolean;
 };
 
@@ -13,7 +13,7 @@ export const BodySchema = Joi.object<BodyType>({
   notificationIds: Joi.array().items(Joi.string().uuid()).description('The notification IDs').default([]),
   contextIds: Joi.array().items(Joi.string().uuid()).description('The context IDs').default([]),
   contextTypes: Joi.array()
-    .items(Joi.string().valid(...Object.values(NotificationContextTypeEnum)))
+    .items(Joi.string().valid(...NotificationCategoryType))
     .description('The context types')
     .default([]),
   dismissAll: Joi.boolean().description('Dismiss all notifications').default(false)

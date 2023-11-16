@@ -1,4 +1,4 @@
-import { NotificationCategoryEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import { ServiceRoleEnum } from '@notifications/shared/enums';
 import { MocksHelper, type CompleteScenarioType } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { innovationOverviewUrl } from '../../_helpers/url.helper';
@@ -52,7 +52,7 @@ describe('Notifications / _handlers / organisation unit kpi suite', () => {
       expect(emails).toStrictEqual([
         {
           templateId: template,
-          notificationPreferenceType: NotificationCategoryEnum.AUTOMATIC,
+          notificationPreferenceType: 'AUTOMATIC',
           to: DTOsHelper.getRecipientUser(scenario.users.ingridAccessor),
           params: {
             innovation_name: 'Innovation 1',
@@ -61,7 +61,7 @@ describe('Notifications / _handlers / organisation unit kpi suite', () => {
         },
         {
           templateId: template,
-          notificationPreferenceType: NotificationCategoryEnum.AUTOMATIC,
+          notificationPreferenceType: 'AUTOMATIC',
           to: DTOsHelper.getRecipientUser(scenario.users.bartQualifyingAccessor),
           params: {
             innovation_name: 'Innovation 1',
@@ -70,7 +70,7 @@ describe('Notifications / _handlers / organisation unit kpi suite', () => {
         },
         {
           templateId: template,
-          notificationPreferenceType: NotificationCategoryEnum.AUTOMATIC,
+          notificationPreferenceType: 'AUTOMATIC',
           to: DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor),
           params: {
             innovation_name: 'Innovation 1',
@@ -79,7 +79,7 @@ describe('Notifications / _handlers / organisation unit kpi suite', () => {
         },
         {
           templateId: template,
-          notificationPreferenceType: NotificationCategoryEnum.AUTOMATIC,
+          notificationPreferenceType: 'AUTOMATIC',
           to: DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor),
           params: {
             innovation_name: 'Innovation 2',
@@ -96,7 +96,7 @@ describe('Notifications / _handlers / organisation unit kpi suite', () => {
             scenario.users.bartQualifyingAccessor.roles.qaRole.id
           ],
           context: {
-            type: NotificationCategoryEnum.AUTOMATIC,
+            type: 'AUTOMATIC',
             id: 'innovation1',
             detail: template
           },
@@ -108,7 +108,7 @@ describe('Notifications / _handlers / organisation unit kpi suite', () => {
           innovationId: 'innovation1',
           userRoleIds: [scenario.users.aliceQualifyingAccessor.roles.qaRole.id],
           context: {
-            type: NotificationCategoryEnum.AUTOMATIC,
+            type: 'AUTOMATIC',
             id: 'innovation1',
             detail: template
           },
@@ -120,7 +120,7 @@ describe('Notifications / _handlers / organisation unit kpi suite', () => {
           innovationId: 'innovation2',
           userRoleIds: [scenario.users.aliceQualifyingAccessor.roles.qaRole.id],
           context: {
-            type: NotificationCategoryEnum.AUTOMATIC,
+            type: 'AUTOMATIC',
             id: 'innovation2',
             detail: template
           },

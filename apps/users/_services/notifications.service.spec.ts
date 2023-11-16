@@ -1,7 +1,7 @@
 import { container } from '../_config';
 
 import { NotificationPreferenceEntity, NotificationUserEntity } from '@users/shared/entities';
-import { NotificationContextTypeEnum, NotificationPreferenceEnum, ServiceRoleEnum } from '@users/shared/enums';
+import { NotificationPreferenceEnum, ServiceRoleEnum } from '@users/shared/enums';
 import { GenericErrorsEnum, UnprocessableEntityError } from '@users/shared/errors';
 import { TestsHelper } from '@users/shared/tests';
 import { DTOsHelper } from '@users/shared/tests/helpers/dtos.helper';
@@ -106,7 +106,7 @@ describe('Users / _services / notifications service suite', () => {
     it('should get all user notifications with the specified contextType', async () => {
       const result = await sut.getUserNotifications(
         DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
-        { contextTypes: [NotificationContextTypeEnum.THREAD], unreadOnly: false },
+        { contextTypes: ['MESSAGES'], unreadOnly: false },
         { order: { createdAt: 'DESC' }, take: 10, skip: 0 },
         em
       );

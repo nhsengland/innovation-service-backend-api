@@ -1,4 +1,3 @@
-import { NotificationCategoryEnum } from '@notifications/shared/enums';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { HandlersHelper } from '../../_helpers/handlers.helper';
 import { testEmails, testInApps } from '../../_helpers/tests.helper';
@@ -36,7 +35,7 @@ describe('Notifications / _handlers / thread-add-followers suite', () => {
 
     it('should send an email to the new followers of the thread', async () => {
       await testEmails(ThreadAddFollowersHandler, 'ME02_THREAD_ADD_FOLLOWERS', {
-        notificationPreferenceType: NotificationCategoryEnum.MESSAGE,
+        notificationPreferenceType: 'MESSAGES',
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         inputData: {
           innovationId: innovation.id,
@@ -55,7 +54,7 @@ describe('Notifications / _handlers / thread-add-followers suite', () => {
     it('should send an in-app to the new followers of the thread', async () => {
       await testInApps(ThreadAddFollowersHandler, 'ME02_THREAD_ADD_FOLLOWERS', {
         innovationId: innovation.id,
-        context: { type: NotificationCategoryEnum.MESSAGE, id: thread.id },
+        context: { type: 'MESSAGES', id: thread.id },
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         inputData: {
           innovationId: innovation.id,

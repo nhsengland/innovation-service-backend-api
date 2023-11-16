@@ -1,7 +1,7 @@
 import { SupportStatusUpdateHandler } from './support-status-update.handler';
 
 import { randText } from '@ngneat/falso';
-import { InnovationSupportStatusEnum, NotificationCategoryEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import { InnovationSupportStatusEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { TranslationHelper } from '@notifications/shared/helpers';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { randomUUID } from 'crypto';
@@ -35,7 +35,7 @@ describe('Notifications / _handlers / support-status-update suite', () => {
   describe('ST01_SUPPORT_STATUS_TO_ENGAGING', () => {
     it('should send an email to the innovators', async () => {
       await testEmails(SupportStatusUpdateHandler, 'ST01_SUPPORT_STATUS_TO_ENGAGING', {
-        notificationPreferenceType: NotificationCategoryEnum.SUPPORT,
+        notificationPreferenceType: 'SUPPORT',
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         inputData: {
           innovationId: innovation.id,
@@ -61,7 +61,7 @@ describe('Notifications / _handlers / support-status-update suite', () => {
     it('should send an in-app to the innovators', async () => {
       await testInApps(SupportStatusUpdateHandler, 'ST01_SUPPORT_STATUS_TO_ENGAGING', {
         innovationId: innovation.id,
-        context: { type: NotificationCategoryEnum.SUPPORT, id: support.id },
+        context: { type: 'SUPPORT', id: support.id },
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         inputData: {
           innovationId: innovation.id,
@@ -89,7 +89,7 @@ describe('Notifications / _handlers / support-status-update suite', () => {
       supportStatus => {
         it('should send an email to the innovators', async () => {
           await testEmails(SupportStatusUpdateHandler, 'ST02_SUPPORT_STATUS_TO_OTHER', {
-            notificationPreferenceType: NotificationCategoryEnum.SUPPORT,
+            notificationPreferenceType: 'SUPPORT',
             requestUser: DTOsHelper.getUserRequestContext(requestUser),
             inputData: {
               innovationId: innovation.id,
@@ -114,7 +114,7 @@ describe('Notifications / _handlers / support-status-update suite', () => {
         it('should send an in-app to the innovators', async () => {
           await testInApps(SupportStatusUpdateHandler, 'ST02_SUPPORT_STATUS_TO_OTHER', {
             innovationId: innovation.id,
-            context: { type: NotificationCategoryEnum.SUPPORT, id: support.id },
+            context: { type: 'SUPPORT', id: support.id },
             requestUser: DTOsHelper.getUserRequestContext(requestUser),
             inputData: {
               innovationId: innovation.id,
@@ -141,7 +141,7 @@ describe('Notifications / _handlers / support-status-update suite', () => {
   describe('ST03_SUPPORT_STATUS_TO_WAITING', () => {
     it('should send an email to the innovators', async () => {
       await testEmails(SupportStatusUpdateHandler, 'ST03_SUPPORT_STATUS_TO_WAITING', {
-        notificationPreferenceType: NotificationCategoryEnum.SUPPORT,
+        notificationPreferenceType: 'SUPPORT',
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         inputData: {
           innovationId: innovation.id,
@@ -165,7 +165,7 @@ describe('Notifications / _handlers / support-status-update suite', () => {
     it('should send an in-app to the innovators', async () => {
       await testInApps(SupportStatusUpdateHandler, 'ST03_SUPPORT_STATUS_TO_WAITING', {
         innovationId: innovation.id,
-        context: { type: NotificationCategoryEnum.SUPPORT, id: support.id },
+        context: { type: 'SUPPORT', id: support.id },
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         inputData: {
           innovationId: innovation.id,

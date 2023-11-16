@@ -1,5 +1,5 @@
 import type { Context } from '@azure/functions';
-import { NotificationCategoryEnum, ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
+import { ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { howToProceedUrl, innovationRecordUrl } from '../../_helpers/url.helper';
 import { BaseHandler } from '../base.handler';
@@ -24,7 +24,7 @@ export class IdleSupportInnovatorHandler extends BaseHandler<
       const recipients = await this.recipientsService.getUsersRecipient(innovators, ServiceRoleEnum.INNOVATOR);
       this.notify('AU03_INNOVATOR_IDLE_SUPPORT', recipients, {
         email: {
-          notificationPreferenceType: NotificationCategoryEnum.AUTOMATIC,
+          notificationPreferenceType: 'AUTOMATIC',
           params: {
             innovation_name: innovation.name,
             innovation_record_url: innovationRecordUrl(ServiceRoleEnum.INNOVATOR, innovation.id),
@@ -34,7 +34,7 @@ export class IdleSupportInnovatorHandler extends BaseHandler<
         inApp: {
           context: {
             detail: 'AU03_INNOVATOR_IDLE_SUPPORT',
-            type: NotificationCategoryEnum.AUTOMATIC,
+            type: 'AUTOMATIC',
             id: innovation.id
           },
           innovationId: innovation.id,

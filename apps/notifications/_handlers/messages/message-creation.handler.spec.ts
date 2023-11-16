@@ -1,4 +1,4 @@
-import { NotificationCategoryEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import { ServiceRoleEnum } from '@notifications/shared/enums';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { HandlersHelper } from '../../_helpers/handlers.helper';
 import { testEmails, testInApps } from '../../_helpers/tests.helper';
@@ -38,7 +38,7 @@ describe('Notifications / _handlers / message-creation suite', () => {
 
         it('should send an email to the followers (expect self) when a message is created', async () => {
           await testEmails(MessageCreationHandler, 'ME03_THREAD_MESSAGE_CREATION', {
-            notificationPreferenceType: NotificationCategoryEnum.MESSAGE,
+            notificationPreferenceType: 'MESSAGES',
             requestUser: DTOsHelper.getUserRequestContext(requestUser),
             inputData: {
               innovationId: innovation.id,
@@ -57,7 +57,7 @@ describe('Notifications / _handlers / message-creation suite', () => {
         it('should send an in-app to the followers (expect self) when a message is created', async () => {
           await testInApps(MessageCreationHandler, 'ME03_THREAD_MESSAGE_CREATION', {
             innovationId: innovation.id,
-            context: { type: NotificationCategoryEnum.MESSAGE, id: thread.messages.johnMessage.id },
+            context: { type: 'MESSAGES', id: thread.messages.johnMessage.id },
             requestUser: DTOsHelper.getUserRequestContext(requestUser),
             inputData: {
               innovationId: innovation.id,

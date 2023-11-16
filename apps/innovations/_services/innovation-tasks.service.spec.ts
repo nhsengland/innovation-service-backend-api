@@ -11,7 +11,6 @@ import {
   ActivityEnum,
   InnovationStatusEnum,
   InnovationTaskStatusEnum,
-  NotificationContextTypeEnum,
   NotifierTypeEnum,
   ServiceRoleEnum,
   UserStatusEnum
@@ -261,7 +260,7 @@ describe('Innovation Tasks Suite', () => {
         return Promise.resolve(
           contextIds.map(contextId => ({
             contextId,
-            contextType: NotificationContextTypeEnum.TASK,
+            contextType: 'TASK',
             id: randUuid(),
             params: {}
           }))

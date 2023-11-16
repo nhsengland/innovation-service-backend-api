@@ -1,5 +1,5 @@
 import { randText } from '@ngneat/falso';
-import { NotificationCategoryEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import { ServiceRoleEnum } from '@notifications/shared/enums';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { testEmails, testInApps } from '../../../_helpers/tests.helper';
 import { innovationOverviewUrl } from '../../../_helpers/url.helper';
@@ -27,7 +27,7 @@ describe('Notifications / _handlers / innovation-stop-sharing suite', () => {
 
     it('should send an email to assigned users', async () => {
       await testEmails(InnovationStopSharingHandler, 'SH01_INNOVATION_STOPPED_SHARED_TO_ASSIGNED_USERS', {
-        notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+        notificationPreferenceType: 'INNOVATION_MANAGEMENT',
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         recipients: assignedUsersRecipients,
         inputData: {
@@ -49,7 +49,7 @@ describe('Notifications / _handlers / innovation-stop-sharing suite', () => {
 
     it('should send an in-app to assigned users', async () => {
       await testInApps(InnovationStopSharingHandler, 'SH01_INNOVATION_STOPPED_SHARED_TO_ASSIGNED_USERS', {
-        context: { type: NotificationCategoryEnum.INNOVATION_MANAGEMENT, id: innovation.id },
+        context: { type: 'INNOVATION_MANAGEMENT', id: innovation.id },
         innovationId: innovation.id,
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         recipients: assignedUsersRecipients,
@@ -70,7 +70,7 @@ describe('Notifications / _handlers / innovation-stop-sharing suite', () => {
   describe('SH03_INNOVATION_STOPPED_SHARED_TO_SELF', () => {
     it('should send an email to innovation owner', async () => {
       await testEmails(InnovationStopSharingHandler, 'SH03_INNOVATION_STOPPED_SHARED_TO_SELF', {
-        notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+        notificationPreferenceType: 'INNOVATION_MANAGEMENT',
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         recipients: [DTOsHelper.getRecipientUser(requestUser)],
         inputData: {
@@ -88,7 +88,7 @@ describe('Notifications / _handlers / innovation-stop-sharing suite', () => {
 
     it('should send an in-app to innovation owner', async () => {
       await testInApps(InnovationStopSharingHandler, 'SH03_INNOVATION_STOPPED_SHARED_TO_SELF', {
-        context: { type: NotificationCategoryEnum.INNOVATION_MANAGEMENT, id: innovation.id },
+        context: { type: 'INNOVATION_MANAGEMENT', id: innovation.id },
         innovationId: innovation.id,
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         recipients: [DTOsHelper.getRecipientUser(requestUser)],

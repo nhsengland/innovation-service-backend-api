@@ -1,8 +1,7 @@
 import type { Context } from '@azure/functions';
 import {
-  FlatNotificationTypes,
-  NotificationCategoryEnum,
-  NotificationContextTypeEnum,
+  NotificationCategoryType,
+  NotificationDetailType,
   NotificationLogTypeEnum,
   NotificationPreferenceEnum,
   NotifierTypeEnum,
@@ -21,7 +20,7 @@ type IdentityRecipientType = Omit<RecipientType, 'userRole'>;
 
 type HandlerEmailType<T> = Array<{
   templateId: T extends keyof EmailTemplates ? T : any; // legacy for now
-  notificationPreferenceType: NotificationCategoryEnum | null;
+  notificationPreferenceType: NotificationCategoryType | null;
   to: EmailRecipientType | Omit<IdentityRecipientType, 'userId' | 'role'>; // maybe review this later and it will probably only require roleId
   //params: T extends keyof EmailTemplatesType ? EmailTemplatesType[T] : Record<string, never>;
   params: T extends keyof EmailTemplatesType ? EmailTemplatesType[T] : any; // legacy for now
@@ -50,7 +49,7 @@ type HandlerEmailOutboundType<T> = {
 type HandlerInAppType<T> = Array<{
   innovationId: string;
   context: {
-    type: NotificationContextTypeEnum | NotificationCategoryEnum;
+    type: NotificationCategoryType;
     detail: T extends keyof InAppTemplatesType ? T : any; // legacy for now should be never
     id: string;
   };
@@ -62,7 +61,10 @@ type HandlerInAppType<T> = Array<{
   };
 }>;
 
-export abstract class BaseHandler<InputDataType extends NotifierTypeEnum, Notifications extends FlatNotificationTypes> {
+export abstract class BaseHandler<
+  InputDataType extends NotifierTypeEnum,
+  Notifications extends NotificationDetailType
+> {
   requestUser: DomainContextType;
   inputData: NotifierTemplatesType[InputDataType];
 
@@ -81,9 +83,10 @@ export abstract class BaseHandler<InputDataType extends NotifierTypeEnum, Notifi
 
   /**
    * Helper method to verify users email notification preferences.
-   * Ex: this.isEmailPreferenceInstantly(NotificationCategoryEnum.TASK, userData);
+   * Ex: this.isEmailPreferenceInstantly(TASK, userData);
    */
-  protected isEmailPreferenceInstantly(type: NotificationCategoryEnum, data?: NotificationPreferences): boolean {
+  // TODO: check if we can remove any
+  protected isEmailPreferenceInstantly(type: NotificationCategoryType, data?: NotificationPreferences): boolean {
     const preference = data as any; // TS can't infer the correct NotificationPreferences
     return !preference || !preference[type] || preference[type] === NotificationPreferenceEnum.YES;
   }

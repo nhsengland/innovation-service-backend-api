@@ -1,4 +1,4 @@
-import { NotificationCategoryEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import { ServiceRoleEnum } from '@notifications/shared/enums';
 import { MocksHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { testEmails } from '../../_helpers/tests.helper';
@@ -25,7 +25,7 @@ describe('Notifications / _handlers / unit-inactivated suite', () => {
     it('should send an email to the innovation owners of the innovations that were completed', async () => {
       await testEmails(UnitInactivatedHandler, 'AP07_UNIT_INACTIVATED_TO_ENGAGING_INNOVATIONS', {
         inputData: { unitId: inactivatedUnit.id, completedInnovationIds: completedInnovation.map(i => i.id) },
-        notificationPreferenceType: NotificationCategoryEnum.ADMIN,
+        notificationPreferenceType: 'ADMIN',
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         recipients: [
           DTOsHelper.getRecipientUser(scenario.users.johnInnovator),
@@ -51,7 +51,7 @@ describe('Notifications / _handlers / unit-inactivated suite', () => {
         completedInnovation.map((inno, i) => ({
           innovationId: inno.id,
           context: {
-            type: NotificationCategoryEnum.ADMIN,
+            type: 'ADMIN',
             detail: 'AP07_UNIT_INACTIVATED_TO_ENGAGING_INNOVATIONS',
             id: inno.id
           },

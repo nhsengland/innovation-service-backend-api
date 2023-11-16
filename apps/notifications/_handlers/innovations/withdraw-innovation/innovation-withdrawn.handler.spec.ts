@@ -1,4 +1,3 @@
-import { NotificationCategoryEnum } from '@notifications/shared/enums';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { container } from '../../../_config/';
 import { testEmails, testInApps } from '../../../_helpers/tests.helper';
@@ -62,7 +61,7 @@ describe('Notifications / _handlers / innovation-withdrawn suite', () => {
 
     it('should send an email to the affected users', async () => {
       await testEmails(InnovationWithdrawnHandler, 'WI01_INNOVATION_WITHDRAWN', {
-        notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+        notificationPreferenceType: 'INNOVATION_MANAGEMENT',
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         recipients: users.map(u => DTOsHelper.getRecipientUser(u)),
         inputData: inputData,
@@ -72,7 +71,7 @@ describe('Notifications / _handlers / innovation-withdrawn suite', () => {
 
     it('should send an in-app to the affected users', async () => {
       await testInApps(InnovationWithdrawnHandler, 'WI01_INNOVATION_WITHDRAWN', {
-        context: { id: innovation.id, type: NotificationCategoryEnum.INNOVATION_MANAGEMENT },
+        context: { id: innovation.id, type: 'INNOVATION_MANAGEMENT' },
         innovationId: innovation.id,
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         recipients: users.map(u => DTOsHelper.getRecipientUser(u)),

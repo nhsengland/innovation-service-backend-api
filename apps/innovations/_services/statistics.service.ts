@@ -12,8 +12,7 @@ import {
   InnovationExportRequestStatusEnum,
   InnovationSectionStatusEnum,
   InnovationSupportStatusEnum,
-  InnovationTaskStatusEnum,
-  NotificationContextTypeEnum
+  InnovationTaskStatusEnum
 } from '@innovations/shared/enums';
 import { NotFoundError, OrganisationErrorsEnum } from '@innovations/shared/errors';
 import type { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
@@ -141,9 +140,7 @@ export class StatisticsService extends BaseService {
       .select('count(*)', 'count')
       .addSelect('max(notification.createdAt)', 'lastSubmittedAt')
       .where('innovation.id = :innovationId', { innovationId })
-      .andWhere('notification.context_type = :context_type', {
-        context_type: NotificationContextTypeEnum.THREAD
-      })
+      .andWhere('notification.context_type = :context_type', { context_type: 'MESSAGES' })
       .andWhere('users.user_role_id = :roleId', { roleId })
       .andWhere('users.readAt IS NULL')
       .getRawOne();
@@ -241,7 +238,7 @@ export class StatisticsService extends BaseService {
         'innovation_thread',
         'thread',
         'thread.id = notification.context_id AND notification.context_type = :contextType',
-        { contextType: NotificationContextTypeEnum.THREAD }
+        { contextType: 'MESSAGES' }
       )
       .where('users.user_role_id = :roleId', { roleId: roleId })
       .andWhere('users.read_at IS NULL')

@@ -1,6 +1,6 @@
 import type { Context } from '@azure/functions';
 
-import { NotificationCategoryEnum, NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import { NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { documentUrl } from '../../_helpers/url.helper';
@@ -26,7 +26,7 @@ export class DocumentUploadHandler extends BaseHandler<
     const unitName = this.getRequestUnitName();
 
     this.addEmails('DC01_UPLOADED_DOCUMENT_TO_INNOVATOR', recipients, {
-      notificationPreferenceType: NotificationCategoryEnum.DOCUMENT,
+      notificationPreferenceType: 'DOCUMENTS',
       params: {
         accessor_name: await this.getUserName(this.requestUser.identityId),
         unit_name: unitName,
@@ -37,7 +37,7 @@ export class DocumentUploadHandler extends BaseHandler<
     this.addInApp('DC01_UPLOADED_DOCUMENT_TO_INNOVATOR', recipients, {
       innovationId: this.inputData.innovationId,
       context: {
-        type: NotificationCategoryEnum.DOCUMENT,
+        type: 'DOCUMENTS',
         detail: 'DC01_UPLOADED_DOCUMENT_TO_INNOVATOR',
         id: this.inputData.file.id
       },

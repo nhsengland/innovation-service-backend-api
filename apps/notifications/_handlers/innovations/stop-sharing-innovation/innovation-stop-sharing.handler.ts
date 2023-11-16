@@ -1,5 +1,5 @@
 import type { Context } from '@azure/functions';
-import { NotificationCategoryEnum, ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
+import { ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { innovationOverviewUrl } from '../../../_helpers/url.helper';
 import { BaseHandler } from '../../base.handler';
@@ -47,7 +47,7 @@ export class InnovationStopSharingHandler extends BaseHandler<
 
     this.notify('SH01_INNOVATION_STOPPED_SHARED_TO_ASSIGNED_USERS', recipients, {
       email: {
-        notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+        notificationPreferenceType: 'INNOVATION_MANAGEMENT',
         params: {
           innovation_name: innovation.name,
           innovator_name: requestUserName,
@@ -57,7 +57,7 @@ export class InnovationStopSharingHandler extends BaseHandler<
       inApp: {
         context: {
           id: innovation.id,
-          type: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+          type: 'INNOVATION_MANAGEMENT',
           detail: 'SH01_INNOVATION_STOPPED_SHARED_TO_ASSIGNED_USERS'
         },
         innovationId: innovation.id,
@@ -78,7 +78,7 @@ export class InnovationStopSharingHandler extends BaseHandler<
 
     this.notify('SH03_INNOVATION_STOPPED_SHARED_TO_SELF', [recipient], {
       email: {
-        notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+        notificationPreferenceType: 'INNOVATION_MANAGEMENT',
         params: {
           innovation_name: innovation.name,
           innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.INNOVATOR, innovation.id)
@@ -88,7 +88,7 @@ export class InnovationStopSharingHandler extends BaseHandler<
       inApp: {
         context: {
           id: innovation.id,
-          type: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+          type: 'INNOVATION_MANAGEMENT',
           detail: 'SH03_INNOVATION_STOPPED_SHARED_TO_SELF'
         },
         innovationId: innovation.id,

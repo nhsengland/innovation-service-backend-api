@@ -1,5 +1,5 @@
 import { randText } from '@ngneat/falso';
-import { NotificationCategoryEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import { ServiceRoleEnum } from '@notifications/shared/enums';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { randomUUID } from 'crypto';
 import { HandlersHelper } from '../../_helpers/handlers.helper';
@@ -41,7 +41,7 @@ describe('Notifications / _handlers / support-new-assigned-accessors suite', () 
   describe('ST04_SUPPORT_NEW_ASSIGNED_ACCESSORS_TO_INNOVATOR', () => {
     it('should send an email to the innovators when a QA assignes new accessors', async () => {
       await testEmails(SupportNewAssignedAccessorsHandler, 'ST04_SUPPORT_NEW_ASSIGNED_ACCESSORS_TO_INNOVATOR', {
-        notificationPreferenceType: NotificationCategoryEnum.SUPPORT,
+        notificationPreferenceType: 'SUPPORT',
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         inputData: {
           innovationId: innovation.id,
@@ -65,7 +65,7 @@ describe('Notifications / _handlers / support-new-assigned-accessors suite', () 
     it('should send an in-app to the innovators when a QA assignes new accessors', async () => {
       await testInApps(SupportNewAssignedAccessorsHandler, 'ST04_SUPPORT_NEW_ASSIGNED_ACCESSORS_TO_INNOVATOR', {
         innovationId: innovation.id,
-        context: { type: NotificationCategoryEnum.SUPPORT, id: support.id },
+        context: { type: 'SUPPORT', id: support.id },
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         inputData: {
           innovationId: innovation.id,
@@ -88,7 +88,7 @@ describe('Notifications / _handlers / support-new-assigned-accessors suite', () 
   describe('ST05_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_NEW_QA', () => {
     it('should send an email to the new QA/A when a QA assignes new accessors', async () => {
       await testEmails(SupportNewAssignedAccessorsHandler, 'ST05_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_NEW_QA', {
-        notificationPreferenceType: NotificationCategoryEnum.SUPPORT,
+        notificationPreferenceType: 'SUPPORT',
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         inputData: {
           innovationId: innovation.id,
@@ -110,7 +110,7 @@ describe('Notifications / _handlers / support-new-assigned-accessors suite', () 
     it('should send an in-app to the new QA/A when a QA assignes new accessors', async () => {
       await testInApps(SupportNewAssignedAccessorsHandler, 'ST05_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_NEW_QA', {
         innovationId: innovation.id,
-        context: { type: NotificationCategoryEnum.SUPPORT, id: support.id },
+        context: { type: 'SUPPORT', id: support.id },
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         inputData: {
           innovationId: innovation.id,
@@ -129,7 +129,7 @@ describe('Notifications / _handlers / support-new-assigned-accessors suite', () 
   describe('ST06_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_OLD_QA', () => {
     it('should send an email to the removed QA/A when a QA assignes new accessors', async () => {
       await testEmails(SupportNewAssignedAccessorsHandler, 'ST06_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_OLD_QA', {
-        notificationPreferenceType: NotificationCategoryEnum.SUPPORT,
+        notificationPreferenceType: 'SUPPORT',
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         inputData: {
           innovationId: innovation.id,
@@ -147,7 +147,7 @@ describe('Notifications / _handlers / support-new-assigned-accessors suite', () 
     it('should send an in-app to the removed QA/A when a QA assignes new accessors', async () => {
       await testInApps(SupportNewAssignedAccessorsHandler, 'ST06_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_OLD_QA', {
         innovationId: innovation.id,
-        context: { type: NotificationCategoryEnum.SUPPORT, id: support.id },
+        context: { type: 'SUPPORT', id: support.id },
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         inputData: {
           innovationId: innovation.id,

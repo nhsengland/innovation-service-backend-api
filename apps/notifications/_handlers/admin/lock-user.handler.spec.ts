@@ -1,7 +1,6 @@
 import { container } from '../../_config/';
 
 import { randUuid } from '@ngneat/falso';
-import { NotificationCategoryEnum } from '@notifications/shared/enums';
 import { MocksHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { testEmails } from '../../_helpers/tests.helper';
@@ -57,7 +56,7 @@ describe('Notifications / _handlers / lock-user suite', () => {
         {
           innovationId: inno1,
           context: {
-            type: NotificationCategoryEnum.ADMIN,
+            type: 'ADMIN',
             detail: 'AP02_INNOVATOR_LOCKED_TO_ASSIGNED_USERS',
             id: inno1
           },
@@ -67,7 +66,7 @@ describe('Notifications / _handlers / lock-user suite', () => {
         {
           innovationId: inno2,
           context: {
-            type: NotificationCategoryEnum.ADMIN,
+            type: 'ADMIN',
             detail: 'AP02_INNOVATOR_LOCKED_TO_ASSIGNED_USERS',
             id: inno2
           },
@@ -84,7 +83,7 @@ describe('Notifications / _handlers / lock-user suite', () => {
   describe('AP03_USER_LOCKED_TO_LOCKED_USER', () => {
     it('should send a confirmation email to the locked user', async () => {
       await testEmails(LockUserHandler, 'AP03_USER_LOCKED_TO_LOCKED_USER', {
-        notificationPreferenceType: NotificationCategoryEnum.ADMIN,
+        notificationPreferenceType: 'ADMIN',
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         recipients: [DTOsHelper.getRecipientUser(lockedUser)],
         inputData: { identityId: lockedUser.identityId },
@@ -95,7 +94,7 @@ describe('Notifications / _handlers / lock-user suite', () => {
 
     it("should not send a confirmation email if the user doesn't exist", async () => {
       await testEmails(LockUserHandler, 'AP03_USER_LOCKED_TO_LOCKED_USER', {
-        notificationPreferenceType: NotificationCategoryEnum.ADMIN,
+        notificationPreferenceType: 'ADMIN',
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         recipients: [],
         inputData: { identityId: randUuid() },

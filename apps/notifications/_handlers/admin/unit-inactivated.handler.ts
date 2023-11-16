@@ -1,5 +1,5 @@
 import type { Context } from '@azure/functions';
-import { NotificationCategoryEnum, ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
+import { ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { dataSharingPreferencesUrl } from '../../_helpers/url.helper';
 import { BaseHandler } from '../base.handler';
@@ -37,7 +37,7 @@ export class UnitInactivatedHandler extends BaseHandler<
       if (owner) {
         this.notify('AP07_UNIT_INACTIVATED_TO_ENGAGING_INNOVATIONS', [owner], {
           email: {
-            notificationPreferenceType: NotificationCategoryEnum.ADMIN,
+            notificationPreferenceType: 'ADMIN',
             params: {
               innovation_name: innovation.name,
               support_url: dataSharingPreferencesUrl(ServiceRoleEnum.INNOVATOR, innovation.id),
@@ -48,7 +48,7 @@ export class UnitInactivatedHandler extends BaseHandler<
             context: {
               id: innovation.id,
               detail: 'AP07_UNIT_INACTIVATED_TO_ENGAGING_INNOVATIONS',
-              type: NotificationCategoryEnum.ADMIN
+              type: 'ADMIN'
             },
             innovationId: innovation.id,
             params: {

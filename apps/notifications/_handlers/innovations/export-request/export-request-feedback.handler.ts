@@ -1,10 +1,5 @@
 import type { Context } from '@azure/functions';
-import {
-  InnovationExportRequestStatusEnum,
-  NotificationCategoryEnum,
-  ServiceRoleEnum,
-  type NotifierTypeEnum
-} from '@notifications/shared/enums';
+import { InnovationExportRequestStatusEnum, ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { innovationRecordUrl } from '../../../_helpers/url.helper';
 import type { RecipientType } from '../../../_services/recipients.service';
@@ -55,7 +50,7 @@ export class ExportRequestFeedbackHandler extends BaseHandler<
 
     this.notify('RE02_EXPORT_REQUEST_APPROVED', [recipient], {
       email: {
-        notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+        notificationPreferenceType: 'INNOVATION_MANAGEMENT',
         params: {
           innovation_name: innovation.name,
           innovator_name: requestName,
@@ -65,7 +60,7 @@ export class ExportRequestFeedbackHandler extends BaseHandler<
       inApp: {
         context: {
           id: this.inputData.exportRequestId,
-          type: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+          type: 'INNOVATION_MANAGEMENT',
           detail: 'RE02_EXPORT_REQUEST_APPROVED'
         },
         innovationId: innovation.id,
@@ -86,7 +81,7 @@ export class ExportRequestFeedbackHandler extends BaseHandler<
 
     this.notify('RE03_EXPORT_REQUEST_REJECTED', [recipient], {
       email: {
-        notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+        notificationPreferenceType: 'INNOVATION_MANAGEMENT',
         params: {
           innovation_name: innovation.name,
           innovator_name: requestName,
@@ -96,7 +91,7 @@ export class ExportRequestFeedbackHandler extends BaseHandler<
       inApp: {
         context: {
           id: this.inputData.exportRequestId,
-          type: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+          type: 'INNOVATION_MANAGEMENT',
           detail: 'RE03_EXPORT_REQUEST_REJECTED'
         },
         innovationId: innovation.id,

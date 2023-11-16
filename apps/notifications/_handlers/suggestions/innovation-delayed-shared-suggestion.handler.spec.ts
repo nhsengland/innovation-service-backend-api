@@ -1,4 +1,4 @@
-import { NotificationCategoryEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import { ServiceRoleEnum } from '@notifications/shared/enums';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { testEmails, testInApps } from '../../_helpers/tests.helper';
 import { innovationOverviewUrl } from '../../_helpers/url.helper';
@@ -25,7 +25,7 @@ describe('Notifications / _handlers / innovation-delayed-shared-suggestion suite
   describe('OS03_INNOVATION_DELAYED_SHARED_SUGGESTION', () => {
     it('should send an email to the QAs from the units that were suggested and delayed shared', async () => {
       await testEmails(InnovationDelayedSharedSuggestionHandler, 'OS03_INNOVATION_DELAYED_SHARED_SUGGESTION', {
-        notificationPreferenceType: NotificationCategoryEnum.SUGGEST_SUPPORT,
+        notificationPreferenceType: 'ORGANISATION_SUGGESTIONS',
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         inputData: { innovationId: innovation.id, newSharedOrgIds: [scenario.organisations.healthOrg.id] },
         recipients: [DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor)],
@@ -39,7 +39,7 @@ describe('Notifications / _handlers / innovation-delayed-shared-suggestion suite
     it('should send an in-app to the QAs from the units that were suggested and delayed shared', async () => {
       await testInApps(InnovationDelayedSharedSuggestionHandler, 'OS03_INNOVATION_DELAYED_SHARED_SUGGESTION', {
         innovationId: innovation.id,
-        context: { type: NotificationCategoryEnum.SUGGEST_SUPPORT, id: innovation.id },
+        context: { type: 'ORGANISATION_SUGGESTIONS', id: innovation.id },
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         inputData: { innovationId: innovation.id, newSharedOrgIds: [scenario.organisations.healthOrg.id] },
         recipients: [DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor)],

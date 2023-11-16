@@ -1,16 +1,12 @@
-import type {
-  InnovationStatusEnum,
-  NotificationContextDetailEnum,
-  NotificationContextTypeEnum
-} from '@users/shared/enums';
+import type { InnovationStatusEnum, NotificationCategoryType, NotificationDetailType } from '@users/shared/enums';
 
 export type ResponseDTO = {
   count: number;
   data: {
     id: string;
     innovation: { id: string; name: string; status: InnovationStatusEnum; ownerName: string };
-    contextType: NotificationContextTypeEnum;
-    contextDetail: NotificationContextDetailEnum;
+    contextType: NotificationCategoryType;
+    contextDetail: NotificationDetailType;
     contextId: string;
     createdAt: Date;
     readAt: Date | null;

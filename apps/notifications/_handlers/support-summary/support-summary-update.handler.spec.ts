@@ -1,4 +1,4 @@
-import { NotificationCategoryEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import { ServiceRoleEnum } from '@notifications/shared/enums';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { testEmails, testInApps } from '../../_helpers/tests.helper';
 import { supportSummaryUrl } from '../../_helpers/url.helper';
@@ -28,7 +28,7 @@ describe('Notifications / _handlers / support-summary-update suite', () => {
   describe('SS01_SUPPORT_SUMMARY_UPDATE_TO_INNOVATORS', () => {
     it('should send an email to the innovators when a QA/A creates a progress update from support summary', async () => {
       await testEmails(SupportSummaryUpdateHandler, 'SS01_SUPPORT_SUMMARY_UPDATE_TO_INNOVATORS', {
-        notificationPreferenceType: NotificationCategoryEnum.SUPPORT_SUMMARY,
+        notificationPreferenceType: 'SUPPORT',
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         inputData: { innovationId: innovation.id, supportId: support.id },
         recipients: innovatorRecipients,
@@ -43,7 +43,7 @@ describe('Notifications / _handlers / support-summary-update suite', () => {
     it('should send an in-app to the innovators when a QA/A creates a progress update from support summary', async () => {
       await testInApps(SupportSummaryUpdateHandler, 'SS01_SUPPORT_SUMMARY_UPDATE_TO_INNOVATORS', {
         innovationId: innovation.id,
-        context: { type: NotificationCategoryEnum.SUPPORT_SUMMARY, id: support.id },
+        context: { type: 'SUPPORT', id: support.id },
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         inputData: { innovationId: innovation.id, supportId: support.id },
         recipients: innovatorRecipients,
@@ -59,7 +59,7 @@ describe('Notifications / _handlers / support-summary-update suite', () => {
   describe('SS02_SUPPORT_SUMMARY_UPDATE_TO_OTHER_ENGAGING_ACCESSORS', () => {
     it('should send an email to the other assigned QA/A when a QA/A from other unit updates support summary', async () => {
       await testEmails(SupportSummaryUpdateHandler, 'SS02_SUPPORT_SUMMARY_UPDATE_TO_OTHER_ENGAGING_ACCESSORS', {
-        notificationPreferenceType: NotificationCategoryEnum.SUPPORT_SUMMARY,
+        notificationPreferenceType: 'SUPPORT',
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         inputData: { innovationId: innovation.id, supportId: support.id },
         recipients: assignedAccessorsRecipients,
@@ -74,7 +74,7 @@ describe('Notifications / _handlers / support-summary-update suite', () => {
     it('should send an in-app to the other assigned QA/A when a QA/A from other unit updates support summary', async () => {
       await testInApps(SupportSummaryUpdateHandler, 'SS02_SUPPORT_SUMMARY_UPDATE_TO_OTHER_ENGAGING_ACCESSORS', {
         innovationId: innovation.id,
-        context: { type: NotificationCategoryEnum.SUPPORT_SUMMARY, id: support.id },
+        context: { type: 'SUPPORT', id: support.id },
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         inputData: { innovationId: innovation.id, supportId: support.id },
         recipients: assignedAccessorsRecipients,

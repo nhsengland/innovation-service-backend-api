@@ -4,9 +4,7 @@ import type { EntityManager } from 'typeorm';
 import {
   InnovationExportRequestStatusEnum,
   InnovationSectionStatusEnum,
-  InnovationTaskStatusEnum,
-  NotificationContextDetailEnum,
-  NotificationContextTypeEnum
+  InnovationTaskStatusEnum
 } from '@innovations/shared/enums';
 import { BadRequestError, GenericErrorsEnum, NotFoundError, OrganisationErrorsEnum } from '@innovations/shared/errors';
 import { TestsHelper } from '@innovations/shared/tests';
@@ -267,11 +265,7 @@ describe('Innovations / _services / innovation statistics suite', () => {
       //create unread message notification
       const notification = await new NotificationBuilder(em)
         .setInnovation(innovation.id)
-        .setContext(
-          NotificationContextTypeEnum.THREAD,
-          NotificationContextDetailEnum.THREAD_MESSAGE_CREATION,
-          randUuid()
-        )
+        .setContext('MESSAGES', 'ME03_THREAD_MESSAGE_CREATION', randUuid())
         .addNotificationUser(scenario.users.aliceQualifyingAccessor, 'qaRole')
         .save();
 
@@ -296,11 +290,7 @@ describe('Innovations / _services / innovation statistics suite', () => {
       //create unread message notification
       await new NotificationBuilder(em)
         .setInnovation(innovation.id)
-        .setContext(
-          NotificationContextTypeEnum.THREAD,
-          NotificationContextDetailEnum.THREAD_MESSAGE_CREATION,
-          thread.id
-        )
+        .setContext('MESSAGES', 'ME03_THREAD_MESSAGE_CREATION', thread.id)
         .addNotificationUser(scenario.users.aliceQualifyingAccessor, 'qaRole')
         .save();
 
