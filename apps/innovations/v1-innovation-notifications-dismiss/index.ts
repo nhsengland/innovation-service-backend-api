@@ -84,7 +84,7 @@ export default openApi(
                     },
                     type: {
                       type: 'string',
-                      enum: [Object.values(NotificationCategoryType)]
+                      enum: NotificationCategoryType
                     }
                   }
                 }

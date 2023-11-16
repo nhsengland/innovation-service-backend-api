@@ -2383,16 +2383,16 @@ paths:
                     type:
                       type: string
                       enum:
-                        - - TASK
-                          - DOCUMENTS
-                          - MESSAGES
-                          - SUPPORT
-                          - NEEDS_ASSESSMENT
-                          - ORGANISATION_SUGGESTIONS
-                          - INNOVATION_MANAGEMENT
-                          - ADMIN
-                          - ACCOUNT
-                          - AUTOMATIC
+                        - TASK
+                        - DOCUMENTS
+                        - MESSAGES
+                        - SUPPORT
+                        - NEEDS_ASSESSMENT
+                        - ORGANISATION_SUGGESTIONS
+                        - INNOVATION_MANAGEMENT
+                        - ADMIN
+                        - ACCOUNT
+                        - AUTOMATIC
       responses:
         "204":
           description: Success
