@@ -1,5 +1,5 @@
 import { randText } from '@ngneat/falso';
-import { NotificationCategoryEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import { ServiceRoleEnum } from '@notifications/shared/enums';
 import { MocksHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { randomUUID } from 'crypto';
@@ -28,7 +28,7 @@ describe('Notifications / _handlers / export-request-submitted suite', () => {
   describe('RE01_EXPORT_REQUEST_SUBMITTED', () => {
     it('should send an email to the innovation owner', async () => {
       await testEmails(ExportRequestSubmittedHandler, 'RE01_EXPORT_REQUEST_SUBMITTED', {
-        notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+        notificationPreferenceType: 'INNOVATION_MANAGEMENT',
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         recipients: [DTOsHelper.getRecipientUser(scenario.users.johnInnovator)],
         inputData: {
@@ -48,7 +48,7 @@ describe('Notifications / _handlers / export-request-submitted suite', () => {
     it('should send an in-app to the innovation owner', async () => {
       await testInApps(ExportRequestSubmittedHandler, 'RE01_EXPORT_REQUEST_SUBMITTED', {
         context: {
-          type: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+          type: 'INNOVATION_MANAGEMENT',
           id: exportRequest.id
         },
         innovationId: innovation.id,

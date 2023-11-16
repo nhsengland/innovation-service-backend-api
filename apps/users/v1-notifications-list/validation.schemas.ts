@@ -1,6 +1,6 @@
 import Joi from 'joi';
 
-import { NotificationContextTypeEnum } from '@users/shared/enums';
+import { NotificationCategoryType } from '@users/shared/enums';
 import { JoiHelper, PaginationQueryParamsType } from '@users/shared/helpers';
 
 enum orderFields {
@@ -8,7 +8,7 @@ enum orderFields {
 }
 
 export type QueryParamsType = PaginationQueryParamsType<orderFields> & {
-  contextTypes: NotificationContextTypeEnum[];
+  contextTypes: NotificationCategoryType[];
   unreadOnly: boolean;
 };
 
@@ -21,7 +21,7 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
       .items(
         Joi.string()
           .allow('')
-          .valid(...Object.values(NotificationContextTypeEnum))
+          .valid(...Object.values(NotificationCategoryType))
       )
       .optional()
       .default([])

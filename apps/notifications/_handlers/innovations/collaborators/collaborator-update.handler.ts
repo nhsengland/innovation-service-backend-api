@@ -1,10 +1,5 @@
 import type { Context } from '@azure/functions';
-import {
-  InnovationCollaboratorStatusEnum,
-  NotificationCategoryEnum,
-  ServiceRoleEnum,
-  type NotifierTypeEnum
-} from '@notifications/shared/enums';
+import { InnovationCollaboratorStatusEnum, ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { manageCollaboratorsUrl } from '../../../_helpers/url.helper';
 import { BaseHandler } from '../../base.handler';
@@ -62,13 +57,13 @@ export class CollaboratorUpdateHandler extends BaseHandler<
     if (collaborator.userId && recipient) {
       this.notify('MC03_COLLABORATOR_UPDATE_CANCEL_INVITE', [recipient], {
         email: {
-          notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+          notificationPreferenceType: 'INNOVATION_MANAGEMENT',
           params: { innovation_name: innovation.name, innovator_name: requestUserName }
         },
         inApp: {
           context: {
             id: collaborator.collaboratorId,
-            type: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+            type: 'INNOVATION_MANAGEMENT',
             detail: 'MC03_COLLABORATOR_UPDATE_CANCEL_INVITE'
           },
           innovationId: innovation.id,
@@ -81,7 +76,7 @@ export class CollaboratorUpdateHandler extends BaseHandler<
       });
     } else {
       this.addEmails('MC03_COLLABORATOR_UPDATE_CANCEL_INVITE', [{ email: collaborator.email }], {
-        notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+        notificationPreferenceType: 'INNOVATION_MANAGEMENT',
         params: { innovation_name: innovation.name, innovator_name: requestUserName }
       });
     }
@@ -96,7 +91,7 @@ export class CollaboratorUpdateHandler extends BaseHandler<
     if (owner) {
       this.notify('MC04_COLLABORATOR_UPDATE_ACCEPTS_INVITE', [owner], {
         email: {
-          notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+          notificationPreferenceType: 'INNOVATION_MANAGEMENT',
           params: {
             innovation_name: innovation.name,
             innovator_name: requestUserName,
@@ -106,7 +101,7 @@ export class CollaboratorUpdateHandler extends BaseHandler<
         inApp: {
           context: {
             id: this.inputData.collaborator.id,
-            type: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+            type: 'INNOVATION_MANAGEMENT',
             detail: 'MC04_COLLABORATOR_UPDATE_ACCEPTS_INVITE'
           },
           innovationId: innovation.id,
@@ -129,7 +124,7 @@ export class CollaboratorUpdateHandler extends BaseHandler<
     if (owner) {
       this.notify('MC05_COLLABORATOR_UPDATE_DECLINES_INVITE', [owner], {
         email: {
-          notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+          notificationPreferenceType: 'INNOVATION_MANAGEMENT',
           params: {
             innovation_name: innovation.name,
             innovator_name: requestUserName,
@@ -139,7 +134,7 @@ export class CollaboratorUpdateHandler extends BaseHandler<
         inApp: {
           context: {
             id: this.inputData.collaborator.id,
-            type: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+            type: 'INNOVATION_MANAGEMENT',
             detail: 'MC05_COLLABORATOR_UPDATE_DECLINES_INVITE'
           },
           innovationId: innovation.id,
@@ -163,13 +158,13 @@ export class CollaboratorUpdateHandler extends BaseHandler<
     if (recipient) {
       this.notify('MC06_COLLABORATOR_UPDATE_REMOVED_COLLABORATOR', [recipient], {
         email: {
-          notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+          notificationPreferenceType: 'INNOVATION_MANAGEMENT',
           params: { innovation_name: innovation.name, innovator_name: requestUserName }
         },
         inApp: {
           context: {
             id: this.inputData.collaborator.id,
-            type: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+            type: 'INNOVATION_MANAGEMENT',
             detail: 'MC06_COLLABORATOR_UPDATE_REMOVED_COLLABORATOR'
           },
           innovationId: innovation.id,
@@ -192,7 +187,7 @@ export class CollaboratorUpdateHandler extends BaseHandler<
 
     this.notify('MC07_COLLABORATOR_UPDATE_COLLABORATOR_LEFT_TO_INNOVATORS', recipients, {
       email: {
-        notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+        notificationPreferenceType: 'INNOVATION_MANAGEMENT',
         params: {
           innovation_name: innovation.name,
           innovator_name: requestUserName,
@@ -202,7 +197,7 @@ export class CollaboratorUpdateHandler extends BaseHandler<
       inApp: {
         context: {
           id: this.inputData.collaborator.id,
-          type: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+          type: 'INNOVATION_MANAGEMENT',
           detail: 'MC07_COLLABORATOR_UPDATE_COLLABORATOR_LEFT_TO_INNOVATORS'
         },
         innovationId: innovation.id,
@@ -225,14 +220,14 @@ export class CollaboratorUpdateHandler extends BaseHandler<
     if (collaborator) {
       this.notify('MC08_COLLABORATOR_UPDATE_COLLABORATOR_LEFT_TO_SELF', [collaborator], {
         email: {
-          notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+          notificationPreferenceType: 'INNOVATION_MANAGEMENT',
           params: { innovation_name: innovation.name },
           options: { includeSelf: true }
         },
         inApp: {
           context: {
             id: this.inputData.collaborator.id,
-            type: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+            type: 'INNOVATION_MANAGEMENT',
             detail: 'MC08_COLLABORATOR_UPDATE_COLLABORATOR_LEFT_TO_SELF'
           },
           innovationId: innovation.id,

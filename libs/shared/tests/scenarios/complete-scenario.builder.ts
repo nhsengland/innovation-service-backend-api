@@ -13,7 +13,7 @@ import {
   InnovationTransferStatusEnum,
   ThreadContextTypeEnum
 } from '../../enums/innovation.enums';
-import { NotificationContextDetailEnum, NotificationContextTypeEnum } from '../../enums/notification.enums';
+import { NotificationContextDetailEnum } from '../../enums/notification.enums';
 import { ServiceRoleEnum, UserStatusEnum } from '../../enums/user.enums';
 import { InnovationAssessmentBuilder } from '../builders/innovation-assessment.builder';
 import { InnovationCollaboratorBuilder } from '../builders/innovation-collaborator.builder';
@@ -539,21 +539,13 @@ export class CompleteScenarioBuilder {
       const johnInnovationNotificationFromMessage = await new NotificationBuilder(entityManager)
         .addNotificationUser(johnInnovator)
         .setInnovation(johnInnovation.id)
-        .setContext(
-          NotificationContextTypeEnum.THREAD,
-          NotificationContextDetailEnum.THREAD_MESSAGE_CREATION,
-          randUuid()
-        )
+        .setContext('MESSAGES', NotificationContextDetailEnum.THREAD_MESSAGE_CREATION, randUuid())
         .save();
 
       const johnInnovationNotificationFromSupport = await new NotificationBuilder(entityManager)
         .addNotificationUser(johnInnovator)
         .setInnovation(johnInnovation.id)
-        .setContext(
-          NotificationContextTypeEnum.SUPPORT,
-          NotificationContextDetailEnum.SUPPORT_STATUS_UPDATE,
-          randUuid()
-        )
+        .setContext('SUPPORT', NotificationContextDetailEnum.SUPPORT_STATUS_UPDATE, randUuid())
         .save();
 
       // Progress updates on John innovation

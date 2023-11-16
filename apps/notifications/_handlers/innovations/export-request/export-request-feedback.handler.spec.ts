@@ -1,9 +1,5 @@
 import { randText } from '@ngneat/falso';
-import {
-  InnovationExportRequestStatusEnum,
-  NotificationCategoryEnum,
-  ServiceRoleEnum
-} from '@notifications/shared/enums';
+import { InnovationExportRequestStatusEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { testEmails, testInApps } from '../../../_helpers/tests.helper';
 import { innovationRecordUrl } from '../../../_helpers/url.helper';
@@ -33,7 +29,7 @@ describe('Notifications / _handlers / export-request-feedback suite', () => {
 
     it('should send an email to the user who requested the export request', async () => {
       await testEmails(ExportRequestFeedbackHandler, 'RE02_EXPORT_REQUEST_APPROVED', {
-        notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+        notificationPreferenceType: 'INNOVATION_MANAGEMENT',
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         recipients: [DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor)],
         inputData: { innovationId: innovation.id, exportRequestId: exportRequest.id },
@@ -46,7 +42,7 @@ describe('Notifications / _handlers / export-request-feedback suite', () => {
     });
     it('should send an in-app to the user who requested the export request', async () => {
       await testInApps(ExportRequestFeedbackHandler, 'RE02_EXPORT_REQUEST_APPROVED', {
-        context: { type: NotificationCategoryEnum.INNOVATION_MANAGEMENT, id: exportRequest.id },
+        context: { type: 'INNOVATION_MANAGEMENT', id: exportRequest.id },
         innovationId: innovation.id,
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         recipients: [DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor)],
@@ -69,7 +65,7 @@ describe('Notifications / _handlers / export-request-feedback suite', () => {
 
     it('should send an email to the user who requested the export request', async () => {
       await testEmails(ExportRequestFeedbackHandler, 'RE03_EXPORT_REQUEST_REJECTED', {
-        notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+        notificationPreferenceType: 'INNOVATION_MANAGEMENT',
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         recipients: [DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor)],
         inputData: { innovationId: innovation.id, exportRequestId: exportRequest.id },
@@ -82,7 +78,7 @@ describe('Notifications / _handlers / export-request-feedback suite', () => {
     });
     it('should send an in-app to the user who requested the export request', async () => {
       await testInApps(ExportRequestFeedbackHandler, 'RE03_EXPORT_REQUEST_REJECTED', {
-        context: { type: NotificationCategoryEnum.INNOVATION_MANAGEMENT, id: exportRequest.id },
+        context: { type: 'INNOVATION_MANAGEMENT', id: exportRequest.id },
         innovationId: innovation.id,
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         recipients: [DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor)],

@@ -1,9 +1,5 @@
 import { randUserName, randUuid } from '@ngneat/falso';
-import {
-  InnovationExportRequestStatusEnum,
-  NotificationCategoryEnum,
-  ServiceRoleEnum
-} from '@notifications/shared/enums';
+import { InnovationExportRequestStatusEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { MocksHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { HandlersHelper } from '../../_helpers/handlers.helper';
@@ -24,7 +20,7 @@ describe('Notifications / _handlers / account-creation suite', () => {
   describe('CA01_ACCOUNT_CREATION_OF_INNOVATOR', () => {
     it('should send an email to user who created a new innovator account', async () => {
       await testEmails(AccountCreationHandler, 'CA01_ACCOUNT_CREATION_OF_INNOVATOR', {
-        notificationPreferenceType: NotificationCategoryEnum.ACCOUNT,
+        notificationPreferenceType: 'ACCOUNT',
         requestUser: DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
         recipients: [DTOsHelper.getRecipientUser(scenario.users.johnInnovator)],
         inputData: {},
@@ -48,7 +44,7 @@ describe('Notifications / _handlers / account-creation suite', () => {
       ]);
 
       await testEmails(AccountCreationHandler, 'CA02_ACCOUNT_CREATION_OF_COLLABORATOR', {
-        notificationPreferenceType: NotificationCategoryEnum.ACCOUNT,
+        notificationPreferenceType: 'ACCOUNT',
         requestUser: DTOsHelper.getUserRequestContext(collaboratorAccount),
         recipients: [DTOsHelper.getRecipientUser(collaboratorAccount)],
         inputData: {},
@@ -73,7 +69,7 @@ describe('Notifications / _handlers / account-creation suite', () => {
       );
 
       await testEmails(AccountCreationHandler, 'CA02_ACCOUNT_CREATION_OF_COLLABORATOR', {
-        notificationPreferenceType: NotificationCategoryEnum.ACCOUNT,
+        notificationPreferenceType: 'ACCOUNT',
         requestUser: DTOsHelper.getUserRequestContext(collaboratorAccount),
         recipients: [DTOsHelper.getRecipientUser(collaboratorAccount)],
         inputData: {},

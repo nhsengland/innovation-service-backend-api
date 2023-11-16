@@ -1,10 +1,5 @@
 import type { Context } from '@azure/functions';
-import {
-  InnovationSupportStatusEnum,
-  NotificationCategoryEnum,
-  ServiceRoleEnum,
-  type NotifierTypeEnum
-} from '@notifications/shared/enums';
+import { InnovationSupportStatusEnum, ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
 import {
   isAccessorDomainContextType,
   type DomainContextType,
@@ -47,7 +42,7 @@ export class SupportSummaryUpdateHandler extends BaseHandler<
     const recipients = await this.recipientsService.getUsersRecipient(innovators, ServiceRoleEnum.INNOVATOR);
 
     this.addEmails('SS01_SUPPORT_SUMMARY_UPDATE_TO_INNOVATORS', recipients, {
-      notificationPreferenceType: NotificationCategoryEnum.SUPPORT_SUMMARY,
+      notificationPreferenceType: 'SUPPORT',
       params: {
         innovation_name: innovation.name,
         unit_name: unit.name,
@@ -57,7 +52,7 @@ export class SupportSummaryUpdateHandler extends BaseHandler<
 
     this.addInApp('SS01_SUPPORT_SUMMARY_UPDATE_TO_INNOVATORS', recipients, {
       context: {
-        type: NotificationCategoryEnum.SUPPORT_SUMMARY,
+        type: 'SUPPORT',
         detail: 'SS01_SUPPORT_SUMMARY_UPDATE_TO_INNOVATORS',
         id: this.inputData.supportId
       },
@@ -81,7 +76,7 @@ export class SupportSummaryUpdateHandler extends BaseHandler<
     ).filter(r => r.unitId !== unit.id);
 
     this.addEmails('SS02_SUPPORT_SUMMARY_UPDATE_TO_OTHER_ENGAGING_ACCESSORS', recipients, {
-      notificationPreferenceType: NotificationCategoryEnum.SUPPORT_SUMMARY,
+      notificationPreferenceType: 'SUPPORT',
       params: {
         innovation_name: innovation.name,
         unit_name: unit.name,
@@ -91,7 +86,7 @@ export class SupportSummaryUpdateHandler extends BaseHandler<
 
     this.addInApp('SS02_SUPPORT_SUMMARY_UPDATE_TO_OTHER_ENGAGING_ACCESSORS', recipients, {
       context: {
-        type: NotificationCategoryEnum.SUPPORT_SUMMARY,
+        type: 'SUPPORT',
         detail: 'SS02_SUPPORT_SUMMARY_UPDATE_TO_OTHER_ENGAGING_ACCESSORS',
         id: this.inputData.supportId
       },

@@ -1,4 +1,4 @@
-import { NotificationCategoryEnum, NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import { NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import type { IdentityProviderService } from '@notifications/shared/services';
 import SHARED_SYMBOLS from '@notifications/shared/services/symbols';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
@@ -45,7 +45,7 @@ export class InnovationTransferOwnershipCreationHandler extends BaseHandler<
 
   private TO01_TRANSFER_OWNERSHIP_NEW_USER(innovationName: string, previousOwner: string, newUserEmail: string): void {
     this.addEmails('TO01_TRANSFER_OWNERSHIP_NEW_USER', [{ email: newUserEmail }], {
-      notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+      notificationPreferenceType: 'INNOVATION_MANAGEMENT',
       params: {
         create_account_url: createAccountUrl(),
         innovation_name: innovationName,
@@ -64,7 +64,7 @@ export class InnovationTransferOwnershipCreationHandler extends BaseHandler<
     if (recipient) {
       this.notify('TO02_TRANSFER_OWNERSHIP_EXISTING_USER', [recipient], {
         email: {
-          notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+          notificationPreferenceType: 'INNOVATION_MANAGEMENT',
           params: {
             dashboard_url: dashboardUrl(ServiceRoleEnum.INNOVATOR),
             innovation_name: innovation.name,
@@ -75,7 +75,7 @@ export class InnovationTransferOwnershipCreationHandler extends BaseHandler<
           context: {
             detail: 'TO02_TRANSFER_OWNERSHIP_EXISTING_USER',
             id: innovation.id,
-            type: NotificationCategoryEnum.INNOVATION_MANAGEMENT
+            type: 'INNOVATION_MANAGEMENT'
           },
           innovationId: innovation.id,
           params: {

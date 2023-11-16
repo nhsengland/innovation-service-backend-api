@@ -1,4 +1,4 @@
-import { NotificationCategoryEnum, ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
+import { ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import type { Context } from '@azure/functions';
@@ -50,7 +50,7 @@ export class OrganisationUnitsSuggestionHandler extends BaseHandler<
 
     this.notify('OS01_UNITS_SUGGESTION_TO_SUGGESTED_UNITS_QA', recipients, {
       email: {
-        notificationPreferenceType: NotificationCategoryEnum.SUGGEST_SUPPORT,
+        notificationPreferenceType: 'ORGANISATION_SUGGESTIONS',
         params: {
           innovation_name: innovation.name,
           comment: this.inputData.comment,
@@ -61,7 +61,7 @@ export class OrganisationUnitsSuggestionHandler extends BaseHandler<
       },
       inApp: {
         context: {
-          type: NotificationCategoryEnum.SUGGEST_SUPPORT,
+          type: 'ORGANISATION_SUGGESTIONS',
           detail: 'OS01_UNITS_SUGGESTION_TO_SUGGESTED_UNITS_QA',
           id: this.inputData.innovationId
         },
@@ -87,7 +87,7 @@ export class OrganisationUnitsSuggestionHandler extends BaseHandler<
     //   'OS01_UNITS_SUGGESTION_TO_SUGGESTED_UNITS_QA',
     //   recipients.filter(r => !innovationSupportsMap.has(r.unitId!)),
     //   {
-    //     notificationPreferenceType: NotificationCategoryEnum.SUGGEST_SUPPORT,
+    //     notificationPreferenceType: 'ORGANISATION_SUGGESTIONS',
     //     params: { ...params, showKPI: 'yes' }
     //   }
     // );
@@ -97,7 +97,7 @@ export class OrganisationUnitsSuggestionHandler extends BaseHandler<
     //   'OS01_UNITS_SUGGESTION_TO_SUGGESTED_UNITS_QA',
     //   recipients.filter(r => innovationSupportsMap.has(r.unitId!)),
     //   {
-    //     notificationPreferenceType: NotificationCategoryEnum.SUGGEST_SUPPORT,
+    //     notificationPreferenceType: 'ORGANISATION_SUGGESTIONS',
     //     params: { ...params, showKPI: 'no' }
     //   }
     // );
@@ -108,7 +108,7 @@ export class OrganisationUnitsSuggestionHandler extends BaseHandler<
     const recipients = await this.recipientsService.getUsersRecipient(innovators, ServiceRoleEnum.INNOVATOR);
 
     this.addEmails('OS02_UNITS_SUGGESTION_NOT_SHARED_TO_INNOVATOR', recipients, {
-      notificationPreferenceType: NotificationCategoryEnum.SUGGEST_SUPPORT,
+      notificationPreferenceType: 'ORGANISATION_SUGGESTIONS',
       params: {
         innovation_name: innovation.name,
         data_sharing_preferences_url: dataSharingPreferencesUrl(ServiceRoleEnum.INNOVATOR, innovation.id)
@@ -117,7 +117,7 @@ export class OrganisationUnitsSuggestionHandler extends BaseHandler<
 
     this.addInApp('OS02_UNITS_SUGGESTION_NOT_SHARED_TO_INNOVATOR', recipients, {
       context: {
-        type: NotificationCategoryEnum.SUGGEST_SUPPORT,
+        type: 'ORGANISATION_SUGGESTIONS',
         detail: 'OS02_UNITS_SUGGESTION_NOT_SHARED_TO_INNOVATOR',
         id: this.inputData.innovationId
       },

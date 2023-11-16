@@ -1,9 +1,4 @@
-import {
-  InnovationTransferStatusEnum,
-  NotificationCategoryEnum,
-  NotifierTypeEnum,
-  ServiceRoleEnum
-} from '@notifications/shared/enums';
+import { InnovationTransferStatusEnum, NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import type { Context } from '@azure/functions';
@@ -75,7 +70,7 @@ export class InnovationTransferOwnershipCompletedHandler extends BaseHandler<
   ): void {
     this.notify('TO06_TRANSFER_OWNERSHIP_ACCEPTS_PREVIOUS_OWNER', [oldOwner], {
       email: {
-        notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+        notificationPreferenceType: 'INNOVATION_MANAGEMENT',
         params: {
           innovation_name: innovation.name,
           new_innovation_owner: newOwner
@@ -85,7 +80,7 @@ export class InnovationTransferOwnershipCompletedHandler extends BaseHandler<
         context: {
           detail: 'TO06_TRANSFER_OWNERSHIP_ACCEPTS_PREVIOUS_OWNER',
           id: innovation.id,
-          type: NotificationCategoryEnum.INNOVATION_MANAGEMENT
+          type: 'INNOVATION_MANAGEMENT'
         },
         innovationId: innovation.id,
         params: {
@@ -106,7 +101,7 @@ export class InnovationTransferOwnershipCompletedHandler extends BaseHandler<
       context: {
         detail: 'TO07_TRANSFER_OWNERSHIP_ACCEPTS_ASSIGNED_ACCESSORS',
         id: innovation.id,
-        type: NotificationCategoryEnum.INNOVATION_MANAGEMENT
+        type: 'INNOVATION_MANAGEMENT'
       },
       innovationId: innovation.id,
       params: {
@@ -126,7 +121,7 @@ export class InnovationTransferOwnershipCompletedHandler extends BaseHandler<
     const newOwner = await this.getUserName(targetIdentity?.identityId, ServiceRoleEnum.INNOVATOR);
     this.notify('TO08_TRANSFER_OWNERSHIP_DECLINES_PREVIOUS_OWNER', [owner], {
       email: {
-        notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+        notificationPreferenceType: 'INNOVATION_MANAGEMENT',
         params: {
           innovation_name: innovation.name,
           manage_innovation_url: manageInnovationUrl(ServiceRoleEnum.INNOVATOR, innovation.id),
@@ -137,7 +132,7 @@ export class InnovationTransferOwnershipCompletedHandler extends BaseHandler<
         context: {
           detail: 'TO08_TRANSFER_OWNERSHIP_DECLINES_PREVIOUS_OWNER',
           id: innovation.id,
-          type: NotificationCategoryEnum.INNOVATION_MANAGEMENT
+          type: 'INNOVATION_MANAGEMENT'
         },
         innovationId: innovation.id,
         params: {
@@ -161,7 +156,7 @@ export class InnovationTransferOwnershipCompletedHandler extends BaseHandler<
     if (recipient) {
       this.notify('TO09_TRANSFER_OWNERSHIP_CANCELED_NEW_OWNER', [recipient], {
         email: {
-          notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+          notificationPreferenceType: 'INNOVATION_MANAGEMENT',
           params: {
             innovation_name: innovation.name,
             innovator_name: oldOwnerName
@@ -171,7 +166,7 @@ export class InnovationTransferOwnershipCompletedHandler extends BaseHandler<
           context: {
             detail: 'TO09_TRANSFER_OWNERSHIP_CANCELED_NEW_OWNER',
             id: innovation.id,
-            type: NotificationCategoryEnum.INNOVATION_MANAGEMENT
+            type: 'INNOVATION_MANAGEMENT'
           },
           innovationId: innovation.id,
           params: {
@@ -183,7 +178,7 @@ export class InnovationTransferOwnershipCompletedHandler extends BaseHandler<
     } else {
       // TODO maybe a new notification - empty displayName as a workaround using the same one
       this.addEmails('TO09_TRANSFER_OWNERSHIP_CANCELED_NEW_OWNER', [{ email: targetEmail, displayname: '' }], {
-        notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+        notificationPreferenceType: 'INNOVATION_MANAGEMENT',
         params: {
           innovation_name: innovation.name,
           innovator_name: oldOwnerName

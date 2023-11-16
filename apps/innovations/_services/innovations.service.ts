@@ -29,7 +29,6 @@ import {
   InnovationSupportStatusEnum,
   InnovationTaskStatusEnum,
   NotificationContextDetailEnum,
-  NotificationContextTypeEnum,
   NotifierTypeEnum,
   PhoneUserPreferenceEnum,
   ServiceRoleEnum,
@@ -654,7 +653,7 @@ export class InnovationsService extends BaseService {
         notificationCounter.notificationsUnread++;
 
         if (filters.fields?.includes('statistics')) {
-          if (n.contextType === NotificationContextTypeEnum.THREAD) {
+          if (n.contextType === 'MESSAGES') {
             notificationCounter.messages++;
           }
           // TODO validate if we need contextDetail or not and if we can leverage the reopen

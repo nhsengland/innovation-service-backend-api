@@ -1,5 +1,5 @@
 import type { Context } from '@azure/functions';
-import { NotificationCategoryEnum, ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
+import { ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { threadUrl } from '../../_helpers/url.helper';
 import { BaseHandler } from '../base.handler';
@@ -25,7 +25,7 @@ export class NeedsAssessmentStartedHandler extends BaseHandler<
 
     this.notify('NA03_NEEDS_ASSESSMENT_STARTED_TO_INNOVATOR', recipients, {
       email: {
-        notificationPreferenceType: NotificationCategoryEnum.NEEDS_ASSESSMENT,
+        notificationPreferenceType: 'NEEDS_ASSESSMENT',
         params: {
           innovation_name: innovation.name,
           message: this.inputData.message,
@@ -34,7 +34,7 @@ export class NeedsAssessmentStartedHandler extends BaseHandler<
       },
       inApp: {
         context: {
-          type: NotificationCategoryEnum.NEEDS_ASSESSMENT,
+          type: 'NEEDS_ASSESSMENT',
           id: this.inputData.assessmentId,
           detail: 'NA03_NEEDS_ASSESSMENT_STARTED_TO_INNOVATOR'
         },

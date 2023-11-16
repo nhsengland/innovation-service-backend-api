@@ -1,4 +1,4 @@
-import { NotificationCategoryEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import { ServiceRoleEnum } from '@notifications/shared/enums';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { testEmails, testInApps } from '../../../_helpers/tests.helper';
 import { createAccountUrl, dashboardUrl } from '../../../_helpers/url.helper';
@@ -29,7 +29,7 @@ describe('Notifications / _handlers / innovation-transfer-ownership-creation han
         ownerId: innovationOwner.id
       });
       await testEmails(InnovationTransferOwnershipCreationHandler, 'TO01_TRANSFER_OWNERSHIP_NEW_USER', {
-        notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+        notificationPreferenceType: 'INNOVATION_MANAGEMENT',
         inputData: {
           innovationId: innovation.id,
           transferId: innovation.transfer.id
@@ -48,7 +48,7 @@ describe('Notifications / _handlers / innovation-transfer-ownership-creation han
   describe('TO02_TRANSFER_OWNERSHIP_EXISTING_USER', () => {
     it('should send email to existing user', async () => {
       await testEmails(InnovationTransferOwnershipCreationHandler, 'TO02_TRANSFER_OWNERSHIP_EXISTING_USER', {
-        notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+        notificationPreferenceType: 'INNOVATION_MANAGEMENT',
         inputData: {
           innovationId: innovation.id,
           transferId: innovation.transfer.id
@@ -67,7 +67,7 @@ describe('Notifications / _handlers / innovation-transfer-ownership-creation han
       await testInApps(InnovationTransferOwnershipCreationHandler, 'TO02_TRANSFER_OWNERSHIP_EXISTING_USER', {
         context: {
           id: innovation.id,
-          type: NotificationCategoryEnum.INNOVATION_MANAGEMENT
+          type: 'INNOVATION_MANAGEMENT'
         },
         innovationId: innovation.id,
         inputData: {

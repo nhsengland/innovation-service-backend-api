@@ -1,5 +1,5 @@
 import type { Context } from '@azure/functions';
-import { NotificationCategoryEnum, ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
+import { ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import type { RecipientType } from '../../_services/recipients.service';
 import { BaseHandler } from '../base.handler';
@@ -49,7 +49,7 @@ export class LockUserHandler extends BaseHandler<
         context: {
           detail: 'AP02_INNOVATOR_LOCKED_TO_ASSIGNED_USERS',
           id: innovation.id,
-          type: NotificationCategoryEnum.ADMIN
+          type: 'ADMIN'
         },
         innovationId: innovation.id,
         params: { innovationName: innovation.name }
@@ -59,7 +59,7 @@ export class LockUserHandler extends BaseHandler<
 
   private async AP03_USER_LOCKED_TO_LOCKED_USER(recipient: RecipientType): Promise<void> {
     this.addEmails('AP03_USER_LOCKED_TO_LOCKED_USER', [recipient], {
-      notificationPreferenceType: NotificationCategoryEnum.ADMIN,
+      notificationPreferenceType: 'ADMIN',
       params: {},
       options: { includeLocked: true }
     });

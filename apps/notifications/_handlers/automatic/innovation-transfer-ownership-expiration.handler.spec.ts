@@ -1,4 +1,4 @@
-import { NotificationCategoryEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import { ServiceRoleEnum } from '@notifications/shared/enums';
 import { SYSTEM_CRON_SENDER } from '@notifications/shared/services/integrations/notifier.service';
 import { MocksHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
@@ -35,7 +35,7 @@ describe('Notifications / _handlers / innovation-transfer-ownership-expiration h
 
     it('Should send email to innovation owner', async () => {
       await testEmails(InnovationTransferOwnershipExpirationHandler, 'AU09_TRANSFER_EXPIRED', {
-        notificationPreferenceType: NotificationCategoryEnum.AUTOMATIC,
+        notificationPreferenceType: 'AUTOMATIC',
         inputData: {
           innovationId: innovation.id,
           transferId: innovation.transfer.id
@@ -60,7 +60,7 @@ describe('Notifications / _handlers / innovation-transfer-ownership-expiration h
         },
         context: {
           id: innovation.id,
-          type: NotificationCategoryEnum.AUTOMATIC
+          type: 'AUTOMATIC'
         },
         innovationId: innovation.id,
         recipients: [DTOsHelper.getRecipientUser(innovationOwner, 'innovatorRole')],

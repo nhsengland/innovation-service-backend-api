@@ -2,9 +2,8 @@ import { container } from '../_config'; // inversify container
 
 import { randUuid } from '@ngneat/falso';
 import {
-  NotificationCategoryEnum,
+  NotificationCategoryType,
   NotificationContextDetailEnum,
-  NotificationContextTypeEnum,
   NotificationPreferenceEnum,
   ServiceRoleEnum
 } from '@notifications/shared/enums';
@@ -103,19 +102,19 @@ describe('Notifications / _handlers / base handler suite', () => {
       // Defaults for tests
       baseHandler.emails = [
         {
-          notificationPreferenceType: NotificationCategoryEnum.TASK,
+          notificationPreferenceType: 'TASK',
           params: {},
           templateId: 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT',
           to: DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'aiRole')
         },
         {
-          notificationPreferenceType: NotificationCategoryEnum.TASK,
+          notificationPreferenceType: 'TASK',
           params: {},
           templateId: 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT',
           to: DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'healthAccessorRole')
         },
         {
-          notificationPreferenceType: NotificationCategoryEnum.TASK,
+          notificationPreferenceType: 'TASK',
           params: {},
           templateId: 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT',
           to: DTOsHelper.getRecipientUser(scenario.users.paulNeedsAssessor, 'assessmentRole')
@@ -126,19 +125,19 @@ describe('Notifications / _handlers / base handler suite', () => {
     it('should remove duplicate roles for resolution', async () => {
       baseHandler.emails = [
         {
-          notificationPreferenceType: NotificationCategoryEnum.TASK,
+          notificationPreferenceType: 'TASK',
           params: {},
           templateId: 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT',
           to: DTOsHelper.getRecipientUser(scenario.users.ingridAccessor, 'accessorRole')
         },
         {
-          notificationPreferenceType: NotificationCategoryEnum.TASK,
+          notificationPreferenceType: 'TASK',
           params: {},
           templateId: 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT',
           to: DTOsHelper.getRecipientUser(scenario.users.ingridAccessor, 'accessorRole')
         },
         {
-          notificationPreferenceType: NotificationCategoryEnum.TASK,
+          notificationPreferenceType: 'TASK',
           params: {},
           templateId: 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT',
           to: DTOsHelper.getRecipientUser(scenario.users.paulNeedsAssessor, 'assessmentRole')
@@ -163,7 +162,7 @@ describe('Notifications / _handlers / base handler suite', () => {
     it('should send email to email recipient', async () => {
       baseHandler.emails = [
         {
-          notificationPreferenceType: NotificationCategoryEnum.TASK,
+          notificationPreferenceType: 'TASK',
           params: {},
           templateId: 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT',
           to: { email: 'test@example.org' }
@@ -276,7 +275,7 @@ describe('Notifications / _handlers / base handler suite', () => {
       const example = [
         {
           context: {
-            type: NotificationContextTypeEnum.TASK,
+            type: 'TASK' as NotificationCategoryType,
             detail: NotificationContextDetailEnum.TASK_CREATION,
             id: randUuid()
           },

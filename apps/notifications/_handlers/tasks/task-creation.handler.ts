@@ -1,4 +1,4 @@
-import { NotificationCategoryEnum, NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import { NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import type { Context } from '@azure/functions';
@@ -27,7 +27,7 @@ export class TaskCreationHandler extends BaseHandler<
     const unitName = this.getRequestUnitName();
 
     this.addEmails('TA01_TASK_CREATION_TO_INNOVATOR', innovatorRecipients, {
-      notificationPreferenceType: NotificationCategoryEnum.TASK,
+      notificationPreferenceType: 'TASK',
       params: {
         innovation_name: innovation.name,
         unit_name: unitName,
@@ -38,7 +38,7 @@ export class TaskCreationHandler extends BaseHandler<
     this.addInApp('TA01_TASK_CREATION_TO_INNOVATOR', innovatorRecipients, {
       innovationId: this.inputData.innovationId,
       context: {
-        type: NotificationCategoryEnum.TASK,
+        type: 'TASK',
         detail: 'TA01_TASK_CREATION_TO_INNOVATOR',
         id: this.inputData.task.id
       },

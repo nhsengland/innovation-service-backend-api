@@ -1,5 +1,5 @@
 import type { Context } from '@azure/functions';
-import { NotificationCategoryEnum, ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
+import { ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { innovationOverviewUrl } from '../../_helpers/url.helper';
 import type { RecipientType } from '../../_services/recipients.service';
@@ -45,7 +45,7 @@ export class NeedsAssessmentAssessorUpdateHandler extends BaseHandler<
     if (!recipient) return;
     this.notify(template, [recipient], {
       email: {
-        notificationPreferenceType: NotificationCategoryEnum.NEEDS_ASSESSMENT,
+        notificationPreferenceType: 'NEEDS_ASSESSMENT',
         params: {
           innovation_name: innovationName,
           innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ASSESSMENT, this.inputData.innovationId)
@@ -53,7 +53,7 @@ export class NeedsAssessmentAssessorUpdateHandler extends BaseHandler<
       },
       inApp: {
         context: {
-          type: NotificationCategoryEnum.NEEDS_ASSESSMENT,
+          type: 'NEEDS_ASSESSMENT',
           id: this.inputData.assessmentId,
           detail: template
         },

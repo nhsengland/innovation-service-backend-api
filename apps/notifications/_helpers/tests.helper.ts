@@ -1,5 +1,5 @@
 import type { Context } from '@azure/functions';
-import type { NotificationCategoryEnum, NotifierTypeEnum } from '@notifications/shared/enums';
+import type { NotificationCategoryType, NotifierTypeEnum } from '@notifications/shared/enums';
 import { MocksHelper } from '@notifications/shared/tests';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import type { EmailTemplatesType } from '../_config';
@@ -15,7 +15,7 @@ export const testEmails = async <
   handlerClass: T,
   template: Notifications,
   data: {
-    notificationPreferenceType: NotificationCategoryEnum | null;
+    notificationPreferenceType: NotificationCategoryType | null;
     requestUser: DomainContextType;
     inputData: NotifierTemplatesType[InputDataType];
     recipients: (EmailRecipientType | RecipientType)[];
@@ -53,7 +53,7 @@ export const testInApps = async <
   data: {
     innovationId: string;
     context: {
-      type: NotificationCategoryEnum;
+      type: NotificationCategoryType;
       id: string;
     };
     requestUser: DomainContextType;

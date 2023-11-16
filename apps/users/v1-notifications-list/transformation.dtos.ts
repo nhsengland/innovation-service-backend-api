@@ -1,7 +1,7 @@
 import type {
   InnovationStatusEnum,
-  NotificationContextDetailEnum,
-  NotificationContextTypeEnum
+  NotificationCategoryType,
+  NotificationContextDetailEnum
 } from '@users/shared/enums';
 
 export type ResponseDTO = {
@@ -9,7 +9,7 @@ export type ResponseDTO = {
   data: {
     id: string;
     innovation: { id: string; name: string; status: InnovationStatusEnum; ownerName: string };
-    contextType: NotificationContextTypeEnum;
+    contextType: NotificationCategoryType;
     contextDetail: NotificationContextDetailEnum;
     contextId: string;
     createdAt: Date;

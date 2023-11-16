@@ -1,4 +1,4 @@
-import { NotificationCategoryEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import { ServiceRoleEnum } from '@notifications/shared/enums';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { HandlersHelper } from '../../_helpers/handlers.helper';
 import { testEmails, testInApps } from '../../_helpers/tests.helper';
@@ -38,7 +38,7 @@ describe('Notifications / _handlers / thread-creation suite', () => {
 
       it('should send an email to the followers when a thread is created', async () => {
         await testEmails(ThreadCreationHandler, 'ME01_THREAD_CREATION', {
-          notificationPreferenceType: NotificationCategoryEnum.MESSAGE,
+          notificationPreferenceType: 'MESSAGES',
           requestUser: DTOsHelper.getUserRequestContext(requestUser),
           inputData: {
             innovationId: innovation.id,
@@ -57,7 +57,7 @@ describe('Notifications / _handlers / thread-creation suite', () => {
       it('should send an in-app to the followers when a thread is created', async () => {
         await testInApps(ThreadCreationHandler, 'ME01_THREAD_CREATION', {
           innovationId: innovation.id,
-          context: { type: NotificationCategoryEnum.MESSAGE, id: thread.id },
+          context: { type: 'MESSAGES', id: thread.id },
           requestUser: DTOsHelper.getUserRequestContext(requestUser),
           inputData: {
             innovationId: innovation.id,

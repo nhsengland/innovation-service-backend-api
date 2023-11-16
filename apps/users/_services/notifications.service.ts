@@ -4,8 +4,8 @@ import type { EntityManager } from 'typeorm';
 import { NotificationEntity, NotificationPreferenceEntity, NotificationUserEntity } from '@users/shared/entities';
 import {
   InnovationStatusEnum,
+  NotificationCategoryType,
   NotificationContextDetailEnum,
-  NotificationContextTypeEnum,
   NotificationPreferenceEnum,
   ServiceRoleEnum,
   UserStatusEnum
@@ -57,7 +57,7 @@ export class NotificationsService extends BaseService {
   public async getUserNotifications(
     domainContext: DomainContextType,
     filters: {
-      contextTypes: NotificationContextTypeEnum[];
+      contextTypes: NotificationCategoryType[];
       unreadOnly: boolean;
     },
     pagination: PaginationQueryParamsType<'createdAt'>,
@@ -67,7 +67,7 @@ export class NotificationsService extends BaseService {
     data: {
       id: string;
       innovation: { id: string; name: string; status: InnovationStatusEnum; ownerName: string };
-      contextType: NotificationContextTypeEnum;
+      contextType: NotificationCategoryType;
       contextDetail: NotificationContextDetailEnum;
       contextId: string;
       createdAt: Date;
@@ -192,7 +192,7 @@ export class NotificationsService extends BaseService {
     conditions: {
       notificationIds: string[];
       contextIds: string[];
-      contextTypes: NotificationContextTypeEnum[];
+      contextTypes: NotificationCategoryType[];
       dismissAll: boolean;
     },
     entityManager?: EntityManager

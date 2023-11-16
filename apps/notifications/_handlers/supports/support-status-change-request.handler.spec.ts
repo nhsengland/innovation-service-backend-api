@@ -1,5 +1,5 @@
 import { randText } from '@ngneat/falso';
-import { InnovationSupportStatusEnum, NotificationCategoryEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import { InnovationSupportStatusEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { TranslationHelper } from '@notifications/shared/helpers';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { testEmails, testInApps } from '../../_helpers/tests.helper';
@@ -25,7 +25,7 @@ describe('Notifications / _handlers / support-new-assigned-accessors suite', () 
   describe('ST07_SUPPORT_STATUS_CHANGE_REQUEST', () => {
     it('should send an email to the QAs when accessor requests status update', async () => {
       await testEmails(SupportStatusChangeRequestHandler, 'ST07_SUPPORT_STATUS_CHANGE_REQUEST', {
-        notificationPreferenceType: NotificationCategoryEnum.SUPPORT,
+        notificationPreferenceType: 'SUPPORT',
         requestUser: DTOsHelper.getUserRequestContext(requestUser, 'healthAccessorRole'),
         inputData: {
           innovationId: innovation.id,
@@ -48,7 +48,7 @@ describe('Notifications / _handlers / support-new-assigned-accessors suite', () 
       await testInApps(SupportStatusChangeRequestHandler, 'ST07_SUPPORT_STATUS_CHANGE_REQUEST', {
         context: {
           id: innovation.id,
-          type: NotificationCategoryEnum.SUPPORT
+          type: 'SUPPORT'
         },
         innovationId: innovation.id,
         requestUser: DTOsHelper.getUserRequestContext(requestUser, 'healthAccessorRole'),

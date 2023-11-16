@@ -1,10 +1,5 @@
 import { randText } from '@ngneat/falso';
-import {
-  InnovationTaskStatusEnum,
-  NotificationCategoryEnum,
-  NotificationContextTypeEnum,
-  ServiceRoleEnum
-} from '@notifications/shared/enums';
+import { InnovationTaskStatusEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { MocksHelper, TestsHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { randomUUID } from 'crypto';
@@ -51,7 +46,7 @@ describe('Notifications / _handlers / task-update suite', () => {
           expect(emails).toEqual([
             {
               templateId: 'TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS',
-              notificationPreferenceType: NotificationCategoryEnum.TASK,
+              notificationPreferenceType: 'TASK',
               to: DTOsHelper.getRecipientUser(scenario.users.johnInnovator, 'innovatorRole'),
               params: {
                 innovation_name: innovation.name,
@@ -62,7 +57,7 @@ describe('Notifications / _handlers / task-update suite', () => {
             },
             {
               templateId: 'TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS',
-              notificationPreferenceType: NotificationCategoryEnum.TASK,
+              notificationPreferenceType: 'TASK',
               to: DTOsHelper.getRecipientUser(scenario.users.janeInnovator, 'innovatorRole'),
               params: {
                 innovation_name: innovation.name,
@@ -97,7 +92,7 @@ describe('Notifications / _handlers / task-update suite', () => {
             {
               innovationId: innovation.id,
               context: {
-                type: NotificationContextTypeEnum.TASK,
+                type: 'TASK',
                 detail: 'TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS',
                 id: task.id
               },
@@ -138,7 +133,7 @@ describe('Notifications / _handlers / task-update suite', () => {
         expect(emails).toEqual([
           {
             templateId: 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT',
-            notificationPreferenceType: NotificationCategoryEnum.TASK,
+            notificationPreferenceType: 'TASK',
             to: DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor),
             params: {
               innovation_name: innovation.name,
@@ -171,7 +166,7 @@ describe('Notifications / _handlers / task-update suite', () => {
           {
             innovationId: innovation.id,
             context: {
-              type: NotificationContextTypeEnum.TASK,
+              type: 'TASK',
               detail: 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT',
               id: task.id
             },
@@ -208,7 +203,7 @@ describe('Notifications / _handlers / task-update suite', () => {
         expect(emails).toEqual([
           {
             templateId: 'TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT',
-            notificationPreferenceType: NotificationCategoryEnum.TASK,
+            notificationPreferenceType: 'TASK',
             to: DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor),
             params: {
               innovation_name: innovation.name,
@@ -240,7 +235,7 @@ describe('Notifications / _handlers / task-update suite', () => {
           {
             innovationId: innovation.id,
             context: {
-              type: NotificationContextTypeEnum.TASK,
+              type: 'TASK',
               detail: 'TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT',
               id: task.id
             },
@@ -281,7 +276,7 @@ describe('Notifications / _handlers / task-update suite', () => {
         expect(emails).toEqual([
           {
             templateId: 'TA05_TASK_CANCELLED_TO_INNOVATOR',
-            notificationPreferenceType: NotificationCategoryEnum.TASK,
+            notificationPreferenceType: 'TASK',
             to: DTOsHelper.getRecipientUser(scenario.users.johnInnovator, 'innovatorRole'),
             params: {
               accessor_name: scenario.users.aliceQualifyingAccessor.name,
@@ -293,7 +288,7 @@ describe('Notifications / _handlers / task-update suite', () => {
           },
           {
             templateId: 'TA05_TASK_CANCELLED_TO_INNOVATOR',
-            notificationPreferenceType: NotificationCategoryEnum.TASK,
+            notificationPreferenceType: 'TASK',
             to: DTOsHelper.getRecipientUser(scenario.users.janeInnovator, 'innovatorRole'),
             params: {
               accessor_name: scenario.users.aliceQualifyingAccessor.name,
@@ -326,7 +321,7 @@ describe('Notifications / _handlers / task-update suite', () => {
           {
             innovationId: innovation.id,
             context: {
-              type: NotificationContextTypeEnum.TASK,
+              type: 'TASK',
               detail: 'TA05_TASK_CANCELLED_TO_INNOVATOR',
               id: task.id
             },
@@ -349,7 +344,7 @@ describe('Notifications / _handlers / task-update suite', () => {
     describe('TA06_TASK_REOPEN_TO_INNOVATOR', () => {
       it('should send an email to the innovators when a task is reopened', async () => {
         await testEmails(TaskUpdateHandler, 'TA06_TASK_REOPEN_TO_INNOVATOR', {
-          notificationPreferenceType: NotificationCategoryEnum.TASK,
+          notificationPreferenceType: 'TASK',
           requestUser: DTOsHelper.getUserRequestContext(requestUser),
           inputData: {
             innovationId: innovation.id,
@@ -376,7 +371,7 @@ describe('Notifications / _handlers / task-update suite', () => {
         await testInApps(TaskUpdateHandler, 'TA06_TASK_REOPEN_TO_INNOVATOR', {
           innovationId: innovation.id,
           context: {
-            type: NotificationCategoryEnum.TASK,
+            type: 'TASK',
             id: task.id
           },
           requestUser: DTOsHelper.getUserRequestContext(requestUser),

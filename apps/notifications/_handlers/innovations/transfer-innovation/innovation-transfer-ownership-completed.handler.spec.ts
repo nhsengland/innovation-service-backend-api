@@ -1,4 +1,4 @@
-import { InnovationTransferStatusEnum, NotificationCategoryEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import { InnovationTransferStatusEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { MocksHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { testEmails, testInApps } from '../../../_helpers/tests.helper';
@@ -48,7 +48,7 @@ describe('Notifications / _handlers / innovation-transfer-ownership-completed ha
           InnovationTransferOwnershipCompletedHandler,
           'TO06_TRANSFER_OWNERSHIP_ACCEPTS_PREVIOUS_OWNER',
           {
-            notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+            notificationPreferenceType: 'INNOVATION_MANAGEMENT',
             inputData: {
               innovationId: innovation.id,
               transferId: innovation.transfer.id
@@ -70,7 +70,7 @@ describe('Notifications / _handlers / innovation-transfer-ownership-completed ha
           {
             context: {
               id: innovation.id,
-              type: NotificationCategoryEnum.INNOVATION_MANAGEMENT
+              type: 'INNOVATION_MANAGEMENT'
             },
             innovationId: innovation.id,
             inputData: {
@@ -94,7 +94,7 @@ describe('Notifications / _handlers / innovation-transfer-ownership-completed ha
           InnovationTransferOwnershipCompletedHandler,
           'TO07_TRANSFER_OWNERSHIP_ACCEPTS_ASSIGNED_ACCESSORS',
           {
-            notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+            notificationPreferenceType: 'INNOVATION_MANAGEMENT',
             inputData: {
               innovationId: innovation.id,
               transferId: innovation.transfer.id
@@ -113,7 +113,7 @@ describe('Notifications / _handlers / innovation-transfer-ownership-completed ha
           {
             context: {
               id: innovation.id,
-              type: NotificationCategoryEnum.INNOVATION_MANAGEMENT
+              type: 'INNOVATION_MANAGEMENT'
             },
             innovationId: innovation.id,
             inputData: {
@@ -154,7 +154,7 @@ describe('Notifications / _handlers / innovation-transfer-ownership-completed ha
           InnovationTransferOwnershipCompletedHandler,
           'TO08_TRANSFER_OWNERSHIP_DECLINES_PREVIOUS_OWNER',
           {
-            notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+            notificationPreferenceType: 'INNOVATION_MANAGEMENT',
             inputData: {
               innovationId: innovation.id,
               transferId: innovation.transfer.id
@@ -177,7 +177,7 @@ describe('Notifications / _handlers / innovation-transfer-ownership-completed ha
           {
             context: {
               id: innovation.id,
-              type: NotificationCategoryEnum.INNOVATION_MANAGEMENT
+              type: 'INNOVATION_MANAGEMENT'
             },
             innovationId: innovation.id,
             inputData: {
@@ -215,7 +215,7 @@ describe('Notifications / _handlers / innovation-transfer-ownership-completed ha
       describe('TO09_TRANSFER_OWNERSHIP_CANCELED_NEW_OWNER', () => {
         it('Should send email to transfer creator', async () => {
           await testEmails(InnovationTransferOwnershipCompletedHandler, 'TO09_TRANSFER_OWNERSHIP_CANCELED_NEW_OWNER', {
-            notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+            notificationPreferenceType: 'INNOVATION_MANAGEMENT',
             inputData: {
               innovationId: innovation.id,
               transferId: innovation.transfer.id
@@ -233,7 +233,7 @@ describe('Notifications / _handlers / innovation-transfer-ownership-completed ha
           await testInApps(InnovationTransferOwnershipCompletedHandler, 'TO09_TRANSFER_OWNERSHIP_CANCELED_NEW_OWNER', {
             context: {
               id: innovation.id,
-              type: NotificationCategoryEnum.INNOVATION_MANAGEMENT
+              type: 'INNOVATION_MANAGEMENT'
             },
             innovationId: innovation.id,
             inputData: {
@@ -270,7 +270,7 @@ describe('Notifications / _handlers / innovation-transfer-ownership-completed ha
       describe('TO09_TRANSFER_OWNERSHIP_CANCELED_NEW_OWNER', () => {
         it('Should send email to transfer creator', async () => {
           await testEmails(InnovationTransferOwnershipCompletedHandler, 'TO09_TRANSFER_OWNERSHIP_CANCELED_NEW_OWNER', {
-            notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+            notificationPreferenceType: 'INNOVATION_MANAGEMENT',
             inputData: {
               innovationId: innovation.id,
               transferId: innovation.transfer.id

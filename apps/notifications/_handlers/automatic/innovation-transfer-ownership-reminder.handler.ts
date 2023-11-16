@@ -1,5 +1,5 @@
 import type { Context } from '@azure/functions';
-import { NotificationCategoryEnum, NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import { NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import type { IdentityProviderService } from '@notifications/shared/services';
 import SHARED_SYMBOLS from '@notifications/shared/services/symbols';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
@@ -29,7 +29,7 @@ export class InnovationTransferOwnershipReminderHandler extends BaseHandler<
     if (!targetUser) {
       // This means that the user is NOT registered in the service.
       this.addEmails('AU07_TRANSFER_ONE_WEEK_REMINDER_NEW_USER', [{ email: this.inputData.recipientEmail }], {
-        notificationPreferenceType: NotificationCategoryEnum.AUTOMATIC,
+        notificationPreferenceType: 'AUTOMATIC',
         params: {
           create_account_url: createAccountUrl(),
           innovation_name: this.inputData.innovationName
@@ -43,7 +43,7 @@ export class InnovationTransferOwnershipReminderHandler extends BaseHandler<
         if (recipient) {
           this.notify('AU08_TRANSFER_ONE_WEEK_REMINDER_EXISTING_USER', [recipient], {
             email: {
-              notificationPreferenceType: NotificationCategoryEnum.AUTOMATIC,
+              notificationPreferenceType: 'AUTOMATIC',
               params: {
                 innovation_name: this.inputData.innovationName,
                 dashboard_url: dashboardUrl(ServiceRoleEnum.INNOVATOR)
@@ -53,7 +53,7 @@ export class InnovationTransferOwnershipReminderHandler extends BaseHandler<
               context: {
                 detail: 'AU08_TRANSFER_ONE_WEEK_REMINDER_EXISTING_USER',
                 id: this.inputData.innovationId,
-                type: NotificationCategoryEnum.AUTOMATIC
+                type: 'AUTOMATIC'
               },
               innovationId: this.inputData.innovationId,
               params: {

@@ -1,5 +1,5 @@
 import type { Context } from '@azure/functions';
-import { NotificationCategoryEnum, ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
+import { ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
 import { groupBy } from '@notifications/shared/helpers/misc.helper';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { innovationOverviewUrl, supportStatusUrl, supportSummaryUrl, threadsUrl } from '../../_helpers/url.helper';
@@ -41,7 +41,7 @@ export class IdleSupportAccessorHandler extends BaseHandler<
 
         this.notify('AU02_ACCESSOR_IDLE_ENGAGING_SUPPORT', recipients, {
           email: {
-            notificationPreferenceType: NotificationCategoryEnum.AUTOMATIC,
+            notificationPreferenceType: 'AUTOMATIC',
             params: {
               innovation_name: innovation.name,
               support_status_url: supportStatusUrl(ServiceRoleEnum.ACCESSOR, innovationId, support.supportId),
@@ -53,7 +53,7 @@ export class IdleSupportAccessorHandler extends BaseHandler<
             context: {
               detail: 'AU02_ACCESSOR_IDLE_ENGAGING_SUPPORT',
               id: support.supportId,
-              type: NotificationCategoryEnum.AUTOMATIC
+              type: 'AUTOMATIC'
             },
             innovationId,
             params: {
@@ -83,7 +83,7 @@ export class IdleSupportAccessorHandler extends BaseHandler<
 
         this.notify('AU06_ACCESSOR_IDLE_WAITING', recipients, {
           email: {
-            notificationPreferenceType: NotificationCategoryEnum.AUTOMATIC,
+            notificationPreferenceType: 'AUTOMATIC',
             params: {
               innovation_name: innovation.name,
               innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, innovationId),
@@ -94,7 +94,7 @@ export class IdleSupportAccessorHandler extends BaseHandler<
             context: {
               detail: 'AU06_ACCESSOR_IDLE_WAITING',
               id: support.supportId,
-              type: NotificationCategoryEnum.AUTOMATIC
+              type: 'AUTOMATIC'
             },
             innovationId,
             params: {

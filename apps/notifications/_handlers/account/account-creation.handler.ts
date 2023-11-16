@@ -1,10 +1,5 @@
 import type { Context } from '@azure/functions';
-import {
-  InnovationExportRequestStatusEnum,
-  NotificationCategoryEnum,
-  ServiceRoleEnum,
-  type NotifierTypeEnum
-} from '@notifications/shared/enums';
+import { InnovationExportRequestStatusEnum, ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { HandlersHelper } from '../../_helpers/handlers.helper';
 import { dashboardUrl } from '../../_helpers/url.helper';
@@ -48,7 +43,7 @@ export class AccountCreationHandler extends BaseHandler<
 
   private async CA01_ACCOUNT_CREATION_OF_INNOVATOR(recipient: RecipientType): Promise<void> {
     this.addEmails('CA01_ACCOUNT_CREATION_OF_INNOVATOR', [recipient], {
-      notificationPreferenceType: NotificationCategoryEnum.ACCOUNT,
+      notificationPreferenceType: 'ACCOUNT',
       params: {
         dashboard_url: dashboardUrl(ServiceRoleEnum.INNOVATOR)
       },
@@ -61,7 +56,7 @@ export class AccountCreationHandler extends BaseHandler<
     innovationNames: string[]
   ): Promise<void> {
     this.addEmails('CA02_ACCOUNT_CREATION_OF_COLLABORATOR', [recipient], {
-      notificationPreferenceType: NotificationCategoryEnum.ACCOUNT,
+      notificationPreferenceType: 'ACCOUNT',
       params: {
         innovations_name: HandlersHelper.transformIntoBullet(innovationNames),
         multiple_innovations: innovationNames.length > 1 ? 'yes' : 'no',

@@ -1,5 +1,5 @@
 import type { Context } from '@azure/functions';
-import { NotificationCategoryEnum, ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
+import { ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
 import { TranslationHelper } from '@notifications/shared/helpers';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { innovationOverviewUrl } from '../../_helpers/url.helper';
@@ -28,7 +28,7 @@ export class SupportStatusChangeRequestHandler extends BaseHandler<
 
       this.notify('ST07_SUPPORT_STATUS_CHANGE_REQUEST', qas, {
         email: {
-          notificationPreferenceType: NotificationCategoryEnum.SUPPORT,
+          notificationPreferenceType: 'SUPPORT',
           params: {
             accessor_name: accessor,
             innovation_name: innovation.name,
@@ -42,7 +42,7 @@ export class SupportStatusChangeRequestHandler extends BaseHandler<
         inApp: {
           context: {
             detail: 'ST07_SUPPORT_STATUS_CHANGE_REQUEST',
-            type: NotificationCategoryEnum.SUPPORT,
+            type: 'SUPPORT',
             id: innovation.id
           },
           innovationId: innovation.id,

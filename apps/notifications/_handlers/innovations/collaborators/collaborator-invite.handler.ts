@@ -1,5 +1,5 @@
 import type { Context } from '@azure/functions';
-import { NotificationCategoryEnum, NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import { NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { collaboratorInfoUrl, createAccountUrl } from '../../../_helpers/url.helper';
 import { BaseHandler } from '../../base.handler';
@@ -41,7 +41,7 @@ export class CollaboratorInviteHandler extends BaseHandler<
       const requestUserName = await this.getRequestUserName();
       this.notify('MC01_COLLABORATOR_INVITE_EXISTING_USER', [recipient], {
         email: {
-          notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+          notificationPreferenceType: 'INNOVATION_MANAGEMENT',
           params: {
             innovation_name: innovation.name,
             innovator_name: requestUserName,
@@ -51,7 +51,7 @@ export class CollaboratorInviteHandler extends BaseHandler<
         inApp: {
           context: {
             id: collaborator.id,
-            type: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+            type: 'INNOVATION_MANAGEMENT',
             detail: 'MC01_COLLABORATOR_INVITE_EXISTING_USER'
           },
           innovationId: innovation.id,
@@ -66,7 +66,7 @@ export class CollaboratorInviteHandler extends BaseHandler<
     collaboratorEmail: string
   ): Promise<void> {
     this.addEmails('MC02_COLLABORATOR_INVITE_NEW_USER', [{ email: collaboratorEmail }], {
-      notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+      notificationPreferenceType: 'INNOVATION_MANAGEMENT',
       params: {
         innovation_name: innovation.name,
         innovator_name: await this.getRequestUserName(),

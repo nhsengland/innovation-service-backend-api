@@ -1,5 +1,5 @@
 import { randText } from '@ngneat/falso';
-import { NotificationCategoryEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import { ServiceRoleEnum } from '@notifications/shared/enums';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { testEmails, testInApps } from '../../_helpers/tests.helper';
 import { dataSharingPreferencesUrl, innovationOverviewUrl } from '../../_helpers/url.helper';
@@ -46,7 +46,7 @@ describe('Notifications / _handlers / organisation-units-suggestion suite', () =
 
     it('should send an email to the QAs from the units that were suggested', async () => {
       await testEmails(OrganisationUnitsSuggestionHandler, 'OS01_UNITS_SUGGESTION_TO_SUGGESTED_UNITS_QA', {
-        notificationPreferenceType: NotificationCategoryEnum.SUGGEST_SUPPORT,
+        notificationPreferenceType: 'ORGANISATION_SUGGESTIONS',
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         inputData: {
           innovationId: innovation.id,
@@ -67,7 +67,7 @@ describe('Notifications / _handlers / organisation-units-suggestion suite', () =
     it('should send an in-app to the QAs from the units that were suggested', async () => {
       await testInApps(OrganisationUnitsSuggestionHandler, 'OS01_UNITS_SUGGESTION_TO_SUGGESTED_UNITS_QA', {
         innovationId: innovation.id,
-        context: { type: NotificationCategoryEnum.SUGGEST_SUPPORT, id: innovation.id },
+        context: { type: 'ORGANISATION_SUGGESTIONS', id: innovation.id },
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         inputData: {
           innovationId: innovation.id,
@@ -91,7 +91,7 @@ describe('Notifications / _handlers / organisation-units-suggestion suite', () =
 
     it('should send an email to the innovators when innovation is not shared with suggested unit', async () => {
       await testEmails(OrganisationUnitsSuggestionHandler, 'OS02_UNITS_SUGGESTION_NOT_SHARED_TO_INNOVATOR', {
-        notificationPreferenceType: NotificationCategoryEnum.SUGGEST_SUPPORT,
+        notificationPreferenceType: 'ORGANISATION_SUGGESTIONS',
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         inputData: {
           innovationId: innovation.id,
@@ -109,7 +109,7 @@ describe('Notifications / _handlers / organisation-units-suggestion suite', () =
     it('should send an in-app to the innovators when innovation is not shared with suggested unit', async () => {
       await testInApps(OrganisationUnitsSuggestionHandler, 'OS02_UNITS_SUGGESTION_NOT_SHARED_TO_INNOVATOR', {
         innovationId: innovation.id,
-        context: { type: NotificationCategoryEnum.SUGGEST_SUPPORT, id: innovation.id },
+        context: { type: 'ORGANISATION_SUGGESTIONS', id: innovation.id },
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         inputData: {
           innovationId: innovation.id,

@@ -1,4 +1,4 @@
-import { NotificationCategoryEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import { ServiceRoleEnum } from '@notifications/shared/enums';
 import { IdentityProviderService } from '@notifications/shared/services';
 import { SYSTEM_CRON_SENDER } from '@notifications/shared/services/integrations/notifier.service';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
@@ -25,7 +25,7 @@ describe('Notifications / _handlers / innovation-transfer-ownership-reminder han
           innovationName: innovation.name,
           recipientEmail: scenario.users.janeInnovator.email
         },
-        notificationPreferenceType: NotificationCategoryEnum.AUTOMATIC,
+        notificationPreferenceType: 'AUTOMATIC',
         outputData: {
           dashboard_url: dashboardUrl(ServiceRoleEnum.INNOVATOR),
           innovation_name: innovation.name
@@ -39,7 +39,7 @@ describe('Notifications / _handlers / innovation-transfer-ownership-reminder han
       await testInApps(InnovationTransferOwnershipReminderHandler, 'AU08_TRANSFER_ONE_WEEK_REMINDER_EXISTING_USER', {
         context: {
           id: innovation.id,
-          type: NotificationCategoryEnum.AUTOMATIC
+          type: 'AUTOMATIC'
         },
         innovationId: innovation.id,
         inputData: {
@@ -65,7 +65,7 @@ describe('Notifications / _handlers / innovation-transfer-ownership-reminder han
           innovationName: innovation.name,
           recipientEmail: scenario.users.janeInnovator.email
         },
-        notificationPreferenceType: NotificationCategoryEnum.AUTOMATIC,
+        notificationPreferenceType: 'AUTOMATIC',
         outputData: {
           create_account_url: createAccountUrl(),
           innovation_name: innovation.name

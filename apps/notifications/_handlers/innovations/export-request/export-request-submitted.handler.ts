@@ -1,5 +1,5 @@
 import type { Context } from '@azure/functions';
-import { NotificationCategoryEnum, ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
+import { ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { HandlersHelper } from '../../../_helpers/handlers.helper';
 import { exportRequestUrl } from '../../../_helpers/url.helper';
@@ -31,7 +31,7 @@ export class ExportRequestSubmittedHandler extends BaseHandler<
 
     this.notify('RE01_EXPORT_REQUEST_SUBMITTED', [recipient], {
       email: {
-        notificationPreferenceType: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+        notificationPreferenceType: 'INNOVATION_MANAGEMENT',
         params: {
           comment: this.inputData.comment,
           innovation_name: innovation.name,
@@ -42,7 +42,7 @@ export class ExportRequestSubmittedHandler extends BaseHandler<
       inApp: {
         context: {
           id: this.inputData.exportRequestId,
-          type: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+          type: 'INNOVATION_MANAGEMENT',
           detail: 'RE01_EXPORT_REQUEST_SUBMITTED'
         },
         innovationId: innovation.id,

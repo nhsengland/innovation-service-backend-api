@@ -1,5 +1,5 @@
 import type { Context } from '@azure/functions';
-import { NotificationCategoryEnum, ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
+import { ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { HandlersHelper } from '../../_helpers/handlers.helper';
 import { threadUrl } from '../../_helpers/url.helper';
@@ -32,7 +32,7 @@ export class ThreadAddFollowersHandler extends BaseHandler<
 
     for (const [role, roleRecipients] of Object.entries(recipientsByRole)) {
       this.addEmails('ME02_THREAD_ADD_FOLLOWERS', roleRecipients, {
-        notificationPreferenceType: NotificationCategoryEnum.MESSAGE,
+        notificationPreferenceType: 'MESSAGES',
         params: {
           innovation_name: innovation.name,
           sender: `${senderName} (${displayTag})`,
@@ -44,7 +44,7 @@ export class ThreadAddFollowersHandler extends BaseHandler<
     this.addInApp('ME02_THREAD_ADD_FOLLOWERS', recipients, {
       innovationId: this.inputData.innovationId,
       context: {
-        type: NotificationCategoryEnum.MESSAGE,
+        type: 'MESSAGES',
         detail: 'ME02_THREAD_ADD_FOLLOWERS',
         id: this.inputData.threadId
       },

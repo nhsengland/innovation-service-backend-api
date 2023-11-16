@@ -1,5 +1,5 @@
 import { randUuid } from '@ngneat/falso';
-import { NotificationCategoryEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import { ServiceRoleEnum } from '@notifications/shared/enums';
 import { MocksHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { testEmails, testInApps } from '../../_helpers/tests.helper';
@@ -28,7 +28,7 @@ describe('Notifications / _handlers / needs assessment assessors update suite', 
     describe('NA06_NEEDS_ASSESSOR_REMOVED', () => {
       it('should send an email to the previous assessor', async () => {
         await testEmails(NeedsAssessmentAssessorUpdateHandler, 'NA06_NEEDS_ASSESSOR_REMOVED', {
-          notificationPreferenceType: NotificationCategoryEnum.NEEDS_ASSESSMENT,
+          notificationPreferenceType: 'NEEDS_ASSESSMENT',
           inputData: inputData,
           outputData: {
             innovation_name: innovation.name,
@@ -43,7 +43,7 @@ describe('Notifications / _handlers / needs assessment assessors update suite', 
         await testInApps(NeedsAssessmentAssessorUpdateHandler, 'NA06_NEEDS_ASSESSOR_REMOVED', {
           innovationId: innovation.id,
           context: {
-            type: NotificationCategoryEnum.NEEDS_ASSESSMENT,
+            type: 'NEEDS_ASSESSMENT',
             id: inputData.assessmentId
           },
           inputData: inputData,
@@ -75,7 +75,7 @@ describe('Notifications / _handlers / needs assessment assessors update suite', 
     describe('NA07_NEEDS_ASSESSOR_ASSIGNED', () => {
       it('should send an email to the previous assessor', async () => {
         await testEmails(NeedsAssessmentAssessorUpdateHandler, 'NA07_NEEDS_ASSESSOR_ASSIGNED', {
-          notificationPreferenceType: NotificationCategoryEnum.NEEDS_ASSESSMENT,
+          notificationPreferenceType: 'NEEDS_ASSESSMENT',
           inputData: inputData,
           outputData: {
             innovation_name: innovation.name,
@@ -90,7 +90,7 @@ describe('Notifications / _handlers / needs assessment assessors update suite', 
         await testInApps(NeedsAssessmentAssessorUpdateHandler, 'NA07_NEEDS_ASSESSOR_ASSIGNED', {
           innovationId: innovation.id,
           context: {
-            type: NotificationCategoryEnum.NEEDS_ASSESSMENT,
+            type: 'NEEDS_ASSESSMENT',
             id: inputData.assessmentId
           },
           inputData: inputData,

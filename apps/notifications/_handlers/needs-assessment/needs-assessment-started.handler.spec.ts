@@ -1,5 +1,5 @@
 import { randText, randUuid } from '@ngneat/falso';
-import { NotificationCategoryEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import { ServiceRoleEnum } from '@notifications/shared/enums';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { testEmails, testInApps } from '../../_helpers/tests.helper';
 import { threadUrl } from '../../_helpers/url.helper';
@@ -31,7 +31,7 @@ describe('Notifications / _handlers / needs assessment start suite', () => {
     describe('NA03_NEEDS_ASSESSMENT_STARTED_TO_INNOVATOR', () => {
       it('should send an email to the innovator', async () => {
         await testEmails(NeedsAssessmentStartedHandler, 'NA03_NEEDS_ASSESSMENT_STARTED_TO_INNOVATOR', {
-          notificationPreferenceType: NotificationCategoryEnum.NEEDS_ASSESSMENT,
+          notificationPreferenceType: 'NEEDS_ASSESSMENT',
           inputData: inputData,
           outputData: {
             innovation_name: innovation.name,
@@ -47,7 +47,7 @@ describe('Notifications / _handlers / needs assessment start suite', () => {
         await testInApps(NeedsAssessmentStartedHandler, 'NA03_NEEDS_ASSESSMENT_STARTED_TO_INNOVATOR', {
           innovationId: inputData.innovationId,
           context: {
-            type: NotificationCategoryEnum.NEEDS_ASSESSMENT,
+            type: 'NEEDS_ASSESSMENT',
             id: inputData.assessmentId
           },
           inputData: inputData,

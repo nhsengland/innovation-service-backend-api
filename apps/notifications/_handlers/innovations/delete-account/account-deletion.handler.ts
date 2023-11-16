@@ -1,5 +1,5 @@
 import type { Context } from '@azure/functions';
-import { NotificationCategoryEnum, ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
+import { ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { innovationOverviewUrl } from '../../../_helpers/url.helper';
 import { BaseHandler } from '../../base.handler';
@@ -42,7 +42,7 @@ export class AccountDeletionHandler extends BaseHandler<
         inApp: {
           context: {
             id: this.requestUser.id,
-            type: NotificationCategoryEnum.INNOVATION_MANAGEMENT,
+            type: 'INNOVATION_MANAGEMENT',
             detail: 'DA01_OWNER_DELETED_ACCOUNT_WITH_PENDING_TRANSFER_TO_COLLABORATOR'
           },
           innovationId: innovation.id,

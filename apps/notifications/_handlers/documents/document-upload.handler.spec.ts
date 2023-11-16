@@ -1,6 +1,6 @@
 import { DocumentUploadHandler } from './document-upload.handler';
 
-import { NotificationCategoryEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import { ServiceRoleEnum } from '@notifications/shared/enums';
 import { CompleteScenarioType, MocksHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 
@@ -39,7 +39,7 @@ describe('Notifications / _handlers / document-upload suite', () => {
         expect(handler.emails).toEqual([
           {
             templateId: 'DC01_UPLOADED_DOCUMENT_TO_INNOVATOR',
-            notificationPreferenceType: NotificationCategoryEnum.DOCUMENT,
+            notificationPreferenceType: 'DOCUMENTS',
             to: DTOsHelper.getRecipientUser(scenario.users.johnInnovator, 'innovatorRole'),
             params: {
               accessor_name: requestUser.name,
@@ -49,7 +49,7 @@ describe('Notifications / _handlers / document-upload suite', () => {
           },
           {
             templateId: 'DC01_UPLOADED_DOCUMENT_TO_INNOVATOR',
-            notificationPreferenceType: NotificationCategoryEnum.DOCUMENT,
+            notificationPreferenceType: 'DOCUMENTS',
             to: DTOsHelper.getRecipientUser(scenario.users.janeInnovator, 'innovatorRole'),
             params: {
               accessor_name: requestUser.name,
@@ -65,7 +65,7 @@ describe('Notifications / _handlers / document-upload suite', () => {
           {
             innovationId: innovation.id,
             context: {
-              type: NotificationCategoryEnum.DOCUMENT,
+              type: 'DOCUMENTS',
               detail: 'DC01_UPLOADED_DOCUMENT_TO_INNOVATOR',
               id: file.id
             },

@@ -14,7 +14,6 @@ import {
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
   InnovationTaskStatusEnum,
-  NotificationContextTypeEnum,
   NotifierTypeEnum
 } from '@innovations/shared/enums';
 import {
@@ -80,7 +79,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
         return Promise.resolve(
           contextIds.map(contextId => ({
             contextId,
-            contextType: NotificationContextTypeEnum.TASK,
+            contextType: 'TASK',
             id: randUuid(),
             params: {}
           }))

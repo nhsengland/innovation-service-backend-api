@@ -1,5 +1,5 @@
 import type { Context } from '@azure/functions';
-import { NotificationCategoryEnum, NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import { NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { innovationOverviewUrl } from '../../_helpers/url.helper';
 import { BaseHandler } from '../base.handler';
@@ -37,7 +37,7 @@ export class InnovationSubmittedHandler extends BaseHandler<
 
     this.notify('NA01_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_INNOVATOR', recipients, {
       email: {
-        notificationPreferenceType: NotificationCategoryEnum.NEEDS_ASSESSMENT,
+        notificationPreferenceType: 'NEEDS_ASSESSMENT',
         params: {
           innovation_name: innovation.name,
           needs_assessment: this.inputData.reassessment ? 'reassessment' : 'assessment'
@@ -48,7 +48,7 @@ export class InnovationSubmittedHandler extends BaseHandler<
       },
       inApp: {
         context: {
-          type: NotificationCategoryEnum.NEEDS_ASSESSMENT,
+          type: 'NEEDS_ASSESSMENT',
           id: innovation.id,
           detail: 'NA01_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_INNOVATOR'
         },
@@ -71,7 +71,7 @@ export class InnovationSubmittedHandler extends BaseHandler<
     const recipients = await this.recipientsService.needsAssessmentUsers();
     this.notify('NA02_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_ASSESSMENT', recipients, {
       email: {
-        notificationPreferenceType: NotificationCategoryEnum.NEEDS_ASSESSMENT,
+        notificationPreferenceType: 'NEEDS_ASSESSMENT',
         params: {
           innovation_name: innovation.name,
           innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ASSESSMENT, innovation.id),
@@ -80,7 +80,7 @@ export class InnovationSubmittedHandler extends BaseHandler<
       },
       inApp: {
         context: {
-          type: NotificationCategoryEnum.NEEDS_ASSESSMENT,
+          type: 'NEEDS_ASSESSMENT',
           id: innovation.id,
           detail: 'NA02_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_ASSESSMENT'
         },

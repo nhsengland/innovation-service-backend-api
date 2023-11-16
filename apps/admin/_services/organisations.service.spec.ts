@@ -14,7 +14,6 @@ import {
   InnovationSupportStatusEnum,
   InnovationTaskStatusEnum,
   NotificationContextDetailEnum,
-  NotificationContextTypeEnum,
   NotifierTypeEnum,
   UserStatusEnum
 } from '@admin/shared/enums';
@@ -157,7 +156,7 @@ describe('Admin / _services / organisations service suite', () => {
         const notification = await new NotificationBuilder(em)
           .setInnovation(scenario.users.johnInnovator.innovations.johnInnovation.id)
           .addNotificationUser(scenario.users.bartQualifyingAccessor)
-          .setContext(NotificationContextTypeEnum.TASK, NotificationContextDetailEnum.TASK_CREATION, task.id)
+          .setContext('TASK', NotificationContextDetailEnum.TASK_CREATION, task.id)
           .save();
 
         await sut.inactivateUnit(domainContext, unit.id, em);
@@ -201,11 +200,7 @@ describe('Admin / _services / organisations service suite', () => {
           const notification = await new NotificationBuilder(em)
             .setInnovation(scenario.users.johnInnovator.innovations.johnInnovation.id)
             .addNotificationUser(scenario.users.bartQualifyingAccessor)
-            .setContext(
-              NotificationContextTypeEnum.SUPPORT,
-              NotificationContextDetailEnum.SUPPORT_STATUS_UPDATE,
-              support.id
-            )
+            .setContext('SUPPORT', NotificationContextDetailEnum.SUPPORT_STATUS_UPDATE, support.id)
             .save();
 
           await sut.inactivateUnit(domainContext, unit.id, em);

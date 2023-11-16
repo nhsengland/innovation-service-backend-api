@@ -1,4 +1,4 @@
-import { NotificationCategoryEnum, ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
+import { ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import type { Context } from '@azure/functions';
@@ -51,7 +51,7 @@ export class UnitKPIHandler extends BaseHandler<
         this.notify(templateId, qas, {
           email: {
             templateId: templateId,
-            notificationPreferenceType: NotificationCategoryEnum.AUTOMATIC,
+            notificationPreferenceType: 'AUTOMATIC',
             params: {
               innovation_name: innovation.name,
               innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, innovation.id)
@@ -60,7 +60,7 @@ export class UnitKPIHandler extends BaseHandler<
           inApp: {
             innovationId: innovation.id,
             context: {
-              type: NotificationCategoryEnum.AUTOMATIC,
+              type: 'AUTOMATIC',
               id: innovation.id,
               detail: templateId
             },
