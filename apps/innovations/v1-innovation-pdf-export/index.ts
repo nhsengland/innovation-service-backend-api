@@ -55,7 +55,7 @@ export default openapi(PostInnovationPDFExport.httpTrigger as AzureFunction, '/v
     tags: ['[v1] Innovations'],
     operationId: 'v1-innovation-pdf-export',
     parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
-    requestBody: SwaggerHelper.bodyJ2S(ParamsSchema),
+    requestBody: SwaggerHelper.bodyJ2S(BodySchema),
     responses: {
       200: { description: 'Ok.' },
       400: { description: 'Bad request.' }
