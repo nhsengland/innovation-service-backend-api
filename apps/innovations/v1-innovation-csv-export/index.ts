@@ -12,7 +12,7 @@ import { container } from '../_config';
 import type { ExportFileService } from '../_services/export-file-service';
 import SYMBOLS from '../_services/symbols';
 import { BodySchema, ParamsSchema, ParamsType, type BodyType } from './validation.schemas';
-class PostInnovationPDFExport {
+class PostInnovationCSVExport {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
     const authorizationService = container.get<AuthorizationService>(SHARED_SYMBOLS.AuthorizationService);
@@ -32,12 +32,12 @@ class PostInnovationPDFExport {
         .verify();
       const innovation = auth.getInnovationInfo();
 
-      const pdf = await exportFileService.create('pdf', innovation.name, body);
+      const csv = await exportFileService.create('csv', innovation.name, body, { withIndex: false });
 
       context.res = {
-        body: pdf,
+        body: csv,
         headers: {
-          'Content-Type': 'application/pdf'
+          'Content-Type': 'application/csv'
         }
       };
 
@@ -49,11 +49,11 @@ class PostInnovationPDFExport {
   }
 }
 
-export default openapi(PostInnovationPDFExport.httpTrigger as AzureFunction, '/v1/{innovationId}/pdf', {
+export default openapi(PostInnovationCSVExport.httpTrigger as AzureFunction, '/v1/{innovationId}/csv', {
   post: {
-    description: 'Generate PDF for an innovation',
+    description: 'Generate CSV for an innovation',
     tags: ['[v1] Innovations'],
-    operationId: 'v1-innovation-pdf-export',
+    operationId: 'v1-innovation-csv-export',
     parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     requestBody: SwaggerHelper.bodyJ2S(ParamsSchema),
     responses: {
