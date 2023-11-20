@@ -35,22 +35,7 @@ paths:
                   oneOf:
                     - type: object
                       properties:
-                        ASSIGN_NA:
-                          type: string
-                          enum:
-                            - YES
-                            - NO
-                        INNOVATION_MANAGEMENT:
-                          type: string
-                          enum:
-                            - YES
-                            - NO
-                        INNOVATOR_SUBMIT_IR:
-                          type: string
-                          enum:
-                            - YES
-                            - NO
-                        MESSAGE:
+                        NEEDS_ASSESSMENT:
                           type: string
                           enum:
                             - YES
@@ -60,22 +45,7 @@ paths:
                           enum:
                             - YES
                             - NO
-                      required:
-                        - ASSIGN_NA
-                        - INNOVATION_MANAGEMENT
-                        - INNOVATOR_SUBMIT_IR
-                        - MESSAGE
-                        - TASK
-                      additionalProperties: false
-                      x-required: true
-                    - type: object
-                      properties:
-                        ACCOUNT:
-                          type: string
-                          enum:
-                            - YES
-                            - NO
-                        EXPORT_REQUEST:
+                        MESSAGES:
                           type: string
                           enum:
                             - YES
@@ -85,12 +55,57 @@ paths:
                           enum:
                             - YES
                             - NO
-                        MESSAGE:
+                      required:
+                        - NEEDS_ASSESSMENT
+                        - TASK
+                        - MESSAGES
+                        - INNOVATION_MANAGEMENT
+                      additionalProperties: false
+                      x-required: true
+                    - type: object
+                      properties:
+                        SUPPORT:
                           type: string
                           enum:
                             - YES
                             - NO
-                        REMINDER:
+                        TASK:
+                          type: string
+                          enum:
+                            - YES
+                            - NO
+                        MESSAGES:
+                          type: string
+                          enum:
+                            - YES
+                            - NO
+                        INNOVATION_MANAGEMENT:
+                          type: string
+                          enum:
+                            - YES
+                            - NO
+                        ADMIN:
+                          type: string
+                          enum:
+                            - YES
+                            - NO
+                        AUTOMATIC:
+                          type: string
+                          enum:
+                            - YES
+                            - NO
+                      required:
+                        - SUPPORT
+                        - TASK
+                        - MESSAGES
+                        - INNOVATION_MANAGEMENT
+                        - ADMIN
+                        - AUTOMATIC
+                      additionalProperties: false
+                      x-required: true
+                    - type: object
+                      properties:
+                        ORGANISATION_SUGGESTIONS:
                           type: string
                           enum:
                             - YES
@@ -105,29 +120,7 @@ paths:
                           enum:
                             - YES
                             - NO
-                      required:
-                        - ACCOUNT
-                        - EXPORT_REQUEST
-                        - INNOVATION_MANAGEMENT
-                        - MESSAGE
-                        - REMINDER
-                        - SUPPORT
-                        - TASK
-                      additionalProperties: false
-                      x-required: true
-                    - type: object
-                      properties:
-                        SUGGEST_SUPPORT:
-                          type: string
-                          enum:
-                            - YES
-                            - NO
-                        ACCOUNT:
-                          type: string
-                          enum:
-                            - YES
-                            - NO
-                        EXPORT_REQUEST:
+                        MESSAGES:
                           type: string
                           enum:
                             - YES
@@ -137,55 +130,34 @@ paths:
                           enum:
                             - YES
                             - NO
-                        MESSAGE:
+                        ADMIN:
                           type: string
                           enum:
                             - YES
                             - NO
-                        REMINDER:
-                          type: string
-                          enum:
-                            - YES
-                            - NO
-                        SUPPORT:
-                          type: string
-                          enum:
-                            - YES
-                            - NO
-                        TASK:
+                        AUTOMATIC:
                           type: string
                           enum:
                             - YES
                             - NO
                       required:
-                        - SUGGEST_SUPPORT
-                        - ACCOUNT
-                        - EXPORT_REQUEST
-                        - INNOVATION_MANAGEMENT
-                        - MESSAGE
-                        - REMINDER
+                        - ORGANISATION_SUGGESTIONS
                         - SUPPORT
                         - TASK
+                        - MESSAGES
+                        - INNOVATION_MANAGEMENT
+                        - ADMIN
+                        - AUTOMATIC
                       additionalProperties: false
                       x-required: true
                     - type: object
                       properties:
-                        DOCUMENT:
-                          type: string
-                          enum:
-                            - YES
-                            - NO
-                        MESSAGE:
-                          type: string
-                          enum:
-                            - YES
-                            - NO
-                        REMINDER:
-                          type: string
-                          enum:
-                            - YES
-                            - NO
                         SUPPORT:
+                          type: string
+                          enum:
+                            - YES
+                            - NO
+                        MESSAGES:
                           type: string
                           enum:
                             - YES
@@ -195,12 +167,22 @@ paths:
                           enum:
                             - YES
                             - NO
+                        DOCUMENTS:
+                          type: string
+                          enum:
+                            - YES
+                            - NO
+                        AUTOMATIC:
+                          type: string
+                          enum:
+                            - YES
+                            - NO
                       required:
-                        - DOCUMENT
-                        - MESSAGE
-                        - REMINDER
                         - SUPPORT
+                        - MESSAGES
                         - TASK
+                        - DOCUMENTS
+                        - AUTOMATIC
                       additionalProperties: false
                       x-required: true
               additionalProperties: false

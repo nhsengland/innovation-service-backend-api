@@ -391,6 +391,37 @@ describe('Users / _services / notifications service suite', () => {
         generatePreferencesObject<ServiceRoleEnum.QUALIFYING_ACCESSOR>(QANotificationCategories)
       );
     });
+
+    it("should return possible new categories even if the user didn't setted it yet", async () => {
+      const mockNaPreferences = generatePreferencesObject<ServiceRoleEnum.ASSESSMENT>(NaNotificationCategories);
+
+      //create preference
+      await em.getRepository(NotificationPreferenceEntity).save({
+        notificationType: 'TASK',
+        preferences: mockNaPreferences,
+        userRoleId: scenario.users.paulNeedsAssessor.roles.assessmentRole.id,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        createdBy: scenario.users.paulNeedsAssessor.roles.assessmentRole.id,
+        updatedBy: scenario.users.paulNeedsAssessor.roles.assessmentRole.id
+      });
+
+      jest
+        .spyOn(module.exports, 'generatePreferencesObject')
+        .mockReturnValue(
+          generatePreferencesObject<ServiceRoleEnum.ASSESSMENT>(['AUTOMATIC', ...NaNotificationCategories])
+        );
+
+      const result = await sut.getUserRoleEmailPreferences(
+        DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor, 'assessmentRole'),
+        em
+      );
+
+      expect(result).toMatchObject({
+        AUTOMATIC: NotificationPreferenceEnum.YES,
+        ...mockNaPreferences
+      });
+    });
   });
 
   describe('upsertEmailPreferences', () => {
