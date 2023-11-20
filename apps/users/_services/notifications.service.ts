@@ -278,7 +278,18 @@ export class NotificationsService extends BaseService {
       .where('preference.user_role_id = :userRoleId', { userRoleId: domainContext.currentRole.id })
       .getOne();
 
-    return userPreferences?.preferences ?? this.getDefaultNotificationPreferences(domainContext.currentRole.role);
+    // Order and manage
+    const preferences = this.getDefaultNotificationPreferences(domainContext.currentRole.role);
+    if (userPreferences) {
+      Object.keys(preferences).forEach((key: any) => {
+        let category: keyof NotificationPreferences = key;
+        if (userPreferences.preferences[category]) {
+          preferences[category] = userPreferences.preferences[category];
+        }
+      });
+    }
+
+    return preferences;
   }
 
   /**
