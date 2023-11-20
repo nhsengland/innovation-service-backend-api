@@ -79,7 +79,7 @@ export class InnovationTransferOwnershipCompletedHandler extends BaseHandler<
       inApp: {
         context: {
           detail: 'TO06_TRANSFER_OWNERSHIP_ACCEPTS_PREVIOUS_OWNER',
-          id: innovation.id,
+          id: this.inputData.transferId,
           type: 'INNOVATION_MANAGEMENT'
         },
         innovationId: innovation.id,
@@ -100,7 +100,7 @@ export class InnovationTransferOwnershipCompletedHandler extends BaseHandler<
     this.addInApp('TO07_TRANSFER_OWNERSHIP_ACCEPTS_ASSIGNED_ACCESSORS', assignedQAs, {
       context: {
         detail: 'TO07_TRANSFER_OWNERSHIP_ACCEPTS_ASSIGNED_ACCESSORS',
-        id: innovation.id,
+        id: this.inputData.transferId,
         type: 'INNOVATION_MANAGEMENT'
       },
       innovationId: innovation.id,
@@ -131,7 +131,7 @@ export class InnovationTransferOwnershipCompletedHandler extends BaseHandler<
       inApp: {
         context: {
           detail: 'TO08_TRANSFER_OWNERSHIP_DECLINES_PREVIOUS_OWNER',
-          id: innovation.id,
+          id: this.inputData.transferId,
           type: 'INNOVATION_MANAGEMENT'
         },
         innovationId: innovation.id,
@@ -165,7 +165,7 @@ export class InnovationTransferOwnershipCompletedHandler extends BaseHandler<
         inApp: {
           context: {
             detail: 'TO09_TRANSFER_OWNERSHIP_CANCELED_NEW_OWNER',
-            id: innovation.id,
+            id: this.inputData.transferId,
             type: 'INNOVATION_MANAGEMENT'
           },
           innovationId: innovation.id,

@@ -44,7 +44,7 @@ export class MessageCreationHandler extends BaseHandler<
       context: {
         type: 'MESSAGES',
         detail: 'ME03_THREAD_MESSAGE_CREATION',
-        id: this.inputData.messageId
+        id: this.inputData.threadId
       },
       params: {
         innovationName: innovation.name,

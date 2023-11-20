@@ -74,7 +74,7 @@ export class InnovationTransferOwnershipCreationHandler extends BaseHandler<
         inApp: {
           context: {
             detail: 'TO02_TRANSFER_OWNERSHIP_EXISTING_USER',
-            id: innovation.id,
+            id: this.inputData.transferId,
             type: 'INNOVATION_MANAGEMENT'
           },
           innovationId: innovation.id,

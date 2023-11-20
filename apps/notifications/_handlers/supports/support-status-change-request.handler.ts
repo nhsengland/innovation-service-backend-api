@@ -43,7 +43,7 @@ export class SupportStatusChangeRequestHandler extends BaseHandler<
           context: {
             detail: 'ST07_SUPPORT_STATUS_CHANGE_REQUEST',
             type: 'SUPPORT',
-            id: innovation.id
+            id: this.inputData.supportId
           },
           innovationId: innovation.id,
           params: {

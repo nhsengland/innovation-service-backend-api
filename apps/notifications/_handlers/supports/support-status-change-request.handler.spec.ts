@@ -47,7 +47,7 @@ describe('Notifications / _handlers / support-new-assigned-accessors suite', () 
     it('should send an inapp to the QAs when accessor requests status update', async () => {
       await testInApps(SupportStatusChangeRequestHandler, 'ST07_SUPPORT_STATUS_CHANGE_REQUEST', {
         context: {
-          id: innovation.id,
+          id: support.id,
           type: 'SUPPORT'
         },
         innovationId: innovation.id,
