@@ -1651,14 +1651,41 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                innovationId:
-                  type: string
-                  format: uuid
-              required:
-                - innovationId
-              additionalProperties: false
+              type: array
+              items:
+                type: object
+                properties:
+                  sections:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        section:
+                          type: string
+                        answers:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              label:
+                                type: string
+                              value:
+                                type: string
+                                nullable: true
+                            required:
+                              - label
+                              - value
+                            additionalProperties: false
+                      required:
+                        - section
+                        - answers
+                      additionalProperties: false
+                  title:
+                    type: string
+                required:
+                  - sections
+                  - title
+                additionalProperties: false
       responses:
         "200":
           description: Ok.
@@ -2486,14 +2513,41 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                innovationId:
-                  type: string
-                  format: uuid
-              required:
-                - innovationId
-              additionalProperties: false
+              type: array
+              items:
+                type: object
+                properties:
+                  sections:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        section:
+                          type: string
+                        answers:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              label:
+                                type: string
+                              value:
+                                type: string
+                                nullable: true
+                            required:
+                              - label
+                              - value
+                            additionalProperties: false
+                      required:
+                        - section
+                        - answers
+                      additionalProperties: false
+                  title:
+                    type: string
+                required:
+                  - sections
+                  - title
+                additionalProperties: false
       responses:
         "200":
           description: Ok.
