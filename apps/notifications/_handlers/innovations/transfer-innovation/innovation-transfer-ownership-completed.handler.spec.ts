@@ -69,7 +69,7 @@ describe('Notifications / _handlers / innovation-transfer-ownership-completed ha
           'TO06_TRANSFER_OWNERSHIP_ACCEPTS_PREVIOUS_OWNER',
           {
             context: {
-              id: innovation.id,
+              id: innovation.transfer.id,
               type: 'INNOVATION_MANAGEMENT'
             },
             innovationId: innovation.id,
@@ -112,7 +112,7 @@ describe('Notifications / _handlers / innovation-transfer-ownership-completed ha
           'TO07_TRANSFER_OWNERSHIP_ACCEPTS_ASSIGNED_ACCESSORS',
           {
             context: {
-              id: innovation.id,
+              id: innovation.transfer.id,
               type: 'INNOVATION_MANAGEMENT'
             },
             innovationId: innovation.id,
@@ -176,7 +176,7 @@ describe('Notifications / _handlers / innovation-transfer-ownership-completed ha
           'TO08_TRANSFER_OWNERSHIP_DECLINES_PREVIOUS_OWNER',
           {
             context: {
-              id: innovation.id,
+              id: innovation.transfer.id,
               type: 'INNOVATION_MANAGEMENT'
             },
             innovationId: innovation.id,
@@ -232,7 +232,7 @@ describe('Notifications / _handlers / innovation-transfer-ownership-completed ha
         it('Should send inapp to transfer creator', async () => {
           await testInApps(InnovationTransferOwnershipCompletedHandler, 'TO09_TRANSFER_OWNERSHIP_CANCELED_NEW_OWNER', {
             context: {
-              id: innovation.id,
+              id: innovation.transfer.id,
               type: 'INNOVATION_MANAGEMENT'
             },
             innovationId: innovation.id,

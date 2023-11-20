@@ -39,7 +39,7 @@ export class InnovationDelayedSharedSuggestionHandler extends BaseHandler<
         innovationId: innovation.id,
         context: {
           type: 'ORGANISATION_SUGGESTIONS',
-          id: innovation.id, // TODO,
+          id: innovation.id,
           detail: 'OS03_INNOVATION_DELAYED_SHARED_SUGGESTION'
         },
         params: { innovationName: innovation.name }

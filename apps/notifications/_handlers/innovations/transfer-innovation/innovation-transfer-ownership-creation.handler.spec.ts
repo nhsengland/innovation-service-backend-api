@@ -66,7 +66,7 @@ describe('Notifications / _handlers / innovation-transfer-ownership-creation han
     it('should send inapp to existing user', async () => {
       await testInApps(InnovationTransferOwnershipCreationHandler, 'TO02_TRANSFER_OWNERSHIP_EXISTING_USER', {
         context: {
-          id: innovation.id,
+          id: innovation.transfer.id,
           type: 'INNOVATION_MANAGEMENT'
         },
         innovationId: innovation.id,

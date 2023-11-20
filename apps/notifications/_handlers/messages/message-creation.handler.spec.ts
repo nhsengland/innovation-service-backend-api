@@ -57,7 +57,7 @@ describe('Notifications / _handlers / message-creation suite', () => {
         it('should send an in-app to the followers (expect self) when a message is created', async () => {
           await testInApps(MessageCreationHandler, 'ME03_THREAD_MESSAGE_CREATION', {
             innovationId: innovation.id,
-            context: { type: 'MESSAGES', id: thread.messages.johnMessage.id },
+            context: { type: 'MESSAGES', id: thread.id },
             requestUser: DTOsHelper.getUserRequestContext(requestUser),
             inputData: {
               innovationId: innovation.id,
