@@ -394,6 +394,7 @@ describe('Users / _services / notifications service suite', () => {
 
     it("should return possible new categories even if the user didn't setted it yet", async () => {
       const mockNaPreferences = generatePreferencesObject<ServiceRoleEnum.ASSESSMENT>(NaNotificationCategories);
+      mockNaPreferences['INNOVATION_MANAGEMENT'] = undefined as unknown as NotificationPreferenceEnum;
 
       //create preference
       await em.getRepository(NotificationPreferenceEntity).save({
@@ -406,20 +407,14 @@ describe('Users / _services / notifications service suite', () => {
         updatedBy: scenario.users.paulNeedsAssessor.roles.assessmentRole.id
       });
 
-      jest
-        .spyOn(module.exports, 'generatePreferencesObject')
-        .mockReturnValue(
-          generatePreferencesObject<ServiceRoleEnum.ASSESSMENT>(['AUTOMATIC', ...NaNotificationCategories])
-        );
-
       const result = await sut.getUserRoleEmailPreferences(
         DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor, 'assessmentRole'),
         em
       );
 
       expect(result).toMatchObject({
-        AUTOMATIC: NotificationPreferenceEnum.YES,
-        ...mockNaPreferences
+        ...mockNaPreferences,
+        INNOVATION_MANAGEMENT: NotificationPreferenceEnum.YES
       });
     });
   });
