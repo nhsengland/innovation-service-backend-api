@@ -5,7 +5,7 @@ export type ResponseDTO = Record<
   {
     id: string;
     name: string;
-    support: { status: InnovationSupportStatusEnum; start?: Date; end?: Date };
+    support: { id?: string; status: InnovationSupportStatusEnum; start?: Date; end?: Date };
     sameOrganisation?: boolean;
   }[]
 >;

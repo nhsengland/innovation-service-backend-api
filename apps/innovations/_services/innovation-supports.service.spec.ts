@@ -380,6 +380,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           id: expect.any(String),
           name: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
           support: {
+            id: innovation.supports.supportByHealthOrgUnit.id,
             status: innovation.supports.supportByHealthOrgUnit.status,
             start: expect.any(Date)
           }
@@ -388,6 +389,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           id: expect.any(String),
           name: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.name,
           support: {
+            id: innovation.supports.supportByMedTechOrgUnit.id,
             status: innovation.supports.supportByMedTechOrgUnit.status,
             start: expect.any(Date)
           }
@@ -416,6 +418,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           id: expect.any(String),
           name: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
           support: {
+            id: innovation.supports.supportByHealthOrgUnit.id,
             status: InnovationSupportStatusEnum.CLOSED,
             start: expect.any(Date),
             end: expect.any(Date)
@@ -425,7 +428,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
     });
 
     it('should return suggested units', async () => {
-      await new InnovationSupportBuilder(em)
+      const innovTechHeavySupport = await new InnovationSupportBuilder(em)
         .setStatus(InnovationSupportStatusEnum.WAITING)
         .setInnovation(innovation.id)
         .setOrganisationUnit(scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.id)
@@ -441,6 +444,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           id: expect.any(String),
           name: scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.name,
           support: {
+            id: innovation.supports.supportByHealthOrgAiUnit.id,
             status: InnovationSupportStatusEnum.WAITING
           }
         },
@@ -448,6 +452,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           id: expect.any(String),
           name: scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.name,
           support: {
+            id: innovTechHeavySupport.id,
             status: InnovationSupportStatusEnum.WAITING
           }
         },

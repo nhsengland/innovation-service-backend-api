@@ -59,7 +59,7 @@ type UnitSupportInformationType = {
 type SuggestedUnitType = {
   id: string;
   name: string;
-  support: { status: InnovationSupportStatusEnum; start?: Date; end?: Date };
+  support: { id?: string; status: InnovationSupportStatusEnum; start?: Date; end?: Date };
 };
 
 @injectable()
@@ -752,16 +752,7 @@ export class InnovationSupportsService extends BaseService {
     domainContext: DomainContextType,
     innovationId: string,
     entityManager?: EntityManager
-  ): Promise<
-    Record<
-      keyof typeof InnovationSupportSummaryTypeEnum,
-      {
-        id: string;
-        name: string;
-        support: { status: InnovationSupportStatusEnum; start?: Date; end?: Date };
-      }[]
-    >
-  > {
+  ): Promise<Record<keyof typeof InnovationSupportSummaryTypeEnum, SuggestedUnitType[]>> {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const suggestedUnitsInfoMap = await this.getSuggestedUnitsInfoMap(innovationId, em);
@@ -780,6 +771,7 @@ export class InnovationSupportsService extends BaseService {
           name: support.unitName,
           ...(support.unitId === domainContext.organisation?.organisationUnit?.id && { sameOrganisation: true }),
           support: {
+            id: support.id,
             status: support.status,
             start: support.startSupport ?? undefined
           }
@@ -790,6 +782,7 @@ export class InnovationSupportsService extends BaseService {
           name: support.unitName,
           ...(support.unitId === domainContext.organisation?.organisationUnit?.id && { sameOrganisation: true }),
           support: {
+            id: support.id,
             status: support.status,
             start: support.startSupport,
             end: support.endSupport
@@ -801,6 +794,7 @@ export class InnovationSupportsService extends BaseService {
           name: support.unitName,
           ...(support.unitId === domainContext.organisation?.organisationUnit?.id && { sameOrganisation: true }),
           support: {
+            id: support.id,
             status: support.status,
             start: support.updatedAt
           }
