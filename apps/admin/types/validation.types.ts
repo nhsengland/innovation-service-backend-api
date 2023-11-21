@@ -4,7 +4,7 @@ import type { AdminOperationEnum, ValidationRuleEnum } from '../_config/admin-op
 export type ValidationResult = {
   rule: ValidationRuleEnum;
   valid: boolean;
-  details?: Record<string, unknown> | ValidationResult[];
+  details?: any;
 };
 
 export type AdminValidationsTemplatesType = {

@@ -82,8 +82,9 @@ export class ValidationService extends BaseService {
 
     const role = await em
       .createQueryBuilder(UserRoleEntity, 'userRole')
-      .innerJoinAndSelect('userRole.organisationUnit', 'organisationUnit')
-      .innerJoinAndSelect('userRole.user', 'user')
+      .select(['userRole.id', 'organisationUnit.id', 'organisationUnit.name', 'user.id'])
+      .innerJoin('userRole.organisationUnit', 'organisationUnit')
+      .innerJoin('userRole.user', 'user')
       .where('userRole.id = :userRoleId', { userRoleId: userRoleId })
       .getOne();
 
@@ -93,7 +94,7 @@ export class ValidationService extends BaseService {
 
     const innovationSupportedOnlyByUser = await em
       .createQueryBuilder(InnovationEntity, 'innovation')
-      .select(['innovation.id', 'innovation.name', 'supports.id', 'organisationUnit.name'])
+      .select(['innovation.id', 'innovation.name'])
       .innerJoin('innovation.innovationSupports', 'supports')
       .innerJoin('supports.userRoles', 'userRole')
       .innerJoin('supports.organisationUnit', 'organisationUnit')
@@ -117,7 +118,7 @@ export class ValidationService extends BaseService {
       valid: innovationSupportedOnlyByUser.length === 0,
       ...(innovationSupportedOnlyByUser.length && {
         details: {
-          unit: innovationSupportedOnlyByUser[0]?.innovationSupports[0]?.organisationUnit?.name,
+          unit: role.organisationUnit?.name,
           innovations: innovationSupportedOnlyByUser.map(i => ({ id: i.id, name: i.name }))
         }
       })

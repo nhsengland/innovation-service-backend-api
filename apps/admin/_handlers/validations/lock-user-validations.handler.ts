@@ -42,7 +42,11 @@ export class LockUserValidationsHandler extends ValidationsHandler<AdminOperatio
     for (const validationName of [...new Set(allValidations.map(v => v.rule))]) {
       const validations = allValidations.filter(v => v.rule === validationName && !v.valid);
       if (validations.length) {
-        this.validations.push({ rule: validationName, valid: false, details: validations });
+        this.validations.push({
+          rule: validationName,
+          valid: false,
+          details: validations.filter(v => v.details).flatMap(v => v.details)
+        });
       } else {
         this.validations.push({ rule: validationName, valid: true });
       }
