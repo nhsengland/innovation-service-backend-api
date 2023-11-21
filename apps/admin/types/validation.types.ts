@@ -1,9 +1,10 @@
-import type { ServiceRoleEnum } from "@admin/shared/enums";
-import type { AdminOperationEnum, ValidationRuleEnum } from "../_config/admin-operations.config";
+import type { ServiceRoleEnum } from '@admin/shared/enums';
+import type { AdminOperationEnum, ValidationRuleEnum } from '../_config/admin-operations.config';
 
 export type ValidationResult = {
   rule: ValidationRuleEnum;
   valid: boolean;
+  details?: any;
 };
 
 export type AdminValidationsTemplatesType = {
@@ -23,11 +24,11 @@ export type AdminValidationsTemplatesType = {
 
   [AdminOperationEnum.ADD_USER_ROLE]: {
     userId: string;
-    role: ServiceRoleEnum,
-    organisationUnitIds?: string[]
+    role: ServiceRoleEnum;
+    organisationUnitIds?: string[];
   };
 
   [AdminOperationEnum.ADD_ANY_USER_ROLE]: {
     userId: string;
   };
-}
+};

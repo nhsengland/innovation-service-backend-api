@@ -1,19 +1,19 @@
-import { container } from '../_config';
 import { In, type EntityManager } from 'typeorm';
+import { container } from '../_config';
 
 import { TestsHelper } from '@admin/shared/tests';
 
 import { OrganisationUnitEntity, UserEntity } from '@admin/shared/entities';
 
-import { InnovationSupportStatusEnum, ServiceRoleEnum, UserStatusEnum } from '@admin/shared/enums';
-import SYMBOLS from './symbols';
-import type { ValidationService } from './validation.service';
-import { ValidationRuleEnum } from '../_config/admin-operations.config';
 import { UserRoleEntity } from '@admin/shared/entities';
-import { UserBuilder } from '@admin/shared/tests/builders/user.builder';
-import { randUuid } from '@ngneat/falso';
+import { InnovationSupportStatusEnum, ServiceRoleEnum, UserStatusEnum } from '@admin/shared/enums';
 import { NotFoundError, UserErrorsEnum } from '@admin/shared/errors';
 import { InnovationSupportBuilder } from '@admin/shared/tests/builders/innovation-support.builder';
+import { UserBuilder } from '@admin/shared/tests/builders/user.builder';
+import { randUuid } from '@ngneat/falso';
+import { ValidationRuleEnum } from '../_config/admin-operations.config';
+import SYMBOLS from './symbols';
+import type { ValidationService } from './validation.service';
 
 describe('Admin / _services / validations service suite', () => {
   let sut: ValidationService;
@@ -160,7 +160,15 @@ describe('Admin / _services / validations service suite', () => {
 
       expect(result).toMatchObject({
         rule: ValidationRuleEnum.NoInnovationsSupportedOnlyByThisUser,
-        valid: false
+        valid: false,
+        details: {
+          innovations: [
+            {
+              id: scenario.users.johnInnovator.innovations.johnInnovationEmpty.id,
+              name: scenario.users.johnInnovator.innovations.johnInnovationEmpty.name
+            }
+          ]
+        }
       });
     });
 
@@ -440,12 +448,10 @@ describe('Admin / _services / validations service suite', () => {
     });
 
     it(`should return false if the user has an ASSESSMENT role and is QA/A in all units of org`, async () => {
-      await em
-        .getRepository(UserRoleEntity)
-        .save({
-          user: UserEntity.new({ id: scenario.users.jamieMadroxAccessor.id }),
-          role: ServiceRoleEnum.ASSESSMENT
-        });
+      await em.getRepository(UserRoleEntity).save({
+        user: UserEntity.new({ id: scenario.users.jamieMadroxAccessor.id }),
+        role: ServiceRoleEnum.ASSESSMENT
+      });
 
       const validation = await sut.checkIfUserCanHaveAssessmentOrAccessorRole(
         scenario.users.jamieMadroxAccessor.id,
