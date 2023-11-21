@@ -1,10 +1,10 @@
 import { container } from '../../_config';
 
-import type { AdminOperationEnum } from '../../_config/admin-operations.config';
-import type { AdminValidationsTemplatesType, ValidationResult } from '../../types/validation.types';
+import { ServiceRoleEnum } from '@admin/shared/enums/user.enums';
 import type { DomainService } from '@admin/shared/services';
 import SHARED_SYMBOLS from '@admin/shared/services/symbols';
-import { ServiceRoleEnum } from '@admin/shared/enums/user.enums';
+import type { AdminOperationEnum } from '../../_config/admin-operations.config';
+import type { AdminValidationsTemplatesType, ValidationResult } from '../../types/validation.types';
 
 import { ValidationsHandler } from './validations.handler';
 
@@ -40,8 +40,9 @@ export class LockUserValidationsHandler extends ValidationsHandler<AdminOperatio
     // if any of the same type validations is false then the grouped validation is false
     // otherwise all are true so the grouped validation is true
     for (const validationName of [...new Set(allValidations.map(v => v.rule))]) {
-      if (allValidations.find(v => v.rule === validationName && !v.valid)) {
-        this.validations.push({ rule: validationName, valid: false });
+      const validations = allValidations.filter(v => v.rule === validationName && !v.valid);
+      if (validations.length) {
+        this.validations.push({ rule: validationName, valid: false, details: validations });
       } else {
         this.validations.push({ rule: validationName, valid: true });
       }
