@@ -1,4 +1,6 @@
+import type { InnovationFileContextTypeEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 import { InnovationStatisticsEnum } from '../_enums/innovation.enums';
+import { DocumentsStatisticsHandler } from '../_handlers/statistics/documents-statistics.handler';
 import { PendingExportRequestsStatisticsHandler } from '../_handlers/statistics/pending-export-requests.handler';
 import { SectionsSubmittedSinceAssessmentStartStatisticsHandler } from '../_handlers/statistics/sections-submitted-since-assessment-start.handler';
 import { SectionsSubmittedSinceSupportStartStatisticsHandler } from '../_handlers/statistics/sections-submitted-since-support-start.handler';
@@ -38,6 +40,9 @@ export const INNOVATION_STATISTICS_CONFIG: Record<
   },
   [InnovationStatisticsEnum.PENDING_EXPORT_REQUESTS_COUNTER]: {
     handler: PendingExportRequestsStatisticsHandler
+  },
+  [InnovationStatisticsEnum.DOCUMENTS_STATISTICS_COUNTER]: {
+    handler: DocumentsStatisticsHandler
   }
 };
 
@@ -83,6 +88,11 @@ export type InnovationStatisticsTemplateType = {
   [InnovationStatisticsEnum.PENDING_EXPORT_REQUESTS_COUNTER]: {
     count: number;
   };
+  [InnovationStatisticsEnum.DOCUMENTS_STATISTICS_COUNTER]: {
+    uploadedByRoles: { role: ServiceRoleEnum; count: number }[];
+    uploadedByUnits: { unit: string; count: number }[];
+    locations: { location: InnovationFileContextTypeEnum; count: number }[];
+  };
 };
 
 export type InnovationStatisticsParamsTemplateType = {
@@ -99,4 +109,5 @@ export type InnovationStatisticsParamsTemplateType = {
   };
   [InnovationStatisticsEnum.UNREAD_MESSAGES_THREADS_INITIATED_BY_COUNTER]: { innovationId: string };
   [InnovationStatisticsEnum.PENDING_EXPORT_REQUESTS_COUNTER]: { innovationId: string };
+  [InnovationStatisticsEnum.DOCUMENTS_STATISTICS_COUNTER]: { innovationId: string };
 };

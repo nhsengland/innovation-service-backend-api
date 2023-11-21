@@ -1,4 +1,5 @@
 import {
+  DocumentsStatisticsViewEntity,
   InnovationAssessmentEntity,
   InnovationExportRequestEntity,
   InnovationSectionEntity,
@@ -10,9 +11,11 @@ import {
 } from '@innovations/shared/entities';
 import {
   InnovationExportRequestStatusEnum,
+  InnovationFileContextTypeEnum,
   InnovationSectionStatusEnum,
   InnovationSupportStatusEnum,
-  InnovationTaskStatusEnum
+  InnovationTaskStatusEnum,
+  ServiceRoleEnum
 } from '@innovations/shared/enums';
 import { NotFoundError, OrganisationErrorsEnum } from '@innovations/shared/errors';
 import type { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
@@ -277,5 +280,27 @@ export class StatisticsService extends BaseService {
       .getCount();
 
     return nPendingRequests;
+  }
+
+  async getDocumentsStatistics(
+    innovationId: string,
+    entityManager?: EntityManager
+  ): Promise<{
+    uploadedByRoles: { role: ServiceRoleEnum; count: number }[];
+    uploadedByUnits: { unit: string; count: number }[];
+    locations: { location: InnovationFileContextTypeEnum; count: number }[];
+  }> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const statistics = await em
+      .createQueryBuilder(DocumentsStatisticsViewEntity, 'stats')
+      .where('stats.innovation_id = :innovationId', { innovationId })
+      .getOne();
+
+    return {
+      uploadedByRoles: statistics?.uploadedByRoles ?? [],
+      uploadedByUnits: statistics?.uploadedByUnits ?? [],
+      locations: statistics?.locations ?? []
+    };
   }
 }
