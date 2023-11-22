@@ -6,7 +6,7 @@ import {
 } from '@notifications/shared/types';
 
 import type { Context } from '@azure/functions';
-import { assessmentUrl, threadUrl } from '../../_helpers/url.helper';
+import { taskUrl, threadUrl } from '../../_helpers/url.helper';
 import type { RecipientType } from '../../_services/recipients.service';
 import { BaseHandler } from '../base.handler';
 
@@ -18,8 +18,6 @@ export class TaskUpdateHandler extends BaseHandler<
   | 'TA05_TASK_CANCELLED_TO_INNOVATOR'
   | 'TA06_TASK_REOPEN_TO_INNOVATOR'
 > {
-  //private identityProviderService = container.get<IdentityProviderService>(SHARED_SYMBOLS.IdentityProviderService);
-
   constructor(
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.TASK_UPDATE],
@@ -69,29 +67,30 @@ export class TaskUpdateHandler extends BaseHandler<
     innovation: { id: string; name: string },
     innovators: RecipientType[]
   ): Promise<void> {
-    this.addEmails('TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS', innovators, {
-      notificationPreferenceType: 'TASK',
-      params: {
-        innovation_name: innovation.name,
-        innovator_name: await this.getRequestUserName(),
-        task_status: this.translateStatus(this.inputData.task.status),
-        message_url: threadUrl(ServiceRoleEnum.INNOVATOR, innovation.id, this.inputData.threadId)
-      }
-    });
-
-    this.addInApp('TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS', innovators, {
-      context: {
-        type: 'TASK',
-        detail: 'TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS',
-        id: this.inputData.task.id
+    this.notify('TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS', innovators, {
+      email: {
+        notificationPreferenceType: 'TASK',
+        params: {
+          innovation_name: innovation.name,
+          innovator_name: await this.getRequestUserName(),
+          task_status: this.translateStatus(this.inputData.task.status),
+          message_url: threadUrl(ServiceRoleEnum.INNOVATOR, innovation.id, this.inputData.threadId)
+        }
       },
-      innovationId: this.inputData.innovationId,
-      params: {
-        requestUserName: await this.getRequestUserName(),
-        innovationName: innovation.name,
-        status: this.inputData.task.status,
-        messageId: this.inputData.messageId,
-        threadId: this.inputData.threadId
+      inApp: {
+        context: {
+          type: 'TASK',
+          detail: 'TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS',
+          id: this.inputData.task.id
+        },
+        innovationId: this.inputData.innovationId,
+        params: {
+          requestUserName: await this.getRequestUserName(),
+          innovationName: innovation.name,
+          status: this.inputData.task.status,
+          messageId: this.inputData.messageId,
+          threadId: this.inputData.threadId
+        }
       }
     });
   }
@@ -100,30 +99,31 @@ export class TaskUpdateHandler extends BaseHandler<
     innovation: { id: string; name: string },
     recipient: RecipientType
   ): Promise<void> {
-    this.addEmails('TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT', [recipient], {
-      notificationPreferenceType: 'TASK',
-      params: {
-        innovation_name: innovation.name,
-        innovator_name: await this.getRequestUserName(),
-        message: this.inputData.message,
-        message_url: threadUrl(recipient.role, innovation.id, this.inputData.threadId),
-        task_url: assessmentUrl(recipient.role, innovation.id, this.inputData.task.id)
-      }
-    });
-
-    this.addInApp('TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT', [recipient], {
-      context: {
-        type: 'TASK',
-        detail: 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT',
-        id: this.inputData.task.id
+    this.notify('TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT', [recipient], {
+      email: {
+        notificationPreferenceType: 'TASK',
+        params: {
+          innovation_name: innovation.name,
+          innovator_name: await this.getRequestUserName(),
+          message: this.inputData.message,
+          message_url: threadUrl(recipient.role, innovation.id, this.inputData.threadId),
+          task_url: taskUrl(recipient.role, innovation.id, this.inputData.task.id)
+        }
       },
-      innovationId: this.inputData.innovationId,
-      params: {
-        requestUserName: await this.getRequestUserName(),
-        innovationName: innovation.name,
-        status: this.inputData.task.status,
-        messageId: this.inputData.messageId,
-        threadId: this.inputData.threadId
+      inApp: {
+        context: {
+          type: 'TASK',
+          detail: 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT',
+          id: this.inputData.task.id
+        },
+        innovationId: this.inputData.innovationId,
+        params: {
+          requestUserName: await this.getRequestUserName(),
+          innovationName: innovation.name,
+          status: this.inputData.task.status,
+          messageId: this.inputData.messageId,
+          threadId: this.inputData.threadId
+        }
       }
     });
   }
@@ -132,29 +132,30 @@ export class TaskUpdateHandler extends BaseHandler<
     innovation: { id: string; name: string },
     recipient: RecipientType
   ): Promise<void> {
-    this.addEmails('TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT', [recipient], {
-      notificationPreferenceType: 'TASK',
-      params: {
-        innovation_name: innovation.name,
-        innovator_name: await this.getRequestUserName(),
-        message: this.inputData.message,
-        message_url: threadUrl(recipient.role, innovation.id, this.inputData.threadId)
-      }
-    });
-
-    this.addInApp('TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT', [recipient], {
-      context: {
-        type: 'TASK',
-        detail: 'TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT',
-        id: this.inputData.task.id
+    this.notify('TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT', [recipient], {
+      email: {
+        notificationPreferenceType: 'TASK',
+        params: {
+          innovation_name: innovation.name,
+          innovator_name: await this.getRequestUserName(),
+          message: this.inputData.message,
+          message_url: threadUrl(recipient.role, innovation.id, this.inputData.threadId)
+        }
       },
-      innovationId: this.inputData.innovationId,
-      params: {
-        requestUserName: await this.getRequestUserName(),
-        innovationName: innovation.name,
-        status: this.inputData.task.status,
-        messageId: this.inputData.messageId,
-        threadId: this.inputData.threadId
+      inApp: {
+        context: {
+          type: 'TASK',
+          detail: 'TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT',
+          id: this.inputData.task.id
+        },
+        innovationId: this.inputData.innovationId,
+        params: {
+          requestUserName: await this.getRequestUserName(),
+          innovationName: innovation.name,
+          status: this.inputData.task.status,
+          messageId: this.inputData.messageId,
+          threadId: this.inputData.threadId
+        }
       }
     });
   }
@@ -163,30 +164,31 @@ export class TaskUpdateHandler extends BaseHandler<
     innovation: { id: string; name: string },
     innovators: RecipientType[]
   ): Promise<void> {
-    this.addEmails('TA05_TASK_CANCELLED_TO_INNOVATOR', innovators, {
-      notificationPreferenceType: 'TASK',
-      params: {
-        accessor_name: await this.getRequestUserName(),
-        unit_name: this.getRequestUnitName(),
-        innovation_name: innovation.name,
-        message: this.inputData.message,
-        message_url: threadUrl(ServiceRoleEnum.INNOVATOR, innovation.id, this.inputData.threadId)
-      }
-    });
-
-    this.addInApp('TA05_TASK_CANCELLED_TO_INNOVATOR', innovators, {
-      context: {
-        type: 'TASK',
-        detail: 'TA05_TASK_CANCELLED_TO_INNOVATOR',
-        id: this.inputData.task.id
+    this.notify('TA05_TASK_CANCELLED_TO_INNOVATOR', innovators, {
+      email: {
+        notificationPreferenceType: 'TASK',
+        params: {
+          accessor_name: await this.getRequestUserName(),
+          unit_name: this.getRequestUnitName(),
+          innovation_name: innovation.name,
+          message: this.inputData.message,
+          message_url: threadUrl(ServiceRoleEnum.INNOVATOR, innovation.id, this.inputData.threadId)
+        }
       },
-      innovationId: this.inputData.innovationId,
-      params: {
-        requestUserName: await this.getRequestUserName(),
-        innovationName: innovation.name,
-        unitName: this.getRequestUnitName(),
-        messageId: this.inputData.messageId,
-        threadId: this.inputData.threadId
+      inApp: {
+        context: {
+          type: 'TASK',
+          detail: 'TA05_TASK_CANCELLED_TO_INNOVATOR',
+          id: this.inputData.task.id
+        },
+        innovationId: this.inputData.innovationId,
+        params: {
+          requestUserName: await this.getRequestUserName(),
+          innovationName: innovation.name,
+          unitName: this.getRequestUnitName(),
+          messageId: this.inputData.messageId,
+          threadId: this.inputData.threadId
+        }
       }
     });
   }
@@ -195,30 +197,31 @@ export class TaskUpdateHandler extends BaseHandler<
     innovation: { id: string; name: string },
     innovators: RecipientType[]
   ): Promise<void> {
-    this.addEmails('TA06_TASK_REOPEN_TO_INNOVATOR', innovators, {
-      notificationPreferenceType: 'TASK',
-      params: {
-        accessor_name: await this.getRequestUserName(),
-        unit_name: this.getRequestUnitName(),
-        innovation_name: innovation.name,
-        message: this.inputData.message,
-        message_url: threadUrl(ServiceRoleEnum.INNOVATOR, innovation.id, this.inputData.threadId)
-      }
-    });
-
-    this.addInApp('TA06_TASK_REOPEN_TO_INNOVATOR', innovators, {
-      context: {
-        type: 'TASK',
-        detail: 'TA06_TASK_REOPEN_TO_INNOVATOR',
-        id: this.inputData.task.id
+    this.notify('TA06_TASK_REOPEN_TO_INNOVATOR', innovators, {
+      email: {
+        notificationPreferenceType: 'TASK',
+        params: {
+          accessor_name: await this.getRequestUserName(),
+          unit_name: this.getRequestUnitName(),
+          innovation_name: innovation.name,
+          message: this.inputData.message,
+          message_url: threadUrl(ServiceRoleEnum.INNOVATOR, innovation.id, this.inputData.threadId)
+        }
       },
-      innovationId: this.inputData.innovationId,
-      params: {
-        requestUserName: await this.getRequestUserName(),
-        innovationName: innovation.name,
-        unitName: this.getRequestUnitName(),
-        messageId: this.inputData.messageId,
-        threadId: this.inputData.threadId
+      inApp: {
+        context: {
+          type: 'TASK',
+          detail: 'TA06_TASK_REOPEN_TO_INNOVATOR',
+          id: this.inputData.task.id
+        },
+        innovationId: this.inputData.innovationId,
+        params: {
+          requestUserName: await this.getRequestUserName(),
+          innovationName: innovation.name,
+          unitName: this.getRequestUnitName(),
+          messageId: this.inputData.messageId,
+          threadId: this.inputData.threadId
+        }
       }
     });
   }
