@@ -122,7 +122,8 @@ describe('Notifications / _handlers / idle support handler suite', () => {
           innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
           params: {
             innovationName: scenario.users.johnInnovator.innovations.johnInnovation.name,
-            supportId: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByHealthOrgUnit.id
+            supportId: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByHealthOrgUnit.id,
+            unitId: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id
           }
         },
         {
@@ -135,7 +136,8 @@ describe('Notifications / _handlers / idle support handler suite', () => {
           innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
           params: {
             innovationName: scenario.users.johnInnovator.innovations.johnInnovation.name,
-            supportId: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByMedTechOrgUnit.id
+            supportId: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByMedTechOrgUnit.id,
+            unitId: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id
           }
         }
       ]);

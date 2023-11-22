@@ -127,6 +127,7 @@ export type InAppTemplatesType = {
   AU02_ACCESSOR_IDLE_ENGAGING_SUPPORT: {
     innovationName: string;
     supportId: string;
+    unitId: string;
   };
   AU03_INNOVATOR_IDLE_SUPPORT: {
     innovationName: string;
