@@ -58,7 +58,8 @@ export class IdleSupportAccessorHandler extends BaseHandler<
             innovationId,
             params: {
               innovationName: innovation.name,
-              supportId: support.supportId
+              supportId: support.supportId,
+              unitId: support.unitId
             }
           }
         });
