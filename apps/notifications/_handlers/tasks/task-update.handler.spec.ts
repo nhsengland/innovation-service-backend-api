@@ -3,7 +3,7 @@ import { InnovationTaskStatusEnum, ServiceRoleEnum } from '@notifications/shared
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { randomUUID } from 'crypto';
 import { testEmails, testInApps } from '../../_helpers/tests.helper';
-import { taskUrl, threadUrl } from '../../_helpers/url.helper';
+import { taskListUrl, threadUrl } from '../../_helpers/url.helper';
 import { NotificationsTestsHelper } from '../../_tests/notifications-test.helper';
 import { TaskUpdateHandler } from './task-update.handler';
 
@@ -100,7 +100,7 @@ describe('Notifications / _handlers / task-update suite', () => {
             innovator_name: scenario.users.johnInnovator.name,
             message: message,
             message_url: threadUrl(ServiceRoleEnum.QUALIFYING_ACCESSOR, innovation.id, threadId),
-            task_url: taskUrl(ServiceRoleEnum.QUALIFYING_ACCESSOR, innovation.id, task.id)
+            task_url: taskListUrl(ServiceRoleEnum.QUALIFYING_ACCESSOR, innovation.id)
           }
         });
       });
