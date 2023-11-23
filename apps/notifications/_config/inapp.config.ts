@@ -95,7 +95,7 @@ export type InAppTemplatesType = {
   ST07_SUPPORT_STATUS_CHANGE_REQUEST: {
     accessorName: string;
     innovationName: string;
-    proposedStatus: string;
+    status: string;
   };
   // Needs assessment
   NA01_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_INNOVATOR: {
