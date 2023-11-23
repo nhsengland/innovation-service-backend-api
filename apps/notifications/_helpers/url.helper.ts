@@ -50,6 +50,14 @@ export const taskUrl = (role: ServiceRoleEnum, innovationId: string, taskId: str
     .buildUrl();
 };
 
+export const taskListUrl = (role: ServiceRoleEnum, innovationId: string): string => {
+  const baseUrl = frontendBaseUrl(role);
+  return new UrlModel(ENV.webBaseTransactionalUrl)
+    .addPath(':baseUrl/innovations/:innovationId/tasks')
+    .setPathParams({ baseUrl, innovationId })
+    .buildUrl();
+};
+
 export const threadsUrl = (role: ServiceRoleEnum, innovationId: string): string => {
   const baseUrl = frontendBaseUrl(role);
   return new UrlModel(ENV.webBaseTransactionalUrl)
