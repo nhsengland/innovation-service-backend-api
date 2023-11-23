@@ -26,6 +26,8 @@ export class SupportStatusChangeRequestHandler extends BaseHandler<
         this.requestUser.organisation.organisationUnit.id
       ]);
 
+      const status = TranslationHelper.translate(`SUPPORT_STATUS.${this.inputData.proposedStatus}`).toLowerCase();
+
       this.notify('ST07_SUPPORT_STATUS_CHANGE_REQUEST', qas, {
         email: {
           notificationPreferenceType: 'SUPPORT',
@@ -33,9 +35,7 @@ export class SupportStatusChangeRequestHandler extends BaseHandler<
             accessor_name: accessor,
             innovation_name: innovation.name,
             innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, innovation.id),
-            proposed_status: TranslationHelper.translate(
-              `SUPPORT_STATUS.${this.inputData.proposedStatus}`
-            ).toLowerCase(),
+            proposed_status: status,
             request_comment: this.inputData.requestStatusUpdateComment
           }
         },
@@ -49,7 +49,7 @@ export class SupportStatusChangeRequestHandler extends BaseHandler<
           params: {
             accessorName: accessor,
             innovationName: innovation.name,
-            proposedStatus: this.inputData.proposedStatus
+            status
           }
         }
       });

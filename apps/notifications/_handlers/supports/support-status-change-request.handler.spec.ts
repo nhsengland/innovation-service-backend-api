@@ -19,6 +19,7 @@ describe('Notifications / _handlers / support-new-assigned-accessors suite', () 
   const support = innovation.supports.supportByHealthOrgUnit;
 
   const message = randText();
+  const status = TranslationHelper.translate(`SUPPORT_STATUS.UNSUITABLE`).toLowerCase();
 
   const requestUser = scenario.users.jamieMadroxAccessor;
 
@@ -38,7 +39,7 @@ describe('Notifications / _handlers / support-new-assigned-accessors suite', () 
           accessor_name: requestUser.name,
           innovation_name: innovation.name,
           innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, innovation.id),
-          proposed_status: TranslationHelper.translate(`SUPPORT_STATUS.UNSUITABLE`).toLowerCase(),
+          proposed_status: status,
           request_comment: message
         }
       });
@@ -62,7 +63,7 @@ describe('Notifications / _handlers / support-new-assigned-accessors suite', () 
         outputData: {
           accessorName: requestUser.name,
           innovationName: innovation.name,
-          proposedStatus: InnovationSupportStatusEnum.UNSUITABLE
+          status
         }
       });
     });
