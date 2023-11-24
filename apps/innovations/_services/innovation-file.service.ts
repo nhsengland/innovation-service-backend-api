@@ -55,7 +55,7 @@ export class InnovationFileService extends BaseService {
       uploadedBy?: ServiceRoleEnum[];
       contextTypes?: InnovationFileContextTypeEnum[];
       contextId?: string;
-      organisations?: string[];
+      units?: string[];
       dateFilter?: {
         field: 'createdAt';
         startDate?: Date;
@@ -126,9 +126,9 @@ export class InnovationFileService extends BaseService {
       query.andWhere('file.context_id = :contextId', { contextId: filters.contextId });
     }
 
-    if (filters.organisations) {
-      query.andWhere('createdByUserRole.organisation_id IN (:...organisations)', {
-        organisations: filters.organisations
+    if (filters.units) {
+      query.andWhere('createdByUserOrgUnit.id IN (:...units)', {
+        units: filters.units
       });
     }
 

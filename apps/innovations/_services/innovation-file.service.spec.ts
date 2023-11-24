@@ -244,19 +244,17 @@ describe('Services / Innovation File service suite', () => {
       const innovationMessageFileByAlice = { file: innovation.files.messageFileByAlice, url: randUrl() };
       const innovationFileByAlice = { file: innovation.files.innovationFileByAlice, url: randUrl() };
       const innovationFileByIngrid = { file: innovation.files.innovationFileByIngrid, url: randUrl() };
-      const innovationFileByJamie = { file: innovation.files.innovationFileByJamieWithAiRole, url: randUrl() };
 
       jest
         .spyOn(FileStorageService.prototype, 'getDownloadUrl')
         .mockReturnValueOnce(innovationMessageFileByAlice.url)
         .mockReturnValueOnce(innovationFileByAlice.url)
-        .mockReturnValueOnce(innovationFileByIngrid.url)
-        .mockReturnValueOnce(innovationFileByJamie.url);
+        .mockReturnValueOnce(innovationFileByIngrid.url);
 
       const files = await sut.getFilesList(
         innovation.id,
-        { organisations: [scenario.organisations.healthOrg.id] },
-        { take: 4, skip: 0, order: { createdAt: 'ASC' } },
+        { units: [scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id] },
+        { take: 3, skip: 0, order: { createdAt: 'ASC' } },
         em
       );
 
@@ -277,11 +275,6 @@ describe('Services / Innovation File service suite', () => {
           name: scenario.users.ingridAccessor.name,
           role: ServiceRoleEnum.ACCESSOR,
           orgUnitName: scenario.users.ingridAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name
-        }),
-        transformFileData(innovationFileByJamie.file, innovationFileByJamie.url, {
-          name: scenario.users.jamieMadroxAccessor.name,
-          role: ServiceRoleEnum.ACCESSOR,
-          orgUnitName: scenario.users.jamieMadroxAccessor.organisations.healthOrg.organisationUnits.healthOrgAiUnit.name
         })
       ];
 
