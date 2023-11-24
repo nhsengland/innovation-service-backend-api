@@ -336,7 +336,13 @@ describe('Innovations / _services / innovation statistics suite', () => {
       const statistics = await sut.getDocumentsStatistics(innovation.id, em);
       expect(statistics).toStrictEqual({
         uploadedByRoles: [{ role: ServiceRoleEnum.ACCESSOR, count: 1 }],
-        uploadedByUnits: [{ unit: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.acronym, count: 1 }],
+        uploadedByUnits: [
+          {
+            id: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
+            unit: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.acronym,
+            count: 1
+          }
+        ],
         locations: [{ location: InnovationFileContextTypeEnum.INNOVATION, count: 1 }]
       });
     });

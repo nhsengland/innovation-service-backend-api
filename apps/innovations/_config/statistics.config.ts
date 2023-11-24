@@ -90,7 +90,7 @@ export type InnovationStatisticsTemplateType = {
   };
   [InnovationStatisticsEnum.DOCUMENTS_STATISTICS_COUNTER]: {
     uploadedByRoles: { role: ServiceRoleEnum; count: number }[];
-    uploadedByUnits: { unit: string; count: number }[];
+    uploadedByUnits: { id: string; unit: string; count: number }[];
     locations: { location: InnovationFileContextTypeEnum; count: number }[];
   };
 };
