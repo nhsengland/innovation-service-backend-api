@@ -20,7 +20,7 @@ export type QueryParamsType = PaginationQueryParamsType<OrderFields> & {
   uploadedBy?: ServiceRoleEnum[];
   contextTypes?: InnovationFileContextTypeEnum[];
   contextId?: string;
-  organisations?: string[];
+  units?: string[];
   dateFilter?: {
     field: 'createdAt';
     startDate?: Date;
@@ -41,7 +41,7 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
     .items(Joi.string().valid(...Object.values(InnovationFileContextTypeEnum)))
     .optional(),
   contextId: Joi.string().max(100).optional(),
-  organisations: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().uuid()).optional(),
+  units: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().uuid()).optional(),
   dateFilter: JoiHelper.AppCustomJoi()
     .stringArrayOfObjects()
     .items(
