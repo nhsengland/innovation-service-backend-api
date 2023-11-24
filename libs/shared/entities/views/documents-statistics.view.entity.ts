@@ -5,7 +5,7 @@ import type { InnovationFileContextTypeEnum } from '../../enums/innovation.enums
 
 export type UploadedByRoleType = { role: ServiceRoleEnum; count: number };
 export type LocationType = { location: InnovationFileContextTypeEnum; count: number };
-export type UploadedByUnitType = { unit: string; count: number };
+export type UploadedByUnitType = { id: string; unit: string; count: number };
 
 @ViewEntity('documents_statistics_view')
 export class DocumentsStatisticsViewEntity {

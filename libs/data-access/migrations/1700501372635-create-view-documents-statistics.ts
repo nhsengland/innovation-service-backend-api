@@ -21,11 +21,11 @@ export class createViewDocumentStatistics1700501372635 implements MigrationInter
           GROUP BY innovation_id, context_type
       ),
       uploaded_by_unit as (
-          SELECT innovation_id, ou.acronym as unit, COUNT(*) as count
+          SELECT innovation_id, ou.id as id, ou.acronym as unit, COUNT(*) as count
           FROM files f
           INNER JOIN user_role r ON r.id = f.created_by_user_role_id AND r.role IN ('ACCESSOR', 'QUALIFYING_ACCESSOR')
           INNER JOIN organisation_unit ou ON ou.id = r.organisation_unit_id AND ou.deleted_at IS NULL
-          GROUP BY innovation_id, ou.acronym
+          GROUP BY innovation_id, ou.id, ou.acronym
       ),
       innovation AS (
           SELECT DISTINCT innovation_id
@@ -34,7 +34,7 @@ export class createViewDocumentStatistics1700501372635 implements MigrationInter
       SELECT innovation_id,
       (SELECT role, count FROM uploaded_by WHERE innovation_id = i.innovation_id FOR JSON PATH) as uploaded_by_roles,
       (SELECT location, count FROM location WHERE innovation_id = i.innovation_id FOR JSON PATH) as locations,
-      (SELECT unit, count FROM uploaded_by_unit WHERE innovation_id = i.innovation_id FOR JSON PATH) as uploaded_by_units
+      (SELECT id, unit, count FROM uploaded_by_unit WHERE innovation_id = i.innovation_id FOR JSON PATH) as uploaded_by_units
       FROM innovation i
       `);
   }

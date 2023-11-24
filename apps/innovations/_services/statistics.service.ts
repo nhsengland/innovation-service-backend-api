@@ -287,7 +287,7 @@ export class StatisticsService extends BaseService {
     entityManager?: EntityManager
   ): Promise<{
     uploadedByRoles: { role: ServiceRoleEnum; count: number }[];
-    uploadedByUnits: { unit: string; count: number }[];
+    uploadedByUnits: { id: string; unit: string; count: number }[];
     locations: { location: InnovationFileContextTypeEnum; count: number }[];
   }> {
     const em = entityManager ?? this.sqlConnection.manager;

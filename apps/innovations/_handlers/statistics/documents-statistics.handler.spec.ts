@@ -16,7 +16,7 @@ describe('Documents Statistics Handler Suite', () => {
 
   const expectedStatistics: Awaited<ReturnType<StatisticsService['getDocumentsStatistics']>> = {
     uploadedByRoles: [{ role: ServiceRoleEnum.ACCESSOR, count: 1 }],
-    uploadedByUnits: [{ unit: randAbbreviation(), count: 10 }],
+    uploadedByUnits: [{ id: randUuid(), unit: randAbbreviation(), count: 10 }],
     locations: [{ location: InnovationFileContextTypeEnum.INNOVATION_EVIDENCE, count: 2 }]
   };
   const mockDocumentStatistics = jest
