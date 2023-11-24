@@ -188,7 +188,6 @@ export type NotifierTemplatesType = {
   // Automatic / Transfer
   [NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_EXPIRATION]: {
     innovationId: string;
-    innovationName: string;
   };
   [NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_REMINDER]: {
     innovationId: string;

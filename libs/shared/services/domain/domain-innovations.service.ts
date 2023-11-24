@@ -110,8 +110,7 @@ export class DomainInnovationsService {
       for (const dbTransfer of transfersToExpire) {
         // Send the notifications
         await this.notifierService.sendSystemNotification(NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_EXPIRATION, {
-          innovationId: dbTransfer.innovation.id,
-          innovationName: dbTransfer.innovation.name
+          innovationId: dbTransfer.innovation.id
         });
       }
     }
