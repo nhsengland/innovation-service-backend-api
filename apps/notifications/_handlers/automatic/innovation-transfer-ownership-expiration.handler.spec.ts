@@ -73,8 +73,7 @@ describe('Notifications / _handlers / innovation-transfer-ownership-expiration h
     const handler = new InnovationTransferOwnershipExpirationHandler(
       DTOsHelper.getUserRequestContext(innovationOwner, 'innovatorRole'),
       {
-        innovationId: innovation.id,
-        innovationName: innovation.name
+        innovationId: innovation.id
       },
       MocksHelper.mockContext()
     );
