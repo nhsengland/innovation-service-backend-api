@@ -6,7 +6,7 @@ import {
 } from '@notifications/shared/types';
 
 import type { Context } from '@azure/functions';
-import { taskListUrl, threadUrl } from '../../_helpers/url.helper';
+import { taskUrl, threadUrl } from '../../_helpers/url.helper';
 import type { RecipientType } from '../../_services/recipients.service';
 import { BaseHandler } from '../base.handler';
 
@@ -107,7 +107,7 @@ export class TaskUpdateHandler extends BaseHandler<
           innovator_name: await this.getRequestUserName(),
           message: this.inputData.message,
           message_url: threadUrl(recipient.role, innovation.id, this.inputData.threadId),
-          task_url: taskListUrl(recipient.role, innovation.id)
+          task_url: taskUrl(recipient.role, innovation.id, this.inputData.task.id)
         }
       },
       inApp: {
