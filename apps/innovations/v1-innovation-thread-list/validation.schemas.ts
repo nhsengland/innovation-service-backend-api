@@ -20,9 +20,7 @@ export type QueryParamsType = PaginationQueryParamsType<OrderFields> & {
 export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
   orderKeys: Object.keys(OrderFields)
 })
-  .append({
-    subject: Joi.string().max(50).optional()
-  })
+  .append({ subject: JoiHelper.AppCustomJoi().decodeURIString().trim().max(50).optional() })
   .when('$userType', {
     is: Joi.string().valid(ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR, ServiceRoleEnum.ASSESSMENT),
     then: Joi.object({
