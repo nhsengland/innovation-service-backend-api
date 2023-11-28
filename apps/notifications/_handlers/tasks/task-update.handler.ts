@@ -67,13 +67,15 @@ export class TaskUpdateHandler extends BaseHandler<
     innovation: { id: string; name: string },
     innovators: RecipientType[]
   ): Promise<void> {
+    const taskStatus = this.translateStatus(this.inputData.task.status);
+
     this.notify('TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS', innovators, {
       email: {
         notificationPreferenceType: 'TASK',
         params: {
           innovation_name: innovation.name,
           innovator_name: await this.getRequestUserName(),
-          task_status: this.translateStatus(this.inputData.task.status),
+          task_status: taskStatus,
           message_url: threadUrl(ServiceRoleEnum.INNOVATOR, innovation.id, this.inputData.threadId)
         }
       },
@@ -87,7 +89,7 @@ export class TaskUpdateHandler extends BaseHandler<
         params: {
           requestUserName: await this.getRequestUserName(),
           innovationName: innovation.name,
-          status: this.inputData.task.status,
+          status: taskStatus,
           messageId: this.inputData.messageId,
           threadId: this.inputData.threadId
         }
@@ -120,7 +122,6 @@ export class TaskUpdateHandler extends BaseHandler<
         params: {
           requestUserName: await this.getRequestUserName(),
           innovationName: innovation.name,
-          status: this.inputData.task.status,
           messageId: this.inputData.messageId,
           threadId: this.inputData.threadId
         }
@@ -152,7 +153,6 @@ export class TaskUpdateHandler extends BaseHandler<
         params: {
           requestUserName: await this.getRequestUserName(),
           innovationName: innovation.name,
-          status: this.inputData.task.status,
           messageId: this.inputData.messageId,
           threadId: this.inputData.threadId
         }

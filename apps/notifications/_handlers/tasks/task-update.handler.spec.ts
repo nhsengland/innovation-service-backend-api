@@ -73,7 +73,7 @@ describe('Notifications / _handlers / task-update suite', () => {
             outputData: {
               requestUserName: scenario.users.johnInnovator.name,
               innovationName: innovation.name,
-              status: status,
+              status: status === InnovationTaskStatusEnum.DONE ? 'done' : 'declined',
               messageId: messageId,
               threadId: threadId
             }
@@ -121,7 +121,6 @@ describe('Notifications / _handlers / task-update suite', () => {
           outputData: {
             requestUserName: scenario.users.johnInnovator.name,
             innovationName: innovation.name,
-            status: InnovationTaskStatusEnum.DONE,
             messageId: messageId,
             threadId: threadId
           }
@@ -167,7 +166,6 @@ describe('Notifications / _handlers / task-update suite', () => {
           outputData: {
             requestUserName: scenario.users.johnInnovator.name,
             innovationName: innovation.name,
-            status: InnovationTaskStatusEnum.DECLINED,
             messageId: messageId,
             threadId: threadId
           }
