@@ -30,7 +30,7 @@ describe('Notifications / _handlers / innovation-submitted suite', () => {
           notificationPreferenceType: 'NEEDS_ASSESSMENT',
           outputData: {
             innovation_name: innovation.name,
-            needs_assessment: 'assessment'
+            assessment_type: 'assessment'
           },
           recipients: [DTOsHelper.getRecipientUser(scenario.users.ottoOctaviusInnovator)],
           requestUser: DTOsHelper.getUserRequestContext(scenario.users.ottoOctaviusInnovator),
@@ -53,7 +53,7 @@ describe('Notifications / _handlers / innovation-submitted suite', () => {
           },
           outputData: {
             innovationName: innovation.name,
-            needsAssessment: 'assessment'
+            assessmentType: 'assessment'
           },
           recipients: [DTOsHelper.getRecipientUser(scenario.users.ottoOctaviusInnovator)],
           requestUser: DTOsHelper.getUserRequestContext(scenario.users.ottoOctaviusInnovator),
@@ -74,7 +74,7 @@ describe('Notifications / _handlers / innovation-submitted suite', () => {
           outputData: {
             innovation_name: innovation.name,
             innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ASSESSMENT, innovation.id),
-            needs_assessment: 'assessment'
+            assessment_type: 'assessment'
           },
           recipients: naRecipients,
           requestUser: DTOsHelper.getUserRequestContext(scenario.users.ottoOctaviusInnovator)
@@ -94,7 +94,7 @@ describe('Notifications / _handlers / innovation-submitted suite', () => {
           },
           outputData: {
             innovationName: innovation.name,
-            needsAssessment: 'assessment'
+            assessmentType: 'assessment'
           },
           recipients: naRecipients,
           requestUser: DTOsHelper.getUserRequestContext(scenario.users.ottoOctaviusInnovator)
@@ -114,7 +114,7 @@ describe('Notifications / _handlers / innovation-submitted suite', () => {
           notificationPreferenceType: 'NEEDS_ASSESSMENT',
           outputData: {
             innovation_name: innovation.name,
-            needs_assessment: 'reassessment'
+            assessment_type: 'reassessment'
           },
           recipients: [DTOsHelper.getRecipientUser(scenario.users.ottoOctaviusInnovator)],
           requestUser: DTOsHelper.getUserRequestContext(scenario.users.ottoOctaviusInnovator),
@@ -137,7 +137,7 @@ describe('Notifications / _handlers / innovation-submitted suite', () => {
           },
           outputData: {
             innovationName: innovation.name,
-            needsAssessment: 'reassessment'
+            assessmentType: 'reassessment'
           },
           recipients: [DTOsHelper.getRecipientUser(scenario.users.ottoOctaviusInnovator)],
           requestUser: DTOsHelper.getUserRequestContext(scenario.users.ottoOctaviusInnovator),
@@ -158,7 +158,7 @@ describe('Notifications / _handlers / innovation-submitted suite', () => {
           outputData: {
             innovation_name: innovation.name,
             innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ASSESSMENT, innovation.id),
-            needs_assessment: 'reassessment'
+            assessment_type: 'reassessment'
           },
           recipients: naRecipients,
           requestUser: DTOsHelper.getUserRequestContext(scenario.users.ottoOctaviusInnovator)
@@ -178,7 +178,7 @@ describe('Notifications / _handlers / innovation-submitted suite', () => {
           },
           outputData: {
             innovationName: innovation.name,
-            needsAssessment: 'reassessment'
+            assessmentType: 'reassessment'
           },
           recipients: naRecipients,
           requestUser: DTOsHelper.getUserRequestContext(scenario.users.ottoOctaviusInnovator)

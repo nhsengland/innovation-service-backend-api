@@ -202,11 +202,11 @@ export type EmailTemplatesType = {
   // NEEDS ASSESSMENT
   NA01_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_INNOVATOR: {
     innovation_name: string;
-    needs_assessment: 'assessment' | 'reassessment';
+    assessment_type: 'assessment' | 'reassessment';
   };
   NA02_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_ASSESSMENT: {
     innovation_name: string;
-    needs_assessment: 'assessment' | 'reassessment';
+    assessment_type: 'assessment' | 'reassessment';
     innovation_overview_url: string;
   };
   NA03_NEEDS_ASSESSMENT_STARTED_TO_INNOVATOR: {

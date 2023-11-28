@@ -100,11 +100,11 @@ export type InAppTemplatesType = {
   // Needs assessment
   NA01_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_INNOVATOR: {
     innovationName: string;
-    needsAssessment: 'assessment' | 'reassessment';
+    assessmentType: 'assessment' | 'reassessment';
   };
   NA02_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_ASSESSMENT: {
     innovationName: string;
-    needsAssessment: 'assessment' | 'reassessment';
+    assessmentType: 'assessment' | 'reassessment';
   };
   NA03_NEEDS_ASSESSMENT_STARTED_TO_INNOVATOR: {
     innovationName: string;
