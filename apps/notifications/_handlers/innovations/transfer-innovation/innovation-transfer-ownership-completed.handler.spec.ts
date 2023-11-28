@@ -279,7 +279,7 @@ describe('Notifications / _handlers / innovation-transfer-ownership-completed ha
               innovation_name: innovation.name,
               innovator_name: previousInnovationOwner.name
             },
-            recipients: [{ email: 'test@example.org', displayname: '' }],
+            recipients: [{ email: 'test@example.org' }],
             requestUser: DTOsHelper.getUserRequestContext(previousInnovationOwner)
           });
         });
