@@ -40,6 +40,7 @@ describe('v1-me-notifications-dismiss Suite', () => {
           notificationIds: [],
           contextIds: [],
           contextTypes: [],
+          contextDetails: [],
           dismissAll: true
         })
         .call<ResponseDTO>(azureFunction);
@@ -64,6 +65,7 @@ describe('v1-me-notifications-dismiss Suite', () => {
           notificationIds: [],
           contextIds: [],
           contextTypes: [],
+          contextDetails: [],
           dismissAll: true
         })
         .call<ErrorResponseType>(azureFunction);
