@@ -241,6 +241,7 @@ describe('Users / _services / notifications service suite', () => {
           notificationIds: [notificationToDismiss.id],
           contextIds: [],
           contextTypes: [],
+          contextDetails: [],
           dismissAll: false
         },
         em
@@ -268,6 +269,7 @@ describe('Users / _services / notifications service suite', () => {
           notificationIds: [],
           contextIds: [notificationToDismiss.context.id],
           contextTypes: [],
+          contextDetails: [],
           dismissAll: false
         },
         em
@@ -295,6 +297,35 @@ describe('Users / _services / notifications service suite', () => {
           notificationIds: [],
           contextIds: [],
           contextTypes: [notificationToDismiss.context.type],
+          contextDetails: [],
+          dismissAll: false
+        },
+        em
+      );
+
+      expect(result).toBe(1);
+
+      const dbNotificationUser = await em
+        .createQueryBuilder(NotificationUserEntity, 'notification_user')
+        .where('notification_user.id = :notificationUserId', {
+          notificationUserId: notificationToDismiss.notificationUsers.johnInnovator.id
+        })
+        .getOne();
+
+      expect(dbNotificationUser?.readAt).toBeTruthy();
+    });
+
+    it('should dismiss the notifications with the specified contextDetail', async () => {
+      const notificationToDismiss =
+        scenario.users.johnInnovator.innovations.johnInnovation.notifications.notificationFromSupport;
+
+      const result = await sut.dismissUserNotifications(
+        DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
+        {
+          notificationIds: [],
+          contextIds: [],
+          contextTypes: [],
+          contextDetails: [notificationToDismiss.context.detail],
           dismissAll: false
         },
         em
@@ -319,6 +350,7 @@ describe('Users / _services / notifications service suite', () => {
           notificationIds: [],
           contextIds: [],
           contextTypes: [],
+          contextDetails: [],
           dismissAll: true
         },
         em
@@ -345,14 +377,14 @@ describe('Users / _services / notifications service suite', () => {
             notificationIds: [],
             contextIds: [],
             contextTypes: [],
+            contextDetails: [],
             dismissAll: false
           },
           em
         )
       ).rejects.toThrowError(
         new UnprocessableEntityError(GenericErrorsEnum.INVALID_PAYLOAD, {
-          message:
-            'Either dismissAll is true or at least one of the following fields must have elements: notificationIds, contextTypes, contextIds'
+          message: 'Either dismissAll is true or at least one of the following fields must have elements: notificationIds, contextTypes, contextDetails, contextIds'
         })
       );
     });

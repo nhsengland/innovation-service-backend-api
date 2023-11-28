@@ -201,6 +201,7 @@ export class NotificationsService extends BaseService {
       notificationIds: string[];
       contextIds: string[];
       contextTypes: NotificationCategoryType[];
+      contextDetails: NotificationDetailType[];
       dismissAll: boolean;
     },
     entityManager?: EntityManager
@@ -211,11 +212,12 @@ export class NotificationsService extends BaseService {
       !conditions.dismissAll &&
       conditions.notificationIds.length === 0 &&
       conditions.contextTypes.length === 0 &&
+      conditions.contextDetails.length === 0 &&
       conditions.contextIds.length === 0
     ) {
       throw new UnprocessableEntityError(GenericErrorsEnum.INVALID_PAYLOAD, {
         message:
-          'Either dismissAll is true or at least one of the following fields must have elements: notificationIds, contextTypes, contextIds'
+          'Either dismissAll is true or at least one of the following fields must have elements: notificationIds, contextTypes, contextDetails, contextIds'
       });
     }
 
@@ -224,6 +226,7 @@ export class NotificationsService extends BaseService {
       notificationIds?: string[];
       contextIds?: string[];
       contextTypes?: string[];
+      contextDetails?: string[];
     } = { roleId: domainContext.currentRole.id };
     const query = em
       .createQueryBuilder(NotificationUserEntity, 'user')
@@ -252,6 +255,10 @@ export class NotificationsService extends BaseService {
       if (conditions.contextTypes.length > 0) {
         notificationQuery.andWhere('notification.contextType IN (:...contextTypes)');
         params.contextTypes = conditions.contextTypes;
+      }
+      if (conditions.contextDetails.length > 0) {
+        notificationQuery.andWhere('notification.contextDetail IN (:...contextDetails)');
+        params.contextDetails = conditions.contextDetails;
       }
 
       query.andWhere('notification_id IN ( ' + notificationQuery.getQuery() + ' )');
