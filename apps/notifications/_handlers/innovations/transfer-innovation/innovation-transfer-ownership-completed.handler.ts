@@ -176,8 +176,7 @@ export class InnovationTransferOwnershipCompletedHandler extends BaseHandler<
         }
       });
     } else {
-      // TODO maybe a new notification - empty displayName as a workaround using the same one
-      this.addEmails('TO09_TRANSFER_OWNERSHIP_CANCELED_NEW_OWNER', [{ email: targetEmail, displayname: '' }], {
+      this.addEmails('TO09_TRANSFER_OWNERSHIP_CANCELED_NEW_OWNER', [{ email: targetEmail }], {
         notificationPreferenceType: 'INNOVATION_MANAGEMENT',
         params: {
           innovation_name: innovation.name,
