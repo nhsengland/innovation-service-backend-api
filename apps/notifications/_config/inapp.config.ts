@@ -1,5 +1,3 @@
-import type { InnovationTaskStatusEnum } from '@notifications/shared/enums';
-
 export type InAppTemplatesType = {
   // Tasks
   TA01_TASK_CREATION_TO_INNOVATOR: {
@@ -9,7 +7,7 @@ export type InAppTemplatesType = {
   };
   TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS: {
     innovationName: string;
-    status: InnovationTaskStatusEnum;
+    status: string;
     requestUserName: string;
     threadId: string;
     messageId: string;
