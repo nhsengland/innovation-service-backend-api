@@ -84,11 +84,6 @@ paths:
                           enum:
                             - YES
                             - NO
-                        ADMIN:
-                          type: string
-                          enum:
-                            - YES
-                            - NO
                         AUTOMATIC:
                           type: string
                           enum:
@@ -99,7 +94,6 @@ paths:
                         - TASK
                         - MESSAGES
                         - INNOVATION_MANAGEMENT
-                        - ADMIN
                         - AUTOMATIC
                       additionalProperties: false
                       x-required: true
@@ -130,11 +124,6 @@ paths:
                           enum:
                             - YES
                             - NO
-                        ADMIN:
-                          type: string
-                          enum:
-                            - YES
-                            - NO
                         AUTOMATIC:
                           type: string
                           enum:
@@ -146,7 +135,6 @@ paths:
                         - TASK
                         - MESSAGES
                         - INNOVATION_MANAGEMENT
-                        - ADMIN
                         - AUTOMATIC
                       additionalProperties: false
                       x-required: true

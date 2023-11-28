@@ -282,7 +282,7 @@ export class NotificationsService extends BaseService {
     const preferences = this.getDefaultNotificationPreferences(domainContext.currentRole.role);
     if (userPreferences) {
       Object.keys(preferences).forEach((key: any) => {
-        let category: keyof NotificationPreferences = key;
+        const category: keyof NotificationPreferences = key;
         if (userPreferences.preferences[category]) {
           preferences[category] = userPreferences.preferences[category];
         }
