@@ -40,7 +40,7 @@ export class InnovationSubmittedHandler extends BaseHandler<
         notificationPreferenceType: 'NEEDS_ASSESSMENT',
         params: {
           innovation_name: innovation.name,
-          needs_assessment: this.inputData.reassessment ? 'reassessment' : 'assessment'
+          assessment_type: this.inputData.reassessment ? 'reassessment' : 'assessment'
         },
         options: {
           includeSelf: true
@@ -54,7 +54,7 @@ export class InnovationSubmittedHandler extends BaseHandler<
         },
         innovationId: innovation.id,
         params: {
-          needsAssessment: this.inputData.reassessment ? 'reassessment' : 'assessment',
+          assessmentType: this.inputData.reassessment ? 'reassessment' : 'assessment',
           innovationName: innovation.name
         },
         options: {
@@ -75,7 +75,7 @@ export class InnovationSubmittedHandler extends BaseHandler<
         params: {
           innovation_name: innovation.name,
           innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ASSESSMENT, innovation.id),
-          needs_assessment: this.inputData.reassessment ? 'reassessment' : 'assessment'
+          assessment_type: this.inputData.reassessment ? 'reassessment' : 'assessment'
         }
       },
       inApp: {
@@ -87,7 +87,7 @@ export class InnovationSubmittedHandler extends BaseHandler<
         innovationId: innovation.id,
         params: {
           innovationName: innovation.name,
-          needsAssessment: this.inputData.reassessment ? 'reassessment' : 'assessment'
+          assessmentType: this.inputData.reassessment ? 'reassessment' : 'assessment'
         }
       }
     });
