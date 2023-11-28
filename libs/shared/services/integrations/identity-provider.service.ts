@@ -366,5 +366,7 @@ export class IdentityProviderService {
       .catch(error => {
         throw this.getError(error.response.status, error.response.data.message);
       });
+
+    await this.cache.delete(identityId);
   }
 }
