@@ -20,7 +20,7 @@ class V1InnovationThreadCreate {
   @Audit({
     action: ActionEnum.CREATE,
     target: TargetEnum.THREAD,
-    identifierResponseField: 'thread.id'
+    identifierResponseField: 'id'
   })
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
     const authorizationService = container.get<AuthorizationService>(SHARED_SYMBOLS.AuthorizationService);
