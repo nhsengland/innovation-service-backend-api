@@ -631,42 +631,45 @@ export class InnovationSupportsService extends BaseService {
       supportId,
       entityManager
     );
-    if (!thread) {
-      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND);
-    }
 
     const accessorsChanges = await this.assignAccessors(
       domainContext,
       support,
       data.accessors.map(item => item.userRoleId),
-      thread.id,
+      thread?.id,
       entityManager
     );
 
-    await this.innovationThreadsService.createThreadMessage(
-      domainContext,
-      thread.id,
-      data.message,
-      false,
-      false,
-      undefined,
-      entityManager
-    );
+    if (thread) {
+      await this.innovationThreadsService.createThreadMessage(
+        domainContext,
+        thread.id,
+        data.message,
+        false,
+        false,
+        undefined,
+        entityManager
+      );
 
-    await this.notifierService.send(domainContext, NotifierTypeEnum.SUPPORT_NEW_ASSIGN_ACCESSORS, {
-      innovationId: innovationId,
-      supportId: supportId,
-      threadId: thread.id,
-      message: data.message,
-      newAssignedAccessorsRoleIds: accessorsChanges.newAssignedAccessors,
-      removedAssignedAccessorsRoleIds: accessorsChanges.removedAssignedAccessors
-    });
+      // Possible techdebt since notification depends on the thread at the moment and we don't have a thread
+      // in old supports before November 2022 (see #156480)
+      await this.notifierService.send(domainContext, NotifierTypeEnum.SUPPORT_NEW_ASSIGN_ACCESSORS, {
+        innovationId: innovationId,
+        supportId: supportId,
+        threadId: thread.id,
+        message: data.message,
+        newAssignedAccessorsRoleIds: accessorsChanges.newAssignedAccessors,
+        removedAssignedAccessorsRoleIds: accessorsChanges.removedAssignedAccessors
+      });
+    }
   }
 
   /**
    * assigns accessors to a support, adding them to the thread followers if the support is ENGAGING
+   * @param domainContext the domain context
    * @param support the support entity or id
    * @param accessorRoleIds the list of assigned accessors role ids
+   * @param threadId optional thread id to add the followers
    * @param entityManager transactional entity manager
    * @returns the list of new assigned accessors role ids
    */
@@ -674,7 +677,7 @@ export class InnovationSupportsService extends BaseService {
     domainContext: DomainContextType,
     support: string | InnovationSupportEntity,
     accessorRoleIds: string[],
-    threadId: string, // this will likely become optional in the future
+    threadId?: string,
     entityManager?: EntityManager
   ): Promise<{ newAssignedAccessors: string[]; removedAssignedAccessors: string[] }> {
     // Force a transaction if one not present
@@ -710,7 +713,7 @@ export class InnovationSupportsService extends BaseService {
 
     // Add followers logic
     // Update thread followers with the new assigned users only when the support is ENGAGING
-    if (support.status === InnovationSupportStatusEnum.ENGAGING) {
+    if (support.status === InnovationSupportStatusEnum.ENGAGING && threadId) {
       // If we want to remove only the previous assigned users we can use this
       // await this.innovationThreadsService.removeFollowers(threadId, [...previousUsersRoleIds], entityManager);
       await this.innovationThreadsService.removeOrganisationUnitFollowers(
