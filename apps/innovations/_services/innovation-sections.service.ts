@@ -37,6 +37,14 @@ import type { EntityManager } from 'typeorm';
 import type { InnovationFileService } from './innovation-file.service';
 import SYMBOLS from './symbols';
 
+type SectionInfoType = {
+  section: CurrentCatalogTypes.InnovationSections;
+  status: InnovationSectionStatusEnum;
+  submittedAt?: Date;
+  submittedBy?: { name: string; displayTag: string };
+  openTasksCount: number;
+};
+
 @injectable()
 export class InnovationSectionsService extends BaseService {
   constructor(
@@ -150,6 +158,11 @@ export class InnovationSectionsService extends BaseService {
     });
   }
 
+  /**
+   * This method could be revised, to use the getSectionsInfoMap (return + data)
+   * Change taskIds array, return only a counter that comes from getSectionsInfoMap
+   * Create a statistics counter that returns the taskIds ordered for FE to use (only being used on task-details)
+   */
   async getInnovationSectionInfo(
     domainContext: DomainContextType,
     innovationId: string,
@@ -161,10 +174,7 @@ export class InnovationSectionsService extends BaseService {
     section: CurrentCatalogTypes.InnovationSections;
     status: InnovationSectionStatusEnum;
     submittedAt: null | Date;
-    submittedBy: null | {
-      name: string;
-      isOwner?: boolean;
-    };
+    submittedBy: null | { name: string; displayTag: string };
     data: null | { [key: string]: any };
     tasksIds?: string[];
   }> {
@@ -235,7 +245,7 @@ export class InnovationSectionsService extends BaseService {
     const sectionHidden =
       [ServiceRoleEnum.QUALIFYING_ACCESSOR, ServiceRoleEnum.ACCESSOR].includes(domainContext.currentRole.role) &&
       dbSection?.status !== InnovationSectionStatusEnum.SUBMITTED;
-    const sectionData = await this.getSectionData(document, sectionKey);
+    const sectionData = this.getSectionData(document, sectionKey);
 
     return {
       id: dbSection?.id || null,
@@ -245,7 +255,10 @@ export class InnovationSectionsService extends BaseService {
       submittedBy: dbSection?.submittedBy
         ? {
             name: submittedBy ?? 'unknown user',
-            ...(submittedBy && { isOwner: dbSection.submittedBy.id === innovation.owner?.id })
+            displayTag: this.domainService.users.getDisplayTag(ServiceRoleEnum.INNOVATOR, {
+              isOwner:
+                innovation.owner && dbSection.submittedBy ? innovation.owner.id === dbSection.submittedBy.id : undefined
+            })
           }
         : null,
       data: !sectionHidden ? sectionData : null,
@@ -459,17 +472,46 @@ export class InnovationSectionsService extends BaseService {
 
   async findAllSections(
     innovationId: string,
-    version?: DocumentType['version']
-  ): Promise<{ section: { section: string }; data: Record<string, any> }[]> {
-    const document = await this.getInnovationDocument(innovationId, version ?? CurrentDocumentConfig.version);
-    const innovationSections = await Promise.all(
-      this.getDocumentSections(document).map(async section => ({
-        section: { section: section },
-        data: await this.getSectionData(document, section)
-      }))
-    );
+    version?: DocumentType['version'],
+    entityManager?: EntityManager
+  ): Promise<{ section: SectionInfoType; data: Record<string, any> }[]> {
+    const em = entityManager ?? this.sqlConnection.manager;
 
-    return innovationSections;
+    const document = await this.getInnovationDocument(innovationId, version ?? CurrentDocumentConfig.version, em);
+    const innovationSections = this.getDocumentSections(document).map(section => ({
+      section: { section: section },
+      data: this.getSectionData(document, section)
+    }));
+
+    const sectionsInfoMap = await this.getSectionsInfoMap(innovationId, [], em);
+
+    const output: Awaited<ReturnType<InnovationSectionsService['findAllSections']>> = [];
+    for (const curSection of innovationSections) {
+      const sectionInfo = sectionsInfoMap.get(curSection.section.section);
+      if (sectionInfo) {
+        output.push({
+          data: curSection.data,
+          section: {
+            section: curSection.section.section,
+            status: sectionInfo.status,
+            submittedAt: sectionInfo.submittedAt,
+            submittedBy: sectionInfo.submittedBy,
+            openTasksCount: sectionInfo.openTasksCount
+          }
+        });
+      } else {
+        output.push({
+          data: curSection.data,
+          section: {
+            section: curSection.section.section,
+            status: InnovationSectionStatusEnum.NOT_STARTED,
+            openTasksCount: 0
+          }
+        });
+      }
+    }
+
+    return output;
   }
 
   async createInnovationEvidence(
@@ -697,18 +739,16 @@ export class InnovationSectionsService extends BaseService {
    * @param sectionKey the section key
    * @returns section data with extra information
    */
-  private async getSectionData<T extends object & DocumentType, K extends Exclude<keyof T, 'version' | 'evidences'>>(
+  private getSectionData<T extends object & DocumentType, K extends Exclude<keyof T, 'version' | 'evidences'>>(
     document: T,
     sectionKey: K
-  ): Promise<
-    T[K] & {
-      evidences?: {
-        id: string;
-        name: string;
-        summary: CurrentEvidenceType['summary'];
-      }[];
-    }
-  > {
+  ): T[K] & {
+    evidences?: {
+      id: string;
+      name: string;
+      summary: CurrentEvidenceType['summary'];
+    }[];
+  } {
     let evidenceData;
 
     // Special case for evidence data
@@ -728,6 +768,64 @@ export class InnovationSectionsService extends BaseService {
       ...sectionData,
       ...(evidenceData && { evidences: evidenceData })
     };
+  }
+
+  private async getSectionsInfoMap(
+    innovationId: string,
+    sectionsKeys?: string[],
+    entityManager?: EntityManager
+  ): Promise<Map<string, SectionInfoType>> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const query = em
+      .createQueryBuilder(InnovationSectionEntity, 'section')
+      .select([
+        'section.id',
+        'section.section',
+        'section.status',
+        'section.submittedAt',
+        'submittedBy.id',
+        'submittedBy.identityId',
+        'submittedBy.status',
+        'innovation.id',
+        'owner.id',
+        'tasks.id'
+      ])
+      .leftJoin('section.submittedBy', 'submittedBy')
+      .innerJoin('section.innovation', 'innovation')
+      .leftJoin('innovation.owner', 'owner')
+      .leftJoin('section.tasks', 'tasks')
+      .where('section.innovation_id = :innovationId', { innovationId });
+
+    if (sectionsKeys?.length) {
+      query.andWhere('section.section IN (:...sectionsKeys)', { sectionsKeys });
+    }
+
+    const sections = await query.getMany();
+
+    const innovators = sections
+      .filter(s => s.submittedBy && s.submittedBy.status !== UserStatusEnum.DELETED)
+      .map(s => s.submittedBy?.identityId)
+      .filter((id): id is string => !!id);
+    const users = await this.identityService.getUsersMap(innovators);
+
+    return new Map(
+      sections.map(s => [
+        s.section,
+        {
+          section: s.section,
+          status: s.status,
+          ...(s.submittedAt && { submittedAt: s.submittedAt }),
+          submittedBy: {
+            name: users.get(s.submittedBy?.identityId ?? '')?.displayName ?? '[unknown user]',
+            displayTag: this.domainService.users.getDisplayTag(ServiceRoleEnum.INNOVATOR, {
+              isOwner: s.innovation.owner && s.submittedBy ? s.innovation.owner.id === s.submittedBy.id : undefined
+            })
+          },
+          openTasksCount: s.tasks.length
+        }
+      ])
+    );
   }
 
   private getDocumentSections<T extends DocumentType>(document: T): Exclude<keyof T, 'version' | 'evidences'>[] {

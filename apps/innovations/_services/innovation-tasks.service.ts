@@ -457,6 +457,7 @@ export class InnovationTasksService extends BaseService {
       .leftJoinAndSelect('innovation.sections', 'sections')
       .leftJoinAndSelect('innovation.innovationSupports', 'supports')
       .leftJoinAndSelect('supports.organisationUnit', 'organisationUnit')
+      .leftJoinAndSelect('sections.tasks', 'tasks')
       .where('innovation.id = :innovationId', { innovationId })
       .getOne();
 
@@ -474,7 +475,7 @@ export class InnovationTasksService extends BaseService {
       is => is.organisationUnit.id === domainContext.organisation?.organisationUnit?.id
     );
 
-    let taskCounter = (await innovationSection.tasks).length;
+    let taskCounter = innovationSection.tasks.length;
     const displayId =
       CurrentDocumentConfig.InnovationSectionAliasEnum[data.section] +
       (++taskCounter).toString().slice(-2).padStart(2, '0');
