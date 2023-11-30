@@ -25,8 +25,7 @@ const expected: Awaited<ReturnType<InnovationSectionsService['findAllSections']>
     section: {
       section: 'INNOVATION_DESCRIPTION',
       openTasksCount: 0,
-      status: InnovationSectionStatusEnum.DRAFT,
-      submittedAt: null
+      status: InnovationSectionStatusEnum.DRAFT
     },
     data: { description: 'test description' }
   }

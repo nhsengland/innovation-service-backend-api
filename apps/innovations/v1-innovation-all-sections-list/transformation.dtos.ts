@@ -4,7 +4,7 @@ export type ResponseDTO = {
   section: {
     section: string;
     status: InnovationSectionStatusEnum;
-    submittedAt: null | Date;
+    submittedAt?: Date;
     submittedBy?: { name: string; displayTag: string };
     openTasksCount: number;
   };

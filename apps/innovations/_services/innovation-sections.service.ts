@@ -40,7 +40,7 @@ import SYMBOLS from './symbols';
 type SectionInfoType = {
   section: CurrentCatalogTypes.InnovationSections;
   status: InnovationSectionStatusEnum;
-  submittedAt: null | Date;
+  submittedAt?: Date;
   submittedBy?: { name: string; displayTag: string };
   openTasksCount: number;
 };
@@ -245,7 +245,7 @@ export class InnovationSectionsService extends BaseService {
     const sectionHidden =
       [ServiceRoleEnum.QUALIFYING_ACCESSOR, ServiceRoleEnum.ACCESSOR].includes(domainContext.currentRole.role) &&
       dbSection?.status !== InnovationSectionStatusEnum.SUBMITTED;
-    const sectionData = await this.getSectionData(document, sectionKey);
+    const sectionData = this.getSectionData(document, sectionKey);
 
     return {
       id: dbSection?.id || null,
@@ -478,12 +478,10 @@ export class InnovationSectionsService extends BaseService {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const document = await this.getInnovationDocument(innovationId, version ?? CurrentDocumentConfig.version, em);
-    const innovationSections = await Promise.all(
-      this.getDocumentSections(document).map(async section => ({
-        section: { section: section },
-        data: await this.getSectionData(document, section)
-      }))
-    );
+    const innovationSections = this.getDocumentSections(document).map(section => ({
+      section: { section: section },
+      data: this.getSectionData(document, section)
+    }));
 
     const sectionsInfoMap = await this.getSectionsInfoMap(innovationId, [], em);
 
@@ -499,6 +497,15 @@ export class InnovationSectionsService extends BaseService {
             submittedAt: sectionInfo.submittedAt,
             submittedBy: sectionInfo.submittedBy,
             openTasksCount: sectionInfo.openTasksCount
+          }
+        });
+      } else {
+        output.push({
+          data: curSection.data,
+          section: {
+            section: curSection.section.section,
+            status: InnovationSectionStatusEnum.NOT_STARTED,
+            openTasksCount: 0
           }
         });
       }
@@ -732,18 +739,16 @@ export class InnovationSectionsService extends BaseService {
    * @param sectionKey the section key
    * @returns section data with extra information
    */
-  private async getSectionData<T extends object & DocumentType, K extends Exclude<keyof T, 'version' | 'evidences'>>(
+  private getSectionData<T extends object & DocumentType, K extends Exclude<keyof T, 'version' | 'evidences'>>(
     document: T,
     sectionKey: K
-  ): Promise<
-    T[K] & {
-      evidences?: {
-        id: string;
-        name: string;
-        summary: CurrentEvidenceType['summary'];
-      }[];
-    }
-  > {
+  ): T[K] & {
+    evidences?: {
+      id: string;
+      name: string;
+      summary: CurrentEvidenceType['summary'];
+    }[];
+  } {
     let evidenceData;
 
     // Special case for evidence data
@@ -810,14 +815,14 @@ export class InnovationSectionsService extends BaseService {
         {
           section: s.section,
           status: s.status,
-          submittedAt: s.submittedAt,
+          ...(s.submittedAt && { submittedAt: s.submittedAt }),
           submittedBy: {
             name: users.get(s.submittedBy?.identityId ?? '')?.displayName ?? '[unknown user]',
             displayTag: this.domainService.users.getDisplayTag(ServiceRoleEnum.INNOVATOR, {
               isOwner: s.innovation.owner && s.submittedBy ? s.innovation.owner.id === s.submittedBy.id : undefined
             })
           },
-          openTasksCount: s.tasks.length ?? 0
+          openTasksCount: s.tasks.length
         }
       ])
     );
