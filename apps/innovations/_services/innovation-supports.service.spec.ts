@@ -892,6 +892,20 @@ describe('Innovations / _services / innovation-supports suite', () => {
       });
     });
 
+    it('should not send a notification nor update thread if no thread found (fix old supports #156480)', async () => {
+      await em.update(InnovationThreadEntity, { contextId: support.id }, { contextId: null });
+      await sut.updateInnovationSupportAccessors(
+        context,
+        innovation.id,
+        support.id,
+        { accessors: newAccessors, message: message },
+        em
+      );
+
+      expect(notifierSendSpy).toHaveBeenCalledTimes(0);
+      expect(threadMessageMock).toHaveBeenCalledTimes(0);
+    });
+
     it('should fail with not found if support not found', async () => {
       await expect(
         sut.updateInnovationSupportAccessors(
@@ -902,19 +916,6 @@ describe('Innovations / _services / innovation-supports suite', () => {
           em
         )
       ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND));
-    });
-
-    it('should fail with not found if thread not found', async () => {
-      await em.update(InnovationThreadEntity, { contextId: support.id }, { deletedAt: new Date() });
-      await expect(
-        sut.updateInnovationSupportAccessors(
-          context,
-          innovation.id,
-          support.id,
-          { accessors: newAccessors, message },
-          em
-        )
-      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND));
     });
 
     it('should fail with unprocessable if innovation status not engaging', async () => {

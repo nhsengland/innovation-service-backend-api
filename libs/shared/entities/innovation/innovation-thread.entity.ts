@@ -1,9 +1,18 @@
-import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  JoinTable,
+  ManyToMany,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn
+} from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
 
-import { UserEntity } from '../user/user.entity';
 import { UserRoleEntity } from '../user/user-role.entity';
+import { UserEntity } from '../user/user.entity';
 import { InnovationThreadMessageEntity } from './innovation-thread-message.entity';
 import { InnovationEntity } from './innovation.entity';
 
@@ -18,10 +27,10 @@ export class InnovationThreadEntity extends BaseEntity {
   subject: string;
 
   @Column({ type: 'simple-enum', name: 'context_type', enum: ThreadContextTypeEnum, nullable: true })
-  contextType: ThreadContextTypeEnum | undefined;
+  contextType: ThreadContextTypeEnum | null;
 
   @Column({ type: 'uniqueidentifier', name: 'context_id', nullable: true })
-  contextId: string | undefined;
+  contextId: string | null;
 
   @OneToMany(() => InnovationThreadMessageEntity, message => message.thread, {
     lazy: true,
