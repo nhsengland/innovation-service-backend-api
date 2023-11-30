@@ -474,7 +474,7 @@ export class InnovationTasksService extends BaseService {
       is => is.organisationUnit.id === domainContext.organisation?.organisationUnit?.id
     );
 
-    let taskCounter = (await innovationSection.tasks).length;
+    let taskCounter = innovationSection.tasks?.length ?? 0;
     const displayId =
       CurrentDocumentConfig.InnovationSectionAliasEnum[data.section] +
       (++taskCounter).toString().slice(-2).padStart(2, '0');

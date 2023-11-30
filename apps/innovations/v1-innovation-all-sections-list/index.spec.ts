@@ -1,3 +1,4 @@
+import { InnovationSectionStatusEnum } from '@innovations/shared/enums';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@innovations/shared/tests';
 import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@innovations/shared/types';
@@ -19,7 +20,17 @@ beforeAll(async () => {
   await testsHelper.init();
 });
 
-const expected = [{ section: { section: 'INNOVATION_DESCRIPTION' }, data: { description: 'test description' } }];
+const expected: Awaited<ReturnType<InnovationSectionsService['findAllSections']>> = [
+  {
+    section: {
+      section: 'INNOVATION_DESCRIPTION',
+      openTasksCount: 0,
+      status: InnovationSectionStatusEnum.DRAFT,
+      submittedAt: null
+    },
+    data: { description: 'test description' }
+  }
+];
 const mock = jest.spyOn(InnovationSectionsService.prototype, 'findAllSections').mockResolvedValue(expected);
 
 afterEach(() => {

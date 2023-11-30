@@ -30,9 +30,7 @@ const expected = {
   section: 'INNOVATION_DESCRIPTION' as const,
   status: InnovationSectionStatusEnum.DRAFT,
   submittedAt: randPastDate(),
-  submittedBy: {
-    name: randFileName()
-  },
+  submittedBy: { name: randFileName(), displayTag: 'Innovator' },
   data: { key: 'value' }
 };
 const mock = jest.spyOn(InnovationSectionsService.prototype, 'getInnovationSectionInfo').mockResolvedValue(expected);

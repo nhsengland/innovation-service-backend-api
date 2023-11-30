@@ -207,4 +207,33 @@ describe('Innovation Sections Suite', () => {
       // assert assuming if no error is thrown then the test is successful (for now)
     });
   });
+
+  describe('getSectionsInfoMap', () => {
+    it('should return all the sections info', async () => {
+      const allSectionsInfo = await sut.findAllSections(innovation.id);
+
+      expect(allSectionsInfo).toStrictEqual([
+        {
+          section: {
+            section: innovation.sections.INNOVATION_DESCRIPTION.section,
+            status: innovation.sections.INNOVATION_DESCRIPTION.status,
+            submittedAt: null,
+            submittedBy: { displayTag: 'Innovator', name: '[unknown user]' },
+            openTasksCount: 4
+          },
+          data: expect.any(Object)
+        },
+        {
+          section: {
+            section: innovation.sections.EVIDENCE_OF_EFFECTIVENESS.section,
+            status: innovation.sections.EVIDENCE_OF_EFFECTIVENESS.status,
+            submittedAt: null,
+            submittedBy: { displayTag: 'Innovator', name: '[unknown user]' },
+            openTasksCount: 0
+          },
+          data: expect.any(Object)
+        }
+      ]);
+    });
+  });
 });
