@@ -219,7 +219,7 @@ describe('Innovation Sections Suite', () => {
             status: innovation.sections.INNOVATION_DESCRIPTION.status,
             submittedAt: undefined,
             submittedBy: { displayTag: 'Innovator', name: '[unknown user]' },
-            openTasksCount: 4
+            openTasksCount: 3 // John innovation has 4 tasks, 3 open and 1 done
           },
           data: expect.any(Object)
         },
