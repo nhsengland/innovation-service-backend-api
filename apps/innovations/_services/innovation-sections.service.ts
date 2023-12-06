@@ -794,7 +794,7 @@ export class InnovationSectionsService extends BaseService {
       .leftJoin('section.submittedBy', 'submittedBy')
       .innerJoin('section.innovation', 'innovation')
       .leftJoin('innovation.owner', 'owner')
-      .leftJoin('section.tasks', 'tasks')
+      .leftJoin('section.tasks', 'tasks', 'tasks.status = :taskStatus', { taskStatus: InnovationTaskStatusEnum.OPEN })
       .where('section.innovation_id = :innovationId', { innovationId });
 
     if (sectionsKeys?.length) {
