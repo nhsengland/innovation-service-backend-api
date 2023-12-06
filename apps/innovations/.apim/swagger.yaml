@@ -4027,7 +4027,7 @@ paths:
           required: false
           schema:
             type: string
-            maxLength: 50
+            maxLength: 100
       responses:
         "200":
           description: Success
