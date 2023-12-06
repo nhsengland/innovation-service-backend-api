@@ -29,7 +29,7 @@ const TRANSLATIONS = {
   },
   TEAMS: {
     ADMIN: 'Service administrators',
-    ASSESSMENT: 'Needs Assessment team'
+    ASSESSMENT: 'Needs assessment team'
   }
 };
 

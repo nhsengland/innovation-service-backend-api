@@ -26,7 +26,7 @@ class V1InnovationThreadFollowersUpdate {
       const pathParams = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
-      await authorizationService
+      const auth = await authorizationService
         .validate(context)
         .setInnovation(pathParams.innovationId)
         .checkInnovatorType()
@@ -35,7 +35,7 @@ class V1InnovationThreadFollowersUpdate {
         .checkInnovation()
         .verify();
 
-      await threadsService.addFollowersToThread(pathParams.threadId, body.followerUserRoleIds);
+      await threadsService.addFollowersToThread(auth.getContext(), pathParams.threadId, body.followerUserRoleIds, true);
 
       context.res = ResponseHelper.NoContent();
       return;

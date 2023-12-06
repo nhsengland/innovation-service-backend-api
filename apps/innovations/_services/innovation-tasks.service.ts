@@ -14,7 +14,7 @@ import {
   InnovationStatusEnum,
   InnovationSupportStatusEnum,
   InnovationTaskStatusEnum,
-  NotificationContextTypeEnum,
+  NotificationCategoryType,
   NotifierTypeEnum,
   ServiceRoleEnum,
   ThreadContextTypeEnum,
@@ -244,7 +244,7 @@ export class InnovationTasksService extends BaseService {
 
     let notifications: {
       id: string;
-      contextType: NotificationContextTypeEnum;
+      contextType: NotificationCategoryType;
       contextId: string;
       params: Record<string, unknown>;
     }[] = [];
@@ -457,6 +457,7 @@ export class InnovationTasksService extends BaseService {
       .leftJoinAndSelect('innovation.sections', 'sections')
       .leftJoinAndSelect('innovation.innovationSupports', 'supports')
       .leftJoinAndSelect('supports.organisationUnit', 'organisationUnit')
+      .leftJoinAndSelect('sections.tasks', 'tasks')
       .where('innovation.id = :innovationId', { innovationId })
       .getOne();
 
@@ -474,7 +475,7 @@ export class InnovationTasksService extends BaseService {
       is => is.organisationUnit.id === domainContext.organisation?.organisationUnit?.id
     );
 
-    let taskCounter = (await innovationSection.tasks).length;
+    let taskCounter = innovationSection.tasks.length;
     const displayId =
       CurrentDocumentConfig.InnovationSectionAliasEnum[data.section] +
       (++taskCounter).toString().slice(-2).padStart(2, '0');
@@ -534,7 +535,7 @@ export class InnovationTasksService extends BaseService {
 
     await this.notifierService.send(domainContext, NotifierTypeEnum.TASK_CREATION, {
       innovationId: innovation.id,
-      task: { id: result.id, section: data.section }
+      task: { id: result.id }
     });
 
     return result;
@@ -544,7 +545,7 @@ export class InnovationTasksService extends BaseService {
     domainContext: DomainContextType,
     innovationId: string,
     taskId: string,
-    data: { status: InnovationTaskStatusEnum; message?: string },
+    data: { status: InnovationTaskStatusEnum; message: string },
     entityManager?: EntityManager
   ): Promise<{ id: string }> {
     const connection = entityManager ?? this.sqlConnection.manager;
@@ -577,31 +578,30 @@ export class InnovationTasksService extends BaseService {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_TASK_WITH_UNPROCESSABLE_STATUS);
     }
 
-    const taskLastUpdatedByUserRole = { id: dbTask.updatedByUserRole.id, role: dbTask.updatedByUserRole.role };
-
     dbTask.updatedByUserRole = UserRoleEntity.new({ id: domainContext.currentRole.id });
 
-    const result = await this.saveTask(domainContext, innovationId, dbTask, data, connection);
+    const { task, threadId, messageId } = await this.saveTask(domainContext, innovationId, dbTask, data, connection);
 
     // Send task status update to innovation owner
     await this.notifierService.send(domainContext, NotifierTypeEnum.TASK_UPDATE, {
       innovationId: dbTask.innovationSection.innovation.id,
       task: {
         id: dbTask.id,
-        section: dbTask.innovationSection.section,
-        status: result.status,
-        previouslyUpdatedByUserRole: taskLastUpdatedByUserRole
-      }
+        status: task.status
+      },
+      message: data.message,
+      messageId: messageId,
+      threadId: threadId
     });
 
-    return { id: result.id };
+    return { id: task.id };
   }
 
   async updateTaskAsNeedsAccessor(
     domainContext: DomainContextType,
     innovationId: string,
     taskId: string,
-    data: { status: InnovationTaskStatusEnum; message?: string },
+    data: { status: InnovationTaskStatusEnum; message: string },
     entityManager?: EntityManager
   ): Promise<{ id: string }> {
     const connection = entityManager ?? this.sqlConnection.manager;
@@ -628,24 +628,23 @@ export class InnovationTasksService extends BaseService {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_TASK_WITH_UNPROCESSABLE_STATUS);
     }
 
-    const taskLastUpdatedByUserRole = { id: dbTask.updatedByUserRole.id, role: dbTask.updatedByUserRole.role };
-
     dbTask.updatedByUserRole = UserRoleEntity.new({ id: domainContext.currentRole.id });
 
-    const result = await this.saveTask(domainContext, innovationId, dbTask, data, connection);
+    const { task, threadId, messageId } = await this.saveTask(domainContext, innovationId, dbTask, data, connection);
 
     // Send task status update to innovation owner
     await this.notifierService.send(domainContext, NotifierTypeEnum.TASK_UPDATE, {
       innovationId: dbTask.innovationSection.innovation.id,
       task: {
         id: dbTask.id,
-        section: dbTask.innovationSection.section,
-        status: result.status,
-        previouslyUpdatedByUserRole: taskLastUpdatedByUserRole
-      }
+        status: task.status
+      },
+      message: data.message,
+      messageId: messageId,
+      threadId: threadId
     });
 
-    return { id: result.id };
+    return { id: task.id };
   }
 
   async updateTaskAsInnovator(
@@ -673,19 +672,20 @@ export class InnovationTasksService extends BaseService {
 
     dbTask.updatedByUserRole = UserRoleEntity.new({ id: domainContext.currentRole.id });
 
-    const result = await this.saveTask(domainContext, innovationId, dbTask, data, connection);
+    const { task, threadId, messageId } = await this.saveTask(domainContext, innovationId, dbTask, data, connection);
 
     await this.notifierService.send(domainContext, NotifierTypeEnum.TASK_UPDATE, {
       innovationId: innovationId,
       task: {
         id: dbTask.id,
-        section: dbTask.innovationSection.section,
-        status: result.status
+        status: task.status
       },
-      comment: data.message
+      message: data.message,
+      messageId: messageId,
+      threadId: threadId
     });
 
-    return { id: result.id };
+    return { id: task.id };
   }
 
   /**
@@ -729,29 +729,27 @@ export class InnovationTasksService extends BaseService {
     domainContext: DomainContextType,
     innovationId: string,
     dbTask: InnovationTaskEntity,
-    data: { status: InnovationTaskStatusEnum; message?: string },
+    data: { status: InnovationTaskStatusEnum; message: string },
     entityManager: EntityManager
-  ): Promise<InnovationTaskEntity> {
+  ): Promise<{ task: InnovationTaskEntity; messageId: string; threadId: string }> {
     const user = { id: domainContext.id, identityId: domainContext.identityId };
 
     return entityManager.transaction(async transaction => {
       let threadMessage: InnovationThreadMessageEntity | null = null;
 
-      if (data.message) {
-        threadMessage = (
-          await this.innovationThreadsService.createThreadMessageByContextId(
-            domainContext,
-            ThreadContextTypeEnum.TASK,
-            dbTask.id,
-            data.message,
-            false,
-            false,
-            transaction
-          )
-        ).threadMessage;
+      threadMessage = (
+        await this.innovationThreadsService.createThreadMessageByContextId(
+          domainContext,
+          ThreadContextTypeEnum.TASK,
+          dbTask.id,
+          data.message,
+          false,
+          false,
+          transaction
+        )
+      ).threadMessage;
 
-        await this.linkMessage(dbTask.id, threadMessage.id, data.status, transaction);
-      }
+      await this.linkMessage(dbTask.id, threadMessage.id, data.status, transaction);
 
       if (data.status === InnovationTaskStatusEnum.DECLINED) {
         await this.domainService.innovations.addActivityLog(
@@ -793,7 +791,12 @@ export class InnovationTasksService extends BaseService {
       dbTask.updatedBy = user.id;
       dbTask.updatedByUserRole = UserRoleEntity.new({ id: domainContext.currentRole.id });
 
-      return transaction.save(InnovationTaskEntity, dbTask);
+      const task = await transaction.save(InnovationTaskEntity, dbTask);
+      return {
+        task: task,
+        messageId: threadMessage.id,
+        threadId: threadMessage.thread.id
+      };
     });
   }
 

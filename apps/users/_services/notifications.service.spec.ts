@@ -1,11 +1,11 @@
 import { container } from '../_config';
 
-import { randUuid } from '@ngneat/falso';
 import { NotificationPreferenceEntity, NotificationUserEntity } from '@users/shared/entities';
-import { EmailNotificationPreferenceEnum, NotificationContextTypeEnum } from '@users/shared/enums';
-import { GenericErrorsEnum, NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
+import { NotificationPreferenceEnum, ServiceRoleEnum } from '@users/shared/enums';
+import { GenericErrorsEnum, UnprocessableEntityError } from '@users/shared/errors';
 import { TestsHelper } from '@users/shared/tests';
 import { DTOsHelper } from '@users/shared/tests/helpers/dtos.helper';
+import { NaNotificationCategories, QANotificationCategories, generatePreferencesObject } from '@users/shared/types';
 import type { EntityManager } from 'typeorm';
 import type { NotificationsService } from './notifications.service';
 import SYMBOLS from './symbols';
@@ -106,7 +106,7 @@ describe('Users / _services / notifications service suite', () => {
     it('should get all user notifications with the specified contextType', async () => {
       const result = await sut.getUserNotifications(
         DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
-        { contextTypes: [NotificationContextTypeEnum.THREAD], unreadOnly: false },
+        { contextTypes: ['MESSAGES'], unreadOnly: false },
         { order: { createdAt: 'DESC' }, take: 10, skip: 0 },
         em
       );
@@ -241,6 +241,7 @@ describe('Users / _services / notifications service suite', () => {
           notificationIds: [notificationToDismiss.id],
           contextIds: [],
           contextTypes: [],
+          contextDetails: [],
           dismissAll: false
         },
         em
@@ -268,6 +269,7 @@ describe('Users / _services / notifications service suite', () => {
           notificationIds: [],
           contextIds: [notificationToDismiss.context.id],
           contextTypes: [],
+          contextDetails: [],
           dismissAll: false
         },
         em
@@ -295,6 +297,35 @@ describe('Users / _services / notifications service suite', () => {
           notificationIds: [],
           contextIds: [],
           contextTypes: [notificationToDismiss.context.type],
+          contextDetails: [],
+          dismissAll: false
+        },
+        em
+      );
+
+      expect(result).toBe(1);
+
+      const dbNotificationUser = await em
+        .createQueryBuilder(NotificationUserEntity, 'notification_user')
+        .where('notification_user.id = :notificationUserId', {
+          notificationUserId: notificationToDismiss.notificationUsers.johnInnovator.id
+        })
+        .getOne();
+
+      expect(dbNotificationUser?.readAt).toBeTruthy();
+    });
+
+    it('should dismiss the notifications with the specified contextDetail', async () => {
+      const notificationToDismiss =
+        scenario.users.johnInnovator.innovations.johnInnovation.notifications.notificationFromSupport;
+
+      const result = await sut.dismissUserNotifications(
+        DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
+        {
+          notificationIds: [],
+          contextIds: [],
+          contextTypes: [],
+          contextDetails: [notificationToDismiss.context.detail],
           dismissAll: false
         },
         em
@@ -319,6 +350,7 @@ describe('Users / _services / notifications service suite', () => {
           notificationIds: [],
           contextIds: [],
           contextTypes: [],
+          contextDetails: [],
           dismissAll: true
         },
         em
@@ -345,14 +377,14 @@ describe('Users / _services / notifications service suite', () => {
             notificationIds: [],
             contextIds: [],
             contextTypes: [],
+            contextDetails: [],
             dismissAll: false
           },
           em
         )
       ).rejects.toThrowError(
         new UnprocessableEntityError(GenericErrorsEnum.INVALID_PAYLOAD, {
-          message:
-            'Either dismissAll is true or at least one of the following fields must have elements: notificationIds, contextTypes, contextIds'
+          message: 'Either dismissAll is true or at least one of the following fields must have elements: notificationIds, contextTypes, contextDetails, contextIds'
         })
       );
     });
@@ -360,103 +392,112 @@ describe('Users / _services / notifications service suite', () => {
 
   describe('getUserRoleEmailPreferences', () => {
     it('should get the email preferences for the specified role', async () => {
+      const mockNaPreferences = generatePreferencesObject<ServiceRoleEnum.ASSESSMENT>(NaNotificationCategories);
+
       //create preference
       await em.getRepository(NotificationPreferenceEntity).save({
         notificationType: 'TASK',
-        preference: EmailNotificationPreferenceEnum.DAILY,
-        userRoleId: scenario.users.adamInnovator.roles.innovatorRole.id,
+        preferences: mockNaPreferences,
+        userRoleId: scenario.users.paulNeedsAssessor.roles.assessmentRole.id,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
+        createdBy: scenario.users.paulNeedsAssessor.roles.assessmentRole.id,
+        updatedBy: scenario.users.paulNeedsAssessor.roles.assessmentRole.id
       });
 
-      const result = await sut.getUserRoleEmailPreferences(scenario.users.adamInnovator.roles.innovatorRole.id, em);
+      const result = await sut.getUserRoleEmailPreferences(
+        DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor, 'assessmentRole'),
+        em
+      );
 
-      expect(result).toMatchObject([
-        {
-          notificationType: 'TASK',
-          preference: EmailNotificationPreferenceEnum.DAILY
-        },
-        {
-          notificationType: 'SUPPORT',
-          preference: EmailNotificationPreferenceEnum.INSTANTLY
-        },
-        {
-          notificationType: 'MESSAGE',
-          preference: EmailNotificationPreferenceEnum.INSTANTLY
-        }
-      ]);
+      expect(result).toMatchObject(mockNaPreferences);
+    });
+
+    it('should return the default email preferences for the specified role', async () => {
+      const result = await sut.getUserRoleEmailPreferences(
+        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole'),
+        em
+      );
+
+      expect(result).toMatchObject(
+        generatePreferencesObject<ServiceRoleEnum.QUALIFYING_ACCESSOR>(QANotificationCategories)
+      );
+    });
+
+    it("should return possible new categories even if the user didn't setted it yet", async () => {
+      const mockNaPreferences = generatePreferencesObject<ServiceRoleEnum.ASSESSMENT>(NaNotificationCategories);
+      mockNaPreferences['INNOVATION_MANAGEMENT'] = undefined as unknown as NotificationPreferenceEnum;
+
+      //create preference
+      await em.getRepository(NotificationPreferenceEntity).save({
+        notificationType: 'TASK',
+        preferences: mockNaPreferences,
+        userRoleId: scenario.users.paulNeedsAssessor.roles.assessmentRole.id,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        createdBy: scenario.users.paulNeedsAssessor.roles.assessmentRole.id,
+        updatedBy: scenario.users.paulNeedsAssessor.roles.assessmentRole.id
+      });
+
+      const result = await sut.getUserRoleEmailPreferences(
+        DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor, 'assessmentRole'),
+        em
+      );
+
+      expect(result).toMatchObject({
+        ...mockNaPreferences,
+        INNOVATION_MANAGEMENT: NotificationPreferenceEnum.YES
+      });
     });
   });
 
   describe('upsertEmailPreferences', () => {
+    const mockNaPreferences = generatePreferencesObject<ServiceRoleEnum.ASSESSMENT>(NaNotificationCategories);
+
     it(`should create email preferences if they don't exist`, async () => {
       await sut.upsertUserEmailPreferences(
-        scenario.users.adamInnovator.roles.innovatorRole.id,
-        [
-          {
-            notificationType: 'TASK',
-            preference: EmailNotificationPreferenceEnum.DAILY
-          }
-        ],
+        DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor, 'assessmentRole'),
+        { preferences: mockNaPreferences },
         em
       );
 
       const dbPreference = await em
-        .createQueryBuilder(NotificationPreferenceEntity, 'notificationPreference')
-        .where('notificationPreference.userRoleId = :userRoleId', {
-          userRoleId: scenario.users.adamInnovator.roles.innovatorRole.id
+        .createQueryBuilder(NotificationPreferenceEntity, 'preference')
+        .where('preference.userRoleId = :userRoleId', {
+          userRoleId: scenario.users.paulNeedsAssessor.roles.assessmentRole.id
         })
-        .andWhere('notificationPreference.notificationType = :notificationType', { notificationType: 'TASK' })
         .getOne();
 
-      expect(dbPreference?.preference).toBe(EmailNotificationPreferenceEnum.DAILY);
+      expect(dbPreference?.preferences).toMatchObject(mockNaPreferences);
     });
 
     it('should update existing email preferences', async () => {
-      //create preference
+      // create preference
       await em.getRepository(NotificationPreferenceEntity).save({
-        notificationType: 'SUPPORT',
-        preference: EmailNotificationPreferenceEnum.DAILY,
-        userRoleId: scenario.users.adamInnovator.roles.innovatorRole.id,
+        preferences: mockNaPreferences,
+        userRoleId: scenario.users.paulNeedsAssessor.roles.assessmentRole.id,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
+        createdBy: scenario.users.paulNeedsAssessor.roles.assessmentRole.id,
+        updatedBy: scenario.users.paulNeedsAssessor.roles.assessmentRole.id
       });
 
+      const expected = { ...mockNaPreferences, MESSAGES: NotificationPreferenceEnum.NO };
+
       await sut.upsertUserEmailPreferences(
-        scenario.users.adamInnovator.roles.innovatorRole.id,
-        [
-          {
-            notificationType: 'SUPPORT',
-            preference: EmailNotificationPreferenceEnum.NEVER
-          }
-        ],
+        DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor, 'assessmentRole'),
+        { preferences: expected },
         em
       );
 
       const dbPreference = await em
-        .createQueryBuilder(NotificationPreferenceEntity, 'notificationPreference')
-        .where('notificationPreference.userRoleId = :userRoleId', {
-          userRoleId: scenario.users.adamInnovator.roles.innovatorRole.id
+        .createQueryBuilder(NotificationPreferenceEntity, 'preference')
+        .where('preference.userRoleId = :userRoleId', {
+          userRoleId: scenario.users.paulNeedsAssessor.roles.assessmentRole.id
         })
-        .andWhere('notificationPreference.notificationType = :notificationType', { notificationType: 'SUPPORT' })
         .getOne();
 
-      expect(dbPreference?.preference).toBe(EmailNotificationPreferenceEnum.NEVER);
-    });
-
-    it(`should throw an error if the specified user role doesn't exist`, async () => {
-      await expect(() =>
-        sut.upsertUserEmailPreferences(
-          randUuid(),
-          [
-            {
-              notificationType: 'SUPPORT',
-              preference: EmailNotificationPreferenceEnum.NEVER
-            }
-          ],
-          em
-        )
-      ).rejects.toThrowError(new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND));
+      expect(dbPreference?.preferences).toMatchObject(expected);
     });
   });
 });

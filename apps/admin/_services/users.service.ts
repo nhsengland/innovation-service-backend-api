@@ -2,12 +2,7 @@ import { inject, injectable } from 'inversify';
 import Joi from 'joi';
 import type { EntityManager } from 'typeorm';
 
-import {
-  OrganisationEntity,
-  OrganisationUnitEntity,
-  UserEntity,
-  UserRoleEntity
-} from '@admin/shared/entities';
+import { OrganisationEntity, OrganisationUnitEntity, UserEntity, UserRoleEntity } from '@admin/shared/entities';
 import { NotifierTypeEnum, ServiceRoleEnum, UserStatusEnum } from '@admin/shared/enums';
 import {
   BadRequestError,
@@ -69,10 +64,10 @@ export class UsersService extends BaseService {
       .select(['user.id', 'user.identityId'])
       .innerJoin('user.serviceRoles', 'userRoles')
       .leftJoin('userRoles.organisation', 'organisation')
-      .where('user.id = :userId', { userId })
+      .where('user.id = :userId', { userId });
 
     if (data.role?.organisationId) {
-      dbUserQuery.andWhere('organisation.id = :organisationId', { organisationId: data.role.organisationId })
+      dbUserQuery.andWhere('organisation.id = :organisationId', { organisationId: data.role.organisationId });
     }
 
     const dbUser = await dbUserQuery.getOne();
@@ -114,7 +109,7 @@ export class UsersService extends BaseService {
       // Send notification to locked user.
       if (data.accountEnabled != undefined && !data.accountEnabled) {
         await this.notifierService.send(context, NotifierTypeEnum.LOCK_USER, {
-          user: { identityId: dbUser.identityId }
+          identityId: dbUser.identityId
         });
       }
 

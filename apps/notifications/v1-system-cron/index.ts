@@ -11,11 +11,13 @@ class V1SystemSchedule {
   static async cronTrigger(_context: Context): Promise<void> {
     const notifierService = container.get<NotifierService>(SHARED_SYMBOLS.NotifierService);
 
-    await notifierService.sendSystemNotification(NotifierTypeEnum.DAILY_DIGEST, {});
-
     await notifierService.sendSystemNotification(NotifierTypeEnum.INCOMPLETE_INNOVATION_RECORD, {});
 
-    await notifierService.sendSystemNotification(NotifierTypeEnum.IDLE_SUPPORT, {});
+    await notifierService.sendSystemNotification(NotifierTypeEnum.IDLE_SUPPORT_ACCESSOR, {});
+
+    await notifierService.sendSystemNotification(NotifierTypeEnum.IDLE_SUPPORT_INNOVATOR, {});
+
+    await notifierService.sendSystemNotification(NotifierTypeEnum.UNIT_KPI, {});
   }
 }
 

@@ -1,9 +1,9 @@
 import azureFunction from '.';
 
-import { EmailNotificationPreferenceEnum } from '@users/shared/enums';
+import type { ServiceRoleEnum } from '@users/shared/enums';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@users/shared/tests';
 import type { TestUserType } from '@users/shared/tests/builders/user.builder';
-import type { ErrorResponseType } from '@users/shared/types';
+import { NaNotificationCategories, generatePreferencesObject, type ErrorResponseType } from '@users/shared/types';
 import { NotificationsService } from '../_services/notifications.service';
 import type { ResponseDTO } from './transformation.dtos';
 
@@ -23,10 +23,7 @@ beforeAll(async () => {
   await testsHelper.init();
 });
 
-const expected = [
-  { preference: EmailNotificationPreferenceEnum.DAILY, notificationType: 'TASK' as const },
-  { preference: EmailNotificationPreferenceEnum.INSTANTLY, notificationType: 'SUPPORT' as const }
-];
+const expected = generatePreferencesObject<ServiceRoleEnum.ASSESSMENT>(NaNotificationCategories);
 const mock = jest.spyOn(NotificationsService.prototype, 'getUserRoleEmailPreferences').mockResolvedValue(expected);
 
 afterEach(() => {
@@ -37,7 +34,7 @@ describe('v1-email-notification-preferences-info Suite', () => {
   describe('200', () => {
     it('should return the email notification preferences info', async () => {
       const result = await new AzureHttpTriggerBuilder()
-        .setAuth(scenario.users.aliceQualifyingAccessor)
+        .setAuth(scenario.users.paulNeedsAssessor)
         .call<ResponseDTO>(azureFunction);
 
       expect(result.body).toStrictEqual(expected);

@@ -14,7 +14,7 @@ import {
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
   InnovationTaskStatusEnum,
-  NotificationContextTypeEnum
+  NotifierTypeEnum
 } from '@innovations/shared/enums';
 import {
   BadRequestError,
@@ -64,10 +64,10 @@ describe('Innovations / _services / innovation-supports suite', () => {
 
   afterEach(async () => {
     await testsHelper.releaseQueryRunnerEntityManager();
-    activityLogSpy.mockReset();
-    supportLogSpy.mockReset();
-    notifierSendSpy.mockReset();
-    threadMessageMock.mockReset();
+    activityLogSpy.mockClear();
+    supportLogSpy.mockClear();
+    notifierSendSpy.mockClear();
+    threadMessageMock.mockClear();
   });
 
   describe('getInnovationSupportsList', () => {
@@ -79,7 +79,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
         return Promise.resolve(
           contextIds.map(contextId => ({
             contextId,
-            contextType: NotificationContextTypeEnum.TASK,
+            contextType: 'TASK',
             id: randUuid(),
             params: {}
           }))
@@ -380,6 +380,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           id: expect.any(String),
           name: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
           support: {
+            id: innovation.supports.supportByHealthOrgUnit.id,
             status: innovation.supports.supportByHealthOrgUnit.status,
             start: expect.any(Date)
           }
@@ -388,6 +389,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           id: expect.any(String),
           name: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.name,
           support: {
+            id: innovation.supports.supportByMedTechOrgUnit.id,
             status: innovation.supports.supportByMedTechOrgUnit.status,
             start: expect.any(Date)
           }
@@ -416,6 +418,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           id: expect.any(String),
           name: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
           support: {
+            id: innovation.supports.supportByHealthOrgUnit.id,
             status: InnovationSupportStatusEnum.CLOSED,
             start: expect.any(Date),
             end: expect.any(Date)
@@ -425,7 +428,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
     });
 
     it('should return suggested units', async () => {
-      await new InnovationSupportBuilder(em)
+      const innovTechHeavySupport = await new InnovationSupportBuilder(em)
         .setStatus(InnovationSupportStatusEnum.WAITING)
         .setInnovation(innovation.id)
         .setOrganisationUnit(scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.id)
@@ -441,6 +444,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           id: expect.any(String),
           name: scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.name,
           support: {
+            id: innovation.supports.supportByHealthOrgAiUnit.id,
             status: InnovationSupportStatusEnum.WAITING
           }
         },
@@ -448,6 +452,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           id: expect.any(String),
           name: scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.name,
           support: {
+            id: innovTechHeavySupport.id,
             status: InnovationSupportStatusEnum.WAITING
           }
         },
@@ -778,7 +783,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
 
       jest.spyOn(InnovationThreadsService.prototype, 'createThreadOrMessage').mockResolvedValue({
         thread: dbThread!,
-        message: undefined
+        message: undefined as any
       });
 
       await expect(() =>
@@ -821,9 +826,16 @@ describe('Innovations / _services / innovation-supports suite', () => {
         userRoleId: scenario.users.ingridAccessor.roles.accessorRole.id
       }
     ];
+    const message = randText();
 
     it('should update to new accessors', async () => {
-      await sut.updateInnovationSupportAccessors(context, innovation.id, support.id, { accessors: newAccessors }, em);
+      await sut.updateInnovationSupportAccessors(
+        context,
+        innovation.id,
+        support.id,
+        { accessors: newAccessors, message },
+        em
+      );
       const supportRoles = (
         await em
           .createQueryBuilder(InnovationSupportEntity, 'support')
@@ -852,33 +864,70 @@ describe('Innovations / _services / innovation-supports suite', () => {
         'Test message',
         false,
         false,
+        undefined,
         em
       );
     });
 
-    it("shouldn't add a message to the thread if one not provided", async () => {
-      await sut.updateInnovationSupportAccessors(context, innovation.id, support.id, { accessors: newAccessors }, em);
+    it('should send a notification when changing the assigned', async () => {
+      await sut.updateInnovationSupportAccessors(
+        context,
+        innovation.id,
+        support.id,
+        { accessors: newAccessors, message: message },
+        em
+      );
 
+      expect(notifierSendSpy).toHaveBeenCalledTimes(1);
+      expect(notifierSendSpy).toHaveBeenCalledWith(context, NotifierTypeEnum.SUPPORT_NEW_ASSIGN_ACCESSORS, {
+        innovationId: innovation.id,
+        supportId: support.id,
+        threadId: innovation.threads.threadByAliceQA.id,
+        message,
+        newAssignedAccessorsRoleIds: newAccessors.map(a => a.userRoleId),
+        removedAssignedAccessorsRoleIds: [
+          scenario.users.aliceQualifyingAccessor.roles.qaRole.id,
+          scenario.users.jamieMadroxAccessor.roles.healthAccessorRole.id
+        ]
+      });
+    });
+
+    it('should not send a notification nor update thread if no thread found (fix old supports #156480)', async () => {
+      await em.update(InnovationThreadEntity, { contextId: support.id }, { contextId: null });
+      await sut.updateInnovationSupportAccessors(
+        context,
+        innovation.id,
+        support.id,
+        { accessors: newAccessors, message: message },
+        em
+      );
+
+      expect(notifierSendSpy).toHaveBeenCalledTimes(0);
       expect(threadMessageMock).toHaveBeenCalledTimes(0);
     });
 
     it('should fail with not found if support not found', async () => {
       await expect(
-        sut.updateInnovationSupportAccessors(context, innovation.id, randUuid(), { accessors: newAccessors }, em)
+        sut.updateInnovationSupportAccessors(
+          context,
+          innovation.id,
+          randUuid(),
+          { accessors: newAccessors, message },
+          em
+        )
       ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND));
-    });
-
-    it('should fail with not found if thread not found', async () => {
-      await em.update(InnovationThreadEntity, { contextId: support.id }, { deletedAt: new Date() });
-      await expect(
-        sut.updateInnovationSupportAccessors(context, innovation.id, support.id, { accessors: newAccessors }, em)
-      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND));
     });
 
     it('should fail with unprocessable if innovation status not engaging', async () => {
       await em.update(InnovationSupportEntity, { id: support.id }, { status: InnovationSupportStatusEnum.WAITING });
       await expect(
-        sut.updateInnovationSupportAccessors(context, innovation.id, support.id, { accessors: newAccessors }, em)
+        sut.updateInnovationSupportAccessors(
+          context,
+          innovation.id,
+          support.id,
+          { accessors: newAccessors, message },
+          em
+        )
       ).rejects.toThrowError(
         new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UPDATE_WITH_UNPROCESSABLE_STATUS)
       );
@@ -886,7 +935,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
 
     it('should fail with unprocessable if accessors is empty', async () => {
       await expect(
-        sut.updateInnovationSupportAccessors(context, innovation.id, support.id, { accessors: [] })
+        sut.updateInnovationSupportAccessors(context, innovation.id, support.id, { accessors: [], message })
       ).rejects.toThrowError(new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD));
     });
   });

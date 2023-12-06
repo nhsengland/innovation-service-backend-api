@@ -1,13 +1,13 @@
 import { NotificationLogTypeEnum } from '@notifications/shared/enums';
 import Joi from 'joi';
 
-import { EmailTypeEnum } from '../_config/emails.config';
+import { EmailTemplates, EmailTemplatesType } from '../_config/emails.config';
 
 export type MessageType = {
   data: {
-    type: EmailTypeEnum;
+    type: keyof EmailTemplates;
     to: string;
-    params: Record<string, unknown>;
+    params: EmailTemplatesType[keyof EmailTemplates];
     log?: {
       type: NotificationLogTypeEnum;
       params: Record<string, string | number>;
@@ -18,7 +18,7 @@ export type MessageType = {
 export const MessageSchema = Joi.object<MessageType>({
   data: Joi.object<MessageType['data']>({
     type: Joi.string()
-      .valid(...Object.values(EmailTypeEnum))
+      .valid(...Object.keys(EmailTemplates))
       .required(),
     to: Joi.string().required(),
     params: Joi.object().required(),

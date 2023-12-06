@@ -8,7 +8,7 @@ export const SYMBOLS = {
   InnovationTransferService: Symbol.for('InnovationTransferService'),
   InnovationsService: Symbol.for('InnovationsService'),
   InnovationCollaboratorsService: Symbol.for('InnovationCollaboratorsService'),
-  PDFService: Symbol.for('PDFService'),
+  ExportFileService: Symbol.for('ExportFileService'),
   StatisticsService: Symbol.for('StatisticsService'),
   InnovationExportRequestService: Symbol.for('InnovationExportRequestService')
 };

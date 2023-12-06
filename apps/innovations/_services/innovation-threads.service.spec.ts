@@ -38,9 +38,16 @@ describe('Innovations / _services / innovation-threads suite', () => {
 
   describe('addFollowersToThread', () => {
     const thread = scenario.users.johnInnovator.innovations.johnInnovation.threads.threadByAliceQA;
+    const requestUserContext = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator);
 
-    it('should add followers to a thread', async () => {
-      await sut.addFollowersToThread(thread.id, [scenario.users.aliceQualifyingAccessor.roles.qaRole.id], em);
+    it('should add followers to a thread and send notification', async () => {
+      await sut.addFollowersToThread(
+        requestUserContext,
+        thread.id,
+        [scenario.users.aliceQualifyingAccessor.roles.qaRole.id],
+        true,
+        em
+      );
 
       const dbThread = await em
         .createQueryBuilder(InnovationThreadEntity, 'thread')
@@ -51,11 +58,18 @@ describe('Innovations / _services / innovation-threads suite', () => {
       expect(dbThread?.followers).toMatchObject([
         UserRoleEntity.new({ id: scenario.users.aliceQualifyingAccessor.roles.qaRole.id })
       ]);
+      expect(notifierSendSpy).toBeCalled();
     });
 
     it(`should throw an error if the thread doesn't exist`, async () => {
       await expect(
-        sut.addFollowersToThread(randUuid(), [scenario.users.aliceQualifyingAccessor.roles.qaRole.id], em)
+        sut.addFollowersToThread(
+          requestUserContext,
+          randUuid(),
+          [scenario.users.aliceQualifyingAccessor.roles.qaRole.id],
+          false,
+          em
+        )
       ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND));
     });
   });
@@ -70,7 +84,7 @@ describe('Innovations / _services / innovation-threads suite', () => {
         followers: [UserRoleEntity.new({ id: scenario.users.aliceQualifyingAccessor.roles.qaRole.id })]
       });
 
-      await sut.unfollowThread(DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor), thread.id, em);
+      await sut.unfollowThread(thread.id, scenario.users.aliceQualifyingAccessor.roles.qaRole.id, em);
 
       const dbThread = await em
         .createQueryBuilder(InnovationThreadEntity, 'thread')
@@ -83,19 +97,13 @@ describe('Innovations / _services / innovation-threads suite', () => {
 
     it('should throw an error if the user is not a follower', async () => {
       await expect(
-        sut.unfollowThread(DTOsHelper.getUserRequestContext(scenario.users.sarahQualifyingAccessor), thread.id, em)
+        sut.unfollowThread(thread.id, scenario.users.sarahQualifyingAccessor.roles.qaRole.id, em)
       ).rejects.toThrowError(new BadRequestError(InnovationErrorsEnum.INNOVATION_THREAD_USER_IS_NOT_FOLLOWER));
-    });
-
-    it('should throw an error if the user is an innovator', async () => {
-      await expect(
-        sut.unfollowThread(DTOsHelper.getUserRequestContext(scenario.users.johnInnovator), thread.id, em)
-      ).rejects.toThrowError(new BadRequestError(InnovationErrorsEnum.INNOVATION_THREAD_INNOVATORS_CANNOT_UNFOLLOW));
     });
 
     it(`should throw an error if the thread doesn't exist`, async () => {
       await expect(
-        sut.unfollowThread(DTOsHelper.getUserRequestContext(scenario.users.johnInnovator), randUuid(), em)
+        sut.unfollowThread(randUuid(), scenario.users.sarahQualifyingAccessor.roles.qaRole.id, em)
       ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND));
     });
   });

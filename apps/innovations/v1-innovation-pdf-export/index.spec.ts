@@ -4,8 +4,7 @@ import { AzureHttpTriggerBuilder, TestsHelper } from '@innovations/shared/tests'
 import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@innovations/shared/types';
 import { randBinary, randText } from '@ngneat/falso';
-import { PDFService } from '../_services/pdf.service';
-import type { ResponseDTO } from './transformation.dtos';
+import { ExportFileService } from '../_services/export-file-service';
 import type { BodyType, ParamsType } from './validation.schemas';
 
 jest.mock('@innovations/shared/decorators', () => ({
@@ -24,12 +23,8 @@ beforeAll(async () => {
   await testsHelper.init();
 });
 
-const name = scenario.users.johnInnovator.innovations.johnInnovation.name;
 const pdf = randBinary();
-const documentDefinitionMock = jest
-  .spyOn(PDFService.prototype, 'buildDocumentHeaderDefinition')
-  .mockReturnValue({ content: '' });
-const generatePDFMock = jest.spyOn(PDFService.prototype, 'generatePDF').mockResolvedValue(pdf);
+const generatePDFMock = jest.spyOn(ExportFileService.prototype, 'create').mockResolvedValue(pdf);
 
 afterEach(() => {
   jest.clearAllMocks();
@@ -58,13 +53,15 @@ describe('v1-innovation-pdf-export Suite', () => {
           innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id
         })
         .setBody<BodyType>(body)
-        .call<ResponseDTO>(azureFunction);
+        .call<unknown>(azureFunction);
 
       expect(result.body).toStrictEqual(pdf);
-      expect(documentDefinitionMock).toHaveBeenCalledTimes(1);
-      expect(documentDefinitionMock).toHaveBeenCalledWith(name, body);
       expect(generatePDFMock).toHaveBeenCalledTimes(1);
-      expect(generatePDFMock).toHaveBeenCalledWith({ content: '' });
+      expect(generatePDFMock).toHaveBeenCalledWith(
+        'pdf',
+        scenario.users.johnInnovator.innovations.johnInnovation.name,
+        body
+      );
     });
   });
 

@@ -29,7 +29,7 @@ import {
   InnovationSupportStatusEnum,
   InnovationTaskStatusEnum,
   InnovationTransferStatusEnum,
-  NotificationContextTypeEnum,
+  NotificationCategoryType,
   NotifierTypeEnum,
   ServiceRoleEnum,
   UserStatusEnum
@@ -86,7 +86,7 @@ export class DomainInnovationsService {
 
     const transfersToExpire = await em
       .createQueryBuilder(InnovationTransferEntity, 'transfers')
-      .select(['transfers.id', 'innovation.id'])
+      .select(['transfers.id', 'innovation.id', 'innovation.name'])
       .innerJoin('transfers.innovation', 'innovation')
       .where('DATEDIFF(day, transfers.created_at, GETDATE()) > :date', {
         date: EXPIRATION_DATES.transfersDays
@@ -110,8 +110,7 @@ export class DomainInnovationsService {
       for (const dbTransfer of transfersToExpire) {
         // Send the notifications
         await this.notifierService.sendSystemNotification(NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_EXPIRATION, {
-          innovationId: dbTransfer.innovation.id,
-          transferId: dbTransfer.id
+          innovationId: dbTransfer.innovation.id
         });
       }
     }
@@ -153,7 +152,6 @@ export class DomainInnovationsService {
         await this.notifierService.sendSystemNotification(NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_REMINDER, {
           innovationId: dbTransfer.innovation.id,
           innovationName: dbTransfer.innovation.name,
-          transferId: dbTransfer.id,
           recipientEmail: dbTransfer.email
         });
       }
@@ -171,8 +169,7 @@ export class DomainInnovationsService {
       affectedUsers: {
         userId: string;
         userType: ServiceRoleEnum;
-        organisationId?: string;
-        organisationUnitId?: string;
+        unitId?: string;
       }[];
     }[]
   > {
@@ -181,16 +178,7 @@ export class DomainInnovationsService {
     }
     const em = entityManager ?? this.sqlConnection.manager;
 
-    const toReturn: {
-      id: string;
-      name: string;
-      affectedUsers: {
-        userId: string;
-        userType: ServiceRoleEnum;
-        organisationId?: string;
-        organisationUnitId?: string;
-      }[];
-    }[] = [];
+    const toReturn: Awaited<ReturnType<DomainInnovationsService['withdrawInnovations']>> = [];
 
     const dbInnovations = await this.innovationRepository
       .createQueryBuilder('innovations')
@@ -241,8 +229,7 @@ export class DomainInnovationsService {
         const affectedUsers: {
           userId: string;
           userType: ServiceRoleEnum;
-          organisationId?: string;
-          organisationUnitId?: string;
+          unitId?: string;
         }[] = [];
 
         if (dbInnovation.status === InnovationStatusEnum.NEEDS_ASSESSMENT) {
@@ -386,8 +373,7 @@ export class DomainInnovationsService {
               .map(su => ({
                 userId: su.user.id,
                 userType: su.role as unknown as ServiceRoleEnum,
-                organisationId: su.organisationId,
-                organisationUnitId: su.organisationUnitId
+                unitId: su.organisationUnitId
               }))
           )
         );
@@ -413,7 +399,7 @@ export class DomainInnovationsService {
         toReturn.push({
           id: dbInnovation.id,
           name: dbInnovation.name,
-          affectedUsers: [...new Map(affectedUsers.map(item => [item['userId'], item])).values()] // remove duplicates
+          affectedUsers
         });
       }
     } catch (error) {
@@ -510,7 +496,7 @@ export class DomainInnovationsService {
   ): Promise<
     {
       id: string;
-      contextType: NotificationContextTypeEnum;
+      contextType: NotificationCategoryType;
       contextId: string;
       params: Record<string, unknown>;
     }[]

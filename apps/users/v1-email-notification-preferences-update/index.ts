@@ -27,9 +27,11 @@ class V1UserEmailNotificationsInfo {
         .checkInnovatorType()
         .verify();
 
-      const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
+      const domainContext = auth.getContext();
 
-      await notificationsService.upsertUserEmailPreferences(auth.getContext().currentRole.id, body);
+      const body = JoiHelper.Validate<BodyType>(BodySchema, request.body, { role: domainContext.currentRole.role });
+
+      await notificationsService.upsertUserEmailPreferences(domainContext, body);
 
       context.res = ResponseHelper.NoContent();
       return;
@@ -42,14 +44,17 @@ class V1UserEmailNotificationsInfo {
 
 export default openApi(V1UserEmailNotificationsInfo.httpTrigger as AzureFunction, '/v1/email-preferences', {
   put: {
-    description: 'Updates the user email preferences ',
+    description: 'Updates the user email preferences',
     operationId: 'v1-email-notification-preferences-upsert',
     tags: ['[v1] Email Preferences'],
     requestBody: SwaggerHelper.bodyJ2S(BodySchema),
     responses: {
-      204: {
-        description: 'The user email preferences were updated successfully'
-      }
+      204: { description: 'The user email preferences were updated successfully' },
+      400: { description: 'Bad Request' },
+      401: { description: 'Unauthorized' },
+      403: { description: 'Forbidden' },
+      404: { description: 'Not found' },
+      500: { description: 'Internal server error' }
     }
   }
 });

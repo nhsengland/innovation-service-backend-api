@@ -6,10 +6,7 @@ export type ResponseDTO = {
   section: CurrentCatalogTypes.InnovationSections;
   status: InnovationSectionStatusEnum;
   submittedAt: null | Date;
-  submittedBy: null | {
-    name: string;
-    isOwner?: boolean;
-  };
+  submittedBy: null | { name: string; displayTag: string };
   data: null | { [key: string]: any };
   tasksIds?: string[];
 };

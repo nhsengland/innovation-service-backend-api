@@ -3,6 +3,7 @@ export type ResponseDTO = {
   messages: {
     id: string;
     message: string;
+    file?: { id: string; name: string; url: string };
     createdAt: Date;
     isNew: boolean;
     isEditable: boolean;

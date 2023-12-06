@@ -12,15 +12,10 @@ export const ParamsSchema = Joi.object<ParamsType>({
   taskId: Joi.string().guid().required()
 }).required();
 
-export type BodyType =
-  | {
-      status: InnovationTaskStatusEnum.OPEN | InnovationTaskStatusEnum.DONE | InnovationTaskStatusEnum.DECLINED;
-      message: string;
-    }
-  | {
-      status: InnovationTaskStatusEnum.CANCELLED;
-      message?: string;
-    };
+export type BodyType = {
+  status: InnovationTaskStatusEnum;
+  message: string;
+};
 
 export const BodySchema = Joi.object<BodyType>({
   status: Joi.when('$userRole', {
@@ -28,9 +23,5 @@ export const BodySchema = Joi.object<BodyType>({
     then: Joi.string().valid(InnovationTaskStatusEnum.OPEN, InnovationTaskStatusEnum.CANCELLED).required(),
     otherwise: Joi.string().valid(InnovationTaskStatusEnum.DONE, InnovationTaskStatusEnum.DECLINED).required()
   }),
-  message: Joi.when('status', {
-    is: InnovationTaskStatusEnum.CANCELLED,
-    then: Joi.string().max(TEXTAREA_LENGTH_LIMIT.s).optional(),
-    otherwise: Joi.string().max(TEXTAREA_LENGTH_LIMIT.s).required()
-  })
+  message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.s).required()
 });

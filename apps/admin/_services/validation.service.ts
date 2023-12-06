@@ -5,11 +5,16 @@ import { InnovationSupportStatusEnum, ServiceRoleEnum, UserStatusEnum } from '@a
 
 import { ValidationRuleEnum } from '../_config/admin-operations.config';
 
-import { BaseService } from './base.service';
-import { BadRequestError, GenericErrorsEnum, NotFoundError, OrganisationErrorsEnum } from '@admin/shared/errors';
-import { UserErrorsEnum } from '@admin/shared/errors';
+import {
+  BadRequestError,
+  GenericErrorsEnum,
+  NotFoundError,
+  OrganisationErrorsEnum,
+  UserErrorsEnum
+} from '@admin/shared/errors';
 import type { EntityManager } from 'typeorm';
 import type { ValidationResult } from '../types/validation.types';
+import { BaseService } from './base.service';
 
 @injectable()
 export class ValidationService extends BaseService {
@@ -77,8 +82,9 @@ export class ValidationService extends BaseService {
 
     const role = await em
       .createQueryBuilder(UserRoleEntity, 'userRole')
-      .innerJoinAndSelect('userRole.organisationUnit', 'organisationUnit')
-      .innerJoinAndSelect('userRole.user', 'user')
+      .select(['userRole.id', 'organisationUnit.id', 'organisationUnit.name', 'user.id'])
+      .innerJoin('userRole.organisationUnit', 'organisationUnit')
+      .innerJoin('userRole.user', 'user')
       .where('userRole.id = :userRoleId', { userRoleId: userRoleId })
       .getOne();
 
@@ -109,7 +115,13 @@ export class ValidationService extends BaseService {
 
     return {
       rule: ValidationRuleEnum.NoInnovationsSupportedOnlyByThisUser,
-      valid: innovationSupportedOnlyByUser.length === 0
+      valid: innovationSupportedOnlyByUser.length === 0,
+      ...(innovationSupportedOnlyByUser.length && {
+        details: {
+          unit: role.organisationUnit?.name,
+          innovations: innovationSupportedOnlyByUser.map(i => ({ id: i.id, name: i.name }))
+        }
+      })
     };
   }
 

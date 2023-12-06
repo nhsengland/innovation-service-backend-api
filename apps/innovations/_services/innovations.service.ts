@@ -28,8 +28,6 @@ import {
   InnovationStatusEnum,
   InnovationSupportStatusEnum,
   InnovationTaskStatusEnum,
-  NotificationContextDetailEnum,
-  NotificationContextTypeEnum,
   NotifierTypeEnum,
   PhoneUserPreferenceEnum,
   ServiceRoleEnum,
@@ -654,13 +652,12 @@ export class InnovationsService extends BaseService {
         notificationCounter.notificationsUnread++;
 
         if (filters.fields?.includes('statistics')) {
-          if (n.contextType === NotificationContextTypeEnum.THREAD) {
+          if (n.contextType === 'MESSAGES') {
             notificationCounter.messages++;
           }
           if (
-            n.contextDetail === NotificationContextDetailEnum.TASK_CREATION ||
-            (n.contextDetail === NotificationContextDetailEnum.TASK_UPDATE &&
-              n.params['actionStatus'] === InnovationTaskStatusEnum.OPEN)
+            n.contextDetail === 'TA01_TASK_CREATION_TO_INNOVATOR' ||
+            n.contextDetail === 'TA06_TASK_REOPEN_TO_INNOVATOR'
           ) {
             notificationCounter.tasks++;
           }
@@ -1169,7 +1166,7 @@ export class InnovationsService extends BaseService {
 
     const innovation = await em
       .createQueryBuilder(InnovationEntity, 'innovation')
-      .select(['innovation.id', 'organisationShares.id'])
+      .select(['innovation.id', 'innovation.status', 'organisationShares.id'])
       .leftJoin('innovation.organisationShares', 'organisationShares')
       .where('innovation.id = :innovationId', { innovationId })
       .getOne();
@@ -1178,10 +1175,12 @@ export class InnovationsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
     }
 
-    const newShares = new Set(organisationShares);
-    const deletedShares = innovation.organisationShares
-      .filter(organisation => !newShares.has(organisation.id))
-      .map(organisation => organisation.id);
+    const oldShares = innovation.organisationShares.map(o => o.id);
+    const oldSharesSet = new Set(oldShares);
+    const sharesSet = new Set(organisationShares);
+
+    const addedShares = organisationShares.filter(s => !oldSharesSet.has(s));
+    const deletedShares = oldShares.filter(s => !sharesSet.has(s));
 
     await em.transaction(async transaction => {
       // Delete shares
@@ -1235,6 +1234,13 @@ export class InnovationsService extends BaseService {
       );
       await transaction.save(InnovationEntity, innovation);
     });
+
+    if (addedShares.length > 0 && innovation.status === InnovationStatusEnum.IN_PROGRESS) {
+      this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_DELAYED_SHARE, {
+        innovationId: innovation.id,
+        newSharedOrgIds: addedShares
+      });
+    }
   }
 
   async submitInnovation(
@@ -1271,7 +1277,7 @@ export class InnovationsService extends BaseService {
 
     await connection.transaction(async transaction => {
       const now = new Date();
-      const update = transaction.update(
+      const update = await transaction.update(
         InnovationEntity,
         { id: innovationId },
         {
@@ -1292,8 +1298,11 @@ export class InnovationsService extends BaseService {
       return update;
     });
 
-    // Add notification with Innovation submited for needs assessment
-    await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_SUBMITED, { innovationId });
+    // Add notification with Innovation submitted for needs assessment
+    await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_SUBMITTED, {
+      innovationId,
+      reassessment: false
+    });
 
     return {
       id: innovationId,
@@ -1357,8 +1366,8 @@ export class InnovationsService extends BaseService {
     const previousAssignedAccessors = dbSupports.flatMap(support =>
       support.userRoles.map(item => ({
         id: item.user.id,
-        organisationUnitId: item.organisationUnitId,
-        userType: item.role
+        role: item.role,
+        unitId: item.organisationUnitId
       }))
     );
 
@@ -1432,7 +1441,7 @@ export class InnovationsService extends BaseService {
 
     await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_STOP_SHARING, {
       innovationId,
-      previousAssignedAccessors: previousAssignedAccessors,
+      affectedUsers: previousAssignedAccessors,
       message: data.message
     });
 
@@ -1649,6 +1658,7 @@ export class InnovationsService extends BaseService {
     return innovationSections.some(x => x.status !== InnovationSectionStatusEnum.SUBMITTED);
   }
 
+  // view recipients service innovationsWithoutSupportForNDays to maintain consistency
   private async lastSupportStatusTransitionFromEngaging(innovationId: string): Promise<Date | null> {
     const result = await this.sqlConnection
       .createQueryBuilder(LastSupportStatusViewEntity, 'lastSupportStatus')
@@ -1690,31 +1700,4 @@ export class InnovationsService extends BaseService {
 
     return result;
   }
-
-  /*
-   * not used after get list refactor
-  private async getInnovationStatistics(innovation: InnovationEntity): Promise<{ messages: number, actions: number }> {
-
-    const statistics = { messages: 0, actions: 0 };
-
-    for (const notification of (await innovation.notifications)) {
-
-      const notificationUsers = await notification.notificationUsers;
-
-      if (notificationUsers.length === 0) { continue; }
-
-      if (notification.contextType === NotificationContextTypeEnum.THREAD) {
-        statistics.messages++;
-      }
-
-      if (notification.contextDetail === NotificationContextDetailEnum.ACTION_CREATION || (notification.contextDetail === NotificationContextDetailEnum.ACTION_UPDATE && JSON.parse(notification.params).actionStatus === InnovationTaskStatusEnum.REQUESTED)) {
-        statistics.actions++;
-      }
-
-    }
-
-    return statistics;
-
-  }
-  */
 }

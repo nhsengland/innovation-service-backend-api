@@ -48,3 +48,19 @@ export const resolveNestedPromises = async <T extends Record<string, any>>(
 
   return plain;
 };
+
+/**
+ * groups an array of objects by a key
+ * @param array array of items
+ * @param key the key
+ * @returns map of key and array of items
+ */
+export const groupBy = <T, K extends keyof T>(array: T[], key: K): Map<T[K], T[]> => {
+  return array.reduce((acc, item) => {
+    if (!acc.has(item[key])) {
+      acc.set(item[key], []);
+    }
+    acc.get(item[key])?.push(item);
+    return acc;
+  }, new Map<T[K], T[]>());
+};

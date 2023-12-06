@@ -1,19 +1,52 @@
-import { EmailNotificationPreferenceEnum, EmailNotificationType } from '@users/shared/enums';
+import { NotificationCategoryType, NotificationPreferenceEnum, ServiceRoleEnum } from '@users/shared/enums';
+import {
+  ANotificationCategories,
+  INotificationCategories,
+  NaNotificationCategories,
+  QANotificationCategories,
+  type NotificationPreferences,
+  type Role2PreferencesType
+} from '@users/shared/types';
 import Joi from 'joi';
 
-export type BodyType = {
-  notificationType: EmailNotificationType;
-  preference: EmailNotificationPreferenceEnum;
-}[];
+// Helper
+const getPreferenceValidationsByRoleCategories = (arr: ReadonlyArray<NotificationCategoryType>) => {
+  return arr.reduce((acc, c) => ({ ...acc, [c]: PreferenceValueSchema }), {});
+};
 
-export const BodySchema = Joi.array()
-  .items(
-    Joi.object<BodyType[0]>({
-      notificationType: Joi.string().valid(...EmailNotificationType).required(),
-      preference: Joi.string()
-        .valid(...Object.values(EmailNotificationPreferenceEnum))
-        .required()
-    })
-  )
-  .min(1)
+export type BodyType = {
+  preferences: NotificationPreferences;
+};
+
+const PreferenceValueSchema = Joi.string()
+  .valid(...Object.values(NotificationPreferenceEnum))
   .required();
+export const BodySchema = Joi.object<BodyType>({
+  preferences: Joi.when('$role', [
+    {
+      is: ServiceRoleEnum.ASSESSMENT,
+      then: Joi.object<Role2PreferencesType<ServiceRoleEnum.ASSESSMENT>>(
+        getPreferenceValidationsByRoleCategories(NaNotificationCategories)
+      ).required()
+    },
+    {
+      is: ServiceRoleEnum.ACCESSOR,
+      then: Joi.object<Role2PreferencesType<ServiceRoleEnum.ACCESSOR>>(
+        getPreferenceValidationsByRoleCategories(ANotificationCategories)
+      ).required()
+    },
+    {
+      is: ServiceRoleEnum.QUALIFYING_ACCESSOR,
+      then: Joi.object<Role2PreferencesType<ServiceRoleEnum.QUALIFYING_ACCESSOR>>(
+        getPreferenceValidationsByRoleCategories(QANotificationCategories)
+      ).required()
+    },
+    {
+      is: ServiceRoleEnum.INNOVATOR,
+      then: Joi.object<Role2PreferencesType<ServiceRoleEnum.INNOVATOR>>(
+        getPreferenceValidationsByRoleCategories(INotificationCategories)
+      ).required(),
+      otherwise: Joi.forbidden()
+    }
+  ])
+});

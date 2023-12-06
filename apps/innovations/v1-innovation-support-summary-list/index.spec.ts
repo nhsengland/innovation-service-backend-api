@@ -30,7 +30,12 @@ const expected = {
     {
       id: randUuid(),
       name: randText(),
-      support: { status: InnovationSupportStatusEnum.ENGAGING, start: randPastDate(), end: randPastDate() }
+      support: {
+        id: randUuid(),
+        status: InnovationSupportStatusEnum.ENGAGING,
+        start: randPastDate(),
+        end: randPastDate()
+      }
     }
   ],
   BEEN_ENGAGED: [],

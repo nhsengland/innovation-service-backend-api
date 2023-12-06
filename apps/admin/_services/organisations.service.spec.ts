@@ -13,8 +13,6 @@ import {
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
   InnovationTaskStatusEnum,
-  NotificationContextDetailEnum,
-  NotificationContextTypeEnum,
   NotifierTypeEnum,
   UserStatusEnum
 } from '@admin/shared/enums';
@@ -157,7 +155,7 @@ describe('Admin / _services / organisations service suite', () => {
         const notification = await new NotificationBuilder(em)
           .setInnovation(scenario.users.johnInnovator.innovations.johnInnovation.id)
           .addNotificationUser(scenario.users.bartQualifyingAccessor)
-          .setContext(NotificationContextTypeEnum.TASK, NotificationContextDetailEnum.TASK_CREATION, task.id)
+          .setContext('TASK', 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT', task.id)
           .save();
 
         await sut.inactivateUnit(domainContext, unit.id, em);
@@ -201,11 +199,7 @@ describe('Admin / _services / organisations service suite', () => {
           const notification = await new NotificationBuilder(em)
             .setInnovation(scenario.users.johnInnovator.innovations.johnInnovation.id)
             .addNotificationUser(scenario.users.bartQualifyingAccessor)
-            .setContext(
-              NotificationContextTypeEnum.SUPPORT,
-              NotificationContextDetailEnum.SUPPORT_STATUS_UPDATE,
-              support.id
-            )
+            .setContext('SUPPORT', 'ST01_SUPPORT_STATUS_TO_ENGAGING', support.id)
             .save();
 
           await sut.inactivateUnit(domainContext, unit.id, em);
@@ -228,14 +222,10 @@ describe('Admin / _services / organisations service suite', () => {
 
           await sut.inactivateUnit(domainContext, unit.id, em);
 
-          expect(notifierSendSpy).toHaveBeenCalledWith(
-            domainContext,
-            NotifierTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED,
-            {
-              innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
-              unitId: unit.id
-            }
-          );
+          expect(notifierSendSpy).toHaveBeenCalledWith(domainContext, NotifierTypeEnum.UNIT_INACTIVATED, {
+            unitId: unit.id,
+            completedInnovationIds: [scenario.users.johnInnovator.innovations.johnInnovation.id]
+          });
         });
 
         it('should create support log entry for each completed support', async () => {

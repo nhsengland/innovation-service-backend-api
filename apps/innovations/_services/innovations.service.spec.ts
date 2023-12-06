@@ -61,8 +61,8 @@ describe('Innovations / _services / innovations suite', () => {
 
   afterEach(async () => {
     await testsHelper.releaseQueryRunnerEntityManager();
-    activityLogSpy.mockReset();
-    notifierSendSpy.mockReset();
+    activityLogSpy.mockClear();
+    notifierSendSpy.mockClear();
   });
 
   describe.skip('getInnovationsList', () => {
@@ -382,9 +382,7 @@ describe('Innovations / _services / innovations suite', () => {
         {
           userId: scenario.users.aliceQualifyingAccessor.id,
           userType: scenario.users.aliceQualifyingAccessor.roles.qaRole.role,
-          organisationId: scenario.users.aliceQualifyingAccessor.organisations.healthOrg.id,
-          organisationUnitId:
-            scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.id
+          unitId: scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.id
         }
       ];
 
@@ -457,12 +455,11 @@ describe('Innovations / _services / innovations suite', () => {
 
       expect(notifierSendSpy).toHaveBeenLastCalledWith(context, NotifierTypeEnum.INNOVATION_STOP_SHARING, {
         innovationId: innovation.id,
-        previousAssignedAccessors: expect.arrayContaining([
+        affectedUsers: expect.arrayContaining([
           {
             id: scenario.users.aliceQualifyingAccessor.id,
-            organisationUnitId:
-              scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
-            userType: ServiceRoleEnum.QUALIFYING_ACCESSOR
+            role: ServiceRoleEnum.QUALIFYING_ACCESSOR,
+            unitId: scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.id
           }
         ]),
         message: message

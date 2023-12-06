@@ -1,12 +1,15 @@
 import Joi from 'joi';
 
 import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
+import { InnovationFileSchema, InnovationFileType } from '../_types/innovation.types';
 
 export type BodyType = {
   message: string;
+  file?: InnovationFileType;
 };
 export const BodySchema = Joi.object<BodyType>({
-  message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xxl).required()
+  message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xxl).required(),
+  file: InnovationFileSchema
 }).required();
 
 export type ParamsType = {

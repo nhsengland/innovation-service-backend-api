@@ -1,19 +1,14 @@
-import { EmailTypeEnum, container } from '../_config'; // inversify container
+import { container } from '../_config'; // inversify container
 
 import { randUuid } from '@ngneat/falso';
-import {
-  EmailNotificationPreferenceEnum,
-  NotificationContextDetailEnum,
-  NotificationContextTypeEnum,
-  ServiceRoleEnum
-} from '@notifications/shared/enums';
+import { NotificationCategoryType, NotificationPreferenceEnum } from '@notifications/shared/enums';
 import { CompleteScenarioType, MocksHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { cloneDeep } from 'lodash';
 import { NotificationsTestsHelper } from '../_tests/notifications-test.helper';
 import { BaseHandler } from './base.handler';
 
-class TestHandler extends BaseHandler<any, any, any> {
+class TestHandler extends BaseHandler<any, any> {
   async run(): Promise<this> {
     console.log(container); // just for typescript to not complain about unused variable
     throw new Error('Method not implemented.');
@@ -23,7 +18,7 @@ class TestHandler extends BaseHandler<any, any, any> {
 describe('Notifications / _handlers / base handler suite', () => {
   let testsHelper: NotificationsTestsHelper;
   let scenario: CompleteScenarioType;
-  let baseHandler: BaseHandler<any, any, any>;
+  let baseHandler: BaseHandler<any, any>;
 
   beforeAll(async () => {
     testsHelper = await new NotificationsTestsHelper().init();
@@ -40,35 +35,20 @@ describe('Notifications / _handlers / base handler suite', () => {
   });
 
   describe('isEmailPreferenceInstantly', () => {
-    it('should return true when the email preference is instant', () => {
-      expect(
-        baseHandler['isEmailPreferenceInstantly']('TASK', { TASK: EmailNotificationPreferenceEnum.INSTANTLY })
-      ).toBe(true);
+    it('should return true when the email preference is yes', () => {
+      expect(baseHandler['shouldSendEmail']('TASK', { TASK: NotificationPreferenceEnum.YES } as any)).toBe(true);
     });
 
-    it.each([[EmailNotificationPreferenceEnum.DAILY], [EmailNotificationPreferenceEnum.NEVER]])(
-      'should return false when the email preference is %s',
-      (preference: EmailNotificationPreferenceEnum) => {
-        expect(baseHandler['isEmailPreferenceInstantly']('TASK', { TASK: preference })).toBe(false);
-      }
-    );
-
-    it('should return true when the email preference is not set', () => {
-      expect(
-        baseHandler['isEmailPreferenceInstantly']('TASK', { MESSAGE: EmailNotificationPreferenceEnum.NEVER })
-      ).toBe(true);
+    it('should return false when the email preference is no', () => {
+      expect(baseHandler['shouldSendEmail']('TASK', { TASK: NotificationPreferenceEnum.NO } as any)).toBe(false);
     });
-  });
 
-  describe('frontendBaseUrl', () => {
-    it.each([
-      [ServiceRoleEnum.ASSESSMENT, 'assessment'],
-      [ServiceRoleEnum.ACCESSOR, 'accessor'],
-      [ServiceRoleEnum.QUALIFYING_ACCESSOR, 'accessor'],
-      [ServiceRoleEnum.INNOVATOR, 'innovator'],
-      [ServiceRoleEnum.ADMIN, '']
-    ])('should return the correct frontend base url for role %s', (role: ServiceRoleEnum, res: string) => {
-      expect(baseHandler['frontendBaseUrl'](role)).toBe(res);
+    it('should return true when the email preference for DOCUMENTS is not defined', () => {
+      expect(baseHandler['shouldSendEmail']('DOCUMENTS', { TASK: NotificationPreferenceEnum.NO } as any)).toBe(true);
+    });
+
+    it('should return true when the email preference is not defined', () => {
+      expect(baseHandler['shouldSendEmail']('INNOVATION_MANAGEMENT')).toBe(true);
     });
   });
 
@@ -78,17 +58,17 @@ describe('Notifications / _handlers / base handler suite', () => {
     beforeAll(() => {
       defaultReply = [
         {
-          templateId: EmailTypeEnum.TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
+          templateId: 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT',
           params: {},
           to: scenario.users.jamieMadroxAccessor.email
         },
         {
-          templateId: EmailTypeEnum.TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
+          templateId: 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT',
           params: {},
           to: scenario.users.jamieMadroxAccessor.email
         },
         {
-          templateId: EmailTypeEnum.TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
+          templateId: 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT',
           params: {},
           to: scenario.users.paulNeedsAssessor.email
         }
@@ -104,19 +84,19 @@ describe('Notifications / _handlers / base handler suite', () => {
         {
           notificationPreferenceType: 'TASK',
           params: {},
-          templateId: EmailTypeEnum.TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
+          templateId: 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT',
           to: DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'aiRole')
         },
         {
           notificationPreferenceType: 'TASK',
           params: {},
-          templateId: EmailTypeEnum.TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
+          templateId: 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT',
           to: DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'healthAccessorRole')
         },
         {
           notificationPreferenceType: 'TASK',
           params: {},
-          templateId: EmailTypeEnum.TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
+          templateId: 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT',
           to: DTOsHelper.getRecipientUser(scenario.users.paulNeedsAssessor, 'assessmentRole')
         }
       ];
@@ -127,19 +107,19 @@ describe('Notifications / _handlers / base handler suite', () => {
         {
           notificationPreferenceType: 'TASK',
           params: {},
-          templateId: EmailTypeEnum.TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
+          templateId: 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT',
           to: DTOsHelper.getRecipientUser(scenario.users.ingridAccessor, 'accessorRole')
         },
         {
           notificationPreferenceType: 'TASK',
           params: {},
-          templateId: EmailTypeEnum.TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
+          templateId: 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT',
           to: DTOsHelper.getRecipientUser(scenario.users.ingridAccessor, 'accessorRole')
         },
         {
           notificationPreferenceType: 'TASK',
           params: {},
-          templateId: EmailTypeEnum.TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
+          templateId: 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT',
           to: DTOsHelper.getRecipientUser(scenario.users.paulNeedsAssessor, 'assessmentRole')
         }
       ];
@@ -164,7 +144,7 @@ describe('Notifications / _handlers / base handler suite', () => {
         {
           notificationPreferenceType: 'TASK',
           params: {},
-          templateId: EmailTypeEnum.TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
+          templateId: 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT',
           to: { email: 'test@example.org' }
         }
       ];
@@ -173,7 +153,7 @@ describe('Notifications / _handlers / base handler suite', () => {
       expect(res).toHaveLength(1);
       expect(res).toMatchObject([
         {
-          templateId: EmailTypeEnum.TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
+          templateId: 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT',
           params: {},
           to: 'test@example.org'
         }
@@ -197,29 +177,27 @@ describe('Notifications / _handlers / base handler suite', () => {
     });
 
     it.each([
-      ['should send', EmailNotificationPreferenceEnum.INSTANTLY, true],
+      ['should send', NotificationPreferenceEnum.YES, true],
       ['should send', undefined, true],
-      ['should not send', EmailNotificationPreferenceEnum.DAILY, false],
-      ['should not send', EmailNotificationPreferenceEnum.NEVER, false]
+      ['should not send', NotificationPreferenceEnum.NO, false]
     ])('%s email to user recipient if preference is %s', async (_label, preference, result) => {
       jest
         .spyOn(baseHandler['recipientsService'], 'getEmailPreferences')
-        .mockResolvedValueOnce(new Map([[scenario.users.jamieMadroxAccessor.roles.aiRole.id, { TASK: preference }]]));
+        .mockResolvedValueOnce(
+          new Map([[scenario.users.jamieMadroxAccessor.roles.aiRole.id, { TASK: preference } as any]])
+        );
 
       expect(await baseHandler.getEmails()).toHaveLength(result ? 3 : 2);
     });
 
-    it.each([
-      [EmailNotificationPreferenceEnum.INSTANTLY],
-      [undefined],
-      [EmailNotificationPreferenceEnum.DAILY],
-      [EmailNotificationPreferenceEnum.NEVER]
-    ])(
+    it.each([[NotificationPreferenceEnum.YES], [undefined], [NotificationPreferenceEnum.NO]])(
       'should always send email to user recipient regardless of preference being %s if ignore preference is set',
       async preference => {
         jest
           .spyOn(baseHandler['recipientsService'], 'getEmailPreferences')
-          .mockResolvedValueOnce(new Map([[scenario.users.jamieMadroxAccessor.roles.aiRole.id, { TASK: preference }]]));
+          .mockResolvedValueOnce(
+            new Map([[scenario.users.jamieMadroxAccessor.roles.aiRole.id, { TASK: preference } as any]])
+          );
 
         baseHandler.emails.forEach(email => (email.options = { ignorePreferences: true }));
         expect(await baseHandler.getEmails()).toHaveLength(3);
@@ -261,9 +239,9 @@ describe('Notifications / _handlers / base handler suite', () => {
     it('should include display name for email recipient if provided', async () => {
       baseHandler.emails = [
         {
-          notificationPreferenceType: 'TASK',
+          notificationPreferenceType: null,
           params: {},
-          templateId: EmailTypeEnum.TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT,
+          templateId: 'TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT',
           to: { email: 'test@example.org', displayname: 'Test User' }
         }
       ];
@@ -277,8 +255,8 @@ describe('Notifications / _handlers / base handler suite', () => {
       const example = [
         {
           context: {
-            type: NotificationContextTypeEnum.TASK,
-            detail: NotificationContextDetailEnum.TASK_CREATION,
+            type: 'TASK' as NotificationCategoryType,
+            detail: 'TA01_TASK_CREATION_TO_INNOVATOR',
             id: randUuid()
           },
           innovationId: randUuid(),

@@ -207,4 +207,58 @@ describe('Innovation Sections Suite', () => {
       // assert assuming if no error is thrown then the test is successful (for now)
     });
   });
+
+  describe('findAllSections', () => {
+    it('should return all the sections info', async () => {
+      const allSectionsInfo = await sut.findAllSections(innovation.id);
+
+      expect(allSectionsInfo).toStrictEqual([
+        {
+          section: {
+            section: innovation.sections.INNOVATION_DESCRIPTION.section,
+            status: innovation.sections.INNOVATION_DESCRIPTION.status,
+            submittedAt: undefined,
+            submittedBy: { displayTag: 'Innovator', name: '[unknown user]' },
+            openTasksCount: 3 // John innovation has 4 tasks, 3 open and 1 done
+          },
+          data: expect.any(Object)
+        },
+        {
+          section: {
+            section: 'UNDERSTANDING_OF_NEEDS',
+            status: 'NOT_STARTED',
+            openTasksCount: 0
+          },
+          data: expect.any(Object)
+        },
+        {
+          section: {
+            section: innovation.sections.EVIDENCE_OF_EFFECTIVENESS.section,
+            status: innovation.sections.EVIDENCE_OF_EFFECTIVENESS.status,
+            submittedAt: undefined,
+            submittedBy: { displayTag: 'Innovator', name: '[unknown user]' },
+            openTasksCount: 0
+          },
+          data: expect.any(Object)
+        },
+        ...[
+          'MARKET_RESEARCH',
+          'CURRENT_CARE_PATHWAY',
+          'TESTING_WITH_USERS',
+          'REGULATIONS_AND_STANDARDS',
+          'INTELLECTUAL_PROPERTY',
+          'REVENUE_MODEL',
+          'COST_OF_INNOVATION',
+          'DEPLOYMENT'
+        ].map(s => ({
+          section: {
+            section: s,
+            status: 'NOT_STARTED',
+            openTasksCount: 0
+          },
+          data: expect.any(Object)
+        }))
+      ]);
+    });
+  });
 });

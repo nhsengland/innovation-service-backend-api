@@ -34,7 +34,7 @@ import type { DomainContextType } from '@innovations/shared/types';
 
 import { InnovationThreadSubjectEnum } from '../_enums/innovation.enums';
 import type {
-  InnovationDocumentType,
+  InnovationFileType,
   InnovationSuggestionAccessor,
   InnovationSuggestionsType
 } from '../_types/innovation.types';
@@ -59,7 +59,7 @@ type UnitSupportInformationType = {
 type SuggestedUnitType = {
   id: string;
   name: string;
-  support: { status: InnovationSupportStatusEnum; start?: Date; end?: Date };
+  support: { id?: string; status: InnovationSupportStatusEnum; start?: Date; end?: Date };
 };
 
 @injectable()
@@ -317,7 +317,7 @@ export class InnovationSupportsService extends BaseService {
         savedSupport.id,
         ThreadContextTypeEnum.SUPPORT,
         transaction,
-        true
+        false
       );
 
       await this.domainService.innovations.addActivityLog(
@@ -342,23 +342,20 @@ export class InnovationSupportsService extends BaseService {
         }
       );
 
-      await this.assignAccessors(savedSupport, accessors, thread.thread.id, transaction);
+      await this.assignAccessors(domainContext, savedSupport, accessors, thread.thread.id, transaction);
 
-      return { id: savedSupport.id };
+      return { id: savedSupport.id, threadId: thread.thread.id };
     });
 
-    await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE, {
+    await this.notifierService.send(domainContext, NotifierTypeEnum.SUPPORT_STATUS_UPDATE, {
       innovationId,
-      innovationSupport: {
+      threadId: result.threadId,
+      support: {
         id: result.id,
         status: data.status,
-        statusChanged: true,
         message: data.message,
-        organisationUnitId: organisationUnitId,
-        newAssignedAccessors:
-          data.status === InnovationSupportStatusEnum.ENGAGING
-            ? (data.accessors ?? []).map(item => ({ id: item.id }))
-            : []
+        newAssignedAccessorsIds:
+          data.status === InnovationSupportStatusEnum.ENGAGING ? (data.accessors ?? []).map(item => item.id) : []
       }
     });
 
@@ -446,9 +443,10 @@ export class InnovationSupportsService extends BaseService {
       data?.organisationUnits &&
       data?.organisationUnits.length > 0
     ) {
-      await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_ORGANISATION_UNITS_SUGGESTION, {
+      await this.notifierService.send(domainContext, NotifierTypeEnum.ORGANISATION_UNITS_SUGGESTION, {
         innovationId,
-        organisationUnitIds: data.organisationUnits
+        unitsIds: data.organisationUnits,
+        comment: data.description
       });
     }
 
@@ -487,8 +485,6 @@ export class InnovationSupportsService extends BaseService {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UPDATE_WITH_UNPROCESSABLE_STATUS);
     }
 
-    const previousStatus = dbSupport.status;
-
     const result = await connection.transaction(async transaction => {
       let assignedAccessors: string[] = [];
       if (data.status === InnovationSupportStatusEnum.ENGAGING) {
@@ -525,7 +521,7 @@ export class InnovationSupportsService extends BaseService {
         savedSupport.id,
         ThreadContextTypeEnum.SUPPORT,
         transaction,
-        true
+        false
       );
 
       if (!thread.message) {
@@ -554,29 +550,29 @@ export class InnovationSupportsService extends BaseService {
         }
       );
 
-      const newAssignedAccessors = await this.assignAccessors(
+      const { newAssignedAccessors } = await this.assignAccessors(
+        domainContext,
         savedSupport,
         assignedAccessors,
         thread.thread.id,
         transaction
       );
 
-      return { id: savedSupport.id, newAssignedAccessors: new Set(newAssignedAccessors) };
+      return { id: savedSupport.id, newAssignedAccessors: new Set(newAssignedAccessors), threadId: thread.thread.id };
     });
 
-    await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE, {
+    await this.notifierService.send(domainContext, NotifierTypeEnum.SUPPORT_STATUS_UPDATE, {
       innovationId,
-      innovationSupport: {
+      threadId: result.threadId,
+      support: {
         id: result.id,
         status: data.status,
-        statusChanged: previousStatus !== data.status,
         message: data.message,
-        organisationUnitId: dbSupport.organisationUnit.id,
-        newAssignedAccessors:
+        newAssignedAccessorsIds:
           data.status === InnovationSupportStatusEnum.ENGAGING
             ? (data.accessors ?? [])
                 .filter(item => result.newAssignedAccessors.has(item.userRoleId))
-                .map(item => ({ id: item.id }))
+                .map(item => item.id)
             : []
       }
     });
@@ -599,7 +595,7 @@ export class InnovationSupportsService extends BaseService {
     innovationId: string,
     supportId: string,
     data: {
-      message?: string;
+      message: string;
       accessors: { id: string; userRoleId: string }[];
     },
     entityManager?: EntityManager
@@ -635,46 +631,59 @@ export class InnovationSupportsService extends BaseService {
       supportId,
       entityManager
     );
-    if (!thread) {
-      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND);
-    }
 
-    await this.assignAccessors(
+    const accessorsChanges = await this.assignAccessors(
+      domainContext,
       support,
       data.accessors.map(item => item.userRoleId),
-      thread.id,
+      thread?.id,
       entityManager
     );
 
-    if (data.message) {
+    if (thread) {
       await this.innovationThreadsService.createThreadMessage(
         domainContext,
         thread.id,
         data.message,
         false,
         false,
+        undefined,
         entityManager
       );
+
+      // Possible techdebt since notification depends on the thread at the moment and we don't have a thread
+      // in old supports before November 2022 (see #156480)
+      await this.notifierService.send(domainContext, NotifierTypeEnum.SUPPORT_NEW_ASSIGN_ACCESSORS, {
+        innovationId: innovationId,
+        supportId: supportId,
+        threadId: thread.id,
+        message: data.message,
+        newAssignedAccessorsRoleIds: accessorsChanges.newAssignedAccessors,
+        removedAssignedAccessorsRoleIds: accessorsChanges.removedAssignedAccessors
+      });
     }
   }
 
   /**
    * assigns accessors to a support, adding them to the thread followers if the support is ENGAGING
+   * @param domainContext the domain context
    * @param support the support entity or id
    * @param accessorRoleIds the list of assigned accessors role ids
+   * @param threadId optional thread id to add the followers
    * @param entityManager transactional entity manager
    * @returns the list of new assigned accessors role ids
    */
   private async assignAccessors(
+    domainContext: DomainContextType,
     support: string | InnovationSupportEntity,
     accessorRoleIds: string[],
-    threadId: string, // this will likely become optional in the future
+    threadId?: string,
     entityManager?: EntityManager
-  ): Promise<string[]> {
+  ): Promise<{ newAssignedAccessors: string[]; removedAssignedAccessors: string[] }> {
     // Force a transaction if one not present
     if (!entityManager) {
       return this.sqlConnection.transaction(async transaction => {
-        return this.assignAccessors(support, accessorRoleIds, threadId, transaction);
+        return this.assignAccessors(domainContext, support, accessorRoleIds, threadId, transaction);
       });
     }
 
@@ -692,8 +701,10 @@ export class InnovationSupportsService extends BaseService {
       support = dbSupport;
     }
 
-    const previousUsersRoleIds = new Set(support.userRoles.map(item => item.id));
-    const newAssignedAccessors = accessorRoleIds.filter(item => !previousUsersRoleIds.has(item));
+    const previousUsersRoleIds = support.userRoles.map(item => item.id);
+    const previousUsersRoleIdsSet = new Set(previousUsersRoleIds);
+    const newAssignedAccessors = accessorRoleIds.filter(item => !previousUsersRoleIdsSet.has(item));
+    const removedAssignedAccessors = previousUsersRoleIds.filter(r => !accessorRoleIds.includes(r));
 
     await entityManager.save(InnovationSupportEntity, {
       id: support.id,
@@ -702,7 +713,7 @@ export class InnovationSupportsService extends BaseService {
 
     // Add followers logic
     // Update thread followers with the new assigned users only when the support is ENGAGING
-    if (support.status === InnovationSupportStatusEnum.ENGAGING) {
+    if (support.status === InnovationSupportStatusEnum.ENGAGING && threadId) {
       // If we want to remove only the previous assigned users we can use this
       // await this.innovationThreadsService.removeFollowers(threadId, [...previousUsersRoleIds], entityManager);
       await this.innovationThreadsService.removeOrganisationUnitFollowers(
@@ -710,10 +721,16 @@ export class InnovationSupportsService extends BaseService {
         support.organisationUnit.id,
         entityManager
       );
-      await this.innovationThreadsService.addFollowersToThread(threadId, accessorRoleIds, entityManager);
+      await this.innovationThreadsService.addFollowersToThread(
+        domainContext,
+        threadId,
+        accessorRoleIds,
+        false,
+        entityManager
+      );
     }
 
-    return newAssignedAccessors;
+    return { newAssignedAccessors, removedAssignedAccessors };
   }
 
   async changeInnovationSupportStatusRequest(
@@ -723,7 +740,7 @@ export class InnovationSupportsService extends BaseService {
     status: InnovationSupportStatusEnum,
     requestReason: string
   ): Promise<boolean> {
-    await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_CHANGE_REQUEST, {
+    await this.notifierService.send(domainContext, NotifierTypeEnum.SUPPORT_STATUS_CHANGE_REQUEST, {
       innovationId,
       supportId,
       proposedStatus: status,
@@ -738,16 +755,7 @@ export class InnovationSupportsService extends BaseService {
     domainContext: DomainContextType,
     innovationId: string,
     entityManager?: EntityManager
-  ): Promise<
-    Record<
-      keyof typeof InnovationSupportSummaryTypeEnum,
-      {
-        id: string;
-        name: string;
-        support: { status: InnovationSupportStatusEnum; start?: Date; end?: Date };
-      }[]
-    >
-  > {
+  ): Promise<Record<keyof typeof InnovationSupportSummaryTypeEnum, SuggestedUnitType[]>> {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const suggestedUnitsInfoMap = await this.getSuggestedUnitsInfoMap(innovationId, em);
@@ -766,6 +774,7 @@ export class InnovationSupportsService extends BaseService {
           name: support.unitName,
           ...(support.unitId === domainContext.organisation?.organisationUnit?.id && { sameOrganisation: true }),
           support: {
+            id: support.id,
             status: support.status,
             start: support.startSupport ?? undefined
           }
@@ -776,6 +785,7 @@ export class InnovationSupportsService extends BaseService {
           name: support.unitName,
           ...(support.unitId === domainContext.organisation?.organisationUnit?.id && { sameOrganisation: true }),
           support: {
+            id: support.id,
             status: support.status,
             start: support.startSupport,
             end: support.endSupport
@@ -787,6 +797,7 @@ export class InnovationSupportsService extends BaseService {
           name: support.unitName,
           ...(support.unitId === domainContext.organisation?.organisationUnit?.id && { sameOrganisation: true }),
           support: {
+            id: support.id,
             status: support.status,
             start: support.updatedAt
           }
@@ -950,7 +961,7 @@ export class InnovationSupportsService extends BaseService {
     data: {
       title: string;
       description: string;
-      document?: InnovationDocumentType;
+      document?: InnovationFileType;
     },
     entityManager?: EntityManager
   ): Promise<void> {
@@ -995,7 +1006,6 @@ export class InnovationSupportsService extends BaseService {
         await this.innovationFileService.createFile(
           domainContext,
           innovationId,
-          support.innovation.status,
           {
             ...data.document,
             context: {
@@ -1003,6 +1013,7 @@ export class InnovationSupportsService extends BaseService {
               type: InnovationFileContextTypeEnum.INNOVATION_PROGRESS_UPDATE
             }
           },
+          support.innovation.status,
           transaction
         );
       }
@@ -1010,7 +1021,6 @@ export class InnovationSupportsService extends BaseService {
 
     await this.notifierService.send(domainContext, NotifierTypeEnum.SUPPORT_SUMMARY_UPDATE, {
       innovationId,
-      organisationUnitId: unitId,
       supportId: support.id
     });
   }

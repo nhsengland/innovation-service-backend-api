@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@users/shared/decorators';
-import { InnovationStatusEnum, NotificationContextDetailEnum, NotificationContextTypeEnum } from '@users/shared/enums';
+import { InnovationStatusEnum, NotificationCategoryType, NotificationDetailType } from '@users/shared/enums';
 import { JoiHelper, ResponseHelper, SwaggerHelper } from '@users/shared/helpers';
 import type { AuthorizationService } from '@users/shared/services';
 import SHARED_SYMBOLS from '@users/shared/services/symbols';
@@ -113,12 +113,12 @@ export default openApi(V1UserNotifications.httpTrigger as AzureFunction, '/v1/no
                       },
                       contextType: {
                         type: 'string',
-                        enum: Object.keys(NotificationContextTypeEnum),
-                        description: 'The notification context type'
+                        enum: NotificationCategoryType,
+                        description: 'The notification context category'
                       },
                       contextDetail: {
                         type: 'string',
-                        enum: Object.keys(NotificationContextDetailEnum),
+                        enum: NotificationDetailType,
                         description: 'The notification context detail'
                       },
                       contextId: {

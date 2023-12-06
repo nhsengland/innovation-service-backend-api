@@ -52,11 +52,8 @@ export class InnovationSectionEntity extends BaseEntity {
   })
   files: InnovationFileLegacyEntity[];
 
-  @OneToMany(() => InnovationTaskEntity, record => record.innovationSection, {
-    lazy: true,
-    cascade: ['insert', 'update']
-  })
-  tasks: Promise<InnovationTaskEntity[]>;
+  @OneToMany(() => InnovationTaskEntity, record => record.innovationSection, { cascade: ['insert', 'update'] })
+  tasks: InnovationTaskEntity[];
 
   static new(data: Partial<InnovationSectionEntity>): InnovationSectionEntity {
     const instance = new InnovationSectionEntity();

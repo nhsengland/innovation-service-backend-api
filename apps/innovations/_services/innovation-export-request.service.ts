@@ -45,9 +45,10 @@ export class InnovationExportRequestService extends BaseService {
       })
     );
 
-    await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST, {
+    await this.notifierService.send(domainContext, NotifierTypeEnum.EXPORT_REQUEST_SUBMITTED, {
       innovationId: innovationId,
-      requestId: request.id
+      exportRequestId: request.id,
+      comment: data.requestReason
     });
 
     return { id: request.id };
@@ -268,9 +269,9 @@ export class InnovationExportRequestService extends BaseService {
     );
 
     if (domainContext.currentRole.role === ServiceRoleEnum.INNOVATOR) {
-      await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK, {
+      await this.notifierService.send(domainContext, NotifierTypeEnum.EXPORT_REQUEST_FEEDBACK, {
         innovationId: request.innovation.id,
-        requestId: request.id
+        exportRequestId: request.id
       });
     }
   }

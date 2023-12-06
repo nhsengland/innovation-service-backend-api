@@ -106,7 +106,8 @@ export class DTOsHelper {
       role: role.role,
       userId: user.id,
       identityId: user.identityId,
-      isActive: user.isActive
+      isActive: user.isActive,
+      unitId: role.organisationUnit?.id
     };
   }
 

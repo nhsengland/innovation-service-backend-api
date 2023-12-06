@@ -7,7 +7,7 @@ import { InnovationSectionStatusEnum, InnovationStatusEnum } from '../../enums/i
 import { NotFoundError } from '../../errors/errors.config';
 import { UserErrorsEnum } from '../../errors/errors.enums';
 
-import type { CurrentCatalogTypes, DocumentType } from '../../schemas/innovation-record';
+import type { CurrentCatalogTypes, CurrentDocumentType } from '../../schemas/innovation-record';
 import { BaseBuilder } from './base.builder';
 import type { TestOrganisationType } from './organisation.builder';
 
@@ -18,8 +18,14 @@ export type TestInnovationType = {
   ownerId: string;
   sections: Map<
     CurrentCatalogTypes.InnovationSections,
-    { id: string; status: InnovationSectionStatusEnum; section: CurrentCatalogTypes.InnovationSections, updatedAt: Date }
+    {
+      id: string;
+      status: InnovationSectionStatusEnum;
+      section: CurrentCatalogTypes.InnovationSections;
+      updatedAt: Date;
+    }
   >;
+  evidences: CurrentDocumentType['evidences'];
   sharedOrganisations: { id: string; name: string }[];
 };
 
@@ -36,7 +42,7 @@ export class InnovationBuilder extends BaseBuilder {
     transfers: []
   };
 
-  private document: DocumentType = {
+  private document: CurrentDocumentType = {
     version: '202304',
     INNOVATION_DESCRIPTION: {
       name: this.innovation.name!,
@@ -143,8 +149,13 @@ export class InnovationBuilder extends BaseBuilder {
     return this;
   }
 
-  withDocument(document: DocumentType): this {
+  withDocument(document: CurrentDocumentType): this {
     this.document = document;
+    return this;
+  }
+
+  withEvidences(evidences: CurrentDocumentType['evidences']): this {
+    this.document.evidences = evidences;
     return this;
   }
 
@@ -153,7 +164,7 @@ export class InnovationBuilder extends BaseBuilder {
       .getRepository(InnovationEntity)
       .save({
         ...this.innovation,
-        sections: this.innovation.sections,
+        sections: this.innovation.sections
       });
 
     await this.getEntityManager()
@@ -190,6 +201,7 @@ export class InnovationBuilder extends BaseBuilder {
       ownerId: result.owner.id,
       sections: new Map(result.sections.map(s => [s['section'], { ...s, updatedAt: s.updatedAt }])),
       sharedOrganisations: result.organisationShares.map(s => ({ id: s.id, name: s.name })),
+      evidences: this.document.evidences
     };
   }
 }

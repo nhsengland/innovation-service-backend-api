@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { DataSource } from 'typeorm';
 
-import { randSoonDate, randText, randUuid } from '@ngneat/falso';
+import { randEmail, randProductDescription, randSoonDate, randText, randUuid } from '@ngneat/falso';
 import {
   InnovationCollaboratorStatusEnum,
   InnovationExportRequestStatusEnum,
@@ -13,7 +13,6 @@ import {
   InnovationTransferStatusEnum,
   ThreadContextTypeEnum
 } from '../../enums/innovation.enums';
-import { NotificationContextDetailEnum, NotificationContextTypeEnum } from '../../enums/notification.enums';
 import { ServiceRoleEnum, UserStatusEnum } from '../../enums/user.enums';
 import { InnovationAssessmentBuilder } from '../builders/innovation-assessment.builder';
 import { InnovationCollaboratorBuilder } from '../builders/innovation-collaborator.builder';
@@ -185,6 +184,15 @@ export class CompleteScenarioBuilder {
         .shareWith([healthOrg, medTechOrg])
         .addSection('INNOVATION_DESCRIPTION')
         .addSection('EVIDENCE_OF_EFFECTIVENESS')
+        .withEvidences([
+          {
+            id: randUuid(),
+            evidenceSubmitType: 'CLINICAL_OR_CARE',
+            summary: randText(),
+            evidenceType: 'CONFERENCE',
+            description: randProductDescription()
+          }
+        ])
         .save();
 
       // Innovation owner by johnInnovator with nothing
@@ -211,6 +219,7 @@ export class CompleteScenarioBuilder {
       // Add elisaPendingCollaborator as a pending collaborator on johnInnovation
       const elisaPendingCollaborator = await new InnovationCollaboratorBuilder(entityManager)
         .setInnovation(johnInnovation.id)
+        .setEmail(randEmail())
         .setStatus(InnovationCollaboratorStatusEnum.PENDING)
         .save();
 
@@ -358,6 +367,15 @@ export class CompleteScenarioBuilder {
         )
         .save();
 
+      const johnInnovationMessageFileByAlice = await new InnovationFileBuilder(entityManager)
+        .setContext({
+          id: johnInnovationThreadByAlice.messages['aliceMessage']!.id,
+          type: InnovationFileContextTypeEnum.INNOVATION_MESSAGE
+        })
+        .setCreatedByUserRole(aliceQualifyingAccessor.roles['qaRole']!.id)
+        .setInnovation(johnInnovation.id)
+        .save();
+
       const johnInnovationThreadByIngrid = await new InnovationThreadBuilder(entityManager)
         .setAuthor(ingridAccessor.id, ingridAccessor.roles['accessorRole']!.id)
         .setInnovation(johnInnovation.id)
@@ -421,6 +439,15 @@ export class CompleteScenarioBuilder {
           type: InnovationFileContextTypeEnum.INNOVATION_SECTION
         })
         .setName('AAAAAAAAAAAAAA')
+        .setCreatedByUserRole(johnInnovator.roles['innovatorRole']!.id)
+        .setInnovation(johnInnovation.id)
+        .save();
+
+      const johnInnovationEvidenceFileByJohn = await new InnovationFileBuilder(entityManager)
+        .setContext({
+          id: johnInnovation.evidences![0]!.id,
+          type: InnovationFileContextTypeEnum.INNOVATION_EVIDENCE
+        })
         .setCreatedByUserRole(johnInnovator.roles['innovatorRole']!.id)
         .setInnovation(johnInnovation.id)
         .save();
@@ -511,21 +538,13 @@ export class CompleteScenarioBuilder {
       const johnInnovationNotificationFromMessage = await new NotificationBuilder(entityManager)
         .addNotificationUser(johnInnovator)
         .setInnovation(johnInnovation.id)
-        .setContext(
-          NotificationContextTypeEnum.THREAD,
-          NotificationContextDetailEnum.THREAD_MESSAGE_CREATION,
-          randUuid()
-        )
+        .setContext('MESSAGES', 'ME03_THREAD_MESSAGE_CREATION', randUuid())
         .save();
 
       const johnInnovationNotificationFromSupport = await new NotificationBuilder(entityManager)
         .addNotificationUser(johnInnovator)
         .setInnovation(johnInnovation.id)
-        .setContext(
-          NotificationContextTypeEnum.SUPPORT,
-          NotificationContextDetailEnum.SUPPORT_STATUS_UPDATE,
-          randUuid()
-        )
+        .setContext('SUPPORT', 'ST02_SUPPORT_STATUS_TO_OTHER', randUuid())
         .save();
 
       // Progress updates on John innovation
@@ -756,7 +775,9 @@ export class CompleteScenarioBuilder {
                   innovationFileByJamieWithAiRole: johnInnovationInnovationFileUploadedByJamieWithAiRole,
                   innovationFileByDeletedUser: johnInnovationInnovationFileUploadedBySebastiaoDeletedUser,
                   innovationFileUploadedAfterToday: johnInnovationInnovationFileUploadedAfterTodayByJohn,
-                  progressUpdateFileByIngrid: johnInnovationProgressUpdateFileUploadedByIngrid
+                  progressUpdateFileByIngrid: johnInnovationProgressUpdateFileUploadedByIngrid,
+                  evidenceFileByJohn: johnInnovationEvidenceFileByJohn,
+                  messageFileByAlice: johnInnovationMessageFileByAlice
                 },
                 transfer: johnInnovationTransferToJane,
                 notifications: {

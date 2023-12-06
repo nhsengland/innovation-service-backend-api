@@ -1,4 +1,3 @@
-import type { Schema } from 'joi';
 import Joi from 'joi';
 
 import { TEXTAREA_LENGTH_LIMIT } from '@notifications/shared/constants';
@@ -11,98 +10,178 @@ import {
 } from '@notifications/shared/enums';
 import type { NotifierTemplatesType } from '@notifications/shared/types';
 
-import { CurrentCatalogTypes } from '@notifications/shared/schemas/innovation-record';
 import {
-  AccessorUnitChangeHandler,
-  ActionCreationHandler,
-  ActionUpdateHandler,
-  BaseHandler,
-  DailyDigestHandler,
-  IdleInnovatorsHandler,
-  IdleSupportHandler,
-  InnovationCollaboratorInviteHandler,
-  InnovationCollaboratorUpdateHandler,
-  InnovationOrganisationUnitsSuggestionHandler,
-  InnovationReassessmentRequestHandler,
-  InnovationRecordExportFeedbackHandler,
-  InnovationRecordExportRequestHandler,
+  AccountCreationHandler,
+  AccountDeletionHandler,
+  CollaboratorInviteHandler,
+  CollaboratorUpdateHandler,
+  DocumentUploadHandler,
+  ExportRequestFeedbackHandler,
+  ExportRequestSubmittedHandler,
+  IdleSupportAccessorHandler,
+  IdleSupportInnovatorHandler,
+  IncompleteRecordHandler,
+  InnovationDelayedSharedSuggestionHandler,
   InnovationStopSharingHandler,
   InnovationSubmittedHandler,
-  InnovationSupportStatusChangeRequestHandler,
-  InnovationSupportStatusUpdateHandler,
   InnovationTransferOwnershipCompletedHandler,
   InnovationTransferOwnershipCreationHandler,
   InnovationTransferOwnershipExpirationHandler,
   InnovationTransferOwnershipReminderHandler,
   InnovationWithdrawnHandler,
-  InnovatorAccountCreationHandler,
-  InnovatorAccountDeletionHandler,
   LockUserHandler,
+  MessageCreationHandler,
   NeedsAssessmentAssessorUpdateHandler,
-  NeedsAssessmentCompletedHandler,
+  NeedsAssessmentCompleteHandler,
   NeedsAssessmentStartedHandler,
+  OrganisationUnitsSuggestionHandler,
+  SupportNewAssignedAccessorsHandler,
+  SupportStatusChangeRequestHandler,
+  SupportStatusUpdateHandler,
   SupportSummaryUpdateHandler,
+  TaskCreationHandler,
+  TaskUpdateHandler,
+  ThreadAddFollowersHandler,
   ThreadCreationHandler,
-  ThreadMessageCreationHandler,
-  UnitInactivationSupportStatusCompletedHandler
+  UnitInactivatedHandler,
+  UnitKPIHandler
 } from '../_handlers';
-import type { EmailTypeEnum } from './emails.config';
 
-export const NOTIFICATIONS_CONFIG: {
-  [key in NotifierTypeEnum]: {
-    handler: {
-      new (...args: any[]): BaseHandler<NotifierTypeEnum, EmailTypeEnum, Record<string, unknown>>;
-    };
-    joiDefinition: Schema;
-  };
-} = {
-  [NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION]: {
-    handler: InnovatorAccountCreationHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION]>({})
+export const NOTIFICATIONS_CONFIG = {
+  // Account
+  [NotifierTypeEnum.ACCOUNT_CREATION]: {
+    handler: AccountCreationHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.ACCOUNT_CREATION]>({})
   },
 
-  [NotifierTypeEnum.INNOVATOR_ACCOUNT_DELETION_WITH_PENDING_TRANSFER]: {
-    handler: InnovatorAccountDeletionHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATOR_ACCOUNT_DELETION_WITH_PENDING_TRANSFER]>(
-      {
-        innovations: Joi.array()
-          .items(
-            Joi.object({
-              id: Joi.string().guid().required(),
-              name: Joi.string().required(),
-              transferExpireDate: Joi.date().required()
-            })
-          )
-          .required()
-      }
-    ).required()
-  },
-
-  [NotifierTypeEnum.INNOVATION_SUBMITED]: {
-    handler: InnovationSubmittedHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_SUBMITED]>({
-      innovationId: Joi.string().guid().required()
-    }).required()
-  },
-
-  [NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED]: {
-    handler: NeedsAssessmentCompletedHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED]>({
+  // Documents
+  [NotifierTypeEnum.INNOVATION_DOCUMENT_UPLOADED]: {
+    handler: DocumentUploadHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_DOCUMENT_UPLOADED]>({
       innovationId: Joi.string().guid().required(),
-      assessmentId: Joi.string().guid().required(),
-      organisationUnitIds: Joi.array().items(Joi.string().guid()).required()
+      file: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_DOCUMENT_UPLOADED]['file']>({
+        id: Joi.string().guid().required()
+      }).required()
     }).required()
   },
 
+  // Tasks
+  [NotifierTypeEnum.TASK_CREATION]: {
+    handler: TaskCreationHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.TASK_CREATION]>({
+      innovationId: Joi.string().guid().required(),
+      task: Joi.object<NotifierTemplatesType[NotifierTypeEnum.TASK_CREATION]['task']>({
+        id: Joi.string().guid().required()
+      }).required()
+    }).required()
+  },
+  [NotifierTypeEnum.TASK_UPDATE]: {
+    handler: TaskUpdateHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.TASK_UPDATE]>({
+      innovationId: Joi.string().guid().required(),
+      task: Joi.object<NotifierTemplatesType[NotifierTypeEnum.TASK_UPDATE]['task']>({
+        id: Joi.string().guid().required(),
+        status: Joi.string()
+          .valid(...Object.values(InnovationTaskStatusEnum))
+          .required()
+      }).required(),
+      message: Joi.string().required(),
+      messageId: Joi.string().guid().required(),
+      threadId: Joi.string().guid().required()
+    }).required()
+  },
+
+  // Messages
+  [NotifierTypeEnum.THREAD_CREATION]: {
+    handler: ThreadCreationHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.THREAD_CREATION]>({
+      innovationId: Joi.string().guid().required(),
+      threadId: Joi.string().guid().required(),
+      messageId: Joi.string().guid().required()
+    }).required()
+  },
+
+  [NotifierTypeEnum.THREAD_ADD_FOLLOWERS]: {
+    handler: ThreadAddFollowersHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.THREAD_ADD_FOLLOWERS]>({
+      innovationId: Joi.string().guid().required(),
+      threadId: Joi.string().guid().required(),
+      newFollowersRoleIds: Joi.array().items(Joi.string().guid()).required()
+    }).required()
+  },
+  [NotifierTypeEnum.THREAD_MESSAGE_CREATION]: {
+    handler: MessageCreationHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.THREAD_MESSAGE_CREATION]>({
+      innovationId: Joi.string().guid().required(),
+      threadId: Joi.string().guid().required(),
+      messageId: Joi.string().guid().required()
+    }).required()
+  },
+
+  // Support
+  [NotifierTypeEnum.SUPPORT_STATUS_UPDATE]: {
+    handler: SupportStatusUpdateHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.SUPPORT_STATUS_UPDATE]>({
+      innovationId: Joi.string().guid().required(),
+      threadId: Joi.string().guid().required(),
+      support: Joi.object<NotifierTemplatesType[NotifierTypeEnum.SUPPORT_STATUS_UPDATE]['support']>({
+        id: Joi.string().guid().required(),
+        status: Joi.string()
+          .valid(...Object.values(InnovationSupportStatusEnum))
+          .required(),
+        message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).trim().required(),
+        newAssignedAccessorsIds: Joi.array().items(Joi.string().guid())
+      }).required()
+    }).required()
+  },
+  [NotifierTypeEnum.SUPPORT_NEW_ASSIGN_ACCESSORS]: {
+    handler: SupportNewAssignedAccessorsHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.SUPPORT_NEW_ASSIGN_ACCESSORS]>({
+      innovationId: Joi.string().guid().required(),
+      supportId: Joi.string().guid().required(),
+      threadId: Joi.string().guid().required(),
+      message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).trim().required(),
+      newAssignedAccessorsRoleIds: Joi.array().items(Joi.string().guid()),
+      removedAssignedAccessorsRoleIds: Joi.array().items(Joi.string().guid())
+    }).required()
+  },
+  [NotifierTypeEnum.SUPPORT_STATUS_CHANGE_REQUEST]: {
+    handler: SupportStatusChangeRequestHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.SUPPORT_STATUS_CHANGE_REQUEST]>({
+      innovationId: Joi.string().guid().required(),
+      supportId: Joi.string().guid().required(),
+      proposedStatus: Joi.string()
+        .valid(...Object.values(InnovationSupportStatusEnum))
+        .required(),
+      requestStatusUpdateComment: Joi.string().required()
+    }).required()
+  },
+
+  // Needs Assessment
+  [NotifierTypeEnum.INNOVATION_SUBMITTED]: {
+    handler: InnovationSubmittedHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_SUBMITTED]>({
+      innovationId: Joi.string().guid().required(),
+      reassessment: Joi.boolean().strict().required()
+    }).required()
+  },
   [NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED]: {
     handler: NeedsAssessmentStartedHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED]>({
       innovationId: Joi.string().guid().required(),
       assessmentId: Joi.string().guid().required(),
+      message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.s).trim().required(),
+      messageId: Joi.string().guid().required(),
       threadId: Joi.string().guid().required()
     }).required()
   },
-
+  [NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED]: {
+    handler: NeedsAssessmentCompleteHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED]>({
+      innovationId: Joi.string().guid().required(),
+      assessmentId: Joi.string().guid().required()
+    }).required()
+  },
   [NotifierTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE]: {
     handler: NeedsAssessmentAssessorUpdateHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE]>({
@@ -117,96 +196,50 @@ export const NOTIFICATIONS_CONFIG: {
     }).required()
   },
 
-  [NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE]: {
-    handler: InnovationSupportStatusUpdateHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE]>({
-      innovationId: Joi.string().guid().required(),
-      innovationSupport: Joi.object<
-        NotifierTemplatesType[NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE]['innovationSupport']
-      >({
-        id: Joi.string().guid().required(),
-        status: Joi.string()
-          .valid(...Object.values(InnovationSupportStatusEnum))
-          .required(),
-        statusChanged: Joi.boolean().strict().required(),
-        organisationUnitId: Joi.string().guid().required(),
-        newAssignedAccessors: Joi.array().items(Joi.object({ id: Joi.string().guid().required() })),
-        message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).trim().required()
-      }).required()
-    }).required()
-  },
-
+  // Support Summary
   [NotifierTypeEnum.SUPPORT_SUMMARY_UPDATE]: {
     handler: SupportSummaryUpdateHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.SUPPORT_SUMMARY_UPDATE]>({
       innovationId: Joi.string().guid().required(),
-      organisationUnitId: Joi.string().guid().required(),
       supportId: Joi.string().guid().required()
     }).required()
   },
 
-  [NotifierTypeEnum.INNOVATION_ORGANISATION_UNITS_SUGGESTION]: {
-    handler: InnovationOrganisationUnitsSuggestionHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_ORGANISATION_UNITS_SUGGESTION]>({
+  // Suggestions
+  [NotifierTypeEnum.ORGANISATION_UNITS_SUGGESTION]: {
+    handler: OrganisationUnitsSuggestionHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.ORGANISATION_UNITS_SUGGESTION]>({
       innovationId: Joi.string().guid().required(),
-      organisationUnitIds: Joi.array().items(Joi.string().guid()).required()
+      unitsIds: Joi.array().items(Joi.string().guid().required()).min(1).required(),
+      comment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).trim().required()
     }).required()
   },
-
-  [NotifierTypeEnum.TASK_CREATION]: {
-    handler: ActionCreationHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.TASK_CREATION]>({
+  [NotifierTypeEnum.INNOVATION_DELAYED_SHARE]: {
+    handler: InnovationDelayedSharedSuggestionHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_DELAYED_SHARE]>({
       innovationId: Joi.string().guid().required(),
-      task: Joi.object<NotifierTemplatesType[NotifierTypeEnum.TASK_CREATION]['task']>({
-        id: Joi.string().guid().required(),
-        section: Joi.string()
-          .valid(...CurrentCatalogTypes.InnovationSections)
-          .required()
-      }).required()
-    }).required()
+      newSharedOrgIds: Joi.array().items(Joi.string().guid().required()).required()
+    })
   },
 
-  [NotifierTypeEnum.TASK_UPDATE]: {
-    handler: ActionUpdateHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.TASK_UPDATE]>({
+  // Innovations
+  // // Export Request
+  [NotifierTypeEnum.EXPORT_REQUEST_SUBMITTED]: {
+    handler: ExportRequestSubmittedHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.EXPORT_REQUEST_SUBMITTED]>({
       innovationId: Joi.string().guid().required(),
-      task: Joi.object<NotifierTemplatesType[NotifierTypeEnum.TASK_UPDATE]['task']>({
-        id: Joi.string().guid().required(),
-        section: Joi.string()
-          .valid(...CurrentCatalogTypes.InnovationSections)
-          .required(),
-        status: Joi.string()
-          .valid(...Object.values(InnovationTaskStatusEnum))
-          .required(),
-        previouslyUpdatedByUserRole: Joi.object({
-          id: Joi.string().guid().required(),
-          role: Joi.string()
-            .valid(...Object.values(ServiceRoleEnum))
-            .required()
-        }).optional()
-      }).required(),
-      comment: Joi.string().optional()
+      exportRequestId: Joi.string().guid().required(),
+      comment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.s).required()
     }).required()
   },
-
-  [NotifierTypeEnum.THREAD_CREATION]: {
-    handler: ThreadCreationHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.THREAD_CREATION]>({
+  [NotifierTypeEnum.EXPORT_REQUEST_FEEDBACK]: {
+    handler: ExportRequestFeedbackHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.EXPORT_REQUEST_FEEDBACK]>({
       innovationId: Joi.string().guid().required(),
-      threadId: Joi.string().guid().required(),
-      messageId: Joi.string().guid().required()
+      exportRequestId: Joi.string().guid().required()
     }).required()
   },
-
-  [NotifierTypeEnum.THREAD_MESSAGE_CREATION]: {
-    handler: ThreadMessageCreationHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.THREAD_MESSAGE_CREATION]>({
-      innovationId: Joi.string().guid().required(),
-      threadId: Joi.string().guid().required(),
-      messageId: Joi.string().guid().required()
-    }).required()
-  },
-
+  // // Withdraw
   [NotifierTypeEnum.INNOVATION_WITHDRAWN]: {
     handler: InnovationWithdrawnHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_WITHDRAWN]>({
@@ -220,15 +253,70 @@ export const NOTIFICATIONS_CONFIG: {
               userType: Joi.string()
                 .valid(...Object.values(ServiceRoleEnum))
                 .required(),
-              organisationId: Joi.string().guid(),
-              organisationUnitId: Joi.string().guid()
+              unitId: Joi.string().guid()
             })
           )
+          .min(1)
           .required()
       }).required()
     }).required()
   },
-
+  // // Delete Account
+  [NotifierTypeEnum.ACCOUNT_DELETION]: {
+    handler: AccountDeletionHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.ACCOUNT_DELETION]>({
+      innovations: Joi.array()
+        .items(
+          Joi.object({
+            id: Joi.string().guid().required(),
+            name: Joi.string().required(),
+            transferExpireDate: Joi.date().required()
+          })
+        )
+        .min(1)
+        .required()
+    }).required()
+  },
+  // // Collaborators
+  [NotifierTypeEnum.COLLABORATOR_INVITE]: {
+    handler: CollaboratorInviteHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.COLLABORATOR_INVITE]>({
+      innovationId: Joi.string().guid().required(),
+      collaboratorId: Joi.string().guid().required()
+    }).required()
+  },
+  [NotifierTypeEnum.COLLABORATOR_UPDATE]: {
+    handler: CollaboratorUpdateHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.COLLABORATOR_UPDATE]>({
+      innovationId: Joi.string().guid().required(),
+      collaborator: Joi.object({
+        id: Joi.string().guid().required(),
+        status: Joi.string()
+          .valid(...Object.values(InnovationCollaboratorStatusEnum))
+          .required()
+      })
+    }).required()
+  },
+  // // Stop Sharing
+  [NotifierTypeEnum.INNOVATION_STOP_SHARING]: {
+    handler: InnovationStopSharingHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_STOP_SHARING]>({
+      innovationId: Joi.string().guid().required(),
+      affectedUsers: Joi.array()
+        .items(
+          Joi.object({
+            id: Joi.string().guid().required(),
+            role: Joi.string()
+              .valid(...Object.values(ServiceRoleEnum))
+              .required(),
+            unitId: Joi.string().guid().optional()
+          })
+        )
+        .required(),
+      message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xs).trim().required()
+    }).required()
+  },
+  // // Transfer Ownership
   [NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_CREATION]: {
     handler: InnovationTransferOwnershipCreationHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_CREATION]>({
@@ -245,143 +333,50 @@ export const NOTIFICATIONS_CONFIG: {
     }).required()
   },
 
-  [NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_EXPIRATION]: {
-    handler: InnovationTransferOwnershipExpirationHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_EXPIRATION]>({
-      innovationId: Joi.string().guid().required(),
-      transferId: Joi.string().guid().required()
+  // Admin
+  [NotifierTypeEnum.LOCK_USER]: {
+    handler: LockUserHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.LOCK_USER]>({
+      identityId: Joi.string().guid().required()
+    }).required()
+  },
+  [NotifierTypeEnum.UNIT_INACTIVATED]: {
+    handler: UnitInactivatedHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.UNIT_INACTIVATED]>({
+      unitId: Joi.string().guid().required(),
+      completedInnovationIds: Joi.array().items(Joi.string().guid().required()).required()
     }).required()
   },
 
+  // Recurrent notifications.
+  [NotifierTypeEnum.INCOMPLETE_INNOVATION_RECORD]: {
+    handler: IncompleteRecordHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INCOMPLETE_INNOVATION_RECORD]>({})
+  },
+  [NotifierTypeEnum.IDLE_SUPPORT_INNOVATOR]: {
+    handler: IdleSupportInnovatorHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.IDLE_SUPPORT_INNOVATOR]>({})
+  },
+  [NotifierTypeEnum.IDLE_SUPPORT_ACCESSOR]: {
+    handler: IdleSupportAccessorHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.IDLE_SUPPORT_ACCESSOR]>({})
+  },
+  [NotifierTypeEnum.UNIT_KPI]: {
+    handler: UnitKPIHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.UNIT_KPI]>({})
+  },
+  [NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_EXPIRATION]: {
+    handler: InnovationTransferOwnershipExpirationHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_EXPIRATION]>({
+      innovationId: Joi.string().guid().required()
+    }).required()
+  },
   [NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_REMINDER]: {
     handler: InnovationTransferOwnershipReminderHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_REMINDER]>({
       innovationId: Joi.string().guid().required(),
       innovationName: Joi.string().required(),
-      transferId: Joi.string().guid().required(),
       recipientEmail: Joi.string().required()
     }).required()
-  },
-
-  [NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST]: {
-    handler: InnovationRecordExportRequestHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST]>({
-      innovationId: Joi.string().guid().required(),
-      requestId: Joi.string().guid().required()
-    }).required()
-  },
-
-  [NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK]: {
-    handler: InnovationRecordExportFeedbackHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK]>({
-      innovationId: Joi.string().guid().required(),
-      requestId: Joi.string().guid().required()
-    }).required()
-  },
-
-  [NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_CHANGE_REQUEST]: {
-    handler: InnovationSupportStatusChangeRequestHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_CHANGE_REQUEST]>({
-      innovationId: Joi.string().guid().required(),
-      supportId: Joi.string().guid().required(),
-      proposedStatus: Joi.string()
-        .valid(...Object.values(InnovationSupportStatusEnum))
-        .required(),
-      requestStatusUpdateComment: Joi.string().required()
-    }).required()
-  },
-
-  [NotifierTypeEnum.INNOVATION_STOP_SHARING]: {
-    handler: InnovationStopSharingHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_STOP_SHARING]>({
-      innovationId: Joi.string().guid().required(),
-      previousAssignedAccessors: Joi.array()
-        .items(
-          Joi.object({
-            id: Joi.string().guid().required(),
-            userType: Joi.string()
-              .valid(...Object.values(ServiceRoleEnum))
-              .required(),
-            organisationUnitId: Joi.string().guid().required()
-          })
-        )
-        .required(),
-      message: Joi.string().required()
-    }).required()
-  },
-
-  [NotifierTypeEnum.INNOVATION_REASSESSMENT_REQUEST]: {
-    handler: InnovationReassessmentRequestHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_REASSESSMENT_REQUEST]>({
-      innovationId: Joi.string().guid().required()
-    }).required()
-  },
-
-  [NotifierTypeEnum.INNOVATION_COLLABORATOR_INVITE]: {
-    handler: InnovationCollaboratorInviteHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_COLLABORATOR_INVITE]>({
-      innovationId: Joi.string().guid().required(),
-      innovationCollaboratorId: Joi.string().guid().required()
-    }).required()
-  },
-
-  [NotifierTypeEnum.INNOVATION_COLLABORATOR_UPDATE]: {
-    handler: InnovationCollaboratorUpdateHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_COLLABORATOR_UPDATE]>({
-      innovationId: Joi.string().guid().required(),
-      innovationCollaborator: Joi.object({
-        id: Joi.string().guid().required(),
-        status: Joi.string()
-          .valid(...Object.values(InnovationCollaboratorStatusEnum))
-          .required()
-      })
-    }).required()
-  },
-
-  // Admin module.
-
-  [NotifierTypeEnum.LOCK_USER]: {
-    handler: LockUserHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.LOCK_USER]>({
-      user: Joi.object<NotifierTemplatesType[NotifierTypeEnum.LOCK_USER]['user']>({
-        identityId: Joi.string().guid().required()
-      }).required()
-    }).required()
-  },
-
-  [NotifierTypeEnum.ACCESSOR_UNIT_CHANGE]: {
-    handler: AccessorUnitChangeHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.ACCESSOR_UNIT_CHANGE]>({
-      user: Joi.object<NotifierTemplatesType[NotifierTypeEnum.ACCESSOR_UNIT_CHANGE]['user']>({
-        id: Joi.string().guid().required(),
-        identityId: Joi.string().guid().required()
-      }).required(),
-      oldOrganisationUnitId: Joi.string().guid().required(),
-      newOrganisationUnitId: Joi.string().guid().required()
-    }).required()
-  },
-
-  [NotifierTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED]: {
-    handler: UnitInactivationSupportStatusCompletedHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED]>({
-      innovationId: Joi.string().guid().required(),
-      unitId: Joi.string().guid().required()
-    }).required()
-  },
-
-  // Recurrent notifications.
-  [NotifierTypeEnum.DAILY_DIGEST]: {
-    handler: DailyDigestHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.DAILY_DIGEST]>({})
-  },
-
-  [NotifierTypeEnum.INCOMPLETE_INNOVATION_RECORD]: {
-    handler: IdleInnovatorsHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INCOMPLETE_INNOVATION_RECORD]>({})
-  },
-
-  [NotifierTypeEnum.IDLE_SUPPORT]: {
-    handler: IdleSupportHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.IDLE_SUPPORT]>({})
   }
-};
+} as const;

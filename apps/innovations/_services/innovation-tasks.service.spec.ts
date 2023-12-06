@@ -11,7 +11,6 @@ import {
   ActivityEnum,
   InnovationStatusEnum,
   InnovationTaskStatusEnum,
-  NotificationContextTypeEnum,
   NotifierTypeEnum,
   ServiceRoleEnum,
   UserStatusEnum
@@ -61,11 +60,11 @@ describe('Innovation Tasks Suite', () => {
 
   afterEach(async () => {
     await testsHelper.releaseQueryRunnerEntityManager();
-    activityLogSpy.mockReset();
-    notifierSendSpy.mockReset();
-    createThreadOrMessageSpy.mockReset();
-    createThreadMessage.mockReset();
-    linkMessageSpy.mockReset();
+    activityLogSpy.mockClear();
+    notifierSendSpy.mockClear();
+    createThreadOrMessageSpy.mockClear();
+    createThreadMessage.mockClear();
+    linkMessageSpy.mockClear();
   });
 
   describe('createTask', () => {
@@ -124,7 +123,7 @@ describe('Innovation Tasks Suite', () => {
 
       expect(notifierSendSpy).toHaveBeenCalledWith(context, NotifierTypeEnum.TASK_CREATION, {
         innovationId: innovation.id,
-        task: { id: task.id, section: 'INNOVATION_DESCRIPTION' }
+        task: { id: task.id }
       });
     });
 
@@ -261,7 +260,7 @@ describe('Innovation Tasks Suite', () => {
         return Promise.resolve(
           contextIds.map(contextId => ({
             contextId,
-            contextType: NotificationContextTypeEnum.TASK,
+            contextType: 'TASK',
             id: randUuid(),
             params: {}
           }))

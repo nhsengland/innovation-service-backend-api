@@ -5,95 +5,59 @@ import type {
   InnovationTaskStatusEnum
 } from '../enums/innovation.enums';
 import type { NotifierTypeEnum } from '../enums/notifier.enums';
-import type { CurrentCatalogTypes } from '../schemas/innovation-record';
 
 export type NotifierTemplatesType = {
-  [NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION]: Record<string, never>;
-
-  [NotifierTypeEnum.INNOVATOR_ACCOUNT_DELETION_WITH_PENDING_TRANSFER]: {
+  // Account
+  [NotifierTypeEnum.ACCOUNT_CREATION]: Record<string, never>;
+  [NotifierTypeEnum.ACCOUNT_DELETION]: {
     innovations: { id: string; name: string; transferExpireDate: string }[];
   };
 
-  [NotifierTypeEnum.INNOVATION_SUBMITED]: {
-    innovationId: string;
+  // Admin
+  [NotifierTypeEnum.LOCK_USER]: {
+    identityId: string;
+  };
+  [NotifierTypeEnum.UNIT_INACTIVATED]: {
+    unitId: string;
+    completedInnovationIds: string[];
   };
 
-  [NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED]: {
+  // Documents
+  [NotifierTypeEnum.INNOVATION_DOCUMENT_UPLOADED]: {
     innovationId: string;
-    assessmentId: string;
-    threadId: string;
+    file: { id: string };
   };
 
-  [NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED]: {
+  // Innovations
+  // // Collaborators
+  [NotifierTypeEnum.COLLABORATOR_INVITE]: {
     innovationId: string;
-    assessmentId: string;
-    organisationUnitIds: string[]; // Suggested organisation units.
+    collaboratorId: string;
   };
-
-  [NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED]: {
+  [NotifierTypeEnum.COLLABORATOR_UPDATE]: {
     innovationId: string;
-    assessmentId: string;
-    organisationUnitIds: string[]; // Suggested organisation units.
+    collaborator: { id: string; status: InnovationCollaboratorStatusEnum };
   };
-
-  [NotifierTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE]: {
+  // // Stop Sharing
+  [NotifierTypeEnum.INNOVATION_STOP_SHARING]: {
     innovationId: string;
-    assessmentId: string;
-    previousAssessor?: { id: string };
-    newAssessor: { id: string };
-  };
-
-  [NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE]: {
-    innovationId: string;
-    innovationSupport: {
+    message: string;
+    affectedUsers: {
       id: string;
-      status: InnovationSupportStatusEnum;
-      statusChanged: boolean;
-      message: string;
-      organisationUnitId: string;
-      newAssignedAccessors?: { id: string }[]; // Newly assigned accessors
-    };
+      role: ServiceRoleEnum;
+      unitId?: string;
+    }[];
   };
-
-  [NotifierTypeEnum.SUPPORT_SUMMARY_UPDATE]: {
+  // // Transfer Ownership
+  [NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_CREATION]: {
     innovationId: string;
-    organisationUnitId: string;
-    supportId: string;
+    transferId: string;
   };
-
-  [NotifierTypeEnum.INNOVATION_ORGANISATION_UNITS_SUGGESTION]: {
+  [NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_COMPLETED]: {
     innovationId: string;
-    organisationUnitIds: string[]; // Suggested organisation units.
+    transferId: string;
   };
-
-  [NotifierTypeEnum.TASK_CREATION]: {
-    innovationId: string;
-    task: { id: string; section: CurrentCatalogTypes.InnovationSections };
-  };
-
-  [NotifierTypeEnum.TASK_UPDATE]: {
-    innovationId: string;
-    task: {
-      id: string;
-      section: CurrentCatalogTypes.InnovationSections;
-      status: InnovationTaskStatusEnum;
-      previouslyUpdatedByUserRole?: { id: string; role: ServiceRoleEnum };
-    };
-    comment?: string;
-  };
-
-  [NotifierTypeEnum.THREAD_CREATION]: {
-    innovationId: string;
-    threadId: string;
-    messageId: string;
-  };
-
-  [NotifierTypeEnum.THREAD_MESSAGE_CREATION]: {
-    innovationId: string;
-    threadId: string;
-    messageId: string;
-  };
-
+  // // Withdraw
   [NotifierTypeEnum.INNOVATION_WITHDRAWN]: {
     innovation: {
       id: string;
@@ -101,93 +65,133 @@ export type NotifierTemplatesType = {
       affectedUsers: {
         userId: string;
         userType: ServiceRoleEnum;
-        organisationId?: string;
-        organisationUnitId?: string;
+        unitId?: string;
       }[];
     };
   };
-
-  [NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_CREATION]: {
+  // // Export Request
+  [NotifierTypeEnum.EXPORT_REQUEST_SUBMITTED]: {
     innovationId: string;
-    transferId: string;
+    exportRequestId: string;
+    comment: string;
+  };
+  [NotifierTypeEnum.EXPORT_REQUEST_FEEDBACK]: {
+    innovationId: string;
+    exportRequestId: string;
   };
 
-  [NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_COMPLETED]: {
+  // Threads/Messages
+  [NotifierTypeEnum.THREAD_CREATION]: {
     innovationId: string;
-    transferId: string;
+    threadId: string;
+    messageId: string;
+  };
+  [NotifierTypeEnum.THREAD_ADD_FOLLOWERS]: {
+    innovationId: string;
+    threadId: string;
+    newFollowersRoleIds: string[];
+  };
+  [NotifierTypeEnum.THREAD_MESSAGE_CREATION]: {
+    innovationId: string;
+    threadId: string;
+    messageId: string;
   };
 
-  [NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_EXPIRATION]: {
+  // Needs Assessment
+  [NotifierTypeEnum.INNOVATION_SUBMITTED]: {
     innovationId: string;
-    transferId: string;
+    reassessment: boolean;
+  };
+  [NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED]: {
+    innovationId: string;
+    assessmentId: string; // not really used
+    message: string;
+    messageId: string;
+    threadId: string;
+  };
+  [NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED]: {
+    innovationId: string;
+    assessmentId: string;
+  };
+  [NotifierTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE]: {
+    innovationId: string;
+    assessmentId: string;
+    previousAssessor?: { id: string };
+    newAssessor: { id: string };
   };
 
-  [NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_REMINDER]: {
+  // Suggestions
+  [NotifierTypeEnum.ORGANISATION_UNITS_SUGGESTION]: {
     innovationId: string;
-    innovationName: string;
-    transferId: string;
-    recipientEmail: string;
+    unitsIds: string[];
+    comment: string;
+  };
+  [NotifierTypeEnum.INNOVATION_DELAYED_SHARE]: {
+    innovationId: string;
+    newSharedOrgIds: string[];
   };
 
-  [NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST]: {
+  // Support Summary
+  [NotifierTypeEnum.SUPPORT_SUMMARY_UPDATE]: {
     innovationId: string;
-    requestId: string;
+    supportId: string;
   };
 
-  [NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK]: {
+  // Supports
+  [NotifierTypeEnum.SUPPORT_STATUS_UPDATE]: {
     innovationId: string;
-    requestId: string;
+    threadId: string;
+    support: {
+      id: string;
+      status: InnovationSupportStatusEnum;
+      message: string;
+      newAssignedAccessorsIds?: string[]; // Newly assigned accessors for Engaging
+    };
   };
-
-  [NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_CHANGE_REQUEST]: {
+  [NotifierTypeEnum.SUPPORT_NEW_ASSIGN_ACCESSORS]: {
+    innovationId: string;
+    threadId: string;
+    supportId: string;
+    message: string;
+    newAssignedAccessorsRoleIds: string[];
+    removedAssignedAccessorsRoleIds: string[];
+  };
+  [NotifierTypeEnum.SUPPORT_STATUS_CHANGE_REQUEST]: {
     innovationId: string;
     supportId: string;
     proposedStatus: InnovationSupportStatusEnum;
     requestStatusUpdateComment: string;
   };
 
-  [NotifierTypeEnum.INNOVATION_STOP_SHARING]: {
+  // Tasks
+  [NotifierTypeEnum.TASK_CREATION]: {
     innovationId: string;
-    previousAssignedAccessors: {
+    task: { id: string };
+  };
+  [NotifierTypeEnum.TASK_UPDATE]: {
+    innovationId: string;
+    task: {
       id: string;
-      userType: ServiceRoleEnum;
-      organisationUnitId: string;
-    }[];
+      status: InnovationTaskStatusEnum;
+    };
     message: string;
-  };
-
-  [NotifierTypeEnum.INNOVATION_REASSESSMENT_REQUEST]: {
-    innovationId: string;
-  };
-
-  [NotifierTypeEnum.INNOVATION_COLLABORATOR_INVITE]: {
-    innovationId: string;
-    innovationCollaboratorId: string;
-  };
-
-  [NotifierTypeEnum.INNOVATION_COLLABORATOR_UPDATE]: {
-    innovationId: string;
-    innovationCollaborator: { id: string; status: InnovationCollaboratorStatusEnum };
-  };
-
-  // Admin module.
-  [NotifierTypeEnum.LOCK_USER]: {
-    user: { identityId: string };
-  };
-
-  [NotifierTypeEnum.ACCESSOR_UNIT_CHANGE]: {
-    user: { id: string; identityId: string };
-    oldOrganisationUnitId: string;
-    newOrganisationUnitId: string;
-  };
-
-  [NotifierTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED]: {
-    innovationId: string;
-    unitId: string;
+    messageId: string;
+    threadId: string;
   };
 
   // Recurrent notifications.
-  [NotifierTypeEnum.DAILY_DIGEST]: Record<string, never>;
   [NotifierTypeEnum.INCOMPLETE_INNOVATION_RECORD]: Record<string, never>;
-  [NotifierTypeEnum.IDLE_SUPPORT]: Record<string, never>;
+  [NotifierTypeEnum.IDLE_SUPPORT_ACCESSOR]: Record<string, never>;
+  [NotifierTypeEnum.IDLE_SUPPORT_INNOVATOR]: Record<string, never>;
+  [NotifierTypeEnum.UNIT_KPI]: Record<string, never>;
+
+  // Automatic / Transfer
+  [NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_EXPIRATION]: {
+    innovationId: string;
+  };
+  [NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_REMINDER]: {
+    innovationId: string;
+    innovationName: string;
+    recipientEmail: string;
+  };
 };

@@ -199,7 +199,9 @@ export class InnovationAssessmentsService extends BaseService {
       await this.notifierService.send(domainContext, NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED, {
         innovationId,
         assessmentId: assessment.id,
-        threadId: thread.thread.id
+        threadId: thread.thread.id,
+        messageId: thread.message.id,
+        message: data.message
       });
 
       return { id: assessment['id'] };
@@ -266,25 +268,8 @@ export class InnovationAssessmentsService extends BaseService {
         assessment.assignTo = UserEntity.new({ id: domainContext.id });
       }
 
+      const currentUnitSuggestionsIds = (assessment.organisationUnits ?? []).map(u => u.id);
       if (data.suggestedOrganisationUnitsIds) {
-        const currentOrgSuggestionsIds = assessment.organisationUnits.map(u => u.id);
-        const newSuggestions = data.suggestedOrganisationUnitsIds.filter(
-          unitId => !currentOrgSuggestionsIds.includes(unitId)
-        );
-
-        if (newSuggestions.length > 0) {
-          await this.domainService.innovations.addSupportLog(
-            transaction,
-            { id: domainContext.id, roleId: domainContext.currentRole.id },
-            innovationId,
-            {
-              type: InnovationSupportLogTypeEnum.ASSESSMENT_SUGGESTION,
-              description: 'NA suggested units',
-              suggestedOrganisationUnits: newSuggestions
-            }
-          );
-        }
-
         assessment.organisationUnits = data.suggestedOrganisationUnitsIds.map(id => OrganisationUnitEntity.new({ id }));
       }
 
@@ -327,19 +312,18 @@ export class InnovationAssessmentsService extends BaseService {
           );
         }
 
-        // Add suggested organisations (NOT units) names to activity log.
-        if ((data.suggestedOrganisationUnitsIds ?? []).length > 0) {
-          const organisations = await this.sqlConnection
+        if (data.suggestedOrganisationUnitsIds?.length) {
+          // Add suggested organisations (NOT units) names to activity log.
+          const organisations = await transaction
             .createQueryBuilder(OrganisationEntity, 'organisation')
             .distinct()
             .innerJoin('organisation.organisationUnits', 'organisationUnits')
-            .where('organisationUnits.id IN (:...ids)', {
-              ids: assessment.organisationUnits.map(ou => ou.id)
-            })
+            .where('organisationUnits.id IN (:...ids)', { ids: data.suggestedOrganisationUnitsIds })
             .andWhere('organisation.inactivated_at IS NULL')
             .andWhere('organisationUnits.inactivated_at IS NULL')
             .getMany();
 
+          // There's a bug open for this for discussion but maybe only add ActivityLog if there were suggestions changed.
           await this.domainService.innovations.addActivityLog(
             transaction,
             {
@@ -349,6 +333,28 @@ export class InnovationAssessmentsService extends BaseService {
             },
             { organisations: organisations.map(item => item.name) }
           );
+
+          const newSuggestions = dbAssessment.finishedAt
+            ? data.suggestedOrganisationUnitsIds.filter(id => !currentUnitSuggestionsIds.includes(id))
+            : data.suggestedOrganisationUnitsIds;
+          if (newSuggestions.length > 0) {
+            await this.domainService.innovations.addSupportLog(
+              transaction,
+              { id: domainContext.id, roleId: domainContext.currentRole.id },
+              innovationId,
+              {
+                type: InnovationSupportLogTypeEnum.ASSESSMENT_SUGGESTION,
+                description: 'NA suggested units',
+                suggestedOrganisationUnits: newSuggestions
+              }
+            );
+
+            await this.notifierService.send(domainContext, NotifierTypeEnum.ORGANISATION_UNITS_SUGGESTION, {
+              innovationId,
+              unitsIds: newSuggestions,
+              comment: data.summary ?? ''
+            });
+          }
         }
       } else {
         // it's draft
@@ -375,8 +381,7 @@ export class InnovationAssessmentsService extends BaseService {
     if (data.isSubmission && !dbAssessment.finishedAt) {
       await this.notifierService.send(domainContext, NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED, {
         innovationId: innovationId,
-        assessmentId: assessmentId,
-        organisationUnitIds: data.suggestedOrganisationUnitsIds || []
+        assessmentId: assessmentId
       });
     }
 
@@ -488,8 +493,9 @@ export class InnovationAssessmentsService extends BaseService {
       return { assessment: { id: assessmentClone.id }, reassessment: { id: reassessment.id } };
     });
 
-    await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_REASSESSMENT_REQUEST, {
-      innovationId: innovationId
+    await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_SUBMITTED, {
+      innovationId: innovationId,
+      reassessment: true
     });
 
     return {
