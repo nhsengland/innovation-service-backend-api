@@ -37,6 +37,29 @@ class V1InnovationsList {
 
       const { skip, take, order, ...filters } = queryParams;
 
+      const x = await innovationsService.getInnovationsList2(domainContext, {
+        select: [
+          'id',
+          'name',
+          'careSettings',
+          'categories',
+          'countryName',
+          'diseasesAndConditions',
+          'engagingUnits',
+          'involvedAACProgrammes',
+          'keyHealthInequalities',
+          'mainCategory',
+          'ownerId',
+          'status',
+          'submittedAt',
+          'updatedAt',
+          'support.status',
+          'support.updatedAt'
+        ]
+      });
+      console.log(x);
+      if (1 < Number(5)) throw new Error('xpto');
+
       const result = await innovationsService.getInnovationsList(
         {
           id: requestUser.id

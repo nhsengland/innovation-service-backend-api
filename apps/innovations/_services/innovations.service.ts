@@ -1,5 +1,5 @@
 import { inject, injectable } from 'inversify';
-import { Brackets, EntityManager, In, ObjectLiteral } from 'typeorm';
+import { Brackets, EntityManager, In, ObjectLiteral, SelectQueryBuilder } from 'typeorm';
 
 import {
   ActivityLogEntity,
@@ -7,6 +7,7 @@ import {
   InnovationDocumentEntity,
   InnovationEntity,
   InnovationExportRequestEntity,
+  InnovationListView,
   InnovationReassessmentRequestEntity,
   InnovationSectionEntity,
   InnovationSupportEntity,
@@ -41,7 +42,11 @@ import {
 } from '@innovations/shared/errors';
 import { PaginationQueryParamsType, TranslationHelper } from '@innovations/shared/helpers';
 import type { DomainService, DomainUsersService, NotifierService } from '@innovations/shared/services';
-import type { ActivityLogListParamsType, DomainContextType } from '@innovations/shared/types';
+import {
+  isAccessorDomainContextType,
+  type ActivityLogListParamsType,
+  type DomainContextType
+} from '@innovations/shared/types';
 
 import { InnovationSupportLogTypeEnum } from '@innovations/shared/enums';
 import { InnovationLocationEnum } from '../_enums/innovation.enums';
@@ -51,7 +56,22 @@ import { createDocumentFromInnovation } from '@innovations/shared/entities/innov
 import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import { ActionEnum } from '@innovations/shared/services/integrations/audit.service';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
+import { groupBy } from 'lodash';
 import { BaseService } from './base.service';
+
+// TODO move types
+type InnovationListSelectType =
+  | keyof Omit<InnovationListView, 'supports'>
+  | `support.${keyof Pick<InnovationSupportEntity, 'status' | 'updatedAt'>}`;
+
+type InnovationListFullResponseType = Omit<InnovationListView, 'supports'> & {
+  support: { status: InnovationSupportStatusEnum; updatedAt: Date | null };
+};
+
+type KeyPart<S> = S extends `${infer U}.${infer _D}` ? U : S;
+type InnovationListResponseType<S extends InnovationListSelectType, K extends KeyPart<S> = KeyPart<S>> = {
+  [k in K]: InnovationListFullResponseType[k];
+};
 
 @injectable()
 export class InnovationsService extends BaseService {
@@ -773,6 +793,89 @@ export class InnovationsService extends BaseService {
         })
       )
     };
+  }
+
+  async getInnovationsList2<S extends InnovationListSelectType>(
+    domainContext: DomainContextType,
+    xpto: {
+      select: S[];
+    },
+    em?: EntityManager
+  ): Promise<InnovationListResponseType<S>> {
+    // TODO grouped status na view em vez do status
+    const joins = new Set(xpto.select.filter(item => item.includes('.')).map(item => item.split('.')[0]));
+    //const fields = new Set(...xpto.select);
+
+    const fieldGroups = groupBy(xpto.select, item => item.split('.')[0]);
+
+    const connection = em ?? this.sqlConnection.manager;
+    const query = connection
+      .createQueryBuilder(InnovationListView, 'innovation')
+      // currently I'm only handling the root selects here, might change in the future. ie: withSupports add the selects
+      //.select(xpto.select.map(item => (item.includes('.') ? item : `innovation.${item}`)));
+      .select(xpto.select.filter(item => !item.includes('.')).map(item => `innovation.${item}`));
+
+    // special case for supports where we add the information from the request support organisation
+    if (isAccessorDomainContextType(domainContext)) {
+      if (joins.has('support')) {
+        this.withSupport(query, domainContext.organisation.organisationUnit.id, fieldGroups['support'] as any);
+      }
+      // automatically add in_progress since A/QA can't see the others (yet)
+      query.andWhere('innovation.status IN (:...innovationStatus)', {
+        innovationStatus: [InnovationStatusEnum.IN_PROGRESS]
+      });
+    }
+
+    query.limit(5); // TODO remove
+
+    const queryResult = await query.getMany();
+    return queryResult.map(item => {
+      const res = {} as any;
+      Object.entries(fieldGroups).forEach(([key, value]) => {
+        if (value.length > 1) {
+          switch (key) {
+            case 'support':
+              {
+                // support is handled differently to remove the nested array since it's only 1 element in this case
+                res[key] = {
+                  ...(value.includes('support.status' as any) && {
+                    status: item.supports[0]?.status ?? InnovationSupportStatusEnum.UNASSIGNED
+                  }),
+                  ...(value.includes('support.updatedAt' as any) && { updatedAt: item.supports[0]?.updatedAt })
+                };
+              }
+              break;
+            default:
+              break;
+          }
+        } else {
+          res[key] = item[value[0] as keyof InnovationListView];
+        }
+      });
+      return res;
+    }) as any; // I'm filtering by select and adding the support field, so it should be safe to cast this can be improved in the future
+  }
+
+  /**
+   * Add support information to the query
+   * @param query the innovation list view query
+   * @param organisationUnitId the organisation unit id to add the support
+   * @returns query with the support information
+   */
+  private withSupport(
+    query: SelectQueryBuilder<InnovationListView>,
+    organisationUnitId: string,
+    fields: ('support.status' | 'support.updatedAt')[]
+  ): SelectQueryBuilder<InnovationListView> {
+    if (!fields.length) {
+      return query;
+    }
+
+    return query
+      .addSelect(fields)
+      .leftJoin('innovation.supports', 'support', 'support.organisation_unit_id = :organisationUnitId', {
+        organisationUnitId
+      });
   }
 
   async getInnovationInfo(
