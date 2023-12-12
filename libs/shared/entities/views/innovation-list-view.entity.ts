@@ -1,4 +1,4 @@
-import { Column, OneToMany, ViewColumn, ViewEntity } from 'typeorm';
+import { Column, OneToMany, PrimaryColumn, ViewColumn, ViewEntity } from 'typeorm';
 import type { InnovationGroupedStatusEnum } from '../../enums';
 import type {
   catalogCareSettings,
@@ -10,7 +10,7 @@ import { InnovationSupportEntity } from '../innovation/innovation-support.entity
 
 @ViewEntity('innovation_list_view')
 export class InnovationListView {
-  @ViewColumn()
+  @PrimaryColumn() // Primary column is required for ViewEntity to work properly with pagination
   id: string;
 
   @ViewColumn()

@@ -56,10 +56,11 @@ class V1InnovationsList {
           'updatedAt',
           'support.status',
           'support.updatedAt'
-        ]
+        ],
+        pagination: { skip: 0, take: 5, order: { updatedAt: 'DESC' } }
       });
       console.log(x);
-      //if (1 < Number(5)) throw new Error('xpto');
+      if (1 < Number(5)) throw new Error('xpto');
 
       const result = await innovationsService.getInnovationsList(
         {

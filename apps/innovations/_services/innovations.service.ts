@@ -799,6 +799,7 @@ export class InnovationsService extends BaseService {
     domainContext: DomainContextType,
     xpto: {
       fields: S[];
+      pagination: PaginationQueryParamsType<S>;
     },
     em?: EntityManager
   ): Promise<InnovationListResponseType<S>> {
@@ -819,11 +820,18 @@ export class InnovationsService extends BaseService {
       }
       // automatically add in_progress since A/QA can't see the others (yet). This might become a filter for A/QAs in the future
       query.andWhere('innovation.status IN (:...innovationStatus)', {
-        innovationStatus: [InnovationStatusEnum.IN_PROGRESS]
+        innovationStatus: [InnovationGroupedStatusEnum.RECEIVING_SUPPORT]
       });
     }
 
-    query.limit(5); // TODO remove
+    // pagination
+    query.skip(xpto.pagination.skip);
+    query.take(xpto.pagination.take);
+    Object.entries(xpto.pagination.order).forEach(([key, value]) => {
+      if (value === 'ASC' || value === 'DESC') {
+        query.addOrderBy(key.includes('.') ? key : `innovation.${key}`, value);
+      }
+    });
 
     const queryResult = await query.getMany();
 
@@ -838,9 +846,9 @@ export class InnovationsService extends BaseService {
                 // support is handled differently to remove the nested array since it's only 1 element in this case
                 res[key] = {
                   ...(value.includes('support.status' as any) && {
-                    status: item.supports[0]?.status ?? InnovationSupportStatusEnum.UNASSIGNED
+                    status: item.supports?.[0]?.status ?? InnovationSupportStatusEnum.UNASSIGNED
                   }),
-                  ...(value.includes('support.updatedAt' as any) && { updatedAt: item.supports[0]?.updatedAt })
+                  ...(value.includes('support.updatedAt' as any) && { updatedAt: item.supports?.[0]?.updatedAt })
                 };
               }
               break;
