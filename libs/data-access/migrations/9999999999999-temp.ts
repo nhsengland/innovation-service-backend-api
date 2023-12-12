@@ -11,8 +11,9 @@ export class createViewDocumentStatistics1700501372635 implements MigrationInter
       i.owner_id, -- maybe external
       i.submitted_at,
       i.updated_at,
-      i.status
+      gs.grouped_status as status
       FROM innovation i
+      INNER JOIN innovation_grouped_status_view_entity gs ON i.id = gs.id
     ),
     documents as (
       SELECT d.id, d.document
@@ -39,6 +40,7 @@ export class createViewDocumentStatistics1700501372635 implements MigrationInter
     SELECT i.*,
     JSON_VALUE(d.document, '$.INNOVATION_DESCRIPTION.countryName') as country_name,
     JSON_VALUE(d.document, '$.INNOVATION_DESCRIPTION.mainCategory') as main_category,
+    JSON_VALUE(d.document, '$.INNOVATION_DESCRIPTION.otherCategoryDescription') as other_category_description,
     JSON_QUERY(d.document, '$.INNOVATION_DESCRIPTION.categories') as categories,
     JSON_QUERY(d.document, '$.INNOVATION_DESCRIPTION.careSettings') as care_settings,
     JSON_QUERY(d.document, '$.INNOVATION_DESCRIPTION.involvedAACProgrammes') as involved_aac_programmes,

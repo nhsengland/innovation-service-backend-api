@@ -37,8 +37,8 @@ class V1InnovationsList {
 
       const { skip, take, order, ...filters } = queryParams;
 
-      const x = await innovationsService.getInnovationsList2(domainContext, {
-        select: [
+      const x = await innovationsService.getInnovationsListNew(domainContext, {
+        fields: [
           'id',
           'name',
           'careSettings',
@@ -49,6 +49,7 @@ class V1InnovationsList {
           'involvedAACProgrammes',
           'keyHealthInequalities',
           'mainCategory',
+          'otherCategoryDescription',
           'ownerId',
           'status',
           'submittedAt',
@@ -58,7 +59,7 @@ class V1InnovationsList {
         ]
       });
       console.log(x);
-      if (1 < Number(5)) throw new Error('xpto');
+      //if (1 < Number(5)) throw new Error('xpto');
 
       const result = await innovationsService.getInnovationsList(
         {

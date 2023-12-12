@@ -1,5 +1,5 @@
 import { Column, OneToMany, ViewColumn, ViewEntity } from 'typeorm';
-import type { InnovationStatusEnum } from '../../enums';
+import type { InnovationGroupedStatusEnum } from '../../enums';
 import type {
   catalogCareSettings,
   catalogCategory,
@@ -27,7 +27,7 @@ export class InnovationListView {
   updatedAt: Date | null;
 
   @ViewColumn()
-  status: InnovationStatusEnum;
+  status: InnovationGroupedStatusEnum;
 
   @ViewColumn({ name: 'country_name' })
   countryName: string;
@@ -35,27 +35,30 @@ export class InnovationListView {
   @ViewColumn({ name: 'main_category' })
   mainCategory: catalogCategory;
 
+  @ViewColumn({ name: 'other_category_description' })
+  otherCategoryDescription: string | null;
+
   @Column({ type: 'simple-json' })
-  categories: catalogCategory[];
+  categories: catalogCategory[] | null;
 
   @Column({ name: 'care_settings', type: 'simple-json' })
-  careSettings: catalogCareSettings[];
+  careSettings: catalogCareSettings[] | null;
 
   @Column({ name: 'involved_aac_programmes', type: 'simple-json' })
-  involvedAACProgrammes: catalogInvolvedAACProgrammes[];
+  involvedAACProgrammes: catalogInvolvedAACProgrammes[] | null;
 
   @Column({ name: 'diseases_and_conditions', type: 'simple-json' })
-  diseasesAndConditions: string[];
+  diseasesAndConditions: string[] | null;
 
   @Column({ name: 'key_health_inequalities', type: 'simple-json' })
-  keyHealthInequalities: catalogKeyHealthInequalities[];
+  keyHealthInequalities: catalogKeyHealthInequalities[] | null;
 
   @Column({ name: 'engaging_units', type: 'simple-json' })
-  engagingUnits: { unit_id: string; name: string; acronym: string }[];
+  engagingUnits: { unit_id: string; name: string; acronym: string }[] | null;
 
   @Column({ name: 'suggested_units', type: 'simple-json' })
-  suggestedUnits: { unit_id: string; name: string; acronym: string }[];
+  suggestedUnits: { unit_id: string; name: string; acronym: string }[] | null;
 
   @OneToMany(() => InnovationSupportEntity, record => record.innovation)
-  supports: InnovationSupportEntity[];
+  supports: InnovationSupportEntity[] | null;
 }

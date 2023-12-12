@@ -795,32 +795,29 @@ export class InnovationsService extends BaseService {
     };
   }
 
-  async getInnovationsList2<S extends InnovationListSelectType>(
+  async getInnovationsListNew<S extends InnovationListSelectType>(
     domainContext: DomainContextType,
     xpto: {
-      select: S[];
+      fields: S[];
     },
     em?: EntityManager
   ): Promise<InnovationListResponseType<S>> {
-    // TODO grouped status na view em vez do status
-    const joins = new Set(xpto.select.filter(item => item.includes('.')).map(item => item.split('.')[0]));
-    //const fields = new Set(...xpto.select);
-
-    const fieldGroups = groupBy(xpto.select, item => item.split('.')[0]);
+    const joins = new Set(xpto.fields.filter(item => item.includes('.')).map(item => item.split('.')[0]));
+    const fieldGroups = groupBy(xpto.fields, item => item.split('.')[0]);
 
     const connection = em ?? this.sqlConnection.manager;
     const query = connection
       .createQueryBuilder(InnovationListView, 'innovation')
       // currently I'm only handling the root selects here, might change in the future. ie: withSupports add the selects
       //.select(xpto.select.map(item => (item.includes('.') ? item : `innovation.${item}`)));
-      .select(xpto.select.filter(item => !item.includes('.')).map(item => `innovation.${item}`));
+      .select(xpto.fields.filter(item => !item.includes('.')).map(item => `innovation.${item}`));
 
-    // special case for supports where we add the information from the request support organisation
     if (isAccessorDomainContextType(domainContext)) {
+      // special case for supports where we add the information from the request support organisation
       if (joins.has('support')) {
         this.withSupport(query, domainContext.organisation.organisationUnit.id, fieldGroups['support'] as any);
       }
-      // automatically add in_progress since A/QA can't see the others (yet)
+      // automatically add in_progress since A/QA can't see the others (yet). This might become a filter for A/QAs in the future
       query.andWhere('innovation.status IN (:...innovationStatus)', {
         innovationStatus: [InnovationStatusEnum.IN_PROGRESS]
       });
@@ -829,6 +826,8 @@ export class InnovationsService extends BaseService {
     query.limit(5); // TODO remove
 
     const queryResult = await query.getMany();
+
+    // Transform the entity into the response DTO
     return queryResult.map(item => {
       const res = {} as any;
       Object.entries(fieldGroups).forEach(([key, value]) => {
