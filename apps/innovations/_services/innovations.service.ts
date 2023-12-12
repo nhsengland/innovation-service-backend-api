@@ -35,6 +35,7 @@ import {
   UserStatusEnum
 } from '@innovations/shared/enums';
 import {
+  GenericErrorsEnum,
   InnovationErrorsEnum,
   NotFoundError,
   OrganisationErrorsEnum,
@@ -56,6 +57,7 @@ import { createDocumentFromInnovation } from '@innovations/shared/entities/innov
 import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import { ActionEnum } from '@innovations/shared/services/integrations/audit.service';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
+import { BadRequestError } from 'libs/shared/errors';
 import { groupBy } from 'lodash';
 import { BaseService } from './base.service';
 
@@ -71,6 +73,14 @@ type InnovationListFullResponseType = Omit<InnovationListView, 'supports'> & {
 type KeyPart<S> = S extends `${infer U}.${infer _D}` ? U : S;
 type InnovationListResponseType<S extends InnovationListSelectType, K extends KeyPart<S> = KeyPart<S>> = {
   [k in K]: InnovationListFullResponseType[k];
+};
+
+type InnovationListFilters = {
+  locations?: InnovationLocationEnum[];
+  engagingOrganisations?: string[];
+  supportStatus?: InnovationSupportStatusEnum[];
+  assignedToMe?: boolean;
+  suggestedOnly?: boolean;
 };
 
 @injectable()
@@ -797,21 +807,24 @@ export class InnovationsService extends BaseService {
 
   async getInnovationsListNew<S extends InnovationListSelectType>(
     domainContext: DomainContextType,
-    xpto: {
+    params: {
       fields: S[];
       pagination: PaginationQueryParamsType<S>;
+      filters?: InnovationListFilters;
     },
     em?: EntityManager
   ): Promise<InnovationListResponseType<S>> {
-    const joins = new Set(xpto.fields.filter(item => item.includes('.')).map(item => item.split('.')[0]));
-    const fieldGroups = groupBy(xpto.fields, item => item.split('.')[0]);
+    // TODO falta owner
+
+    const joins = new Set(params.fields.filter(item => item.includes('.')).map(item => item.split('.')[0]));
+    const fieldGroups = groupBy(params.fields, item => item.split('.')[0]);
 
     const connection = em ?? this.sqlConnection.manager;
     const query = connection
       .createQueryBuilder(InnovationListView, 'innovation')
       // currently I'm only handling the root selects here, might change in the future. ie: withSupports add the selects
       //.select(xpto.select.map(item => (item.includes('.') ? item : `innovation.${item}`)));
-      .select(xpto.fields.filter(item => !item.includes('.')).map(item => `innovation.${item}`));
+      .select(params.fields.filter(item => !item.includes('.')).map(item => `innovation.${item}`));
 
     if (isAccessorDomainContextType(domainContext)) {
       // special case for supports where we add the information from the request support organisation
@@ -824,10 +837,15 @@ export class InnovationsService extends BaseService {
       });
     }
 
+    // filters
+    Object.entries(params.filters ?? {}).forEach(([key, value]) => {
+      this.filtersHandlers[key as keyof typeof this.filtersHandlers](domainContext, query, value as any);
+    });
+
     // pagination
-    query.skip(xpto.pagination.skip);
-    query.take(xpto.pagination.take);
-    Object.entries(xpto.pagination.order).forEach(([key, value]) => {
+    query.skip(params.pagination.skip);
+    query.take(params.pagination.take);
+    Object.entries(params.pagination.order).forEach(([key, value]) => {
       if (value === 'ASC' || value === 'DESC') {
         query.addOrderBy(key.includes('.') ? key : `innovation.${key}`, value);
       }
@@ -872,7 +890,7 @@ export class InnovationsService extends BaseService {
   private withSupport(
     query: SelectQueryBuilder<InnovationListView>,
     organisationUnitId: string,
-    fields: ('support.status' | 'support.updatedAt')[]
+    fields: ('support.id' | 'support.status' | 'support.updatedAt')[]
   ): SelectQueryBuilder<InnovationListView> {
     if (!fields.length) {
       return query;
@@ -883,6 +901,87 @@ export class InnovationsService extends BaseService {
       .leftJoin('innovation.supports', 'support', 'support.organisation_unit_id = :organisationUnitId', {
         organisationUnitId
       });
+  }
+
+  private readonly filtersHandlers: {
+    [k in keyof Required<InnovationListFilters>]: (
+      domainContext: DomainContextType,
+      query: SelectQueryBuilder<InnovationListView>,
+      value: Required<InnovationListFilters>[k]
+    ) => any;
+  } = {
+    locations: this.addLocationFilter,
+    supportStatus: this.addSupportFilter,
+    engagingOrganisations: this.addEngagingOrganisationsFilter,
+    assignedToMe: this.addAssignedToMeFilter,
+    suggestedOnly: this.addSuggestedOnlyFilter
+  };
+
+  private addLocationFilter(
+    _domainContext: DomainContextType,
+    query: SelectQueryBuilder<InnovationListView>,
+    locations: InnovationLocationEnum[]
+  ): SelectQueryBuilder<InnovationListView> {
+    return query.andWhere(
+      new Brackets(qb => {
+        qb.where('1 <> 1'); // ugly shortcut to not worry about the first OR
+        if (locations.includes(InnovationLocationEnum['Based outside UK'])) {
+          qb.orWhere('innovation.countryName NOT IN (:...ukLocations)', {
+            ukLocations: [
+              InnovationLocationEnum.England,
+              InnovationLocationEnum['Northern Ireland'],
+              InnovationLocationEnum.Scotland,
+              InnovationLocationEnum.Wales
+            ]
+          });
+        }
+        const ukLocationsSelect = locations.filter(l => l !== InnovationLocationEnum['Based outside UK']);
+        if (ukLocationsSelect.length) {
+          qb.orWhere('innovation.countryName IN (:...ukLocationsSelect)', { ukLocationsSelect });
+        }
+      })
+    );
+  }
+
+  private addSupportFilter(
+    domainContext: DomainContextType,
+    query: SelectQueryBuilder<InnovationListView>,
+    supportStatuses: InnovationSupportStatusEnum[]
+  ): SelectQueryBuilder<InnovationListView> {
+    // sanity check to ensure we're joining with the support
+    if (!query.expressionMap.aliases.find(item => item.name === 'support')) {
+      if (!isAccessorDomainContextType(domainContext)) {
+        throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD, {
+          message: 'Support filter is only valid for accessor domain context'
+        });
+      }
+      this.withSupport(query, domainContext.organisation.organisationUnit.id, ['support.id']);
+    }
+    return query.andWhere('support.status IN (:...supportStatuses)', { supportStatuses: supportStatuses });
+  }
+
+  private addEngagingOrganisationsFilter(
+    _domainContext: DomainContextType,
+    _query: SelectQueryBuilder<InnovationListView>,
+    _organisationIds: string[]
+  ): SelectQueryBuilder<InnovationListView> {
+    throw new Error('Method not implemented.');
+  }
+
+  private addAssignedToMeFilter(
+    _domainContext: DomainContextType,
+    _query: SelectQueryBuilder<InnovationListView>,
+    _value: boolean
+  ): SelectQueryBuilder<InnovationListView> {
+    throw new Error('Method not implemented.');
+  }
+
+  private addSuggestedOnlyFilter(
+    _domainContext: DomainContextType,
+    _query: SelectQueryBuilder<InnovationListView>,
+    _value: boolean
+  ): SelectQueryBuilder<InnovationListView> {
+    throw new Error('Method not implemented.');
   }
 
   async getInnovationInfo(

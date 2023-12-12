@@ -58,6 +58,7 @@ export class createViewDocumentStatistics1700501372635 implements MigrationInter
     --1=1
     -- AND EXISTS(SELECT 1 FROM engaging_units WHERE innovation_id = x.id AND unit_id in ('982AB20B-7CB6-EC11-997E-0050F25A43BD'))
     --AND EXISTS(SELECT 1 FROM innovation_suggestions WHERE innovation_id = x.id AND unit_id in ('982AB20B-7CB6-EC11-997E-0050F25A43BD'))    
+    --EXISTS(SELECT 1 FROM OPENJSON(care_settings) WHERE value != 'INDUSTRY')
       `);
   }
 

@@ -9,6 +9,8 @@ import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
 
+import { InnovationSupportStatusEnum } from '@innovations/shared/enums';
+import { InnovationLocationEnum } from '../_enums/innovation.enums';
 import type { InnovationsService } from '../_services/innovations.service';
 import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
@@ -57,7 +59,12 @@ class V1InnovationsList {
           'support.status',
           'support.updatedAt'
         ],
-        pagination: { skip: 0, take: 5, order: { updatedAt: 'DESC' } }
+        pagination: { skip: 0, take: 5, order: { updatedAt: 'DESC', 'support.status': 'ASC' } },
+        filters: {
+          locations: [InnovationLocationEnum['Based outside UK']],
+          supportStatus: [InnovationSupportStatusEnum.CLOSED, InnovationSupportStatusEnum.ENGAGING]
+          //assignedToMe: true
+        }
       });
       console.log(x);
       if (1 < Number(5)) throw new Error('xpto');
