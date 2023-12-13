@@ -104,7 +104,7 @@ export type InnovationListResponseType<S extends InnovationListSelectType, K ext
 export type InnovationListFilters = {
   locations?: InnovationLocationEnum[];
   engagingOrganisations?: string[];
-  supportStatus?: InnovationSupportStatusEnum[];
+  supportStatuses?: InnovationSupportStatusEnum[];
   assignedToMe?: boolean;
   suggestedOnly?: boolean;
 };
@@ -843,6 +843,7 @@ export class InnovationsService extends BaseService {
     // TODO falta owner
     // TODO shared with org for A/QA limitation
     // TODO there's a bug when sorting by support and not linking support, add to improve sorts in join cases
+    // TODO improve empty string handle (should be FE really)
 
     const joins = new Set(params.fields.filter(item => item.includes('.')).map(item => item.split('.')[0]));
     const fieldGroups = groupBy(params.fields, item => item.split('.')[0]);
@@ -941,11 +942,11 @@ export class InnovationsService extends BaseService {
       value: Required<InnovationListFilters>[k]
     ) => void;
   } = {
-    locations: this.addLocationFilter,
-    supportStatus: this.addSupportFilter,
-    engagingOrganisations: this.addJsonArrayInFilter('engagingOrganisations', '$.organisationId'),
-    assignedToMe: this.addAssignedToMeFilter,
-    suggestedOnly: this.addSuggestedOnlyFilter
+    locations: this.addLocationFilter.bind(this),
+    supportStatuses: this.addSupportFilter.bind(this),
+    engagingOrganisations: this.addJsonArrayInFilter('engagingOrganisations', '$.organisationId').bind(this),
+    assignedToMe: this.addAssignedToMeFilter.bind(this),
+    suggestedOnly: this.addSuggestedOnlyFilter.bind(this)
   };
 
   private addLocationFilter(
@@ -953,25 +954,27 @@ export class InnovationsService extends BaseService {
     query: SelectQueryBuilder<InnovationListView>,
     locations: InnovationLocationEnum[]
   ): void {
-    query.andWhere(
-      new Brackets(qb => {
-        qb.where('1 <> 1'); // ugly shortcut to not worry about the first OR
-        if (locations.includes(InnovationLocationEnum['Based outside UK'])) {
-          qb.orWhere('innovation.countryName NOT IN (:...ukLocations)', {
-            ukLocations: [
-              InnovationLocationEnum.England,
-              InnovationLocationEnum['Northern Ireland'],
-              InnovationLocationEnum.Scotland,
-              InnovationLocationEnum.Wales
-            ]
-          });
-        }
-        const ukLocationsSelect = locations.filter(l => l !== InnovationLocationEnum['Based outside UK']);
-        if (ukLocationsSelect.length) {
-          qb.orWhere('innovation.countryName IN (:...ukLocationsSelect)', { ukLocationsSelect });
-        }
-      })
-    );
+    if (locations.length) {
+      query.andWhere(
+        new Brackets(qb => {
+          qb.where('1 <> 1'); // ugly shortcut to not worry about the first OR
+          if (locations.includes(InnovationLocationEnum['Based outside UK'])) {
+            qb.orWhere('innovation.countryName NOT IN (:...ukLocations)', {
+              ukLocations: [
+                InnovationLocationEnum.England,
+                InnovationLocationEnum['Northern Ireland'],
+                InnovationLocationEnum.Scotland,
+                InnovationLocationEnum.Wales
+              ]
+            });
+          }
+          const ukLocationsSelect = locations.filter(l => l !== InnovationLocationEnum['Based outside UK']);
+          if (ukLocationsSelect.length) {
+            qb.orWhere('innovation.countryName IN (:...ukLocationsSelect)', { ukLocationsSelect });
+          }
+        })
+      );
+    }
   }
 
   private addSupportFilter(
@@ -979,16 +982,18 @@ export class InnovationsService extends BaseService {
     query: SelectQueryBuilder<InnovationListView>,
     supportStatuses: InnovationSupportStatusEnum[]
   ): void {
-    // sanity check to ensure we're joining with the support
-    if (!query.expressionMap.aliases.find(item => item.name === 'support')) {
-      if (!isAccessorDomainContextType(domainContext)) {
-        throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD, {
-          message: 'Support filter is only valid for accessor domain context'
-        });
+    if (supportStatuses.length) {
+      // sanity check to ensure we're joining with the support
+      if (!query.expressionMap.aliases.find(item => item.name === 'support')) {
+        if (!isAccessorDomainContextType(domainContext)) {
+          throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD, {
+            message: 'Support filter is only valid for accessor domain context'
+          });
+        }
+        this.withSupport(query, domainContext.organisation.organisationUnit.id, ['support.id']);
       }
-      this.withSupport(query, domainContext.organisation.organisationUnit.id, ['support.id']);
+      query.andWhere('support.status IN (:...supportStatuses)', { supportStatuses: supportStatuses });
     }
-    query.andWhere('support.status IN (:...supportStatuses)', { supportStatuses: supportStatuses });
   }
 
   /**

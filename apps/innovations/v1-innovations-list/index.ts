@@ -12,7 +12,7 @@ import { container } from '../_config';
 import type { InnovationsService } from '../_services/innovations.service';
 import SYMBOLS from '../_services/symbols';
 import type { NewResponseDTO, ResponseDTO } from './transformation.dtos';
-import { NewQueryParamsSchema, NewQueryParamsType, QueryParamsSchema, QueryParamsType } from './validation.schemas';
+import { QueryParamsSchema, QueryParamsType } from './validation.schemas';
 
 class V1InnovationsList {
   @JwtDecoder()
@@ -77,15 +77,12 @@ class V1InnovationsList {
         };
         context.res = ResponseHelper.Ok<ResponseDTO>(response);
       } else {
-        const queryParams = JoiHelper.Validate<NewQueryParamsType>(NewQueryParamsSchema, request.query, {
-          userType: domainContext.currentRole.role
-        });
-        const { skip, take, order, fields, ...filters } = queryParams;
+        const { fields, ...newFilters } = filters; // improve this when we remove legacy
 
         const response = await innovationsService.getInnovationsListNew(domainContext, {
           fields: fields,
           pagination: { skip, take, order },
-          filters: filters
+          filters: newFilters
         });
         context.res = ResponseHelper.Ok<NewResponseDTO>(response as any); // todo fix this any
       }
