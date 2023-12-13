@@ -213,4 +213,4 @@ export const NewQueryParamsSchema = JoiHelper.PaginationJoiSchema({
   })
   .required();
 
-export const QueryParamsSchema = Joi.alternatives().try(NewQueryParamsSchema); //, LegacyQueryParamsSchema);
+export const QueryParamsSchema = Joi.alternatives().try(NewQueryParamsSchema, LegacyQueryParamsSchema);
