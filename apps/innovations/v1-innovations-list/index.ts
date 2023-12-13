@@ -9,8 +9,6 @@ import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
 
-import { InnovationSupportStatusEnum } from '@innovations/shared/enums';
-import { InnovationLocationEnum } from '../_enums/innovation.enums';
 import type { InnovationsService } from '../_services/innovations.service';
 import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
@@ -54,19 +52,22 @@ class V1InnovationsList {
           'otherCategoryDescription',
           'ownerId',
           'status',
+          'groupedStatus',
           'submittedAt',
           'updatedAt',
           'support.status',
           'support.updatedAt'
         ],
-        pagination: { skip: 0, take: 5, order: { updatedAt: 'DESC', 'support.status': 'ASC' } },
+        pagination: { skip: 0, take: 1, order: { updatedAt: 'DESC', 'support.status': 'ASC' } },
         filters: {
-          locations: [InnovationLocationEnum['Based outside UK']],
-          supportStatus: [InnovationSupportStatusEnum.CLOSED, InnovationSupportStatusEnum.ENGAGING]
+          // locations: [InnovationLocationEnum['Based outside UK']],
+          // supportStatus: [InnovationSupportStatusEnum.ENGAGING],
+          // engagingOrganisations: ['50413668-5BBA-EC11-997E-0050F25A43BD'],
           //assignedToMe: true
+          suggestedOnly: true
         }
       });
-      console.log(x);
+      console.log(x.count);
       if (1 < Number(5)) throw new Error('xpto');
 
       const result = await innovationsService.getInnovationsList(

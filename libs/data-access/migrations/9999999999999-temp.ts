@@ -8,10 +8,11 @@ export class createViewDocumentStatistics1700501372635 implements MigrationInter
       SELECT 
       i.id,
       i.name,
+      i.status,
       i.owner_id, -- maybe external
       i.submitted_at,
       i.updated_at,
-      gs.grouped_status as status
+      gs.grouped_status as grouped_status
       FROM innovation i
       INNER JOIN innovation_grouped_status_view_entity gs ON i.id = gs.id
     ),
@@ -20,10 +21,16 @@ export class createViewDocumentStatistics1700501372635 implements MigrationInter
       FROM innovation_document d
     ),
     engaging_units as (
-      SELECT s.innovation_id, ou.id as unit_id, ou.name, ou.acronym
+      SELECT s.innovation_id, ou.id as unit_id, ou.name, ou.acronym, ou.organisation_id
       FROM organisation_unit ou
       INNER JOIN innovation_support s ON ou.id = s.organisation_unit_id AND s.status='ENGAGING'
       WHERE ou.deleted_at IS NULL
+    ),
+    engaging_organisations as (
+      SELECT ou.innovation_id, o.id as organisation_id, o.name, o.acronym
+      FROM organisation o
+      INNER JOIN engaging_units ou ON o.id = ou.organisation_id
+      GROUP BY ou.innovation_id, o.id, o.name, o.acronym
     ),
     innovation_suggestions as (
       SELECT innovation_id, organisation_unit_id as unit_id, ou.name, ou.acronym FROM (
@@ -46,19 +53,13 @@ export class createViewDocumentStatistics1700501372635 implements MigrationInter
     JSON_QUERY(d.document, '$.INNOVATION_DESCRIPTION.involvedAACProgrammes') as involved_aac_programmes,
     JSON_QUERY(d.document, '$.UNDERSTANDING_OF_NEEDS.diseasesConditionsImpact') as diseases_and_conditions,
     JSON_QUERY(d.document, '$.UNDERSTANDING_OF_NEEDS.keyHealthInequalities') as key_health_inequalities,
-    (SELECT unit_id, name, acronym FROM engaging_units s WHERE s.innovation_id = i.id FOR JSON PATH) as engaging_units,
-    (SELECT unit_id, name, acronym FROM innovation_suggestions s WHERE s.innovation_id = i.id FOR JSON PATH) as suggested_units
+    (SELECT unit_id as unitId, name, acronym FROM engaging_units u WHERE u.innovation_id = i.id FOR JSON PATH) as engaging_units,
+	  (SELECT organisation_id as organisationId, name, acronym FROM engaging_organisations o WHERE o.innovation_id = i.id FOR JSON PATH) as engaging_organisations,
+    (SELECT unit_id as unitId, name, acronym FROM innovation_suggestions s WHERE s.innovation_id = i.id FOR JSON PATH) as suggested_units
     -- conditional s.status as support_status,
     -- conditional s.updated_at as support_updatedAt
     FROM innovations i
     INNER JOIN documents d ON i.id = d.id
-    LEFT JOIN engaging_units eu ON eu.innovation_id = i.id
-    -- conditional LEFT JOIN innovation_support s ON s.innovation_id = i.id AND s.organisation_unit_id = '982AB20B-7CB6-EC11-997E-0050F25A43BD' -- conditional for OUs
-    --WHERE
-    --1=1
-    -- AND EXISTS(SELECT 1 FROM engaging_units WHERE innovation_id = x.id AND unit_id in ('982AB20B-7CB6-EC11-997E-0050F25A43BD'))
-    --AND EXISTS(SELECT 1 FROM innovation_suggestions WHERE innovation_id = x.id AND unit_id in ('982AB20B-7CB6-EC11-997E-0050F25A43BD'))    
-    --EXISTS(SELECT 1 FROM OPENJSON(care_settings) WHERE value != 'INDUSTRY')
       `);
   }
 

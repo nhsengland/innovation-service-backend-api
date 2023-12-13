@@ -1,5 +1,5 @@
 import { Column, OneToMany, PrimaryColumn, ViewColumn, ViewEntity } from 'typeorm';
-import type { InnovationGroupedStatusEnum } from '../../enums';
+import type { InnovationGroupedStatusEnum, InnovationStatusEnum } from '../../enums';
 import type {
   catalogCareSettings,
   catalogCategory,
@@ -27,7 +27,10 @@ export class InnovationListView {
   updatedAt: Date | null;
 
   @ViewColumn()
-  status: InnovationGroupedStatusEnum;
+  status: InnovationStatusEnum;
+
+  @ViewColumn({ name: 'grouped_status' })
+  groupedStatus: InnovationGroupedStatusEnum;
 
   @ViewColumn({ name: 'country_name' })
   countryName: string;
@@ -52,6 +55,9 @@ export class InnovationListView {
 
   @Column({ name: 'key_health_inequalities', type: 'simple-json' })
   keyHealthInequalities: catalogKeyHealthInequalities[] | null;
+
+  @Column({ name: 'engaging_organisations', type: 'simple-json' })
+  engagingOrganisations: { unit_id: string; name: string; acronym: string }[] | null;
 
   @Column({ name: 'engaging_units', type: 'simple-json' })
   engagingUnits: { unit_id: string; name: string; acronym: string }[] | null;
