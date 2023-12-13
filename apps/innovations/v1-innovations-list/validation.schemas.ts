@@ -3,13 +3,15 @@ import Joi from 'joi';
 import {
   InnovationGroupedStatusEnum,
   InnovationStatusEnum,
-  InnovationSupportStatusEnum
+  InnovationSupportStatusEnum,
+  ServiceRoleEnum
 } from '@innovations/shared/enums';
 import { JoiHelper, PaginationQueryParamsType } from '@innovations/shared/helpers';
 
 import { CurrentCatalogTypes, CurrentDocumentSchemaMap } from '@innovations/shared/schemas/innovation-record';
 import type { TypeFromArray } from '@innovations/shared/types';
 import { InnovationLocationEnum } from '../_enums/innovation.enums';
+import { InnovationListFilters, InnovationListSelectType } from '../_services/innovations.service';
 
 const DateFilterKeys = ['submittedAt'] as const;
 const FieldsKeys = ['assessment', 'supports', 'notifications', 'statistics', 'groupedStatus'] as const;
@@ -25,7 +27,8 @@ enum orderFields {
   assessmentFinishedAt = 'assessmentFinishedAt'
 }
 
-export type QueryParamsType = PaginationQueryParamsType<orderFields> & {
+export type LegacyQueryParamsType = PaginationQueryParamsType<orderFields> & {
+  legacy: true;
   name?: string;
   mainCategories?: CurrentCatalogTypes.catalogCategory[];
   locations?: InnovationLocationEnum[];
@@ -47,10 +50,18 @@ export type QueryParamsType = PaginationQueryParamsType<orderFields> & {
   fields?: TypeFromArray<typeof FieldsKeys>[];
 };
 
-export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
+export type NewQueryParamsType = PaginationQueryParamsType<InnovationListSelectType> &
+  InnovationListFilters & {
+    fields: InnovationListSelectType[];
+  };
+
+export type QueryParamsType = LegacyQueryParamsType | NewQueryParamsType;
+
+export const LegacyQueryParamsSchema = JoiHelper.PaginationJoiSchema({
   orderKeys: Object.keys(orderFields)
 })
-  .append<QueryParamsType>({
+  .append<LegacyQueryParamsType>({
+    legacy: JoiHelper.AppCustomJoi().boolean().forbidden().default(true),
     name: JoiHelper.AppCustomJoi().decodeURIString().trim().allow(null, '').optional(),
     mainCategories: JoiHelper.AppCustomJoi().stringArray().items(CurrentDocumentSchemaMap).optional(),
     locations: JoiHelper.AppCustomJoi()
@@ -144,3 +155,62 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
   )
   .messages({ 'any.unknown': 'order field is not allowed when latestWorkedByMe is true' })
   .required();
+
+export const NewQueryParamsSchema = JoiHelper.PaginationJoiSchema({
+  orderKeys: Object.values(InnovationListSelectType)
+})
+  .append<NewQueryParamsType>({
+    fields: JoiHelper.AppCustomJoi()
+      .stringArray()
+      .items(Joi.string().valid(...Object.values(InnovationListSelectType)))
+      .min(1)
+      .required(),
+    engagingOrganisations: JoiHelper.AppCustomJoi().stringArray().items(Joi.string()).optional(),
+    locations: JoiHelper.AppCustomJoi()
+      .stringArray()
+      .items(Joi.string().valid(...Object.values(InnovationLocationEnum)))
+      .optional()
+  })
+  .when('$userType', {
+    switch: [
+      {
+        is: ServiceRoleEnum.INNOVATOR,
+        then: Joi.object({})
+      },
+      {
+        is: ServiceRoleEnum.ASSESSMENT,
+        then: Joi.object({
+          assignedToMe: Joi.boolean().optional()
+        })
+      },
+      {
+        is: ServiceRoleEnum.ACCESSOR,
+        then: Joi.object({
+          assignedToMe: Joi.boolean().optional(),
+          suggestedOnly: Joi.boolean().optional(),
+          supportStatuses: JoiHelper.AppCustomJoi()
+            .stringArray()
+            .items(Joi.string().valid(InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.CLOSED))
+            .optional()
+        })
+      },
+      {
+        is: ServiceRoleEnum.QUALIFYING_ACCESSOR,
+        then: Joi.object({
+          assignedToMe: Joi.boolean().optional(),
+          suggestedOnly: Joi.boolean().optional(),
+          supportStatuses: JoiHelper.AppCustomJoi()
+            .stringArray()
+            .items(Joi.string().valid(...Object.values(InnovationSupportStatusEnum)))
+            .optional()
+        })
+      },
+      {
+        is: ServiceRoleEnum.ADMIN,
+        then: Joi.object({})
+      }
+    ]
+  })
+  .required();
+
+export const QueryParamsSchema = Joi.alternatives().try(NewQueryParamsSchema); //, LegacyQueryParamsSchema);

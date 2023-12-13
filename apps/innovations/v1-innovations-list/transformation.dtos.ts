@@ -5,6 +5,7 @@ import type {
   ServiceRoleEnum
 } from '@innovations/shared/enums';
 import type { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
+import type { InnovationListFullResponseType } from '../_services/innovations.service';
 
 export type ResponseDTO = {
   count: number;
@@ -55,4 +56,9 @@ export type ResponseDTO = {
       messages: number;
     };
   }[];
+};
+
+export type NewResponseDTO = {
+  count: number;
+  data: Partial<InnovationListFullResponseType>;
 };

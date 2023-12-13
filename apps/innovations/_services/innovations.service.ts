@@ -64,20 +64,40 @@ import { groupBy, snakeCase } from 'lodash';
 import { BaseService } from './base.service';
 
 // TODO move types
-type InnovationListSelectType =
+export const InnovationListSelectType = [
+  'id',
+  'name',
+  'careSettings',
+  'categories',
+  'countryName',
+  'diseasesAndConditions',
+  'engagingUnits',
+  'involvedAACProgrammes',
+  'keyHealthInequalities',
+  'mainCategory',
+  'otherCategoryDescription',
+  'ownerId',
+  'status',
+  'groupedStatus',
+  'submittedAt',
+  'updatedAt',
+  'support.status',
+  'support.updatedAt'
+] as const;
+export type InnovationListSelectType =
   | keyof Omit<InnovationListView, 'supports'>
   | `support.${keyof Pick<InnovationSupportEntity, 'status' | 'updatedAt'>}`;
 
-type InnovationListFullResponseType = Omit<InnovationListView, 'supports'> & {
+export type InnovationListFullResponseType = Omit<InnovationListView, 'supports'> & {
   support: { status: InnovationSupportStatusEnum; updatedAt: Date | null };
 };
 
 type KeyPart<S> = S extends `${infer U}.${infer _D}` ? U : S;
-type InnovationListResponseType<S extends InnovationListSelectType, K extends KeyPart<S> = KeyPart<S>> = {
+export type InnovationListResponseType<S extends InnovationListSelectType, K extends KeyPart<S> = KeyPart<S>> = {
   [k in K]: InnovationListFullResponseType[k];
 };
 
-type InnovationListFilters = {
+export type InnovationListFilters = {
   locations?: InnovationLocationEnum[];
   engagingOrganisations?: string[];
   supportStatus?: InnovationSupportStatusEnum[];
@@ -818,6 +838,7 @@ export class InnovationsService extends BaseService {
   ): Promise<{ count: number; data: InnovationListResponseType<S>[] }> {
     // TODO falta owner
     // TODO shared with org for A/QA limitation
+    // TODO there's a bug when sorting by support and not linking support, add to improve sorts in join cases
 
     const joins = new Set(params.fields.filter(item => item.includes('.')).map(item => item.split('.')[0]));
     const fieldGroups = groupBy(params.fields, item => item.split('.')[0]);
@@ -1494,7 +1515,7 @@ export class InnovationsService extends BaseService {
     });
 
     if (addedShares.length > 0 && innovation.status === InnovationStatusEnum.IN_PROGRESS) {
-      this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_DELAYED_SHARE, {
+      await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_DELAYED_SHARE, {
         innovationId: innovation.id,
         newSharedOrgIds: addedShares
       });
