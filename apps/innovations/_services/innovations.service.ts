@@ -67,20 +67,24 @@ import { BaseService } from './base.service';
 export const InnovationListSelectType = [
   'id',
   'name',
-  'careSettings',
-  'categories',
-  'countryName',
-  'diseasesAndConditions',
-  'engagingUnits',
-  'involvedAACProgrammes',
-  'keyHealthInequalities',
-  'mainCategory',
-  'otherCategoryDescription',
-  'ownerId',
   'status',
   'groupedStatus',
   'submittedAt',
   'updatedAt',
+  // Document fields
+  'careSettings',
+  'categories',
+  'countryName',
+  'diseasesAndConditions',
+  'involvedAACProgrammes',
+  'keyHealthInequalities',
+  'mainCategory',
+  'otherCategoryDescription',
+  // Relation fields
+  'ownerId', // this will change
+  'engagingOrganisations',
+  'engagingUnits',
+  'suggestedOrganisations',
   'support.status',
   'support.updatedAt'
 ] as const;

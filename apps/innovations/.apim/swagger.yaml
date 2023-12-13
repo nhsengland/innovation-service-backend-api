@@ -938,20 +938,22 @@ paths:
               enum:
                 - id
                 - name
+                - status
+                - groupedStatus
+                - submittedAt
+                - updatedAt
                 - careSettings
                 - categories
                 - countryName
                 - diseasesAndConditions
-                - engagingUnits
                 - involvedAACProgrammes
                 - keyHealthInequalities
                 - mainCategory
                 - otherCategoryDescription
                 - ownerId
-                - status
-                - groupedStatus
-                - submittedAt
-                - updatedAt
+                - engagingOrganisations
+                - engagingUnits
+                - suggestedOrganisations
                 - support.status
                 - support.updatedAt
             minItems: 1

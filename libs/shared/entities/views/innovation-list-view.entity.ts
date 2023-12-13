@@ -24,7 +24,7 @@ export class InnovationListView {
   submittedAt: Date | null;
 
   @ViewColumn({ name: 'updated_at' })
-  updatedAt: Date | null;
+  updatedAt: Date;
 
   @ViewColumn()
   status: InnovationStatusEnum;
@@ -57,13 +57,13 @@ export class InnovationListView {
   keyHealthInequalities: catalogKeyHealthInequalities[] | null;
 
   @Column({ name: 'engaging_organisations', type: 'simple-json' })
-  engagingOrganisations: { unit_id: string; name: string; acronym: string }[] | null;
+  engagingOrganisations: { organisationId: string; name: string; acronym: string }[] | null;
 
   @Column({ name: 'engaging_units', type: 'simple-json' })
-  engagingUnits: { unit_id: string; name: string; acronym: string }[] | null;
+  engagingUnits: { unitId: string; name: string; acronym: string }[] | null;
 
   @Column({ name: 'suggested_units', type: 'simple-json' })
-  suggestedUnits: { unit_id: string; name: string; acronym: string }[] | null;
+  suggestedUnits: { unitId: string; name: string; acronym: string }[] | null;
 
   @OneToMany(() => InnovationSupportEntity, record => record.innovation)
   supports: InnovationSupportEntity[] | null;
