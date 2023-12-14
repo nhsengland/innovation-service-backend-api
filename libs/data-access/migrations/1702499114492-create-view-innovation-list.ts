@@ -56,8 +56,6 @@ export class createInnovationListView1702499114492 implements MigrationInterface
     (SELECT unit_id as unitId, name, acronym FROM engaging_units u WHERE u.innovation_id = i.id FOR JSON PATH) as engaging_units,
 	  (SELECT organisation_id as organisationId, name, acronym FROM engaging_organisations o WHERE o.innovation_id = i.id FOR JSON PATH) as engaging_organisations,
     (SELECT unit_id as unitId, name, acronym FROM innovation_suggestions s WHERE s.innovation_id = i.id FOR JSON PATH) as suggested_units
-    -- conditional s.status as support_status,
-    -- conditional s.updated_at as support_updatedAt
     FROM innovations i
     INNER JOIN documents d ON i.id = d.id
       `);

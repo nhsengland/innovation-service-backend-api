@@ -843,7 +843,22 @@ export class InnovationsService extends BaseService {
     // TODO falta owner
     // TODO shared with org for A/QA limitation
     // TODO there's a bug when sorting by support and not linking support, add to improve sorts in join cases
-    // TODO improve empty string handle (should be FE really)
+    // TODO filter unassigned not working correctly (need to check the ones that are null also)
+    // TODO filter Engaging Organisations not working (check http://localhost:4200/transactional/accessor/innovations/469A65D5-1482-EE11-8925-7C1E520432D9/overview it should have NortherGroup: 50413668-5BBA-EC11-997E-0050F25A43BD)
+    // TODO allow selection within JSON fields, ie: only fetch engagingOrganisations.organisationId
+
+    // Some sanity checks
+    if (!params.fields.length) {
+      return { count: 0, data: [] };
+    }
+    // Ensure that the sort field is one of the fields
+    Object.keys(params.pagination.order).forEach(key => {
+      if (!params.fields.includes(key as S)) {
+        throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD, {
+          message: `Invalid sort field ${key} missing from fields`
+        });
+      }
+    });
 
     const joins = new Set(params.fields.filter(item => item.includes('.')).map(item => item.split('.')[0]));
     const fieldGroups = groupBy(params.fields, item => item.split('.')[0]);
