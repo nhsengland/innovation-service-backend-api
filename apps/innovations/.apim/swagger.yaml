@@ -915,6 +915,82 @@ paths:
             format: float
             maximum: 100
             default: 20
+        - name: order
+          in: query
+          required: false
+          schema:
+            type: object
+            properties: {}
+            additionalProperties:
+              type: string
+              enum:
+                - ASC
+                - DESC
+            default:
+              default: DESC
+        - name: fields
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - id
+                - name
+                - status
+                - groupedStatus
+                - submittedAt
+                - updatedAt
+                - careSettings
+                - categories
+                - countryName
+                - diseasesAndConditions
+                - involvedAACProgrammes
+                - keyHealthInequalities
+                - mainCategory
+                - otherCategoryDescription
+                - ownerId
+                - engagingOrganisations
+                - engagingUnits
+                - suggestedOrganisations
+                - support.status
+                - support.updatedAt
+            minItems: 1
+        - name: engagingOrganisations
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+        - name: locations
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - England
+                - Scotland
+                - Wales
+                - Northern Ireland
+                - Based outside UK
+        - name: skip
+          in: query
+          required: false
+          schema:
+            type: number
+            format: float
+        - name: take
+          in: query
+          required: false
+          schema:
+            type: number
+            format: float
+            maximum: 100
+            default: 20
         - name: name
           in: query
           required: false

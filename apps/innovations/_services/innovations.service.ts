@@ -1,5 +1,5 @@
 import { inject, injectable } from 'inversify';
-import { Brackets, EntityManager, In, ObjectLiteral } from 'typeorm';
+import { Brackets, EntityManager, In, ObjectLiteral, SelectQueryBuilder } from 'typeorm';
 
 import {
   ActivityLogEntity,
@@ -7,6 +7,7 @@ import {
   InnovationDocumentEntity,
   InnovationEntity,
   InnovationExportRequestEntity,
+  InnovationListView,
   InnovationReassessmentRequestEntity,
   InnovationSectionEntity,
   InnovationSupportEntity,
@@ -34,14 +35,22 @@ import {
   UserStatusEnum
 } from '@innovations/shared/enums';
 import {
+  BadRequestError,
+  GenericErrorsEnum,
   InnovationErrorsEnum,
   NotFoundError,
+  NotImplementedError,
   OrganisationErrorsEnum,
   UnprocessableEntityError
 } from '@innovations/shared/errors';
 import { PaginationQueryParamsType, TranslationHelper } from '@innovations/shared/helpers';
 import type { DomainService, DomainUsersService, NotifierService } from '@innovations/shared/services';
-import type { ActivityLogListParamsType, DomainContextType } from '@innovations/shared/types';
+import {
+  isAAssessmentDomainContextType,
+  isAccessorDomainContextType,
+  type ActivityLogListParamsType,
+  type DomainContextType
+} from '@innovations/shared/types';
 
 import { InnovationSupportLogTypeEnum } from '@innovations/shared/enums';
 import { InnovationLocationEnum } from '../_enums/innovation.enums';
@@ -51,7 +60,54 @@ import { createDocumentFromInnovation } from '@innovations/shared/entities/innov
 import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import { ActionEnum } from '@innovations/shared/services/integrations/audit.service';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
+import { groupBy, snakeCase } from 'lodash';
 import { BaseService } from './base.service';
+
+// TODO move types
+export const InnovationListSelectType = [
+  'id',
+  'name',
+  'status',
+  'groupedStatus',
+  'submittedAt',
+  'updatedAt',
+  // Document fields
+  'careSettings',
+  'categories',
+  'countryName',
+  'diseasesAndConditions',
+  'involvedAACProgrammes',
+  'keyHealthInequalities',
+  'mainCategory',
+  'otherCategoryDescription',
+  // Relation fields
+  'ownerId', // this will change
+  'engagingOrganisations',
+  'engagingUnits',
+  'suggestedOrganisations',
+  'support.status',
+  'support.updatedAt'
+] as const;
+export type InnovationListSelectType =
+  | keyof Omit<InnovationListView, 'supports'>
+  | `support.${keyof Pick<InnovationSupportEntity, 'status' | 'updatedAt'>}`;
+
+export type InnovationListFullResponseType = Omit<InnovationListView, 'supports'> & {
+  support: { status: InnovationSupportStatusEnum; updatedAt: Date | null };
+};
+
+type KeyPart<S> = S extends `${infer U}.${infer _D}` ? U : S;
+export type InnovationListResponseType<S extends InnovationListSelectType, K extends KeyPart<S> = KeyPart<S>> = {
+  [k in K]: InnovationListFullResponseType[k];
+};
+
+export type InnovationListFilters = {
+  locations?: InnovationLocationEnum[];
+  engagingOrganisations?: string[];
+  supportStatuses?: InnovationSupportStatusEnum[];
+  assignedToMe?: boolean;
+  suggestedOnly?: boolean;
+};
 
 @injectable()
 export class InnovationsService extends BaseService {
@@ -775,6 +831,254 @@ export class InnovationsService extends BaseService {
     };
   }
 
+  async getInnovationsListNew<S extends InnovationListSelectType>(
+    domainContext: DomainContextType,
+    params: {
+      fields: S[];
+      pagination: PaginationQueryParamsType<S>;
+      filters?: InnovationListFilters;
+    },
+    em?: EntityManager
+  ): Promise<{ count: number; data: InnovationListResponseType<S>[] }> {
+    // TODO falta owner
+    // TODO shared with org for A/QA limitation
+    // TODO there's a bug when sorting by support and not linking support, add to improve sorts in join cases
+    // TODO filter unassigned not working correctly (need to check the ones that are null also)
+    // TODO filter Engaging Organisations not working (check http://localhost:4200/transactional/accessor/innovations/469A65D5-1482-EE11-8925-7C1E520432D9/overview it should have NortherGroup: 50413668-5BBA-EC11-997E-0050F25A43BD)
+    // TODO allow selection within JSON fields, ie: only fetch engagingOrganisations.organisationId
+    // TODO location filter returning +1 in England and +1 in Northern Ireland
+
+    // Some sanity checks
+    if (!params.fields.length) {
+      return { count: 0, data: [] };
+    }
+    // Ensure that the sort field is one of the fields
+    Object.keys(params.pagination.order).forEach(key => {
+      if (!params.fields.includes(key as S)) {
+        throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD, {
+          message: `Invalid sort field ${key} missing from fields`
+        });
+      }
+    });
+
+    const joins = new Set(params.fields.filter(item => item.includes('.')).map(item => item.split('.')[0]));
+    const fieldGroups = groupBy(params.fields, item => item.split('.')[0]);
+
+    const connection = em ?? this.sqlConnection.manager;
+    const query = connection
+      .createQueryBuilder(InnovationListView, 'innovation')
+      // currently I'm only handling the root selects here, might change in the future. ie: withSupports add the selects
+      //.select(xpto.select.map(item => (item.includes('.') ? item : `innovation.${item}`)));
+      .select(params.fields.filter(item => !item.includes('.')).map(item => `innovation.${item}`));
+
+    if (isAccessorDomainContextType(domainContext)) {
+      // special case for supports where we add the information from the request support organisation (only applicable for A/QA)
+      if (joins.has('support')) {
+        this.withSupport(query, domainContext.organisation.organisationUnit.id, fieldGroups['support'] as any);
+      }
+      // automatically add in_progress since A/QA can't see the others (yet). This might become a filter for A/QAs in the future
+      query.andWhere('innovation.status IN (:...innovationStatus)', {
+        innovationStatus: [InnovationStatusEnum.IN_PROGRESS]
+      });
+    }
+
+    // filters
+    Object.entries(params.filters ?? {}).forEach(([key, value]) => {
+      this.filtersHandlers[key as keyof typeof this.filtersHandlers](domainContext, query, value as any);
+    });
+
+    // pagination
+    query.skip(params.pagination.skip);
+    query.take(params.pagination.take);
+    Object.entries(params.pagination.order).forEach(([key, value]) => {
+      if (value === 'ASC' || value === 'DESC') {
+        query.addOrderBy(key.includes('.') ? key : `innovation.${key}`, value);
+      }
+    });
+
+    const queryResult = await query.getManyAndCount();
+
+    // Transform the entity into the response DTO
+    return {
+      count: queryResult[1],
+      data: queryResult[0].map(item => {
+        const res = {} as any;
+        Object.entries(fieldGroups).forEach(([key, value]) => {
+          if (value.length > 1) {
+            switch (key) {
+              case 'support':
+                {
+                  // support is handled differently to remove the nested array since it's only 1 element in this case
+                  res[key] = {
+                    ...(value.includes('support.status' as any) && {
+                      status: item.supports?.[0]?.status ?? InnovationSupportStatusEnum.UNASSIGNED
+                    }),
+                    ...(value.includes('support.updatedAt' as any) && { updatedAt: item.supports?.[0]?.updatedAt })
+                  };
+                }
+                break;
+              default:
+                break;
+            }
+          } else {
+            res[key] = item[value[0] as keyof InnovationListView];
+          }
+        });
+        return res;
+      }) // I'm filtering by select and adding the support field
+    };
+  }
+
+  /**
+   * Add support information to the query
+   * @param query the innovation list view query
+   * @param organisationUnitId the organisation unit id to add the support
+   * @returns query with the support information
+   */
+  private withSupport(
+    query: SelectQueryBuilder<InnovationListView>,
+    organisationUnitId: string,
+    fields: ('support.id' | 'support.status' | 'support.updatedAt')[]
+  ): SelectQueryBuilder<InnovationListView> {
+    if (!fields.length) {
+      return query;
+    }
+
+    return query
+      .addSelect(fields)
+      .leftJoin('innovation.supports', 'support', 'support.organisation_unit_id = :organisationUnitId', {
+        organisationUnitId
+      });
+  }
+
+  private readonly filtersHandlers: {
+    [k in keyof Required<InnovationListFilters>]: (
+      domainContext: DomainContextType,
+      query: SelectQueryBuilder<InnovationListView>,
+      value: Required<InnovationListFilters>[k]
+    ) => void;
+  } = {
+    locations: this.addLocationFilter.bind(this),
+    supportStatuses: this.addSupportFilter.bind(this),
+    engagingOrganisations: this.addJsonArrayInFilter('engagingOrganisations', '$.organisationId').bind(this),
+    assignedToMe: this.addAssignedToMeFilter.bind(this),
+    suggestedOnly: this.addSuggestedOnlyFilter.bind(this)
+  };
+
+  private addLocationFilter(
+    _domainContext: DomainContextType,
+    query: SelectQueryBuilder<InnovationListView>,
+    locations: InnovationLocationEnum[]
+  ): void {
+    if (locations.length) {
+      query.andWhere(
+        new Brackets(qb => {
+          qb.where('1 <> 1'); // ugly shortcut to not worry about the first OR
+          if (locations.includes(InnovationLocationEnum['Based outside UK'])) {
+            qb.orWhere('innovation.countryName NOT IN (:...ukLocations)', {
+              ukLocations: [
+                InnovationLocationEnum.England,
+                InnovationLocationEnum['Northern Ireland'],
+                InnovationLocationEnum.Scotland,
+                InnovationLocationEnum.Wales
+              ]
+            });
+          }
+          const ukLocationsSelect = locations.filter(l => l !== InnovationLocationEnum['Based outside UK']);
+          if (ukLocationsSelect.length) {
+            qb.orWhere('innovation.countryName IN (:...ukLocationsSelect)', { ukLocationsSelect });
+          }
+        })
+      );
+    }
+  }
+
+  private addSupportFilter(
+    domainContext: DomainContextType,
+    query: SelectQueryBuilder<InnovationListView>,
+    supportStatuses: InnovationSupportStatusEnum[]
+  ): void {
+    if (supportStatuses.length) {
+      // sanity check to ensure we're joining with the support
+      if (!query.expressionMap.aliases.find(item => item.name === 'support')) {
+        if (!isAccessorDomainContextType(domainContext)) {
+          throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD, {
+            message: 'Support filter is only valid for accessor domain context'
+          });
+        }
+        this.withSupport(query, domainContext.organisation.organisationUnit.id, ['support.id']);
+      }
+      query.andWhere('support.status IN (:...supportStatuses)', { supportStatuses: supportStatuses });
+    }
+  }
+
+  /**
+   * adds a filter that searches for a value in the json arrays of the innovation list view
+   * @param filterKey the filter key to use in the query
+   * @param fieldSelector optional selector to use in the json search (defaults to undefined for simple arrays)
+   * @param column the array column to search (defaults to filterKey)
+   * @returns filter handler function
+   */
+  private addJsonArrayInFilter<
+    FilterKey extends keyof InnovationListFilters,
+    FilterValue extends Required<InnovationListFilters[FilterKey]>,
+    FilterValues extends FilterValue extends unknown[]
+      ? FilterValue
+      : FilterValue extends true | false // hackish because type script would make it true[] or false[] otherwise
+      ? boolean[]
+      : FilterValue[]
+  >(
+    filterKey: FilterKey,
+    fieldSelector?: string,
+    column: string = snakeCase(filterKey)
+  ): (_domainContext: DomainContextType, query: SelectQueryBuilder<InnovationListView>, value: FilterValues) => void {
+    return (_domainContext: DomainContextType, query: SelectQueryBuilder<InnovationListView>, values: FilterValues) => {
+      if (values.length) {
+        const valueField = fieldSelector ? `JSON_VALUE(value, '${fieldSelector}')` : 'value';
+        query.andWhere(`EXISTS(SELECT 1 FROM OPENJSON(${column}) WHERE ${valueField} IN(:...values))`, { values });
+      }
+    };
+  }
+
+  private addAssignedToMeFilter(
+    domainContext: DomainContextType,
+    query: SelectQueryBuilder<InnovationListView>,
+    value: boolean
+  ): void {
+    if (value) {
+      if (isAccessorDomainContextType(domainContext)) {
+        // sanity check to ensure we're joining with the support
+        if (!query.expressionMap.aliases.find(item => item.name === 'support')) {
+          this.withSupport(query, domainContext.organisation.organisationUnit.id, ['support.id']);
+        }
+        query.innerJoin('support.userRoles', 'supportUserRoles');
+        query.andWhere('supportUserRoles.id = :userRoleId', {
+          userRoleId: domainContext.currentRole.id
+        });
+      }
+      if (isAAssessmentDomainContextType(domainContext)) {
+        throw new NotImplementedError(GenericErrorsEnum.NOT_IMPLEMENTED_ERROR, {
+          message: 'Assigned to me filter not implemented for Needs Assessment Team yet'
+        });
+      }
+      // Choose to do nothing instead of throwing an error if this is passed when not supposed (joi should handle it)
+      // but as a behavior think it's better to ignore the filter than to throw an error
+    }
+  }
+
+  private addSuggestedOnlyFilter(
+    domainContext: DomainContextType,
+    query: SelectQueryBuilder<InnovationListView>,
+    value: boolean
+  ): void {
+    if (value && isAccessorDomainContextType(domainContext)) {
+      query.andWhere(
+        `EXISTS(SELECT 1 FROM OPENJSON(innovation.suggested_units) WHERE JSON_VALUE(value, '$.unitId') = :contextOrganisationUnitId)`,
+        { contextOrganisationUnitId: domainContext.organisation.organisationUnit.id }
+      );
+    }
+  }
+
   async getInnovationInfo(
     domainContext: DomainContextType,
     id: string,
@@ -1236,7 +1540,7 @@ export class InnovationsService extends BaseService {
     });
 
     if (addedShares.length > 0 && innovation.status === InnovationStatusEnum.IN_PROGRESS) {
-      this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_DELAYED_SHARE, {
+      await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_DELAYED_SHARE, {
         innovationId: innovation.id,
         newSharedOrgIds: addedShares
       });
