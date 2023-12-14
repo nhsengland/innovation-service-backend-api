@@ -16,9 +16,8 @@ export class InnovationListView {
   @ViewColumn()
   name: string;
 
-  // make relation?, should it be identity?
   @ViewColumn({ name: 'owner_id' })
-  ownerId: string;
+  ownerId: string | null;
 
   @ViewColumn({ name: 'submitted_at' })
   submittedAt: Date | null;
@@ -34,6 +33,9 @@ export class InnovationListView {
 
   @ViewColumn({ name: 'country_name' })
   countryName: string;
+
+  @ViewColumn()
+  postcode: string;
 
   @ViewColumn({ name: 'main_category' })
   mainCategory: catalogCategory;

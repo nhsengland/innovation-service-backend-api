@@ -9,12 +9,13 @@ export class createInnovationListView1702499114492 implements MigrationInterface
       i.id,
       i.name,
       i.status,
-      i.owner_id, -- maybe external
+      u.id as owner_id,
       i.submitted_at,
       i.updated_at,
       gs.grouped_status as grouped_status
       FROM innovation i
       INNER JOIN innovation_grouped_status_view_entity gs ON i.id = gs.id
+      LEFT JOIN [user] u ON i.owner_id = u.id AND u.status != 'DELETED'
     ),
     documents as (
       SELECT d.id, d.document
@@ -46,6 +47,7 @@ export class createInnovationListView1702499114492 implements MigrationInterface
     )
     SELECT i.*,
     JSON_VALUE(d.document, '$.INNOVATION_DESCRIPTION.countryName') as country_name,
+    JSON_VALUE(d.document, '$.INNOVATION_DESCRIPTION.postcode') as postcode,
     JSON_VALUE(d.document, '$.INNOVATION_DESCRIPTION.mainCategory') as main_category,
     JSON_VALUE(d.document, '$.INNOVATION_DESCRIPTION.otherCategoryDescription') as other_category_description,
     JSON_QUERY(d.document, '$.INNOVATION_DESCRIPTION.categories') as categories,
