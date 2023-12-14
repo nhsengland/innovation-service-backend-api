@@ -950,12 +950,15 @@ paths:
                 - keyHealthInequalities
                 - mainCategory
                 - otherCategoryDescription
-                - ownerId
+                - postcode
                 - engagingOrganisations
                 - engagingUnits
                 - suggestedOrganisations
+                - support.id
                 - support.status
                 - support.updatedAt
+                - owner.id
+                - owner.name
             minItems: 1
         - name: engagingOrganisations
           in: query

@@ -60,7 +60,7 @@ import { createDocumentFromInnovation } from '@innovations/shared/entities/innov
 import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import { ActionEnum } from '@innovations/shared/services/integrations/audit.service';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import { groupBy, snakeCase } from 'lodash';
+import { groupBy, isString, snakeCase } from 'lodash';
 import { BaseService } from './base.service';
 
 // TODO move types
@@ -80,20 +80,27 @@ export const InnovationListSelectType = [
   'keyHealthInequalities',
   'mainCategory',
   'otherCategoryDescription',
+  'postcode',
   // Relation fields
-  'ownerId', // this will change
   'engagingOrganisations',
   'engagingUnits',
   'suggestedOrganisations',
+  'support.id',
   'support.status',
-  'support.updatedAt'
+  'support.updatedAt',
+  'owner.id',
+  'owner.name'
 ] as const;
+type InnovationListViewFields = Omit<InnovationListView, 'supports' | 'ownerId'>;
 export type InnovationListSelectType =
-  | keyof Omit<InnovationListView, 'supports'>
-  | `support.${keyof Pick<InnovationSupportEntity, 'status' | 'updatedAt'>}`;
+  | keyof InnovationListViewFields
+  | `support.${keyof Pick<InnovationSupportEntity, 'status' | 'updatedAt'>}`
+  | 'owner.id'
+  | 'owner.name';
 
-export type InnovationListFullResponseType = Omit<InnovationListView, 'supports'> & {
+export type InnovationListFullResponseType = InnovationListViewFields & {
   support: { status: InnovationSupportStatusEnum; updatedAt: Date | null };
+  owner: { id: string; name: string | null } | null;
 };
 
 type KeyPart<S> = S extends `${infer U}.${infer _D}` ? U : S;
@@ -108,6 +115,19 @@ export type InnovationListFilters = {
   assignedToMe?: boolean;
   suggestedOnly?: boolean;
 };
+
+// Join types are the ones with nested selectable objects
+export type InnovationListJoinTypes = InnovationListSelectType extends infer X
+  ? X extends `${infer U}.${infer _D}`
+    ? U
+    : never
+  : never;
+
+type InnovationListChildrenType<T extends InnovationListJoinTypes> = InnovationListSelectType extends infer X
+  ? X extends `${T}.${infer D}`
+    ? `${T}.${D}`
+    : never
+  : never;
 
 @injectable()
 export class InnovationsService extends BaseService {
@@ -831,6 +851,22 @@ export class InnovationsService extends BaseService {
     };
   }
 
+  //#region innovationsListNew
+  /**
+   * graph like method to return list information
+   * This is a new version that leverages the innovation_list_view to retrieve most information in a effective way.
+   * It's strongly typed and allows fetching only partials of the nested objects
+   *
+   * Supports requires a different approach since it depends on user to fetch and isn't necessarily part of the view
+   *
+   * @param domainContext the user making the request
+   * @param params parameters for the query:
+   *  - fields: the fields to return (supports dotted children)
+   *  - pagination: the pagination parameters supports multiple orderBys
+   *  - filters: the filters to apply
+   * @param em optional entity manager
+   * @returns list of innovations with only the selected fields
+   */
   async getInnovationsListNew<S extends InnovationListSelectType>(
     domainContext: DomainContextType,
     params: {
@@ -840,13 +876,12 @@ export class InnovationsService extends BaseService {
     },
     em?: EntityManager
   ): Promise<{ count: number; data: InnovationListResponseType<S>[] }> {
-    // TODO falta owner
     // TODO shared with org for A/QA limitation
-    // TODO there's a bug when sorting by support and not linking support, add to improve sorts in join cases
     // TODO filter unassigned not working correctly (need to check the ones that are null also)
     // TODO filter Engaging Organisations not working (check http://localhost:4200/transactional/accessor/innovations/469A65D5-1482-EE11-8925-7C1E520432D9/overview it should have NortherGroup: 50413668-5BBA-EC11-997E-0050F25A43BD)
     // TODO allow selection within JSON fields, ie: only fetch engagingOrganisations.organisationId
     // TODO location filter returning +1 in England and +1 in Northern Ireland
+    // TODO admin consider withDeleted ; others add filter to exclude deleted
 
     // Some sanity checks
     if (!params.fields.length) {
@@ -861,7 +896,12 @@ export class InnovationsService extends BaseService {
       }
     });
 
-    const joins = new Set(params.fields.filter(item => item.includes('.')).map(item => item.split('.')[0]));
+    const nestedObjects = new Set(
+      params.fields
+        .filter(item => item.includes('.'))
+        .map(item => item.split('.')[0])
+        .filter(isString) // remove undefined
+    );
     const fieldGroups = groupBy(params.fields, item => item.split('.')[0]);
 
     const connection = em ?? this.sqlConnection.manager;
@@ -871,16 +911,18 @@ export class InnovationsService extends BaseService {
       //.select(xpto.select.map(item => (item.includes('.') ? item : `innovation.${item}`)));
       .select(params.fields.filter(item => !item.includes('.')).map(item => `innovation.${item}`));
 
+    // Special role constraints (maybe make handler in the future)
     if (isAccessorDomainContextType(domainContext)) {
-      // special case for supports where we add the information from the request support organisation (only applicable for A/QA)
-      if (joins.has('support')) {
-        this.withSupport(query, domainContext.organisation.organisationUnit.id, fieldGroups['support'] as any);
-      }
       // automatically add in_progress since A/QA can't see the others (yet). This might become a filter for A/QAs in the future
       query.andWhere('innovation.status IN (:...innovationStatus)', {
         innovationStatus: [InnovationStatusEnum.IN_PROGRESS]
       });
     }
+
+    // Nested object handlers and joins
+    nestedObjects.forEach(join => {
+      this.joinHandlers[join as keyof typeof this.joinHandlers](domainContext, query, fieldGroups[join] as any[]);
+    });
 
     // filters
     Object.entries(params.filters ?? {}).forEach(([key, value]) => {
@@ -898,29 +940,32 @@ export class InnovationsService extends BaseService {
 
     const queryResult = await query.getManyAndCount();
 
+    // Optimization to only fetch users once
+    const usersMap = nestedObjects.has('owner')
+      ? await this.domainService.users.getUsersMap({
+          userIds: queryResult[0].map(i => i.ownerId).filter(isString)
+        })
+      : new Map();
+
     // Transform the entity into the response DTO
     return {
       count: queryResult[1],
       data: queryResult[0].map(item => {
         const res = {} as any;
         Object.entries(fieldGroups).forEach(([key, value]) => {
-          if (value.length > 1) {
-            switch (key) {
-              case 'support':
-                {
-                  // support is handled differently to remove the nested array since it's only 1 element in this case
-                  res[key] = {
-                    ...(value.includes('support.status' as any) && {
-                      status: item.supports?.[0]?.status ?? InnovationSupportStatusEnum.UNASSIGNED
-                    }),
-                    ...(value.includes('support.updatedAt' as any) && { updatedAt: item.supports?.[0]?.updatedAt })
-                  };
-                }
-                break;
-              default:
-                break;
+          if (nestedObjects.has(key)) {
+            if (key === 'value') {
+              // This will allow asking for support and getting all the default fields
+              throw new NotImplementedError(GenericErrorsEnum.NOT_IMPLEMENTED_ERROR, {
+                message: 'support for nested objects not implemented yet'
+              });
+            }
+            const handler = this.displayHandlers[key as keyof typeof this.displayHandlers];
+            if (handler) {
+              res[key] = handler(item, value as any[], { usersMap }); // this any should be safe since it comes from the groupBy
             }
           } else {
+            // Handle plain object directly from the view
             res[key] = item[value[0] as keyof InnovationListView];
           }
         });
@@ -929,6 +974,19 @@ export class InnovationsService extends BaseService {
     };
   }
 
+  //#region join handlers
+  // Nested object handlers / joins
+  private readonly joinHandlers: {
+    [k in InnovationListJoinTypes]: (
+      domainContext: DomainContextType,
+      query: SelectQueryBuilder<InnovationListView>,
+      value: InnovationListChildrenType<k> | any
+    ) => void;
+  } = {
+    support: this.withSupport.bind(this),
+    owner: this.withOwner.bind(this)
+  };
+
   /**
    * Add support information to the query
    * @param query the innovation list view query
@@ -936,21 +994,37 @@ export class InnovationsService extends BaseService {
    * @returns query with the support information
    */
   private withSupport(
+    domainContext: DomainContextType,
     query: SelectQueryBuilder<InnovationListView>,
-    organisationUnitId: string,
-    fields: ('support.id' | 'support.status' | 'support.updatedAt')[]
-  ): SelectQueryBuilder<InnovationListView> {
-    if (!fields.length) {
-      return query;
-    }
+    fields: ('support.id' | 'support.status' | 'support.updatedAt')[] = ['support.id']
+  ): void {
+    if (fields.length) {
+      if (!isAccessorDomainContextType(domainContext)) {
+        throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD, {
+          message: 'Support is only valid for accessor domain context'
+        });
+      }
 
-    return query
-      .addSelect(fields)
-      .leftJoin('innovation.supports', 'support', 'support.organisation_unit_id = :organisationUnitId', {
-        organisationUnitId
-      });
+      query
+        .addSelect(fields)
+        .leftJoin('innovation.supports', 'support', 'support.organisation_unit_id = :organisationUnitId', {
+          organisationUnitId: domainContext.organisation.organisationUnit.id
+        });
+    }
   }
 
+  private withOwner(
+    _domainContext: DomainContextType,
+    query: SelectQueryBuilder<InnovationListView>,
+    fields: ('owner.id' | 'owner.name')[] = ['owner.id']
+  ): void {
+    if (fields.length) {
+      query.addSelect(['innovation.ownerId']);
+    }
+  }
+  //#endregion
+
+  //#region filter handlers
   private readonly filtersHandlers: {
     [k in keyof Required<InnovationListFilters>]: (
       domainContext: DomainContextType,
@@ -1001,12 +1075,7 @@ export class InnovationsService extends BaseService {
     if (supportStatuses.length) {
       // sanity check to ensure we're joining with the support
       if (!query.expressionMap.aliases.find(item => item.name === 'support')) {
-        if (!isAccessorDomainContextType(domainContext)) {
-          throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD, {
-            message: 'Support filter is only valid for accessor domain context'
-          });
-        }
-        this.withSupport(query, domainContext.organisation.organisationUnit.id, ['support.id']);
+        this.withSupport(domainContext, query);
       }
       query.andWhere('support.status IN (:...supportStatuses)', { supportStatuses: supportStatuses });
     }
@@ -1049,7 +1118,7 @@ export class InnovationsService extends BaseService {
       if (isAccessorDomainContextType(domainContext)) {
         // sanity check to ensure we're joining with the support
         if (!query.expressionMap.aliases.find(item => item.name === 'support')) {
-          this.withSupport(query, domainContext.organisation.organisationUnit.id, ['support.id']);
+          this.withSupport(domainContext, query);
         }
         query.innerJoin('support.userRoles', 'supportUserRoles');
         query.andWhere('supportUserRoles.id = :userRoleId', {
@@ -1078,6 +1147,50 @@ export class InnovationsService extends BaseService {
       );
     }
   }
+  //#endregion
+
+  //#region nested display handlers
+  private displayHandlers: {
+    [k in InnovationListJoinTypes]: (
+      item: InnovationListView,
+      fields: InnovationListChildrenType<k>[],
+      extra: { usersMap: Map<string, Awaited<ReturnType<DomainUsersService['getUsersList']>>[0]> }
+    ) => Partial<InnovationListFullResponseType[k]>;
+  } = {
+    support: this.displaySupport.bind(this),
+    owner: this.displayOwner.bind(this)
+  };
+
+  private displaySupport(
+    item: InnovationListView,
+    fields: InnovationListChildrenType<'support'>[]
+  ): Partial<InnovationListFullResponseType['support']> {
+    // support is handled differently to remove the nested array since it's only 1 element in this case
+    return {
+      ...(fields.includes('support.status' as any) && {
+        status: item.supports?.[0]?.status ?? InnovationSupportStatusEnum.UNASSIGNED
+      }),
+      ...(fields.includes('support.updatedAt' as any) && { updatedAt: item.supports?.[0]?.updatedAt })
+    };
+  }
+
+  private displayOwner(
+    item: InnovationListView,
+    fields: InnovationListChildrenType<'owner'>[],
+    extra: { usersMap: Map<string, Awaited<ReturnType<DomainUsersService['getUsersList']>>[0]> }
+  ): Partial<InnovationListFullResponseType['owner']> {
+    if (!item.ownerId) {
+      return null;
+    }
+    return {
+      ...(fields.includes('owner.id') && { id: item.ownerId }),
+      ...(fields.includes('owner.name') && {
+        name: extra.usersMap.get(item.ownerId)?.displayName ?? null
+      })
+    };
+  }
+  //#endregion
+  //#endregion
 
   async getInnovationInfo(
     domainContext: DomainContextType,
