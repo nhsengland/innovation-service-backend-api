@@ -35,6 +35,7 @@ import {
   UserStatusEnum
 } from '@innovations/shared/enums';
 import {
+  BadRequestError,
   GenericErrorsEnum,
   InnovationErrorsEnum,
   NotFoundError,
@@ -59,7 +60,6 @@ import { createDocumentFromInnovation } from '@innovations/shared/entities/innov
 import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import { ActionEnum } from '@innovations/shared/services/integrations/audit.service';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import { BadRequestError } from 'libs/shared/errors';
 import { groupBy, snakeCase } from 'lodash';
 import { BaseService } from './base.service';
 
@@ -846,6 +846,7 @@ export class InnovationsService extends BaseService {
     // TODO filter unassigned not working correctly (need to check the ones that are null also)
     // TODO filter Engaging Organisations not working (check http://localhost:4200/transactional/accessor/innovations/469A65D5-1482-EE11-8925-7C1E520432D9/overview it should have NortherGroup: 50413668-5BBA-EC11-997E-0050F25A43BD)
     // TODO allow selection within JSON fields, ie: only fetch engagingOrganisations.organisationId
+    // TODO location filter returning +1 in England and +1 in Northern Ireland
 
     // Some sanity checks
     if (!params.fields.length) {
