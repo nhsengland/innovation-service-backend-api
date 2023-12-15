@@ -2,6 +2,11 @@ import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class createInnovationListView1702499114492 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
+    // Fix bad seed data that was making created_by incompatible with UUID
+    await queryRunner.query(
+      `UPDATE organisation SET created_by='00000000-0000-0000-0000-000000000000' WHERE created_by='seed'`
+    );
+
     await queryRunner.query(`
     CREATE OR ALTER VIEW innovation_list_view AS
     WITH innovations AS (
@@ -10,12 +15,14 @@ export class createInnovationListView1702499114492 implements MigrationInterface
       i.name,
       i.status,
       u.id as owner_id,
+      o.name as owner_company_name,
       i.submitted_at,
       i.updated_at,
       gs.grouped_status as grouped_status
       FROM innovation i
       INNER JOIN innovation_grouped_status_view_entity gs ON i.id = gs.id
       LEFT JOIN [user] u ON i.owner_id = u.id AND u.status != 'DELETED'
+      LEFT JOIN organisation o ON u.id= o.created_by AND o.deleted_at IS NULL AND o.is_shadow = 0
     ),
     documents as (
       SELECT d.id, d.document

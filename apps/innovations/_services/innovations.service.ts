@@ -90,18 +90,20 @@ export const InnovationListSelectType = [
   'support.status',
   'support.updatedAt',
   'owner.id',
-  'owner.name'
+  'owner.name',
+  'owner.companyName'
 ] as const;
 type InnovationListViewFields = Omit<InnovationListView, 'supports' | 'ownerId'>;
 export type InnovationListSelectType =
   | keyof InnovationListViewFields
   | `support.${keyof Pick<InnovationSupportEntity, 'status' | 'updatedAt'>}`
   | 'owner.id'
-  | 'owner.name';
+  | 'owner.name'
+  | 'owner.companyName';
 
 export type InnovationListFullResponseType = InnovationListViewFields & {
   support: { status: InnovationSupportStatusEnum; updatedAt: Date | null };
-  owner: { id: string; name: string | null } | null;
+  owner: { id: string; name: string | null; companyName: string | null } | null;
 };
 
 type KeyPart<S> = S extends `${infer U}.${infer _D}` ? U : S;
@@ -878,9 +880,11 @@ export class InnovationsService extends BaseService {
     },
     em?: EntityManager
   ): Promise<{ count: number; data: InnovationListResponseType<S>[] }> {
+    // TODO grouped status filter for admin
     // TODO filter Engaging Organisations not working (check http://localhost:4200/transactional/accessor/innovations/469A65D5-1482-EE11-8925-7C1E520432D9/overview it should have NortherGroup: 50413668-5BBA-EC11-997E-0050F25A43BD)
     // TODO allow selection within JSON fields, ie: only fetch engagingOrganisations.organisationId
     // TODO admin consider withDeleted ; others add filter to exclude deleted
+    // TODO assign accessor/suggested not working ?
 
     // Some sanity checks
     if (!params.fields.length) {
@@ -894,6 +898,12 @@ export class InnovationsService extends BaseService {
         });
       }
     });
+    // Ensure that we aren't filtering by owner name as it's not supported (joi is validating this, didn't spend much time getting the pagination type to work with Omit)
+    if (Object.keys(params.pagination.order).includes('owner.name')) {
+      throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD, {
+        message: 'Invalid sort field owner.name not supported'
+      });
+    }
 
     const nestedObjects = new Set(
       params.fields
@@ -943,6 +953,10 @@ export class InnovationsService extends BaseService {
     query.take(params.pagination.take);
     Object.entries(params.pagination.order).forEach(([key, value]) => {
       if (value === 'ASC' || value === 'DESC') {
+        // Special case for orders we might improve this in the future if it becomes the norm
+        if (key.startsWith('owner.')) {
+          key = 'owner' + key.split('.')[1]!.charAt(0).toUpperCase() + key.split('.')[1]?.slice(1);
+        }
         query.addOrderBy(key.includes('.') ? key : `innovation.${key}`, value);
       }
     });
@@ -1025,10 +1039,13 @@ export class InnovationsService extends BaseService {
   private withOwner(
     _domainContext: DomainContextType,
     query: SelectQueryBuilder<InnovationListView>,
-    fields: ('owner.id' | 'owner.name')[] = ['owner.id']
+    fields: ('owner.id' | 'owner.name' | 'owner.companyName')[] = ['owner.id']
   ): void {
     if (fields.length) {
-      query.addSelect(['innovation.ownerId']);
+      query.addSelect([
+        'innovation.ownerId',
+        ...(fields.includes('owner.companyName') ? ['innovation.ownerCompanyName'] : [])
+      ]);
     }
   }
   //#endregion
@@ -1230,6 +1247,9 @@ export class InnovationsService extends BaseService {
       ...(fields.includes('owner.id') && { id: item.ownerId }),
       ...(fields.includes('owner.name') && {
         name: extra.usersMap.get(item.ownerId)?.displayName ?? null
+      }),
+      ...(fields.includes('owner.companyName') && {
+        companyName: item.ownerCompanyName ?? null
       })
     };
   }

@@ -967,6 +967,7 @@ paths:
                 - support.updatedAt
                 - owner.id
                 - owner.name
+                - owner.companyName
             minItems: 1
         - name: locations
           in: query
