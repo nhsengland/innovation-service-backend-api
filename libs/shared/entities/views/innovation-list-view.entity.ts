@@ -49,6 +49,9 @@ export class InnovationListView {
   @Column({ name: 'care_settings', type: 'simple-json' })
   careSettings: catalogCareSettings[] | null;
 
+  @Column({ name: 'other_care_setting' })
+  otherCareSetting: string | null;
+
   @Column({ name: 'involved_aac_programmes', type: 'simple-json' })
   involvedAACProgrammes: catalogInvolvedAACProgrammes[] | null;
 

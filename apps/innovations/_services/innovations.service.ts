@@ -79,6 +79,7 @@ export const InnovationListSelectType = [
   'involvedAACProgrammes',
   'keyHealthInequalities',
   'mainCategory',
+  'otherCareSetting',
   'otherCategoryDescription',
   'postcode',
   // Relation fields
@@ -877,11 +878,8 @@ export class InnovationsService extends BaseService {
     },
     em?: EntityManager
   ): Promise<{ count: number; data: InnovationListResponseType<S>[] }> {
-    // TODO shared with org for A/QA limitation
-    // TODO filter unassigned not working correctly (need to check the ones that are null also)
     // TODO filter Engaging Organisations not working (check http://localhost:4200/transactional/accessor/innovations/469A65D5-1482-EE11-8925-7C1E520432D9/overview it should have NortherGroup: 50413668-5BBA-EC11-997E-0050F25A43BD)
     // TODO allow selection within JSON fields, ie: only fetch engagingOrganisations.organisationId
-    // TODO location filter returning +1 in England and +1 in Northern Ireland
     // TODO admin consider withDeleted ; others add filter to exclude deleted
 
     // Some sanity checks
@@ -914,6 +912,15 @@ export class InnovationsService extends BaseService {
 
     // Special role constraints (maybe make handler in the future)
     if (isAccessorDomainContextType(domainContext)) {
+      // force the innovation to be shared with the support organisation
+      query.innerJoin(
+        'innovation_share',
+        'shares',
+        'shares.innovation_id = innovation.id AND shares.organisation_id = :organisationId',
+        {
+          organisationId: domainContext.organisation.id
+        }
+      );
       // automatically add in_progress since A/QA can't see the others (yet). This might become a filter for A/QAs in the future
       query.andWhere('innovation.status IN (:...innovationStatus)', {
         innovationStatus: [InnovationStatusEnum.IN_PROGRESS]
@@ -1174,7 +1181,14 @@ export class InnovationsService extends BaseService {
       if (!query.expressionMap.aliases.find(item => item.name === 'support')) {
         this.withSupport(domainContext, query);
       }
-      query.andWhere('support.status IN (:...supportStatuses)', { supportStatuses: supportStatuses });
+      query.andWhere(
+        new Brackets(qb => {
+          qb.where('support.status IN (:...supportStatuses)', { supportStatuses: supportStatuses });
+          if (supportStatuses.includes(InnovationSupportStatusEnum.UNASSIGNED)) {
+            qb.orWhere('support.id IS NULL');
+          }
+        })
+      );
     }
   }
   //#endregion
