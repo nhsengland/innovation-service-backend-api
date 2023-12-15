@@ -160,16 +160,17 @@ export const NewQueryParamsSchema = JoiHelper.PaginationJoiSchema({
   orderKeys: Object.values(InnovationListSelectType)
 })
   .append<NewQueryParamsType>({
+    engagingOrganisations: JoiHelper.AppCustomJoi().stringArray().items(Joi.string()).optional(),
     fields: JoiHelper.AppCustomJoi()
       .stringArray()
       .items(Joi.string().valid(...Object.values(InnovationListSelectType)))
       .min(1)
       .required(),
-    engagingOrganisations: JoiHelper.AppCustomJoi().stringArray().items(Joi.string()).optional(),
     locations: JoiHelper.AppCustomJoi()
       .stringArray()
       .items(Joi.string().valid(...Object.values(InnovationLocationEnum)))
-      .optional()
+      .optional(),
+    search: JoiHelper.AppCustomJoi().decodeURIString().trim().allow(null, '').optional()
   })
   .when('$userType', {
     switch: [
