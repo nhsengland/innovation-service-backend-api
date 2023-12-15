@@ -52,6 +52,7 @@ export class createInnovationListView1702499114492 implements MigrationInterface
     JSON_VALUE(d.document, '$.INNOVATION_DESCRIPTION.otherCategoryDescription') as other_category_description,
     JSON_QUERY(d.document, '$.INNOVATION_DESCRIPTION.categories') as categories,
     JSON_QUERY(d.document, '$.INNOVATION_DESCRIPTION.careSettings') as care_settings,
+    JSON_VALUE(d.document, '$.INNOVATION_DESCRIPTION.otherCareSetting') as other_care_setting,
     JSON_QUERY(d.document, '$.INNOVATION_DESCRIPTION.involvedAACProgrammes') as involved_aac_programmes,
     JSON_QUERY(d.document, '$.UNDERSTANDING_OF_NEEDS.diseasesConditionsImpact') as diseases_and_conditions,
     JSON_QUERY(d.document, '$.UNDERSTANDING_OF_NEEDS.keyHealthInequalities') as key_health_inequalities,

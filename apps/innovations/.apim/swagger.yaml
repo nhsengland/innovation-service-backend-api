@@ -956,6 +956,7 @@ paths:
                 - involvedAACProgrammes
                 - keyHealthInequalities
                 - mainCategory
+                - otherCareSetting
                 - otherCategoryDescription
                 - postcode
                 - engagingOrganisations
