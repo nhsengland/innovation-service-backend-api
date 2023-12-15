@@ -928,6 +928,13 @@ paths:
                 - DESC
             default:
               default: DESC
+        - name: engagingOrganisations
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
         - name: fields
           in: query
           required: false
@@ -960,13 +967,6 @@ paths:
                 - owner.id
                 - owner.name
             minItems: 1
-        - name: engagingOrganisations
-          in: query
-          required: false
-          schema:
-            type: array
-            items:
-              type: string
         - name: locations
           in: query
           required: false
@@ -980,6 +980,12 @@ paths:
                 - Wales
                 - Northern Ireland
                 - Based outside UK
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+            nullable: true
         - name: skip
           in: query
           required: false

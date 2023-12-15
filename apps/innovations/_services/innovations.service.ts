@@ -113,6 +113,7 @@ export type InnovationListFilters = {
   engagingOrganisations?: string[];
   supportStatuses?: InnovationSupportStatusEnum[];
   assignedToMe?: boolean;
+  search?: string;
   suggestedOnly?: boolean;
 };
 
@@ -925,9 +926,10 @@ export class InnovationsService extends BaseService {
     });
 
     // filters
-    Object.entries(params.filters ?? {}).forEach(([key, value]) => {
-      this.filtersHandlers[key as keyof typeof this.filtersHandlers](domainContext, query, value as any);
-    });
+    for (const [key, value] of Object.entries(params.filters ?? {})) {
+      // add to do a as any for the filters as the value was evaluated as never but this should be safe to use
+      await (this.filtersHandlers[key as keyof typeof this.filtersHandlers] as any)(domainContext, query, value);
+    }
 
     // pagination
     query.skip(params.pagination.skip);
@@ -1030,56 +1032,15 @@ export class InnovationsService extends BaseService {
       domainContext: DomainContextType,
       query: SelectQueryBuilder<InnovationListView>,
       value: Required<InnovationListFilters>[k]
-    ) => void;
+    ) => void | Promise<void>;
   } = {
-    locations: this.addLocationFilter.bind(this),
-    supportStatuses: this.addSupportFilter.bind(this),
-    engagingOrganisations: this.addJsonArrayInFilter('engagingOrganisations', '$.organisationId').bind(this),
     assignedToMe: this.addAssignedToMeFilter.bind(this),
-    suggestedOnly: this.addSuggestedOnlyFilter.bind(this)
+    engagingOrganisations: this.addJsonArrayInFilter('engagingOrganisations', '$.organisationId').bind(this),
+    locations: this.addLocationFilter.bind(this),
+    search: this.addSearchFilter.bind(this),
+    suggestedOnly: this.addSuggestedOnlyFilter.bind(this),
+    supportStatuses: this.addSupportFilter.bind(this)
   };
-
-  private addLocationFilter(
-    _domainContext: DomainContextType,
-    query: SelectQueryBuilder<InnovationListView>,
-    locations: InnovationLocationEnum[]
-  ): void {
-    if (locations.length) {
-      query.andWhere(
-        new Brackets(qb => {
-          qb.where('1 <> 1'); // ugly shortcut to not worry about the first OR
-          if (locations.includes(InnovationLocationEnum['Based outside UK'])) {
-            qb.orWhere('innovation.countryName NOT IN (:...ukLocations)', {
-              ukLocations: [
-                InnovationLocationEnum.England,
-                InnovationLocationEnum['Northern Ireland'],
-                InnovationLocationEnum.Scotland,
-                InnovationLocationEnum.Wales
-              ]
-            });
-          }
-          const ukLocationsSelect = locations.filter(l => l !== InnovationLocationEnum['Based outside UK']);
-          if (ukLocationsSelect.length) {
-            qb.orWhere('innovation.countryName IN (:...ukLocationsSelect)', { ukLocationsSelect });
-          }
-        })
-      );
-    }
-  }
-
-  private addSupportFilter(
-    domainContext: DomainContextType,
-    query: SelectQueryBuilder<InnovationListView>,
-    supportStatuses: InnovationSupportStatusEnum[]
-  ): void {
-    if (supportStatuses.length) {
-      // sanity check to ensure we're joining with the support
-      if (!query.expressionMap.aliases.find(item => item.name === 'support')) {
-        this.withSupport(domainContext, query);
-      }
-      query.andWhere('support.status IN (:...supportStatuses)', { supportStatuses: supportStatuses });
-    }
-  }
 
   /**
    * adds a filter that searches for a value in the json arrays of the innovation list view
@@ -1135,6 +1096,61 @@ export class InnovationsService extends BaseService {
     }
   }
 
+  private addLocationFilter(
+    _domainContext: DomainContextType,
+    query: SelectQueryBuilder<InnovationListView>,
+    locations: InnovationLocationEnum[]
+  ): void {
+    if (locations.length) {
+      query.andWhere(
+        new Brackets(qb => {
+          qb.where('1 <> 1'); // ugly shortcut to not worry about the first OR
+          if (locations.includes(InnovationLocationEnum['Based outside UK'])) {
+            qb.orWhere('innovation.countryName NOT IN (:...ukLocations)', {
+              ukLocations: [
+                InnovationLocationEnum.England,
+                InnovationLocationEnum['Northern Ireland'],
+                InnovationLocationEnum.Scotland,
+                InnovationLocationEnum.Wales
+              ]
+            });
+          }
+          const ukLocationsSelect = locations.filter(l => l !== InnovationLocationEnum['Based outside UK']);
+          if (ukLocationsSelect.length) {
+            qb.orWhere('innovation.countryName IN (:...ukLocationsSelect)', { ukLocationsSelect });
+          }
+        })
+      );
+    }
+  }
+
+  private async addSearchFilter(
+    domainContext: DomainContextType,
+    query: SelectQueryBuilder<InnovationListView>,
+    search: string
+  ): Promise<void> {
+    if (search) {
+      // Admins can search by email (full match search)
+      const targetUser =
+        domainContext.currentRole.role === ServiceRoleEnum.ADMIN && search.match(/^\S+@\S+$/)
+          ? await this.domainService.users.getUserByEmail(search)
+          : null;
+      query.andWhere(
+        new Brackets(async qb => {
+          qb.where('innovation.name LIKE :search', { search: `%${search}%` });
+          // Admins can search by email (full match search)
+          if (targetUser?.length && targetUser[0]) {
+            qb.orWhere('innovation.owner_id = :userId', {
+              userId: targetUser[0].id
+            });
+          }
+          // Company search will be added here when the story arrives
+          //qb.orWhere('innovation.company LIKE :search', { search: `%${search}%` });
+        })
+      );
+    }
+  }
+
   private addSuggestedOnlyFilter(
     domainContext: DomainContextType,
     query: SelectQueryBuilder<InnovationListView>,
@@ -1145,6 +1161,20 @@ export class InnovationsService extends BaseService {
         `EXISTS(SELECT 1 FROM OPENJSON(innovation.suggested_units) WHERE JSON_VALUE(value, '$.unitId') = :contextOrganisationUnitId)`,
         { contextOrganisationUnitId: domainContext.organisation.organisationUnit.id }
       );
+    }
+  }
+
+  private addSupportFilter(
+    domainContext: DomainContextType,
+    query: SelectQueryBuilder<InnovationListView>,
+    supportStatuses: InnovationSupportStatusEnum[]
+  ): void {
+    if (supportStatuses.length) {
+      // sanity check to ensure we're joining with the support
+      if (!query.expressionMap.aliases.find(item => item.name === 'support')) {
+        this.withSupport(domainContext, query);
+      }
+      query.andWhere('support.status IN (:...supportStatuses)', { supportStatuses: supportStatuses });
     }
   }
   //#endregion
