@@ -19,6 +19,9 @@ export class InnovationListView {
   @ViewColumn({ name: 'owner_id' })
   ownerId: string | null;
 
+  @ViewColumn({ name: 'owner_company_name' })
+  ownerCompanyName: string | null;
+
   @ViewColumn({ name: 'submitted_at' })
   submittedAt: Date | null;
 
