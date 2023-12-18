@@ -112,12 +112,13 @@ export type InnovationListResponseType<S extends InnovationListSelectType, K ext
 };
 
 export type InnovationListFilters = {
-  locations?: InnovationLocationEnum[];
-  engagingOrganisations?: string[];
-  supportStatuses?: InnovationSupportStatusEnum[];
   assignedToMe?: boolean;
+  engagingOrganisations?: string[];
+  groupedStatuses: InnovationGroupedStatusEnum[];
+  locations?: InnovationLocationEnum[];
   search?: string;
   suggestedOnly?: boolean;
+  supportStatuses?: InnovationSupportStatusEnum[];
 };
 
 // Join types are the ones with nested selectable objects
@@ -880,11 +881,9 @@ export class InnovationsService extends BaseService {
     },
     em?: EntityManager
   ): Promise<{ count: number; data: InnovationListResponseType<S>[] }> {
-    // TODO grouped status filter for admin
     // TODO filter Engaging Organisations not working (check http://localhost:4200/transactional/accessor/innovations/469A65D5-1482-EE11-8925-7C1E520432D9/overview it should have NortherGroup: 50413668-5BBA-EC11-997E-0050F25A43BD)
     // TODO allow selection within JSON fields, ie: only fetch engagingOrganisations.organisationId
     // TODO admin consider withDeleted ; others add filter to exclude deleted
-    // TODO assign accessor/suggested not working ?
 
     // Some sanity checks
     if (!params.fields.length) {
@@ -1060,6 +1059,7 @@ export class InnovationsService extends BaseService {
   } = {
     assignedToMe: this.addAssignedToMeFilter.bind(this),
     engagingOrganisations: this.addJsonArrayInFilter('engagingOrganisations', '$.organisationId').bind(this),
+    groupedStatuses: this.addInFilter('groupedStatuses', 'groupedStatus').bind(this),
     locations: this.addLocationFilter.bind(this),
     search: this.addSearchFilter.bind(this),
     suggestedOnly: this.addSuggestedOnlyFilter.bind(this),
@@ -1090,6 +1090,24 @@ export class InnovationsService extends BaseService {
       if (values.length) {
         const valueField = fieldSelector ? `JSON_VALUE(value, '${fieldSelector}')` : 'value';
         query.andWhere(`EXISTS(SELECT 1 FROM OPENJSON(${column}) WHERE ${valueField} IN(:...values))`, { values });
+      }
+    };
+  }
+
+  /**
+   * adds a filter that searchs for a value in a column
+   * @param filterKey the filter key to use in the query
+   * @param column the array column to search (defaults to filterKey)
+   * @returns filter handler function
+   */
+  private addInFilter<FilterKey extends keyof InnovationListFilters>(
+    filterKey: FilterKey,
+    column: string = snakeCase(filterKey)
+  ): (_domainContext: DomainContextType, query: SelectQueryBuilder<InnovationListView>, value: any[]) => void {
+    return (_domainContext: DomainContextType, query: SelectQueryBuilder<InnovationListView>, values: any[]) => {
+      if (values.length) {
+        const col = column.includes('.') ? column : `innovation.${column}`;
+        query.andWhere(`${col} IN (:...values)`, { values });
       }
     };
   }

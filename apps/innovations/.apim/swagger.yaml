@@ -969,6 +969,21 @@ paths:
                 - owner.name
                 - owner.companyName
             minItems: 1
+        - name: groupedStatuses
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - RECORD_NOT_SHARED
+                - AWAITING_NEEDS_ASSESSMENT
+                - NEEDS_ASSESSMENT
+                - AWAITING_SUPPORT
+                - RECEIVING_SUPPORT
+                - NO_ACTIVE_SUPPORT
+                - AWAITING_NEEDS_REASSESSMENT
         - name: locations
           in: query
           required: false
