@@ -48,6 +48,7 @@ import type { DomainService, DomainUsersService, NotifierService } from '@innova
 import {
   isAAssessmentDomainContextType,
   isAccessorDomainContextType,
+  isAdminDomainContextType,
   type ActivityLogListParamsType,
   type DomainContextType
 } from '@innovations/shared/types';
@@ -881,9 +882,7 @@ export class InnovationsService extends BaseService {
     },
     em?: EntityManager
   ): Promise<{ count: number; data: InnovationListResponseType<S>[] }> {
-    // TODO filter Engaging Organisations not working (check http://localhost:4200/transactional/accessor/innovations/469A65D5-1482-EE11-8925-7C1E520432D9/overview it should have NortherGroup: 50413668-5BBA-EC11-997E-0050F25A43BD)
     // TODO allow selection within JSON fields, ie: only fetch engagingOrganisations.organisationId
-    // TODO admin consider withDeleted ; others add filter to exclude deleted
 
     // Some sanity checks
     if (!params.fields.length) {
@@ -934,6 +933,11 @@ export class InnovationsService extends BaseService {
       query.andWhere('innovation.status IN (:...innovationStatus)', {
         innovationStatus: [InnovationStatusEnum.IN_PROGRESS]
       });
+    }
+
+    // Exclude withdrawn innovations from non admin users (at least for now)
+    if (!isAdminDomainContextType(domainContext)) {
+      query.andWhere('innovation.status != :deletedStatus', { deletedStatus: InnovationStatusEnum.WITHDRAWN });
     }
 
     // Nested object handlers and joins
@@ -1089,7 +1093,10 @@ export class InnovationsService extends BaseService {
     return (_domainContext: DomainContextType, query: SelectQueryBuilder<InnovationListView>, values: FilterValues) => {
       if (values.length) {
         const valueField = fieldSelector ? `JSON_VALUE(value, '${fieldSelector}')` : 'value';
-        query.andWhere(`EXISTS(SELECT 1 FROM OPENJSON(${column}) WHERE ${valueField} IN(:...values))`, { values });
+        const valueVariable = `${filterKey}Value`; // this is here to ensure uniqueness of the variable name
+        query.andWhere(`EXISTS(SELECT 1 FROM OPENJSON(${column}) WHERE ${valueField} IN(:...${valueVariable}))`, {
+          [valueVariable]: values
+        });
       }
     };
   }
@@ -1107,7 +1114,8 @@ export class InnovationsService extends BaseService {
     return (_domainContext: DomainContextType, query: SelectQueryBuilder<InnovationListView>, values: any[]) => {
       if (values.length) {
         const col = column.includes('.') ? column : `innovation.${column}`;
-        query.andWhere(`${col} IN (:...values)`, { values });
+        const valueVariable = `${filterKey}Value`; // this is here to ensure uniqueness of the variable name
+        query.andWhere(`${col} IN (:...${valueVariable}))`, { [valueVariable]: values });
       }
     };
   }
