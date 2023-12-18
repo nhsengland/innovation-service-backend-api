@@ -166,6 +166,14 @@ export const NewQueryParamsSchema = JoiHelper.PaginationJoiSchema({
       .items(Joi.string().valid(...Object.values(InnovationListSelectType)))
       .min(1)
       .required(),
+    groupedStatuses: JoiHelper.AppCustomJoi()
+      .stringArray()
+      .items(
+        Joi.string().valid(
+          ...Object.values(InnovationGroupedStatusEnum).filter(v => v !== InnovationGroupedStatusEnum.WITHDRAWN)
+        )
+      ) // withdrawn is not allowed filter except for admin
+      .optional(),
     locations: JoiHelper.AppCustomJoi()
       .stringArray()
       .items(Joi.string().valid(...Object.values(InnovationLocationEnum)))
@@ -208,7 +216,12 @@ export const NewQueryParamsSchema = JoiHelper.PaginationJoiSchema({
       },
       {
         is: ServiceRoleEnum.ADMIN,
-        then: Joi.object({})
+        then: Joi.object({
+          groupedStatuses: JoiHelper.AppCustomJoi()
+            .stringArray()
+            .items(Joi.string().valid(...Object.values(InnovationGroupedStatusEnum)))
+            .optional()
+        })
       }
     ]
   })
