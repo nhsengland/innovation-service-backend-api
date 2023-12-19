@@ -32,7 +32,7 @@ class PostInnovationCSVExport {
         .verify();
       const innovation = auth.getInnovationInfo();
 
-      const csv = await exportFileService.create('csv', innovation.name, body, { withIndex: false });
+      const csv = await exportFileService.create(auth.getContext(), 'csv', innovation.name, body, { withIndex: false });
 
       context.res = {
         body: csv,

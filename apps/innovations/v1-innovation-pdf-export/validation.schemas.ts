@@ -1,3 +1,4 @@
+import { InnovationSectionStatusEnum } from '@innovations/shared/enums';
 import Joi from 'joi';
 import type { InnovationAllSectionsType } from '../_types/innovation.types';
 
@@ -17,6 +18,9 @@ export const BodySchema = Joi.array()
       .items(
         Joi.object({
           section: Joi.string().required(),
+          status: Joi.string()
+            .valid(...Object.values(InnovationSectionStatusEnum), 'UNKNOWN')
+            .required(),
           answers: Joi.array()
             .items(
               Joi.object({

@@ -106,6 +106,7 @@ export type InnovationExportSectionAnswerType = {
 
 export type InnovationExportSectionItemType = {
   section: string;
+  status: InnovationSectionStatusEnum | 'UNKNOWN';
   answers: InnovationExportSectionAnswerType[];
 };
 

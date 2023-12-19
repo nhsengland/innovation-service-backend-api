@@ -12,6 +12,7 @@ import {
 } from '../_helpers/innovation.pdf.styles';
 import type { InnovationAllSectionsType, InnovationExportSectionAnswerType } from '../_types/innovation.types';
 
+import { DomainContextType, isAccessorDomainContextType } from '@innovations/shared/types';
 import { BaseService } from './base.service';
 
 @injectable()
@@ -26,11 +27,24 @@ export class ExportFileService extends BaseService {
   };
 
   async create<T extends keyof ExportFileService['handlers']>(
+    domainContext: DomainContextType,
     type: T,
     innovationName: string,
     body: InnovationAllSectionsType,
     options?: Parameters<ExportFileService['handlers'][T]>[2]
   ): Promise<ReturnType<ExportFileService['handlers'][T]>> {
+    // sanitize draft information for accessors
+    if (isAccessorDomainContextType(domainContext)) {
+      body.forEach(section => {
+        section.sections.forEach(subsection => {
+          if (subsection.status === 'DRAFT') {
+            subsection.answers = [
+              { label: '', value: 'This section is in draft and will not be visible until it is resubmitted.' }
+            ];
+          }
+        });
+      });
+    }
     return this.handlers[type](innovationName, body, options) as any;
   }
 
@@ -66,7 +80,7 @@ export class ExportFileService extends BaseService {
           options?.withIndex
             ? `${sectionIndex + 1}.${subsectionIndex + 1} ${subsection.section}`
             : `${subsection.section}`,
-          `${question.label}`,
+          question.label ? `${question.label}` : `${question.value}`,
           `${question.value}`
         ])
       )
@@ -137,11 +151,14 @@ export class ExportFileService extends BaseService {
 
         let questionNumber = 1;
         section.answers.forEach((answer: InnovationExportSectionAnswerType) => {
-          documentDefinition.content.push({
-            text: `${sectionNumber}.${subSectionNumber}.${questionNumber} ${answer.label}`,
-            style: 'question',
-            margin: [10, 10]
-          } as any);
+          // Don't add the header if no label for the question
+          if (answer.label) {
+            documentDefinition.content.push({
+              text: `${sectionNumber}.${subSectionNumber}.${questionNumber} ${answer.label}`,
+              style: 'question',
+              margin: [10, 10]
+            } as any);
+          }
 
           const answers = answer.value.split('\n');
 

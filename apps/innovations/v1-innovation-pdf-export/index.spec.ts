@@ -1,5 +1,6 @@
 import azureFunction from '.';
 
+import { InnovationSectionStatusEnum } from '@innovations/shared/enums';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@innovations/shared/tests';
 import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@innovations/shared/types';
@@ -39,6 +40,7 @@ describe('v1-innovation-pdf-export Suite', () => {
             { label: randText(), value: randText() },
             { label: randText(), value: randText() }
           ],
+          status: InnovationSectionStatusEnum.SUBMITTED,
           section: randText()
         }
       ],
