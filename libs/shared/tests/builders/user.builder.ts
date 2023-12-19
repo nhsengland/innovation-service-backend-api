@@ -139,6 +139,7 @@ export class UserBuilder extends BaseBuilder {
       if (!dbOrganisationId && isInnovator) {
         dbOrganisationId = (
           await this.getEntityManager().save(OrganisationEntity, {
+            createdBy: user.id,
             name: randCompanyName(),
             acronym: randAbbreviation(),
             isShadow: true,

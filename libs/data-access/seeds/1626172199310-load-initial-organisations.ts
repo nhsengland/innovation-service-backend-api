@@ -85,8 +85,8 @@ export class loadInitialOrganisations1626172199310 {
         name: organisation.name,
         acronym: organisation.acronym,
         type: OrganisationTypeEnum.ACCESSOR,
-        createdBy: 'seed',
-        updatedBy: 'seed'
+        createdBy: '00000000-0000-0000-0000-000000000000',
+        updatedBy: '00000000-0000-0000-0000-000000000000'
       });
       const savedOrganisation = await SQLDB_SEEDS_CONNECTION.manager.getRepository(OrganisationEntity).save(orgObj);
 
@@ -95,8 +95,8 @@ export class loadInitialOrganisations1626172199310 {
           name: organisationUnit.name,
           acronym: organisationUnit.acronym,
           organisation: savedOrganisation,
-          createdBy: 'seed',
-          updatedBy: 'seed'
+          createdBy: '00000000-0000-0000-0000-000000000000',
+          updatedBy: '00000000-0000-0000-0000-000000000000'
         });
         await SQLDB_SEEDS_CONNECTION.getRepository(OrganisationUnitEntity).save(orgUnitObj);
       }
