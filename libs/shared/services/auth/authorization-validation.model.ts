@@ -319,11 +319,12 @@ export class AuthorizationValidationModel {
           }
         };
         break;
-      default:
+      default: {
         const roleType: never = role.role;
         throw new UnprocessableEntityError(AuthErrorsEnum.AUTH_USER_TYPE_UNKNOWN, {
           details: { roleType }
         });
+      }
     }
     // }
 
