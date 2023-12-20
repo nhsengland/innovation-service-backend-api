@@ -32,7 +32,7 @@ class PostInnovationPDFExport {
         .verify();
       const innovation = auth.getInnovationInfo();
 
-      const pdf = await exportFileService.create('pdf', innovation.name, body);
+      const pdf = await exportFileService.create(auth.getContext(), 'pdf', innovation.name, body);
 
       context.res = {
         body: pdf,

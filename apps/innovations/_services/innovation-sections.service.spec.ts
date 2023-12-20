@@ -210,7 +210,10 @@ describe('Innovation Sections Suite', () => {
 
   describe('findAllSections', () => {
     it('should return all the sections info', async () => {
-      const allSectionsInfo = await sut.findAllSections(innovation.id);
+      const allSectionsInfo = await sut.findAllSections(
+        DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
+        innovation.id
+      );
 
       expect(allSectionsInfo).toStrictEqual([
         {
@@ -239,7 +242,68 @@ describe('Innovation Sections Suite', () => {
             submittedBy: { displayTag: 'Innovator', name: '[unknown user]' },
             openTasksCount: 0
           },
+          data: {
+            currentlyCollectingEvidence: expect.any(String),
+            evidences: expect.any(Array),
+            hasEvidence: expect.any(String),
+            needsSupportAnyArea: expect.any(Array),
+            summaryOngoingEvidenceGathering: expect.any(String)
+          }
+        },
+        ...[
+          'MARKET_RESEARCH',
+          'CURRENT_CARE_PATHWAY',
+          'TESTING_WITH_USERS',
+          'REGULATIONS_AND_STANDARDS',
+          'INTELLECTUAL_PROPERTY',
+          'REVENUE_MODEL',
+          'COST_OF_INNOVATION',
+          'DEPLOYMENT'
+        ].map(s => ({
+          section: {
+            section: s,
+            status: 'NOT_STARTED',
+            openTasksCount: 0
+          },
           data: expect.any(Object)
+        }))
+      ]);
+    });
+
+    it('should return empty section data if the user is an accessor and the section is not submitted', async () => {
+      const allSectionsInfo = await sut.findAllSections(
+        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+        innovation.id
+      );
+
+      expect(allSectionsInfo).toStrictEqual([
+        {
+          section: {
+            section: innovation.sections.INNOVATION_DESCRIPTION.section,
+            status: innovation.sections.INNOVATION_DESCRIPTION.status,
+            submittedAt: undefined,
+            submittedBy: { displayTag: 'Innovator', name: '[unknown user]' },
+            openTasksCount: 3 // John innovation has 4 tasks, 3 open and 1 done
+          },
+          data: expect.any(Object)
+        },
+        {
+          section: {
+            section: 'UNDERSTANDING_OF_NEEDS',
+            status: 'NOT_STARTED',
+            openTasksCount: 0
+          },
+          data: expect.any(Object)
+        },
+        {
+          section: {
+            section: innovation.sections.EVIDENCE_OF_EFFECTIVENESS.section,
+            status: innovation.sections.EVIDENCE_OF_EFFECTIVENESS.status,
+            submittedAt: undefined,
+            submittedBy: { displayTag: 'Innovator', name: '[unknown user]' },
+            openTasksCount: 0
+          },
+          data: {}
         },
         ...[
           'MARKET_RESEARCH',

@@ -25,7 +25,7 @@ class GetInnovationAllSectionsList {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
       const query = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
 
-      await authorizationService
+      const auth = await authorizationService
         .validate(context)
         .setInnovation(params.innovationId)
         .checkAssessmentType()
@@ -34,7 +34,11 @@ class GetInnovationAllSectionsList {
         .checkInnovation()
         .verify();
 
-      const result = await innovationSectionsService.findAllSections(params.innovationId, query.version);
+      const result = await innovationSectionsService.findAllSections(
+        auth.getContext(),
+        params.innovationId,
+        query.version
+      );
       context.res = ResponseHelper.Ok<ResponseDTO>(result);
       return;
     } catch (error) {

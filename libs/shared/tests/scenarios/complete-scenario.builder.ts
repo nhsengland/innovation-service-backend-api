@@ -6,6 +6,7 @@ import {
   InnovationCollaboratorStatusEnum,
   InnovationExportRequestStatusEnum,
   InnovationFileContextTypeEnum,
+  InnovationSectionStatusEnum,
   InnovationStatusEnum,
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
@@ -183,7 +184,7 @@ export class CompleteScenarioBuilder {
         .setStatus(InnovationStatusEnum.IN_PROGRESS)
         .shareWith([healthOrg, medTechOrg])
         .addSection('INNOVATION_DESCRIPTION')
-        .addSection('EVIDENCE_OF_EFFECTIVENESS')
+        .addSection('EVIDENCE_OF_EFFECTIVENESS', InnovationSectionStatusEnum.DRAFT)
         .withEvidences([
           {
             id: randUuid(),

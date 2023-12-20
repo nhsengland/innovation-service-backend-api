@@ -31,7 +31,7 @@ import {
   CurrentEvidenceType
 } from '@innovations/shared/schemas/innovation-record';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import type { DomainContextType } from '@innovations/shared/types';
+import { isAccessorDomainContextType, type DomainContextType } from '@innovations/shared/types';
 import { randomUUID } from 'crypto';
 import type { EntityManager } from 'typeorm';
 import type { InnovationFileService } from './innovation-file.service';
@@ -471,6 +471,7 @@ export class InnovationSectionsService extends BaseService {
   }
 
   async findAllSections(
+    domainContext: DomainContextType,
     innovationId: string,
     version?: DocumentType['version'],
     entityManager?: EntityManager
@@ -488,9 +489,14 @@ export class InnovationSectionsService extends BaseService {
     const output: Awaited<ReturnType<InnovationSectionsService['findAllSections']>> = [];
     for (const curSection of innovationSections) {
       const sectionInfo = sectionsInfoMap.get(curSection.section.section);
+      // A/QA can't see draft sections data
+      const currentSectionData =
+        sectionInfo?.status !== InnovationSectionStatusEnum.SUBMITTED && isAccessorDomainContextType(domainContext)
+          ? {}
+          : curSection.data;
       if (sectionInfo) {
         output.push({
-          data: curSection.data,
+          data: currentSectionData,
           section: {
             section: curSection.section.section,
             status: sectionInfo.status,
@@ -501,7 +507,7 @@ export class InnovationSectionsService extends BaseService {
         });
       } else {
         output.push({
-          data: curSection.data,
+          data: currentSectionData,
           section: {
             section: curSection.section.section,
             status: InnovationSectionStatusEnum.NOT_STARTED,
