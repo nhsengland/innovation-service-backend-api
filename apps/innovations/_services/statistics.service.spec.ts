@@ -178,10 +178,6 @@ describe('Innovations / _services / innovation statistics suite', () => {
         {
           updatedAt: new Date(innovation.sections.INNOVATION_DESCRIPTION.updatedAt),
           section: innovation.sections.INNOVATION_DESCRIPTION.section
-        },
-        {
-          updatedAt: new Date(innovation.sections.EVIDENCE_OF_EFFECTIVENESS.updatedAt),
-          section: innovation.sections.EVIDENCE_OF_EFFECTIVENESS.section
         }
       ]);
     });
