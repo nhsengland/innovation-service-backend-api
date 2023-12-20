@@ -1,11 +1,13 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class improvePerformanceViewInnovationListTODO implements MigrationInterface {
+export class improvePerformanceViewInnovationList1703093655994 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Depending on query execution plan, this index is required for performance reasons
     await queryRunner.query(
       `
+      -- important for performance
       CREATE NONCLUSTERED INDEX idx_innovation_status ON dbo.innovation (status) INCLUDE (updated_at);
+      -- replacing two indexes with one, the other is covered by the PK
       DROP INDEX idx_innovation_assessment_organisation_unit_organisation_unit_id ON dbo.innovation_assessment_organisation_unit;
       DROP INDEX idx_innovation_assessment_organisation_unit_innovation_id ON dbo.innovation_assessment_organisation_unit;
       CREATE INDEX idx_innovation_assessment_organisation_unit_assessment_id ON dbo.innovation_assessment_organisation_unit(organisation_unit_id, innovation_assessment_id);
