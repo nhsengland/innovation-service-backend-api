@@ -1195,7 +1195,7 @@ export class InnovationsService extends BaseService {
             });
           }
           // Company search will be added here when the story arrives
-          //qb.orWhere('innovation.company LIKE :search', { search: `%${search}%` });
+          qb.orWhere('innovation.ownerCompanyName LIKE :search', { search: `%${search}%` });
         })
       );
     }
