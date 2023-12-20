@@ -39,15 +39,23 @@ export class createInnovationListView1702499114492 implements MigrationInterface
       FROM organisation o
       INNER JOIN engaging_units ou ON o.id = ou.organisation_id
       GROUP BY ou.innovation_id, o.id, o.name, o.acronym
+    ),    
+    innovation_suggestions_assessment as (
+      SELECT innovation_id, aou.organisation_unit_id FROM innovation_assessment_organisation_unit aou
+      INNER JOIN innovation_assessment a ON a.id = aou.innovation_assessment_id
+      WHERE a.deleted_at IS NULL
+    ),
+    innovation_suggestions_support_orgs as (
+      SELECT innovation_id, slou.organisation_unit_id FROM innovation_support_log_organisation_unit slou
+      INNER JOIN innovation_support_log sl ON slou.innovation_support_log_id=sl.id
+      WHERE sl.type='ACCESSOR_SUGGESTION'
+      GROUP BY innovation_id, slou.organisation_unit_id
     ),
     innovation_suggestions as (
       SELECT innovation_id, organisation_unit_id as unit_id, ou.name, ou.acronym FROM (
-        SELECT innovation_id, aou.organisation_unit_id FROM innovation_assessment_organisation_unit aou
-        INNER JOIN innovation_assessment a ON a.id = aou.innovation_assessment_id
-        WHERE a.deleted_at IS NULL
-        UNION ALL
-        SELECT innovation_id, slou.organisation_unit_id FROM innovation_support_log_organisation_unit slou
-        INNER JOIN innovation_support_log sl ON slou.innovation_support_log_id=sl.id
+        SELECT * FROM innovation_suggestions_assessment
+        UNION ALL 
+        SELECT * FROM innovation_suggestions_assessment
         ) t
       INNER JOIN organisation_unit ou ON t.organisation_unit_id = ou.id AND ou.deleted_at IS NULL
       GROUP BY innovation_id, organisation_unit_id, ou.name, ou.acronym
