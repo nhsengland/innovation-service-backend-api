@@ -1764,6 +1764,13 @@ paths:
                       properties:
                         section:
                           type: string
+                        status:
+                          type: string
+                          enum:
+                            - NOT_STARTED
+                            - DRAFT
+                            - SUBMITTED
+                            - UNKNOWN
                         answers:
                           type: array
                           items:
@@ -1780,6 +1787,7 @@ paths:
                             additionalProperties: false
                       required:
                         - section
+                        - status
                         - answers
                       additionalProperties: false
                   title:
@@ -2626,6 +2634,13 @@ paths:
                       properties:
                         section:
                           type: string
+                        status:
+                          type: string
+                          enum:
+                            - NOT_STARTED
+                            - DRAFT
+                            - SUBMITTED
+                            - UNKNOWN
                         answers:
                           type: array
                           items:
@@ -2642,6 +2657,7 @@ paths:
                             additionalProperties: false
                       required:
                         - section
+                        - status
                         - answers
                       additionalProperties: false
                   title:
