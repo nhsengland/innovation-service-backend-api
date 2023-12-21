@@ -1115,7 +1115,7 @@ export class InnovationsService extends BaseService {
       if (values.length) {
         const col = column.includes('.') ? column : `innovation.${column}`;
         const valueVariable = `${filterKey}Value`; // this is here to ensure uniqueness of the variable name
-        query.andWhere(`${col} IN (:...${valueVariable}))`, { [valueVariable]: values });
+        query.andWhere(`${col} IN (:...${valueVariable})`, { [valueVariable]: values });
       }
     };
   }
