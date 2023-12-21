@@ -64,37 +64,37 @@ import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import { groupBy, isString, snakeCase } from 'lodash';
 import { BaseService } from './base.service';
 
-// TODO move types
-export const InnovationListSelectType = [
-  'id',
-  'name',
-  'status',
-  'groupedStatus',
-  'submittedAt',
-  'updatedAt',
+export const InnovationListSelectDict = {
+  id: 'innovation.id',
+  name: 'document.name',
+  status: 'innovation.status',
+  groupedStatus: 'groupedStatus.groupedStatus',
+  submittedAt: 'innovation.submittedAt',
+  updatedAt: 'innovation.updatedAt',
   // Document fields
-  'careSettings',
-  'categories',
-  'countryName',
-  'diseasesAndConditions',
-  'involvedAACProgrammes',
-  'keyHealthInequalities',
-  'mainCategory',
-  'otherCareSetting',
-  'otherCategoryDescription',
-  'postcode',
+  careSettings: 'document.careSettings',
+  categories: 'document.categories',
+  countryName: 'document.countryName',
+  diseasesAndConditions: 'document.diseasesAndConditions',
+  involvedAACProgrammes: 'document.involvedAACProgrammes',
+  keyHealthInequalities: 'document.keyHealthInequalities',
+  mainCategory: 'document.mainCategory',
+  otherCareSetting: 'document.otherCareSetting',
+  otherCategoryDescription: 'document.otherCategoryDescription',
+  postcode: 'document.postcode',
   // Relation fields
-  'engagingOrganisations',
-  'engagingUnits',
-  'suggestedOrganisations',
-  'support.id',
-  'support.status',
-  'support.updatedAt',
-  'owner.id',
-  'owner.name',
-  'owner.companyName'
-] as const;
+  engagingOrganisations: 'todo',
+  engagingUnits: 'todo',
+  suggestedOrganisations: 'todo',
+  'support.id': 'support.id',
+  'support.status': 'support.status',
+  'support.updatedAt': 'support.updatedAt',
+  'owner.id': 'owner.id',
+  'owner.name': 'owner.name',
+  'owner.companyName': 'owner.companyName'
+} as const;
 type InnovationListViewFields = Omit<InnovationListView, 'supports' | 'ownerId'>;
+export const InnovationListSelectType: InnovationListSelectType[] = Object.keys(InnovationListSelectDict) as any;
 export type InnovationListSelectType =
   | keyof InnovationListViewFields
   | `support.${keyof Pick<InnovationSupportEntity, 'status' | 'updatedAt'>}`
@@ -905,18 +905,32 @@ export class InnovationsService extends BaseService {
 
     const nestedObjects = new Set(
       params.fields
+        .map(item => InnovationListSelectDict[item as keyof typeof InnovationListSelectDict])
         .filter(item => item.includes('.'))
         .map(item => item.split('.')[0])
         .filter(isString) // remove undefined
+    ); // wil this be required?
+    const fieldGroups = groupBy(
+      params.fields
+        .map(item => InnovationListSelectDict[item as keyof typeof InnovationListSelectDict])
+        .filter(isString), // remove undefined
+      item => item.split('.')[0]
     );
-    const fieldGroups = groupBy(params.fields, item => item.split('.')[0]);
 
     const connection = em ?? this.sqlConnection.manager;
+
     const query = connection
-      .createQueryBuilder(InnovationListView, 'innovation')
-      // currently I'm only handling the root selects here, might change in the future. ie: withSupports add the selects
-      //.select(xpto.select.map(item => (item.includes('.') ? item : `innovation.${item}`)));
-      .select(params.fields.filter(item => !item.includes('.')).map(item => `innovation.${item}`));
+      .createQueryBuilder(InnovationEntity, 'innovation')
+      .select(fieldGroups['innovation'] ?? ['innovation.id']); // Always add a base select with innovation
+
+    if (10 > Number(5)) {
+      console.log(await query.getManyAndCount());
+      throw new Error('buu');
+    }
+
+    // currently I'm only handling the root selects here, might change in the future. ie: withSupports add the selects
+    //.select(xpto.select.map(item => (item.includes('.') ? item : `innovation.${item}`)));
+    //.select(nestedObjects['innovation']);
 
     // Special role constraints (maybe make handler in the future)
     if (isAccessorDomainContextType(domainContext)) {
@@ -942,7 +956,11 @@ export class InnovationsService extends BaseService {
 
     // Nested object handlers and joins
     nestedObjects.forEach(join => {
-      this.joinHandlers[join as keyof typeof this.joinHandlers](domainContext, query, fieldGroups[join] as any[]);
+      this.joinHandlers[join as keyof typeof this.joinHandlers](
+        domainContext,
+        query as any,
+        fieldGroups[join] as any[]
+      ); // TODO
     });
 
     // filters
@@ -969,7 +987,7 @@ export class InnovationsService extends BaseService {
     // Optimization to only fetch users once
     const usersMap = nestedObjects.has('owner')
       ? await this.domainService.users.getUsersMap({
-          userIds: queryResult[0].map(i => i.ownerId).filter(isString)
+          userIds: queryResult[0].map(i => (i as any).ownerId).filter(isString) //TODO
         })
       : new Map();
 
@@ -988,11 +1006,11 @@ export class InnovationsService extends BaseService {
             }
             const handler = this.displayHandlers[key as keyof typeof this.displayHandlers];
             if (handler) {
-              res[key] = handler(item, value as any[], { usersMap }); // this any should be safe since it comes from the groupBy
+              res[key] = handler(item as any, value as any[], { usersMap }); // this any should be safe since it comes from the groupBy // TODO
             }
           } else {
             // Handle plain object directly from the view
-            res[key] = item[value[0] as keyof InnovationListView];
+            res[key] = (item as any)[value[0] as keyof InnovationListView]; // TODO
           }
         });
         return res;
