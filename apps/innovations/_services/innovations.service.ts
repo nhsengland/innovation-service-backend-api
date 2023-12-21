@@ -1195,7 +1195,7 @@ export class InnovationsService extends BaseService {
             });
           }
           // Company search will be added here when the story arrives
-          //qb.orWhere('innovation.company LIKE :search', { search: `%${search}%` });
+          qb.orWhere('innovation.ownerCompanyName LIKE :search', { search: `%${search}%` });
         })
       );
     }
@@ -1207,10 +1207,25 @@ export class InnovationsService extends BaseService {
     value: boolean
   ): void {
     if (value && isAccessorDomainContextType(domainContext)) {
-      query.andWhere(
-        `EXISTS(SELECT 1 FROM OPENJSON(innovation.suggested_units) WHERE JSON_VALUE(value, '$.unitId') = :contextOrganisationUnitId)`,
-        { contextOrganisationUnitId: domainContext.organisation.organisationUnit.id }
-      );
+      query
+        .innerJoin('innovation', 'i', 'i.id = innovation.id')
+        .leftJoin('i.assessments', 'assessments')
+
+        .leftJoin('assessments.organisationUnits', 'assessmentOrganisationUnits')
+        .leftJoin('i.innovationSupportLogs', 'supportLogs', 'supportLogs.type = :supportLogType', {
+          supportLogType: InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION
+        })
+        .leftJoin('supportLogs.suggestedOrganisationUnits', 'supportLogOrgUnit')
+        .andWhere(
+          `(assessmentOrganisationUnits.id = :suggestedOrganisationUnitId OR supportLogOrgUnit.id =:suggestedOrganisationUnitId)`,
+          { suggestedOrganisationUnitId: domainContext.organisation.organisationUnit.id }
+        );
+
+      // while ugly the above is better performant when filtering only by suggested units without using documents and other filters, pretty much the same otherwise (maybe a bit slower)
+      // query.andWhere(
+      //   `EXISTS(SELECT 1 FROM OPENJSON(innovation.suggested_units) WHERE JSON_VALUE(value, '$.unitId') = :contextOrganisationUnitId)`,
+      //   { contextOrganisationUnitId: domainContext.organisation.organisationUnit.id }
+      // );
     }
   }
 
