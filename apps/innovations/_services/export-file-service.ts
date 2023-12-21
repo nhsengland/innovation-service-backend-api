@@ -12,7 +12,11 @@ import {
 } from '../_helpers/innovation.pdf.styles';
 import type { InnovationAllSectionsType, InnovationExportSectionAnswerType } from '../_types/innovation.types';
 
-import { DomainContextType, isAccessorDomainContextType } from '@innovations/shared/types';
+import {
+  DomainContextType,
+  isAccessorDomainContextType,
+  isAssessmentDomainContextType
+} from '@innovations/shared/types';
 import { BaseService } from './base.service';
 
 @injectable()
@@ -33,8 +37,8 @@ export class ExportFileService extends BaseService {
     body: InnovationAllSectionsType,
     options?: Parameters<ExportFileService['handlers'][T]>[2]
   ): Promise<ReturnType<ExportFileService['handlers'][T]>> {
-    // sanitize draft information for accessors
-    if (isAccessorDomainContextType(domainContext)) {
+    // sanitize draft information for A/QA/NAs
+    if (isAccessorDomainContextType(domainContext) || isAssessmentDomainContextType(domainContext)) {
       body.forEach(section => {
         section.sections.forEach(subsection => {
           if (subsection.status === 'DRAFT') {

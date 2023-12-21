@@ -46,9 +46,9 @@ import {
 import { PaginationQueryParamsType, TranslationHelper } from '@innovations/shared/helpers';
 import type { DomainService, DomainUsersService, NotifierService } from '@innovations/shared/services';
 import {
-  isAAssessmentDomainContextType,
   isAccessorDomainContextType,
   isAdminDomainContextType,
+  isAssessmentDomainContextType,
   type ActivityLogListParamsType,
   type DomainContextType
 } from '@innovations/shared/types';
@@ -1136,7 +1136,7 @@ export class InnovationsService extends BaseService {
           userRoleId: domainContext.currentRole.id
         });
       }
-      if (isAAssessmentDomainContextType(domainContext)) {
+      if (isAssessmentDomainContextType(domainContext)) {
         throw new NotImplementedError(GenericErrorsEnum.NOT_IMPLEMENTED_ERROR, {
           message: 'Assigned to me filter not implemented for Needs Assessment Team yet'
         });

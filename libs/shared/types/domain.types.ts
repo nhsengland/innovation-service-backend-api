@@ -120,7 +120,7 @@ export type DomainContextType =
 export const isInnovatorDomainContextType = (value: DomainContextType): value is InnovatorDomainContextType => {
   return value.currentRole.role === ServiceRoleEnum.INNOVATOR;
 };
-export const isAAssessmentDomainContextType = (value: DomainContextType): value is AssessmentDomainContextType => {
+export const isAssessmentDomainContextType = (value: DomainContextType): value is AssessmentDomainContextType => {
   return value.currentRole.role === ServiceRoleEnum.ASSESSMENT;
 };
 export const isAccessorDomainContextType = (value: DomainContextType): value is AccessorDomainContextType => {
