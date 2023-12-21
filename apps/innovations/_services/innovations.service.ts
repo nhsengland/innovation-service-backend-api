@@ -1,5 +1,5 @@
 import { inject, injectable } from 'inversify';
-import { Brackets, EntityManager, In, ObjectLiteral, SelectQueryBuilder } from 'typeorm';
+import { Brackets, DeepPartial, EntityManager, In, ObjectLiteral, SelectQueryBuilder } from 'typeorm';
 
 import {
   ActivityLogEntity,
@@ -61,7 +61,7 @@ import { createDocumentFromInnovation } from '@innovations/shared/entities/innov
 import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import { ActionEnum } from '@innovations/shared/services/integrations/audit.service';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import { groupBy, isString, snakeCase } from 'lodash';
+import { groupBy, isString } from 'lodash';
 import { BaseService } from './base.service';
 
 export const InnovationListSelectDict = {
@@ -93,6 +93,7 @@ export const InnovationListSelectDict = {
   'owner.name': 'owner.name',
   'owner.companyName': 'owner.companyName'
 } as const;
+// const InnovationListReverseDict = Object.fromEntries(Object.entries(InnovationListSelectDict).map(([k, v]) => [v, k]));
 type InnovationListViewFields = Omit<InnovationListView, 'supports' | 'ownerId'>;
 export const InnovationListSelectType: InnovationListSelectType[] = Object.keys(InnovationListSelectDict) as any;
 export type InnovationListSelectType =
@@ -123,11 +124,22 @@ export type InnovationListFilters = {
 };
 
 // Join types are the ones with nested selectable objects
-export type InnovationListJoinTypes = InnovationListSelectType extends infer X
-  ? X extends `${infer U}.${infer _D}`
-    ? U
-    : never
-  : never;
+type InnovationListJoinTypes = Exclude<
+  (typeof InnovationListSelectDict)[keyof typeof InnovationListSelectDict] extends infer X
+    ? X extends `${infer U}.${infer _D}`
+      ? U
+      : never
+    : never,
+  'innovation'
+>;
+type InnovationListJoinFields<T extends InnovationListJoinTypes> =
+  (typeof InnovationListSelectDict)[keyof typeof InnovationListSelectDict] extends infer S
+    ? S extends `${infer U}.${infer D}`
+      ? U extends T
+        ? `${T}.${D}`
+        : never
+      : never
+    : never;
 
 type InnovationListChildrenType<T extends InnovationListJoinTypes> = InnovationListSelectType extends infer X
   ? X extends `${T}.${infer D}`
@@ -905,11 +917,10 @@ export class InnovationsService extends BaseService {
 
     const nestedObjects = new Set(
       params.fields
-        .map(item => InnovationListSelectDict[item as keyof typeof InnovationListSelectDict])
         .filter(item => item.includes('.'))
         .map(item => item.split('.')[0])
         .filter(isString) // remove undefined
-    ); // wil this be required?
+    );
     const fieldGroups = groupBy(
       params.fields
         .map(item => InnovationListSelectDict[item as keyof typeof InnovationListSelectDict])
@@ -923,44 +934,32 @@ export class InnovationsService extends BaseService {
       .createQueryBuilder(InnovationEntity, 'innovation')
       .select(fieldGroups['innovation'] ?? ['innovation.id']); // Always add a base select with innovation
 
-    if (10 > Number(5)) {
-      console.log(await query.getManyAndCount());
-      throw new Error('buu');
-    }
-
-    // currently I'm only handling the root selects here, might change in the future. ie: withSupports add the selects
-    //.select(xpto.select.map(item => (item.includes('.') ? item : `innovation.${item}`)));
-    //.select(nestedObjects['innovation']);
-
     // Special role constraints (maybe make handler in the future)
     if (isAccessorDomainContextType(domainContext)) {
       // force the innovation to be shared with the support organisation
-      query.innerJoin(
-        'innovation_share',
-        'shares',
-        'shares.innovation_id = innovation.id AND shares.organisation_id = :organisationId',
-        {
-          organisationId: domainContext.organisation.id
-        }
-      );
+      query.innerJoin('innovation.organisationShares', 'shares', 'shares.id = :organisationId', {
+        organisationId: domainContext.organisation.id
+      });
       // automatically add in_progress since A/QA can't see the others (yet). This might become a filter for A/QAs in the future
       query.andWhere('innovation.status IN (:...innovationStatus)', {
         innovationStatus: [InnovationStatusEnum.IN_PROGRESS]
       });
+
+      // TODO MISSING ACCESSOR CENAS
     }
 
     // Exclude withdrawn innovations from non admin users (at least for now)
     if (!isAdminDomainContextType(domainContext)) {
+      // TODO change this to the withDeleted if admin
       query.andWhere('innovation.status != :deletedStatus', { deletedStatus: InnovationStatusEnum.WITHDRAWN });
     }
 
     // Nested object handlers and joins
-    nestedObjects.forEach(join => {
-      this.joinHandlers[join as keyof typeof this.joinHandlers](
-        domainContext,
-        query as any,
-        fieldGroups[join] as any[]
-      ); // TODO
+    Object.keys(fieldGroups).forEach(join => {
+      if (join !== 'innovation' && join !== 'todo') {
+        // TODO
+        this.joinHandlers[join as keyof typeof this.joinHandlers](domainContext, query, fieldGroups[join] as any[]);
+      }
     });
 
     // filters
@@ -997,20 +996,17 @@ export class InnovationsService extends BaseService {
       data: queryResult[0].map(item => {
         const res = {} as any;
         Object.entries(fieldGroups).forEach(([key, value]) => {
-          if (nestedObjects.has(key)) {
-            if (key === 'value') {
-              // This will allow asking for support and getting all the default fields
-              throw new NotImplementedError(GenericErrorsEnum.NOT_IMPLEMENTED_ERROR, {
-                message: 'support for nested objects not implemented yet'
-              });
-            }
-            const handler = this.displayHandlers[key as keyof typeof this.displayHandlers];
-            if (handler) {
-              res[key] = handler(item as any, value as any[], { usersMap }); // this any should be safe since it comes from the groupBy // TODO
-            }
+          // Temp
+          if (key === 'todo') {
+            return;
+          }
+          if (key === 'innovation') {
+            value.forEach(field => {
+              res[key] = item[field as keyof InnovationEntity];
+            });
           } else {
-            // Handle plain object directly from the view
-            res[key] = (item as any)[value[0] as keyof InnovationListView]; // TODO
+            const handler = this.displayHandlers[key as keyof typeof this.displayHandlers];
+            Object.assign(res, handler(item, value as any, { usersMap }));
           }
         });
         return res;
@@ -1023,12 +1019,14 @@ export class InnovationsService extends BaseService {
   private readonly joinHandlers: {
     [k in InnovationListJoinTypes]: (
       domainContext: DomainContextType,
-      query: SelectQueryBuilder<InnovationListView>,
-      value: InnovationListChildrenType<k> | any
+      query: SelectQueryBuilder<InnovationEntity>,
+      value: InnovationListJoinFields<k>[] | undefined
     ) => void;
   } = {
     support: this.withSupport.bind(this),
-    owner: this.withOwner.bind(this)
+    owner: this.withOwner.bind(this),
+    document: this.withDocument.bind(this),
+    groupedStatus: this.withGroupedStatus.bind(this)
   };
 
   /**
@@ -1039,8 +1037,8 @@ export class InnovationsService extends BaseService {
    */
   private withSupport(
     domainContext: DomainContextType,
-    query: SelectQueryBuilder<InnovationListView>,
-    fields: ('support.id' | 'support.status' | 'support.updatedAt')[] = ['support.id']
+    query: SelectQueryBuilder<InnovationEntity>,
+    fields: InnovationListJoinFields<'support'>[] = ['support.id']
   ): void {
     if (fields.length) {
       if (!isAccessorDomainContextType(domainContext)) {
@@ -1051,7 +1049,7 @@ export class InnovationsService extends BaseService {
 
       query
         .addSelect(fields)
-        .leftJoin('innovation.supports', 'support', 'support.organisation_unit_id = :organisationUnitId', {
+        .leftJoin('innovation.innovationSupports', 'support', 'support.organisation_unit_id = :organisationUnitId', {
           organisationUnitId: domainContext.organisation.organisationUnit.id
         });
     }
@@ -1059,14 +1057,47 @@ export class InnovationsService extends BaseService {
 
   private withOwner(
     _domainContext: DomainContextType,
-    query: SelectQueryBuilder<InnovationListView>,
-    fields: ('owner.id' | 'owner.name' | 'owner.companyName')[] = ['owner.id']
+    query: SelectQueryBuilder<InnovationEntity>,
+    fields: InnovationListJoinFields<'owner'>[] = ['owner.id']
   ): void {
     if (fields.length) {
-      query.addSelect([
-        'innovation.ownerId',
-        ...(fields.includes('owner.companyName') ? ['innovation.ownerCompanyName'] : [])
-      ]);
+      // This can be optimized to avoid the join if the fields don't include companyName, leaving like this in case there are other fields in the future
+      query
+        .addSelect([
+          'owner.id',
+          ...(fields.includes('owner.companyName') ? ['ownerRole.id', 'ownerOrganisation.name'] : [])
+        ]) // we need to add the role to have the name of the organisation (typeorm)
+        .leftJoin('innovation.owner', 'owner')
+        .leftJoin('owner.serviceRoles', 'ownerRole', 'ownerRole.role = :ownerRole', {
+          ownerRole: ServiceRoleEnum.INNOVATOR
+        })
+        .leftJoin('ownerRole.organisation', 'ownerOrganisation', 'ownerOrganisation.isShadow = :notShadow', {
+          notShadow: false
+        });
+    }
+  }
+
+  private withDocument(
+    _domainContext: DomainContextType,
+    query: SelectQueryBuilder<InnovationEntity>,
+    fields: InnovationListJoinFields<'document'>[] = ['document.name']
+  ): void {
+    if (fields.length) {
+      // This might be improved after to filter specific fields
+      query
+        .addSelect('document.document')
+        .leftJoin('innovation.document', 'document')
+        .andWhere('document.deleted_at IS NULL');
+    }
+  }
+
+  private withGroupedStatus(
+    _domainContext: DomainContextType,
+    query: SelectQueryBuilder<InnovationEntity>,
+    fields: InnovationListJoinFields<'groupedStatus'>[] = ['groupedStatus.groupedStatus']
+  ): void {
+    if (fields.length) {
+      query.addSelect(fields).leftJoin('innovation.innovationGroupedStatus', 'groupedStatus');
     }
   }
   //#endregion
@@ -1075,13 +1106,13 @@ export class InnovationsService extends BaseService {
   private readonly filtersHandlers: {
     [k in keyof Required<InnovationListFilters>]: (
       domainContext: DomainContextType,
-      query: SelectQueryBuilder<InnovationListView>,
+      query: SelectQueryBuilder<InnovationEntity>,
       value: Required<InnovationListFilters>[k]
     ) => void | Promise<void>;
   } = {
     assignedToMe: this.addAssignedToMeFilter.bind(this),
-    engagingOrganisations: this.addJsonArrayInFilter('engagingOrganisations', '$.organisationId').bind(this),
-    groupedStatuses: this.addInFilter('groupedStatuses', 'groupedStatus').bind(this),
+    engagingOrganisations: this.addInFilter('organisation_unit_id', 'support'),
+    groupedStatuses: this.addInFilter('groupedStatus', 'groupedStatus').bind(this),
     locations: this.addLocationFilter.bind(this),
     search: this.addSearchFilter.bind(this),
     suggestedOnly: this.addSuggestedOnlyFilter.bind(this),
@@ -1095,29 +1126,34 @@ export class InnovationsService extends BaseService {
    * @param column the array column to search (defaults to filterKey)
    * @returns filter handler function
    */
-  private addJsonArrayInFilter<
-    FilterKey extends keyof InnovationListFilters,
-    FilterValue extends Required<InnovationListFilters[FilterKey]>,
-    FilterValues extends FilterValue extends unknown[]
-      ? FilterValue
-      : FilterValue extends true | false // hackish because type script would make it true[] or false[] otherwise
-      ? boolean[]
-      : FilterValue[]
-  >(
-    filterKey: FilterKey,
-    fieldSelector?: string,
-    column: string = snakeCase(filterKey)
-  ): (_domainContext: DomainContextType, query: SelectQueryBuilder<InnovationListView>, value: FilterValues) => void {
-    return (_domainContext: DomainContextType, query: SelectQueryBuilder<InnovationListView>, values: FilterValues) => {
-      if (values.length) {
-        const valueField = fieldSelector ? `JSON_VALUE(value, '${fieldSelector}')` : 'value';
-        const valueVariable = `${filterKey}Value`; // this is here to ensure uniqueness of the variable name
-        query.andWhere(`EXISTS(SELECT 1 FROM OPENJSON(${column}) WHERE ${valueField} IN(:...${valueVariable}))`, {
-          [valueVariable]: values
-        });
-      }
-    };
-  }
+  // private addDocumentJsonArrayInFilter<
+  //   FilterKey extends keyof InnovationListFilters,
+  //   FilterValue extends Required<InnovationListFilters[FilterKey]>,
+  //   FilterValues extends FilterValue extends unknown[]
+  //     ? FilterValue
+  //     : FilterValue extends true | false // hackish because type script would make it true[] or false[] otherwise
+  //     ? boolean[]
+  //     : FilterValue[]
+  // >(
+  //   filterKey: FilterKey,
+  //   fieldSelector?: string,
+  //   column: string = snakeCase(filterKey)
+  // ): (_domainContext: DomainContextType, query: SelectQueryBuilder<InnovationEntity>, value: FilterValues) => void {
+  //   return (domainContext: DomainContextType, query: SelectQueryBuilder<InnovationEntity>, values: FilterValues) => {
+  //     if (values.length) {
+  //       if(!query.alias.includes('document')) {
+  //         this.withDocument(domainContext, query);
+  //       }
+  //       const valueField = fieldSelector ? `JSON_VALUE(value, '${fieldSelector}')` : 'value';
+  //       const valueVariable = `${filterKey}Value`; // this is here to ensure uniqueness of the variable name
+  //       // Not so beautiful but better performing
+  //       query.andWhere(`JSON_QUERY(document.document, )`)
+  //       query.andWhere(`EXISTS(SELECT 1 FROM OPENJSON(${column}) WHERE ${valueField} IN(:...${valueVariable}))`, {
+  //         [valueVariable]: values
+  //       });
+  //     }
+  //   };
+  // }
 
   /**
    * adds a filter that searchs for a value in a column
@@ -1125,14 +1161,17 @@ export class InnovationsService extends BaseService {
    * @param column the array column to search (defaults to filterKey)
    * @returns filter handler function
    */
-  private addInFilter<FilterKey extends keyof InnovationListFilters>(
-    filterKey: FilterKey,
-    column: string = snakeCase(filterKey)
-  ): (_domainContext: DomainContextType, query: SelectQueryBuilder<InnovationListView>, value: any[]) => void {
-    return (_domainContext: DomainContextType, query: SelectQueryBuilder<InnovationListView>, values: any[]) => {
+  private addInFilter(
+    column: string,
+    join?: keyof typeof this.joinHandlers
+  ): (domainContext: DomainContextType, query: SelectQueryBuilder<InnovationEntity>, value: any[]) => void {
+    return (domainContext: DomainContextType, query: SelectQueryBuilder<InnovationEntity>, values: any[]) => {
+      if (join && !query.expressionMap.aliases.find(item => item.name === join)) {
+        this.joinHandlers[join](domainContext, query, undefined);
+      }
       if (values.length) {
         const col = column.includes('.') ? column : `innovation.${column}`;
-        const valueVariable = `${filterKey}Value`; // this is here to ensure uniqueness of the variable name
+        const valueVariable = `${column}Value`; // this is here to ensure uniqueness of the variable name
         query.andWhere(`${col} IN (:...${valueVariable}))`, { [valueVariable]: values });
       }
     };
@@ -1140,7 +1179,7 @@ export class InnovationsService extends BaseService {
 
   private addAssignedToMeFilter(
     domainContext: DomainContextType,
-    query: SelectQueryBuilder<InnovationListView>,
+    query: SelectQueryBuilder<InnovationEntity>,
     value: boolean
   ): void {
     if (value) {
@@ -1166,7 +1205,7 @@ export class InnovationsService extends BaseService {
 
   private addLocationFilter(
     _domainContext: DomainContextType,
-    query: SelectQueryBuilder<InnovationListView>,
+    query: SelectQueryBuilder<InnovationEntity>,
     locations: InnovationLocationEnum[]
   ): void {
     if (locations.length) {
@@ -1174,7 +1213,7 @@ export class InnovationsService extends BaseService {
         new Brackets(qb => {
           qb.where('1 <> 1'); // ugly shortcut to not worry about the first OR
           if (locations.includes(InnovationLocationEnum['Based outside UK'])) {
-            qb.orWhere('innovation.countryName NOT IN (:...ukLocations)', {
+            qb.orWhere("JSON_VALUE(document.document, '$.INNOVATION_DESCRIPTION.countryName') IN (:...ukLocations)", {
               ukLocations: [
                 InnovationLocationEnum.England,
                 InnovationLocationEnum['Northern Ireland'],
@@ -1185,7 +1224,10 @@ export class InnovationsService extends BaseService {
           }
           const ukLocationsSelect = locations.filter(l => l !== InnovationLocationEnum['Based outside UK']);
           if (ukLocationsSelect.length) {
-            qb.orWhere('innovation.countryName IN (:...ukLocationsSelect)', { ukLocationsSelect });
+            qb.orWhere(
+              "JSON_VALUE(document.document, '$.INNOVATION_DESCRIPTION.countryName') IN (:...ukLocationsSelect)",
+              { ukLocationsSelect }
+            );
           }
         })
       );
@@ -1194,10 +1236,13 @@ export class InnovationsService extends BaseService {
 
   private async addSearchFilter(
     domainContext: DomainContextType,
-    query: SelectQueryBuilder<InnovationListView>,
+    query: SelectQueryBuilder<InnovationEntity>,
     search: string
   ): Promise<void> {
     if (search) {
+      if (!query.expressionMap.aliases.find(item => item.name === 'owner')) {
+        this.withOwner(domainContext, query, ['owner.companyName']);
+      }
       // Admins can search by email (full match search)
       const targetUser =
         domainContext.currentRole.role === ServiceRoleEnum.ADMIN && search.match(/^\S+@\S+$/)
@@ -1205,7 +1250,9 @@ export class InnovationsService extends BaseService {
           : null;
       query.andWhere(
         new Brackets(async qb => {
-          qb.where('innovation.name LIKE :search', { search: `%${search}%` });
+          qb.where("JSON_VALUE(document.document, '$.INNOVATION_DESCRIPTION.countryName') LIKE :search", {
+            search: `%${search}%`
+          });
           // Admins can search by email (full match search)
           if (targetUser?.length && targetUser[0]) {
             qb.orWhere('innovation.owner_id = :userId', {
@@ -1213,7 +1260,7 @@ export class InnovationsService extends BaseService {
             });
           }
           // Company search will be added here when the story arrives
-          qb.orWhere('innovation.ownerCompanyName LIKE :search', { search: `%${search}%` });
+          qb.orWhere('ownerOrganisation.name LIKE :search', { search: `%${search}%` });
         })
       );
     }
@@ -1221,16 +1268,14 @@ export class InnovationsService extends BaseService {
 
   private addSuggestedOnlyFilter(
     domainContext: DomainContextType,
-    query: SelectQueryBuilder<InnovationListView>,
+    query: SelectQueryBuilder<InnovationEntity>,
     value: boolean
   ): void {
     if (value && isAccessorDomainContextType(domainContext)) {
       query
-        .innerJoin('innovation', 'i', 'i.id = innovation.id')
-        .leftJoin('i.assessments', 'assessments')
-
+        .leftJoin('innovation.assessments', 'assessments')
         .leftJoin('assessments.organisationUnits', 'assessmentOrganisationUnits')
-        .leftJoin('i.innovationSupportLogs', 'supportLogs', 'supportLogs.type = :supportLogType', {
+        .leftJoin('innovation.innovationSupportLogs', 'supportLogs', 'supportLogs.type = :supportLogType', {
           supportLogType: InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION
         })
         .leftJoin('supportLogs.suggestedOrganisationUnits', 'supportLogOrgUnit')
@@ -1238,18 +1283,12 @@ export class InnovationsService extends BaseService {
           `(assessmentOrganisationUnits.id = :suggestedOrganisationUnitId OR supportLogOrgUnit.id =:suggestedOrganisationUnitId)`,
           { suggestedOrganisationUnitId: domainContext.organisation.organisationUnit.id }
         );
-
-      // while ugly the above is better performant when filtering only by suggested units without using documents and other filters, pretty much the same otherwise (maybe a bit slower)
-      // query.andWhere(
-      //   `EXISTS(SELECT 1 FROM OPENJSON(innovation.suggested_units) WHERE JSON_VALUE(value, '$.unitId') = :contextOrganisationUnitId)`,
-      //   { contextOrganisationUnitId: domainContext.organisation.organisationUnit.id }
-      // );
     }
   }
 
   private addSupportFilter(
     domainContext: DomainContextType,
-    query: SelectQueryBuilder<InnovationListView>,
+    query: SelectQueryBuilder<InnovationEntity>,
     supportStatuses: InnovationSupportStatusEnum[]
   ): void {
     if (supportStatuses.length) {
@@ -1272,44 +1311,70 @@ export class InnovationsService extends BaseService {
   //#region nested display handlers
   private displayHandlers: {
     [k in InnovationListJoinTypes]: (
-      item: InnovationListView,
+      item: InnovationEntity,
       fields: InnovationListChildrenType<k>[],
       extra: { usersMap: Map<string, Awaited<ReturnType<DomainUsersService['getUsersList']>>[0]> }
-    ) => Partial<InnovationListFullResponseType[k]>;
+    ) => DeepPartial<InnovationListFullResponseType>;
   } = {
     support: this.displaySupport.bind(this),
-    owner: this.displayOwner.bind(this)
+    owner: this.displayOwner.bind(this),
+    document: this.displayDocument.bind(this),
+    groupedStatus: this.displayGroupedStatus.bind(this)
   };
 
   private displaySupport(
-    item: InnovationListView,
+    item: InnovationEntity,
     fields: InnovationListChildrenType<'support'>[]
-  ): Partial<InnovationListFullResponseType['support']> {
+  ): { support: Partial<InnovationListFullResponseType['support']> } {
     // support is handled differently to remove the nested array since it's only 1 element in this case
     return {
-      ...(fields.includes('support.status' as any) && {
-        status: item.supports?.[0]?.status ?? InnovationSupportStatusEnum.UNASSIGNED
-      }),
-      ...(fields.includes('support.updatedAt' as any) && { updatedAt: item.supports?.[0]?.updatedAt })
+      support: {
+        ...(fields.includes('support.status' as any) && {
+          status: item.innovationSupports?.[0]?.status ?? InnovationSupportStatusEnum.UNASSIGNED
+        }),
+        ...(fields.includes('support.updatedAt' as any) && { updatedAt: item.innovationSupports?.[0]?.updatedAt })
+      }
     };
   }
 
   private displayOwner(
-    item: InnovationListView,
+    item: InnovationEntity,
     fields: InnovationListChildrenType<'owner'>[],
     extra: { usersMap: Map<string, Awaited<ReturnType<DomainUsersService['getUsersList']>>[0]> }
-  ): Partial<InnovationListFullResponseType['owner']> {
-    if (!item.ownerId) {
-      return null;
+  ): { owner: Partial<InnovationListFullResponseType['owner']> | null } {
+    if (!item.owner) {
+      return { owner: null };
     }
     return {
-      ...(fields.includes('owner.id') && { id: item.ownerId }),
-      ...(fields.includes('owner.name') && {
-        name: extra.usersMap.get(item.ownerId)?.displayName ?? null
-      }),
-      ...(fields.includes('owner.companyName') && {
-        companyName: item.ownerCompanyName ?? null
-      })
+      owner: {
+        ...(fields.includes('owner.id') && { id: item.owner.id }),
+        ...(fields.includes('owner.name') && {
+          name: extra.usersMap.get(item.owner.id)?.displayName ?? null
+        }),
+        ...(fields.includes('owner.companyName') && {
+          companyName: item.owner.serviceRoles[0]?.organisation?.name ?? null
+        })
+      }
+    };
+  }
+
+  private displayDocument(
+    _item: InnovationEntity,
+    _fields: InnovationListChildrenType<'document'>[]
+  ): Partial<InnovationListFullResponseType> {
+    // We can improve this type later
+
+    return {
+      document: 'todo'
+    } as any;
+  }
+
+  private displayGroupedStatus(
+    item: InnovationEntity,
+    _fields: InnovationListChildrenType<'groupedStatus'>[] // we only have a field for this one really
+  ): { groupedStatus: InnovationGroupedStatusEnum } {
+    return {
+      groupedStatus: item.innovationGroupedStatus.groupedStatus ?? InnovationGroupedStatusEnum.RECORD_NOT_SHARED
     };
   }
   //#endregion
