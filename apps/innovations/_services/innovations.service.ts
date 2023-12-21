@@ -933,6 +933,16 @@ export class InnovationsService extends BaseService {
       query.andWhere('innovation.status IN (:...innovationStatus)', {
         innovationStatus: [InnovationStatusEnum.IN_PROGRESS]
       });
+
+      // Accessors can only see innovations that they are supporting
+      if (domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR) {
+        if (!nestedObjects.has('support')) {
+          nestedObjects.add('support');
+        }
+        query.andWhere('support.status IN (:...accessorSupportStatusFilter)', {
+          accessorSupportStatusFilter: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.CLOSED]
+        });
+      }
     }
 
     // Exclude withdrawn innovations from non admin users (at least for now)
