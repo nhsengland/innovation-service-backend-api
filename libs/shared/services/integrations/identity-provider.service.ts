@@ -2,6 +2,7 @@ import axios, { AxiosResponse } from 'axios';
 import { inject, injectable } from 'inversify';
 
 import {
+  ConflictError,
   GenericErrorsEnum,
   InternalServerError,
   NotFoundError,
@@ -328,6 +329,35 @@ export class IdentityProviderService {
       })
       .catch(error => {
         throw this.getError(error.response.status, error.response.data.message);
+      });
+  }
+
+  async updateUserEmail(identityId: string, email: string): Promise<void> {
+    await this.verifyAccessToken();
+
+    // DOCS: https://docs.microsoft.com/pt-PT/graph/api/user-update?view=graph-rest-1.0&tabs=http
+    // Response: 204 No Content, so we can return direcly.
+    await axios
+      .patch<undefined>(
+        `https://graph.microsoft.com/v1.0/users/${identityId}`,
+        {
+          identities: [
+            {
+              signInType: 'emailAddress',
+              issuer: `${this.tenantName}.onmicrosoft.com`,
+              issuerAssignedId: email
+            }
+          ]
+        },
+        {
+          headers: { Authorization: `Bearer ${this.sessionData.token}` }
+        }
+      )
+      .catch(error => {
+        if (error.response.status === 400 && error.response.data?.error?.message?.includes('conflicting object')) {
+          throw new ConflictError(UserErrorsEnum.USER_IDENTITY_CONFLCIT, { message: 'Email already exists' });
+        }
+        throw this.getError(error.response.status, error.response.data.error.message);
       });
   }
 
