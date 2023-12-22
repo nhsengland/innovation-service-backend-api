@@ -959,9 +959,10 @@ paths:
                 - otherCareSetting
                 - otherCategoryDescription
                 - postcode
-                - engagingOrganisations
                 - engagingUnits
-                - suggestedOrganisations
+                - engagingUnits.id
+                - engagingUnits.name
+                - engagingUnits.acronym
                 - support.id
                 - support.status
                 - support.updatedAt

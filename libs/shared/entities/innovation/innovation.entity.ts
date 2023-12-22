@@ -27,6 +27,7 @@ import { InnovationTransferEntity } from './innovation-transfer.entity';
 
 import { InnovationStatusEnum } from '../../enums/innovation.enums';
 import type { CurrentCatalogTypes } from '../../schemas/innovation-record';
+import { InnovationListView } from '../views/innovation-list-view.entity';
 
 @Entity('innovation')
 export class InnovationEntity extends BaseEntity {
@@ -130,6 +131,10 @@ export class InnovationEntity extends BaseEntity {
 
   @OneToOne(() => InnovationGroupedStatusViewEntity, record => record.innovation)
   innovationGroupedStatus: InnovationGroupedStatusViewEntity;
+
+  @OneToOne(() => InnovationListView, record => record.id)
+  @JoinColumn({ name: 'id' })
+  innovationListView: InnovationListView;
 
   @OneToMany(() => InnovationCollaboratorEntity, record => record.innovation)
   collaborators: InnovationCollaboratorEntity[];

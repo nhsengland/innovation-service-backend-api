@@ -7,7 +7,6 @@ import {
   InnovationDocumentEntity,
   InnovationEntity,
   InnovationExportRequestEntity,
-  InnovationListView,
   InnovationReassessmentRequestEntity,
   InnovationSectionEntity,
   InnovationSupportEntity,
@@ -59,6 +58,12 @@ import type { InnovationSectionModel } from '../_types/innovation.types';
 
 import { createDocumentFromInnovation } from '@innovations/shared/entities/innovation/innovation-document.entity';
 import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
+import type { catalogCareSettings } from '@innovations/shared/schemas/innovation-record/202209/catalog.types';
+import type {
+  catalogCategory,
+  catalogInvolvedAACProgrammes,
+  catalogKeyHealthInequalities
+} from '@innovations/shared/schemas/innovation-record/202304/catalog.types';
 import { ActionEnum } from '@innovations/shared/services/integrations/audit.service';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import { groupBy, isString } from 'lodash';
@@ -83,9 +88,11 @@ export const InnovationListSelectDict = {
   otherCategoryDescription: 'document.otherCategoryDescription',
   postcode: 'document.postcode',
   // Relation fields
-  engagingOrganisations: 'todo',
-  engagingUnits: 'todo',
-  suggestedOrganisations: 'todo',
+  engagingUnits: undefined,
+  'engagingUnits.id': 'engagingUnits.id',
+  'engagingUnits.name': 'engagingUnits.name',
+  'engagingUnits.acronym': 'engagingUnits.acronym',
+  // suggestedOrganisations: 'todo',
   'support.id': 'support.id',
   'support.status': 'support.status',
   'support.updatedAt': 'support.updatedAt',
@@ -94,23 +101,48 @@ export const InnovationListSelectDict = {
   'owner.companyName': 'owner.companyName'
 } as const;
 // const InnovationListReverseDict = Object.fromEntries(Object.entries(InnovationListSelectDict).map(([k, v]) => [v, k]));
-type InnovationListViewFields = Omit<InnovationListView, 'supports' | 'ownerId'>;
 export const InnovationListSelectType: InnovationListSelectType[] = Object.keys(InnovationListSelectDict) as any;
-export type InnovationListSelectType =
-  | keyof InnovationListViewFields
-  | `support.${keyof Pick<InnovationSupportEntity, 'status' | 'updatedAt'>}`
-  | 'owner.id'
-  | 'owner.name'
-  | 'owner.companyName';
+export type InnovationListSelectType = keyof typeof InnovationListSelectDict;
 
-export type InnovationListFullResponseType = InnovationListViewFields & {
-  support: { status: InnovationSupportStatusEnum; updatedAt: Date | null };
-  owner: { id: string; name: string | null; companyName: string | null } | null;
+export type InnovationListFullResponseType = {
+  id: string;
+  name: string;
+  status: InnovationStatusEnum;
+  groupedStatus: InnovationGroupedStatusEnum;
+  submittedAt: null | Date;
+  updatedAt: null | Date;
+  // Document fields
+  careSettings: catalogCareSettings[] | null;
+  categories: catalogCategory[] | null;
+  countryName: string | null;
+  diseasesAndConditions: string[] | null;
+  involvedAACProgrammes: catalogInvolvedAACProgrammes[] | null;
+  keyHealthInequalities: catalogKeyHealthInequalities[] | null;
+  mainCategory: catalogCategory | null;
+  otherCareSetting: string | null;
+  otherCategoryDescription: string | null;
+  postcode: string | null;
+  // Relation fields
+  engagingUnits: {
+    id: string;
+    name: string;
+    acronym: string;
+  }[];
+  support: {
+    id: string;
+    status: InnovationSupportStatusEnum;
+    updatedAt: Date;
+  } | null;
+  owner: {
+    id: string;
+    name: string | null;
+    companyName: string | null;
+  } | null;
 };
 
 type KeyPart<S> = S extends `${infer U}.${infer _D}` ? U : S;
 export type InnovationListResponseType<S extends InnovationListSelectType, K extends KeyPart<S> = KeyPart<S>> = {
-  [k in K]: InnovationListFullResponseType[k];
+  [k in K]: InnovationListFullResponseType[k]; // not 100% for the children types but serves it's purpose for now and keeping it simple
 };
 
 export type InnovationListFilters = {
@@ -923,7 +955,7 @@ export class InnovationsService extends BaseService {
     );
     const fieldGroups = groupBy(
       params.fields
-        .map(item => InnovationListSelectDict[item as keyof typeof InnovationListSelectDict])
+        .map(item => InnovationListSelectDict[item as keyof typeof InnovationListSelectDict] ?? item)
         .filter(isString), // remove undefined
       item => item.split('.')[0]
     );
@@ -1023,10 +1055,11 @@ export class InnovationsService extends BaseService {
       value: InnovationListJoinFields<k>[] | undefined
     ) => void;
   } = {
-    support: this.withSupport.bind(this),
-    owner: this.withOwner.bind(this),
     document: this.withDocument.bind(this),
-    groupedStatus: this.withGroupedStatus.bind(this)
+    engagingUnits: this.withEngagingUnits.bind(this),
+    groupedStatus: this.withGroupedStatus.bind(this),
+    owner: this.withOwner.bind(this),
+    support: this.withSupport.bind(this)
   };
 
   /**
@@ -1100,6 +1133,20 @@ export class InnovationsService extends BaseService {
       query.addSelect(fields).leftJoin('innovation.innovationGroupedStatus', 'groupedStatus');
     }
   }
+
+  // We can leverage the view for multiple stuff and create a handler specific for this
+  private withEngagingUnits(
+    _domainContext: DomainContextType,
+    query: SelectQueryBuilder<InnovationEntity>,
+    fields: InnovationListJoinFields<'engagingUnits'>[] = ['engagingUnits.id']
+  ): void {
+    if (fields.length) {
+      if (!query.alias.includes('innovationListView')) {
+        query.innerJoin('innovation.innovationListView', 'innovationListView');
+      }
+      query.addSelect('innovationListView.engagingUnits');
+    }
+  }
   //#endregion
 
   //#region filter handlers
@@ -1111,7 +1158,11 @@ export class InnovationsService extends BaseService {
     ) => void | Promise<void>;
   } = {
     assignedToMe: this.addAssignedToMeFilter.bind(this),
-    engagingOrganisations: this.addInFilter('organisation_unit_id', 'support'),
+    engagingOrganisations: this.addJsonArrayInFilter(
+      'engaging_organisations',
+      '$.organisationId',
+      'innovationListView'
+    ).bind(this),
     groupedStatuses: this.addInFilter('groupedStatus', 'groupedStatus').bind(this),
     locations: this.addLocationFilter.bind(this),
     search: this.addSearchFilter.bind(this),
@@ -1126,34 +1177,31 @@ export class InnovationsService extends BaseService {
    * @param column the array column to search (defaults to filterKey)
    * @returns filter handler function
    */
-  // private addDocumentJsonArrayInFilter<
-  //   FilterKey extends keyof InnovationListFilters,
-  //   FilterValue extends Required<InnovationListFilters[FilterKey]>,
-  //   FilterValues extends FilterValue extends unknown[]
-  //     ? FilterValue
-  //     : FilterValue extends true | false // hackish because type script would make it true[] or false[] otherwise
-  //     ? boolean[]
-  //     : FilterValue[]
-  // >(
-  //   filterKey: FilterKey,
-  //   fieldSelector?: string,
-  //   column: string = snakeCase(filterKey)
-  // ): (_domainContext: DomainContextType, query: SelectQueryBuilder<InnovationEntity>, value: FilterValues) => void {
-  //   return (domainContext: DomainContextType, query: SelectQueryBuilder<InnovationEntity>, values: FilterValues) => {
-  //     if (values.length) {
-  //       if(!query.alias.includes('document')) {
-  //         this.withDocument(domainContext, query);
-  //       }
-  //       const valueField = fieldSelector ? `JSON_VALUE(value, '${fieldSelector}')` : 'value';
-  //       const valueVariable = `${filterKey}Value`; // this is here to ensure uniqueness of the variable name
-  //       // Not so beautiful but better performing
-  //       query.andWhere(`JSON_QUERY(document.document, )`)
-  //       query.andWhere(`EXISTS(SELECT 1 FROM OPENJSON(${column}) WHERE ${valueField} IN(:...${valueVariable}))`, {
-  //         [valueVariable]: values
-  //       });
-  //     }
-  //   };
-  // }
+  private addJsonArrayInFilter(
+    jsonColumn: string,
+    fieldSelector?: string,
+    join?: keyof typeof this.joinHandlers | 'innovationListView'
+  ): (_domainContext: DomainContextType, query: SelectQueryBuilder<InnovationEntity>, value: any[]) => void {
+    return (domainContext: DomainContextType, query: SelectQueryBuilder<InnovationEntity>, values: any[]) => {
+      if (values.length) {
+        if (join && !query.expressionMap.aliases.find(item => item.name === join)) {
+          // This is a fake join handler (might change in the future since the fake is actually the engagingUnits)
+          if (join === 'innovationListView') {
+            query.innerJoin('innovation.innovationListView', 'innovationListView');
+          } else {
+            this.joinHandlers[join](domainContext, query, undefined);
+          }
+        }
+
+        const column = join ? `${join}.${jsonColumn}` : `innovation.${jsonColumn}`;
+        const valueVariable = `${join}${jsonColumn}Value`; // this is here to ensure uniqueness of the variable name
+        const valueField = fieldSelector ? `JSON_VALUE(value, '${fieldSelector}')` : 'value';
+        query.andWhere(`EXISTS(SELECT 1 FROM OPENJSON(${column}) WHERE ${valueField} IN(:...${valueVariable}))`, {
+          [valueVariable]: values
+        });
+      }
+    };
+  }
 
   /**
    * adds a filter that searchs for a value in a column
@@ -1170,9 +1218,9 @@ export class InnovationsService extends BaseService {
         this.joinHandlers[join](domainContext, query, undefined);
       }
       if (values.length) {
-        const col = column.includes('.') ? column : `innovation.${column}`;
-        const valueVariable = `${column}Value`; // this is here to ensure uniqueness of the variable name
-        query.andWhere(`${col} IN (:...${valueVariable}))`, { [valueVariable]: values });
+        const col = join ? `${join}.${column}` : `innovation.${column}`;
+        const valueVariable = `${join}${column}Value`; // this is here to ensure uniqueness of the variable name
+        query.andWhere(`${col} IN (:...${valueVariable})`, { [valueVariable]: values });
       }
     };
   }
@@ -1316,10 +1364,11 @@ export class InnovationsService extends BaseService {
       extra: { usersMap: Map<string, Awaited<ReturnType<DomainUsersService['getUsersList']>>[0]> }
     ) => DeepPartial<InnovationListFullResponseType>;
   } = {
-    support: this.displaySupport.bind(this),
-    owner: this.displayOwner.bind(this),
     document: this.displayDocument.bind(this),
-    groupedStatus: this.displayGroupedStatus.bind(this)
+    groupedStatus: this.displayGroupedStatus.bind(this),
+    engagingUnits: this.displayEngagingUnits.bind(this),
+    owner: this.displayOwner.bind(this),
+    support: this.displaySupport.bind(this)
   };
 
   private displaySupport(
@@ -1386,10 +1435,10 @@ export class InnovationsService extends BaseService {
     diseasesAndConditions: 'UNDERSTANDING_OF_NEEDS.diseasesConditionsImpact',
     keyHealthInequalities: 'UNDERSTANDING_OF_NEEDS.keyHealthInequalities'
   };
-  private displayDocument(
+  private displayDocument<T extends keyof typeof this.documentMap>(
     item: InnovationEntity,
-    fields: (keyof typeof this.documentMap)[]
-  ): Partial<InnovationListFullResponseType> {
+    fields: T[]
+  ): Partial<Pick<InnovationListFullResponseType, T>> {
     const document = item.document.document;
     const res = {} as Partial<InnovationListFullResponseType>;
 
@@ -1411,6 +1460,20 @@ export class InnovationsService extends BaseService {
   ): { groupedStatus: InnovationGroupedStatusEnum } {
     return {
       groupedStatus: item.innovationGroupedStatus.groupedStatus ?? InnovationGroupedStatusEnum.RECORD_NOT_SHARED
+    };
+  }
+
+  private displayEngagingUnits(
+    item: InnovationEntity,
+    _fields: InnovationListChildrenType<'engagingUnits'>[]
+  ): { engagingUnits: DeepPartial<InnovationListFullResponseType['engagingUnits']> } {
+    return {
+      engagingUnits:
+        item.innovationListView?.engagingUnits?.map(unit => ({
+          id: unit.unitId,
+          name: unit.name,
+          acronym: unit.acronym
+        })) ?? []
     };
   }
   //#endregion
