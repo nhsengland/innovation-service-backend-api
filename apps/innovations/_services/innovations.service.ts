@@ -1358,15 +1358,51 @@ export class InnovationsService extends BaseService {
     };
   }
 
+  private readonly documentMap: {
+    [k in keyof Pick<
+      InnovationListFullResponseType,
+      | 'name'
+      | 'countryName'
+      | 'careSettings'
+      | 'categories'
+      | 'diseasesAndConditions'
+      | 'involvedAACProgrammes'
+      | 'keyHealthInequalities'
+      | 'mainCategory'
+      | 'otherCareSetting'
+      | 'otherCategoryDescription'
+      | 'postcode'
+    >]: string;
+  } = {
+    name: 'INNOVATION_DESCRIPTION.name',
+    countryName: 'INNOVATION_DESCRIPTION.countryName',
+    postcode: 'INNOVATION_DESCRIPTION.postcode',
+    mainCategory: 'INNOVATION_DESCRIPTION.mainCategory',
+    otherCategoryDescription: 'INNOVATION_DESCRIPTION.otherCategoryDescription',
+    categories: 'INNOVATION_DESCRIPTION.categories',
+    careSettings: 'INNOVATION_DESCRIPTION.careSettings',
+    otherCareSetting: 'INNOVATION_DESCRIPTION.otherCareSetting',
+    involvedAACProgrammes: 'INNOVATION_DESCRIPTION.involvedAACProgrammes',
+    diseasesAndConditions: 'UNDERSTANDING_OF_NEEDS.diseasesConditionsImpact',
+    keyHealthInequalities: 'UNDERSTANDING_OF_NEEDS.keyHealthInequalities'
+  };
   private displayDocument(
-    _item: InnovationEntity,
-    _fields: InnovationListChildrenType<'document'>[]
+    item: InnovationEntity,
+    fields: (keyof typeof this.documentMap)[]
   ): Partial<InnovationListFullResponseType> {
-    // We can improve this type later
+    const document = item.document.document;
+    const res = {} as Partial<InnovationListFullResponseType>;
 
-    return {
-      document: 'todo'
-    } as any;
+    fields
+      .map(field => field.split('.')[1])
+      .filter(isString)
+      .forEach(field => {
+        const [section, answer] = (this.documentMap[field as keyof typeof this.documentMap] ?? '').split('.');
+        if (section && answer) {
+          res[field as keyof typeof this.documentMap] = (document as any)[section]?.[answer] ?? null;
+        }
+      });
+    return res;
   }
 
   private displayGroupedStatus(
