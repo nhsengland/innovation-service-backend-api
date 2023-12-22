@@ -8,6 +8,7 @@ import {
 } from '@innovations/shared/enums';
 import { JoiHelper, PaginationQueryParamsType } from '@innovations/shared/helpers';
 
+import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
 import { CurrentCatalogTypes, CurrentDocumentSchemaMap } from '@innovations/shared/schemas/innovation-record';
 import type { TypeFromArray } from '@innovations/shared/types';
 import { InnovationLocationEnum } from '../_enums/innovation.enums';
@@ -178,7 +179,7 @@ export const NewQueryParamsSchema = JoiHelper.PaginationJoiSchema({
       .stringArray()
       .items(Joi.string().valid(...Object.values(InnovationLocationEnum)))
       .optional(),
-    search: JoiHelper.AppCustomJoi().decodeURIString().trim().allow(null, '').optional()
+    search: JoiHelper.AppCustomJoi().decodeURIString().trim().max(TEXTAREA_LENGTH_LIMIT.xs).allow(null, '').optional()
   })
   .when('$userType', {
     switch: [
