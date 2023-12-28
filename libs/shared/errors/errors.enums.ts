@@ -30,7 +30,7 @@ export enum UserErrorsEnum {
   USER_MODEL_INVALID = 'U.0010',
   USER_ANNOUNCEMENT_NOT_FOUND = 'U.0011',
   USER_ROLE_NOT_FOUND = 'U.0012',
-  USER_IDENTITY_CONFLCIT = 'U.0013'
+  USER_IDENTITY_CONFLICT = 'U.0013'
 }
 
 export enum OrganisationErrorsEnum {

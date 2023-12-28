@@ -355,7 +355,7 @@ export class IdentityProviderService {
       )
       .catch(error => {
         if (error.response.status === 400 && error.response.data?.error?.message?.includes('conflicting object')) {
-          throw new ConflictError(UserErrorsEnum.USER_IDENTITY_CONFLCIT, { message: 'Email already exists' });
+          throw new ConflictError(UserErrorsEnum.USER_IDENTITY_CONFLICT, { message: 'Email already exists' });
         }
         throw this.getError(error.response.status, error.response.data.error.message);
       });
