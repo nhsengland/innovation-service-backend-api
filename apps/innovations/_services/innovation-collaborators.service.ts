@@ -86,7 +86,8 @@ export class InnovationCollaboratorsService extends BaseService {
       collaboratorRole: data.role,
       status: InnovationCollaboratorStatusEnum.PENDING,
       updatedBy: domainContext.id,
-      invitedAt: new Date().toISOString()
+      invitedAt: new Date().toISOString(),
+      ...(user && { user: UserEntity.new({ id: user.id }) })
     };
 
     let collaboratorId;
@@ -97,7 +98,6 @@ export class InnovationCollaboratorsService extends BaseService {
         email: data.email,
         innovation: InnovationEntity.new({ id: innovationId }),
         createdBy: domainContext.id,
-        ...(user && { user: UserEntity.new({ id: user.id }) })
       });
 
       collaboratorId = collaborator.id;
