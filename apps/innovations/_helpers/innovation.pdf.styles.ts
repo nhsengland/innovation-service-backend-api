@@ -48,7 +48,7 @@ export const buildDocumentTOCDefinition = (innovationName: string): any => {
       alignment: 'left'
     },
     {
-      text: 'NHS Innovation service',
+      text: 'NHS Innovation Service',
       style: 'documentInfo',
       margin: [0, 440, 0, 0],
       alignment: 'right'
