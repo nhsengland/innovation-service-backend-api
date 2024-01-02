@@ -1004,6 +1004,14 @@ paths:
             type: string
             maxLength: 200
             nullable: true
+        - name: diseasesAndConditions
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              maxLength: 100
         - name: skip
           in: query
           required: false

@@ -120,6 +120,7 @@ export type InnovationListFilters = {
   search?: string;
   suggestedOnly?: boolean;
   supportStatuses?: InnovationSupportStatusEnum[];
+  diseasesAndConditions: string[];
 };
 
 // Join types are the ones with nested selectable objects
@@ -1077,7 +1078,8 @@ export class InnovationsService extends BaseService {
     locations: this.addLocationFilter.bind(this),
     search: this.addSearchFilter.bind(this),
     suggestedOnly: this.addSuggestedOnlyFilter.bind(this),
-    supportStatuses: this.addSupportFilter.bind(this)
+    supportStatuses: this.addSupportFilter.bind(this),
+    diseasesAndConditions: this.addJsonArrayInFilter('diseasesAndConditions').bind(this)
   };
 
   /**

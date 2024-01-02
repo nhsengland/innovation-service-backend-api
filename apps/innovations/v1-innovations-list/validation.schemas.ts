@@ -179,7 +179,8 @@ export const NewQueryParamsSchema = JoiHelper.PaginationJoiSchema({
       .stringArray()
       .items(Joi.string().valid(...Object.values(InnovationLocationEnum)))
       .optional(),
-    search: JoiHelper.AppCustomJoi().decodeURIString().trim().max(TEXTAREA_LENGTH_LIMIT.xs).allow(null, '').optional()
+    search: JoiHelper.AppCustomJoi().decodeURIString().trim().max(TEXTAREA_LENGTH_LIMIT.xs).allow(null, '').optional(),
+    diseasesAndConditions: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().max(100)).optional()
   })
   .when('$userType', {
     switch: [
