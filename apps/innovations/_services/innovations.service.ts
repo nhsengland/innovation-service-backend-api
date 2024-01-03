@@ -112,10 +112,14 @@ export type InnovationListResponseType<S extends InnovationListSelectType, K ext
   [k in K]: InnovationListFullResponseType[k];
 };
 
+export const DateFilterFieldsType = ['submittedAt', 'updatedAt', 'support.updatedAt'] as const;
+export type DateFilterFieldsType = (typeof DateFilterFieldsType)[number];
+
 export type InnovationListFilters = {
   assignedToMe?: boolean;
   careSettings?: CurrentCatalogTypes.catalogCareSettings[];
   categories?: CurrentCatalogTypes.catalogCategory[];
+  dateFilters?: { field: DateFilterFieldsType; startDate?: Date; endDate?: Date }[];
   diseasesAndConditions: string[];
   engagingOrganisations?: string[];
   groupedStatuses: InnovationGroupedStatusEnum[];
@@ -165,11 +169,7 @@ export class InnovationsService extends BaseService {
       suggestedOnly?: boolean;
       latestWorkedByMe?: boolean;
       hasAccessThrough?: ('owner' | 'collaborator')[];
-      dateFilter?: {
-        field: 'submittedAt';
-        startDate?: Date;
-        endDate?: Date;
-      }[];
+      dateFilter?: { field: DateFilterFieldsType; startDate?: Date; endDate?: Date }[];
       withDeleted?: boolean;
       fields?: ('assessment' | 'supports' | 'notifications' | 'statistics' | 'groupedStatus')[];
     },
@@ -1085,6 +1085,7 @@ export class InnovationsService extends BaseService {
     assignedToMe: this.addAssignedToMeFilter.bind(this),
     careSettings: this.addJsonArrayInFilter('careSettings').bind(this),
     categories: this.addJsonArrayInFilter('categories').bind(this),
+    dateFilters: this.addDateFilters.bind(this),
     diseasesAndConditions: this.addJsonArrayInFilter('diseasesAndConditions').bind(this),
     engagingOrganisations: this.addJsonArrayInFilter('engagingOrganisations', {
       fieldSelector: '$.organisationId'
@@ -1290,6 +1291,37 @@ export class InnovationsService extends BaseService {
           }
         })
       );
+    }
+  }
+
+  private addDateFilters(
+    domainContext: DomainContextType,
+    query: SelectQueryBuilder<InnovationListView>,
+    dateFilters: { field: DateFilterFieldsType; startDate?: Date; endDate?: Date }[]
+  ): void {
+    if (dateFilters && dateFilters.length > 0) {
+      if (
+        dateFilters.some(({ field }) => field.includes('support')) &&
+        !query.expressionMap.aliases.find(item => item.name === 'support')
+      ) {
+        this.withSupport(domainContext, query);
+      }
+
+      for (const filter of dateFilters) {
+        const filterKey = !filter.field.includes('.') ? `innovation.${filter.field}` : filter.field;
+
+        if (filter.startDate) {
+          query.andWhere(`${filterKey} >= :startDate`, { startDate: filter.startDate });
+        }
+
+        if (filter.endDate) {
+          // This is needed because default TimeStamp for a DD/MM/YYYY date is 00:00:00
+          const beforeDateWithTimestamp = new Date(filter.endDate);
+          beforeDateWithTimestamp.setDate(beforeDateWithTimestamp.getDate() + 1);
+
+          query.andWhere(`${filterKey} < :endDate`, { endDate: beforeDateWithTimestamp });
+        }
+      }
     }
   }
   //#endregion
