@@ -12,9 +12,12 @@ import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
 import { CurrentCatalogTypes, CurrentDocumentSchemaMap } from '@innovations/shared/schemas/innovation-record';
 import type { TypeFromArray } from '@innovations/shared/types';
 import { InnovationLocationEnum } from '../_enums/innovation.enums';
-import { InnovationListFilters, InnovationListSelectType } from '../_services/innovations.service';
+import {
+  DateFilterFieldsType,
+  InnovationListFilters,
+  InnovationListSelectType
+} from '../_services/innovations.service';
 
-const DateFilterKeys = ['submittedAt'] as const;
 const FieldsKeys = ['assessment', 'supports', 'notifications', 'statistics', 'groupedStatus'] as const;
 const HasAccessThroughKeys = ['owner', 'collaborator'] as const;
 
@@ -43,7 +46,7 @@ export type LegacyQueryParamsType = PaginationQueryParamsType<orderFields> & {
   latestWorkedByMe?: boolean;
   hasAccessThrough?: TypeFromArray<typeof HasAccessThroughKeys>[];
   dateFilter?: {
-    field: TypeFromArray<typeof DateFilterKeys>;
+    field: DateFilterFieldsType;
     startDate?: Date;
     endDate?: Date;
   }[];
@@ -123,7 +126,7 @@ export const LegacyQueryParamsSchema = JoiHelper.PaginationJoiSchema({
       .items(
         Joi.object({
           field: Joi.string()
-            .valid(...DateFilterKeys)
+            .valid(...DateFilterFieldsType)
             .required(),
           startDate: Joi.date().optional(),
           endDate: Joi.date().optional()
@@ -180,7 +183,19 @@ export const NewQueryParamsSchema = JoiHelper.PaginationJoiSchema({
       .items(Joi.string().valid(...Object.values(InnovationLocationEnum)))
       .optional(),
     search: JoiHelper.AppCustomJoi().decodeURIString().trim().max(TEXTAREA_LENGTH_LIMIT.xs).allow(null, '').optional(),
-    diseasesAndConditions: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().max(100)).optional()
+    diseasesAndConditions: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().max(100)).optional(),
+    dateFilters: JoiHelper.AppCustomJoi()
+      .stringArrayOfObjects()
+      .items(
+        Joi.object({
+          field: Joi.string()
+            .valid(...DateFilterFieldsType)
+            .required(),
+          startDate: Joi.date().optional(),
+          endDate: Joi.date().optional()
+        })
+      )
+      .optional()
   })
   .when('$userType', {
     switch: [
