@@ -184,6 +184,10 @@ export const NewQueryParamsSchema = JoiHelper.PaginationJoiSchema({
         )
       ) // withdrawn is not allowed filter except for admin
       .optional(),
+    involvedAACProgrammes: JoiHelper.AppCustomJoi()
+      .stringArray()
+      .items(Joi.string().valid(...CurrentCatalogTypes.catalogInvolvedAACProgrammes))
+      .optional(),
     locations: JoiHelper.AppCustomJoi()
       .stringArray()
       .items(Joi.string().valid(...Object.values(InnovationLocationEnum)))

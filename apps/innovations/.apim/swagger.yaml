@@ -1037,6 +1037,27 @@ paths:
                 - RECEIVING_SUPPORT
                 - NO_ACTIVE_SUPPORT
                 - AWAITING_NEEDS_REASSESSMENT
+        - name: involvedAACProgrammes
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - No
+                - Health Innovation Network
+                - Artificial Intelligence in Health and Care Award
+                - Clinical Entrepreneur Programme
+                - Early Access to Medicines Scheme
+                - Innovation for Healthcare Inequalities Programme
+                - Innovation and Technology Payment Programme
+                - NHS Innovation Accelerator
+                - NHS Insights Prioritisation Programme
+                - Pathway Transformation Fund
+                - Rapid Uptake Products Programme
+                - Small Business Research Initiative for Healthcare
+                - Test beds
         - name: locations
           in: query
           required: false
