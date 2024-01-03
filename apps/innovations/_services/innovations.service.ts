@@ -114,6 +114,7 @@ export type InnovationListResponseType<S extends InnovationListSelectType, K ext
 
 export type InnovationListFilters = {
   assignedToMe?: boolean;
+  careSettings?: CurrentCatalogTypes.catalogCareSettings[];
   categories?: CurrentCatalogTypes.catalogCategory[];
   diseasesAndConditions: string[];
   engagingOrganisations?: string[];
@@ -1074,6 +1075,7 @@ export class InnovationsService extends BaseService {
     ) => void | Promise<void>;
   } = {
     assignedToMe: this.addAssignedToMeFilter.bind(this),
+    careSettings: this.addJsonArrayInFilter('careSettings').bind(this),
     categories: this.addJsonArrayInFilter('categories').bind(this),
     diseasesAndConditions: this.addJsonArrayInFilter('diseasesAndConditions').bind(this),
     engagingOrganisations: this.addJsonArrayInFilter('engagingOrganisations', '$.organisationId').bind(this),

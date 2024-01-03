@@ -161,6 +161,10 @@ export const NewQueryParamsSchema = JoiHelper.PaginationJoiSchema({
   orderKeys: Object.values(InnovationListSelectType)
 })
   .append<NewQueryParamsType>({
+    careSettings: JoiHelper.AppCustomJoi()
+      .stringArray()
+      .items(Joi.string().valid(...CurrentCatalogTypes.catalogCareSettings))
+      .optional(),
     categories: JoiHelper.AppCustomJoi()
       .stringArray()
       .items(Joi.string().valid(...CurrentCatalogTypes.catalogCategory))

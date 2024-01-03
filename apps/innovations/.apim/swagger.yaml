@@ -928,6 +928,30 @@ paths:
                 - DESC
             default:
               default: DESC
+        - name: careSettings
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - ACADEMIA
+                - ACUTE_TRUSTS_INPATIENT
+                - ACUTE_TRUSTS_OUTPATIENT
+                - AMBULANCE
+                - CARE_HOMES_CARE_SETTING
+                - END_LIFE_CARE
+                - ICS
+                - INDUSTRY
+                - LOCAL_AUTHORITY_EDUCATION
+                - MENTAL_HEALTH
+                - PHARMACY
+                - PRIMARY_CARE
+                - SOCIAL_CARE
+                - THIRD_SECTOR_ORGANISATIONS
+                - URGENT_AND_EMERGENCY
+                - OTHER
         - name: categories
           in: query
           required: false
