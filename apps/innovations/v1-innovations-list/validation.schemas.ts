@@ -188,6 +188,10 @@ export const NewQueryParamsSchema = JoiHelper.PaginationJoiSchema({
       .stringArray()
       .items(Joi.string().valid(...CurrentCatalogTypes.catalogInvolvedAACProgrammes))
       .optional(),
+    keyHealthInequalities: JoiHelper.AppCustomJoi()
+      .stringArray()
+      .items(Joi.string().valid(...CurrentCatalogTypes.catalogKeyHealthInequalities))
+      .optional(),
     locations: JoiHelper.AppCustomJoi()
       .stringArray()
       .items(Joi.string().valid(...Object.values(InnovationLocationEnum)))

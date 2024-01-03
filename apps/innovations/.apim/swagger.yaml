@@ -1058,6 +1058,20 @@ paths:
                 - Rapid Uptake Products Programme
                 - Small Business Research Initiative for Healthcare
                 - Test beds
+        - name: keyHealthInequalities
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - MATERNITY
+                - SEVER_MENTAL_ILLNESS
+                - CHRONIC_RESPIRATORY_DISEASE
+                - EARLY_CANCER_DIAGNOSIS
+                - HYPERTENSION_CASE_FINDING
+                - NONE
         - name: locations
           in: query
           required: false

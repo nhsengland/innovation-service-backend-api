@@ -120,6 +120,7 @@ export type InnovationListFilters = {
   engagingOrganisations?: string[];
   groupedStatuses: InnovationGroupedStatusEnum[];
   involvedAACProgrammes?: CurrentCatalogTypes.catalogInvolvedAACProgrammes[];
+  keyHealthInequalities?: CurrentCatalogTypes.catalogKeyHealthInequalities[];
   locations?: InnovationLocationEnum[];
   search?: string;
   suggestedOnly?: boolean;
@@ -1090,6 +1091,7 @@ export class InnovationsService extends BaseService {
     }).bind(this),
     groupedStatuses: this.addInFilter('groupedStatuses', 'groupedStatus').bind(this),
     involvedAACProgrammes: this.addJsonArrayInFilter('involvedAACProgrammes', { noValue: 'No' }).bind(this),
+    keyHealthInequalities: this.addJsonArrayInFilter('keyHealthInequalities', { noValue: 'NONE' }).bind(this),
     locations: this.addLocationFilter.bind(this),
     search: this.addSearchFilter.bind(this),
     suggestedOnly: this.addSuggestedOnlyFilter.bind(this),
@@ -1099,8 +1101,10 @@ export class InnovationsService extends BaseService {
   /**
    * adds a filter that searches for a value in the json arrays of the innovation list view
    * @param filterKey the filter key to use in the query
-   * @param fieldSelector optional selector to use in the json search (defaults to undefined for simple arrays)
-   * @param column the array column to search (defaults to filterKey)
+   * @param options optional options
+   * - fieldSelector optional selector to use in the json search (defaults to undefined for simple arrays)
+   * - column the array column to search (defaults to filterKey)
+   * - noValue the value for the option being not selected (defaults to undefined). If this exists rows with null will match
    * @returns filter handler function
    */
   private addJsonArrayInFilter<
