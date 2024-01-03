@@ -114,13 +114,14 @@ export type InnovationListResponseType<S extends InnovationListSelectType, K ext
 
 export type InnovationListFilters = {
   assignedToMe?: boolean;
+  categories?: CurrentCatalogTypes.catalogCategory[];
+  diseasesAndConditions: string[];
   engagingOrganisations?: string[];
   groupedStatuses: InnovationGroupedStatusEnum[];
   locations?: InnovationLocationEnum[];
   search?: string;
   suggestedOnly?: boolean;
   supportStatuses?: InnovationSupportStatusEnum[];
-  diseasesAndConditions: string[];
 };
 
 // Join types are the ones with nested selectable objects
@@ -1073,13 +1074,14 @@ export class InnovationsService extends BaseService {
     ) => void | Promise<void>;
   } = {
     assignedToMe: this.addAssignedToMeFilter.bind(this),
+    categories: this.addJsonArrayInFilter('categories').bind(this),
+    diseasesAndConditions: this.addJsonArrayInFilter('diseasesAndConditions').bind(this),
     engagingOrganisations: this.addJsonArrayInFilter('engagingOrganisations', '$.organisationId').bind(this),
     groupedStatuses: this.addInFilter('groupedStatuses', 'groupedStatus').bind(this),
     locations: this.addLocationFilter.bind(this),
     search: this.addSearchFilter.bind(this),
     suggestedOnly: this.addSuggestedOnlyFilter.bind(this),
-    supportStatuses: this.addSupportFilter.bind(this),
-    diseasesAndConditions: this.addJsonArrayInFilter('diseasesAndConditions').bind(this)
+    supportStatuses: this.addSupportFilter.bind(this)
   };
 
   /**

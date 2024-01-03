@@ -161,6 +161,11 @@ export const NewQueryParamsSchema = JoiHelper.PaginationJoiSchema({
   orderKeys: Object.values(InnovationListSelectType)
 })
   .append<NewQueryParamsType>({
+    categories: JoiHelper.AppCustomJoi()
+      .stringArray()
+      .items(Joi.string().valid(...CurrentCatalogTypes.catalogCategory))
+      .optional(),
+    diseasesAndConditions: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().max(100)).optional(),
     engagingOrganisations: JoiHelper.AppCustomJoi().stringArray().items(Joi.string()).optional(),
     fields: JoiHelper.AppCustomJoi()
       .stringArray()
@@ -179,8 +184,7 @@ export const NewQueryParamsSchema = JoiHelper.PaginationJoiSchema({
       .stringArray()
       .items(Joi.string().valid(...Object.values(InnovationLocationEnum)))
       .optional(),
-    search: JoiHelper.AppCustomJoi().decodeURIString().trim().max(TEXTAREA_LENGTH_LIMIT.xs).allow(null, '').optional(),
-    diseasesAndConditions: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().max(100)).optional()
+    search: JoiHelper.AppCustomJoi().decodeURIString().trim().max(TEXTAREA_LENGTH_LIMIT.xs).allow(null, '').optional()
   })
   .when('$userType', {
     switch: [

@@ -928,6 +928,35 @@ paths:
                 - DESC
             default:
               default: DESC
+        - name: categories
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - MEDICAL_DEVICE
+                - IN_VITRO_DIAGNOSTIC
+                - PHARMACEUTICAL
+                - DIGITAL
+                - AI
+                - EDUCATION
+                - PPE
+                - MODELS_CARE
+                - ESTATES_FACILITIES
+                - TRAVEL_TRANSPORT
+                - FOOD_NUTRITION
+                - DATA_MONITORING
+                - OTHER
+        - name: diseasesAndConditions
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              maxLength: 100
         - name: engagingOrganisations
           in: query
           required: false
@@ -1004,14 +1033,6 @@ paths:
             type: string
             maxLength: 200
             nullable: true
-        - name: diseasesAndConditions
-          in: query
-          required: false
-          schema:
-            type: array
-            items:
-              type: string
-              maxLength: 100
         - name: skip
           in: query
           required: false
