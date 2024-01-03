@@ -1012,6 +1012,29 @@ paths:
             items:
               type: string
               maxLength: 100
+        - name: dateFilters
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                field:
+                  type: string
+                  enum:
+                    - submittedAt
+                    - updatedAt
+                    - support.updatedAt
+                startDate:
+                  type: string
+                  format: date-time
+                endDate:
+                  type: string
+                  format: date-time
+              required:
+                - field
+              additionalProperties: false
         - name: skip
           in: query
           required: false
@@ -1709,6 +1732,8 @@ paths:
                   type: string
                   enum:
                     - submittedAt
+                    - updatedAt
+                    - support.updatedAt
                 startDate:
                   type: string
                   format: date-time
