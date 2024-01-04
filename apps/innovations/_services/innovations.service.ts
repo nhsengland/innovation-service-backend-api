@@ -117,14 +117,18 @@ export type DateFilterFieldsType = (typeof DateFilterFieldsType)[number];
 
 export type InnovationListFilters = {
   assignedToMe?: boolean;
+  careSettings?: CurrentCatalogTypes.catalogCareSettings[];
+  categories?: CurrentCatalogTypes.catalogCategory[];
+  dateFilters?: { field: DateFilterFieldsType; startDate?: Date; endDate?: Date }[];
+  diseasesAndConditions: string[];
   engagingOrganisations?: string[];
   groupedStatuses: InnovationGroupedStatusEnum[];
+  involvedAACProgrammes?: CurrentCatalogTypes.catalogInvolvedAACProgrammes[];
+  keyHealthInequalities?: CurrentCatalogTypes.catalogKeyHealthInequalities[];
   locations?: InnovationLocationEnum[];
   search?: string;
   suggestedOnly?: boolean;
   supportStatuses?: InnovationSupportStatusEnum[];
-  diseasesAndConditions?: string[];
-  dateFilters?: { field: DateFilterFieldsType; startDate?: Date; endDate?: Date }[];
 };
 
 // Join types are the ones with nested selectable objects
@@ -1066,28 +1070,42 @@ export class InnovationsService extends BaseService {
 
   //#region filter handlers
   private readonly filtersHandlers: {
-    [k in keyof Required<InnovationListFilters>]: (
-      domainContext: DomainContextType,
-      query: SelectQueryBuilder<InnovationListView>,
-      value: Required<InnovationListFilters>[k]
-    ) => void | Promise<void>;
+    [k in keyof Required<InnovationListFilters>]:
+      | ((
+          domainContext: DomainContextType,
+          query: SelectQueryBuilder<InnovationListView>,
+          value: Required<InnovationListFilters>[k]
+        ) => void | Promise<void>)
+      | ((
+          domainContext: DomainContextType,
+          query: SelectQueryBuilder<InnovationListView>,
+          value: Required<InnovationListFilters>[k][]
+        ) => void | Promise<void>);
   } = {
     assignedToMe: this.addAssignedToMeFilter.bind(this),
-    engagingOrganisations: this.addJsonArrayInFilter('engagingOrganisations', '$.organisationId').bind(this),
+    careSettings: this.addJsonArrayInFilter('careSettings').bind(this),
+    categories: this.addJsonArrayInFilter('categories').bind(this),
+    dateFilters: this.addDateFilters.bind(this),
+    diseasesAndConditions: this.addJsonArrayInFilter('diseasesAndConditions').bind(this),
+    engagingOrganisations: this.addJsonArrayInFilter('engagingOrganisations', {
+      fieldSelector: '$.organisationId'
+    }).bind(this),
     groupedStatuses: this.addInFilter('groupedStatuses', 'groupedStatus').bind(this),
+    involvedAACProgrammes: this.addJsonArrayInFilter('involvedAACProgrammes', { noValue: 'No' }).bind(this),
+    keyHealthInequalities: this.addJsonArrayInFilter('keyHealthInequalities', { noValue: 'NONE' }).bind(this),
     locations: this.addLocationFilter.bind(this),
     search: this.addSearchFilter.bind(this),
     suggestedOnly: this.addSuggestedOnlyFilter.bind(this),
-    supportStatuses: this.addSupportFilter.bind(this),
-    diseasesAndConditions: this.addJsonArrayInFilter('diseasesAndConditions').bind(this),
-    dateFilters: this.addDateFilters.bind(this)
+    supportStatuses: this.addSupportFilter.bind(this)
   };
 
   /**
    * adds a filter that searches for a value in the json arrays of the innovation list view
    * @param filterKey the filter key to use in the query
-   * @param fieldSelector optional selector to use in the json search (defaults to undefined for simple arrays)
-   * @param column the array column to search (defaults to filterKey)
+   * @param options optional options
+   * - fieldSelector optional selector to use in the json search (defaults to undefined for simple arrays)
+   * - column the array column to search (defaults to filterKey)
+   * - noValue the value for the option being not selected (defaults to undefined). If this exists rows with null will match
    * @returns filter handler function
    */
   private addJsonArrayInFilter<
@@ -1100,16 +1118,29 @@ export class InnovationsService extends BaseService {
       : FilterValue[]
   >(
     filterKey: FilterKey,
-    fieldSelector?: string,
-    column: string = snakeCase(filterKey)
+    options?: {
+      fieldSelector?: string;
+      column?: string;
+      noValue?: Exclude<FilterValues[number], undefined>;
+    }
   ): (_domainContext: DomainContextType, query: SelectQueryBuilder<InnovationListView>, value: FilterValues) => void {
     return (_domainContext: DomainContextType, query: SelectQueryBuilder<InnovationListView>, values: FilterValues) => {
+      const column = options?.column ?? snakeCase(filterKey);
       if (values.length) {
-        const valueField = fieldSelector ? `JSON_VALUE(value, '${fieldSelector}')` : 'value';
+        const valueField = options?.fieldSelector ? `JSON_VALUE(value, '${options?.fieldSelector}')` : 'value';
         const valueVariable = `${filterKey}Value`; // this is here to ensure uniqueness of the variable name
-        query.andWhere(`EXISTS(SELECT 1 FROM OPENJSON(${column}) WHERE ${valueField} IN(:...${valueVariable}))`, {
-          [valueVariable]: values
-        });
+        if (options?.noValue && values.includes(options.noValue as any)) {
+          query.andWhere(
+            `(${column} IS NULL OR EXISTS(SELECT 1 FROM OPENJSON(${column}) WHERE ${valueField} IN(:...${valueVariable}) OR ${valueField} IS NULL))`,
+            {
+              [valueVariable]: values
+            }
+          );
+        } else {
+          query.andWhere(`EXISTS(SELECT 1 FROM OPENJSON(${column}) WHERE ${valueField} IN(:...${valueVariable}))`, {
+            [valueVariable]: values
+          });
+        }
       }
     };
   }

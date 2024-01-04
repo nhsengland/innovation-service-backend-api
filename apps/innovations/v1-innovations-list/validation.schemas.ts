@@ -164,6 +164,27 @@ export const NewQueryParamsSchema = JoiHelper.PaginationJoiSchema({
   orderKeys: Object.values(InnovationListSelectType)
 })
   .append<NewQueryParamsType>({
+    careSettings: JoiHelper.AppCustomJoi()
+      .stringArray()
+      .items(Joi.string().valid(...CurrentCatalogTypes.catalogCareSettings))
+      .optional(),
+    categories: JoiHelper.AppCustomJoi()
+      .stringArray()
+      .items(Joi.string().valid(...CurrentCatalogTypes.catalogCategory))
+      .optional(),
+    dateFilters: JoiHelper.AppCustomJoi()
+      .stringArrayOfObjects()
+      .items(
+        Joi.object({
+          field: Joi.string()
+            .valid(...DateFilterFieldsType)
+            .required(),
+          startDate: Joi.date().optional(),
+          endDate: Joi.date().optional()
+        })
+      )
+      .optional(),
+    diseasesAndConditions: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().max(100)).optional(),
     engagingOrganisations: JoiHelper.AppCustomJoi().stringArray().items(Joi.string()).optional(),
     fields: JoiHelper.AppCustomJoi()
       .stringArray()
@@ -178,24 +199,19 @@ export const NewQueryParamsSchema = JoiHelper.PaginationJoiSchema({
         )
       ) // withdrawn is not allowed filter except for admin
       .optional(),
+    involvedAACProgrammes: JoiHelper.AppCustomJoi()
+      .stringArray()
+      .items(Joi.string().valid(...CurrentCatalogTypes.catalogInvolvedAACProgrammes))
+      .optional(),
+    keyHealthInequalities: JoiHelper.AppCustomJoi()
+      .stringArray()
+      .items(Joi.string().valid(...CurrentCatalogTypes.catalogKeyHealthInequalities))
+      .optional(),
     locations: JoiHelper.AppCustomJoi()
       .stringArray()
       .items(Joi.string().valid(...Object.values(InnovationLocationEnum)))
       .optional(),
-    search: JoiHelper.AppCustomJoi().decodeURIString().trim().max(TEXTAREA_LENGTH_LIMIT.xs).allow(null, '').optional(),
-    diseasesAndConditions: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().max(100)).optional(),
-    dateFilters: JoiHelper.AppCustomJoi()
-      .stringArrayOfObjects()
-      .items(
-        Joi.object({
-          field: Joi.string()
-            .valid(...DateFilterFieldsType)
-            .required(),
-          startDate: Joi.date().optional(),
-          endDate: Joi.date().optional()
-        })
-      )
-      .optional()
+    search: JoiHelper.AppCustomJoi().decodeURIString().trim().max(TEXTAREA_LENGTH_LIMIT.xs).allow(null, '').optional()
   })
   .when('$userType', {
     switch: [
