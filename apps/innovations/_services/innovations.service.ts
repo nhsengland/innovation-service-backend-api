@@ -1091,8 +1091,8 @@ export class InnovationsService extends BaseService {
       fieldSelector: '$.organisationId'
     }).bind(this),
     groupedStatuses: this.addInFilter('groupedStatuses', 'groupedStatus').bind(this),
-    involvedAACProgrammes: this.addJsonArrayInFilter('involvedAACProgrammes', { noValue: 'No' }).bind(this),
-    keyHealthInequalities: this.addJsonArrayInFilter('keyHealthInequalities', { noValue: 'NONE' }).bind(this),
+    involvedAACProgrammes: this.addJsonArrayInFilter('involvedAACProgrammes').bind(this),
+    keyHealthInequalities: this.addJsonArrayInFilter('keyHealthInequalities').bind(this),
     locations: this.addLocationFilter.bind(this),
     search: this.addSearchFilter.bind(this),
     suggestedOnly: this.addSuggestedOnlyFilter.bind(this),
@@ -1105,7 +1105,7 @@ export class InnovationsService extends BaseService {
    * @param options optional options
    * - fieldSelector optional selector to use in the json search (defaults to undefined for simple arrays)
    * - column the array column to search (defaults to filterKey)
-   * - noValue the value for the option being not selected (defaults to undefined). If this exists rows with null will match
+   * - noValue the value for the option being not selected (defaults to undefined). If this is defined rows with null will match
    * @returns filter handler function
    */
   private addJsonArrayInFilter<
@@ -1130,6 +1130,7 @@ export class InnovationsService extends BaseService {
         const valueField = options?.fieldSelector ? `JSON_VALUE(value, '${options?.fieldSelector}')` : 'value';
         const valueVariable = `${filterKey}Value`; // this is here to ensure uniqueness of the variable name
         if (options?.noValue && values.includes(options.noValue as any)) {
+          // this is a case where we want the no filter option to match the null value also
           query.andWhere(
             `(${column} IS NULL OR EXISTS(SELECT 1 FROM OPENJSON(${column}) WHERE ${valueField} IN(:...${valueVariable}) OR ${valueField} IS NULL))`,
             {
