@@ -84,6 +84,7 @@ export const InnovationListSelectType = [
   'otherCategoryDescription',
   'postcode',
   // Relation fields
+  'assessment.id',
   'engagingOrganisations',
   'engagingUnits',
   'suggestedOrganisations',
@@ -94,15 +95,17 @@ export const InnovationListSelectType = [
   'owner.name',
   'owner.companyName'
 ] as const;
-type InnovationListViewFields = Omit<InnovationListView, 'supports' | 'ownerId'>;
+type InnovationListViewFields = Omit<InnovationListView, 'assessment' | 'supports' | 'ownerId'>;
 export type InnovationListSelectType =
   | keyof InnovationListViewFields
+  | `assessment.${keyof Pick<InnovationAssessmentEntity, 'id'>}`
   | `support.${keyof Pick<InnovationSupportEntity, 'status' | 'updatedAt'>}`
   | 'owner.id'
   | 'owner.name'
   | 'owner.companyName';
 
 export type InnovationListFullResponseType = InnovationListViewFields & {
+  assessment: { id: string } | null;
   support: { status: InnovationSupportStatusEnum; updatedAt: Date | null };
   owner: { id: string; name: string | null; companyName: string | null } | null;
 };
@@ -1024,16 +1027,21 @@ export class InnovationsService extends BaseService {
       value: InnovationListChildrenType<k> | any
     ) => void;
   } = {
+    assessment: this.withAssessment.bind(this),
     support: this.withSupport.bind(this),
     owner: this.withOwner.bind(this)
   };
 
-  /**
-   * Add support information to the query
-   * @param query the innovation list view query
-   * @param organisationUnitId the organisation unit id to add the support
-   * @returns query with the support information
-   */
+  private withAssessment(
+    _domainContext: DomainContextType,
+    query: SelectQueryBuilder<InnovationListView>,
+    fields: 'assessment.id'[] = ['assessment.id']
+  ): void {
+    if (fields.length) {
+      query.addSelect(fields).leftJoin('innovation.assessment', 'assessment');
+    }
+  }
+
   private withSupport(
     domainContext: DomainContextType,
     query: SelectQueryBuilder<InnovationListView>,
@@ -1335,9 +1343,36 @@ export class InnovationsService extends BaseService {
       extra: { usersMap: Map<string, Awaited<ReturnType<DomainUsersService['getUsersList']>>[0]> }
     ) => Partial<InnovationListFullResponseType[k]>;
   } = {
+    assessment: this.oneToOneDisplayMapping<'assessment'>('assessment').bind(this),
     support: this.displaySupport.bind(this),
     owner: this.displayOwner.bind(this)
   };
+
+  /**
+   * Maps children fields from the view to the output on a 1:1.
+   *
+   * This can be used with both joins and nested objects (objects not used atm)
+   *
+   * @param child the element from the view we're mapping
+   * @returns the object for that element with all the selected fields
+   */
+  private oneToOneDisplayMapping<T extends keyof InnovationListView>(
+    child: T
+  ): (
+    item: InnovationListView,
+    fields: InnovationListChildrenType<'assessment'>[]
+  ) => Partial<InnovationListFullResponseType[T extends keyof InnovationListFullResponseType ? T : never]> {
+    return (item, fields) => {
+      const res = {} as any;
+      fields.forEach(field => {
+        const [parent, element] = field.split('.');
+        if (parent === child && element) {
+          res[element] = (item as any)[parent]?.[element] ?? null;
+        }
+      });
+      return res;
+    };
+  }
 
   private displaySupport(
     item: InnovationListView,

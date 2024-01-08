@@ -1035,6 +1035,7 @@ paths:
                 - otherCareSetting
                 - otherCategoryDescription
                 - postcode
+                - assessment.id
                 - engagingOrganisations
                 - engagingUnits
                 - suggestedOrganisations
