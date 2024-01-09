@@ -1045,6 +1045,9 @@ paths:
                 - owner.id
                 - owner.name
                 - owner.companyName
+                - statistics.notifications
+                - statistics.tasks
+                - statistics.messages
             minItems: 1
         - name: groupedStatuses
           in: query
