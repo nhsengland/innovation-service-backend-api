@@ -1,4 +1,4 @@
-import { Column, OneToMany, PrimaryColumn, ViewColumn, ViewEntity } from 'typeorm';
+import { Column, OneToMany, OneToOne, PrimaryColumn, ViewColumn, ViewEntity } from 'typeorm';
 import type { InnovationGroupedStatusEnum, InnovationStatusEnum } from '../../enums';
 import type {
   catalogCareSettings,
@@ -6,6 +6,7 @@ import type {
   catalogInvolvedAACProgrammes,
   catalogKeyHealthInequalities
 } from '../../schemas/innovation-record/202304/catalog.types';
+import { InnovationAssessmentEntity } from '../innovation/innovation-assessment.entity';
 import { InnovationSupportEntity } from '../innovation/innovation-support.entity';
 
 @ViewEntity('innovation_list_view')
@@ -72,6 +73,9 @@ export class InnovationListView {
 
   @Column({ name: 'suggested_units', type: 'simple-json' })
   suggestedUnits: { unitId: string; name: string; acronym: string }[] | null;
+
+  @OneToOne(() => InnovationAssessmentEntity, record => record.innovation)
+  assessment: InnovationAssessmentEntity | null;
 
   @OneToMany(() => InnovationSupportEntity, record => record.innovation)
   supports: InnovationSupportEntity[] | null;

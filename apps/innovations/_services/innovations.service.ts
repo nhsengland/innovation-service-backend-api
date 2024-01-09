@@ -61,7 +61,7 @@ import { createDocumentFromInnovation } from '@innovations/shared/entities/innov
 import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import { ActionEnum } from '@innovations/shared/services/integrations/audit.service';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import { groupBy, isString, snakeCase } from 'lodash';
+import { groupBy, isString, mapValues, snakeCase } from 'lodash';
 import { BaseService } from './base.service';
 
 // TODO move types
@@ -84,6 +84,7 @@ export const InnovationListSelectType = [
   'otherCategoryDescription',
   'postcode',
   // Relation fields
+  'assessment.id',
   'engagingOrganisations',
   'engagingUnits',
   'suggestedOrganisations',
@@ -92,19 +93,28 @@ export const InnovationListSelectType = [
   'support.updatedAt',
   'owner.id',
   'owner.name',
-  'owner.companyName'
+  'owner.companyName',
+  'statistics.notifications',
+  'statistics.tasks',
+  'statistics.messages'
 ] as const;
-type InnovationListViewFields = Omit<InnovationListView, 'supports' | 'ownerId'>;
+type InnovationListViewFields = Omit<InnovationListView, 'assessment' | 'supports' | 'ownerId'>;
 export type InnovationListSelectType =
   | keyof InnovationListViewFields
-  | `support.${keyof Pick<InnovationSupportEntity, 'status' | 'updatedAt'>}`
+  | `assessment.${keyof Pick<InnovationAssessmentEntity, 'id'>}`
+  | `support.${keyof Pick<InnovationSupportEntity, 'id' | 'status' | 'updatedAt'>}`
   | 'owner.id'
   | 'owner.name'
-  | 'owner.companyName';
+  | 'owner.companyName'
+  | 'statistics.notifications'
+  | 'statistics.tasks'
+  | 'statistics.messages';
 
 export type InnovationListFullResponseType = InnovationListViewFields & {
+  assessment: { id: string } | null;
   support: { status: InnovationSupportStatusEnum; updatedAt: Date | null };
   owner: { id: string; name: string | null; companyName: string | null } | null;
+  statistics: { notifications: number; tasks: number; messages: number };
 };
 
 type KeyPart<S> = S extends `${infer U}.${infer _D}` ? U : S;
@@ -132,7 +142,7 @@ export type InnovationListFilters = {
 };
 
 // Join types are the ones with nested selectable objects
-export type InnovationListJoinTypes = InnovationListSelectType extends infer X
+type InnovationListJoinTypes = InnovationListSelectType extends infer X
   ? X extends `${infer U}.${infer _D}`
     ? U
     : never
@@ -140,9 +150,13 @@ export type InnovationListJoinTypes = InnovationListSelectType extends infer X
 
 type InnovationListChildrenType<T extends InnovationListJoinTypes> = InnovationListSelectType extends infer X
   ? X extends `${T}.${infer D}`
-    ? `${T}.${D}`
+    ? D
     : never
   : never;
+
+type PickHandlerReturnType<T extends { [k: string]: any }, K extends keyof T> = {
+  [k in K]: Awaited<ReturnType<T[k]>>;
+};
 
 @injectable()
 export class InnovationsService extends BaseService {
@@ -874,6 +888,7 @@ export class InnovationsService extends BaseService {
    * @param params parameters for the query:
    *  - fields: the fields to return (supports dotted children)
    *  - pagination: the pagination parameters supports multiple orderBys
+   *    - orderBy postHandled fields isn't allowed (ie: statistics, owner.name). This isn't being validated yet
    *  - filters: the filters to apply
    * @param em optional entity manager
    * @returns list of innovations with only the selected fields
@@ -914,7 +929,10 @@ export class InnovationsService extends BaseService {
         .map(item => item.split('.')[0])
         .filter(isString) // remove undefined
     );
-    const fieldGroups = groupBy(params.fields, item => item.split('.')[0]);
+    const fieldGroups = mapValues(
+      groupBy(params.fields, item => item.split('.')[0]),
+      v => v.map(item => item.split('.')[1] ?? null)
+    );
 
     const connection = em ?? this.sqlConnection.manager;
     const query = connection
@@ -981,12 +999,25 @@ export class InnovationsService extends BaseService {
 
     const queryResult = await query.getManyAndCount();
 
-    // Optimization to only fetch users once
-    const usersMap = nestedObjects.has('owner')
-      ? await this.domainService.users.getUsersMap({
-          userIds: queryResult[0].map(i => i.ownerId).filter(isString)
-        })
-      : new Map();
+    // postHandlers - optimize to only fetch once. This means that the fields handled here aren't sortable but it would
+    // be really bad performant otherwise and for the names even worse.
+    const handlerMaps: {
+      [k in keyof typeof this.postHandlers]: Awaited<ReturnType<(typeof this.postHandlers)[k]>>;
+    } = {} as any; // initialization
+    for (const key of Object.keys(this.postHandlers) as (keyof typeof this.postHandlers)[]) {
+      const fields = fieldGroups[key];
+      // users is "different" to allow it working with multiple cases besides owner in the future
+      if (fields || (key === 'users' && nestedObjects.has('owner'))) {
+        handlerMaps[key] = (await this.postHandlers[key as keyof typeof handlerMaps](
+          domainContext,
+          queryResult[0],
+          fields as any, // should be safe since it's result from groupBy
+          connection
+        )) as any;
+      } else {
+        new Map();
+      }
+    }
 
     // Transform the entity into the response DTO
     return {
@@ -1003,11 +1034,11 @@ export class InnovationsService extends BaseService {
             }
             const handler = this.displayHandlers[key as keyof typeof this.displayHandlers];
             if (handler) {
-              res[key] = handler(item, value as any[], { usersMap }); // this any should be safe since it comes from the groupBy
+              res[key] = handler(item, value as any[], handlerMaps); // this any should be safe since it comes from the groupBy
             }
           } else {
             // Handle plain object directly from the view
-            res[key] = item[value[0] as keyof InnovationListView];
+            res[key] = item[key as keyof InnovationListView];
           }
         });
         return res;
@@ -1024,20 +1055,39 @@ export class InnovationsService extends BaseService {
       value: InnovationListChildrenType<k> | any
     ) => void;
   } = {
+    assessment: this.withAssessment.bind(this),
+    owner: this.withOwner.bind(this),
     support: this.withSupport.bind(this),
-    owner: this.withOwner.bind(this)
+    statistics: () => {}
   };
 
-  /**
-   * Add support information to the query
-   * @param query the innovation list view query
-   * @param organisationUnitId the organisation unit id to add the support
-   * @returns query with the support information
-   */
+  private withAssessment(
+    _domainContext: DomainContextType,
+    query: SelectQueryBuilder<InnovationListView>,
+    fields: InnovationListChildrenType<'assessment'>[] = ['id']
+  ): void {
+    if (fields.length) {
+      query.addSelect(fields.map(f => `assessment.${f}`)).leftJoin('innovation.assessment', 'assessment');
+    }
+  }
+
+  private withOwner(
+    _domainContext: DomainContextType,
+    query: SelectQueryBuilder<InnovationListView>,
+    fields: InnovationListChildrenType<'owner'>[] = ['id']
+  ): void {
+    if (fields.length) {
+      query.addSelect([
+        'innovation.ownerId',
+        ...(fields.includes('companyName') ? ['innovation.ownerCompanyName'] : [])
+      ]);
+    }
+  }
+
   private withSupport(
     domainContext: DomainContextType,
     query: SelectQueryBuilder<InnovationListView>,
-    fields: ('support.id' | 'support.status' | 'support.updatedAt')[] = ['support.id']
+    fields: InnovationListChildrenType<'support'>[] = ['id']
   ): void {
     if (fields.length) {
       if (!isAccessorDomainContextType(domainContext)) {
@@ -1047,24 +1097,66 @@ export class InnovationsService extends BaseService {
       }
 
       query
-        .addSelect(fields)
+        .addSelect(fields.map(f => `support.${f}`))
         .leftJoin('innovation.supports', 'support', 'support.organisation_unit_id = :organisationUnitId', {
           organisationUnitId: domainContext.organisation.organisationUnit.id
         });
     }
   }
+  //#endregion
 
-  private withOwner(
-    _domainContext: DomainContextType,
-    query: SelectQueryBuilder<InnovationListView>,
-    fields: ('owner.id' | 'owner.name' | 'owner.companyName')[] = ['owner.id']
-  ): void {
-    if (fields.length) {
-      query.addSelect([
-        'innovation.ownerId',
-        ...(fields.includes('owner.companyName') ? ['innovation.ownerCompanyName'] : [])
-      ]);
+  //#region post handlers
+  private readonly postHandlers = {
+    statistics: this.withStatistics.bind(this),
+    users: this.withUsers.bind(this)
+  };
+
+  // Maybe create a view for this in the future so it's reusable in other places...
+  private statisticsMap: {
+    [k in InnovationListChildrenType<'statistics'>]: string;
+  } = {
+    notifications: 'count(*)',
+    messages: "COUNT(case when context_type='MESSAGES' then 1 end)",
+    tasks:
+      "COUNT(case when context_detail IN ('TA01_TASK_CREATION_TO_INNOVATOR', 'TA06_TASK_REOPEN_TO_INNOVATOR') then 1 end)"
+  };
+  private async withStatistics(
+    domainContext: DomainContextType,
+    innovations: InnovationListView[],
+    fields: InnovationListChildrenType<'statistics'>[],
+    entityManager: EntityManager
+  ): Promise<Map<string, { [k in (typeof fields)[number]]: number }>> {
+    if (innovations.length ?? fields.length) {
+      const query = entityManager
+        .createQueryBuilder('notification', 'notification')
+        .select('notification.innovation_id', 'innovationId')
+        .innerJoin('notification_user', 'user', 'notification.id = user.notification_id')
+        .where('user.user_role_id = :domainContextRoleId', { domainContextRoleId: domainContext.currentRole.id })
+        .andWhere('notification.innovation_id IN (:...handlerInnovationIds)', {
+          handlerInnovationIds: innovations.map(i => i.id)
+        })
+        .andWhere('user.read_at IS NULL')
+        .groupBy('notification.innovation_id');
+
+      fields.forEach(field => {
+        query.addSelect(this.statisticsMap[field], field);
+      });
+
+      return new Map((await query.getRawMany()).map(item => [item.innovationId, item] as const));
+    } else {
+      return new Map();
     }
+  }
+
+  private async withUsers(
+    _domainContext: DomainContextType,
+    innovations: InnovationListView[],
+    _fields: unknown[],
+    _entityManager: EntityManager
+  ): ReturnType<DomainUsersService['getUsersMap']> {
+    return this.domainService.users.getUsersMap({
+      userIds: innovations.map(i => i.ownerId).filter(isString)
+    });
   }
   //#endregion
 
@@ -1332,12 +1424,37 @@ export class InnovationsService extends BaseService {
     [k in InnovationListJoinTypes]: (
       item: InnovationListView,
       fields: InnovationListChildrenType<k>[],
-      extra: { usersMap: Map<string, Awaited<ReturnType<DomainUsersService['getUsersList']>>[0]> }
+      postHandlers: { [k in keyof typeof this.postHandlers]: Awaited<ReturnType<(typeof this.postHandlers)[k]>> }
     ) => Partial<InnovationListFullResponseType[k]>;
   } = {
+    assessment: this.oneToOneDisplayMapping<'assessment'>('assessment').bind(this),
     support: this.displaySupport.bind(this),
-    owner: this.displayOwner.bind(this)
+    owner: this.displayOwner.bind(this),
+    statistics: this.displayStatistics.bind(this) // Finish the display of statistics
   };
+
+  /**
+   * Maps children fields from the view to the output on a 1:1.
+   *
+   * This can be used with both joins and nested objects (objects not used atm)
+   *
+   * @param child the element from the view we're mapping
+   * @returns the object for that element with all the selected fields
+   */
+  private oneToOneDisplayMapping<T extends keyof InnovationListView>(
+    child: T
+  ): (
+    item: InnovationListView,
+    fields: InnovationListChildrenType<'assessment'>[]
+  ) => Partial<InnovationListFullResponseType[T extends keyof InnovationListFullResponseType ? T : never]> {
+    return (item, fields) => {
+      const res = {} as any;
+      fields.forEach(field => {
+        res[field] = (item as any)[child]?.[field] ?? null;
+      });
+      return res;
+    };
+  }
 
   private displaySupport(
     item: InnovationListView,
@@ -1345,30 +1462,42 @@ export class InnovationsService extends BaseService {
   ): Partial<InnovationListFullResponseType['support']> {
     // support is handled differently to remove the nested array since it's only 1 element in this case
     return {
-      ...(fields.includes('support.status' as any) && {
+      ...(fields.includes('id') && { id: item.supports?.[0]?.id ?? null }),
+      ...(fields.includes('status') && {
         status: item.supports?.[0]?.status ?? InnovationSupportStatusEnum.UNASSIGNED
       }),
-      ...(fields.includes('support.updatedAt' as any) && { updatedAt: item.supports?.[0]?.updatedAt })
+      ...(fields.includes('updatedAt') && { updatedAt: item.supports?.[0]?.updatedAt })
     };
   }
 
   private displayOwner(
     item: InnovationListView,
     fields: InnovationListChildrenType<'owner'>[],
-    extra: { usersMap: Map<string, Awaited<ReturnType<DomainUsersService['getUsersList']>>[0]> }
+    extra: PickHandlerReturnType<typeof this.postHandlers, 'users'>
   ): Partial<InnovationListFullResponseType['owner']> {
     if (!item.ownerId) {
       return null;
     }
     return {
-      ...(fields.includes('owner.id') && { id: item.ownerId }),
-      ...(fields.includes('owner.name') && {
-        name: extra.usersMap.get(item.ownerId)?.displayName ?? null
+      ...(fields.includes('id') && { id: item.ownerId }),
+      ...(fields.includes('name') && {
+        name: extra.users.get(item.ownerId)?.displayName ?? null
       }),
-      ...(fields.includes('owner.companyName') && {
+      ...(fields.includes('companyName') && {
         companyName: item.ownerCompanyName ?? null
       })
     };
+  }
+
+  private displayStatistics(
+    item: InnovationListView,
+    fields: InnovationListChildrenType<'statistics'>[],
+    extra: PickHandlerReturnType<typeof this.postHandlers, 'statistics'>
+  ): Partial<InnovationListFullResponseType['statistics']> {
+    return fields.reduce((acc, field) => {
+      acc[field] = extra.statistics.get(item.id)?.[field] ?? 0;
+      return acc;
+    }, {} as any);
   }
   //#endregion
   //#endregion
