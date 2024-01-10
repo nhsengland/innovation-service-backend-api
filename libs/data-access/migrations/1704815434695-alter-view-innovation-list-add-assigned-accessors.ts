@@ -25,7 +25,7 @@ export class alterViewInnovationListAddAssignedAccessors implements MigrationInt
     ),
     engaging_units as (
       SELECT s.innovation_id, ou.id as unit_id, ou.name, ou.acronym, ou.organisation_id, 
-      '[' + STRING_AGG(CONVERT(VARCHAR(38), QUOTENAME(u.id, '"')), ',') + ']' as assigned_accessors
+      JSON_QUERY('[' + STRING_AGG(CONVERT(VARCHAR(38), QUOTENAME(u.id, '"')), ',') + ']') as assigned_accessors
       FROM organisation_unit ou
       INNER JOIN innovation_support s ON ou.id = s.organisation_unit_id AND s.status='ENGAGING'
       LEFT JOIN innovation_support_user su ON s.id = su.innovation_support_id
@@ -79,7 +79,5 @@ export class alterViewInnovationListAddAssignedAccessors implements MigrationInt
       `);
   }
 
-  public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`DROP VIEW innovation_list_view;`);
-  }
+  public async down(): Promise<void> {}
 }
