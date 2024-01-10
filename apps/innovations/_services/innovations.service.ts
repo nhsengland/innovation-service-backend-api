@@ -1032,12 +1032,6 @@ export class InnovationsService extends BaseService {
         const res = {} as any;
         Object.entries(fieldGroups).forEach(([key, value]) => {
           if (key in this.displayHandlers) {
-            if (key === 'value') {
-              // This will allow asking for support and getting all the default fields
-              throw new NotImplementedError(GenericErrorsEnum.NOT_IMPLEMENTED_ERROR, {
-                message: 'support for nested objects not implemented yet'
-              });
-            }
             const handler = this.displayHandlers[key as keyof typeof this.displayHandlers];
             if (handler) {
               res[key] = handler(item, value as any[], handlerMaps); // this any should be safe since it comes from the groupBy
