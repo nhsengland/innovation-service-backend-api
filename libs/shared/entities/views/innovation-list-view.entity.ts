@@ -69,7 +69,7 @@ export class InnovationListView {
   engagingOrganisations: { organisationId: string; name: string; acronym: string }[] | null;
 
   @Column({ name: 'engaging_units', type: 'simple-json' })
-  engagingUnits: { unitId: string; name: string; acronym: string }[] | null;
+  engagingUnits: { unitId: string; name: string; acronym: string; assignedAccessors: string[] | null }[] | null;
 
   @Column({ name: 'suggested_units', type: 'simple-json' })
   suggestedUnits: { unitId: string; name: string; acronym: string }[] | null;

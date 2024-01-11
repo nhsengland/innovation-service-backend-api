@@ -110,8 +110,13 @@ export type InnovationListSelectType =
   | 'statistics.tasks'
   | 'statistics.messages';
 
-export type InnovationListFullResponseType = InnovationListViewFields & {
+export type InnovationListFullResponseType = Omit<InnovationListViewFields, 'engagingUnits'> & {
   assessment: { id: string } | null;
+  engagingUnits:
+    | (Omit<NonNullable<InnovationListView['engagingUnits']>[number], 'assignedAccessors'> & {
+        assignedAccessors: UserWithRoleDTO[] | null;
+      })[]
+    | null;
   support: { status: InnovationSupportStatusEnum; updatedAt: Date | null };
   owner: { id: string; name: string | null; companyName: string | null } | null;
   statistics: { notifications: number; tasks: number; messages: number };
@@ -157,6 +162,8 @@ type InnovationListChildrenType<T extends InnovationListJoinTypes> = InnovationL
 type PickHandlerReturnType<T extends { [k: string]: any }, K extends keyof T> = {
   [k in K]: Awaited<ReturnType<T[k]>>;
 };
+
+type UserWithRoleDTO = { id: string; name: string | null }; // role: ServiceRoleEnum }; // the role ain't used yet
 
 @injectable()
 export class InnovationsService extends BaseService {
@@ -938,7 +945,6 @@ export class InnovationsService extends BaseService {
     const query = connection
       .createQueryBuilder(InnovationListView, 'innovation')
       // currently I'm only handling the root selects here, might change in the future. ie: withSupports add the selects
-      //.select(xpto.select.map(item => (item.includes('.') ? item : `innovation.${item}`)));
       .select(params.fields.filter(item => !item.includes('.')).map(item => `innovation.${item}`));
 
     // Special role constraints (maybe make handler in the future)
@@ -1006,8 +1012,8 @@ export class InnovationsService extends BaseService {
     } = {} as any; // initialization
     for (const key of Object.keys(this.postHandlers) as (keyof typeof this.postHandlers)[]) {
       const fields = fieldGroups[key];
-      // users is "different" to allow it working with multiple cases besides owner in the future
-      if (fields || (key === 'users' && nestedObjects.has('owner'))) {
+      // users is "different" to allow it working with multiple cases (owner, engagingUnits)
+      if (fields || (key === 'users' && (nestedObjects.has('owner') || fieldGroups['engagingUnits']))) {
         handlerMaps[key] = (await this.postHandlers[key as keyof typeof handlerMaps](
           domainContext,
           queryResult[0],
@@ -1025,13 +1031,7 @@ export class InnovationsService extends BaseService {
       data: queryResult[0].map(item => {
         const res = {} as any;
         Object.entries(fieldGroups).forEach(([key, value]) => {
-          if (nestedObjects.has(key)) {
-            if (key === 'value') {
-              // This will allow asking for support and getting all the default fields
-              throw new NotImplementedError(GenericErrorsEnum.NOT_IMPLEMENTED_ERROR, {
-                message: 'support for nested objects not implemented yet'
-              });
-            }
+          if (key in this.displayHandlers) {
             const handler = this.displayHandlers[key as keyof typeof this.displayHandlers];
             if (handler) {
               res[key] = handler(item, value as any[], handlerMaps); // this any should be safe since it comes from the groupBy
@@ -1154,10 +1154,18 @@ export class InnovationsService extends BaseService {
     _fields: unknown[],
     _entityManager: EntityManager
   ): ReturnType<DomainUsersService['getUsersMap']> {
+    const usersSet = new Set<string>();
+    // Add the owners and the engaging units accessors
+    innovations.forEach(i => {
+      [i.ownerId, ...(i.engagingUnits?.flatMap(u => u.assignedAccessors) || [])].filter(isString).forEach(u => {
+        usersSet.add(u);
+      });
+    });
     return this.domainService.users.getUsersMap({
-      userIds: innovations.map(i => i.ownerId).filter(isString)
+      userIds: [...usersSet]
     });
   }
+
   //#endregion
 
   //#region filter handlers
@@ -1421,13 +1429,15 @@ export class InnovationsService extends BaseService {
 
   //#region nested display handlers
   private displayHandlers: {
-    [k in InnovationListJoinTypes]: (
+    [k in InnovationListJoinTypes | 'engagingUnits']: (
+      // engagingUnits is a special case since it's not a join, this should become a "join" later but would imply further FE changes
       item: InnovationListView,
-      fields: InnovationListChildrenType<k>[],
+      fields: k extends InnovationListJoinTypes ? InnovationListChildrenType<k>[] : string[],
       postHandlers: { [k in keyof typeof this.postHandlers]: Awaited<ReturnType<(typeof this.postHandlers)[k]>> }
     ) => Partial<InnovationListFullResponseType[k]>;
   } = {
     assessment: this.oneToOneDisplayMapping<'assessment'>('assessment').bind(this),
+    engagingUnits: this.displayEngagingUnits.bind(this),
     support: this.displaySupport.bind(this),
     owner: this.displayOwner.bind(this),
     statistics: this.displayStatistics.bind(this) // Finish the display of statistics
@@ -1454,6 +1464,26 @@ export class InnovationsService extends BaseService {
       });
       return res;
     };
+  }
+
+  private displayEngagingUnits(
+    item: InnovationListView,
+    _fields: string[],
+    extra: PickHandlerReturnType<typeof this.postHandlers, 'users'>
+  ): Partial<InnovationListFullResponseType['engagingUnits']> {
+    // currently not doing any field selection, just replacing user names
+    return (
+      item.engagingUnits?.map(unit => ({
+        acronym: unit.acronym,
+        assignedAccessors:
+          unit.assignedAccessors?.map(userId => ({
+            id: userId,
+            name: extra.users.get(userId)?.displayName ?? null
+          })) ?? null,
+        name: unit.name,
+        unitId: unit.unitId
+      })) || null
+    );
   }
 
   private displaySupport(
