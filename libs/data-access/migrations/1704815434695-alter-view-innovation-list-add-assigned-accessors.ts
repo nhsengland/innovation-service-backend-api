@@ -1,6 +1,6 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class alterViewInnovationListAddAssignedAccessors implements MigrationInterface {
+export class alterViewInnovationListAddAssignedAccessors1704815434695 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
     CREATE OR ALTER VIEW innovation_list_view AS
