@@ -2,8 +2,11 @@
 // README at: https://github.com/devcontainers/templates/tree/main/src/ubuntu
 {
 	"name": "Ubuntu",
-	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"image": "mcr.microsoft.com/devcontainers/base:jammy",
+	"build": { "dockerfile": "Dockerfile" },
+	// Using Dockefile reference above to specify the platform as Azure Functions won't run properly on ARM64 
+	// See https://github.com/docker/roadmap/issues/384
+	// "image": "mcr.microsoft.com/devcontainers/base:jammy",	
+
 	"runArgs": ["--add-host=host.docker.internal:host-gateway"],
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	"features": {
