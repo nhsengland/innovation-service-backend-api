@@ -29,7 +29,7 @@ export class alterViewInnovationListAddAssignedAccessors1704815434695 implements
       FROM organisation_unit ou
       INNER JOIN innovation_support s ON ou.id = s.organisation_unit_id AND s.status='ENGAGING'
       LEFT JOIN innovation_support_user su ON s.id = su.innovation_support_id
-      LEFT JOIN user_role r ON r.id = su.user_role_id AND r.is_active = 1
+      LEFT JOIN user_role r ON r.id = su.user_role_id
       LEFT JOIN [user] u ON r.user_id = u.id AND u.status != 'DELETED'
       WHERE ou.deleted_at IS NULL
       GROUP BY s.innovation_id, ou.id, ou.name, ou.acronym, ou.organisation_id
