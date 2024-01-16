@@ -851,6 +851,10 @@ paths:
                     - name
                     - organisationId
                   additionalProperties: false
+                email:
+                  type: string
+                  format: email
+                  description: Email of the user.
               additionalProperties: false
       responses:
         "200":

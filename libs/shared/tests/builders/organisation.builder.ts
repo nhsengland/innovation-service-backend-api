@@ -1,7 +1,7 @@
+import { randAlpha, randCompanyName } from '@ngneat/falso';
+import type { EntityManager } from 'typeorm';
 import { OrganisationEntity } from '../../entities';
 import { OrganisationTypeEnum } from '../../enums';
-import { randCompanyName, randAlpha } from '@ngneat/falso';
-import type { EntityManager } from 'typeorm';
 import { BaseBuilder } from './base.builder';
 import type { TestOrganisationUnitType } from './organisation-unit.builder';
 
@@ -21,6 +21,7 @@ export class OrganisationBuilder extends BaseBuilder {
     super(entityManager);
 
     this.organisation = OrganisationEntity.new({
+      createdBy: '00000000-0000-0000-0000-000000000000',
       name: randCompanyName(),
       acronym: randAlpha({ length: 5 }).join('.'),
       isShadow: false,

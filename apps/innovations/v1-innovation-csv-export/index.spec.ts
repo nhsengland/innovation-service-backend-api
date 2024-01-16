@@ -3,6 +3,7 @@ import azureFunction from '.';
 import { InnovationSectionStatusEnum } from '@innovations/shared/enums';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@innovations/shared/tests';
 import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
+import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
 import type { ErrorResponseType } from '@innovations/shared/types';
 import { randText } from '@ngneat/falso';
 import { ExportFileService } from '../_services/export-file-service';
@@ -60,6 +61,7 @@ describe('v1-innovation-csv-export Suite', () => {
       expect(result.body).toStrictEqual(csv);
       expect(generateCSVMock).toHaveBeenCalledTimes(1);
       expect(generateCSVMock).toHaveBeenCalledWith(
+        DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
         'csv',
         scenario.users.johnInnovator.innovations.johnInnovation.name,
         body,

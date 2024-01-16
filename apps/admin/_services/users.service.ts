@@ -54,6 +54,7 @@ export class UsersService extends BaseService {
     data: {
       accountEnabled?: boolean;
       role?: { name: ServiceRoleEnum.ACCESSOR | ServiceRoleEnum.QUALIFYING_ACCESSOR; organisationId: string };
+      email?: string;
     },
     entityManager?: EntityManager
   ): Promise<{ id: string }> {
@@ -111,6 +112,10 @@ export class UsersService extends BaseService {
         await this.notifierService.send(context, NotifierTypeEnum.LOCK_USER, {
           identityId: dbUser.identityId
         });
+      }
+
+      if (data.email) {
+        await this.identityProviderService.updateUserEmail(dbUser.identityId, data.email);
       }
 
       // Remove cache entry.

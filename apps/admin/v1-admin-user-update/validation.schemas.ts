@@ -12,6 +12,7 @@ export const ParamsSchema = Joi.object<ParamsType>({
 export type BodyType = {
   accountEnabled?: boolean;
   role?: { name: ServiceRoleEnum.ACCESSOR | ServiceRoleEnum.QUALIFYING_ACCESSOR; organisationId: string };
+  email?: string;
 };
 
 export const BodySchema = Joi.object<BodyType>({
@@ -22,5 +23,6 @@ export const BodySchema = Joi.object<BodyType>({
       .required()
       .description('Name of the role.'),
     organisationId: Joi.string().guid().required().description('Id of the organisation.')
-  })
+  }),
+  email: Joi.string().email().description('Email of the user.')
 }).required();

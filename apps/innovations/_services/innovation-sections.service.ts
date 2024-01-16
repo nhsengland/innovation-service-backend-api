@@ -31,7 +31,11 @@ import {
   CurrentEvidenceType
 } from '@innovations/shared/schemas/innovation-record';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import { isAccessorDomainContextType, type DomainContextType } from '@innovations/shared/types';
+import {
+  isAccessorDomainContextType,
+  isAssessmentDomainContextType,
+  type DomainContextType
+} from '@innovations/shared/types';
 import { randomUUID } from 'crypto';
 import type { EntityManager } from 'typeorm';
 import type { InnovationFileService } from './innovation-file.service';
@@ -240,12 +244,11 @@ export class InnovationSectionsService extends BaseService {
       submittedBy = null;
     }
 
-    // Business Rule A/QAs can only see submitted sections
-    // TODO: this can use history table to retrieve the last submitted section from the document if we choose to present them something they could previously see.
+    // Business Rule A/QA/NAs can only see submitted sections
     const sectionHidden =
-      [ServiceRoleEnum.QUALIFYING_ACCESSOR, ServiceRoleEnum.ACCESSOR].includes(domainContext.currentRole.role) &&
+      (isAccessorDomainContextType(domainContext) || isAssessmentDomainContextType(domainContext)) &&
       dbSection?.status !== InnovationSectionStatusEnum.SUBMITTED;
-    const sectionData = this.getSectionData(document, sectionKey);
+    const sectionData = sectionHidden ? {} : this.getSectionData(document, sectionKey);
 
     return {
       id: dbSection?.id || null,
@@ -261,7 +264,7 @@ export class InnovationSectionsService extends BaseService {
             })
           }
         : null,
-      data: !sectionHidden ? sectionData : null,
+      data: sectionData,
       ...(filters.fields?.includes('tasks') && tasks ? { tasksIds: tasks?.map(task => task.id) } : {})
     };
   }
@@ -489,9 +492,10 @@ export class InnovationSectionsService extends BaseService {
     const output: Awaited<ReturnType<InnovationSectionsService['findAllSections']>> = [];
     for (const curSection of innovationSections) {
       const sectionInfo = sectionsInfoMap.get(curSection.section.section);
-      // A/QA can't see draft sections data
+      // A/QA/NA can't see draft sections data
       const currentSectionData =
-        sectionInfo?.status !== InnovationSectionStatusEnum.SUBMITTED && isAccessorDomainContextType(domainContext)
+        sectionInfo?.status !== InnovationSectionStatusEnum.SUBMITTED &&
+        (isAccessorDomainContextType(domainContext) || isAssessmentDomainContextType(domainContext))
           ? {}
           : curSection.data;
       if (sectionInfo) {

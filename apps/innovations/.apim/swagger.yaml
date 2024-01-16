@@ -915,6 +915,224 @@ paths:
             format: float
             maximum: 100
             default: 20
+        - name: order
+          in: query
+          required: false
+          schema:
+            type: object
+            properties: {}
+            additionalProperties:
+              type: string
+              enum:
+                - ASC
+                - DESC
+            default:
+              default: DESC
+        - name: careSettings
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - ACADEMIA
+                - ACUTE_TRUSTS_INPATIENT
+                - ACUTE_TRUSTS_OUTPATIENT
+                - AMBULANCE
+                - CARE_HOMES_CARE_SETTING
+                - END_LIFE_CARE
+                - ICS
+                - INDUSTRY
+                - LOCAL_AUTHORITY_EDUCATION
+                - MENTAL_HEALTH
+                - PHARMACY
+                - PRIMARY_CARE
+                - SOCIAL_CARE
+                - THIRD_SECTOR_ORGANISATIONS
+                - URGENT_AND_EMERGENCY
+                - OTHER
+        - name: categories
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - MEDICAL_DEVICE
+                - IN_VITRO_DIAGNOSTIC
+                - PHARMACEUTICAL
+                - DIGITAL
+                - AI
+                - EDUCATION
+                - PPE
+                - MODELS_CARE
+                - ESTATES_FACILITIES
+                - TRAVEL_TRANSPORT
+                - FOOD_NUTRITION
+                - DATA_MONITORING
+                - OTHER
+        - name: dateFilters
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                field:
+                  type: string
+                  enum:
+                    - submittedAt
+                    - updatedAt
+                    - support.updatedAt
+                startDate:
+                  type: string
+                  format: date-time
+                endDate:
+                  type: string
+                  format: date-time
+              required:
+                - field
+              additionalProperties: false
+        - name: diseasesAndConditions
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              maxLength: 100
+        - name: engagingOrganisations
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+        - name: fields
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - id
+                - name
+                - status
+                - groupedStatus
+                - submittedAt
+                - updatedAt
+                - careSettings
+                - categories
+                - countryName
+                - diseasesAndConditions
+                - involvedAACProgrammes
+                - keyHealthInequalities
+                - mainCategory
+                - otherCareSetting
+                - otherCategoryDescription
+                - postcode
+                - assessment.id
+                - engagingOrganisations
+                - engagingUnits
+                - suggestedOrganisations
+                - support.id
+                - support.status
+                - support.updatedAt
+                - owner.id
+                - owner.name
+                - owner.companyName
+                - statistics.notifications
+                - statistics.tasks
+                - statistics.messages
+            minItems: 1
+        - name: groupedStatuses
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - RECORD_NOT_SHARED
+                - AWAITING_NEEDS_ASSESSMENT
+                - NEEDS_ASSESSMENT
+                - AWAITING_SUPPORT
+                - RECEIVING_SUPPORT
+                - NO_ACTIVE_SUPPORT
+                - AWAITING_NEEDS_REASSESSMENT
+        - name: involvedAACProgrammes
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - No
+                - Health Innovation Network
+                - Artificial Intelligence in Health and Care Award
+                - Clinical Entrepreneur Programme
+                - Early Access to Medicines Scheme
+                - Innovation for Healthcare Inequalities Programme
+                - Innovation and Technology Payment Programme
+                - NHS Innovation Accelerator
+                - NHS Insights Prioritisation Programme
+                - Pathway Transformation Fund
+                - Rapid Uptake Products Programme
+                - Small Business Research Initiative for Healthcare
+                - Test beds
+        - name: keyHealthInequalities
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - MATERNITY
+                - SEVER_MENTAL_ILLNESS
+                - CHRONIC_RESPIRATORY_DISEASE
+                - EARLY_CANCER_DIAGNOSIS
+                - HYPERTENSION_CASE_FINDING
+                - NONE
+        - name: locations
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - England
+                - Scotland
+                - Wales
+                - Northern Ireland
+                - Based outside UK
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 200
+            nullable: true
+        - name: skip
+          in: query
+          required: false
+          schema:
+            type: number
+            format: float
+        - name: take
+          in: query
+          required: false
+          schema:
+            type: number
+            format: float
+            maximum: 100
+            default: 20
         - name: name
           in: query
           required: false
@@ -1598,6 +1816,8 @@ paths:
                   type: string
                   enum:
                     - submittedAt
+                    - updatedAt
+                    - support.updatedAt
                 startDate:
                   type: string
                   format: date-time
@@ -4043,7 +4263,7 @@ paths:
           required: false
           schema:
             type: string
-            maxLength: 50
+            maxLength: 100
       responses:
         "200":
           description: Success

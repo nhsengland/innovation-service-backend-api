@@ -3,15 +3,21 @@ import Joi from 'joi';
 import {
   InnovationGroupedStatusEnum,
   InnovationStatusEnum,
-  InnovationSupportStatusEnum
+  InnovationSupportStatusEnum,
+  ServiceRoleEnum
 } from '@innovations/shared/enums';
 import { JoiHelper, PaginationQueryParamsType } from '@innovations/shared/helpers';
 
+import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
 import { CurrentCatalogTypes, CurrentDocumentSchemaMap } from '@innovations/shared/schemas/innovation-record';
 import type { TypeFromArray } from '@innovations/shared/types';
 import { InnovationLocationEnum } from '../_enums/innovation.enums';
+import {
+  DateFilterFieldsType,
+  InnovationListFilters,
+  InnovationListSelectType
+} from '../_services/innovations.service';
 
-const DateFilterKeys = ['submittedAt'] as const;
 const FieldsKeys = ['assessment', 'supports', 'notifications', 'statistics', 'groupedStatus'] as const;
 const HasAccessThroughKeys = ['owner', 'collaborator'] as const;
 
@@ -25,7 +31,8 @@ enum orderFields {
   assessmentFinishedAt = 'assessmentFinishedAt'
 }
 
-export type QueryParamsType = PaginationQueryParamsType<orderFields> & {
+export type LegacyQueryParamsType = PaginationQueryParamsType<orderFields> & {
+  legacy: true;
   name?: string;
   mainCategories?: CurrentCatalogTypes.catalogCategory[];
   locations?: InnovationLocationEnum[];
@@ -39,7 +46,7 @@ export type QueryParamsType = PaginationQueryParamsType<orderFields> & {
   latestWorkedByMe?: boolean;
   hasAccessThrough?: TypeFromArray<typeof HasAccessThroughKeys>[];
   dateFilter?: {
-    field: TypeFromArray<typeof DateFilterKeys>;
+    field: DateFilterFieldsType;
     startDate?: Date;
     endDate?: Date;
   }[];
@@ -47,10 +54,18 @@ export type QueryParamsType = PaginationQueryParamsType<orderFields> & {
   fields?: TypeFromArray<typeof FieldsKeys>[];
 };
 
-export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
+export type NewQueryParamsType = PaginationQueryParamsType<InnovationListSelectType> &
+  InnovationListFilters & {
+    fields: InnovationListSelectType[];
+  };
+
+export type QueryParamsType = LegacyQueryParamsType | NewQueryParamsType;
+
+export const LegacyQueryParamsSchema = JoiHelper.PaginationJoiSchema({
   orderKeys: Object.keys(orderFields)
 })
-  .append<QueryParamsType>({
+  .append<LegacyQueryParamsType>({
+    legacy: JoiHelper.AppCustomJoi().boolean().forbidden().default(true),
     name: JoiHelper.AppCustomJoi().decodeURIString().trim().allow(null, '').optional(),
     mainCategories: JoiHelper.AppCustomJoi().stringArray().items(CurrentDocumentSchemaMap).optional(),
     locations: JoiHelper.AppCustomJoi()
@@ -111,7 +126,7 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
       .items(
         Joi.object({
           field: Joi.string()
-            .valid(...DateFilterKeys)
+            .valid(...DateFilterFieldsType)
             .required(),
           startDate: Joi.date().optional(),
           endDate: Joi.date().optional()
@@ -144,3 +159,105 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
   )
   .messages({ 'any.unknown': 'order field is not allowed when latestWorkedByMe is true' })
   .required();
+
+export const NewQueryParamsSchema = JoiHelper.PaginationJoiSchema({
+  orderKeys: Object.values(InnovationListSelectType)
+})
+  .append<NewQueryParamsType>({
+    careSettings: JoiHelper.AppCustomJoi()
+      .stringArray()
+      .items(Joi.string().valid(...CurrentCatalogTypes.catalogCareSettings))
+      .optional(),
+    categories: JoiHelper.AppCustomJoi()
+      .stringArray()
+      .items(Joi.string().valid(...CurrentCatalogTypes.catalogCategory))
+      .optional(),
+    dateFilters: JoiHelper.AppCustomJoi()
+      .stringArrayOfObjects()
+      .items(
+        Joi.object({
+          field: Joi.string()
+            .valid(...DateFilterFieldsType)
+            .required(),
+          startDate: Joi.date().optional(),
+          endDate: Joi.date().optional()
+        })
+      )
+      .optional(),
+    diseasesAndConditions: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().max(100)).optional(),
+    engagingOrganisations: JoiHelper.AppCustomJoi().stringArray().items(Joi.string()).optional(),
+    fields: JoiHelper.AppCustomJoi()
+      .stringArray()
+      .items(Joi.string().valid(...Object.values(InnovationListSelectType)))
+      .min(1)
+      .required(),
+    groupedStatuses: JoiHelper.AppCustomJoi()
+      .stringArray()
+      .items(
+        Joi.string().valid(
+          ...Object.values(InnovationGroupedStatusEnum).filter(v => v !== InnovationGroupedStatusEnum.WITHDRAWN)
+        )
+      ) // withdrawn is not allowed filter except for admin
+      .optional(),
+    involvedAACProgrammes: JoiHelper.AppCustomJoi()
+      .stringArray()
+      .items(Joi.string().valid(...CurrentCatalogTypes.catalogInvolvedAACProgrammes))
+      .optional(),
+    keyHealthInequalities: JoiHelper.AppCustomJoi()
+      .stringArray()
+      .items(Joi.string().valid(...CurrentCatalogTypes.catalogKeyHealthInequalities))
+      .optional(),
+    locations: JoiHelper.AppCustomJoi()
+      .stringArray()
+      .items(Joi.string().valid(...Object.values(InnovationLocationEnum)))
+      .optional(),
+    search: JoiHelper.AppCustomJoi().decodeURIString().trim().max(TEXTAREA_LENGTH_LIMIT.xs).allow(null, '').optional()
+  })
+  .when('$userType', {
+    switch: [
+      {
+        is: ServiceRoleEnum.INNOVATOR,
+        then: Joi.object({})
+      },
+      {
+        is: ServiceRoleEnum.ASSESSMENT,
+        then: Joi.object({
+          assignedToMe: Joi.boolean().optional()
+        })
+      },
+      {
+        is: ServiceRoleEnum.ACCESSOR,
+        then: Joi.object({
+          assignedToMe: Joi.boolean().optional(),
+          suggestedOnly: Joi.boolean().optional(),
+          supportStatuses: JoiHelper.AppCustomJoi()
+            .stringArray()
+            .items(Joi.string().valid(InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.CLOSED))
+            .optional()
+        })
+      },
+      {
+        is: ServiceRoleEnum.QUALIFYING_ACCESSOR,
+        then: Joi.object({
+          assignedToMe: Joi.boolean().optional(),
+          suggestedOnly: Joi.boolean().optional(),
+          supportStatuses: JoiHelper.AppCustomJoi()
+            .stringArray()
+            .items(Joi.string().valid(...Object.values(InnovationSupportStatusEnum)))
+            .optional()
+        })
+      },
+      {
+        is: ServiceRoleEnum.ADMIN,
+        then: Joi.object({
+          groupedStatuses: JoiHelper.AppCustomJoi()
+            .stringArray()
+            .items(Joi.string().valid(...Object.values(InnovationGroupedStatusEnum)))
+            .optional()
+        })
+      }
+    ]
+  })
+  .required();
+
+export const QueryParamsSchema = Joi.alternatives().try(NewQueryParamsSchema, LegacyQueryParamsSchema);
