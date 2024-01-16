@@ -16,10 +16,14 @@
 	},
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [],
+	"forwardPorts": [7071, 7072, 7073, 7074],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "npm install"
+	"postCreateCommand": "npm i -g azure-functions-core-tools@4 --unsafe-perm true && npm install",
+
+	"remoteEnv": {
+		"FUNCTIONS_CORE_TOOLS_TELEMETRY_OPTOUT" : "1"
+	}
 
 	// Configure tool-specific properties.
 	// "customizations": {},
