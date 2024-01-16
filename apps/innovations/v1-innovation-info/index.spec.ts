@@ -172,7 +172,7 @@ describe('v1-innovation-info Suite', () => {
     });
 
     it('should include owner organisations if he has', async () => {
-      const organisation = { name: randFullName(), size: null };
+      const organisation = { name: randFullName(), size: null, registrationNumber: null };
       mock.mockResolvedValueOnce({
         ...expectedWithOwner,
         owner: { ...expectedWithOwner.owner, organisation }

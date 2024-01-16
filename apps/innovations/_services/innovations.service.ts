@@ -1561,7 +1561,7 @@ export class InnovationsService extends BaseService {
       mobilePhone: null | string;
       isActive: boolean;
       lastLoginAt?: null | Date;
-      organisation?: { name: string; size: null | string };
+      organisation?: { name: string; size: null | string; registrationNumber: null | string };
     };
     lastEndSupportAt: null | Date;
     assessment?: null | {
@@ -1595,6 +1595,7 @@ export class InnovationsService extends BaseService {
         'innovationOwnerOrganisation.isShadow',
         'innovationOwnerOrganisation.name',
         'innovationOwnerOrganisation.size',
+        'innovationOwnerOrganisation.registrationNumber',
         'reassessmentRequests.id',
         'innovationGroupedStatus.groupedStatus',
         'collaborator.id'
@@ -1747,7 +1748,8 @@ export class InnovationsService extends BaseService {
                 !innovation.owner.serviceRoles[0].organisation.isShadow && {
                   organisation: {
                     name: innovation.owner.serviceRoles[0].organisation.name,
-                    size: innovation.owner.serviceRoles[0].organisation.size
+                    size: innovation.owner.serviceRoles[0].organisation.size,
+                    registrationNumber: innovation.owner.serviceRoles[0].organisation.registrationNumber
                   }
                 })
             }
