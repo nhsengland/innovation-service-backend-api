@@ -227,4 +227,77 @@ describe('Notifications / _handlers / idle support handler suite', () => {
       ]);
     });
   });
+
+  describe('AU10_ACCESSOR_IDLE_ENGAGING_SUPPORT_FOR_SIX_WEEKS', () => {
+    it('should send notifications for each innovations supporting accessors', async () => {
+      const handler = new IdleSupportAccessorHandler({} as any, {}, MocksHelper.mockContext());
+      await handler.run();
+
+      const emails = handler.emails.filter(e => e.templateId === 'AU10_ACCESSOR_IDLE_ENGAGING_SUPPORT_FOR_SIX_WEEKS');
+      const inApps = handler.inApp.filter(
+        a => a.context.detail === 'AU10_ACCESSOR_IDLE_ENGAGING_SUPPORT_FOR_SIX_WEEKS'
+      );
+
+      expect(emails).toStrictEqual([
+        {
+          templateId: 'AU10_ACCESSOR_IDLE_ENGAGING_SUPPORT_FOR_SIX_WEEKS',
+          notificationPreferenceType: 'AUTOMATIC',
+          to: DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor),
+          params: {
+            innovation_name: scenario.users.johnInnovator.innovations.johnInnovation.name
+          }
+        },
+        {
+          templateId: 'AU10_ACCESSOR_IDLE_ENGAGING_SUPPORT_FOR_SIX_WEEKS',
+          notificationPreferenceType: 'AUTOMATIC',
+          to: DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'healthAccessorRole'),
+          params: {
+            innovation_name: scenario.users.johnInnovator.innovations.johnInnovation.name
+          }
+        },
+        {
+          templateId: 'AU10_ACCESSOR_IDLE_ENGAGING_SUPPORT_FOR_SIX_WEEKS',
+          notificationPreferenceType: 'AUTOMATIC',
+          to: DTOsHelper.getRecipientUser(scenario.users.samAccessor),
+          params: {
+            innovation_name: scenario.users.johnInnovator.innovations.johnInnovation.name
+          }
+        }
+      ]);
+
+      expect(inApps).toStrictEqual([
+        {
+          context: {
+            detail: 'AU10_ACCESSOR_IDLE_ENGAGING_SUPPORT_FOR_SIX_WEEKS',
+            type: 'AUTOMATIC',
+            id: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByHealthOrgUnit.id
+          },
+          userRoleIds: [
+            scenario.users.aliceQualifyingAccessor.roles.qaRole.id,
+            scenario.users.jamieMadroxAccessor.roles.healthAccessorRole.id
+          ],
+          innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
+          params: {
+            innovationName: scenario.users.johnInnovator.innovations.johnInnovation.name,
+            supportId: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByHealthOrgUnit.id,
+            unitId: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id
+          }
+        },
+        {
+          context: {
+            detail: 'AU10_ACCESSOR_IDLE_ENGAGING_SUPPORT_FOR_SIX_WEEKS',
+            type: 'AUTOMATIC',
+            id: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByMedTechOrgUnit.id
+          },
+          userRoleIds: [scenario.users.samAccessor.roles.accessorRole.id],
+          innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
+          params: {
+            innovationName: scenario.users.johnInnovator.innovations.johnInnovation.name,
+            supportId: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByMedTechOrgUnit.id,
+            unitId: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id
+          }
+        }
+      ]);
+    });
+  });
 });
