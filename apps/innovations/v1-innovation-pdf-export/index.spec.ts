@@ -33,21 +33,24 @@ afterEach(() => {
 });
 
 describe('v1-innovation-pdf-export Suite', () => {
-  const body = [
-    {
-      sections: [
-        {
-          answers: [
-            { label: randText(), value: randText() },
-            { label: randText(), value: randText() }
-          ],
-          status: InnovationSectionStatusEnum.SUBMITTED,
-          section: randText()
-        }
-      ],
-      title: randText()
-    }
-  ];
+  const body = {
+    sections: [
+      {
+        sections: [
+          {
+            answers: [
+              { label: randText(), value: randText() },
+              { label: randText(), value: randText() }
+            ],
+            status: InnovationSectionStatusEnum.SUBMITTED,
+            section: randText()
+          }
+        ],
+        title: randText()
+      }
+    ],
+    startSectionIndex: 1
+  };
   describe('200', () => {
     it('should return the pdf', async () => {
       const result = await new AzureHttpTriggerBuilder()
