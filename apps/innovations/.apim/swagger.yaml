@@ -1364,6 +1364,8 @@ paths:
                           - RESEARCH_GOVERNANCE
                           - DATA_SHARING
                           - CONFIDENTIAL_PATIENT_DATA
+                          - APPROVAL_DATA_STUDIES
+                          - UNDERSTANDING_LAWS
                           - DO_NOT_NEED_SUPPORT
                       minItems: 1
                   additionalProperties: false
