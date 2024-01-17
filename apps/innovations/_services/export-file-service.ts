@@ -62,8 +62,6 @@ export class ExportFileService extends BaseService {
    * @returns the pdf file
    */
   private createPdf(innovationName: string, body: DocumentExportInboundDataType): Promise<Buffer> {
-    console.log('body');
-    console.log(body);
     const definition = this.buildPdfDocumentHeaderDefinition(innovationName, body);
     return this.createPDFFromDefinition(definition);
   }
