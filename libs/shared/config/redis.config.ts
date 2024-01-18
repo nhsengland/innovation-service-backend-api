@@ -5,12 +5,15 @@ import type { RedisClientOptions } from 'redis';
 const [url, ...parameters] = (process.env['REDIS_CACHE_CONNECTIONSTRING'] || '').split(',');
 const dict = parameters
   .map(s => s.match('([^=]+)=(.*)'))
-  .reduce((acc, m) => {
-    if (m && m[1] && m[2]) {
-      acc[m[1]] = m[2];
-    }
-    return acc;
-  }, {} as Record<string, string>);
+  .reduce(
+    (acc, m) => {
+      if (m && m[1] && m[2]) {
+        acc[m[1]] = m[2];
+      }
+      return acc;
+    },
+    {} as Record<string, string>
+  );
 
 export const REDIS_DEFAULT_CONNECTION: RedisClientOptions = Object.freeze<RedisClientOptions>({
   url: `redis${dict['ssl'] === 'True' ? 's' : ''}://${url}`,

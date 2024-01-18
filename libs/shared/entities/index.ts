@@ -83,7 +83,7 @@ export { LastSupportStatusViewEntity } from './views/last-support-status.view.en
 export { InnovationListView } from './views/innovation-list-view.entity';
 export { InnovationTaskDescriptionsViewEntity } from './views/innovation-task-descriptions.view.entity';
 export { SupportKPIViewEntity } from './views/support-kpi.view.entity';
-export { SupportLastActivityUpdateView} from './views/support-last-activity-update.view.entity';
+export { SupportLastActivityUpdateView } from './views/support-last-activity-update.view.entity';
 export { DocumentsStatisticsViewEntity } from './views/documents-statistics.view.entity';
 
 // Entities lists.
@@ -108,10 +108,7 @@ export const INNOVATION_ENTITIES = [
   InnovationUserTestEntity,
   InnovationEntity
 ];
-export const ORGANISATION_ENTITIES = [
-  OrganisationUnitEntity,
-  OrganisationEntity
-];
+export const ORGANISATION_ENTITIES = [OrganisationUnitEntity, OrganisationEntity];
 export const USER_ENTITIES = [
   AnnouncementEntity,
   AnnouncementUserEntity,
@@ -123,4 +120,12 @@ export const USER_ENTITIES = [
   UserRoleEntity,
   UserEntity
 ];
-export const VIEW_ENTITIES = [InnovationGroupedStatusViewEntity, InnovationTaskDescriptionsViewEntity, LastSupportStatusViewEntity, SupportKPIViewEntity, SupportLastActivityUpdateView, DocumentsStatisticsViewEntity, InnovationListView];
+export const VIEW_ENTITIES = [
+  InnovationGroupedStatusViewEntity,
+  InnovationTaskDescriptionsViewEntity,
+  LastSupportStatusViewEntity,
+  SupportKPIViewEntity,
+  SupportLastActivityUpdateView,
+  DocumentsStatisticsViewEntity,
+  InnovationListView
+];

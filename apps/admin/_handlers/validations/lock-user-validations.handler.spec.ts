@@ -117,7 +117,6 @@ describe('Admin / _handlers / validations / lock-user suite', () => {
     });
 
     it('should group the same validations as valid if all are valid', async () => {
-
       handler = new LockUserValidationsHandler({ userId: scenario.users.jamieMadroxAccessor.id });
       await handler.run();
 

@@ -1,10 +1,5 @@
 import type { EntityManager } from 'typeorm';
-import {
-  InnovationEntity,
-  InnovationSupportEntity,
-  OrganisationUnitEntity,
-  UserRoleEntity
-} from '../../entities';
+import { InnovationEntity, InnovationSupportEntity, OrganisationUnitEntity, UserRoleEntity } from '../../entities';
 import { InnovationSupportStatusEnum } from '../../enums';
 import { BaseBuilder } from './base.builder';
 import type { TestUserType } from './user.builder';
@@ -43,7 +38,6 @@ export class InnovationSupportBuilder extends BaseBuilder {
 
   setAccessors(accessors: TestUserType[]): this {
     for (const accessor of accessors) {
-
       const validRole = Object.values(accessor.roles).find(
         role => role.organisationUnit?.id === this.support.organisationUnit.id
       );

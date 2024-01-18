@@ -33,7 +33,7 @@ class V1InnovationSupportAvailableStatus {
         .verify();
       const domainContext = auth.getContext();
 
-      if(!isAccessorDomainContextType(domainContext)) throw new BadRequestError(UserErrorsEnum.USER_TYPE_INVALID);
+      if (!isAccessorDomainContextType(domainContext)) throw new BadRequestError(UserErrorsEnum.USER_TYPE_INVALID);
 
       const result = await innovationSupportsService.getValidSupportStatuses(
         params.innovationId,

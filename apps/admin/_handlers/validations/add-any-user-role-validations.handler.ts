@@ -4,13 +4,11 @@ import { ValidationsHandler } from './validations.handler';
 import type { AdminOperationEnum } from '../../_config/admin-operations.config';
 
 export class AddAnyUserRoleValidationsHandler extends ValidationsHandler<AdminOperationEnum.ADD_ANY_USER_ROLE> {
-
   constructor(inputData: AdminValidationsTemplatesType[AdminOperationEnum.ADD_ANY_USER_ROLE]) {
     super(inputData);
   }
 
   async run(): Promise<ValidationResult[]> {
-
     this.validations.push(
       ...(await this.validationsService.checkIfUserHasAnyRole(this.data.userId, [
         ServiceRoleEnum.ADMIN,
