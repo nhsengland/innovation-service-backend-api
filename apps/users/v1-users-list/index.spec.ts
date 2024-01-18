@@ -30,7 +30,7 @@ const usersList = {
       name: randFullName(),
       lockedAt: null,
       roles: [] as any,
-      email: randEmail(),
+      email: randEmail()
     }
   ]
 };

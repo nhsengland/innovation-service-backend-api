@@ -21,7 +21,8 @@
     "seeds": "ts-node ./node_modules/typeorm/cli.js migration:run -d libs/data-access/config/seeds-connection.config.ts",
     "postinstall": "node .scripts/postinstall.js",
     "prepare": "husky install",
-    "prettier": "prettier -w apps/ libs/",
+    "prettier:fix": "prettier -w apps/ libs/",
+    "prettier:check": "prettier -c apps/ libs/",
     "test": "jest --forceExit --runInBand",
     "test:coverage": "jest --runInBand --forceExit --coverage --collectCoverageFrom='apps/**/*.ts' --collectCoverageFrom='libs/**/*.ts'"
   },

@@ -89,7 +89,12 @@ export class JoiHelper {
     );
   }
 
-  static PaginationJoiSchema(data: { orderKeys: string[]; skip?: number; take?: number, maxTake?: number } ): Joi.ObjectSchema {
+  static PaginationJoiSchema(data: {
+    orderKeys: string[];
+    skip?: number;
+    take?: number;
+    maxTake?: number;
+  }): Joi.ObjectSchema {
     return Joi.object({
       skip: Joi.number().default(data.skip ?? 0),
       take: Joi.number()

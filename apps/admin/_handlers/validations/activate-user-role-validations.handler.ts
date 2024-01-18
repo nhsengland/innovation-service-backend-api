@@ -45,7 +45,6 @@ export class ActivateUserRoleValidationsHandler extends ValidationsHandler<Admin
         break;
 
       case ServiceRoleEnum.ACCESSOR:
-
         /*c8 ignore next 3*/
         if (!role.organisationUnit) {
           throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD);
@@ -59,10 +58,9 @@ export class ActivateUserRoleValidationsHandler extends ValidationsHandler<Admin
           ))
         );
         this.validations.push(
-          await this.validationsService.checkIfUserHasAnyAccessorRoleInOtherOrganisation(
-            this.data.userId,
-            [role.organisationUnit.id]
-          )
+          await this.validationsService.checkIfUserHasAnyAccessorRoleInOtherOrganisation(this.data.userId, [
+            role.organisationUnit.id
+          ])
         );
         this.validations.push(await this.validationsService.checkIfUnitIsActive(role.id));
         break;
@@ -81,10 +79,9 @@ export class ActivateUserRoleValidationsHandler extends ValidationsHandler<Admin
           ))
         );
         this.validations.push(
-          await this.validationsService.checkIfUserHasAnyAccessorRoleInOtherOrganisation(
-            this.data.userId,
-            [role.organisationUnit.id]
-          )
+          await this.validationsService.checkIfUserHasAnyAccessorRoleInOtherOrganisation(this.data.userId, [
+            role.organisationUnit.id
+          ])
         );
         this.validations.push(await this.validationsService.checkIfUnitIsActive(role.id));
         break;

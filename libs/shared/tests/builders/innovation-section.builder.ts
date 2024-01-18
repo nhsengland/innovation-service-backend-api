@@ -38,16 +38,15 @@ export class InnovationSectionBuilder extends BaseBuilder {
   }
 
   async save(): Promise<TestInnovationSectionType> {
-    const savedSection= await this.getEntityManager()
-      .getRepository(InnovationSectionEntity)
-      .save(this.section);
-    
-    const result = await this.getEntityManager().createQueryBuilder(InnovationSectionEntity, 'section')
+    const savedSection = await this.getEntityManager().getRepository(InnovationSectionEntity).save(this.section);
+
+    const result = await this.getEntityManager()
+      .createQueryBuilder(InnovationSectionEntity, 'section')
       .where('section.id = :sectionId', { sectionId: savedSection.id })
       .getOne();
 
-    if(!result) {
-      throw new Error('InnovationSectionBuilder::save:: Error saving/retriving section information.')
+    if (!result) {
+      throw new Error('InnovationSectionBuilder::save:: Error saving/retriving section information.');
     }
 
     return {
@@ -55,6 +54,6 @@ export class InnovationSectionBuilder extends BaseBuilder {
       status: result.status,
       section: result.section,
       updatedAt: result.updatedAt
-    }
+    };
   }
 }

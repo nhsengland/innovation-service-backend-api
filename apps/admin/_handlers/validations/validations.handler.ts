@@ -8,7 +8,7 @@ import type { AdminValidationsTemplatesType, ValidationResult } from '../../type
 export abstract class ValidationsHandler<AdminOperation extends AdminOperationEnum> {
   data: AdminValidationsTemplatesType[AdminOperation];
   validations: ValidationResult[];
-  
+
   protected validationsService = container.get<ValidationService>(SYMBOLS.ValidationService);
 
   constructor(data: AdminValidationsTemplatesType[AdminOperation]) {
@@ -18,4 +18,3 @@ export abstract class ValidationsHandler<AdminOperation extends AdminOperationEn
 
   abstract run(): Promise<ValidationResult[]>;
 }
-

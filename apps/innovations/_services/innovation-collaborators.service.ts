@@ -97,7 +97,7 @@ export class InnovationCollaboratorsService extends BaseService {
         ...collaboratorObj,
         email: data.email,
         innovation: InnovationEntity.new({ id: innovationId }),
-        createdBy: domainContext.id,
+        createdBy: domainContext.id
       });
 
       collaboratorId = collaborator.id;

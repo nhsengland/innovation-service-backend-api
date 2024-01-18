@@ -40,11 +40,9 @@ class V1InnovationPause {
 
       const domainContext = auth.getContext();
 
-      const result = await innovationsService.pauseInnovation(
-        domainContext,
-        params.innovationId,
-        { message: body.message }
-      );
+      const result = await innovationsService.pauseInnovation(domainContext, params.innovationId, {
+        message: body.message
+      });
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;
     } catch (error) {

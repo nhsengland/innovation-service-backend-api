@@ -1,6 +1,4 @@
-import type {
-  PhoneUserPreferenceEnum
-} from '@users/shared/enums';
+import type { PhoneUserPreferenceEnum } from '@users/shared/enums';
 import type { RoleType } from '@users/shared/types';
 
 export type ResponseDTO = {

@@ -8,7 +8,6 @@ export class AlterTableNotificationRemoveContextTypeConstraint1690199134929 impl
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-
     await queryRunner.query(`
       ALTER TABLE "notification" ADD CONSTRAINT "CK_notification_context_type" CHECK (context_type IN (
         'NEEDS_ASSESSMENT',

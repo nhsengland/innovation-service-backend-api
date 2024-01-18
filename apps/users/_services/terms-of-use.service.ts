@@ -80,9 +80,8 @@ export class TermsOfUseService extends BaseService {
     currentRole: ServiceRoleEnum | '',
     entityManager?: EntityManager
   ): Promise<{ id: string }> {
-
     const em = entityManager ?? this.sqlConnection.manager;
-    
+
     const dbTermsOfUse = await this.getActiveTermsOfUseInfo(requestUser, currentRole, em);
 
     // when terms of use haven't been released the above function already throws a not found error

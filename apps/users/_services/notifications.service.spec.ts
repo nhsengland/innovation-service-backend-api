@@ -384,7 +384,8 @@ describe('Users / _services / notifications service suite', () => {
         )
       ).rejects.toThrowError(
         new UnprocessableEntityError(GenericErrorsEnum.INVALID_PAYLOAD, {
-          message: 'Either dismissAll is true or at least one of the following fields must have elements: notificationIds, contextTypes, contextDetails, contextIds'
+          message:
+            'Either dismissAll is true or at least one of the following fields must have elements: notificationIds, contextTypes, contextDetails, contextIds'
         })
       );
     });
