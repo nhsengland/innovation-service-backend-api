@@ -71,7 +71,8 @@ export const NotificationTypes = {
     'AU06_ACCESSOR_IDLE_WAITING',
     'AU07_TRANSFER_ONE_WEEK_REMINDER_NEW_USER',
     'AU08_TRANSFER_ONE_WEEK_REMINDER_EXISTING_USER',
-    'AU09_TRANSFER_EXPIRED'
+    'AU09_TRANSFER_EXPIRED',
+    'AU10_ACCESSOR_IDLE_ENGAGING_SUPPORT_FOR_SIX_WEEKS'
   ] as const
 };
 export type NotificationTypes = typeof NotificationTypes;
