@@ -2,8 +2,11 @@
 // README at: https://github.com/devcontainers/templates/tree/main/src/ubuntu
 {
 	"name": "Ubuntu",
-	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"image": "mcr.microsoft.com/devcontainers/base:jammy",
+	"build": { "dockerfile": "Dockerfile" },
+	// Using Dockefile reference above to specify the platform as Azure Functions won't run properly on ARM64 
+	// See https://github.com/docker/roadmap/issues/384
+	// "image": "mcr.microsoft.com/devcontainers/base:jammy",	
+
 	"runArgs": ["--add-host=host.docker.internal:host-gateway"],
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	"features": {
@@ -16,10 +19,14 @@
 	},
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [],
+	"forwardPorts": [7071, 7072, 7073, 7074],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "npm install"
+	"postCreateCommand": "npm i -g azure-functions-core-tools@4 --unsafe-perm true && npm install",
+
+	"remoteEnv": {
+		"FUNCTIONS_CORE_TOOLS_TELEMETRY_OPTOUT" : "1"
+	}
 
 	// Configure tool-specific properties.
 	// "customizations": {},
