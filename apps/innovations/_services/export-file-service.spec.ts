@@ -38,37 +38,40 @@ describe('Export File Service Suite', () => {
           context,
           'csv',
           'innovation name',
-          [
-            {
-              title: 'title 1',
-              sections: [
-                {
-                  section: 'section 1',
-                  status: InnovationSectionStatusEnum.SUBMITTED,
-                  answers: [
-                    {
-                      label: 'question 1',
-                      value: 'value 1'
-                    },
-                    {
-                      label: 'question 2',
-                      value: 'value 2'
-                    }
-                  ]
-                },
-                {
-                  section: 'section 2',
-                  status: InnovationSectionStatusEnum.DRAFT,
-                  answers: [
-                    {
-                      label: 'question 3',
-                      value: 'value 3'
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
+          {
+            sections: [
+              {
+                title: 'title 1',
+                sections: [
+                  {
+                    section: 'section 1',
+                    status: InnovationSectionStatusEnum.SUBMITTED,
+                    answers: [
+                      {
+                        label: 'question 1',
+                        value: 'value 1'
+                      },
+                      {
+                        label: 'question 2',
+                        value: 'value 2'
+                      }
+                    ]
+                  },
+                  {
+                    section: 'section 2',
+                    status: InnovationSectionStatusEnum.DRAFT,
+                    answers: [
+                      {
+                        label: 'question 3',
+                        value: 'value 3'
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            startSectionIndex: 1
+          },
           { withIndex: false }
         );
         expect(csv).toStrictEqual(
@@ -86,37 +89,40 @@ describe('Export File Service Suite', () => {
           context,
           'csv',
           'innovation name',
-          [
-            {
-              title: 'title 1',
-              sections: [
-                {
-                  section: 'section 1',
-                  status: InnovationSectionStatusEnum.SUBMITTED,
-                  answers: [
-                    {
-                      label: 'question 1',
-                      value: 'value 1'
-                    },
-                    {
-                      label: 'question 2',
-                      value: 'value 2'
-                    }
-                  ]
-                },
-                {
-                  section: 'section 2',
-                  status: InnovationSectionStatusEnum.DRAFT,
-                  answers: [
-                    {
-                      label: 'question 3',
-                      value: 'value 3'
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
+          {
+            sections: [
+              {
+                title: 'title 1',
+                sections: [
+                  {
+                    section: 'section 1',
+                    status: InnovationSectionStatusEnum.SUBMITTED,
+                    answers: [
+                      {
+                        label: 'question 1',
+                        value: 'value 1'
+                      },
+                      {
+                        label: 'question 2',
+                        value: 'value 2'
+                      }
+                    ]
+                  },
+                  {
+                    section: 'section 2',
+                    status: InnovationSectionStatusEnum.DRAFT,
+                    answers: [
+                      {
+                        label: 'question 3',
+                        value: 'value 3'
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            startSectionIndex: 1
+          },
           { withIndex: true }
         );
         expect(csv).toStrictEqual(
@@ -136,37 +142,40 @@ describe('Export File Service Suite', () => {
           user,
           'csv',
           'innovation name',
-          [
-            {
-              title: 'title 1',
-              sections: [
-                {
-                  section: 'section 1',
-                  status: InnovationSectionStatusEnum.SUBMITTED,
-                  answers: [
-                    {
-                      label: 'question 1',
-                      value: 'value 1'
-                    },
-                    {
-                      label: 'question 2',
-                      value: 'value 2'
-                    }
-                  ]
-                },
-                {
-                  section: 'section 2',
-                  status: InnovationSectionStatusEnum.DRAFT,
-                  answers: [
-                    {
-                      label: 'question 3',
-                      value: 'value 3'
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
+          {
+            sections: [
+              {
+                title: 'title 1',
+                sections: [
+                  {
+                    section: 'section 1',
+                    status: InnovationSectionStatusEnum.SUBMITTED,
+                    answers: [
+                      {
+                        label: 'question 1',
+                        value: 'value 1'
+                      },
+                      {
+                        label: 'question 2',
+                        value: 'value 2'
+                      }
+                    ]
+                  },
+                  {
+                    section: 'section 2',
+                    status: InnovationSectionStatusEnum.DRAFT,
+                    answers: [
+                      {
+                        label: 'question 3',
+                        value: 'value 3'
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            startSectionIndex: 1
+          },
           { withIndex: false }
         );
         expect(csv).toStrictEqual(

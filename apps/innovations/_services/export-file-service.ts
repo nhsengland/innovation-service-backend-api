@@ -3,6 +3,7 @@ import PdfPrinter from 'pdfmake';
 import PdfMake from 'pdfmake/build/pdfmake';
 import PdfFonts from 'pdfmake/build/vfs_fonts';
 import type { TDocumentDefinitions } from 'pdfmake/interfaces';
+import { InnovationSectionStatusEnum } from '@innovations/shared/enums';
 
 import {
   buildDocumentFooterDefinition,
@@ -18,6 +19,35 @@ import {
   isAssessmentDomainContextType
 } from '@innovations/shared/types';
 import { BaseService } from './base.service';
+import Joi from 'joi';
+
+export type DocumentExportInboundDataType = { sections: InnovationAllSectionsType; startSectionIndex: number };
+export const DocumentExportBodySchema = Joi.object<DocumentExportInboundDataType>({
+  sections: Joi.array()
+    .items({
+      sections: Joi.array()
+        .items(
+          Joi.object({
+            section: Joi.string().required(),
+            status: Joi.string()
+              .valid(...Object.values(InnovationSectionStatusEnum), 'UNKNOWN')
+              .required(),
+            answers: Joi.array()
+              .items(
+                Joi.object({
+                  label: Joi.string().required(),
+                  value: Joi.string().allow(null, '').required()
+                })
+              )
+              .required()
+          })
+        )
+        .required(),
+      title: Joi.string().required()
+    })
+    .required(),
+  startSectionIndex: Joi.number().required()
+});
 
 @injectable()
 export class ExportFileService extends BaseService {
@@ -34,12 +64,12 @@ export class ExportFileService extends BaseService {
     domainContext: DomainContextType,
     type: T,
     innovationName: string,
-    body: InnovationAllSectionsType,
+    body: DocumentExportInboundDataType,
     options?: Parameters<ExportFileService['handlers'][T]>[2]
   ): Promise<ReturnType<ExportFileService['handlers'][T]>> {
     // sanitize draft information for A/QA/NAs
     if (isAccessorDomainContextType(domainContext) || isAssessmentDomainContextType(domainContext)) {
-      body.forEach(section => {
+      body.sections.forEach(section => {
         section.sections.forEach(subsection => {
           if (subsection.status === 'DRAFT') {
             subsection.answers = [
@@ -59,7 +89,7 @@ export class ExportFileService extends BaseService {
    * @param body questions and answers
    * @returns the pdf file
    */
-  private createPdf(innovationName: string, body: InnovationAllSectionsType): Promise<Buffer> {
+  private createPdf(innovationName: string, body: DocumentExportInboundDataType): Promise<Buffer> {
     const definition = this.buildPdfDocumentHeaderDefinition(innovationName, body);
     return this.createPDFFromDefinition(definition);
   }
@@ -72,12 +102,12 @@ export class ExportFileService extends BaseService {
    */
   private createCsv(
     _innovationName: string,
-    body: InnovationAllSectionsType,
+    body: DocumentExportInboundDataType,
     options?: { withIndex?: boolean }
   ): string {
     // Add headers
     const header = ['Section', 'Subsection', 'Question', 'Answer'];
-    const data = body.flatMap((section, sectionIndex) =>
+    const data = body.sections.flatMap((section, sectionIndex) =>
       section.sections.flatMap((subsection, subsectionIndex) =>
         subsection.answers.map(question => [
           options?.withIndex ? `${sectionIndex + 1} ${section.title}` : `${section.title}`,
@@ -123,7 +153,7 @@ export class ExportFileService extends BaseService {
 
   private buildPdfDocumentHeaderDefinition(
     innovationName: string,
-    body: InnovationAllSectionsType
+    body: DocumentExportInboundDataType
   ): TDocumentDefinitions {
     const documentDefinition = {
       header: buildDocumentHeaderDefinition(),
@@ -132,8 +162,8 @@ export class ExportFileService extends BaseService {
       styles: buildDocumentStylesDefinition()
     };
 
-    let sectionNumber = 1;
-    body.forEach(entry => {
+    let sectionNumber = body.startSectionIndex;
+    body.sections.forEach(entry => {
       documentDefinition.content.push({
         text: `${sectionNumber}. ${entry.title}`,
         style: 'sectionTitle',

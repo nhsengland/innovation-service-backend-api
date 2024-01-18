@@ -1873,49 +1873,59 @@ paths:
         content:
           application/json:
             schema:
-              type: array
-              items:
-                type: object
-                properties:
-                  sections:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        section:
-                          type: string
-                        status:
-                          type: string
-                          enum:
-                            - NOT_STARTED
-                            - DRAFT
-                            - SUBMITTED
-                            - UNKNOWN
-                        answers:
-                          type: array
-                          items:
-                            type: object
-                            properties:
-                              label:
-                                type: string
-                              value:
-                                type: string
-                                nullable: true
-                            required:
-                              - label
-                              - value
-                            additionalProperties: false
-                      required:
-                        - section
-                        - status
-                        - answers
-                      additionalProperties: false
-                  title:
-                    type: string
-                required:
-                  - sections
-                  - title
-                additionalProperties: false
+              type: object
+              properties:
+                sections:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      sections:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            section:
+                              type: string
+                            status:
+                              type: string
+                              enum:
+                                - NOT_STARTED
+                                - DRAFT
+                                - SUBMITTED
+                                - UNKNOWN
+                            answers:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  label:
+                                    type: string
+                                  value:
+                                    type: string
+                                    nullable: true
+                                required:
+                                  - label
+                                  - value
+                                additionalProperties: false
+                          required:
+                            - section
+                            - status
+                            - answers
+                          additionalProperties: false
+                      title:
+                        type: string
+                    required:
+                      - sections
+                      - title
+                    additionalProperties: false
+                startSectionIndex:
+                  type: number
+                  format: float
+              required:
+                - sections
+                - startSectionIndex
+              additionalProperties: false
       responses:
         "200":
           description: Ok.
@@ -2743,49 +2753,59 @@ paths:
         content:
           application/json:
             schema:
-              type: array
-              items:
-                type: object
-                properties:
-                  sections:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        section:
-                          type: string
-                        status:
-                          type: string
-                          enum:
-                            - NOT_STARTED
-                            - DRAFT
-                            - SUBMITTED
-                            - UNKNOWN
-                        answers:
-                          type: array
-                          items:
-                            type: object
-                            properties:
-                              label:
-                                type: string
-                              value:
-                                type: string
-                                nullable: true
-                            required:
-                              - label
-                              - value
-                            additionalProperties: false
-                      required:
-                        - section
-                        - status
-                        - answers
-                      additionalProperties: false
-                  title:
-                    type: string
-                required:
-                  - sections
-                  - title
-                additionalProperties: false
+              type: object
+              properties:
+                sections:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      sections:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            section:
+                              type: string
+                            status:
+                              type: string
+                              enum:
+                                - NOT_STARTED
+                                - DRAFT
+                                - SUBMITTED
+                                - UNKNOWN
+                            answers:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  label:
+                                    type: string
+                                  value:
+                                    type: string
+                                    nullable: true
+                                required:
+                                  - label
+                                  - value
+                                additionalProperties: false
+                          required:
+                            - section
+                            - status
+                            - answers
+                          additionalProperties: false
+                      title:
+                        type: string
+                    required:
+                      - sections
+                      - title
+                    additionalProperties: false
+                startSectionIndex:
+                  type: number
+                  format: float
+              required:
+                - sections
+                - startSectionIndex
+              additionalProperties: false
       responses:
         "200":
           description: Ok.

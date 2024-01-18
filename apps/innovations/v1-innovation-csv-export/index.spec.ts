@@ -33,21 +33,24 @@ afterEach(() => {
 });
 
 describe('v1-innovation-csv-export Suite', () => {
-  const body = [
-    {
-      sections: [
-        {
-          answers: [
-            { label: randText(), value: randText() },
-            { label: randText(), value: randText() }
-          ],
-          status: InnovationSectionStatusEnum.SUBMITTED,
-          section: randText()
-        }
-      ],
-      title: randText()
-    }
-  ];
+  const body = {
+    sections: [
+      {
+        sections: [
+          {
+            answers: [
+              { label: randText(), value: randText() },
+              { label: randText(), value: randText() }
+            ],
+            status: InnovationSectionStatusEnum.SUBMITTED,
+            section: randText()
+          }
+        ],
+        title: randText()
+      }
+    ],
+    startSectionIndex: 1
+  };
   describe('200', () => {
     it('should return the csv', async () => {
       const result = await new AzureHttpTriggerBuilder()
