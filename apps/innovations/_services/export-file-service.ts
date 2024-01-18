@@ -3,6 +3,7 @@ import PdfPrinter from 'pdfmake';
 import PdfMake from 'pdfmake/build/pdfmake';
 import PdfFonts from 'pdfmake/build/vfs_fonts';
 import type { TDocumentDefinitions } from 'pdfmake/interfaces';
+import { InnovationSectionStatusEnum } from '@innovations/shared/enums';
 
 import {
   buildDocumentFooterDefinition,
@@ -18,8 +19,35 @@ import {
   isAssessmentDomainContextType
 } from '@innovations/shared/types';
 import { BaseService } from './base.service';
+import Joi from 'joi';
 
 export type DocumentExportInboundDataType = { sections: InnovationAllSectionsType; startSectionIndex: number };
+export const DocumentExportBodySchema = Joi.object<DocumentExportInboundDataType>({
+  sections: Joi.array()
+    .items({
+      sections: Joi.array()
+        .items(
+          Joi.object({
+            section: Joi.string().required(),
+            status: Joi.string()
+              .valid(...Object.values(InnovationSectionStatusEnum), 'UNKNOWN')
+              .required(),
+            answers: Joi.array()
+              .items(
+                Joi.object({
+                  label: Joi.string().required(),
+                  value: Joi.string().allow(null, '').required()
+                })
+              )
+              .required()
+          })
+        )
+        .required(),
+      title: Joi.string().required()
+    })
+    .required(),
+  startSectionIndex: Joi.number().required()
+});
 
 @injectable()
 export class ExportFileService extends BaseService {
