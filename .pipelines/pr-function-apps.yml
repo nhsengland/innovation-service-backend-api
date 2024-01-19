@@ -99,22 +99,22 @@ steps:
   displayName: 'Run Seeds against the Container'
 
 - script: |
-    npm run app:test --app=innovations
+    npm run app:test --function-app=innovations
   displayName: 'Run innovations tests'
   condition: eq(variables.testsReady, 'true')
 
 - script: |
-    npm run app:test --app=users
+    npm run app:test --function-app=users
   displayName: 'Run users tests'
   condition: eq(variables.testsReady, 'true')
 
 - script: |
-    npm run app:test --app=admin
+    npm run app:test --function-app=admin
   displayName: 'Run admin tests'
   condition: eq(variables.testsReady, 'true')
 
 - script: |
-    npm run app:test --app=notifications
+    npm run app:test --function-app=notifications
   displayName: 'Run notifications tests'
   condition: eq(variables.testsReady, 'true')
 

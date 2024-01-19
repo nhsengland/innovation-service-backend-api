@@ -111,8 +111,8 @@ Choose and start the application trought the "Run and Debug" menu (when using vs
 
 ## Linting an app
 ``` bash 
-$ npm run app:lint --app=innovations
-$ npm run app:lint --app=users
+$ npm run app:lint --function-app=innovations
+$ npm run app:lint --function-app=users
 $ ...
 
 ```
@@ -122,8 +122,8 @@ Before being able to run tests, you must run migratins on the "tests" DB. Then y
 ``` bash
 $ npm run migrations:test # Only needs to be runned once.
 
-$ npm run app:test --app=innovations
-$ npm run app:test --app=users
+$ npm run app:test --function-app=innovations
+$ npm run app:test --function-app=users
 $ ...
 
 ```
