@@ -27,7 +27,7 @@ describe('Notifications / _handlers / user-email-address-updated suite', () => {
       await testEmails(UserEmailAddressUpdatedHandler, 'AP08_USER_EMAIL_ADDRESS_UPDATED', {
         notificationPreferenceType: 'ADMIN',
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
-        recipients: [DTOsHelper.getRecipientUser(user)],
+        recipients: [DTOsHelper.getRecipientUser(user), { email: oldEmail, displayname: user.name }],
         inputData: { identityId: user.identityId, oldEmail, newEmail },
         outputData: {
           new_email_address: newEmail
