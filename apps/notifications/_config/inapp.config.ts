@@ -266,4 +266,5 @@ export type InAppTemplatesType = {
     unitName: string;
     innovationName: string;
   };
+  AP08_USER_EMAIL_ADDRESS_UPDATED: Record<string, never>;
 };

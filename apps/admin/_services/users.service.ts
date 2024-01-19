@@ -115,7 +115,13 @@ export class UsersService extends BaseService {
       }
 
       if (data.email) {
+        const userInfo = await this.identityProviderService.getUserInfo(dbUser.identityId);
         await this.identityProviderService.updateUserEmail(dbUser.identityId, data.email);
+        await this.notifierService.send(context, NotifierTypeEnum.USER_EMAIL_ADDRESS_UPDATED, {
+          identityId: dbUser.identityId,
+          oldEmail: userInfo.email,
+          newEmail: data.email
+        });
       }
 
       // Remove cache entry.
