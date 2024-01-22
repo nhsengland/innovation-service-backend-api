@@ -3,16 +3,16 @@
 {
 	"name": "Ubuntu",
 	"build": { "dockerfile": "Dockerfile" },
-	// Using Dockefile reference above to specify the platform as Azure Functions won't run properly on ARM64 
+	// Using Dockefile reference above to specify the platform as Azure Functions won't run properly on ARM64
 	// See https://github.com/docker/roadmap/issues/384
-	// "image": "mcr.microsoft.com/devcontainers/base:jammy",	
+	// "image": "mcr.microsoft.com/devcontainers/base:jammy",
 
 	"runArgs": ["--add-host=host.docker.internal:host-gateway"],
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	"features": {
 		"ghcr.io/devcontainers/features/node:1": {
 			"nodeGypDependencies": true,
-			"version": "14",
+			"version": "18",
 			"nvmVersion": "latest"
 		},
 		"ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
