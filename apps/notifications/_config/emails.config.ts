@@ -81,6 +81,7 @@ export const EmailTemplates = {
   // ADMIN
   AP03_USER_LOCKED_TO_LOCKED_USER: '95751f8f-ba65-436c-baa6-dabca6ca7acf',
   AP07_UNIT_INACTIVATED_TO_ENGAGING_INNOVATIONS: '9e18194c-99fd-408e-89a6-47616e647c27',
+  AP08_USER_EMAIL_ADDRESS_UPDATED: '170a57ee-718d-44f5-b836-ba9c77de89f4',
 
   // ACCOUNT
   CA01_ACCOUNT_CREATION_OF_INNOVATOR: 'd4bd42fa-a3a2-4eb3-ab71-844caba26044',
@@ -411,6 +412,9 @@ export type EmailTemplatesType = {
     unit_name: string;
     innovation_name: string;
     support_url: string;
+  };
+  AP08_USER_EMAIL_ADDRESS_UPDATED: {
+    new_email_address: string;
   };
 
   // Account

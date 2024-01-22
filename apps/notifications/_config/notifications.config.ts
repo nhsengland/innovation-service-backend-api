@@ -46,6 +46,7 @@ import {
   UnitInactivatedHandler,
   UnitKPIHandler
 } from '../_handlers';
+import { UserEmailAddressUpdatedHandler } from '../_handlers/admin/user-email-address-updated.handler';
 
 export const NOTIFICATIONS_CONFIG = {
   // Account
@@ -345,6 +346,14 @@ export const NOTIFICATIONS_CONFIG = {
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.UNIT_INACTIVATED]>({
       unitId: Joi.string().guid().required(),
       completedInnovationIds: Joi.array().items(Joi.string().guid().required()).required()
+    }).required()
+  },
+  [NotifierTypeEnum.USER_EMAIL_ADDRESS_UPDATED]: {
+    handler: UserEmailAddressUpdatedHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.USER_EMAIL_ADDRESS_UPDATED]>({
+      identityId: Joi.string().guid().required(),
+      oldEmail: Joi.string().required(),
+      newEmail: Joi.string().required()
     }).required()
   },
 
