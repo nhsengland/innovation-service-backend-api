@@ -3,7 +3,7 @@ Explanation here
 
 
 ## Requirements
-- Node 14
+- Node 18
 - Docker and Docker compose
 
 ### Instructions to install docker + docker compose on a linux ubuntu flavored environment.
@@ -41,7 +41,7 @@ DB_NAME=innovationdb
 DB_TESTS_HOST=localhost
 DB_TESTS_USER=sa
 DB_TESTS_PWD=Pass@word
-DB_TESTS_NAME=innovationdb
+DB_TESTS_NAME=tests
 
 ADMIN_OID={secret}
 ```

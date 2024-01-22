@@ -8,9 +8,9 @@ parameters:
 
 steps:
 - task: NodeTool@0
-  displayName: 'Install Node 14'
+  displayName: 'Install Node 18'
   inputs:
-    versionSpec: '14.x'
+    versionSpec: '18.x'
 
 - task: CmdLine@2
   displayName: 'Build APP'
