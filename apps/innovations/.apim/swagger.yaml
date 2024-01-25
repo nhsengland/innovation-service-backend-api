@@ -12,51 +12,75 @@ paths:
       tags:
         - "[v1] Innovation Activities Log"
       parameters:
-        - name: innovationId
-          in: path
-          required: true
-          description: Innovation Id.
-          schema:
-            type: string
         - name: skip
           in: query
           required: false
-          description: The number of records to skip.
           schema:
-            type: integer
-            minimum: 0
+            type: number
+            format: float
         - name: take
           in: query
           required: false
-          description: The number of records to take.
           schema:
-            type: integer
-            minimum: 1
+            type: number
+            format: float
             maximum: 100
+            default: 20
         - name: order
           in: query
           required: false
-          description: The order of the records.
           schema:
-            type: string
+            type: object
+            properties: {}
+            additionalProperties:
+              type: string
+              enum:
+                - ASC
+                - DESC
+            default:
+              default: DESC
         - name: activityTypes
           in: query
           required: false
-          description: Activity types of the logs.
           schema:
-            type: string
-        - name: startDate
+            type: array
+            items:
+              type: string
+              enum:
+                - INNOVATION_MANAGEMENT
+                - INNOVATION_RECORD
+                - NEEDS_ASSESSMENT
+                - SUPPORT
+                - COMMENTS
+                - TASKS
+                - THREADS
+        - name: dateFilters
           in: query
           required: false
-          description: Activity Logs that start after this date.
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                field:
+                  type: string
+                  enum:
+                    - createdAt
+                startDate:
+                  type: string
+                  format: date-time
+                endDate:
+                  type: string
+                  format: date-time
+              required:
+                - field
+              additionalProperties: false
+        - name: innovationId
+          in: path
+          required: true
           schema:
             type: string
-        - name: endDate
-          in: query
-          required: false
-          description: Activity Logs that start before this date.
-          schema:
-            type: string
+            format: uuid
       responses:
         "200":
           description: Success
