@@ -16,14 +16,12 @@ paths:
           in: query
           required: false
           schema:
-            type: number
-            format: float
+            type: integer
         - name: take
           in: query
           required: false
           schema:
-            type: number
-            format: float
+            type: integer
             maximum: 100
             default: 20
         - name: order
@@ -929,14 +927,12 @@ paths:
           in: query
           required: false
           schema:
-            type: number
-            format: float
+            type: integer
         - name: take
           in: query
           required: false
           schema:
-            type: number
-            format: float
+            type: integer
             maximum: 100
             default: 20
         - name: order
@@ -1147,14 +1143,12 @@ paths:
           in: query
           required: false
           schema:
-            type: number
-            format: float
+            type: integer
         - name: take
           in: query
           required: false
           schema:
-            type: number
-            format: float
+            type: integer
             maximum: 100
             default: 20
         - name: name
@@ -2316,14 +2310,12 @@ paths:
           in: query
           required: false
           schema:
-            type: number
-            format: float
+            type: integer
         - name: take
           in: query
           required: false
           schema:
-            type: number
-            format: float
+            type: integer
             maximum: 100
             default: 20
         - name: order
@@ -4281,14 +4273,12 @@ paths:
           in: query
           required: false
           schema:
-            type: number
-            format: float
+            type: integer
         - name: take
           in: query
           required: false
           schema:
-            type: number
-            format: float
+            type: integer
             maximum: 100
             default: 20
         - name: order
@@ -5033,14 +5023,12 @@ paths:
           in: query
           required: false
           schema:
-            type: number
-            format: float
+            type: integer
         - name: take
           in: query
           required: false
           schema:
-            type: number
-            format: float
+            type: integer
             maximum: 100
             default: 20
         - name: order
