@@ -140,6 +140,11 @@ export type InAppTemplatesType = {
     innovationName: string;
     supportId: string; // really not required atm
   };
+  AU10_ACCESSOR_IDLE_ENGAGING_SUPPORT_FOR_SIX_WEEKS: {
+    innovationName: string;
+    supportId: string;
+    unitId: string;
+  };
   // Automatic / Transfer
   AU08_TRANSFER_ONE_WEEK_REMINDER_EXISTING_USER: {
     innovationName: string;
@@ -261,4 +266,5 @@ export type InAppTemplatesType = {
     unitName: string;
     innovationName: string;
   };
+  AP08_USER_EMAIL_ADDRESS_UPDATED: Record<string, never>;
 };

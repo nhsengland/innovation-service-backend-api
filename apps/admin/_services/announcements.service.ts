@@ -37,7 +37,7 @@ export class AnnouncementsService extends BaseService {
     }[];
   }> {
     const em = entityManager ?? this.sqlConnection.manager;
-    
+
     const [dbAnnouncements, dbCount] = await em
       .createQueryBuilder(AnnouncementEntity, 'announcement')
       .select([
@@ -67,7 +67,10 @@ export class AnnouncementsService extends BaseService {
     };
   }
 
-  async getAnnouncementInfo(announcementId: string, entityManager?: EntityManager): Promise<{
+  async getAnnouncementInfo(
+    announcementId: string,
+    entityManager?: EntityManager
+  ): Promise<{
     id: string;
     title: string;
     userRoles: ServiceRoleEnum[];

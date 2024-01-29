@@ -46,7 +46,7 @@ describe('Admin / _handlers / validations / add-user-role suite', () => {
     it.each([
       [ServiceRoleEnum.ADMIN, ValidationRuleEnum.UserHasAnyAdminRole],
       [ServiceRoleEnum.INNOVATOR, ValidationRuleEnum.UserHasAnyInnovatorRole],
-      [ServiceRoleEnum.ASSESSMENT, ValidationRuleEnum.UserHasAnyAssessmentRole],
+      [ServiceRoleEnum.ASSESSMENT, ValidationRuleEnum.UserHasAnyAssessmentRole]
     ])('should check if user has any %s role', async (_roleType, rule) => {
       expect(handler.validations.some(v => v.rule === rule)).toBeTruthy();
     });
@@ -65,7 +65,7 @@ describe('Admin / _handlers / validations / add-user-role suite', () => {
     it.each([
       [ServiceRoleEnum.ADMIN, ValidationRuleEnum.UserHasAnyAdminRole],
       [ServiceRoleEnum.INNOVATOR, ValidationRuleEnum.UserHasAnyInnovatorRole],
-      [ServiceRoleEnum.QUALIFYING_ACCESSOR, ValidationRuleEnum.UserHasAnyQualifyingAccessorRole],
+      [ServiceRoleEnum.QUALIFYING_ACCESSOR, ValidationRuleEnum.UserHasAnyQualifyingAccessorRole]
     ])('should check if user has any %s role', async (_roleType, rule) => {
       expect(handler.validations.some(v => v.rule === rule)).toBeTruthy();
     });
@@ -77,9 +77,7 @@ describe('Admin / _handlers / validations / add-user-role suite', () => {
     });
 
     it('should check if user already has a role in the same unit', async () => {
-      expect(
-        handler.validations.some(v => v.rule === ValidationRuleEnum.UserAlreadyHasRoleInUnit)
-      ).toBeTruthy();
+      expect(handler.validations.some(v => v.rule === ValidationRuleEnum.UserAlreadyHasRoleInUnit)).toBeTruthy();
     });
   });
 
@@ -96,7 +94,7 @@ describe('Admin / _handlers / validations / add-user-role suite', () => {
     it.each([
       [ServiceRoleEnum.ADMIN, ValidationRuleEnum.UserHasAnyAdminRole],
       [ServiceRoleEnum.INNOVATOR, ValidationRuleEnum.UserHasAnyInnovatorRole],
-      [ServiceRoleEnum.ACCESSOR, ValidationRuleEnum.UserHasAnyAccessorRole],
+      [ServiceRoleEnum.ACCESSOR, ValidationRuleEnum.UserHasAnyAccessorRole]
     ])('should check if user has any %s role', async (_roleType, rule) => {
       expect(handler.validations.some(v => v.rule === rule)).toBeTruthy();
     });
@@ -108,9 +106,7 @@ describe('Admin / _handlers / validations / add-user-role suite', () => {
     });
 
     it('should check if user already has a role in the same unit', async () => {
-      expect(
-        handler.validations.some(v => v.rule === ValidationRuleEnum.UserAlreadyHasRoleInUnit)
-      ).toBeTruthy();
+      expect(handler.validations.some(v => v.rule === ValidationRuleEnum.UserAlreadyHasRoleInUnit)).toBeTruthy();
     });
   });
 
@@ -123,9 +119,7 @@ describe('Admin / _handlers / validations / add-user-role suite', () => {
           role: roleType
         });
 
-        await expect(() => handler.run()).rejects.toThrowError(
-          new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD)
-        );
+        await expect(() => handler.run()).rejects.toThrowError(new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD));
       }
     );
   });

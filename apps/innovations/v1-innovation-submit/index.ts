@@ -38,10 +38,7 @@ class V1InnovationSubmit {
 
       const domainContext = auth.getContext();
 
-      const result = await innovationsService.submitInnovation(
-        domainContext,
-        params.innovationId
-      );
+      const result = await innovationsService.submitInnovation(domainContext, params.innovationId);
       context.res = ResponseHelper.Ok<ResponseDTO>({
         id: result.id,
         status: result.status

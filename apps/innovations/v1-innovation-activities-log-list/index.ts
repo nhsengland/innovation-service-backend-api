@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import type { AuthorizationService } from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { CustomContextType } from '@innovations/shared/types';
@@ -67,74 +67,7 @@ export default openApi(V1InnovationsActivitiesLogList.httpTrigger as AzureFuncti
     operationId: 'v1-innovation-activities-log-list',
     description: 'Get activities log list of an Innovation',
     tags: ['[v1] Innovation Activities Log'],
-    parameters: [
-      {
-        name: 'innovationId',
-        in: 'path',
-        required: true,
-        description: 'Innovation Id.',
-        schema: {
-          type: 'string'
-        }
-      },
-      {
-        name: 'skip',
-        in: 'query',
-        required: false,
-        description: 'The number of records to skip.',
-        schema: {
-          type: 'integer',
-          minimum: 0
-        }
-      },
-      {
-        name: 'take',
-        in: 'query',
-        required: false,
-        description: 'The number of records to take.',
-        schema: {
-          type: 'integer',
-          minimum: 1,
-          maximum: 100
-        }
-      },
-      {
-        name: 'order',
-        in: 'query',
-        required: false,
-        description: 'The order of the records.',
-        schema: {
-          type: 'string'
-        }
-      },
-      {
-        name: 'activityTypes',
-        in: 'query',
-        required: false,
-        description: 'Activity types of the logs.',
-        schema: {
-          type: 'string'
-        }
-      },
-      {
-        name: 'startDate',
-        in: 'query',
-        required: false,
-        description: 'Activity Logs that start after this date.',
-        schema: {
-          type: 'string'
-        }
-      },
-      {
-        name: 'endDate',
-        in: 'query',
-        required: false,
-        description: 'Activity Logs that start before this date.',
-        schema: {
-          type: 'string'
-        }
-      }
-    ],
+    parameters: SwaggerHelper.paramJ2S( { query: QueryParamsSchema, path: ParamsSchema }),
     responses: {
       200: {
         description: 'Success',

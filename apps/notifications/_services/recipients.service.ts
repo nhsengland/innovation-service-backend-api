@@ -734,13 +734,13 @@ export class RecipientsService extends BaseService {
   }
 
   /**
-   * returns the engaging supports that haven't had an interaction in n days, repeats every m days afterwards
+   * returns the engaging supports that haven't had an interaction in n days, repeats every m days afterwards (if m is defined)
    * @param days number of idle days to check (default: 90)
-   * @param repeat repeat the notification every n days (default: 30)
+   * @param repeat repeat the notification every n days (if defined)
    */
   async idleEngagingSupports(
     days = 90,
-    repeat = 30,
+    repeat?: number,
     entityManager?: EntityManager
   ): Promise<{ innovationId: string; unitId: string; supportId: string }[]> {
     const em = entityManager ?? this.sqlConnection.manager;
@@ -748,9 +748,15 @@ export class RecipientsService extends BaseService {
       .createQueryBuilder(InnovationSupportEntity, 'support')
       .select(['support.id', 'lastActivityUpdate.innovationId', 'lastActivityUpdate.organisationUnitId'])
       .innerJoin('support.lastActivityUpdate', 'lastActivityUpdate')
-      .where('support.status = :status', { status: InnovationSupportStatusEnum.ENGAGING })
-      .andWhere('DATEDIFF(day, lastActivityUpdate.lastUpdate, GETDATE()) >= :days', { days })
-      .andWhere('DATEDIFF(day, lastActivityUpdate.lastUpdate, GETDATE()) % :repeat = 0', { repeat });
+      .where('support.status = :status', { status: InnovationSupportStatusEnum.ENGAGING });
+
+    if (repeat) {
+      query
+        .andWhere('DATEDIFF(day, lastActivityUpdate.lastUpdate, GETDATE()) >= :days', { days })
+        .andWhere('DATEDIFF(day, lastActivityUpdate.lastUpdate, GETDATE()) % :repeat = 0', { repeat });
+    } else {
+      query.andWhere('DATEDIFF(day, lastActivityUpdate.lastUpdate, GETDATE()) = :days', { days });
+    }
 
     const rows = await query.getMany();
     return rows.map(row => ({

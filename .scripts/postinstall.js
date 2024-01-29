@@ -5,6 +5,6 @@ if (process.env.PRE_INSTALL == "1" || process.platform == "win32") {
   const { execSync } = require("child_process");
 
   fs.readdirSync("./apps").forEach((app) => {
-    execSync(`npm run app:configure --app=${app}`);
+    execSync(`npm run app:configure --function-app=${app}`);
   });
 }

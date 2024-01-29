@@ -21,6 +21,11 @@ export type NotifierTemplatesType = {
     unitId: string;
     completedInnovationIds: string[];
   };
+  [NotifierTypeEnum.USER_EMAIL_ADDRESS_UPDATED]: {
+    identityId: string;
+    oldEmail: string;
+    newEmail: string;
+  };
 
   // Documents
   [NotifierTypeEnum.INNOVATION_DOCUMENT_UPLOADED]: {

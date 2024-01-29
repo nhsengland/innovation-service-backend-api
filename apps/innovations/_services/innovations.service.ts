@@ -1561,7 +1561,7 @@ export class InnovationsService extends BaseService {
       mobilePhone: null | string;
       isActive: boolean;
       lastLoginAt?: null | Date;
-      organisation?: { name: string; size: null | string };
+      organisation?: { name: string; size: null | string; registrationNumber: null | string };
     };
     lastEndSupportAt: null | Date;
     assessment?: null | {
@@ -1595,6 +1595,7 @@ export class InnovationsService extends BaseService {
         'innovationOwnerOrganisation.isShadow',
         'innovationOwnerOrganisation.name',
         'innovationOwnerOrganisation.size',
+        'innovationOwnerOrganisation.registrationNumber',
         'reassessmentRequests.id',
         'innovationGroupedStatus.groupedStatus',
         'collaborator.id'
@@ -1747,7 +1748,8 @@ export class InnovationsService extends BaseService {
                 !innovation.owner.serviceRoles[0].organisation.isShadow && {
                   organisation: {
                     name: innovation.owner.serviceRoles[0].organisation.name,
-                    size: innovation.owner.serviceRoles[0].organisation.size
+                    size: innovation.owner.serviceRoles[0].organisation.size,
+                    registrationNumber: innovation.owner.serviceRoles[0].organisation.registrationNumber
                   }
                 })
             }
@@ -2207,7 +2209,10 @@ export class InnovationsService extends BaseService {
 
   async getInnovationActivitiesLog(
     innovationId: string,
-    filters: { activityTypes?: ActivityTypeEnum[]; startDate?: string; endDate?: string },
+    filters: {
+      activityTypes?: ActivityTypeEnum[];
+      dateFilters?: { field: 'createdAt'; startDate?: Date; endDate?: Date }[];
+    },
     pagination: PaginationQueryParamsType<'createdAt'>,
     entityManager?: EntityManager
   ): Promise<{
@@ -2241,15 +2246,25 @@ export class InnovationsService extends BaseService {
         activityTypes: filters.activityTypes
       });
     }
-    if (filters.startDate) {
-      query.andWhere('activityLog.createdAt >= :startDate', { startDate: filters.startDate });
-    }
-    if (filters.endDate) {
-      // This is needed because default TimeStamp for a DD/MM/YYYY date is 00:00:00
-      const beforeDateWithTimestamp = new Date(filters.endDate);
-      beforeDateWithTimestamp.setDate(beforeDateWithTimestamp.getDate() + 1);
 
-      query.andWhere('activityLog.createdAt < :endDate', { endDate: beforeDateWithTimestamp });
+    if (filters.dateFilters && filters.dateFilters.length > 0) {
+      const dateFilterKeyMap = new Map([['createdAt', 'activityLog.createdAt']]);
+
+      for (const filter of filters.dateFilters) {
+        const filterKey = dateFilterKeyMap.get(filter.field);
+
+        if (filter.startDate) {
+          query.andWhere(`${filterKey} >= :startDate`, { startDate: filter.startDate });
+        }
+
+        if (filter.endDate) {
+          // This is needed because default TimeStamp for a DD/MM/YYYY date is 00:00:00
+          const beforeDateWithTimestamp = new Date(filter.endDate);
+          beforeDateWithTimestamp.setDate(beforeDateWithTimestamp.getDate() + 1);
+
+          query.andWhere(`${filterKey} < :endDate`, { endDate: beforeDateWithTimestamp });
+        }
+      }
     }
 
     // Pagination and ordering

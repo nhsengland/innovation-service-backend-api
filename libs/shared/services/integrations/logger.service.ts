@@ -3,7 +3,7 @@ import { injectable } from 'inversify';
 
 @injectable()
 export class LoggerService {
-  private runningLocally = process.env['LOCAL_MODE'] || process.env['JEST_WORKER_ID'] || false;
+  private runningLocally = process.env['LOCAL_MODE'] || process.env['NODE_ENV'] === 'test' || false;
 
   constructor() {
     if (!this.runningLocally) {
@@ -21,7 +21,7 @@ export class LoggerService {
 
   log(message: string, additionalInformation?: any): void {
     if (this.runningLocally) {
-      if (!process.env['JEST_WORKER_ID']) {
+      if (process.env['NODE_ENV'] !== 'test') {
         console.log('[LOG]: ', message, additionalInformation);
       }
       return;
@@ -36,7 +36,7 @@ export class LoggerService {
 
   error(message: string, additionalInformation?: any): void {
     if (this.runningLocally) {
-      if (!process.env['JEST_WORKER_ID']) {
+      if (process.env['NODE_ENV'] !== 'test') {
         console.error('[ERROR]: ', message, additionalInformation);
       }
       return;

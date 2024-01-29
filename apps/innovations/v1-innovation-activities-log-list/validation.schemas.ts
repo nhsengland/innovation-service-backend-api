@@ -6,6 +6,9 @@ enum orderFields {
   createdAt = 'createdAt'
 }
 
+export const DateFilterFieldsType = ['createdAt'] as const;
+export type DateFilterFieldsType = (typeof DateFilterFieldsType)[number];
+
 export type ParamsType = {
   innovationId: string;
 };
@@ -15,8 +18,11 @@ export const ParamsSchema = Joi.object<ParamsType>({
 
 export type QueryParamsType = PaginationQueryParamsType<orderFields> & {
   activityTypes?: ActivityTypeEnum[];
-  startDate?: string;
-  endDate?: string;
+  dateFilters?: {
+    field: DateFilterFieldsType;
+    startDate?: Date;
+    endDate?: Date;
+  }[];
 };
 export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
   orderKeys: Object.keys(orderFields)
@@ -26,7 +32,17 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
       .stringArray()
       .items(Joi.string().valid(...Object.values(ActivityTypeEnum)))
       .optional(),
-    startDate: JoiHelper.AppCustomJoi().decodeURIDate().optional(),
-    endDate: JoiHelper.AppCustomJoi().decodeURIDate().optional()
+    dateFilters: JoiHelper.AppCustomJoi()
+      .stringArrayOfObjects()
+      .items(
+        Joi.object({
+          field: Joi.string()
+            .valid(...DateFilterFieldsType)
+            .required(),
+          startDate: Joi.date().optional(),
+          endDate: Joi.date().optional()
+        })
+      )
+      .optional()
   })
   .required();

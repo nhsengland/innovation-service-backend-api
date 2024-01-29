@@ -356,7 +356,8 @@ describe('Admin / _services / announcements service suite', () => {
 
       await sut.deleteAnnouncement(announcement.id, em);
 
-      const dbAnnouncement = await em.createQueryBuilder(AnnouncementEntity, 'announcement')
+      const dbAnnouncement = await em
+        .createQueryBuilder(AnnouncementEntity, 'announcement')
         .where('announcement.id = :announcementId', { announcementId: announcement.id })
         .withDeleted()
         .getOne();

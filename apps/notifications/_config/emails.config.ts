@@ -45,6 +45,7 @@ export const EmailTemplates = {
   AU04_SUPPORT_KPI_REMINDER: 'e1f0a2bc-3b15-4733-ba89-c0d5c9fec38a',
   AU05_SUPPORT_KPI_OVERDUE: '5fe24d48-8def-457d-a81f-56750f38c508',
   AU06_ACCESSOR_IDLE_WAITING: '34f06061-18a1-4b5c-9c35-1759192ff055',
+  AU10_ACCESSOR_IDLE_ENGAGING_SUPPORT_FOR_SIX_WEEKS: '8cb2a4b3-92bd-42fa-b8c4-4597e75eae6c',
   // AUTOMATIC / TRANSFER
   AU07_TRANSFER_ONE_WEEK_REMINDER_NEW_USER: 'eae90e2b-4f1f-45d5-a7b3-6af9e328a786',
   AU08_TRANSFER_ONE_WEEK_REMINDER_EXISTING_USER: 'd1a40cf5-85ae-4b0d-ba53-28b0bc374284',
@@ -80,6 +81,7 @@ export const EmailTemplates = {
   // ADMIN
   AP03_USER_LOCKED_TO_LOCKED_USER: '95751f8f-ba65-436c-baa6-dabca6ca7acf',
   AP07_UNIT_INACTIVATED_TO_ENGAGING_INNOVATIONS: '9e18194c-99fd-408e-89a6-47616e647c27',
+  AP08_USER_EMAIL_ADDRESS_UPDATED: '170a57ee-718d-44f5-b836-ba9c77de89f4',
 
   // ACCOUNT
   CA01_ACCOUNT_CREATION_OF_INNOVATOR: 'd4bd42fa-a3a2-4eb3-ab71-844caba26044',
@@ -291,6 +293,10 @@ export type EmailTemplatesType = {
     thread_url: string;
   };
 
+  AU10_ACCESSOR_IDLE_ENGAGING_SUPPORT_FOR_SIX_WEEKS: {
+    innovation_name: string;
+  };
+
   // Automatic / Transfer
   AU07_TRANSFER_ONE_WEEK_REMINDER_NEW_USER: {
     innovation_name: string;
@@ -406,6 +412,9 @@ export type EmailTemplatesType = {
     unit_name: string;
     innovation_name: string;
     support_url: string;
+  };
+  AP08_USER_EMAIL_ADDRESS_UPDATED: {
+    new_email_address: string;
   };
 
   // Account

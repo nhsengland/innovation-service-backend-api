@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { randUuid } from '@ngneat/falso';
+import { WEEK_IN_DAYS } from '@notifications/shared/constants';
 import {
   ActivityLogEntity,
   InnovationEntity,
@@ -930,6 +931,19 @@ describe('Notifications / _services / recipients service suite', () => {
     it('returns empty array of idle innovations if there are no innovations', async () => {
       const res = await sut.idleEngagingSupports(30, 30, em);
       expect(res).toHaveLength(0);
+    });
+
+    it('returns innovations if last given support was 6 weeks ago', async () => {
+      const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+      const support = innovation.supports.supportByHealthOrgUnit;
+      const dateSixWeeksAgo = new Date(Date.now() - 6 * WEEK_IN_DAYS * 24 * 60 * 60 * 1000);
+      await em.update(InnovationSupportEntity, { id: support.id }, { updatedAt: dateSixWeeksAgo });
+      await em.delete(InnovationSupportLogEntity, {
+        innovation: { id: innovation.id },
+        organisationUnit: { id: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id }
+      });
+      const res = await sut.idleEngagingSupports(6 * WEEK_IN_DAYS, 0, em);
+      expect(res).toHaveLength(1);
     });
 
     it('returns innovations if last status was updated 30 days ago', async () => {

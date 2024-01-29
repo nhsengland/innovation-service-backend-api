@@ -42,11 +42,11 @@ export class JoiHelper {
           return typeof value !== 'string'
             ? { value }
             : {
-                value: value
-                  .replace(/(^,+)|(,+$)/gm, '')
-                  .split(',')
-                  .filter(item => item)
-              };
+              value: value
+                .replace(/(^,+)|(,+$)/gm, '')
+                .split(',')
+                .filter(item => item)
+            };
         }
       },
 
@@ -89,10 +89,18 @@ export class JoiHelper {
     );
   }
 
-  static PaginationJoiSchema(data: { orderKeys: string[]; skip?: number; take?: number, maxTake?: number } ): Joi.ObjectSchema {
+  static PaginationJoiSchema(data: {
+    orderKeys: string[];
+    skip?: number;
+    take?: number;
+    maxTake?: number;
+  }): Joi.ObjectSchema {
     return Joi.object({
-      skip: Joi.number().default(data.skip ?? 0),
+      skip: Joi.number()
+        .integer()
+        .default(data.skip ?? 0),
       take: Joi.number()
+        .integer()
         .max(data.maxTake ?? 100)
         .default(data.take ?? 20),
       order: this.AppCustomJoi()

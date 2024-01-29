@@ -21,10 +21,10 @@ if [ -n "$CHANGES" ]; then
 
   for APP in $APPS; do
     echo "Running lint for $APP"
-    npm run app:lint --app=$APP -- --quiet 
+    npm run app:lint --function-app=$APP -- --quiet 
     echo "Running tests for $APP (TODO)"
     #echo "Running build for $APP"
-    #npm run app:build --app=$APP
+    #npm run app:build --function-app=$APP
   done
 else
   echo "No changes detected in apps or libs. Skipping affected tests."

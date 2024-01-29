@@ -102,19 +102,19 @@ export class OrganisationsService extends BaseService {
       .where('userRole.organisation_id = :organisationId', { organisationId: organisation.id })
       .getMany();
 
-    const unitUserCounts = onlyActiveUsers ?
-     new Map(
-      (await organisation.organisationUnits).map(u => [
-        u.id,
-        organisationUserRoles.filter(ur => ur.organisationUnitId === u.id && ur.isActive).length
-      ])
-    ) :
-     new Map(
-      (await organisation.organisationUnits).map(u => [
-        u.id,
-        organisationUserRoles.filter(ur => ur.organisationUnitId === u.id).length
-      ])
-    );
+    const unitUserCounts = onlyActiveUsers
+      ? new Map(
+          (await organisation.organisationUnits).map(u => [
+            u.id,
+            organisationUserRoles.filter(ur => ur.organisationUnitId === u.id && ur.isActive).length
+          ])
+        )
+      : new Map(
+          (await organisation.organisationUnits).map(u => [
+            u.id,
+            organisationUserRoles.filter(ur => ur.organisationUnitId === u.id).length
+          ])
+        );
 
     const organisationUnits = await Promise.all(
       (await organisation.organisationUnits).map(async unit => ({

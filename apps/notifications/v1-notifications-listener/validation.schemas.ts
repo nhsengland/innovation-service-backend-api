@@ -20,6 +20,6 @@ export const MessageSchema = Joi.object<MessageType>({
       .valid(...Object.values(NotifierTypeEnum))
       .required(),
 
-    params: Joi.object().required(),
+    params: Joi.object().required()
   }).required()
 }).required();

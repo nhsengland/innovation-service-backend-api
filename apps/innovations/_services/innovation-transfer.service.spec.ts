@@ -129,13 +129,10 @@ describe('Innovations / _services / innovation transfer suite', () => {
     });
 
     it('should throw a not found error when the transfer is not found', async () => {
-      await expect(() =>
-        sut.getPendingInnovationTransferInfo(
-          randUuid(),
-          em
-        )
-      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_TRANSFER_NOT_FOUND));
-    })
+      await expect(() => sut.getPendingInnovationTransferInfo(randUuid(), em)).rejects.toThrowError(
+        new NotFoundError(InnovationErrorsEnum.INNOVATION_TRANSFER_NOT_FOUND)
+      );
+    });
   });
 
   describe('getInnovationTransferInfo', () => {

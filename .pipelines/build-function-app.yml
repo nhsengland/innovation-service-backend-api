@@ -8,17 +8,17 @@ parameters:
 
 steps:
 - task: NodeTool@0
-  displayName: 'Install Node 14'
+  displayName: 'Install Node 18'
   inputs:
-    versionSpec: '14.x'
+    versionSpec: '18.x'
 
 - task: CmdLine@2
   displayName: 'Build APP'
   inputs:
     script: |
       npm install &&
-      npm run app:configure --app=${{parameters.appName}} &&
-      npm run app:build --app=${{parameters.appName}} &&
+      npm run app:configure --function-app=${{parameters.appName}} &&
+      npm run app:build --function-app=${{parameters.appName}} &&
       cp -r node_modules dist/apps/${{parameters.appName}}
 
 - ${{ if eq(parameters.hasApim, true) }}:

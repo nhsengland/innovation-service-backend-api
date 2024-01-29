@@ -649,7 +649,7 @@ describe('Innovations / _services / innovations suite', () => {
       const result = await sut.getInnovationActivitiesLog(
         innovation.id,
         {
-          startDate: new Date('10/10/2020').toISOString()
+          dateFilters: [{ field: 'createdAt', startDate: new Date('10/10/2020') }]
         },
         {
           skip: 0,
@@ -676,7 +676,7 @@ describe('Innovations / _services / innovations suite', () => {
       const result = await sut.getInnovationActivitiesLog(
         innovation.id,
         {
-          endDate: new Date('10/10/2020').toISOString()
+          dateFilters: [{ field: 'createdAt', endDate: new Date('10/10/2020') }]
         },
         {
           skip: 0,

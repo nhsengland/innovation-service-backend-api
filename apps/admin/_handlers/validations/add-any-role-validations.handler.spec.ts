@@ -10,8 +10,10 @@ describe('Admin / _handlers / validations / add-any-role suite', () => {
   const testsHelper = new TestsHelper();
   const scenario = testsHelper.getCompleteScenario();
 
-  const canHaveAssessmentOrAccessorRoleSpy = jest
-    .spyOn(ValidationService.prototype, 'checkIfUserCanHaveAssessmentOrAccessorRole')
+  const canHaveAssessmentOrAccessorRoleSpy = jest.spyOn(
+    ValidationService.prototype,
+    'checkIfUserCanHaveAssessmentOrAccessorRole'
+  );
 
   const hasAnyRoleSpy = jest.spyOn(ValidationService.prototype, 'checkIfUserHasAnyRole');
 
@@ -19,28 +21,31 @@ describe('Admin / _handlers / validations / add-any-role suite', () => {
     await testsHelper.init();
   });
 
-  it.each([ServiceRoleEnum.ADMIN, ServiceRoleEnum.INNOVATOR])('should check if user has any %s role', async (roleType) => {
+  it.each([ServiceRoleEnum.ADMIN, ServiceRoleEnum.INNOVATOR])(
+    'should check if user has any %s role',
+    async roleType => {
       handler = new AddAnyUserRoleValidationsHandler({
-        userId: scenario.users.adamInnovator.id 
+        userId: scenario.users.adamInnovator.id
       });
 
       await handler.run();
 
-      expect(hasAnyRoleSpy).toHaveBeenCalledWith(scenario.users.adamInnovator.id, expect.arrayContaining([roleType]))
-  })
+      expect(hasAnyRoleSpy).toHaveBeenCalledWith(scenario.users.adamInnovator.id, expect.arrayContaining([roleType]));
+    }
+  );
 
   it('should check if user can have any ASSESSMENT of ACCESSOR role', async () => {
-      handler = new AddAnyUserRoleValidationsHandler({
-        userId: scenario.users.aliceQualifyingAccessor.id
-      });
+    handler = new AddAnyUserRoleValidationsHandler({
+      userId: scenario.users.aliceQualifyingAccessor.id
+    });
 
-      await handler.run();
+    await handler.run();
 
-      expect(canHaveAssessmentOrAccessorRoleSpy).toHaveBeenCalled();
-      expect(handler.validations.map(v => v.rule)).toMatchObject([
-        ValidationRuleEnum.UserHasAnyAdminRole,
-        ValidationRuleEnum.UserHasAnyInnovatorRole,
-        ValidationRuleEnum.UserCanHaveAssessmentOrAccessorRole
-      ])
-  })
+    expect(canHaveAssessmentOrAccessorRoleSpy).toHaveBeenCalled();
+    expect(handler.validations.map(v => v.rule)).toMatchObject([
+      ValidationRuleEnum.UserHasAnyAdminRole,
+      ValidationRuleEnum.UserHasAnyInnovatorRole,
+      ValidationRuleEnum.UserCanHaveAssessmentOrAccessorRole
+    ]);
+  });
 });

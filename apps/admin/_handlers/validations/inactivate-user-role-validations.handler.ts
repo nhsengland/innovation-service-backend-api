@@ -22,19 +22,13 @@ export class InactivateUserRoleValidationsHandler extends ValidationsHandler<Adm
     }
 
     if (role?.role === ServiceRoleEnum.QUALIFYING_ACCESSOR) {
-      this.validations.push(
-        await this.validationsService.checkIfLastQualifyingAccessorUserOnOrganisationUnit(role.id)
-      );
+      this.validations.push(await this.validationsService.checkIfLastQualifyingAccessorUserOnOrganisationUnit(role.id));
 
-      this.validations.push(
-        await this.validationsService.checkIfNoInnovationsSupportedOnlyByThisUser(role.id)
-      );
+      this.validations.push(await this.validationsService.checkIfNoInnovationsSupportedOnlyByThisUser(role.id));
     }
 
     if (role?.role === ServiceRoleEnum.ACCESSOR) {
-      this.validations.push(
-        await this.validationsService.checkIfNoInnovationsSupportedOnlyByThisUser(role.id)
-      );
+      this.validations.push(await this.validationsService.checkIfNoInnovationsSupportedOnlyByThisUser(role.id));
     }
 
     return this.validations;

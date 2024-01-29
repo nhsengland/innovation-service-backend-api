@@ -6,8 +6,8 @@
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run-script", "app:watch", "--app=admin", "--port=7071"],
-      "runtimeVersion": "14",
+      "runtimeArgs": ["run-script", "app:watch", "--function-app=admin", "--port=7071"],
+      "runtimeVersion": "18",
       "skipFiles": ["<node_internals>/**"],
       "console": "integratedTerminal",
       "internalConsoleOptions": "openOnSessionStart"
@@ -17,8 +17,8 @@
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run-script", "app:watch", "--app=innovations", "--port=7072"],
-      "runtimeVersion": "14",
+      "runtimeArgs": ["run-script", "app:watch", "--function-app=innovations", "--port=7072"],
+      "runtimeVersion": "18",
       "skipFiles": ["<node_internals>/**"],
       "console": "integratedTerminal",
       "internalConsoleOptions": "openOnSessionStart"
@@ -28,8 +28,8 @@
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run-script", "app:watch", "--app=notifications", "--port=7073"],
-      "runtimeVersion": "14",
+      "runtimeArgs": ["run-script", "app:watch", "--function-app=notifications", "--port=7073"],
+      "runtimeVersion": "18",
       "skipFiles": ["<node_internals>/**"],
       "console": "integratedTerminal",
       "internalConsoleOptions": "openOnSessionStart"
@@ -39,8 +39,8 @@
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run-script", "app:watch", "--app=users", "--port=7074"],
-      "runtimeVersion": "14",
+      "runtimeArgs": ["run-script", "app:watch", "--function-app=users", "--port=7074"],
+      "runtimeVersion": "18",
       "skipFiles": ["<node_internals>/**"],
       "console": "integratedTerminal",
       "internalConsoleOptions": "openOnSessionStart"

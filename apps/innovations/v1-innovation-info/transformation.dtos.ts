@@ -29,7 +29,7 @@ export type ResponseDTO = {
     contactByPhoneTimeframe?: PhoneUserPreferenceEnum | null;
     mobilePhone?: null | string;
     lastLoginAt?: null | Date;
-    organisation?: { name: string; size: null | string };
+    organisation?: { name: string; size: null | string; registrationNumber: null | string };
   };
   lastEndSupportAt: null | Date;
   assessment?: null | {

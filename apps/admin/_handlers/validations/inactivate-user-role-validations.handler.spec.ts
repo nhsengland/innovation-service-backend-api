@@ -24,7 +24,7 @@ describe('Admin / _handlers / validations / inactivate-user-role suite', () => {
       valid: true
     });
 
-  const lastInUnitCheckSpy= jest
+  const lastInUnitCheckSpy = jest
     .spyOn(ValidationService.prototype, 'checkIfLastQualifyingAccessorUserOnOrganisationUnit')
     .mockResolvedValue({
       rule: ValidationRuleEnum.LastQualifyingAccessorUserOnOrganisationUnit,
@@ -68,7 +68,7 @@ describe('Admin / _handlers / validations / inactivate-user-role suite', () => {
     await handler.run();
 
     expect(accessorSupportCheckSpy).toHaveBeenCalled();
-    expect(handler.validations).toHaveLength(roleType === ServiceRoleEnum.ACCESSOR ? 1 : 2)
+    expect(handler.validations).toHaveLength(roleType === ServiceRoleEnum.ACCESSOR ? 1 : 2);
     expect(
       handler.validations.filter(v => v.rule === ValidationRuleEnum.NoInnovationsSupportedOnlyByThisUser)
     ).toMatchObject([
@@ -89,7 +89,9 @@ describe('Admin / _handlers / validations / inactivate-user-role suite', () => {
 
     expect(lastInUnitCheckSpy).toHaveBeenCalled();
     expect(handler.validations).toHaveLength(2);
-    expect(handler.validations.filter(v => v.rule === ValidationRuleEnum.LastQualifyingAccessorUserOnOrganisationUnit)).toMatchObject([
+    expect(
+      handler.validations.filter(v => v.rule === ValidationRuleEnum.LastQualifyingAccessorUserOnOrganisationUnit)
+    ).toMatchObject([
       {
         rule: ValidationRuleEnum.LastQualifyingAccessorUserOnOrganisationUnit,
         valid: true
