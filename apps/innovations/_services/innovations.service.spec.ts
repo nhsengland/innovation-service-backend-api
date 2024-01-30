@@ -19,6 +19,7 @@ import {
   OrganisationErrorsEnum,
   UnprocessableEntityError
 } from '@innovations/shared/errors';
+import { TranslationHelper } from '@innovations/shared/helpers';
 import { DomainInnovationsService, NotifierService } from '@innovations/shared/services';
 import { TestsHelper } from '@innovations/shared/tests';
 import { ActivityLogBuilder, TestActivityLogType } from '@innovations/shared/tests/builders/activity-log.builder';
@@ -34,6 +35,7 @@ import {
   randText,
   randUuid
 } from '@ngneat/falso';
+import assert from 'node:assert';
 import { EntityManager } from 'typeorm';
 import { container } from '../_config';
 import type { InnovationsService } from './innovations.service';
@@ -420,6 +422,100 @@ describe('Innovations / _services / innovations suite', () => {
         sut.withdrawInnovation(DTOsHelper.getUserRequestContext(scenario.users.johnInnovator), randUuid(), reason)
       ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND));
     });
+  });
+
+  describe('archiveInnovation', () => {
+    const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+    const context = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator);
+    const message = randText({ charCount: 10 });
+
+    it('should archive the innovation', async () => {
+      await sut.archiveInnovation(context, innovation.id, { message: message }, em);
+
+      const dbInnovation = await em
+        .createQueryBuilder(InnovationEntity, 'innovation')
+        .select(['innovation.status'])
+        .where('innovation.id = :innovationId', { innovationId: innovation.id })
+        .getOne();
+
+      expect(dbInnovation?.status).toBe(InnovationStatusEnum.ARCHIVED);
+    });
+
+    it('should cancel all open tasks', async () => {
+      const dbPreviouslyOpenTasks = await em
+        .createQueryBuilder(InnovationTaskEntity, 'task')
+        .select(['task.status', 'task.id'])
+        .innerJoin('task.innovationSection', 'innovationSection')
+        .innerJoin('innovationSection.innovation', 'innovation')
+        .where('innovation.id = :innovationId', { innovationId: innovation.id })
+        .andWhere('task.status IN (:...openTaskStatuses)', {
+          openTaskStatuses: [InnovationTaskStatusEnum.OPEN]
+        })
+        .getMany();
+
+      await sut.archiveInnovation(context, innovation.id, { message: message }, em);
+
+      const dbCancelledTasks = await em
+        .createQueryBuilder(InnovationTaskEntity, 'task')
+        .select(['task.status'])
+        .where('task.id IN (:...taskIds)', { taskIds: dbPreviouslyOpenTasks.map(a => a.id) })
+        .getMany();
+
+      expect(dbCancelledTasks).toHaveLength(dbPreviouslyOpenTasks.length);
+    });
+
+    it('should close all support and save a snapshot', async () => {
+      const dbPreviousSupports = await em
+        .createQueryBuilder(InnovationSupportEntity, 'support')
+        .select(['support.id', 'support.status', 'support.archiveSnapshot', 'userRole.id', 'user.id'])
+        .innerJoin('support.innovation', 'innovation')
+        .leftJoin('support.userRoles', 'userRole')
+        .leftJoin('userRole.user', 'user')
+        .where('innovation.id = :innovationId', { innovationId: innovation.id })
+        .getMany();
+
+      await sut.archiveInnovation(context, innovation.id, { message: message }, em);
+
+      const dbSupports = await em
+        .createQueryBuilder(InnovationSupportEntity, 'support')
+        .select(['support.id', 'support.status', 'support.archiveSnapshot'])
+        .where('support.id IN (:...supportIds)', { supportIds: dbPreviousSupports.map(s => s.id) })
+        .getMany();
+
+      for (const support of dbSupports) {
+        const previousSupport = dbPreviousSupports.find(s => s.id === support.id);
+        assert(previousSupport);
+        expect(support.status).toBe(InnovationSupportStatusEnum.CLOSED);
+        expect(support.archiveSnapshot).toMatchObject({
+          archivedAt: expect.any(String),
+          status: previousSupport.status,
+          assignedAccessors: previousSupport.userRoles.map(r => r.user.id)
+        });
+      }
+    });
+
+    it.each([InnovationExportRequestStatusEnum.PENDING, InnovationExportRequestStatusEnum.APPROVED])(
+      'should reject all %s export requests',
+      async status => {
+        // ensure request is pending
+        await em
+          .getRepository(InnovationExportRequestEntity)
+          .update({ id: innovation.exportRequests.requestByAlice.id }, { status: status });
+
+        await sut.archiveInnovation(context, innovation.id, { message: message }, em);
+
+        const dbRequest = await em
+          .createQueryBuilder(InnovationExportRequestEntity, 'request')
+          .select(['request.status', 'request.rejectReason'])
+          .where('request.id = :requestId', { requestId: innovation.exportRequests.requestByAlice.id })
+          .getOne();
+
+        expect(dbRequest?.status).toBe(InnovationExportRequestStatusEnum.REJECTED);
+        expect(dbRequest?.rejectReason).toBe(TranslationHelper.translate('DEFAULT_MESSAGES.EXPORT_REQUEST.ARCHIVE'));
+      }
+    );
+
+    it.skip('should add the archive to support summary', async () => {});
   });
 
   describe('pauseInnovation', () => {

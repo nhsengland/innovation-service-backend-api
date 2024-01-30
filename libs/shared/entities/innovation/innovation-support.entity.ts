@@ -28,6 +28,9 @@ export class InnovationSupportEntity extends BaseEntity {
   @Column({ type: 'simple-enum', enum: InnovationSupportStatusEnum, nullable: false })
   status: InnovationSupportStatusEnum;
 
+  @Column({ name: 'archive_snapshot', type: 'simple-json' })
+  archiveSnapshot: { archivedAt: Date; status: InnovationSupportStatusEnum; assignedAccessors: string[] } | null;
+
   @ManyToOne(() => InnovationEntity, { nullable: false })
   @JoinColumn({ name: 'innovation_id' })
   innovation: InnovationEntity;

@@ -174,6 +174,97 @@ export class InnovationsService extends BaseService {
     super();
   }
 
+  async archiveInnovation(
+    domainContext: DomainContextType,
+    innovationId: string,
+    data: { message: string },
+    entityManager?: EntityManager
+  ): Promise<void> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const supports = await em
+      .createQueryBuilder(InnovationSupportEntity, 'support')
+      .leftJoinAndSelect('support.userRoles', 'userRole')
+      .leftJoinAndSelect('userRole.user', 'user')
+      .where('support.innovation_id = :innovationId', { innovationId })
+      .getMany();
+
+    // TODO: This will be needed for the notification
+    // const previousAssignedAccessors = supports.flatMap(support =>
+    //   support.userRoles.map(item => ({
+    //     id: item.user.id,
+    //     role: item.role,
+    //     unitId: item.organisationUnitId
+    //   }))
+    // );
+
+    const archivedAt = new Date();
+
+    await em.transaction(async transaction => {
+      const sections = await transaction
+        .createQueryBuilder(InnovationSectionEntity, 'section')
+        .select(['section.id'])
+        .where('section.innovation_id = :innovationId', { innovationId })
+        .getMany();
+
+      // Update all OPEN tasks to CANCELLED
+      await transaction.update(
+        InnovationTaskEntity,
+        { innovationSection: In(sections.map(s => s.id)), status: InnovationTaskStatusEnum.OPEN },
+        {
+          status: InnovationTaskStatusEnum.CANCELLED,
+          updatedBy: domainContext.id,
+          updatedByUserRole: UserRoleEntity.new({ id: domainContext.currentRole.id })
+        }
+      );
+
+      // Change all supports to closed and save a snapshot
+      const supportUpdates = [];
+      for (const support of supports) {
+        // Save snapshot before updating support
+        support.archiveSnapshot = {
+          archivedAt,
+          status: support.status,
+          assignedAccessors: support.userRoles.map(r => r.user.id)
+        };
+
+        support.userRoles = [];
+        support.updatedBy = domainContext.id;
+        support.status = InnovationSupportStatusEnum.CLOSED;
+
+        supportUpdates.push(await transaction.save(InnovationSupportEntity, support));
+      }
+      await Promise.all(supportUpdates);
+
+      // Reject all PENDING and APPROVED export requests
+      await transaction
+        .createQueryBuilder()
+        .update(InnovationExportRequestEntity)
+        .set({
+          status: InnovationExportRequestStatusEnum.REJECTED,
+          rejectReason: TranslationHelper.translate('DEFAULT_MESSAGES.EXPORT_REQUEST.ARCHIVE'),
+          updatedBy: domainContext.id
+        })
+        .where('innovation_id = :innovationId', { innovationId })
+        .andWhere('status IN (:...status)', {
+          status: [InnovationExportRequestStatusEnum.PENDING, InnovationExportRequestStatusEnum.APPROVED]
+        })
+        .execute();
+
+      // Update Innovation status
+      await transaction.update(
+        InnovationEntity,
+        { id: innovationId },
+        { status: InnovationStatusEnum.ARCHIVED, statusUpdatedAt: archivedAt, updatedBy: domainContext.id }
+      );
+
+      // TODO: Add it to support summary
+      console.log(data);
+    });
+
+    // TODO: Send notification
+  }
+
   async getInnovationsList(
     user: { id: string },
     domainContext: DomainContextType,

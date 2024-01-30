@@ -14,8 +14,7 @@ export type BodyType = {
 };
 export const BodySchema = Joi.object<BodyType>({
   message: Joi.string()
-    .max(TEXTAREA_LENGTH_LIMIT.xs)
+    .max(TEXTAREA_LENGTH_LIMIT.xl)
     .trim()
     .required()
-    .description('Message provided when pausing an innovation')
 }).required();

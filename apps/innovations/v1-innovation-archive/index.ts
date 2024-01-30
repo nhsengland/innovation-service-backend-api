@@ -13,16 +13,11 @@ import { container } from '../_config';
 
 import type { InnovationsService } from '../_services/innovations.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1InnovationPause {
   @JwtDecoder()
-  @Audit({
-    action: ActionEnum.UPDATE,
-    target: TargetEnum.INNOVATION,
-    identifierParam: 'innovationId'
-  })
+  @Audit({ action: ActionEnum.UPDATE, target: TargetEnum.INNOVATION, identifierParam: 'innovationId' })
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
     const authorizationService = container.get<AuthorizationService>(SHARED_SYMBOLS.AuthorizationService);
     const innovationsService = container.get<InnovationsService>(SYMBOLS.InnovationsService);
@@ -37,13 +32,11 @@ class V1InnovationPause {
         .checkInnovatorType()
         .checkInnovation({ isOwner: true, status: [InnovationStatusEnum.IN_PROGRESS] })
         .verify();
-
       const domainContext = auth.getContext();
 
-      const result = await innovationsService.pauseInnovation(domainContext, params.innovationId, {
-        message: body.message
-      });
-      context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
+      await innovationsService.archiveInnovation(domainContext, params.innovationId, { message: body.message });
+
+      context.res = ResponseHelper.NoContent();
       return;
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
@@ -52,28 +45,16 @@ class V1InnovationPause {
   }
 }
 
-export default openApi(V1InnovationPause.httpTrigger as AzureFunction, '/v1/{innovationId}/pause', {
+export default openApi(V1InnovationPause.httpTrigger as AzureFunction, '/v1/{innovationId}/archive', {
   patch: {
-    summary: 'Pause an innovation',
-    description: 'Pause an innovation.',
-    operationId: 'v1-innovation-pause',
+    summary: 'Archive an innovation',
+    description: 'Archive an innovation.',
+    operationId: 'v1-innovation-archive',
     tags: ['Innovation'],
     parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     requestBody: SwaggerHelper.bodyJ2S(BodySchema),
     responses: {
-      200: {
-        description: 'Innovation paused successfully.',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                id: { type: 'string', description: 'Innovation ID' }
-              }
-            }
-          }
-        }
-      }
+      200: { description: 'Innovation archived successfully.' }
     }
   }
 });
