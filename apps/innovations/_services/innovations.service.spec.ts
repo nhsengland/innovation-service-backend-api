@@ -5,7 +5,7 @@ import {
   InnovationTaskEntity,
   NotificationUserEntity
 } from '@innovations/shared/entities';
-import { ActivityEnum, ActivityTypeEnum, NotifierTypeEnum, ServiceRoleEnum } from '@innovations/shared/enums';
+import { ActivityEnum, ActivityTypeEnum, NotifierTypeEnum } from '@innovations/shared/enums';
 import {
   InnovationExportRequestStatusEnum,
   InnovationSectionStatusEnum,
@@ -72,12 +72,12 @@ describe('Innovations / _services / innovations suite', () => {
 
   describe.skip('getInnovationsList', () => {
     //TODO
-    it('should list innovations', async () => { });
+    it('should list innovations', async () => {});
   });
 
   describe.skip('getInnovationInfo', () => {
     //TODO
-    it('should get innovation info', async () => { });
+    it('should get innovation info', async () => {});
   });
 
   describe('getNeedsAssessmentOverdueInnovations', () => {
@@ -538,114 +538,6 @@ describe('Innovations / _services / innovations suite', () => {
         }
       );
     });
-  });
-
-  describe('pauseInnovation', () => {
-    const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
-    const context = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator);
-    const message = randText({ charCount: 10 });
-
-    it('should pause the innovation', async () => {
-      const result = await sut.pauseInnovation(context, innovation.id, { message: message }, em);
-
-      const dbInnovation = await em
-        .createQueryBuilder(InnovationEntity, 'innovation')
-        .select(['innovation.status'])
-        .where('innovation.id = :innovationId', { innovationId: innovation.id })
-        .getOne();
-
-      expect(result).toMatchObject({ id: innovation.id });
-      expect(dbInnovation?.status).toBe(InnovationStatusEnum.PAUSED);
-    });
-
-    it('should write to activity log', async () => {
-      await sut.pauseInnovation(context, innovation.id, { message: message }, em);
-
-      expect(activityLogSpy).toHaveBeenLastCalledWith(
-        expect.any(EntityManager),
-        { innovationId: innovation.id, activity: ActivityEnum.INNOVATION_PAUSE, domainContext: context },
-        { message: message }
-      );
-    });
-
-    it('should send notification', async () => {
-      await sut.pauseInnovation(context, innovation.id, { message: message }, em);
-
-      expect(notifierSendSpy).toHaveBeenLastCalledWith(context, NotifierTypeEnum.INNOVATION_STOP_SHARING, {
-        innovationId: innovation.id,
-        affectedUsers: expect.arrayContaining([
-          {
-            id: scenario.users.aliceQualifyingAccessor.id,
-            role: ServiceRoleEnum.QUALIFYING_ACCESSOR,
-            unitId: scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.id
-          }
-        ]),
-        message: message
-      });
-    });
-
-    it('should change status of open tasks to DECLINED', async () => {
-      const dbPreviouslyOpenTasks = await em
-        .createQueryBuilder(InnovationTaskEntity, 'task')
-        .select(['task.status', 'task.id'])
-        .innerJoin('task.innovationSection', 'innovationSection')
-        .innerJoin('innovationSection.innovation', 'innovation')
-        .where('innovation.id = :innovationId', { innovationId: innovation.id })
-        .andWhere('task.status IN (:...openTaskStatuses)', {
-          openTaskStatuses: [InnovationTaskStatusEnum.OPEN]
-        })
-        .getMany();
-
-      await sut.pauseInnovation(context, innovation.id, { message: message }, em);
-
-      const dbDeclinedTasks = await em
-        .createQueryBuilder(InnovationTaskEntity, 'task')
-        .select(['task.status'])
-        .where('task.id IN (:...taskIds)', { taskIds: dbPreviouslyOpenTasks.map(a => a.id) })
-        .getMany();
-
-      expect(dbDeclinedTasks.filter(a => a.status !== InnovationTaskStatusEnum.DECLINED)).toHaveLength(0);
-    });
-
-    it('should change all ongoing supports to UNASSIGNED', async () => {
-      const dbPreviouslyOngoingSupports = await em
-        .createQueryBuilder(InnovationSupportEntity, 'support')
-        .select(['support.status', 'support.id'])
-        .innerJoin('support.innovation', 'innovation')
-        .where('innovation.id = :innovationId', { innovationId: innovation.id })
-        .andWhere('support.status = :supportStatus', { supportStatus: InnovationSupportStatusEnum.ENGAGING })
-        .getMany();
-
-      await sut.pauseInnovation(context, innovation.id, { message: message }, em);
-
-      const dbSupports = await em
-        .createQueryBuilder(InnovationSupportEntity, 'support')
-        .select(['support.status'])
-        .where('support.id IN (:...supportIds)', { supportIds: dbPreviouslyOngoingSupports.map(s => s.id) })
-        .getMany();
-
-      expect(dbSupports.filter(s => s.status !== InnovationSupportStatusEnum.UNASSIGNED)).toHaveLength(0);
-    });
-
-    it.each([InnovationExportRequestStatusEnum.PENDING, InnovationExportRequestStatusEnum.APPROVED])(
-      'should reject all %s export requests',
-      async status => {
-        // ensure request is pending
-        await em
-          .getRepository(InnovationExportRequestEntity)
-          .update({ id: innovation.exportRequests.requestByAlice.id }, { status: status });
-
-        await sut.pauseInnovation(context, innovation.id, { message: message }, em);
-
-        const dbRequest = await em
-          .createQueryBuilder(InnovationExportRequestEntity, 'request')
-          .select(['request.status'])
-          .where('request.id = :requestId', { requestId: innovation.exportRequests.requestByAlice.id })
-          .getOne();
-
-        expect(dbRequest?.status).toBe(InnovationExportRequestStatusEnum.REJECTED);
-      }
-    );
   });
 
   describe('getInnovationActivitiesLog', () => {

@@ -184,7 +184,15 @@ export class InnovationsService extends BaseService {
 
     const supports = await em
       .createQueryBuilder(InnovationSupportEntity, 'support')
-      .select(['support.id', 'support.status', 'support.updatedBy', 'userRole.id', 'userRole.role', 'user.id', 'unit.id'])
+      .select([
+        'support.id',
+        'support.status',
+        'support.updatedBy',
+        'userRole.id',
+        'userRole.role',
+        'user.id',
+        'unit.id'
+      ])
       .innerJoin('support.organisationUnit', 'unit')
       .leftJoin('support.userRoles', 'userRole')
       .leftJoin('userRole.user', 'user')
@@ -1321,8 +1329,8 @@ export class InnovationsService extends BaseService {
     FilterValues extends FilterValue extends unknown[]
       ? FilterValue
       : FilterValue extends true | false // hackish because type script would make it true[] or false[] otherwise
-      ? boolean[]
-      : FilterValue[]
+        ? boolean[]
+        : FilterValue[]
   >(
     filterKey: FilterKey,
     options?: {
@@ -2211,107 +2219,6 @@ export class InnovationsService extends BaseService {
       });
     }
     return { id: dbInnovation.id };
-  }
-
-  async pauseInnovation(
-    domainContext: DomainContextType,
-    innovationId: string,
-    data: { message: string },
-    entityManager?: EntityManager
-  ): Promise<{ id: string }> {
-    const connection = entityManager ?? this.sqlConnection.manager;
-
-    const dbSupports = await connection
-      .createQueryBuilder(InnovationSupportEntity, 'supports')
-      .innerJoinAndSelect('supports.userRoles', 'userRole')
-      .innerJoinAndSelect('userRole.user', 'user')
-      .where('supports.innovation_id = :innovationId', { innovationId })
-      .andWhere('user.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED })
-      .getMany();
-
-    const previousAssignedAccessors = dbSupports.flatMap(support =>
-      support.userRoles.map(item => ({
-        id: item.user.id,
-        role: item.role,
-        unitId: item.organisationUnitId
-      }))
-    );
-
-    const result = await connection.transaction(async transaction => {
-      const sections = await transaction
-        .createQueryBuilder(InnovationSectionEntity, 'section')
-        .select(['section.id'])
-        .addSelect('section.innovation_id')
-        .where('section.innovation_id = :innovationId', { innovationId })
-        .getMany();
-
-      // Decline all tasks for all innovation supports.
-      await transaction.getRepository(InnovationTaskEntity).update(
-        {
-          innovationSection: In(sections.map(section => section.id)),
-          status: In([InnovationTaskStatusEnum.OPEN])
-        },
-        {
-          status: InnovationTaskStatusEnum.DECLINED,
-          updatedBy: domainContext.id,
-          updatedByUserRole: UserRoleEntity.new({ id: domainContext.currentRole.id })
-        }
-      );
-
-      // Update all support to UNASSIGNED.
-      for (const innovationSupport of dbSupports) {
-        innovationSupport.status = InnovationSupportStatusEnum.UNASSIGNED;
-        innovationSupport.userRoles = []; //TODO: refactor this. Delete from innovation_support_user table directly
-        innovationSupport.updatedBy = domainContext.id;
-        await transaction.save(InnovationSupportEntity, innovationSupport);
-      }
-
-      // Update innovation status.
-      await transaction.update(
-        InnovationEntity,
-        { id: innovationId },
-        {
-          status: InnovationStatusEnum.PAUSED,
-          statusUpdatedAt: new Date().toISOString(),
-          updatedBy: domainContext.id
-        }
-      );
-
-      // Reject all PENDING AND APPROVED export requests
-      await transaction
-        .createQueryBuilder(InnovationExportRequestEntity, 'request')
-        .update({
-          status: InnovationExportRequestStatusEnum.REJECTED,
-          rejectReason: TranslationHelper.translate('DEFAULT_MESSAGES.EXPORT_REQUEST.STOP_SHARING'),
-          updatedBy: domainContext.id
-        })
-        .where(
-          'innovation_id = :innovationId AND (status = :pendingStatus OR (status = :approvedStatus AND updated_at >= :expiredAt))',
-          {
-            innovationId,
-            pendingStatus: InnovationExportRequestStatusEnum.PENDING,
-            approvedStatus: InnovationExportRequestStatusEnum.APPROVED,
-            expiredAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString()
-          }
-        )
-        .execute();
-
-      await this.domainService.innovations.addActivityLog(
-        transaction,
-        { innovationId, activity: ActivityEnum.INNOVATION_PAUSE, domainContext },
-        { message: data.message }
-      );
-
-      return { id: innovationId };
-    });
-
-    await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_STOP_SHARING, {
-      innovationId,
-      affectedUsers: previousAssignedAccessors,
-      message: data.message
-    });
-
-    return result;
   }
 
   async getInnovationActivitiesLog(
