@@ -195,8 +195,9 @@ export class InnovationsService extends BaseService {
       ])
       .innerJoin('support.organisationUnit', 'unit')
       .leftJoin('support.userRoles', 'userRole')
-      .leftJoin('userRole.user', 'user')
+      .leftJoin('userRole.user', 'user', "user.status <> 'DELETED'")
       .where('support.innovation_id = :innovationId', { innovationId })
+      .andWhere('support.status <> :supportClosed', { supportClosed: InnovationSupportStatusEnum.CLOSED })
       .getMany();
 
     // TODO: This will be needed for the notification
@@ -229,8 +230,7 @@ export class InnovationsService extends BaseService {
       );
 
       // Change all supports to closed and save a snapshot
-      const supportUpdates = [];
-      for (const support of supports) {
+      const supportsToUpdate = supports.map(support => {
         // Save snapshot before updating support
         support.archiveSnapshot = {
           archivedAt,
@@ -242,9 +242,9 @@ export class InnovationsService extends BaseService {
         support.updatedBy = domainContext.id;
         support.status = InnovationSupportStatusEnum.CLOSED;
 
-        supportUpdates.push(await transaction.save(InnovationSupportEntity, support));
-      }
-      await Promise.all(supportUpdates);
+        return support;
+      });
+      await transaction.save(InnovationSupportEntity, supportsToUpdate);
 
       // Reject all PENDING and APPROVED export requests
       await transaction
