@@ -432,6 +432,7 @@ export class DomainInnovationsService {
    * - QA suggesting other organisations/units.
    * - NA suggesting organisations/units
    * - Admin completing support update while inactivating units
+   * - Archival of innovation by innovation owner
    */
   async addSupportLog(
     transactionManager: EntityManager,
@@ -446,15 +447,19 @@ export class DomainInnovationsService {
       createdBy: user.id,
       createdByUserRole: UserRoleEntity.new({ id: user.roleId }),
       updatedBy: user.id,
-      ...(params.type !== InnovationSupportLogTypeEnum.ASSESSMENT_SUGGESTION && {
-        organisationUnit: OrganisationUnitEntity.new({ id: params.unitId }),
-        innovationSupportStatus: params.supportStatus
-      }),
+      ...(params.type !== InnovationSupportLogTypeEnum.ASSESSMENT_SUGGESTION &&
+        params.type !== InnovationSupportLogTypeEnum.INNOVATION_ARCHIVED && {
+          organisationUnit: OrganisationUnitEntity.new({ id: params.unitId }),
+          innovationSupportStatus: params.supportStatus
+        }),
       ...((params.type === InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION ||
         params.type === InnovationSupportLogTypeEnum.ASSESSMENT_SUGGESTION) && {
         suggestedOrganisationUnits: params.suggestedOrganisationUnits.map(id => OrganisationUnitEntity.new({ id }))
       }),
-      ...(params.type === InnovationSupportLogTypeEnum.PROGRESS_UPDATE && { params: params.params })
+      ...(params.type === InnovationSupportLogTypeEnum.PROGRESS_UPDATE && { params: params.params }),
+      ...(params.type === InnovationSupportLogTypeEnum.INNOVATION_ARCHIVED && {
+        organisationUnit: OrganisationUnitEntity.new({ id: params.unitId })
+      })
     });
 
     try {

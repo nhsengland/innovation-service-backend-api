@@ -10,6 +10,7 @@ import {
   InnovationExportRequestStatusEnum,
   InnovationSectionStatusEnum,
   InnovationStatusEnum,
+  InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
   InnovationTaskStatusEnum
 } from '@innovations/shared/enums/innovation.enums';
@@ -50,6 +51,7 @@ describe('Innovations / _services / innovations suite', () => {
   const scenario = testsHelper.getCompleteScenario();
 
   const activityLogSpy = jest.spyOn(DomainInnovationsService.prototype, 'addActivityLog');
+  const supportLogSpy = jest.spyOn(DomainInnovationsService.prototype, 'addSupportLog');
   const notifierSendSpy = jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
 
   beforeAll(async () => {
@@ -64,17 +66,18 @@ describe('Innovations / _services / innovations suite', () => {
   afterEach(async () => {
     await testsHelper.releaseQueryRunnerEntityManager();
     activityLogSpy.mockClear();
+    supportLogSpy.mockClear();
     notifierSendSpy.mockClear();
   });
 
   describe.skip('getInnovationsList', () => {
     //TODO
-    it('should list innovations', async () => {});
+    it('should list innovations', async () => { });
   });
 
   describe.skip('getInnovationInfo', () => {
     //TODO
-    it('should get innovation info', async () => {});
+    it('should get innovation info', async () => { });
   });
 
   describe('getNeedsAssessmentOverdueInnovations', () => {
@@ -515,7 +518,26 @@ describe('Innovations / _services / innovations suite', () => {
       }
     );
 
-    it.skip('should add the archive to support summary', async () => {});
+    it('should add the archive to support summary', async () => {
+      const nPreviousSupports = await em
+        .createQueryBuilder(InnovationSupportEntity, 'support')
+        .where('innovation_id = :innovationId', { innovationId: innovation.id })
+        .getCount();
+
+      await sut.archiveInnovation(context, innovation.id, { message: message }, em);
+
+      expect(supportLogSpy).toHaveBeenCalledTimes(nPreviousSupports);
+      expect(supportLogSpy).toHaveBeenLastCalledWith(
+        expect.any(EntityManager),
+        { id: context.id, roleId: context.currentRole.id },
+        innovation.id,
+        {
+          type: InnovationSupportLogTypeEnum.INNOVATION_ARCHIVED,
+          description: message,
+          unitId: expect.any(String)
+        }
+      );
+    });
   });
 
   describe('pauseInnovation', () => {

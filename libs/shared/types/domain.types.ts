@@ -344,7 +344,7 @@ export type IdentityUserInfo = {
 // Support Log Types
 export type SupportLogParams = {
   description: string;
-} & (SupportLogStatusUpdate | SupportLogAccessorSuggestion | SupportLogProgressUpdate | SupportLogAssessmentSuggestion);
+} & (SupportLogStatusUpdate | SupportLogAccessorSuggestion | SupportLogProgressUpdate | SupportLogAssessmentSuggestion | SupportLogInnovationArchive);
 
 export type SupportLogStatusUpdate = {
   type: InnovationSupportLogTypeEnum.STATUS_UPDATE;
@@ -370,3 +370,8 @@ export type SupportLogAssessmentSuggestion = {
   type: InnovationSupportLogTypeEnum.ASSESSMENT_SUGGESTION;
   suggestedOrganisationUnits: string[];
 };
+
+export type SupportLogInnovationArchive = {
+  type: InnovationSupportLogTypeEnum.INNOVATION_ARCHIVED,
+  unitId: string;
+}

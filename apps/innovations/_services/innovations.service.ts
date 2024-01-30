@@ -184,8 +184,10 @@ export class InnovationsService extends BaseService {
 
     const supports = await em
       .createQueryBuilder(InnovationSupportEntity, 'support')
-      .leftJoinAndSelect('support.userRoles', 'userRole')
-      .leftJoinAndSelect('userRole.user', 'user')
+      .select(['support.id', 'support.status', 'support.updatedBy', 'userRole.id', 'userRole.role', 'user.id', 'unit.id'])
+      .innerJoin('support.organisationUnit', 'unit')
+      .leftJoin('support.userRoles', 'userRole')
+      .leftJoin('userRole.user', 'user')
       .where('support.innovation_id = :innovationId', { innovationId })
       .getMany();
 
@@ -194,7 +196,7 @@ export class InnovationsService extends BaseService {
     //   support.userRoles.map(item => ({
     //     id: item.user.id,
     //     role: item.role,
-    //     unitId: item.organisationUnitId
+    //     unitId: support.organisationUnit.id
     //   }))
     // );
 
@@ -258,8 +260,22 @@ export class InnovationsService extends BaseService {
         { status: InnovationStatusEnum.ARCHIVED, statusUpdatedAt: archivedAt, updatedBy: domainContext.id }
       );
 
-      // TODO: Add it to support summary
-      console.log(data);
+      const supportLogs = [];
+      for (const support of supports) {
+        supportLogs.push(
+          await this.domainService.innovations.addSupportLog(
+            transaction,
+            { id: domainContext.id, roleId: domainContext.currentRole.id },
+            innovationId,
+            {
+              type: InnovationSupportLogTypeEnum.INNOVATION_ARCHIVED,
+              description: data.message,
+              unitId: support.organisationUnit.id
+            }
+          )
+        );
+      }
+      await Promise.all(supportLogs);
     });
 
     // TODO: Send notification
