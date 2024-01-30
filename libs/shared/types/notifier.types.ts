@@ -53,6 +53,17 @@ export type NotifierTemplatesType = {
       unitId?: string;
     }[];
   };
+  // // Archive
+  [NotifierTypeEnum.INNOVATION_ARCHIVE]: {
+    innovationId: string;
+    message: string;
+    affectedUsers: {
+      id: string;
+      role: ServiceRoleEnum;
+      unitId?: string;
+    }[];
+    assessmentType: 'reassessment' | 'assessment';
+  };
   // // Transfer Ownership
   [NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_CREATION]: {
     innovationId: string;
