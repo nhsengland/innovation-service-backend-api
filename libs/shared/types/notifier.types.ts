@@ -57,7 +57,7 @@ export type NotifierTemplatesType = {
   [NotifierTypeEnum.INNOVATION_ARCHIVE]: {
     innovationId: string;
     message: string;
-    assessmentType: 'reassessment' | 'assessment';
+    reassessment: boolean;
   };
   // // Transfer Ownership
   [NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_CREATION]: {
