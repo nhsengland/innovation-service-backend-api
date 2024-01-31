@@ -6,7 +6,7 @@
       "direction": "in",
       "name": "req",
       "methods": ["patch"],
-      "route": "v1/{innovationId}/pause"
+      "route": "v1/{innovationId}/archive"
     },
     {
       "type": "http",
