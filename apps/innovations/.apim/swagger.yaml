@@ -1767,7 +1767,6 @@ paths:
                     - IN_PROGRESS
                     - WITHDRAWN
                     - COMPLETE
-                    - PAUSED
                     - ARCHIVED
         - name: engagingOrganisations
           in: query
