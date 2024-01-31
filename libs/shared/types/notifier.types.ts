@@ -57,11 +57,6 @@ export type NotifierTemplatesType = {
   [NotifierTypeEnum.INNOVATION_ARCHIVE]: {
     innovationId: string;
     message: string;
-    affectedUsers: {
-      id: string;
-      role: ServiceRoleEnum;
-      unitId?: string;
-    }[];
     assessmentType: 'reassessment' | 'assessment';
   };
   // // Transfer Ownership
