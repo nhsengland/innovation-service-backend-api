@@ -5,11 +5,12 @@ import {
   InnovationTaskEntity,
   NotificationUserEntity
 } from '@innovations/shared/entities';
-import { ActivityEnum, ActivityTypeEnum, NotifierTypeEnum, ServiceRoleEnum } from '@innovations/shared/enums';
+import { ActivityEnum, ActivityTypeEnum, NotifierTypeEnum } from '@innovations/shared/enums';
 import {
   InnovationExportRequestStatusEnum,
   InnovationSectionStatusEnum,
   InnovationStatusEnum,
+  InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
   InnovationTaskStatusEnum
 } from '@innovations/shared/enums/innovation.enums';
@@ -19,6 +20,7 @@ import {
   OrganisationErrorsEnum,
   UnprocessableEntityError
 } from '@innovations/shared/errors';
+import { TranslationHelper } from '@innovations/shared/helpers';
 import { DomainInnovationsService, NotifierService } from '@innovations/shared/services';
 import { TestsHelper } from '@innovations/shared/tests';
 import { ActivityLogBuilder, TestActivityLogType } from '@innovations/shared/tests/builders/activity-log.builder';
@@ -34,6 +36,7 @@ import {
   randText,
   randUuid
 } from '@ngneat/falso';
+import assert from 'node:assert';
 import { EntityManager } from 'typeorm';
 import { container } from '../_config';
 import type { InnovationsService } from './innovations.service';
@@ -48,6 +51,7 @@ describe('Innovations / _services / innovations suite', () => {
   const scenario = testsHelper.getCompleteScenario();
 
   const activityLogSpy = jest.spyOn(DomainInnovationsService.prototype, 'addActivityLog');
+  const supportLogSpy = jest.spyOn(DomainInnovationsService.prototype, 'addSupportLog');
   const notifierSendSpy = jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
 
   beforeAll(async () => {
@@ -62,6 +66,7 @@ describe('Innovations / _services / innovations suite', () => {
   afterEach(async () => {
     await testsHelper.releaseQueryRunnerEntityManager();
     activityLogSpy.mockClear();
+    supportLogSpy.mockClear();
     notifierSendSpy.mockClear();
   });
 
@@ -422,13 +427,13 @@ describe('Innovations / _services / innovations suite', () => {
     });
   });
 
-  describe('pauseInnovation', () => {
+  describe('archiveInnovation', () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
     const context = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator);
     const message = randText({ charCount: 10 });
 
-    it('should pause the innovation', async () => {
-      const result = await sut.pauseInnovation(context, innovation.id, { message: message }, em);
+    it('should archive the innovation', async () => {
+      await sut.archiveInnovation(context, innovation.id, { message: message }, em);
 
       const dbInnovation = await em
         .createQueryBuilder(InnovationEntity, 'innovation')
@@ -436,37 +441,10 @@ describe('Innovations / _services / innovations suite', () => {
         .where('innovation.id = :innovationId', { innovationId: innovation.id })
         .getOne();
 
-      expect(result).toMatchObject({ id: innovation.id });
-      expect(dbInnovation?.status).toBe(InnovationStatusEnum.PAUSED);
+      expect(dbInnovation?.status).toBe(InnovationStatusEnum.ARCHIVED);
     });
 
-    it('should write to activity log', async () => {
-      await sut.pauseInnovation(context, innovation.id, { message: message }, em);
-
-      expect(activityLogSpy).toHaveBeenLastCalledWith(
-        expect.any(EntityManager),
-        { innovationId: innovation.id, activity: ActivityEnum.INNOVATION_PAUSE, domainContext: context },
-        { message: message }
-      );
-    });
-
-    it('should send notification', async () => {
-      await sut.pauseInnovation(context, innovation.id, { message: message }, em);
-
-      expect(notifierSendSpy).toHaveBeenLastCalledWith(context, NotifierTypeEnum.INNOVATION_STOP_SHARING, {
-        innovationId: innovation.id,
-        affectedUsers: expect.arrayContaining([
-          {
-            id: scenario.users.aliceQualifyingAccessor.id,
-            role: ServiceRoleEnum.QUALIFYING_ACCESSOR,
-            unitId: scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.id
-          }
-        ]),
-        message: message
-      });
-    });
-
-    it('should change status of open tasks to DECLINED', async () => {
+    it('should cancel all open tasks', async () => {
       const dbPreviouslyOpenTasks = await em
         .createQueryBuilder(InnovationTaskEntity, 'task')
         .select(['task.status', 'task.id'])
@@ -478,35 +456,45 @@ describe('Innovations / _services / innovations suite', () => {
         })
         .getMany();
 
-      await sut.pauseInnovation(context, innovation.id, { message: message }, em);
+      await sut.archiveInnovation(context, innovation.id, { message: message }, em);
 
-      const dbDeclinedTasks = await em
+      const dbCancelledTasks = await em
         .createQueryBuilder(InnovationTaskEntity, 'task')
         .select(['task.status'])
         .where('task.id IN (:...taskIds)', { taskIds: dbPreviouslyOpenTasks.map(a => a.id) })
         .getMany();
 
-      expect(dbDeclinedTasks.filter(a => a.status !== InnovationTaskStatusEnum.DECLINED)).toHaveLength(0);
+      expect(dbCancelledTasks).toHaveLength(dbPreviouslyOpenTasks.length);
     });
 
-    it('should change all ongoing supports to UNASSIGNED', async () => {
-      const dbPreviouslyOngoingSupports = await em
+    it('should close all support and save a snapshot', async () => {
+      const dbPreviousSupports = await em
         .createQueryBuilder(InnovationSupportEntity, 'support')
-        .select(['support.status', 'support.id'])
+        .select(['support.id', 'support.status', 'support.archiveSnapshot', 'userRole.id', 'user.id'])
         .innerJoin('support.innovation', 'innovation')
+        .leftJoin('support.userRoles', 'userRole')
+        .leftJoin('userRole.user', 'user')
         .where('innovation.id = :innovationId', { innovationId: innovation.id })
-        .andWhere('support.status = :supportStatus', { supportStatus: InnovationSupportStatusEnum.ENGAGING })
         .getMany();
 
-      await sut.pauseInnovation(context, innovation.id, { message: message }, em);
+      await sut.archiveInnovation(context, innovation.id, { message: message }, em);
 
       const dbSupports = await em
         .createQueryBuilder(InnovationSupportEntity, 'support')
-        .select(['support.status'])
-        .where('support.id IN (:...supportIds)', { supportIds: dbPreviouslyOngoingSupports.map(s => s.id) })
+        .select(['support.id', 'support.status', 'support.archiveSnapshot'])
+        .where('support.id IN (:...supportIds)', { supportIds: dbPreviousSupports.map(s => s.id) })
         .getMany();
 
-      expect(dbSupports.filter(s => s.status !== InnovationSupportStatusEnum.UNASSIGNED)).toHaveLength(0);
+      for (const support of dbSupports) {
+        const previousSupport = dbPreviousSupports.find(s => s.id === support.id);
+        assert(previousSupport);
+        expect(support.status).toBe(InnovationSupportStatusEnum.CLOSED);
+        expect(support.archiveSnapshot).toMatchObject({
+          archivedAt: expect.any(String),
+          status: previousSupport.status,
+          assignedAccessors: previousSupport.userRoles.map(r => r.user.id)
+        });
+      }
     });
 
     it.each([InnovationExportRequestStatusEnum.PENDING, InnovationExportRequestStatusEnum.APPROVED])(
@@ -517,17 +505,39 @@ describe('Innovations / _services / innovations suite', () => {
           .getRepository(InnovationExportRequestEntity)
           .update({ id: innovation.exportRequests.requestByAlice.id }, { status: status });
 
-        await sut.pauseInnovation(context, innovation.id, { message: message }, em);
+        await sut.archiveInnovation(context, innovation.id, { message: message }, em);
 
         const dbRequest = await em
           .createQueryBuilder(InnovationExportRequestEntity, 'request')
-          .select(['request.status'])
+          .select(['request.status', 'request.rejectReason'])
           .where('request.id = :requestId', { requestId: innovation.exportRequests.requestByAlice.id })
           .getOne();
 
         expect(dbRequest?.status).toBe(InnovationExportRequestStatusEnum.REJECTED);
+        expect(dbRequest?.rejectReason).toBe(TranslationHelper.translate('DEFAULT_MESSAGES.EXPORT_REQUEST.ARCHIVE'));
       }
     );
+
+    it('should add the archive to support summary', async () => {
+      const nPreviousSupports = await em
+        .createQueryBuilder(InnovationSupportEntity, 'support')
+        .where('innovation_id = :innovationId', { innovationId: innovation.id })
+        .getCount();
+
+      await sut.archiveInnovation(context, innovation.id, { message: message }, em);
+
+      expect(supportLogSpy).toHaveBeenCalledTimes(nPreviousSupports);
+      expect(supportLogSpy).toHaveBeenLastCalledWith(
+        expect.any(EntityManager),
+        { id: context.id, roleId: context.currentRole.id },
+        innovation.id,
+        {
+          type: InnovationSupportLogTypeEnum.INNOVATION_ARCHIVED,
+          description: message,
+          unitId: expect.any(String)
+        }
+      );
+    });
   });
 
   describe('getInnovationActivitiesLog', () => {
