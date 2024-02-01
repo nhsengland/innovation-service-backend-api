@@ -11,7 +11,7 @@ export class migratePausedStatusToArchived1706720380014 implements MigrationInte
                   COALESCE(archive_snapshot, '{}'),
                   '$.archivedAt', CONVERT(VARCHAR, i.status_updated_at)
               ),
-              '$.roles', JSON_QUERY('[]')
+              '$.assignedAccessors', JSON_QUERY('[]')
           ),
           '$.status', (
               CASE
