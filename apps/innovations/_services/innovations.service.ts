@@ -246,7 +246,7 @@ export class InnovationsService extends BaseService {
       });
       await transaction.save(InnovationSupportEntity, supportsToUpdate);
 
-      // Reject all PENDING and APPROVED export requests
+      // Reject all PENDING export requests
       await transaction
         .createQueryBuilder()
         .update(InnovationExportRequestEntity)
@@ -256,9 +256,7 @@ export class InnovationsService extends BaseService {
           updatedBy: domainContext.id
         })
         .where('innovation_id = :innovationId', { innovationId })
-        .andWhere('status IN (:...status)', {
-          status: [InnovationExportRequestStatusEnum.PENDING, InnovationExportRequestStatusEnum.APPROVED]
-        })
+        .andWhere('status IN (:...status)', { status: [InnovationExportRequestStatusEnum.PENDING] })
         .execute();
 
       // Update Innovation status

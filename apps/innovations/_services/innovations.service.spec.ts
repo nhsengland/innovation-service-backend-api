@@ -497,26 +497,26 @@ describe('Innovations / _services / innovations suite', () => {
       }
     });
 
-    it.each([InnovationExportRequestStatusEnum.PENDING, InnovationExportRequestStatusEnum.APPROVED])(
-      'should reject all %s export requests',
-      async status => {
-        // ensure request is pending
-        await em
-          .getRepository(InnovationExportRequestEntity)
-          .update({ id: innovation.exportRequests.requestByAlice.id }, { status: status });
+    it('should reject all pending export requests', async () => {
+      // ensure request is pending
+      await em
+        .getRepository(InnovationExportRequestEntity)
+        .update(
+          { id: innovation.exportRequests.requestByAlice.id },
+          { status: InnovationExportRequestStatusEnum.PENDING }
+        );
 
-        await sut.archiveInnovation(context, innovation.id, { message: message }, em);
+      await sut.archiveInnovation(context, innovation.id, { message: message }, em);
 
-        const dbRequest = await em
-          .createQueryBuilder(InnovationExportRequestEntity, 'request')
-          .select(['request.status', 'request.rejectReason'])
-          .where('request.id = :requestId', { requestId: innovation.exportRequests.requestByAlice.id })
-          .getOne();
+      const dbRequest = await em
+        .createQueryBuilder(InnovationExportRequestEntity, 'request')
+        .select(['request.status', 'request.rejectReason'])
+        .where('request.id = :requestId', { requestId: innovation.exportRequests.requestByAlice.id })
+        .getOne();
 
-        expect(dbRequest?.status).toBe(InnovationExportRequestStatusEnum.REJECTED);
-        expect(dbRequest?.rejectReason).toBe(TranslationHelper.translate('DEFAULT_MESSAGES.EXPORT_REQUEST.ARCHIVE'));
-      }
-    );
+      expect(dbRequest?.status).toBe(InnovationExportRequestStatusEnum.REJECTED);
+      expect(dbRequest?.rejectReason).toBe(TranslationHelper.translate('DEFAULT_MESSAGES.EXPORT_REQUEST.ARCHIVE'));
+    });
 
     it('should add the archive to support summary', async () => {
       const nPreviousSupports = await em
