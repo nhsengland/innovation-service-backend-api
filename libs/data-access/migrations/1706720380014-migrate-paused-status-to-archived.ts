@@ -3,30 +3,30 @@ import type { MigrationInterface, QueryRunner } from 'typeorm';
 export class migratePausedStatusToArchived1706720380014 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
+      -- Add new field previous_state in innovations to aid queries
+      ALTER TABLE innovation ADD archived_status nvarchar(255);
+    `);
+
+    await queryRunner.query(`
       -- Change all support status from paused innovations to closed and update the archive_snapshot
       UPDATE innovation_support
-          SET status = 'CLOSED', archive_snapshot = JSON_MODIFY(
-          JSON_MODIFY(
-              JSON_MODIFY(
-                  COALESCE(archive_snapshot, '{}'),
-                  '$.archivedAt', CONVERT(VARCHAR, i.status_updated_at)
-              ),
-              '$.assignedAccessors', JSON_QUERY('[]')
-          ),
-          '$.status', (
-              CASE
-                  WHEN s.status = 'UNASSIGNED' THEN 'ENGAGING'
-                  ELSE s.status
-              END
-              )
-          )
-          FROM innovation_support s
-          INNER JOIN innovation i ON i.id = s.innovation_id
-          WHERE i.status = 'PAUSED' AND s.[status] != 'CLOSED';
+        SET status = 'CLOSED', archive_snapshot = JSON_OBJECT(
+            'archivedAt': i.status_updated_at,
+            'assignedAccessors': JSON_ARRAY(),
+            'status': (
+                CASE
+                    WHEN s.status = 'UNASSIGNED' THEN 'ENGAGING'
+                    ELSE s.status
+                END
+            )
+        )
+      FROM innovation_support s
+      INNER JOIN innovation i ON i.id = s.innovation_id
+      WHERE i.status = 'PAUSED' AND s.[status] != 'CLOSED';
 
-      -- Update all paused innovations to archived
+      -- Update all paused innovations to archived and populate the archived_status field
       UPDATE innovation
-          SET status = 'ARCHIVED'
+          SET archived_status = 'IN_PROGRESS', status = 'ARCHIVED'
           WHERE status = 'PAUSED';
 
       -- Remove PAUSED from the innovation status constraint
@@ -47,7 +47,7 @@ export class migratePausedStatusToArchived1706720380014 implements MigrationInte
     CREATE OR ALTER VIEW [innovation_grouped_status_view_entity] AS
       SELECT innovation.id,
           CASE
-              WHEN innovation.status IN ('CREATED') THEN 'RECORD_NOT_SHARED' -- Removed Paused
+              WHEN innovation.status = 'CREATED' THEN 'RECORD_NOT_SHARED'
               WHEN innovation.status = 'NEEDS_ASSESSMENT' THEN 'NEEDS_ASSESSMENT'
               WHEN innovation.status = 'WITHDRAWN' THEN 'WITHDRAWN'
               WHEN innovation.status = 'ARCHIVED' THEN 'ARCHIVED' -- Added
@@ -79,5 +79,5 @@ export class migratePausedStatusToArchived1706720380014 implements MigrationInte
     `);
   }
 
-  public async down(): Promise<void> {}
+  public async down(): Promise<void> { }
 }
