@@ -324,7 +324,7 @@ export const NOTIFICATIONS_CONFIG = {
     handler: InnovationArchiveHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_ARCHIVE]>({
       innovationId: Joi.string().guid().required(),
-      message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xs).trim().required(),
+      message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).trim().required(),
       previousStatus: Joi.string()
         .valid(...Object.values(InnovationStatusEnum))
         .required(),

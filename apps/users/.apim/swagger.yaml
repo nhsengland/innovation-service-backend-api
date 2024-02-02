@@ -721,7 +721,6 @@ paths:
                                 - IN_PROGRESS
                                 - WITHDRAWN
                                 - COMPLETE
-                                - PAUSED
                                 - ARCHIVED
                               description: The innovation status
                         contextType:
