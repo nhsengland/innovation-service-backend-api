@@ -142,6 +142,29 @@ describe('v1-innovation-info Suite', () => {
       });
     });
 
+    it("shouldn't include owner with contact details for NA if innovation is archived", async () => {
+      mock.mockResolvedValueOnce({ ...expectedWithOwner, status: InnovationStatusEnum.ARCHIVED });
+      const result = await new AzureHttpTriggerBuilder()
+        .setAuth(scenario.users.paulNeedsAssessor)
+        .setParams<ParamsType>({
+          innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id
+        })
+        .call<ResponseDTO>(azureFunction);
+
+      expect(result.body).toStrictEqual({
+        ...expectedWithOwner,
+        status: InnovationStatusEnum.ARCHIVED,
+        owner: {
+          ...pick(expectedWithOwner.owner, [
+            'id',
+            'name',
+            'isActive',
+          ]),
+          organisation: undefined
+        }
+      });
+    });
+
     it('should include owner with contact details+last login at for admin', async () => {
       mock.mockResolvedValueOnce(expectedWithOwner);
       const result = await new AzureHttpTriggerBuilder()
