@@ -223,7 +223,6 @@ export type EmailTemplatesType = {
   NA04_NEEDS_ASSESSMENT_COMPLETE_TO_INNOVATOR: {
     innovation_name: string;
     data_sharing_preferences_url: string;
-    needs_assessment_url: string;
   };
   NA06_NEEDS_ASSESSOR_REMOVED: {
     innovation_name: string;
