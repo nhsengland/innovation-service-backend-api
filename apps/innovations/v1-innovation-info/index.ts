@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { Audit, JwtDecoder } from '@innovations/shared/decorators';
-import { ServiceRoleEnum } from '@innovations/shared/enums';
+import { InnovationStatusEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
 import type { AuthorizationService } from '@innovations/shared/services';
 import { ActionEnum, TargetEnum } from '@innovations/shared/services/integrations/audit.service';
@@ -61,10 +61,10 @@ class V1InnovationInfo {
                 name: result.owner.name,
                 isActive: result.owner.isActive,
                 organisation: result.owner.organisation,
-                // Contact details only sent to Assessment and Admin users.
-                ...([ServiceRoleEnum.ASSESSMENT, ServiceRoleEnum.ADMIN].includes(
-                  domainContext.currentRole.role as ServiceRoleEnum
-                )
+                // Contact details are always sent to ADMIN and sent to Assessment if innovation is not archived
+                ...(domainContext.currentRole.role === ServiceRoleEnum.ADMIN ||
+                (domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT &&
+                  result.status !== InnovationStatusEnum.ARCHIVED)
                   ? {
                       email: result.owner.email,
                       mobilePhone: result.owner.mobilePhone,
