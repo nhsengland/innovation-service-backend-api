@@ -264,7 +264,12 @@ export class InnovationsService extends BaseService {
       await transaction.update(
         InnovationEntity,
         { id: innovationId },
-        { archivedStatus: () => 'status', status: InnovationStatusEnum.ARCHIVED, statusUpdatedAt: archivedAt, updatedBy: domainContext.id }
+        {
+          archivedStatus: () => 'status',
+          status: InnovationStatusEnum.ARCHIVED,
+          statusUpdatedAt: archivedAt,
+          updatedBy: domainContext.id
+        }
       );
 
       const supportLogs = [];
@@ -1063,14 +1068,19 @@ export class InnovationsService extends BaseService {
 
     // Special role constraints (maybe make handler in the future)
     if (isAccessorDomainContextType(domainContext)) {
-      // force the innovation to be shared with the support organisation
+      // join with the innovation share if there's one (required to know if it was shared with the accessor's organisation)
       query.addSelect('shares.id').leftJoin('innovation.organisationShares', 'shares', 'shares.id = :organisationId', {
         organisationId: domainContext.organisation.id
       });
       // automatically add in_progress since A/QA can't see the others (yet). This might become a filter for A/QAs in the future
-      query.andWhere('innovation.status IN (:...innovationStatus)', {
-        innovationStatus: [InnovationStatusEnum.IN_PROGRESS, InnovationStatusEnum.ARCHIVED]
-      });
+      // current rule is A/QA can see innovations in progress or archived innovations that were in progress
+      query.andWhere(
+        '(innovation.status IN (:...innovationStatus) OR (innovation.status = :innovationArchivedStatus AND innovation.archivedStatus IN (:...innovationStatus)))',
+        {
+          innovationStatus: [InnovationStatusEnum.IN_PROGRESS],
+          innovationArchivedStatus: InnovationStatusEnum.ARCHIVED
+        }
+      );
 
       // Accessors can only see innovations that they are supporting
       if (domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR) {
@@ -1209,6 +1219,10 @@ export class InnovationsService extends BaseService {
         .addSelect(fields.map(f => `support.${f}`))
         .leftJoin('innovation.supports', 'support', 'support.organisation_unit_id = :organisationUnitId', {
           organisationUnitId: domainContext.organisation.organisationUnit.id
+        })
+        // Ignore archived innovations that never had any support or it would be messing with the status and support summary
+        .andWhere('(innovation.status != :innovationArchivedStatus OR support.id IS NOT NULL) ', {
+          innovationArchivedStatus: InnovationStatusEnum.ARCHIVED
         });
     }
   }
