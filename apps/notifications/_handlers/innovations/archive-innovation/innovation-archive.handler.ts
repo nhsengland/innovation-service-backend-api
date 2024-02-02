@@ -23,9 +23,7 @@ export class InnovationArchiveHandler extends BaseHandler<
     const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
 
     // Always send a "receipt" to the owner
-    if (innovation.ownerId) {
-      await this.AI01_INNOVATION_ARCHIVED_TO_SELF(innovation);
-    }
+    await this.AI01_INNOVATION_ARCHIVED_TO_SELF(innovation);
 
     // Send notifications to collaborators
     await this.AI02_INNOVATION_ARCHIVED_TO_COLLABORATORS(innovation);
@@ -79,11 +77,12 @@ export class InnovationArchiveHandler extends BaseHandler<
     ownerId?: string;
   }): Promise<void> {
     const collaborators = await this.recipientsService.getInnovationActiveCollaborators(this.inputData.innovationId);
-    const recipients = await this.recipientsService.getUsersRecipient(collaborators, ServiceRoleEnum.INNOVATOR);
 
-    if (!collaborators) {
+    if (!collaborators.length) {
       return;
     }
+
+    const recipients = await this.recipientsService.getUsersRecipient(collaborators, ServiceRoleEnum.INNOVATOR);
 
     this.notify('AI02_INNOVATION_ARCHIVED_TO_COLLABORATORS', recipients, {
       email: {
