@@ -1,5 +1,5 @@
 import type { Context } from '@azure/functions';
-import { ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
+import { ServiceRoleEnum, type NotifierTypeEnum, InnovationStatusEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { innovationOverviewUrl } from '../../../_helpers/url.helper';
 import { BaseHandler } from '../../base.handler';
@@ -31,7 +31,12 @@ export class InnovationArchiveHandler extends BaseHandler<
     await this.AI02_INNOVATION_ARCHIVED_TO_COLLABORATORS(innovation);
 
     // Send notifications to QA/A
-    await this.AI03_INNOVATION_ARCHIVED_TO_ENGAGING_QA_A(innovation);
+    if (this.inputData.affectedUsers.length > 0) {
+      await this.AI03_INNOVATION_ARCHIVED_TO_ENGAGING_QA_A(innovation);
+    }
+
+    // Send notifications to NA if innovation is waiting assessment/reassessment
+    await this.AI04_INNOVATION_ARCHIVED_TO_NA_DURING_NEEDS_ASSESSMENT(innovation);
 
     return this;
   }
@@ -68,7 +73,11 @@ export class InnovationArchiveHandler extends BaseHandler<
     });
   }
 
-  private async AI02_INNOVATION_ARCHIVED_TO_COLLABORATORS(innovation: { id: string; name: string }): Promise<void> {
+  private async AI02_INNOVATION_ARCHIVED_TO_COLLABORATORS(innovation: {
+    id: string;
+    name: string;
+    ownerId?: string;
+  }): Promise<void> {
     const collaborators = await this.recipientsService.getInnovationActiveCollaborators(this.inputData.innovationId);
     const recipients = await this.recipientsService.getUsersRecipient(collaborators, ServiceRoleEnum.INNOVATOR);
 
@@ -81,8 +90,7 @@ export class InnovationArchiveHandler extends BaseHandler<
         notificationPreferenceType: 'INNOVATION_MANAGEMENT',
         params: {
           innovation_name: innovation.name
-        },
-        options: { includeSelf: true }
+        }
       },
       inApp: {
         context: {
@@ -91,16 +99,27 @@ export class InnovationArchiveHandler extends BaseHandler<
           detail: 'AI02_INNOVATION_ARCHIVED_TO_COLLABORATORS'
         },
         innovationId: innovation.id,
-        params: { innovationName: innovation.name },
-        options: { includeSelf: true }
+        params: { innovationName: innovation.name }
       }
     });
   }
 
-  private async AI03_INNOVATION_ARCHIVED_TO_ENGAGING_QA_A(innovation: { id: string; name: string }): Promise<void> {
-    const assignedQAs = await this.recipientsService.innovationAssignedRecipients(innovation.id, {});
+  private async AI03_INNOVATION_ARCHIVED_TO_ENGAGING_QA_A(innovation: {
+    id: string;
+    name: string;
+    ownerId?: string;
+  }): Promise<void> {
+    const recipients = await this.recipientsService.usersBagToRecipients(
+      this.inputData.affectedUsers
+        .map(u => ({
+          id: u.userId,
+          userType: u.userType,
+          organisationUnit: u.unitId
+        }))
+        .filter(u => [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR].includes(u.userType))
+    );
 
-    this.notify('AI03_INNOVATION_ARCHIVED_TO_ENGAGING_QA_A', assignedQAs, {
+    this.notify('AI03_INNOVATION_ARCHIVED_TO_ENGAGING_QA_A', recipients, {
       email: {
         notificationPreferenceType: 'INNOVATION_MANAGEMENT',
         params: {
@@ -117,9 +136,8 @@ export class InnovationArchiveHandler extends BaseHandler<
         innovationId: innovation.id,
         params: {
           innovationName: innovation.name,
-          archived_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, innovation.id)
-        },
-        options: {}
+          archivedUrl: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, innovation.id)
+        }
       }
     });
   }
@@ -127,15 +145,37 @@ export class InnovationArchiveHandler extends BaseHandler<
   private async AI04_INNOVATION_ARCHIVED_TO_NA_DURING_NEEDS_ASSESSMENT(innovation: {
     id: string;
     name: string;
+    ownerId?: string;
   }): Promise<void> {
-    const assignedAssessment = await this.recipientsService.needsAssessmentUsers();
+    const previousAssessor = await this.recipientsService.usersBagToRecipients(
+      this.inputData.affectedUsers
+        .map(u => ({
+          id: u.userId,
+          userType: u.userType
+        }))
+        .filter(u => u.userType === ServiceRoleEnum.ASSESSMENT)
+    );
 
-    this.notify('AI04_INNOVATION_ARCHIVED_TO_NA_DURING_NEEDS_ASSESSMENT', assignedAssessment, {
+    if (!previousAssessor || this.inputData.previousStatus !== InnovationStatusEnum.ARCHIVED) {
+      return;
+    }
+
+    this.notify('AI04_INNOVATION_ARCHIVED_TO_NA_DURING_NEEDS_ASSESSMENT', previousAssessor, {
       email: {
         notificationPreferenceType: 'INNOVATION_MANAGEMENT',
         params: {
-          innovation_name: innovation.name,
-          assessment_type: this.inputData.reassessment ? 'reassessment' : 'assessment'
+          innovation_name: innovation.name
+        }
+      },
+      inApp: {
+        context: {
+          id: innovation.id,
+          type: 'INNOVATION_MANAGEMENT',
+          detail: 'AI04_INNOVATION_ARCHIVED_TO_NA_DURING_NEEDS_ASSESSMENT'
+        },
+        innovationId: innovation.id,
+        params: {
+          innovationName: innovation.name
         }
       }
     });

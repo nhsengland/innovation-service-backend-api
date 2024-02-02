@@ -1,6 +1,7 @@
 import type { ServiceRoleEnum } from '../enums';
 import type {
   InnovationCollaboratorStatusEnum,
+  InnovationStatusEnum,
   InnovationSupportStatusEnum,
   InnovationTaskStatusEnum
 } from '../enums/innovation.enums';
@@ -57,7 +58,12 @@ export type NotifierTemplatesType = {
   [NotifierTypeEnum.INNOVATION_ARCHIVE]: {
     innovationId: string;
     message: string;
-    reassessment: boolean;
+    previousStatus: InnovationStatusEnum;
+    affectedUsers: {
+      userId: string;
+      userType: ServiceRoleEnum;
+      unitId?: string;
+    }[];
   };
   // // Transfer Ownership
   [NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_CREATION]: {

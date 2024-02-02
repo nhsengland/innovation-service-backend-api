@@ -201,13 +201,31 @@ export class InnovationsService extends BaseService {
       .getMany();
 
     // TODO: This will be needed for the notification
-    // const previousAssignedAccessors = supports.flatMap(support =>
-    //   support.userRoles.map(item => ({
-    //     id: item.user.id,
-    //     role: item.role,
-    //     unitId: support.organisationUnit.id
-    //   }))
-    // );
+    const innovation = await em
+      .createQueryBuilder(InnovationEntity, 'innovation')
+      .select(['support.status'])
+      .where('innovation.id = :innovationId', { innovationId: innovationId })
+      .getOne();
+
+    if (!innovation) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
+    }
+
+    const affectedUsers: {
+      userId: string;
+      userType: ServiceRoleEnum;
+      unitId?: string;
+    }[] = [];
+
+    affectedUsers.push(
+      ...supports.flatMap(support =>
+        support.userRoles.map(item => ({
+          userId: item.user.id,
+          userType: item.role,
+          unitId: support.organisationUnit.id
+        }))
+      )
+    );
 
     const archivedAt = new Date();
 
@@ -286,7 +304,12 @@ export class InnovationsService extends BaseService {
       await Promise.all(supportLogs);
     });
 
-    // TODO: Send notification
+    await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_ARCHIVE, {
+      innovationId: innovationId,
+      message: data.message,
+      previousStatus: innovation.status,
+      affectedUsers: affectedUsers
+    });
   }
 
   async getInnovationsList(
@@ -1329,8 +1352,8 @@ export class InnovationsService extends BaseService {
     FilterValues extends FilterValue extends unknown[]
       ? FilterValue
       : FilterValue extends true | false // hackish because type script would make it true[] or false[] otherwise
-        ? boolean[]
-        : FilterValue[]
+      ? boolean[]
+      : FilterValue[]
   >(
     filterKey: FilterKey,
     options?: {

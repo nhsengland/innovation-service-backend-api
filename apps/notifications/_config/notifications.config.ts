@@ -3,6 +3,7 @@ import Joi from 'joi';
 import { TEXTAREA_LENGTH_LIMIT } from '@notifications/shared/constants';
 import {
   InnovationCollaboratorStatusEnum,
+  InnovationStatusEnum,
   InnovationSupportStatusEnum,
   InnovationTaskStatusEnum,
   NotifierTypeEnum,
@@ -21,6 +22,7 @@ import {
   IdleSupportAccessorHandler,
   IdleSupportInnovatorHandler,
   IncompleteRecordHandler,
+  InnovationArchiveHandler,
   InnovationDelayedSharedSuggestionHandler,
   InnovationStopSharingHandler,
   InnovationSubmittedHandler,
@@ -315,6 +317,29 @@ export const NOTIFICATIONS_CONFIG = {
         )
         .required(),
       message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xs).trim().required()
+    }).required()
+  },
+  // // Archived
+  [NotifierTypeEnum.INNOVATION_ARCHIVE]: {
+    handler: InnovationArchiveHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_ARCHIVE]>({
+      innovationId: Joi.string().guid().required(),
+      message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xs).trim().required(),
+      previousStatus: Joi.string()
+        .valid(...Object.values(InnovationStatusEnum))
+        .required(),
+      affectedUsers: Joi.array()
+        .items(
+          Joi.object({
+            userId: Joi.string().guid().required(),
+            userType: Joi.string()
+              .valid(...Object.values(ServiceRoleEnum))
+              .required(),
+            unitId: Joi.string().guid()
+          })
+        )
+        .min(1)
+        .required()
     }).required()
   },
   // // Transfer Ownership

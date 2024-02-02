@@ -200,11 +200,10 @@ export type InAppTemplatesType = {
   };
   AI03_INNOVATION_ARCHIVED_TO_ENGAGING_QA_A: {
     innovationName: string;
-    archived_url: string;
+    archivedUrl: string;
   };
   AI04_INNOVATION_ARCHIVED_TO_NA_DURING_NEEDS_ASSESSMENT: {
     innovationName: string;
-    assessmentType: 'assessment' | 'reassessment';
   };
   SH01_INNOVATION_STOPPED_SHARED_TO_ASSIGNED_USERS: {
     innovationName: string;
