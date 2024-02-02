@@ -200,7 +200,7 @@ export class InnovationsService extends BaseService {
       .andWhere('support.status <> :supportClosed', { supportClosed: InnovationSupportStatusEnum.CLOSED })
       .getMany();
 
-    // TODO: This will be needed for the notification
+    // TODO: Will need to add logic to push ASSESSMENT users to implement notification AI04, decision currently on hold by client.
     const innovation = await em
       .createQueryBuilder(InnovationEntity, 'innovation')
       .select(['innovation.status'])
@@ -281,7 +281,12 @@ export class InnovationsService extends BaseService {
       await transaction.update(
         InnovationEntity,
         { id: innovationId },
-        { archivedStatus: () => 'status', status: InnovationStatusEnum.ARCHIVED, statusUpdatedAt: archivedAt, updatedBy: domainContext.id }
+        {
+          archivedStatus: () => 'status',
+          status: InnovationStatusEnum.ARCHIVED,
+          statusUpdatedAt: archivedAt,
+          updatedBy: domainContext.id
+        }
       );
 
       const supportLogs = [];
