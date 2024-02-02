@@ -437,11 +437,12 @@ describe('Innovations / _services / innovations suite', () => {
 
       const dbInnovation = await em
         .createQueryBuilder(InnovationEntity, 'innovation')
-        .select(['innovation.status'])
+        .select(['innovation.status', 'innovation.archivedStatus'])
         .where('innovation.id = :innovationId', { innovationId: innovation.id })
         .getOne();
 
       expect(dbInnovation?.status).toBe(InnovationStatusEnum.ARCHIVED);
+      expect(dbInnovation?.archivedStatus).toBe(innovation.status);
     });
 
     it('should cancel all open tasks', async () => {

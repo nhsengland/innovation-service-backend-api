@@ -32,7 +32,7 @@ class V1InnovationReassessmentRequestCreate {
         .setInnovation(params.innovationId)
         .checkInnovatorType()
         .checkInnovation({
-          status: [InnovationStatusEnum.IN_PROGRESS, InnovationStatusEnum.PAUSED]
+          status: [InnovationStatusEnum.IN_PROGRESS, InnovationStatusEnum.ARCHIVED]
         })
         .verify();
       const domainContext = auth.getContext();

@@ -6,7 +6,6 @@ export enum InnovationStatusEnum {
   // NEEDS_ASSESSMENT_REVIEW = 'NEEDS_ASSESSMENT_REVIEW', // Not it use nowadays.
   WITHDRAWN = 'WITHDRAWN',
   COMPLETE = 'COMPLETE',
-  PAUSED = 'PAUSED',
   ARCHIVED = 'ARCHIVED'
 }
 
