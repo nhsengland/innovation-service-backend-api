@@ -349,6 +349,7 @@ export type EmailTemplatesType = {
   };
   AI04_INNOVATION_ARCHIVED_TO_NA_DURING_NEEDS_ASSESSMENT: {
     innovation_name: string;
+    assessment_type: 'assessment' | 'reassessment';
   };
   SH01_INNOVATION_STOPPED_SHARED_TO_ASSIGNED_USERS: {
     innovation_name: string;

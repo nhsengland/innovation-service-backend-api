@@ -163,7 +163,8 @@ export class InnovationArchiveHandler extends BaseHandler<
       email: {
         notificationPreferenceType: 'INNOVATION_MANAGEMENT',
         params: {
-          innovation_name: innovation.name
+          innovation_name: innovation.name,
+          assessment_type: this.inputData.reassessment ? 'reassessment' : 'assessment'
         }
       },
       inApp: {
@@ -174,7 +175,8 @@ export class InnovationArchiveHandler extends BaseHandler<
         },
         innovationId: innovation.id,
         params: {
-          innovationName: innovation.name
+          innovationName: innovation.name,
+          assessmentType: this.inputData.reassessment ? 'reassessment' : 'assessment'
         }
       }
     });

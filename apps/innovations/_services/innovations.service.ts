@@ -311,6 +311,9 @@ export class InnovationsService extends BaseService {
       innovationId: innovationId,
       message: data.message,
       previousStatus: innovation.status,
+      // TODO add logic to this for AI04, when client decides
+      reassessment: false,
+      // TODO add logic to add NAs, for AI04, when client decides
       affectedUsers: affectedUsers
     });
   }

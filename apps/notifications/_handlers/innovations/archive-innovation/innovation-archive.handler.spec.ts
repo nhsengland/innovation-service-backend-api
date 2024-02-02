@@ -34,6 +34,7 @@ describe('Notifications / _handlers / innovation-archive suite', () => {
         inputData: {
           innovationId: innovation.id,
           message,
+          reassessment: false,
           previousStatus: InnovationStatusEnum.IN_PROGRESS,
           affectedUsers: []
         },
@@ -53,6 +54,7 @@ describe('Notifications / _handlers / innovation-archive suite', () => {
         inputData: {
           innovationId: innovation.id,
           message,
+          reassessment: false,
           previousStatus: InnovationStatusEnum.IN_PROGRESS,
           affectedUsers: []
         },
@@ -73,6 +75,7 @@ describe('Notifications / _handlers / innovation-archive suite', () => {
         inputData: {
           innovationId: innovation.id,
           message,
+          reassessment: false,
           previousStatus: InnovationStatusEnum.IN_PROGRESS,
           affectedUsers: []
         },
@@ -91,6 +94,7 @@ describe('Notifications / _handlers / innovation-archive suite', () => {
         inputData: {
           innovationId: innovation.id,
           message,
+          reassessment: false,
           previousStatus: InnovationStatusEnum.IN_PROGRESS,
           affectedUsers: []
         },
@@ -113,6 +117,7 @@ describe('Notifications / _handlers / innovation-archive suite', () => {
         inputData: {
           innovationId: innovation.id,
           message,
+          reassessment: false,
           previousStatus: InnovationStatusEnum.IN_PROGRESS,
           affectedUsers: [
             {
@@ -138,6 +143,7 @@ describe('Notifications / _handlers / innovation-archive suite', () => {
         inputData: {
           innovationId: innovation.id,
           message,
+          reassessment: false,
           previousStatus: InnovationStatusEnum.IN_PROGRESS,
           affectedUsers: [
             {
@@ -164,6 +170,7 @@ describe('Notifications / _handlers / innovation-archive suite', () => {
         inputData: {
           innovationId: innovation.id,
           message,
+          reassessment: false,
           affectedUsers: [
             {
               userId: scenario.users.paulNeedsAssessor.id,
@@ -173,7 +180,8 @@ describe('Notifications / _handlers / innovation-archive suite', () => {
           previousStatus: InnovationStatusEnum.ARCHIVED
         },
         outputData: {
-          innovation_name: innovation.name
+          innovation_name: innovation.name,
+          assessment_type: 'assessment'
         }
       });
     });
@@ -186,6 +194,7 @@ describe('Notifications / _handlers / innovation-archive suite', () => {
         inputData: {
           innovationId: innovation.id,
           message,
+          reassessment: false,
           affectedUsers: [
             {
               userId: scenario.users.paulNeedsAssessor.id,
@@ -195,7 +204,8 @@ describe('Notifications / _handlers / innovation-archive suite', () => {
           previousStatus: InnovationStatusEnum.IN_PROGRESS
         },
         outputData: {
-          innovation_name: innovation.name
+          innovation_name: innovation.name,
+          assessment_type: 'assessment'
         }
       });
     });
@@ -209,6 +219,7 @@ describe('Notifications / _handlers / innovation-archive suite', () => {
         inputData: {
           innovationId: innovation.id,
           message,
+          reassessment: false,
           affectedUsers: [
             {
               userId: scenario.users.paulNeedsAssessor.id,
@@ -218,7 +229,8 @@ describe('Notifications / _handlers / innovation-archive suite', () => {
           previousStatus: InnovationStatusEnum.ARCHIVED
         },
         outputData: {
-          innovationName: innovation.name
+          innovationName: innovation.name,
+          assessmentType: 'assessment'
         }
       });
     });

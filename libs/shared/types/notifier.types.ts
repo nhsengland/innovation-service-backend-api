@@ -59,6 +59,7 @@ export type NotifierTemplatesType = {
     innovationId: string;
     message: string;
     previousStatus: InnovationStatusEnum;
+    reassessment: boolean;
     affectedUsers: {
       userId: string;
       userType: ServiceRoleEnum;
