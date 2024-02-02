@@ -203,7 +203,7 @@ export class InnovationsService extends BaseService {
     // TODO: This will be needed for the notification
     const innovation = await em
       .createQueryBuilder(InnovationEntity, 'innovation')
-      .select(['support.status'])
+      .select(['innovation.status'])
       .where('innovation.id = :innovationId', { innovationId: innovationId })
       .getOne();
 
@@ -1350,8 +1350,8 @@ export class InnovationsService extends BaseService {
     FilterValues extends FilterValue extends unknown[]
       ? FilterValue
       : FilterValue extends true | false // hackish because type script would make it true[] or false[] otherwise
-      ? boolean[]
-      : FilterValue[]
+        ? boolean[]
+        : FilterValue[]
   >(
     filterKey: FilterKey,
     options?: {
