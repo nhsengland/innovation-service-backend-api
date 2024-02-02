@@ -281,7 +281,7 @@ export class InnovationsService extends BaseService {
       await transaction.update(
         InnovationEntity,
         { id: innovationId },
-        { status: InnovationStatusEnum.ARCHIVED, statusUpdatedAt: archivedAt, updatedBy: domainContext.id }
+        { archivedStatus: () => 'status', status: InnovationStatusEnum.ARCHIVED, statusUpdatedAt: archivedAt, updatedBy: domainContext.id }
       );
 
       const supportLogs = [];
