@@ -144,6 +144,7 @@ export type InnovationListFilters = {
   search?: string;
   suggestedOnly?: boolean;
   supportStatuses?: InnovationSupportStatusEnum[];
+  //closedByMyOrganisation?: boolean;
 };
 
 // Join types are the ones with nested selectable objects
@@ -1063,17 +1064,12 @@ export class InnovationsService extends BaseService {
     // Special role constraints (maybe make handler in the future)
     if (isAccessorDomainContextType(domainContext)) {
       // force the innovation to be shared with the support organisation
-      query.innerJoin(
-        'innovation_share',
-        'shares',
-        'shares.innovation_id = innovation.id AND shares.organisation_id = :organisationId',
-        {
-          organisationId: domainContext.organisation.id
-        }
-      );
+      query.addSelect('shares.id').leftJoin('innovation.organisationShares', 'shares', 'shares.id = :organisationId', {
+        organisationId: domainContext.organisation.id
+      });
       // automatically add in_progress since A/QA can't see the others (yet). This might become a filter for A/QAs in the future
       query.andWhere('innovation.status IN (:...innovationStatus)', {
-        innovationStatus: [InnovationStatusEnum.IN_PROGRESS]
+        innovationStatus: [InnovationStatusEnum.IN_PROGRESS, InnovationStatusEnum.ARCHIVED]
       });
 
       // Accessors can only see innovations that they are supporting
