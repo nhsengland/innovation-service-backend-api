@@ -61,7 +61,7 @@ import { createDocumentFromInnovation } from '@innovations/shared/entities/innov
 import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import { ActionEnum } from '@innovations/shared/services/integrations/audit.service';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import { groupBy, isString, mapValues, snakeCase } from 'lodash';
+import { groupBy, isString, mapValues, pick, snakeCase } from 'lodash';
 import { BaseService } from './base.service';
 
 // TODO move types
@@ -1190,7 +1190,7 @@ export class InnovationsService extends BaseService {
     return {
       count: queryResult[1],
       data: queryResult[0].map(item => {
-        const res = {} as any;
+        let res = {} as any;
         Object.entries(fieldGroups).forEach(([key, value]) => {
           if (key in this.displayHandlers) {
             const handler = this.displayHandlers[key as keyof typeof this.displayHandlers];
@@ -1202,8 +1202,25 @@ export class InnovationsService extends BaseService {
             res[key] = item[key as keyof InnovationListView];
           }
         });
+
+        // Extra postProcessing the items if required (this might become a function in the future, currently only one rule)
+        if (isAccessorDomainContextType(domainContext) && item.organisationShares?.length === 0) {
+          res = pick(res, [
+            'id',
+            'name',
+            'submittedAt',
+            'groupedStatus',
+            'updatedAt',
+            'mainCategory',
+            'otherCategoryDescription',
+            'countryName',
+            'postCode',
+            'support'
+          ]);
+        }
+
         return res;
-      }) // I'm filtering by select and adding the support field
+      })
     };
   }
 
