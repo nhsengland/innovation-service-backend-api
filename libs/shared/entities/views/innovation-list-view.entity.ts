@@ -1,4 +1,4 @@
-import { Column, OneToMany, OneToOne, PrimaryColumn, ViewColumn, ViewEntity } from 'typeorm';
+import { Column, JoinTable, ManyToMany, OneToMany, OneToOne, PrimaryColumn, ViewColumn, ViewEntity } from 'typeorm';
 import type { InnovationGroupedStatusEnum, InnovationStatusEnum } from '../../enums';
 import type {
   catalogCareSettings,
@@ -8,6 +8,7 @@ import type {
 } from '../../schemas/innovation-record/202304/catalog.types';
 import { InnovationAssessmentEntity } from '../innovation/innovation-assessment.entity';
 import { InnovationSupportEntity } from '../innovation/innovation-support.entity';
+import { OrganisationEntity } from '../organisation/organisation.entity';
 
 @ViewEntity('innovation_list_view')
 export class InnovationListView {
@@ -31,6 +32,9 @@ export class InnovationListView {
 
   @ViewColumn()
   status: InnovationStatusEnum;
+
+  @ViewColumn({ name: 'archived_status' })
+  archivedStatus: InnovationStatusEnum | null;
 
   @ViewColumn({ name: 'grouped_status' })
   groupedStatus: InnovationGroupedStatusEnum;
@@ -79,4 +83,20 @@ export class InnovationListView {
 
   @OneToMany(() => InnovationSupportEntity, record => record.innovation)
   supports: InnovationSupportEntity[] | null;
+
+  @ManyToMany(() => OrganisationEntity, record => record.innovationShares, {
+    nullable: true
+  })
+  @JoinTable({
+    name: 'innovation_share',
+    joinColumn: {
+      name: 'innovation_id',
+      referencedColumnName: 'id'
+    },
+    inverseJoinColumn: {
+      name: 'organisation_id',
+      referencedColumnName: 'id'
+    }
+  })
+  organisationShares: OrganisationEntity[];
 }

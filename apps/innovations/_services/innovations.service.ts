@@ -61,7 +61,7 @@ import { createDocumentFromInnovation } from '@innovations/shared/entities/innov
 import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import { ActionEnum } from '@innovations/shared/services/integrations/audit.service';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import { groupBy, isString, mapValues, snakeCase } from 'lodash';
+import { groupBy, isString, mapValues, pick, snakeCase } from 'lodash';
 import { BaseService } from './base.service';
 
 // TODO move types
@@ -91,6 +91,8 @@ export const InnovationListSelectType = [
   'support.id',
   'support.status',
   'support.updatedAt',
+  'support.updatedBy',
+  'support.closedReason',
   'owner.id',
   'owner.name',
   'owner.companyName',
@@ -102,7 +104,8 @@ type InnovationListViewFields = Omit<InnovationListView, 'assessment' | 'support
 export type InnovationListSelectType =
   | keyof InnovationListViewFields
   | `assessment.${keyof Pick<InnovationAssessmentEntity, 'id'>}`
-  | `support.${keyof Pick<InnovationSupportEntity, 'id' | 'status' | 'updatedAt'>}`
+  | `support.${keyof Pick<InnovationSupportEntity, 'id' | 'status' | 'updatedAt' | 'updatedBy'>}`
+  | 'support.closedReason'
   | 'owner.id'
   | 'owner.name'
   | 'owner.companyName'
@@ -117,7 +120,12 @@ export type InnovationListFullResponseType = Omit<InnovationListViewFields, 'eng
         assignedAccessors: UserWithRoleDTO[] | null;
       })[]
     | null;
-  support: { status: InnovationSupportStatusEnum; updatedAt: Date | null };
+  support: {
+    status: InnovationSupportStatusEnum;
+    updatedAt: Date | null;
+    updatedBy: string | null;
+    closedReason: 'ARCHIVED' | 'STOPPED_SHARED' | 'CLOSED' | null;
+  } | null;
   owner: { id: string; name: string | null; companyName: string | null } | null;
   statistics: { notifications: number; tasks: number; messages: number };
 };
@@ -144,6 +152,7 @@ export type InnovationListFilters = {
   search?: string;
   suggestedOnly?: boolean;
   supportStatuses?: InnovationSupportStatusEnum[];
+  closedByMyOrganisation?: boolean;
 };
 
 // Join types are the ones with nested selectable objects
@@ -1093,19 +1102,33 @@ export class InnovationsService extends BaseService {
 
     // Special role constraints (maybe make handler in the future)
     if (isAccessorDomainContextType(domainContext)) {
-      // force the innovation to be shared with the support organisation
-      query.innerJoin(
-        'innovation_share',
-        'shares',
-        'shares.innovation_id = innovation.id AND shares.organisation_id = :organisationId',
+      // Because of the many to many relationship I need to do a custom join to get the shares while keeping typeorm happy
+      // The on condition must be on the relation table and not on the organisation one
+      query
+        .leftJoin(
+          'innovation_share',
+          'innovation_shares',
+          'innovation_shares.innovation_id = innovation.id AND innovation_shares.organisation_id = :organisationId',
+          {
+            organisationId: domainContext.organisation.id
+          }
+        )
+        .leftJoinAndMapMany(
+          'innovation.organisationShares',
+          'organisation',
+          'shares',
+          'shares.id = innovation_shares.organisation_id'
+        );
+
+      // automatically add in_progress since A/QA can't see the others (yet). This might become a filter for A/QAs in the future
+      // current rule is A/QA can see innovations in progress or archived innovations that were in progress
+      query.andWhere(
+        '(innovation.status IN (:...innovationStatus) OR (innovation.status = :innovationArchivedStatus AND innovation.archivedStatus IN (:...innovationStatus)))',
         {
-          organisationId: domainContext.organisation.id
+          innovationStatus: [InnovationStatusEnum.IN_PROGRESS],
+          innovationArchivedStatus: InnovationStatusEnum.ARCHIVED
         }
       );
-      // automatically add in_progress since A/QA can't see the others (yet). This might become a filter for A/QAs in the future
-      query.andWhere('innovation.status IN (:...innovationStatus)', {
-        innovationStatus: [InnovationStatusEnum.IN_PROGRESS]
-      });
 
       // Accessors can only see innovations that they are supporting
       if (domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR) {
@@ -1118,7 +1141,8 @@ export class InnovationsService extends BaseService {
       }
     }
 
-    // Exclude withdrawn innovations from non admin users (at least for now)
+    // Exclude withdrawn innovations from non admin users (at least for now). This state is still present for old innovations
+    // but no longer used
     if (!isAdminDomainContextType(domainContext)) {
       query.andWhere('innovation.status != :deletedStatus', { deletedStatus: InnovationStatusEnum.WITHDRAWN });
     }
@@ -1134,7 +1158,7 @@ export class InnovationsService extends BaseService {
       await (this.filtersHandlers[key as keyof typeof this.filtersHandlers] as any)(domainContext, query, value);
     }
 
-    // pagination
+    // pagination and sorting (TODO create a function for this as it's getting more complex)
     query.skip(params.pagination.skip);
     query.take(params.pagination.take);
     Object.entries(params.pagination.order).forEach(([key, value]) => {
@@ -1143,9 +1167,28 @@ export class InnovationsService extends BaseService {
         if (key.startsWith('owner.')) {
           key = 'owner' + key.split('.')[1]!.charAt(0).toUpperCase() + key.split('.')[1]?.slice(1);
         }
-        query.addOrderBy(key.includes('.') ? key : `innovation.${key}`, value);
+        switch (key) {
+          case 'owner.name':
+          case 'support.updatedBy':
+            throw new NotImplementedError(GenericErrorsEnum.NOT_IMPLEMENTED_ERROR, {
+              message: 'Sort by name is not allowed'
+            });
+
+          case 'support.closedReason':
+            query.addSelect(
+              `CASE WHEN innovation.status = '${InnovationStatusEnum.ARCHIVED}' THEN 1 ELSE CASE WHEN shares.id IS NULL THEN 3 ELSE 2 END END`,
+              'closedReasonOrder'
+            );
+            query.addOrderBy(`closedReasonOrder`, value);
+            break;
+          default:
+            query.addOrderBy(key.includes('.') ? key : `innovation.${key}`, value);
+        }
       }
     });
+
+    // Improve dependency selects if required at this point later on if it becomes a rules, keeping it in the functions
+    // that have the knowledge of the fields for now. Ie: closedReason for support requires innovation.status
 
     const queryResult = await query.getManyAndCount();
 
@@ -1185,8 +1228,12 @@ export class InnovationsService extends BaseService {
             res[key] = item[key as keyof InnovationListView];
           }
         });
-        return res;
-      }) // I'm filtering by select and adding the support field
+
+        // Extra postProcessing the items if required (this might become handlers in the future, keeping a function for now)
+        return isAccessorDomainContextType(domainContext) && item.organisationShares?.length === 0
+          ? this.cleanupAccessorsNotSharedInnovation(res)
+          : res;
+      })
     };
   }
 
@@ -1241,10 +1288,22 @@ export class InnovationsService extends BaseService {
       }
 
       query
-        .addSelect(fields.map(f => `support.${f}`))
+        .addSelect((fields.filter(f => f !== 'closedReason') ?? ['id']).map(f => `support.${f}`))
         .leftJoin('innovation.supports', 'support', 'support.organisation_unit_id = :organisationUnitId', {
           organisationUnitId: domainContext.organisation.organisationUnit.id
+        })
+        // Ignore archived innovations that never had any support or it would be messing with the status and support summary
+        .andWhere('(innovation.status != :innovationArchivedStatus OR support.id IS NOT NULL) ', {
+          innovationArchivedStatus: InnovationStatusEnum.ARCHIVED
         });
+
+      // closedReason is inferred from the innovation status (archive) and having a support for this organisation (not shared)
+      if (
+        fields.includes('closedReason') &&
+        !query.expressionMap.selects.some(s => s.selection === 'innovation.status')
+      ) {
+        query.addSelect('innovation.status');
+      }
     }
   }
   //#endregion
@@ -1301,9 +1360,12 @@ export class InnovationsService extends BaseService {
     const usersSet = new Set<string>();
     // Add the owners and the engaging units accessors
     innovations.forEach(i => {
-      [i.ownerId, ...(i.engagingUnits?.flatMap(u => u.assignedAccessors) || [])].filter(isString).forEach(u => {
-        usersSet.add(u);
-      });
+      // We need to resolve the innovation owner name, the supports updatedBy (for the closedBy) and the engaging units accessors
+      [i.ownerId, i.supports?.[0]?.updatedBy, ...(i.engagingUnits?.flatMap(u => u.assignedAccessors) || [])]
+        .filter(isString)
+        .forEach(u => {
+          usersSet.add(u);
+        });
     });
     return this.domainService.users.getUsersMap({
       userIds: [...usersSet]
@@ -1329,6 +1391,7 @@ export class InnovationsService extends BaseService {
     assignedToMe: this.addAssignedToMeFilter.bind(this),
     careSettings: this.addJsonArrayInFilter('careSettings').bind(this),
     categories: this.addJsonArrayInFilter('categories').bind(this),
+    closedByMyOrganisation: this.addClosedByMyOrganisationFilters.bind(this),
     dateFilters: this.addDateFilters.bind(this),
     diseasesAndConditions: this.addJsonArrayInFilter('diseasesAndConditions').bind(this),
     engagingOrganisations: this.addJsonArrayInFilter('engagingOrganisations', {
@@ -1539,6 +1602,23 @@ export class InnovationsService extends BaseService {
     }
   }
 
+  private addClosedByMyOrganisationFilters(
+    domainContext: DomainContextType,
+    query: SelectQueryBuilder<InnovationListView>,
+    value: boolean
+  ): void {
+    if (value && isAccessorDomainContextType(domainContext)) {
+      // we only want closed supports that aren't archives or stopped shared
+      query.andWhere(
+        new Brackets(qb => {
+          qb.where('support.status != :closedSupportStatus', {
+            closedSupportStatus: InnovationSupportStatusEnum.CLOSED
+          }).orWhere('(support.archive_snapshot IS NULL AND shares.id IS NOT NULL)'); // these are always joined for accessor roles
+        })
+      );
+    }
+  }
+
   private addDateFilters(
     domainContext: DomainContextType,
     query: SelectQueryBuilder<InnovationListView>,
@@ -1632,7 +1712,8 @@ export class InnovationsService extends BaseService {
 
   private displaySupport(
     item: InnovationListView,
-    fields: InnovationListChildrenType<'support'>[]
+    fields: InnovationListChildrenType<'support'>[],
+    extra: PickHandlerReturnType<typeof this.postHandlers, 'users'>
   ): Partial<InnovationListFullResponseType['support']> {
     // support is handled differently to remove the nested array since it's only 1 element in this case
     return {
@@ -1640,7 +1721,25 @@ export class InnovationsService extends BaseService {
       ...(fields.includes('status') && {
         status: item.supports?.[0]?.status ?? InnovationSupportStatusEnum.UNASSIGNED
       }),
-      ...(fields.includes('updatedAt') && { updatedAt: item.supports?.[0]?.updatedAt })
+      ...(fields.includes('updatedAt') && { updatedAt: item.supports?.[0]?.updatedAt }),
+      ...(fields.includes('updatedBy') && {
+        updatedBy:
+          item.status === InnovationStatusEnum.ARCHIVED || item.supports?.[0] === undefined
+            ? 'Innovator'
+            : item.supports?.[0]?.updatedBy
+              ? extra.users.get(item.supports[0].updatedBy)?.displayName ?? null
+              : null
+      }),
+      ...(fields.includes('closedReason') && {
+        closedReason:
+          item.supports?.[0]?.status === InnovationSupportStatusEnum.CLOSED
+            ? item.status === 'ARCHIVED'
+              ? 'ARCHIVED'
+              : item.organisationShares?.length
+                ? 'CLOSED'
+                : 'STOPPED_SHARED'
+            : null
+      })
     };
   }
 
@@ -2514,5 +2613,26 @@ export class InnovationsService extends BaseService {
     }
 
     return result;
+  }
+
+  /**
+   * Cleanup innovation output to keep only the fields an accessor as access when not shared
+   * @param input the input to be cleaned
+   * @param notShared if it's shared or not
+   * @returns cleanup the response to remove fields that are not shared
+   */
+  private cleanupAccessorsNotSharedInnovation<T extends object>(input: T): Partial<T> {
+    return pick(input, [
+      'id',
+      'name',
+      'submittedAt',
+      'groupedStatus',
+      'updatedAt',
+      'mainCategory',
+      'otherCategoryDescription',
+      'countryName',
+      'postCode',
+      'support'
+    ]);
   }
 }
