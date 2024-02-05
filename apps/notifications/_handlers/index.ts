@@ -16,6 +16,7 @@ export { AccountDeletionHandler } from './innovations/delete-account/account-del
 export { ExportRequestFeedbackHandler } from './innovations/export-request/export-request-feedback.handler';
 export { ExportRequestSubmittedHandler } from './innovations/export-request/export-request-submitted.handler';
 export { InnovationStopSharingHandler } from './innovations/stop-sharing-innovation/innovation-stop-sharing.handler';
+export { InnovationArchiveHandler } from './innovations/archive-innovation/innovation-archive.handler';
 export { InnovationTransferOwnershipCompletedHandler } from './innovations/transfer-innovation/innovation-transfer-ownership-completed.handler';
 export { InnovationTransferOwnershipCreationHandler } from './innovations/transfer-innovation/innovation-transfer-ownership-creation.handler';
 export { InnovationWithdrawnHandler } from './innovations/withdraw-innovation/innovation-withdrawn.handler';

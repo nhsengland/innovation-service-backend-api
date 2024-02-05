@@ -1,6 +1,7 @@
 import type { ServiceRoleEnum } from '../enums';
 import type {
   InnovationCollaboratorStatusEnum,
+  InnovationStatusEnum,
   InnovationSupportStatusEnum,
   InnovationTaskStatusEnum
 } from '../enums/innovation.enums';
@@ -50,6 +51,18 @@ export type NotifierTemplatesType = {
     affectedUsers: {
       id: string;
       role: ServiceRoleEnum;
+      unitId?: string;
+    }[];
+  };
+  // // Archive
+  [NotifierTypeEnum.INNOVATION_ARCHIVE]: {
+    innovationId: string;
+    message: string;
+    previousStatus: InnovationStatusEnum;
+    reassessment: boolean;
+    affectedUsers: {
+      userId: string;
+      userType: ServiceRoleEnum;
       unitId?: string;
     }[];
   };

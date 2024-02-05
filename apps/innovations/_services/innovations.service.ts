@@ -200,14 +200,32 @@ export class InnovationsService extends BaseService {
       .andWhere('support.status <> :supportClosed', { supportClosed: InnovationSupportStatusEnum.CLOSED })
       .getMany();
 
-    // TODO: This will be needed for the notification
-    // const previousAssignedAccessors = supports.flatMap(support =>
-    //   support.userRoles.map(item => ({
-    //     id: item.user.id,
-    //     role: item.role,
-    //     unitId: support.organisationUnit.id
-    //   }))
-    // );
+    // TODO: Will need to add logic to push ASSESSMENT users to implement notification AI04, decision currently on hold by client.
+    const innovation = await em
+      .createQueryBuilder(InnovationEntity, 'innovation')
+      .select(['innovation.status'])
+      .where('innovation.id = :innovationId', { innovationId: innovationId })
+      .getOne();
+
+    if (!innovation) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
+    }
+
+    const affectedUsers: {
+      userId: string;
+      userType: ServiceRoleEnum;
+      unitId?: string;
+    }[] = [];
+
+    affectedUsers.push(
+      ...supports.flatMap(support =>
+        support.userRoles.map(item => ({
+          userId: item.user.id,
+          userType: item.role,
+          unitId: support.organisationUnit.id
+        }))
+      )
+    );
 
     const archivedAt = new Date();
 
@@ -263,7 +281,12 @@ export class InnovationsService extends BaseService {
       await transaction.update(
         InnovationEntity,
         { id: innovationId },
-        { archivedStatus: () => 'status', status: InnovationStatusEnum.ARCHIVED, statusUpdatedAt: archivedAt, updatedBy: domainContext.id }
+        {
+          archivedStatus: () => 'status',
+          status: InnovationStatusEnum.ARCHIVED,
+          statusUpdatedAt: archivedAt,
+          updatedBy: domainContext.id
+        }
       );
 
       const supportLogs = [];
@@ -284,7 +307,15 @@ export class InnovationsService extends BaseService {
       await Promise.all(supportLogs);
     });
 
-    // TODO: Send notification
+    await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_ARCHIVE, {
+      innovationId: innovationId,
+      message: data.message,
+      previousStatus: innovation.status,
+      // TODO add logic to this for AI04, when client decides
+      reassessment: false,
+      // TODO add logic to add NAs, for AI04, when client decides
+      affectedUsers: affectedUsers
+    });
   }
 
   async getInnovationsList(

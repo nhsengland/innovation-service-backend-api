@@ -19,7 +19,6 @@ export class CollaboratorInviteHandler extends BaseHandler<
   async run(): Promise<this> {
     const collaborator = await this.recipientsService.innovationCollaborationInfo(this.inputData.collaboratorId);
     const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
-
     if (collaborator.userId) {
       await this.MC01_COLLABORATOR_INVITE_EXISTING_USER(innovation, {
         id: collaborator.collaboratorId,
