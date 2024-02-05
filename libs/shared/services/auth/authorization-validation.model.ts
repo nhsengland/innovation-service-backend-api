@@ -409,7 +409,8 @@ export class AuthorizationValidationModel {
         assessmentInnovationStatus: [
           InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
           InnovationStatusEnum.NEEDS_ASSESSMENT,
-          InnovationStatusEnum.IN_PROGRESS
+          InnovationStatusEnum.IN_PROGRESS,
+          InnovationStatusEnum.ARCHIVED
         ]
       });
     }
@@ -430,13 +431,26 @@ export class AuthorizationValidationModel {
         throw new ForbiddenError(AuthErrorsEnum.AUTH_INNOVATION_UNAUTHORIZED);
       }
 
-      query.innerJoin('innovation.organisationShares', 'innovationShares');
-      query.andWhere('innovation.status IN (:...accessorInnovationStatus)', {
-        accessorInnovationStatus: [InnovationStatusEnum.IN_PROGRESS, InnovationStatusEnum.COMPLETE]
-      });
-      query.andWhere('innovationShares.id = :accessorOrganisationId', {
-        accessorOrganisationId: context.organisation.id
-      });
+      query
+        .innerJoin('innovation.organisationShares', 'innovationShares')
+        .andWhere(
+          new Brackets(qb => {
+            qb.where('innovation.status IN (:...accessorInnovationStatus)', {
+              accessorInnovationStatus: [
+                InnovationStatusEnum.IN_PROGRESS,
+                InnovationStatusEnum.COMPLETE // Think this status is not used atm
+              ]
+            }).orWhere(
+              'innovation.status = :archivedStatus AND innovation.archivedStatus IN (:...accessorInnovationStatus)',
+              {
+                archivedStatus: InnovationStatusEnum.ARCHIVED
+              }
+            );
+          })
+        )
+        .andWhere('innovationShares.id = :accessorOrganisationId', {
+          accessorOrganisationId: context.organisation.id
+        });
 
       if (context.currentRole.role === ServiceRoleEnum.ACCESSOR) {
         query.innerJoin('innovation.innovationSupports', 'innovationSupports');
