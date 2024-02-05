@@ -432,7 +432,7 @@ export class InnovationAssessmentsService extends BaseService {
     }
 
     const result = await connection.transaction(async transaction => {
-      // 0. Restore old supports if they exist
+      // 0. Restore old supports if they exist and innovation is ARCHIVED
       // 1. Update the innovation status to WAITING_NEEDS_ASSESSMENT
       // 2. Soft deletes the previous assessment record
       // 3. Create a new assessment record copied from the previously soft deleted one and sets deleted_at = NULL
@@ -442,7 +442,11 @@ export class InnovationAssessmentsService extends BaseService {
 
       const now = new Date();
 
-      if (innovation && innovation.innovationSupports.length > 0) {
+      if (
+        innovation &&
+        innovation.status === InnovationStatusEnum.ARCHIVED &&
+        innovation.innovationSupports.length > 0
+      ) {
         await transaction.save(
           InnovationSupportEntity,
           innovation.innovationSupports.map(support => {
