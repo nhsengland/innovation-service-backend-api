@@ -1693,7 +1693,7 @@ export class InnovationsService extends BaseService {
       }),
       ...(fields.includes('updatedAt') && { updatedAt: item.supports?.[0]?.updatedAt }),
       ...(fields.includes('updatedBy') && {
-        closedBy:
+        updatedBy:
           item.status === InnovationStatusEnum.ARCHIVED || item.supports?.[0] === undefined
             ? 'Innovator'
             : item.supports?.[0]?.updatedBy
