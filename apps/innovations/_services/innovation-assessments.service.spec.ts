@@ -337,6 +337,8 @@ describe('Innovation Assessments Suite', () => {
         { innovation: { id: innovationWithAssessment.id } },
         { status: InnovationSupportStatusEnum.CLOSED }
       );
+      await em.update(InnovationEntity, { id: innovationWithAssessment.id }, { status: InnovationStatusEnum.ARCHIVED });
+
       await sut.createInnovationReassessment(
         DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
         innovationWithAssessment.id,
