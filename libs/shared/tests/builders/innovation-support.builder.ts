@@ -8,6 +8,8 @@ export type TestInnovationSupportType = {
   id: string;
   status: InnovationSupportStatusEnum;
   updatedAt: Date;
+  archiveSnapshot: null | { archivedAt: Date; status: InnovationSupportStatusEnum; assignedAccessors: string[] };
+  userRoles: string[]
 };
 
 export class InnovationSupportBuilder extends BaseBuilder {
@@ -17,6 +19,7 @@ export class InnovationSupportBuilder extends BaseBuilder {
     super(entityManager);
     this.support = InnovationSupportEntity.new({
       status: InnovationSupportStatusEnum.UNASSIGNED,
+      archiveSnapshot: null,
       userRoles: []
     });
   }
@@ -54,7 +57,16 @@ export class InnovationSupportBuilder extends BaseBuilder {
   }
 
   async save(): Promise<TestInnovationSupportType> {
-    const savedSupport = await this.getEntityManager().getRepository(InnovationSupportEntity).save(this.support);
+    const savedSupport = await this.getEntityManager()
+      .getRepository(InnovationSupportEntity)
+      .save({
+        ...this.support,
+        archiveSnapshot: {
+          archivedAt: new Date(),
+          status: this.support.status,
+          assignedAccessors: this.support.userRoles.map(r => r.id)
+        }
+      });
 
     const result = await this.getEntityManager()
       .createQueryBuilder(InnovationSupportEntity, 'support')
@@ -68,7 +80,15 @@ export class InnovationSupportBuilder extends BaseBuilder {
     return {
       id: result.id,
       status: result.status,
-      updatedAt: result.updatedAt
+      updatedAt: result.updatedAt,
+      archiveSnapshot: result.archiveSnapshot
+        ? {
+            archivedAt: result.archiveSnapshot.archivedAt,
+            status: result.archiveSnapshot.status,
+            assignedAccessors: result.archiveSnapshot.assignedAccessors
+          }
+        : null,
+        userRoles: this.support.userRoles.map(r => r.id)
     };
   }
 }

@@ -2828,7 +2828,6 @@ paths:
       parameters:
         - name: innovationId
           in: path
-          description: Innovation ID
           required: true
           schema:
             type: string
@@ -2843,15 +2842,16 @@ paths:
               properties:
                 updatedInnovationRecord:
                   type: string
-                  description: Updated innovation record since submitting the last assessment.
-                  example: YES
+                  enum:
+                    - YES
+                    - NO
                 description:
                   type: string
-                  description: Changes made to the innovation since submitting the last assessment
-                    and what support you need next
+                  maxLength: 500
               required:
                 - updatedInnovationRecord
-                - changes
+                - description
+              additionalProperties: false
       responses:
         "200":
           description: Returns the reassessment request and the cloned assessment id
