@@ -1190,7 +1190,7 @@ export class InnovationsService extends BaseService {
     return {
       count: queryResult[1],
       data: queryResult[0].map(item => {
-        let res = {} as any;
+        const res = {} as any;
         Object.entries(fieldGroups).forEach(([key, value]) => {
           if (key in this.displayHandlers) {
             const handler = this.displayHandlers[key as keyof typeof this.displayHandlers];
@@ -1203,23 +1203,10 @@ export class InnovationsService extends BaseService {
           }
         });
 
-        // Extra postProcessing the items if required (this might become a function in the future, currently only one rule)
-        if (isAccessorDomainContextType(domainContext) && item.organisationShares?.length === 0) {
-          res = pick(res, [
-            'id',
-            'name',
-            'submittedAt',
-            'groupedStatus',
-            'updatedAt',
-            'mainCategory',
-            'otherCategoryDescription',
-            'countryName',
-            'postCode',
-            'support'
-          ]);
-        }
-
-        return res;
+        // Extra postProcessing the items if required (this might become handlers in the future, keeping a function for now)
+        return isAccessorDomainContextType(domainContext) && item.organisationShares?.length === 0
+          ? this.cleanupAccessorsNotSharedInnovation(res)
+          : res;
       })
     };
   }
@@ -2600,5 +2587,26 @@ export class InnovationsService extends BaseService {
     }
 
     return result;
+  }
+
+  /**
+   * Cleanup innovation output to keep only the fields an accessor as access when not shared
+   * @param input the input to be cleaned
+   * @param notShared if it's shared or not
+   * @returns cleanup the response to remove fields that are not shared
+   */
+  private cleanupAccessorsNotSharedInnovation<T extends object>(input: T): Partial<T> {
+    return pick(input, [
+      'id',
+      'name',
+      'submittedAt',
+      'groupedStatus',
+      'updatedAt',
+      'mainCategory',
+      'otherCategoryDescription',
+      'countryName',
+      'postCode',
+      'support'
+    ]);
   }
 }
