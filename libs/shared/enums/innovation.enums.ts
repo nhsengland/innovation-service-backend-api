@@ -5,7 +5,7 @@ export enum InnovationStatusEnum {
   IN_PROGRESS = 'IN_PROGRESS',
   // NEEDS_ASSESSMENT_REVIEW = 'NEEDS_ASSESSMENT_REVIEW', // Not it use nowadays.
   WITHDRAWN = 'WITHDRAWN',
-  COMPLETE = 'COMPLETE',
+  COMPLETE = 'COMPLETE', // Think this status is not used atm
   ARCHIVED = 'ARCHIVED'
 }
 
