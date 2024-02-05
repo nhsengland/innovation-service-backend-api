@@ -152,7 +152,7 @@ export type InnovationListFilters = {
   search?: string;
   suggestedOnly?: boolean;
   supportStatuses?: InnovationSupportStatusEnum[];
-  //closedByMyOrganisation?: boolean;
+  closedByMyOrganisation?: boolean;
 };
 
 // Join types are the ones with nested selectable objects
@@ -1361,6 +1361,7 @@ export class InnovationsService extends BaseService {
     assignedToMe: this.addAssignedToMeFilter.bind(this),
     careSettings: this.addJsonArrayInFilter('careSettings').bind(this),
     categories: this.addJsonArrayInFilter('categories').bind(this),
+    closedByMyOrganisation: this.addClosedByMyOrganisationFilters.bind(this),
     dateFilters: this.addDateFilters.bind(this),
     diseasesAndConditions: this.addJsonArrayInFilter('diseasesAndConditions').bind(this),
     engagingOrganisations: this.addJsonArrayInFilter('engagingOrganisations', {
@@ -1566,6 +1567,23 @@ export class InnovationsService extends BaseService {
           if (supportStatuses.includes(InnovationSupportStatusEnum.UNASSIGNED)) {
             qb.orWhere('support.id IS NULL');
           }
+        })
+      );
+    }
+  }
+
+  private addClosedByMyOrganisationFilters(
+    domainContext: DomainContextType,
+    query: SelectQueryBuilder<InnovationListView>,
+    value: boolean
+  ): void {
+    if (value && isAccessorDomainContextType(domainContext)) {
+      // we only want closed supports that aren't archives or stopped shared
+      query.andWhere(
+        new Brackets(qb => {
+          qb.where('support.status != :closedSupportStatus', {
+            closedSupportStatus: InnovationSupportStatusEnum.CLOSED
+          }).orWhere('(support.archive_snapshot IS NULL AND shares.id IS NOT NULL)'); // these are always joined for accessor roles
         })
       );
     }

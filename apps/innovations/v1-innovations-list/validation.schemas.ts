@@ -229,6 +229,7 @@ export const NewQueryParamsSchema = JoiHelper.PaginationJoiSchema({
         is: ServiceRoleEnum.ACCESSOR,
         then: Joi.object({
           assignedToMe: Joi.boolean().optional(),
+          closedByMyOrganisation: Joi.boolean().optional(),
           suggestedOnly: Joi.boolean().optional(),
           supportStatuses: JoiHelper.AppCustomJoi()
             .stringArray()
@@ -240,6 +241,7 @@ export const NewQueryParamsSchema = JoiHelper.PaginationJoiSchema({
         is: ServiceRoleEnum.QUALIFYING_ACCESSOR,
         then: Joi.object({
           assignedToMe: Joi.boolean().optional(),
+          closedByMyOrganisation: Joi.boolean().optional(),
           suggestedOnly: Joi.boolean().optional(),
           supportStatuses: JoiHelper.AppCustomJoi()
             .stringArray()
