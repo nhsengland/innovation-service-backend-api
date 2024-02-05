@@ -1116,6 +1116,7 @@ paths:
                 - RECEIVING_SUPPORT
                 - NO_ACTIVE_SUPPORT
                 - AWAITING_NEEDS_REASSESSMENT
+                - ARCHIVED
         - name: involvedAACProgrammes
           in: query
           required: false
@@ -1813,6 +1814,7 @@ paths:
                 - NO_ACTIVE_SUPPORT
                 - AWAITING_NEEDS_REASSESSMENT
                 - WITHDRAWN
+                - ARCHIVED
         - name: assignedToMe
           in: query
           required: false
