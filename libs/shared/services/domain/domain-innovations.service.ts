@@ -433,6 +433,7 @@ export class DomainInnovationsService {
    * - NA suggesting organisations/units
    * - Admin completing support update while inactivating units
    * - Archival of innovation by innovation owner
+   * - Innovator stopped sharing innovation with unit
    */
   async addSupportLog(
     transactionManager: EntityManager,
@@ -447,8 +448,7 @@ export class DomainInnovationsService {
       createdBy: user.id,
       createdByUserRole: UserRoleEntity.new({ id: user.roleId }),
       updatedBy: user.id,
-      ...(params.type !== InnovationSupportLogTypeEnum.ASSESSMENT_SUGGESTION &&
-        params.type !== InnovationSupportLogTypeEnum.INNOVATION_ARCHIVED && {
+      ...(params.type !== InnovationSupportLogTypeEnum.ASSESSMENT_SUGGESTION && {
           organisationUnit: OrganisationUnitEntity.new({ id: params.unitId }),
           innovationSupportStatus: params.supportStatus
         }),
@@ -457,9 +457,6 @@ export class DomainInnovationsService {
         suggestedOrganisationUnits: params.suggestedOrganisationUnits.map(id => OrganisationUnitEntity.new({ id }))
       }),
       ...(params.type === InnovationSupportLogTypeEnum.PROGRESS_UPDATE && { params: params.params }),
-      ...(params.type === InnovationSupportLogTypeEnum.INNOVATION_ARCHIVED && {
-        organisationUnit: OrganisationUnitEntity.new({ id: params.unitId })
-      })
     });
 
     try {

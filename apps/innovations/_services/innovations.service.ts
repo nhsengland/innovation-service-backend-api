@@ -308,7 +308,8 @@ export class InnovationsService extends BaseService {
             {
               type: InnovationSupportLogTypeEnum.INNOVATION_ARCHIVED,
               description: data.message,
-              unitId: support.organisationUnit.id
+              unitId: support.organisationUnit.id,
+              supportStatus: InnovationSupportStatusEnum.CLOSED
             }
           )
         );
@@ -2156,7 +2157,7 @@ export class InnovationsService extends BaseService {
     organisationShares: string[],
     entityManager?: EntityManager
   ): Promise<void> {
-    const em = entityManager || this.sqlConnection.manager;
+    const em = entityManager ?? this.sqlConnection.manager;
 
     // Sanity check if all organisation exists.
     const organisations = await em
@@ -2193,42 +2194,71 @@ export class InnovationsService extends BaseService {
       if (deletedShares.length > 0) {
         // Check for active supports
         const supports = await transaction
-          .createQueryBuilder(InnovationSupportEntity, 'innovationSupport')
-          .innerJoin('innovationSupport.innovation', 'innovation')
-          .innerJoin('innovationSupport.organisationUnit', 'organisationUnit')
+          .createQueryBuilder(InnovationSupportEntity, 'support')
+          .select(['support.id', 'support.status', 'unit.id'])
+          .innerJoin('support.innovation', 'innovation')
+          .innerJoin('support.organisationUnit', 'unit')
           .where('innovation.id = :innovationId', { innovationId })
-          .andWhere('organisationUnit.organisation IN (:...ids)', { ids: deletedShares })
+          .andWhere('unit.organisation IN (:...ids)', { ids: deletedShares })
           .getMany();
 
         const supportIds = supports.map(support => support.id);
         if (supportIds.length > 0) {
-          // Decline all tasks for the deleted shares supports
-          await transaction
-            .getRepository(InnovationTaskEntity)
-            .createQueryBuilder()
-            .update()
-            .where('innovation_support_id IN (:...ids)', { ids: supportIds })
-            .andWhere('status IN (:...status)', {
-              status: [InnovationTaskStatusEnum.OPEN]
-            })
-            .set({
-              status: InnovationTaskStatusEnum.DECLINED,
+          // Cancel all tasks for the deleted shares supports
+          await transaction.update(
+            InnovationTaskEntity,
+            { innovationSupport: { id: In(supportIds), status: InnovationTaskStatusEnum.OPEN } },
+            {
+              status: InnovationTaskStatusEnum.CANCELLED,
               updatedBy: domainContext.id,
               updatedByUserRole: UserRoleEntity.new({ id: domainContext.currentRole.id })
-            })
-            .execute();
+            }
+          );
 
-          await transaction
-            .getRepository(InnovationSupportEntity)
-            .createQueryBuilder()
-            .update()
-            .where('id IN (:...ids)', { ids: supportIds })
-            .set({
-              status: InnovationSupportStatusEnum.UNASSIGNED,
-              updatedBy: domainContext.id,
-              deletedAt: new Date().toISOString()
-            })
-            .execute();
+          // Close all supports
+          await transaction.update(
+            InnovationSupportEntity,
+            { id: In(supportIds) },
+            { status: InnovationSupportStatusEnum.CLOSED, updatedBy: domainContext.id }
+          );
+
+          const units = supports.map(s => s.organisationUnit.id);
+          // Add to support summary
+          for (const unitId of units) {
+            await this.domainService.innovations.addSupportLog(
+              transaction,
+              { id: domainContext.id, roleId: domainContext.currentRole.id },
+              innovationId,
+              {
+                type: InnovationSupportLogTypeEnum.STOP_SHARE,
+                unitId,
+                description: '',
+                supportStatus: InnovationSupportStatusEnum.CLOSED
+              }
+            );
+          }
+
+          // Reject all pending export requests if they exist
+          const exportRequests = await transaction
+            .createQueryBuilder(InnovationExportRequestEntity, 'request')
+            .select(['request.id'])
+            .innerJoin('request.createdByUserRole', 'role')
+            .where('request.innovation_id = :innovationId', { innovationId })
+            .andWhere('role.organisation_unit_id IN (:...unitIds)', { unitIds: units })
+            .getMany();
+          if (exportRequests.length > 0) {
+            await transaction.save(
+              InnovationExportRequestEntity,
+              exportRequests.map(r => {
+                return {
+                  ...r,
+                  status: InnovationExportRequestStatusEnum.REJECTED,
+                  rejectReason: TranslationHelper.translate('DEFAULT_MESSAGES.EXPORT_REQUEST.STOP_SHARING'),
+                  updatedBy: domainContext.id
+                };
+              })
+            );
+          }
         }
       }
 

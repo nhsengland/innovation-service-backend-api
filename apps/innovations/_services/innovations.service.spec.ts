@@ -254,15 +254,13 @@ describe('Innovations / _services / innovations suite', () => {
             innovation.supports.supportByMedTechOrgUnit.id
           ]
         })
-        .andWhere('task.status IN (:...taskStatus)', {
-          taskStatus: [InnovationTaskStatusEnum.OPEN]
-        })
+        .andWhere('task.status IN (:...taskStatus)', { taskStatus: [InnovationTaskStatusEnum.OPEN] })
         .getMany();
 
       expect(dbTasks).toHaveLength(0);
     });
 
-    it('should set all ongoing supports from removed organisations to UNASSIGNED', async () => {
+    it('should set all ongoing supports from removed organisations to CLOSED', async () => {
       // remove all existing shares and add share with innovTechOrg
       await sut.updateInnovationShares(
         DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
@@ -280,14 +278,57 @@ describe('Innovations / _services / innovations suite', () => {
             innovation.supports.supportByMedTechOrgUnit.id
           ]
         })
-        .withDeleted()
         .getMany();
 
-      expect(dbSupports.map(s => s.status)).toMatchObject([
-        InnovationSupportStatusEnum.UNASSIGNED,
-        InnovationSupportStatusEnum.UNASSIGNED,
-        InnovationSupportStatusEnum.UNASSIGNED
-      ]);
+      for (const support of dbSupports) {
+        expect(support.status).toBe(InnovationSupportStatusEnum.CLOSED);
+      }
+    });
+
+    it('should reject all pending export requests from removed orgs', async () => {
+      // ensure request is pending
+      await em.update(
+        InnovationExportRequestEntity,
+        { id: innovation.exportRequests.requestBySam.id },
+        { status: InnovationExportRequestStatusEnum.PENDING }
+      );
+
+      // Remove medTechOrg share
+      await sut.updateInnovationShares(
+        DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
+        innovation.id,
+        [scenario.organisations.healthOrg.id],
+        em
+      );
+
+      const dbRequest = await em
+        .createQueryBuilder(InnovationExportRequestEntity, 'request')
+        .select(['request.status', 'request.rejectReason'])
+        .where('request.id = :requestId', { requestId: innovation.exportRequests.requestBySam.id })
+        .getOne();
+
+      expect(dbRequest?.status).toBe(InnovationExportRequestStatusEnum.REJECTED);
+      expect(dbRequest?.rejectReason).toBe(TranslationHelper.translate('DEFAULT_MESSAGES.EXPORT_REQUEST.STOP_SHARING'));
+    });
+
+    it('should add the stop share to support summary from removed units', async () => {
+      const context = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator);
+
+      // Remove medTechOrg share
+      await sut.updateInnovationShares(context, innovation.id, [scenario.organisations.healthOrg.id], em);
+
+      expect(supportLogSpy).toHaveBeenCalledTimes(1);
+      expect(supportLogSpy).toHaveBeenCalledWith(
+        expect.any(EntityManager),
+        { id: context.id, roleId: context.currentRole.id },
+        innovation.id,
+        {
+          type: InnovationSupportLogTypeEnum.STOP_SHARE,
+          unitId: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id,
+          description: '',
+          supportStatus: InnovationSupportStatusEnum.CLOSED
+        }
+      );
     });
 
     it(`should throw an error if any of the provided organisations doesn't exist`, async () => {
@@ -535,7 +576,8 @@ describe('Innovations / _services / innovations suite', () => {
         {
           type: InnovationSupportLogTypeEnum.INNOVATION_ARCHIVED,
           description: message,
-          unitId: expect.any(String)
+          unitId: expect.any(String),
+          supportStatus: InnovationSupportStatusEnum.CLOSED
         }
       );
     });
