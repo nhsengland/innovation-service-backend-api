@@ -949,6 +949,23 @@ export class InnovationSupportsService extends BaseService {
             params: {}
           });
           break;
+        case InnovationSupportLogTypeEnum.INNOVATION_ARCHIVED:
+          summary.push({
+            ...defaultSummary,
+            type: 'INNOVATION_ARCHIVED',
+            params: {
+              supportStatus: supportLog.innovationSupportStatus ?? InnovationSupportStatusEnum.CLOSED,
+              message: supportLog.description
+            }
+          });
+          break;
+        case InnovationSupportLogTypeEnum.STOP_SHARE:
+          summary.push({
+            ...defaultSummary,
+            type: 'STOP_SHARE',
+            params: { supportStatus: supportLog.innovationSupportStatus ?? InnovationSupportStatusEnum.CLOSED }
+          });
+          break;
       }
     }
 

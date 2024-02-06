@@ -62,6 +62,11 @@ export class InnovationSupportLogBuilder extends BaseBuilder {
     return this;
   }
 
+  setOrganisationUnit(unitId: string): this {
+    this.supportLog.organisationUnit = OrganisationUnitEntity.new({ id: unitId });
+    return this;
+  }
+
   async save(): Promise<TestInnovationSupportLogType> {
     const savedLog = await this.getEntityManager().getRepository(InnovationSupportLogEntity).save(this.supportLog);
     const log = await this.getEntityManager()

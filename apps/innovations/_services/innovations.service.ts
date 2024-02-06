@@ -308,7 +308,8 @@ export class InnovationsService extends BaseService {
             {
               type: InnovationSupportLogTypeEnum.INNOVATION_ARCHIVED,
               description: data.message,
-              unitId: support.organisationUnit.id
+              unitId: support.organisationUnit.id,
+              supportStatus: InnovationSupportStatusEnum.CLOSED
             }
           )
         );
@@ -2224,7 +2225,12 @@ export class InnovationsService extends BaseService {
               transaction,
               { id: domainContext.id, roleId: domainContext.currentRole.id },
               innovationId,
-              { type: InnovationSupportLogTypeEnum.STOP_SHARE, unitId, description: '' }
+              {
+                type: InnovationSupportLogTypeEnum.STOP_SHARE,
+                unitId,
+                description: '',
+                supportStatus: InnovationSupportStatusEnum.CLOSED
+              }
             );
           }
 

@@ -325,7 +325,8 @@ describe('Innovations / _services / innovations suite', () => {
         {
           type: InnovationSupportLogTypeEnum.STOP_SHARE,
           unitId: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id,
-          description: ''
+          description: '',
+          supportStatus: InnovationSupportStatusEnum.CLOSED
         }
       );
     });
@@ -575,7 +576,8 @@ describe('Innovations / _services / innovations suite', () => {
         {
           type: InnovationSupportLogTypeEnum.INNOVATION_ARCHIVED,
           description: message,
-          unitId: expect.any(String)
+          unitId: expect.any(String),
+          supportStatus: InnovationSupportStatusEnum.CLOSED
         }
       );
     });
