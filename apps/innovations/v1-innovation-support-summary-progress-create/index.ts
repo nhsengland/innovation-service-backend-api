@@ -28,6 +28,7 @@ class V1InnovationSupportSummaryProgressCreate {
         .setInnovation(params.innovationId)
         .checkAccessorType()
         .checkInnovation()
+        .checkArchivedStatus()
         .verify();
 
       await innovationSupportsService.createProgressUpdate(auth.getContext(), params.innovationId, body);
