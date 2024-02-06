@@ -1303,7 +1303,8 @@ export class InnovationsService extends BaseService {
         });
 
       // closedReason is inferred from the innovation and support status (archive) and having a support for this organisation (not shared)
-      if (fields.includes('closedReason')) {
+      // updated by also depends on the statuses
+      if (fields.includes('closedReason') || fields.includes('updatedBy')) {
         if (!query.expressionMap.selects.some(s => s.selection === 'innovation.status')) {
           query.addSelect('innovation.status');
         }
@@ -1731,7 +1732,7 @@ export class InnovationsService extends BaseService {
       ...(fields.includes('updatedAt') && { updatedAt: item.supports?.[0]?.updatedAt }),
       ...(fields.includes('updatedBy') && {
         updatedBy:
-          item.status === InnovationStatusEnum.ARCHIVED || item.supports?.[0] === undefined
+          item.status === InnovationStatusEnum.ARCHIVED || !item.organisationShares?.length
             ? 'Innovator'
             : item.supports?.[0]?.updatedBy
               ? extra.users?.get(item.supports[0].updatedBy)?.displayName ?? null
