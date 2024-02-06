@@ -1301,12 +1301,14 @@ export class InnovationsService extends BaseService {
           innovationArchivedStatus: InnovationStatusEnum.ARCHIVED
         });
 
-      // closedReason is inferred from the innovation status (archive) and having a support for this organisation (not shared)
-      if (
-        fields.includes('closedReason') &&
-        !query.expressionMap.selects.some(s => s.selection === 'innovation.status')
-      ) {
-        query.addSelect('innovation.status');
+      // closedReason is inferred from the innovation and support status (archive) and having a support for this organisation (not shared)
+      if (fields.includes('closedReason')) {
+        if (!query.expressionMap.selects.some(s => s.selection === 'innovation.status')) {
+          query.addSelect('innovation.status');
+        }
+        if (!fields.includes('status')) {
+          query.addSelect('support.status');
+        }
       }
     }
   }
