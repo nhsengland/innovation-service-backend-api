@@ -152,7 +152,7 @@ export class InnovationTasksService extends BaseService {
         { accessorSupportsOrganisationUnitId: domainContext.organisation.organisationUnit.id }
       );
       query.andWhere('innovation.status IN (:...accessorInnovationStatus)', {
-        accessorInnovationStatus: [InnovationStatusEnum.IN_PROGRESS, InnovationStatusEnum.COMPLETE]
+        accessorInnovationStatus: [InnovationStatusEnum.IN_PROGRESS]
       });
       query.andWhere('shares.id = :accessorOrganisationId', {
         accessorOrganisationId: domainContext.organisation.id

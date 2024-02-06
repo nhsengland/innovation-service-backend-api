@@ -436,10 +436,7 @@ export class AuthorizationValidationModel {
         .andWhere(
           new Brackets(qb => {
             qb.where('innovation.status IN (:...accessorInnovationStatus)', {
-              accessorInnovationStatus: [
-                InnovationStatusEnum.IN_PROGRESS,
-                InnovationStatusEnum.COMPLETE // Think this status is not used atm
-              ]
+              accessorInnovationStatus: [InnovationStatusEnum.IN_PROGRESS]
             }).orWhere(
               'innovation.status = :archivedStatus AND innovation.archivedStatus IN (:...accessorInnovationStatus)',
               {

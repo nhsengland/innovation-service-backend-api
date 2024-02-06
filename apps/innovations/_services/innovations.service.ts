@@ -516,7 +516,7 @@ export class InnovationsService extends BaseService {
         { accessorSupportsOrganisationUnitId: domainContext.organisation?.organisationUnit?.id }
       );
       innovationFetchQuery.andWhere('innovations.status IN (:...accessorInnovationStatus)', {
-        accessorInnovationStatus: [InnovationStatusEnum.IN_PROGRESS, InnovationStatusEnum.COMPLETE]
+        accessorInnovationStatus: [InnovationStatusEnum.IN_PROGRESS]
       });
       innovationFetchQuery.andWhere('shares.id = :accessorOrganisationId', {
         accessorOrganisationId: domainContext.organisation?.id
