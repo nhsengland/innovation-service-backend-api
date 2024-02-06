@@ -493,7 +493,7 @@ describe('Innovations / _services / innovations suite', () => {
         expect(support.archiveSnapshot).toMatchObject({
           archivedAt: expect.any(String),
           status: previousSupport.status,
-          assignedAccessors: previousSupport.userRoles.map(r => r.user.id)
+          assignedAccessors: previousSupport.userRoles.map(r => r.id)
         });
       }
     });
