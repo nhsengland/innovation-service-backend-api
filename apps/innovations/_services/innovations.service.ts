@@ -262,7 +262,7 @@ export class InnovationsService extends BaseService {
         support.archiveSnapshot = {
           archivedAt,
           status: support.status,
-          assignedAccessors: support.userRoles.map(r => r.user.id)
+          assignedAccessors: support.userRoles.map(r => r.id)
         };
 
         support.userRoles = [];
