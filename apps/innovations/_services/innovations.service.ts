@@ -1194,13 +1194,17 @@ export class InnovationsService extends BaseService {
 
     // postHandlers - optimize to only fetch once. This means that the fields handled here aren't sortable but it would
     // be really bad performant otherwise and for the names even worse.
+    const needUsernameResolution =
+      nestedObjects.has('owner') || fieldGroups['engagingUnits'] || fieldGroups['support']?.includes('updatedBy');
+
     const handlerMaps: {
       [k in keyof typeof this.postHandlers]: Awaited<ReturnType<(typeof this.postHandlers)[k]>>;
     } = {} as any; // initialization
     for (const key of Object.keys(this.postHandlers) as (keyof typeof this.postHandlers)[]) {
       const fields = fieldGroups[key];
-      // users is "different" to allow it working with multiple cases (owner, engagingUnits)
-      if (fields || (key === 'users' && (nestedObjects.has('owner') || fieldGroups['engagingUnits']))) {
+      // users is "different" to allow it working with multiple cases (owner, engagingUnits, support.updatedby)
+      // need to improve the user detection in the future to avoid this
+      if (fields || (key === 'users' && needUsernameResolution)) {
         handlerMaps[key] = (await this.postHandlers[key as keyof typeof handlerMaps](
           domainContext,
           queryResult[0],
@@ -1727,7 +1731,7 @@ export class InnovationsService extends BaseService {
           item.status === InnovationStatusEnum.ARCHIVED || item.supports?.[0] === undefined
             ? 'Innovator'
             : item.supports?.[0]?.updatedBy
-              ? extra.users.get(item.supports[0].updatedBy)?.displayName ?? null
+              ? extra.users?.get(item.supports[0].updatedBy)?.displayName ?? null
               : null
       }),
       ...(fields.includes('closedReason') && {
