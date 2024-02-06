@@ -1758,7 +1758,6 @@ paths:
                   type: string
                   enum:
                     - IN_PROGRESS
-                    - COMPLETE
                 x-required: true
               - type: array
                 items:
@@ -1769,7 +1768,6 @@ paths:
                     - NEEDS_ASSESSMENT
                     - IN_PROGRESS
                     - WITHDRAWN
-                    - COMPLETE
                     - ARCHIVED
         - name: engagingOrganisations
           in: query
