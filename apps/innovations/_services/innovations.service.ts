@@ -1731,7 +1731,7 @@ export class InnovationsService extends BaseService {
           item.status === InnovationStatusEnum.ARCHIVED || item.supports?.[0] === undefined
             ? 'Innovator'
             : item.supports?.[0]?.updatedBy
-              ? extra.users.get(item.supports[0].updatedBy)?.displayName ?? null
+              ? extra.users?.get(item.supports[0].updatedBy)?.displayName ?? null
               : null
       }),
       ...(fields.includes('closedReason') && {
