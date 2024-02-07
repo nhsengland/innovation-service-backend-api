@@ -217,6 +217,12 @@ export class CompleteScenarioBuilder {
         .addRole(ServiceRoleEnum.INNOVATOR, 'innovatorRole')
         .save();
 
+      // Collaborator on johnInnovationArchived
+      const janeInnovatorArchived = await new UserBuilder(entityManager)
+        .setName('Jane Innovator Archived')
+        .addRole(ServiceRoleEnum.INNOVATOR, 'innovatorRole')
+        .save();
+
       // Add janeInnovator as a collaborator on johnInnovation
       const janeCollaborator = await new InnovationCollaboratorBuilder(entityManager)
         .setUser(janeInnovator.id)
@@ -227,8 +233,8 @@ export class CompleteScenarioBuilder {
 
       // Add janeInnovator as a collaborator on johnInnovationArchived
       const janeCollaboratorArchived = await new InnovationCollaboratorBuilder(entityManager)
-        .setUser(janeInnovator.id)
-        .setEmail(janeInnovator.email)
+        .setUser(janeInnovatorArchived.id)
+        .setEmail(janeInnovatorArchived.email)
         .setRole()
         .setInnovation(johnInnovationArchived.id)
         .save();
@@ -834,6 +840,13 @@ export class CompleteScenarioBuilder {
           janeInnovator: {
             ...janeInnovator,
             roles: { innovatorRole: janeInnovator.roles['innovatorRole']! },
+            innovations: {
+              johnInnovation: johnInnovation
+            }
+          },
+          janeInnovatorArchived: {
+            ...janeInnovatorArchived,
+            roles: { innovatorRole: janeInnovatorArchived.roles['innovatorRole']! },
             innovations: {
               johnInnovation: johnInnovation
             }

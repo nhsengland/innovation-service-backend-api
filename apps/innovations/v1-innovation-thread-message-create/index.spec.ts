@@ -104,7 +104,7 @@ describe('v1-innovation-thread-message-create Suite', () => {
       ['A', 409, scenario.users.ingridAccessor],
       ['NA', 409, scenario.users.paulNeedsAssessor],
       ['Innovator owner', 409, scenario.users.johnInnovator],
-      ['Innovator collaborator', 409, scenario.users.janeInnovator]
+      ['Innovator collaborator', 409, scenario.users.janeInnovatorArchived]
     ])(
       'access with user %s should give conflict on creating message',
       async (_role: string, status: number, user: TestUserType) => {
