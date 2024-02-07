@@ -66,6 +66,26 @@ describe('v1-innovation-task-create Suite', () => {
     });
   });
 
+  describe('409', () => {
+    it.each([
+      ['QA', scenario.users.aliceQualifyingAccessor, undefined],
+      ['A', scenario.users.jamieMadroxAccessor, 'healthAccessorRole']
+    ])(
+      'access with user %s should give conflict in the archive',
+      async (_role: string, user: TestUserType, roleKey?: string) => {
+        const result = await new AzureHttpTriggerBuilder()
+          .setAuth(user, roleKey)
+          .setParams<ParamsType>({
+            innovationId: scenario.users.johnInnovator.innovations.johnInnovationArchived.id
+          })
+          .setBody<BodyType>(payload)
+          .call<ResponseDTO>(v1InnovationTaskCreate);
+
+        expect(result.status).toBe(409);
+      }
+    );
+  });
+
   describe('Access', () => {
     it.each([
       ['Admin', 403, scenario.users.allMighty],

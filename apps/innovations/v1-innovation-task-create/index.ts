@@ -30,6 +30,7 @@ class V1InnovationTaskCreate {
         .checkAccessorType()
         .checkAssessmentType()
         .checkInnovation()
+        .checkNotArchived()
         .verify();
 
       const domainContext = auth.getContext();
