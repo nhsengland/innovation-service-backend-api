@@ -7,7 +7,7 @@ import {
   InnovationSupportStatusEnum,
   ServiceRoleEnum
 } from '../../enums';
-import { ForbiddenError, UnprocessableEntityError,ConflictError } from '../../errors';
+import { ForbiddenError, UnprocessableEntityError, ConflictError } from '../../errors';
 import type { DomainContextType, DomainUserInfoType } from '../../types';
 import type { DomainService } from '../domain/domain.service';
 
@@ -45,7 +45,7 @@ enum UserValidationKeys {
 }
 enum InnovationValidationKeys {
   checkInnovation = 'innovationValidation',
-  checkArchived = 'checkArchivedValidation'
+  checkNotArchived = 'checkNotArchivedValidation'
 }
 
 export class AuthorizationValidationModel {
@@ -239,13 +239,15 @@ export class AuthorizationValidationModel {
     return null;
   }
 
-  checkArchivedStatus(config?: { whitelist: ServiceRoleEnum[] } | { blacklist: ServiceRoleEnum[] }): this {
-    this.innovationValidations.set(InnovationValidationKeys.checkArchived, () =>
-      this.innovationArchivedRulesValidation(config)
+  checkNotArchived(config?: { whitelist: ServiceRoleEnum[] } | { blacklist: ServiceRoleEnum[] }): this {
+    this.innovationValidations.set(InnovationValidationKeys.checkNotArchived, () =>
+      this.innovationNotArchivedValidation(config)
     );
     return this;
   }
-  private innovationArchivedRulesValidation( config?: { whitelist: ServiceRoleEnum[] } | { blacklist: ServiceRoleEnum[] }): null | AuthErrorsEnum {
+  private innovationNotArchivedValidation(
+    config?: { whitelist: ServiceRoleEnum[] } | { blacklist: ServiceRoleEnum[] }
+  ): null | AuthErrorsEnum {
     if (!this.innovation.data) {
       return AuthErrorsEnum.AUTH_INNOVATION_UNAUTHORIZED;
     }
@@ -253,7 +255,7 @@ export class AuthorizationValidationModel {
     const currentRole = this.getContext().currentRole.role;
     if (this.innovation.data.status === InnovationStatusEnum.ARCHIVED) {
       // If no config is defined it blocks everything if the status is archived.
-      if(!config) {
+      if (!config) {
         return AuthErrorsEnum.AUTH_INNOVATION_ARCHIVED_CONFLICT;
       }
       // If whitelist config is defined let's the whitelisted "pass" and blocks all the others.
@@ -388,7 +390,7 @@ export class AuthorizationValidationModel {
       this.innovationValidations.forEach(checkMethod => validations.push(checkMethod())); // This will run the validation itself and return the result to the array.
       if (validations.some(item => item !== null)) {
         const error = validations.find(item => item !== null) || AuthErrorsEnum.AUTH_USER_UNAUTHORIZED;
-        if(error === AuthErrorsEnum.AUTH_INNOVATION_ARCHIVED_CONFLICT) {
+        if (error === AuthErrorsEnum.AUTH_INNOVATION_ARCHIVED_CONFLICT) {
           throw new ConflictError(error);
         }
         throw new ForbiddenError(error);
