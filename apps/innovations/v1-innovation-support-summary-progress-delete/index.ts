@@ -27,6 +27,7 @@ class V1InnovationSupportSummaryProgressDelete {
         .setInnovation(params.innovationId)
         .checkAccessorType()
         .checkInnovation()
+        .checkNotArchived()
         .verify();
 
       await innovationSupportsService.deleteProgressUpdate(auth.getContext(), params.innovationId, params.progressId);

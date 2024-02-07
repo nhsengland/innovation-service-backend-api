@@ -66,4 +66,22 @@ describe('v1-innovation-support-summary-progress-delete', () => {
       expect(result.status).toBe(status);
     });
   });
+
+  it.each([
+    ['QA', scenario.users.aliceQualifyingAccessor, undefined],
+    ['A', scenario.users.jamieMadroxAccessor, 'healthAccessorRole']
+  ])(
+    'access with user %s should give conflict in the archive',
+    async (_role: string, user: TestUserType, roleKey?: string) => {
+      const result = await new AzureHttpTriggerBuilder()
+        .setAuth(user, roleKey)
+        .setParams<ParamsType>({
+          innovationId: scenario.users.johnInnovator.innovations.johnInnovationArchived.id,
+          progressId: randUuid()
+        })
+        .call<ErrorResponseType>(azureFunction);
+
+      expect(result.status).toBe(409);
+    }
+  );
 });
