@@ -71,5 +71,27 @@ describe('v1-innovation-thread-followers-update', () => {
 
       expect(result.status).toBe(status);
     });
+
+    it.each([
+      ['QA', 409, scenario.users.aliceQualifyingAccessor],
+      ['A', 409, scenario.users.ingridAccessor],
+      ['NA', 409, scenario.users.paulNeedsAssessor]
+    ])(
+      'access with user %s should give conflict on add followers',
+      async (_role: string, status: number, user: TestUserType) => {
+        const result = await new AzureHttpTriggerBuilder()
+          .setAuth(user)
+          .setParams<ParamsType>({
+            innovationId: scenario.users.johnInnovator.innovations.johnInnovationArchived.id,
+            threadId: randUuid()
+          })
+          .setBody<BodyType>({
+            followerUserRoleIds: [scenario.users.aliceQualifyingAccessor.roles.qaRole.id]
+          })
+          .call<ErrorResponseType>(azureFunction);
+
+        expect(result.status).toBe(status);
+      }
+    );
   });
 });
