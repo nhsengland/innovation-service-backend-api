@@ -9,6 +9,7 @@ import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
 
+import { ServiceRoleEnum } from '@innovations/shared/enums';
 import type { InnovationFileService } from '../_services/innovation-file.service';
 import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
@@ -31,6 +32,7 @@ class V1InnovationFileCreate {
         .checkAccessorType()
         .checkAssessmentType()
         .checkInnovation()
+        .checkNotArchived({ whitelist: [ServiceRoleEnum.INNOVATOR] })
         .verify();
 
       const result = await innovationFilesService.createFile(

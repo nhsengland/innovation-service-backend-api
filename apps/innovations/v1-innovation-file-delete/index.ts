@@ -9,6 +9,7 @@ import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
 
+import { ServiceRoleEnum } from '@innovations/shared/enums';
 import type { InnovationFileService } from '../_services/innovation-file.service';
 import SYMBOLS from '../_services/symbols';
 import { ParamsSchema, ParamsType } from './validation.schemas';
@@ -29,6 +30,7 @@ class V1InnovationFileDelete {
         .checkAccessorType()
         .checkAssessmentType()
         .checkInnovation()
+        .checkNotArchived({ whitelist: [ServiceRoleEnum.INNOVATOR] })
         .verify();
 
       await innovationFilesService.deleteFile(auth.getContext(), params.fileId);
