@@ -784,7 +784,7 @@ export class CompleteScenarioBuilder {
                   adamCollaborator: adamCollaborator,
                   elisaPendingCollaborator: elisaPendingCollaborator,
                   janeCollaborator: janeCollaborator,
-                  janeCollarboratorArchived: janeCollaboratorArchived,
+                  janeCollaboratorArchived: janeCollaboratorArchived,
                   sebastiaoCollaborator: sebastiaoCollaborator
                 },
                 sections: {
