@@ -66,5 +66,20 @@ describe('v1-innovation-shares-update Suite', () => {
 
       expect(result.status).toBe(status);
     });
+
+    it.each([['I', scenario.users.johnInnovator]])(
+      'access with user %s should give conflict in the archive',
+      async (_role: string, user: TestUserType) => {
+        const result = await new AzureHttpTriggerBuilder()
+          .setAuth(user)
+          .setParams<ParamsType>({
+            innovationId: scenario.users.johnInnovator.innovations.johnInnovationArchived.id
+          })
+          .setBody<BodyType>({ organisations: [randUuid()] })
+          .call<ErrorResponseType>(azureFunction);
+
+        expect(result.status).toBe(409);
+      }
+    );
   });
 });
