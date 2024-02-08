@@ -82,7 +82,7 @@ describe('v1-innovation-thread-message-update Suite', () => {
     ['A', 409, scenario.users.ingridAccessor],
     ['NA', 409, scenario.users.paulNeedsAssessor],
     ['Innovator owner', 409, scenario.users.johnInnovator],
-    ['Innovator collaborator', 409, scenario.users.janeInnovatorArchived]
+    ['Innovator collaborator', 409, scenario.users.janeInnovator]
   ])(
     'access with user %s should give conflict on update message',
     async (_role: string, status: number, user: TestUserType) => {
