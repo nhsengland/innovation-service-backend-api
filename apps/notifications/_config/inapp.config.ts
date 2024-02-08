@@ -212,7 +212,14 @@ export type InAppTemplatesType = {
   SH03_INNOVATION_STOPPED_SHARED_TO_SELF: {
     innovationName: string;
   };
+  SH04_INNOVATION_STOPPED_SHARING_WITH_INDIVIDUAL_ORG_TO_OWNER: {
+    innovationName: string;
+    organisationName: string;
+  };
   DA01_OWNER_DELETED_ACCOUNT_WITH_PENDING_TRANSFER_TO_COLLABORATOR: {
+    innovationName: string;
+  };
+  DA02_OWNER_DELETED_ACCOUNT_WITHOUT_PENDING_TRANSFER_TO_COLLABORATOR: {
     innovationName: string;
   };
   MC01_COLLABORATOR_INVITE_EXISTING_USER: {

@@ -1,12 +1,14 @@
 import type { Context } from '@azure/functions';
 import { ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
-import { innovationOverviewUrl } from '../../../_helpers/url.helper';
+import { dataSharingPreferencesUrl, innovationOverviewUrl } from '../../../_helpers/url.helper';
 import { BaseHandler } from '../../base.handler';
 
 export class InnovationStopSharingHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_STOP_SHARING,
-  'SH01_INNOVATION_STOPPED_SHARED_TO_ASSIGNED_USERS' | 'SH03_INNOVATION_STOPPED_SHARED_TO_SELF'
+  | 'SH01_INNOVATION_STOPPED_SHARED_TO_ASSIGNED_USERS'
+  | 'SH03_INNOVATION_STOPPED_SHARED_TO_SELF'
+  | 'SH04_INNOVATION_STOPPED_SHARING_WITH_INDIVIDUAL_ORG_TO_OWNER'
 > {
   constructor(
     requestUser: DomainContextType,
@@ -22,6 +24,7 @@ export class InnovationStopSharingHandler extends BaseHandler<
     // Always send a "receipt" to the owner
     if (innovation.ownerId) {
       await this.SH03_INNOVATION_STOPPED_SHARED_TO_SELF(innovation);
+      await this.SH04_INNOVATION_STOPPED_SHARING_WITH_INDIVIDUAL_ORG_TO_OWNER(innovation);
     }
 
     // Send the email for the assigned NA or QA/A
@@ -90,6 +93,39 @@ export class InnovationStopSharingHandler extends BaseHandler<
           id: innovation.id,
           type: 'INNOVATION_MANAGEMENT',
           detail: 'SH03_INNOVATION_STOPPED_SHARED_TO_SELF'
+        },
+        innovationId: innovation.id,
+        params: { innovationName: innovation.name },
+        options: { includeSelf: true }
+      }
+    });
+  }
+
+  private async SH04_INNOVATION_STOPPED_SHARING_WITH_INDIVIDUAL_ORG_TO_OWNER(innovation: {
+    id: string;
+    name: string;
+    ownerId?: string;
+  }): Promise<void> {
+    const recipient = await this.recipientsService.getUsersRecipient(innovation.ownerId, ServiceRoleEnum.INNOVATOR);
+    if (!recipient) {
+      return;
+    }
+
+    this.notify('SH04_INNOVATION_STOPPED_SHARING_WITH_INDIVIDUAL_ORG_TO_OWNER', [recipient], {
+      email: {
+        notificationPreferenceType: 'INNOVATION_MANAGEMENT',
+        params: {
+          innovation_name: innovation.name,
+          organisation_name: '',
+          data_sharing_preferences_url: dataSharingPreferencesUrl(ServiceRoleEnum.INNOVATOR, innovation.id)
+        },
+        options: { includeSelf: true }
+      },
+      inApp: {
+        context: {
+          id: innovation.id,
+          type: 'INNOVATION_MANAGEMENT',
+          detail: 'SH04_INNOVATION_STOPPED_SHARING_WITH_INDIVIDUAL_ORG_TO_OWNER'
         },
         innovationId: innovation.id,
         params: { innovationName: innovation.name },
