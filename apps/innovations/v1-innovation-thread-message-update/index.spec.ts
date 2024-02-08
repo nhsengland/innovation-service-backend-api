@@ -76,4 +76,32 @@ describe('v1-innovation-thread-message-update Suite', () => {
       expect(result.status).toBe(status);
     });
   });
+
+  describe('Access', () => {
+    it.each([
+      ['Admin', 403, scenario.users.allMighty],
+      ['QA', 409, scenario.users.aliceQualifyingAccessor],
+      ['A', 409, scenario.users.ingridAccessor],
+      ['NA', 409, scenario.users.paulNeedsAssessor],
+      ['Innovator owner', 409, scenario.users.johnInnovator],
+      ['Innovator collaborator', 409, scenario.users.janeInnovatorArchived]
+    ])(
+      'access with user %s should give conflict on update message',
+      async (_role: string, status: number, user: TestUserType) => {
+        const result = await new AzureHttpTriggerBuilder()
+          .setAuth(user)
+          .setParams<ParamsType>({
+            innovationId: scenario.users.johnInnovator.innovations.johnInnovationArchived.id,
+            threadId: randUuid(),
+            messageId: randUuid()
+          })
+          .setBody<BodyType>({
+            message: randText()
+          })
+          .call<ErrorResponseType>(azureFunction);
+
+        expect(result.status).toBe(status);
+      }
+    );
+  });
 });
