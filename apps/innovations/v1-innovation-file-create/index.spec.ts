@@ -56,6 +56,33 @@ describe('v1-innovation-file-create Suite', () => {
       expect(result.status).toBe(200);
       expect(mock).toHaveBeenCalledTimes(1);
     });
+
+    it('should create a file as innovator for archived innovations', async () => {
+      const result = await new AzureHttpTriggerBuilder()
+        .setAuth(scenario.users.johnInnovator)
+        .setParams<ParamsType>({ innovationId: scenario.users.johnInnovator.innovations.johnInnovationArchived.id })
+        .setBody<BodyType>(sampleBody)
+        .call<ResponseDTO>(azureFunction);
+
+      expect(result.body).toMatchObject(expected);
+      expect(result.status).toBe(200);
+      expect(mock).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('409', () => {
+    it.each([['QA', scenario.users.aliceQualifyingAccessor, undefined]])(
+      'access with user %s should give conflict in the archive',
+      async (_role: string, user: TestUserType, roleKey?: string) => {
+        const result = await new AzureHttpTriggerBuilder()
+          .setAuth(user, roleKey)
+          .setParams<ParamsType>({ innovationId: scenario.users.johnInnovator.innovations.johnInnovationArchived.id })
+          .setBody<BodyType>(sampleBody)
+          .call<ResponseDTO>(azureFunction);
+
+        expect(result.status).toBe(409);
+      }
+    );
   });
 
   describe('Access', () => {

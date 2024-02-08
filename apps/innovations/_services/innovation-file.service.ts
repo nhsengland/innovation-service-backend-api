@@ -18,6 +18,7 @@ import {
   UserStatusEnum
 } from '@innovations/shared/enums';
 import {
+  ConflictError,
   ForbiddenError,
   InnovationErrorsEnum,
   NotFoundError,
@@ -31,6 +32,7 @@ import type { FileStorageService, IdentityProviderService, NotifierService } fro
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { DomainContextType, IdentityUserInfo } from '@innovations/shared/types';
 
+import { AuthErrorsEnum } from '@innovations/shared/services/auth/authorization-validation.model';
 import type {
   InnovationFileOutputContextType,
   InnovationFileOutputType,
@@ -272,7 +274,8 @@ export class InnovationFileService extends BaseService {
         'createdByUserOrgUnit.id',
         'createdByUserOrgUnit.name',
         'innovation.id',
-        'innovationOwner.id'
+        'innovationOwner.id',
+        'innovation.status'
       ])
       .innerJoin('file.createdByUserRole', 'createdByUserRole')
       .innerJoin('createdByUserRole.user', 'createdByUser')
@@ -323,7 +326,9 @@ export class InnovationFileService extends BaseService {
       },
       canDelete: this.canDeleteFile(
         { role: file.createdByUserRole.role, orgUnitId: file.createdByUserRole.organisationUnit?.id },
-        { role: domainContext.currentRole.role, orgUnitId: domainContext.organisation?.organisationUnit?.id }
+        { role: domainContext.currentRole.role, orgUnitId: domainContext.organisation?.organisationUnit?.id },
+        file.innovation.status,
+        file.contextType
       )
     };
   }
@@ -356,6 +361,17 @@ export class InnovationFileService extends BaseService {
           InnovationErrorsEnum.INNOVATION_FILE_ON_INNOVATION_EVIDENCE_MUST_BE_UPLOADED_BY_INNOVATOR
         );
       }
+    }
+
+    // Check if the innovation is archived and the file is not an innovation section before upload (other roles are checked in the auth but innovator was whitelisted)
+    if (
+      domainContext.currentRole.role === ServiceRoleEnum.INNOVATOR &&
+      innovationStatus === InnovationStatusEnum.ARCHIVED &&
+      ![InnovationFileContextTypeEnum.INNOVATION_SECTION, InnovationFileContextTypeEnum.INNOVATION_EVIDENCE].includes(
+        data.context.type
+      )
+    ) {
+      throw new ConflictError(AuthErrorsEnum.AUTH_INNOVATION_ARCHIVED_CONFLICT);
     }
 
     const nFiles = await connection
@@ -428,8 +444,17 @@ export class InnovationFileService extends BaseService {
 
     const file = await connection
       .createQueryBuilder(InnovationFileEntity, 'file')
-      .select(['file.id', 'file.storageId', 'createdByRole.id', 'createdByRole.role', 'createdByUserOrgUnit.id'])
+      .select([
+        'file.id',
+        'file.storageId',
+        'file.contextType',
+        'createdByRole.id',
+        'createdByRole.role',
+        'createdByUserOrgUnit.id',
+        'innovation.status'
+      ])
       .innerJoin('file.createdByUserRole', 'createdByRole')
+      .innerJoin('file.innovation', 'innovation')
       .leftJoin('createdByRole.organisationUnit', 'createdByUserOrgUnit')
       .where('file.id = :fileId', { fileId })
       .getOne();
@@ -441,7 +466,9 @@ export class InnovationFileService extends BaseService {
     if (
       !this.canDeleteFile(
         { role: file.createdByUserRole.role, orgUnitId: file.createdByUserRole.organisationUnit?.id },
-        { role: domainContext.currentRole.role, orgUnitId: domainContext.organisation?.organisationUnit?.id }
+        { role: domainContext.currentRole.role, orgUnitId: domainContext.organisation?.organisationUnit?.id },
+        file.innovation.status,
+        file.contextType
       )
     ) {
       throw new ForbiddenError(InnovationErrorsEnum.INNOVATION_FILE_NO_PERMISSION_TO_DELETE);
@@ -481,10 +508,22 @@ export class InnovationFileService extends BaseService {
 
   private canDeleteFile(
     createdByRole: { role: ServiceRoleEnum; orgUnitId?: string },
-    requestUserRole: { role: ServiceRoleEnum; orgUnitId?: string }
+    requestUserRole: { role: ServiceRoleEnum; orgUnitId?: string },
+    status: InnovationStatusEnum,
+    type: InnovationFileContextTypeEnum
   ): boolean {
     switch (requestUserRole.role) {
       case ServiceRoleEnum.INNOVATOR:
+        // Check if the innovation is archived and the file is not an innovation section before delete (other roles are checked in the auth but innovator was whitelisted)
+        if (
+          status === InnovationStatusEnum.ARCHIVED &&
+          ![
+            InnovationFileContextTypeEnum.INNOVATION_SECTION,
+            InnovationFileContextTypeEnum.INNOVATION_EVIDENCE
+          ].includes(type)
+        ) {
+          return false;
+        }
         return createdByRole.role === ServiceRoleEnum.INNOVATOR;
       case ServiceRoleEnum.ASSESSMENT:
         return createdByRole.role === ServiceRoleEnum.ASSESSMENT;

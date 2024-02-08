@@ -44,6 +44,36 @@ describe('v1-innovation-file-delete Suite', () => {
       expect(result.status).toBe(204);
       expect(mock).toHaveBeenCalledTimes(1);
     });
+
+    it('should create a file as innovator for archived innovations', async () => {
+      const result = await new AzureHttpTriggerBuilder()
+        .setAuth(scenario.users.johnInnovator)
+        .setParams<ParamsType>({
+          innovationId: scenario.users.johnInnovator.innovations.johnInnovationArchived.id,
+          fileId: randUuid()
+        })
+        .call<never>(azureFunction);
+
+      expect(result.status).toBe(204);
+      expect(mock).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('409', () => {
+    it.each([['QA', scenario.users.aliceQualifyingAccessor, undefined]])(
+      'access with user %s should give conflict in the archive',
+      async (_role: string, user: TestUserType, roleKey?: string) => {
+        const result = await new AzureHttpTriggerBuilder()
+          .setAuth(user, roleKey)
+          .setParams<ParamsType>({
+            innovationId: scenario.users.johnInnovator.innovations.johnInnovationArchived.id,
+            fileId: randUuid()
+          })
+          .call<never>(azureFunction);
+
+        expect(result.status).toBe(409);
+      }
+    );
   });
 
   describe('Access', () => {
