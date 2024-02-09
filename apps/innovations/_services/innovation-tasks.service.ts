@@ -134,13 +134,17 @@ export class InnovationTasksService extends BaseService {
       if (!filters.allTasks) {
         query.andWhere('task.innovation_support_id IS NULL');
       }
-      query.andWhere('innovation.status IN (:...assessmentInnovationStatus)', {
-        assessmentInnovationStatus: [
-          InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
-          InnovationStatusEnum.NEEDS_ASSESSMENT,
-          InnovationStatusEnum.IN_PROGRESS
-        ]
-      });
+      query.andWhere(
+        '(innovation.status IN (:...assessmentInnovationStatus) OR (innovation.status = :innovationArchivedStatus AND innovation.archivedStatus IN (:...assessmentInnovationStatus)))',
+        {
+          assessmentInnovationStatus: [
+            InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
+            InnovationStatusEnum.NEEDS_ASSESSMENT,
+            InnovationStatusEnum.IN_PROGRESS
+          ],
+          innovationArchivedStatus: InnovationStatusEnum.ARCHIVED
+        }
+      );
     }
 
     if (isAccessorDomainContextType(domainContext)) {
