@@ -499,7 +499,8 @@ export class InnovationsService extends BaseService {
         assessmentInnovationStatus: [
           InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
           InnovationStatusEnum.NEEDS_ASSESSMENT,
-          InnovationStatusEnum.IN_PROGRESS
+          InnovationStatusEnum.IN_PROGRESS,
+          InnovationStatusEnum.ARCHIVED
         ]
       });
     }
