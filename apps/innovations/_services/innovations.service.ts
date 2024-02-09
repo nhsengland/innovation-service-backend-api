@@ -495,13 +495,17 @@ export class InnovationsService extends BaseService {
     }
 
     if (domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT) {
-      innovationFetchQuery.andWhere('innovations.status IN (:...assessmentInnovationStatus)', {
-        assessmentInnovationStatus: [
-          InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
-          InnovationStatusEnum.NEEDS_ASSESSMENT,
-          InnovationStatusEnum.IN_PROGRESS
-        ]
-      });
+      innovationFetchQuery.andWhere(
+        '(innovations.status IN (:...assessmentInnovationStatus) OR (innovations.status = :innovationArchivedStatus AND innovations.archivedStatus IN (:...assessmentInnovationStatus)))',
+        {
+          assessmentInnovationStatus: [
+            InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
+            InnovationStatusEnum.NEEDS_ASSESSMENT,
+            InnovationStatusEnum.IN_PROGRESS
+          ],
+          innovationArchivedStatus: InnovationStatusEnum.ARCHIVED
+        }
+      );
     }
 
     if (
