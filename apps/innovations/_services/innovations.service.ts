@@ -1107,6 +1107,11 @@ export class InnovationsService extends BaseService {
 
     // Special role constraints (maybe make handler in the future)
     if (isAccessorDomainContextType(domainContext)) {
+      // support is required for A/QAs access check
+      if (!nestedObjects.has('support')) {
+        nestedObjects.add('support');
+      }
+
       // Because of the many to many relationship I need to do a custom join to get the shares while keeping typeorm happy
       // The on condition must be on the relation table and not on the organisation one
       query
@@ -1123,6 +1128,12 @@ export class InnovationsService extends BaseService {
           'organisation',
           'shares',
           'shares.id = innovation_shares.organisation_id'
+        )
+        // Innovation list can have innovations that are shared or organisations that are not share that had a support in the past
+        .andWhere(
+          new Brackets(qb => {
+            qb.where('innovation_shares.organisation_id IS NOT NULL').orWhere('support.id IS NOT NULL');
+          })
         );
 
       // automatically add in_progress since A/QA can't see the others (yet). This might become a filter for A/QAs in the future
@@ -1137,9 +1148,6 @@ export class InnovationsService extends BaseService {
 
       // Accessors can only see innovations that they are supporting
       if (domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR) {
-        if (!nestedObjects.has('support')) {
-          nestedObjects.add('support');
-        }
         query.andWhere('support.status IN (:...accessorSupportStatusFilter)', {
           accessorSupportStatusFilter: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.CLOSED]
         });
@@ -1727,6 +1735,17 @@ export class InnovationsService extends BaseService {
     fields: InnovationListChildrenType<'support'>[],
     extra: PickHandlerReturnType<typeof this.postHandlers, 'users'>
   ): Partial<InnovationListFullResponseType['support']> {
+    const updatedBy = extra.users.get(item.supports?.[0]?.updatedBy ?? '') ?? null;
+    const displayName =
+      // Ensuring that updatedBy is always innovator if the innovation is archived or not shared
+      item.status === InnovationStatusEnum.ARCHIVED ||
+      !item.organisationShares?.length ||
+      // if the user has the innovator role (currently exclusive) as the updatedBy is not a role but user id and we can't
+      // distinguish if there's multiple roles for the same user
+      updatedBy?.roles.some(r => r.role === ServiceRoleEnum.INNOVATOR)
+        ? 'Innovator'
+        : updatedBy?.displayName ?? null;
+
     // support is handled differently to remove the nested array since it's only 1 element in this case
     return {
       ...(fields.includes('id') && { id: item.supports?.[0]?.id ?? null }),
@@ -1734,14 +1753,7 @@ export class InnovationsService extends BaseService {
         status: item.supports?.[0]?.status ?? InnovationSupportStatusEnum.UNASSIGNED
       }),
       ...(fields.includes('updatedAt') && { updatedAt: item.supports?.[0]?.updatedAt }),
-      ...(fields.includes('updatedBy') && {
-        updatedBy:
-          item.status === InnovationStatusEnum.ARCHIVED || !item.organisationShares?.length
-            ? 'Innovator'
-            : item.supports?.[0]?.updatedBy
-              ? extra.users?.get(item.supports[0].updatedBy)?.displayName ?? null
-              : null
-      }),
+      ...(fields.includes('updatedBy') && { updatedBy: displayName }),
       ...(fields.includes('closedReason') && {
         closedReason:
           item.supports?.[0]?.status === InnovationSupportStatusEnum.CLOSED
