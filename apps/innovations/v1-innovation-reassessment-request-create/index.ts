@@ -31,7 +31,7 @@ class V1InnovationReassessmentRequestCreate {
         .validate(context)
         .setInnovation(params.innovationId)
         .checkInnovatorType()
-        .checkInnovation({ status: [InnovationStatusEnum.IN_PROGRESS, InnovationStatusEnum.ARCHIVED], isOwner: true })
+        .checkInnovation({ status: [InnovationStatusEnum.IN_PROGRESS, InnovationStatusEnum.ARCHIVED] })
         .verify();
       const domainContext = auth.getContext();
 

@@ -238,6 +238,21 @@ export class CompleteScenarioBuilder {
         .setStatus(InnovationCollaboratorStatusEnum.LEFT)
         .save();
 
+      // Olivia Innovator specs:
+      // Collaborator on johnInnovationArchived
+      const oliviaInnovator = await new UserBuilder(entityManager)
+        .setName('Olivia Innovator')
+        .addRole(ServiceRoleEnum.INNOVATOR, 'innovatorRole')
+        .save();
+
+      // Add oliviaInnovator as a collaborator on johnInnovationArchived
+      const oliviaCollaborator = await new InnovationCollaboratorBuilder(entityManager)
+        .setUser(oliviaInnovator.id)
+        .setEmail(oliviaInnovator.email)
+        .setRole()
+        .setInnovation(johnInnovationArchived.id)
+        .save();
+
       // assessment on johnInnovation assigned to Paul (NA)
       // completed and shared with healthOrg
       const johnInnovationAssessmentByPaul = await new InnovationAssessmentBuilder(entityManager)
@@ -716,7 +731,12 @@ export class CompleteScenarioBuilder {
             roles: { innovatorRole: johnInnovator.roles['innovatorRole']! },
             innovations: {
               johnInnovationEmpty: johnInnovationEmpty,
-              johnInnovationArchived: johnInnovationArchived,
+              johnInnovationArchived: {
+                ...johnInnovationArchived,
+                collaborators: {
+                  oliviaCollaborator: oliviaCollaborator
+                }
+              },
               johnInnovation: {
                 ...johnInnovation,
                 supports: {
@@ -867,6 +887,13 @@ export class CompleteScenarioBuilder {
                 assessmentInProgress: brainComputerInterfaceInnovationAssessment
               },
               powerSourceInnovation: powerSourceInnovation
+            }
+          },
+          oliviaInnovator: {
+            ...oliviaInnovator,
+            roles: { innovatorRole: oliviaInnovator.roles['innovatorRole']! },
+            innovations: {
+              johnInnovationArchived: johnInnovationArchived
             }
           },
           // Accessors

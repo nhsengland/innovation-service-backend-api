@@ -59,7 +59,7 @@ describe('v1-innovation-reassessment-request-create Suite', () => {
       ['QA', 403, scenario.users.aliceQualifyingAccessor],
       ['NA', 403, scenario.users.paulNeedsAssessor],
       ['Innovator owner', 200, scenario.users.johnInnovator],
-      ['Innovator collaborator', 403, scenario.users.janeInnovator],
+      ['Innovator collaborator', 200, scenario.users.janeInnovator],
       ['Innovator other', 403, scenario.users.ottoOctaviusInnovator]
     ])('access with user %s should give %i', async (_role: string, status: number, user: TestUserType) => {
       const result = await new AzureHttpTriggerBuilder()
