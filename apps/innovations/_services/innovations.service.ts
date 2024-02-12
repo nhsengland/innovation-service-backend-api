@@ -1107,6 +1107,11 @@ export class InnovationsService extends BaseService {
 
     // Special role constraints (maybe make handler in the future)
     if (isAccessorDomainContextType(domainContext)) {
+      // support is required for A/QAs access check
+      if (!nestedObjects.has('support')) {
+        nestedObjects.add('support');
+      }
+
       // Because of the many to many relationship I need to do a custom join to get the shares while keeping typeorm happy
       // The on condition must be on the relation table and not on the organisation one
       query
@@ -1123,6 +1128,12 @@ export class InnovationsService extends BaseService {
           'organisation',
           'shares',
           'shares.id = innovation_shares.organisation_id'
+        )
+        // Innovation list can have innovations that are shared or organisations that are not share that had a support in the past
+        .andWhere(
+          new Brackets(qb => {
+            qb.where('innovation_shares.organisation_id IS NOT NULL').orWhere('support.id IS NOT NULL');
+          })
         );
 
       // automatically add in_progress since A/QA can't see the others (yet). This might become a filter for A/QAs in the future
@@ -1137,9 +1148,6 @@ export class InnovationsService extends BaseService {
 
       // Accessors can only see innovations that they are supporting
       if (domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR) {
-        if (!nestedObjects.has('support')) {
-          nestedObjects.add('support');
-        }
         query.andWhere('support.status IN (:...accessorSupportStatusFilter)', {
           accessorSupportStatusFilter: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.CLOSED]
         });
