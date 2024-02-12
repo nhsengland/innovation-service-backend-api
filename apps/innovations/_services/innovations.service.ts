@@ -1735,6 +1735,17 @@ export class InnovationsService extends BaseService {
     fields: InnovationListChildrenType<'support'>[],
     extra: PickHandlerReturnType<typeof this.postHandlers, 'users'>
   ): Partial<InnovationListFullResponseType['support']> {
+    const updatedBy = extra.users.get(item.supports?.[0]?.updatedBy ?? '') ?? null;
+    const displayName =
+      // Ensuring that updatedBy is always innovator if the innovation is archived or not shared
+      item.status === InnovationStatusEnum.ARCHIVED ||
+      !item.organisationShares?.length ||
+      // if the user has the innovator role (currently exclusive) as the updatedBy is not a role but user id and we can't
+      // distinguish if there's multiple roles for the same user
+      updatedBy?.roles.some(r => r.role === ServiceRoleEnum.INNOVATOR)
+        ? 'Innovator'
+        : updatedBy?.displayName ?? null;
+
     // support is handled differently to remove the nested array since it's only 1 element in this case
     return {
       ...(fields.includes('id') && { id: item.supports?.[0]?.id ?? null }),
@@ -1742,14 +1753,7 @@ export class InnovationsService extends BaseService {
         status: item.supports?.[0]?.status ?? InnovationSupportStatusEnum.UNASSIGNED
       }),
       ...(fields.includes('updatedAt') && { updatedAt: item.supports?.[0]?.updatedAt }),
-      ...(fields.includes('updatedBy') && {
-        updatedBy:
-          item.status === InnovationStatusEnum.ARCHIVED || !item.organisationShares?.length
-            ? 'Innovator'
-            : item.supports?.[0]?.updatedBy
-              ? extra.users?.get(item.supports[0].updatedBy)?.displayName ?? null
-              : null
-      }),
+      ...(fields.includes('updatedBy') && { updatedBy: displayName }),
       ...(fields.includes('closedReason') && {
         closedReason:
           item.supports?.[0]?.status === InnovationSupportStatusEnum.CLOSED
