@@ -192,141 +192,23 @@ export class InnovationsService extends BaseService {
   ): Promise<void> {
     const em = entityManager ?? this.sqlConnection.manager;
 
-    const supports = await em
-      .createQueryBuilder(InnovationSupportEntity, 'support')
-      .select([
-        'support.id',
-        'support.status',
-        'support.updatedBy',
-        'userRole.id',
-        'userRole.role',
-        'user.id',
-        'unit.id'
-      ])
-      .innerJoin('support.organisationUnit', 'unit')
-      .leftJoin('support.userRoles', 'userRole')
-      .leftJoin('userRole.user', 'user', "user.status <> 'DELETED'")
-      .where('support.innovation_id = :innovationId', { innovationId })
-      .andWhere('support.status <> :supportClosed', { supportClosed: InnovationSupportStatusEnum.CLOSED })
-      .getMany();
-
-    // TODO: Will need to add logic to push ASSESSMENT users to implement notification AI04, decision currently on hold by client.
-    const innovation = await em
-      .createQueryBuilder(InnovationEntity, 'innovation')
-      .select(['innovation.status'])
-      .where('innovation.id = :innovationId', { innovationId: innovationId })
-      .getOne();
-
-    if (!innovation) {
-      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
-    }
-
-    const affectedUsers: {
-      userId: string;
-      userType: ServiceRoleEnum;
-      unitId?: string;
-    }[] = [];
-
-    affectedUsers.push(
-      ...supports.flatMap(support =>
-        support.userRoles.map(item => ({
-          userId: item.user.id,
-          userType: item.role,
-          unitId: support.organisationUnit.id
-        }))
-      )
+    const archivedInnovations = await this.domainService.innovations.archiveInnovations(
+      domainContext,
+      [{ id: innovationId, reason: data.message }],
+      em
     );
 
-    const archivedAt = new Date();
-
-    await em.transaction(async transaction => {
-      const sections = await transaction
-        .createQueryBuilder(InnovationSectionEntity, 'section')
-        .select(['section.id'])
-        .where('section.innovation_id = :innovationId', { innovationId })
-        .getMany();
-
-      // Update all OPEN tasks to CANCELLED
-      await transaction.update(
-        InnovationTaskEntity,
-        { innovationSection: In(sections.map(s => s.id)), status: InnovationTaskStatusEnum.OPEN },
-        {
-          status: InnovationTaskStatusEnum.CANCELLED,
-          updatedBy: domainContext.id,
-          updatedByUserRole: UserRoleEntity.new({ id: domainContext.currentRole.id })
-        }
-      );
-
-      // Change all supports to closed and save a snapshot
-      const supportsToUpdate = supports.map(support => {
-        // Save snapshot before updating support
-        support.archiveSnapshot = {
-          archivedAt,
-          status: support.status,
-          assignedAccessors: support.userRoles.map(r => r.id)
-        };
-
-        support.userRoles = [];
-        support.updatedBy = domainContext.id;
-        support.status = InnovationSupportStatusEnum.CLOSED;
-
-        return support;
+    for (const innovation of archivedInnovations) {
+      await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_ARCHIVE, {
+        innovationId: innovation.id,
+        message: innovation.reason,
+        previousStatus: innovation.prevStatus,
+        // TODO add logic to this for AI04, when client decides
+        reassessment: false,
+        // TODO add logic to add NAs, for AI04, when client decides
+        affectedUsers: innovation.affectedUsers
       });
-      await transaction.save(InnovationSupportEntity, supportsToUpdate);
-
-      // Reject all PENDING export requests
-      await transaction
-        .createQueryBuilder()
-        .update(InnovationExportRequestEntity)
-        .set({
-          status: InnovationExportRequestStatusEnum.REJECTED,
-          rejectReason: TranslationHelper.translate('DEFAULT_MESSAGES.EXPORT_REQUEST.ARCHIVE'),
-          updatedBy: domainContext.id
-        })
-        .where('innovation_id = :innovationId', { innovationId })
-        .andWhere('status IN (:...status)', { status: [InnovationExportRequestStatusEnum.PENDING] })
-        .execute();
-
-      // Update Innovation status
-      await transaction.update(
-        InnovationEntity,
-        { id: innovationId },
-        {
-          archivedStatus: () => 'status',
-          status: InnovationStatusEnum.ARCHIVED,
-          statusUpdatedAt: archivedAt,
-          updatedBy: domainContext.id
-        }
-      );
-
-      const supportLogs = [];
-      for (const support of supports) {
-        supportLogs.push(
-          await this.domainService.innovations.addSupportLog(
-            transaction,
-            { id: domainContext.id, roleId: domainContext.currentRole.id },
-            innovationId,
-            {
-              type: InnovationSupportLogTypeEnum.INNOVATION_ARCHIVED,
-              description: data.message,
-              unitId: support.organisationUnit.id,
-              supportStatus: InnovationSupportStatusEnum.CLOSED
-            }
-          )
-        );
-      }
-      await Promise.all(supportLogs);
-    });
-
-    await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_ARCHIVE, {
-      innovationId: innovationId,
-      message: data.message,
-      previousStatus: innovation.status,
-      // TODO add logic to this for AI04, when client decides
-      reassessment: false,
-      // TODO add logic to add NAs, for AI04, when client decides
-      affectedUsers: affectedUsers
-    });
+    }
   }
 
   async getInnovationsList(
