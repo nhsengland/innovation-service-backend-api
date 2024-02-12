@@ -33,6 +33,7 @@ class V1InnovationThreadMessageCreate {
         .checkAccessorType()
         .checkAssessmentType()
         .checkInnovation()
+        .checkNotArchived()
         .verify();
 
       const domainContext = auth.getContext();

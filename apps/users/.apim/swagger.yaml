@@ -720,7 +720,6 @@ paths:
                                 - NEEDS_ASSESSMENT
                                 - IN_PROGRESS
                                 - WITHDRAWN
-                                - COMPLETE
                                 - ARCHIVED
                               description: The innovation status
                         contextType:
