@@ -339,7 +339,6 @@ export const NOTIFICATIONS_CONFIG = {
             unitId: Joi.string().guid()
           })
         )
-        .min(1)
         .required()
     }).required()
   },
