@@ -385,7 +385,7 @@ describe('Innovation Assessments Suite', () => {
     it('should not create a reassessment if the innovation is in archived status and user is a collaborator', async () => {
       await expect(async () =>
         sut.createInnovationReassessment(
-          DTOsHelper.getUserRequestContext(scenario.users.oliviaInnovator),
+          DTOsHelper.getUserRequestContext(scenario.users.janeInnovator),
           innovationWithArchivedStatus.id,
           { updatedInnovationRecord: 'YES', description: randText() },
           em
