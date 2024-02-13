@@ -1735,7 +1735,7 @@ export class InnovationsService extends BaseService {
     fields: InnovationListChildrenType<'support'>[],
     extra: PickHandlerReturnType<typeof this.postHandlers, 'users'>
   ): Partial<InnovationListFullResponseType['support']> {
-    const updatedBy = extra.users.get(item.supports?.[0]?.updatedBy ?? '') ?? null;
+    const updatedBy = extra.users?.get(item.supports?.[0]?.updatedBy ?? '') ?? null;
     const displayName =
       // Ensuring that updatedBy is always innovator if the innovation is archived or not shared
       item.status === InnovationStatusEnum.ARCHIVED ||
