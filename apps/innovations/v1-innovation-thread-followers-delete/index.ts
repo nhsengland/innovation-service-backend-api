@@ -31,6 +31,7 @@ class V1InnovationThreadFollowersDelete {
         .setInnovation(params.innovationId)
         .checkAccessorType()
         .checkAssessmentType()
+        .checkNotArchived()
         .verify();
       const domainContext = auth.getContext();
 

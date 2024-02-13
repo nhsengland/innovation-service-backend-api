@@ -202,6 +202,7 @@ export class CompleteScenarioBuilder {
         .setStatus(InnovationStatusEnum.IN_PROGRESS)
         .save();
 
+      // Archived Innovation owned by johnInnovator with janeCollaboratorArchive as ACTIVE collaborator
       const johnInnovationArchived = await new InnovationBuilder(entityManager)
         .setOwner(johnInnovator.id)
         .setStatus(InnovationStatusEnum.ARCHIVED)
@@ -222,6 +223,14 @@ export class CompleteScenarioBuilder {
         .setEmail(janeInnovator.email)
         .setRole()
         .setInnovation(johnInnovation.id)
+        .save();
+
+      // Add janeInnovator as a collaborator on johnInnovationArchived
+      const janeCollaboratorArchived = await new InnovationCollaboratorBuilder(entityManager)
+        .setUser(janeInnovator.id)
+        .setEmail(janeInnovator.email)
+        .setRole()
+        .setInnovation(johnInnovationArchived.id)
         .save();
 
       // Add elisaPendingCollaborator as a pending collaborator on johnInnovation
@@ -734,7 +743,8 @@ export class CompleteScenarioBuilder {
               johnInnovationArchived: {
                 ...johnInnovationArchived,
                 collaborators: {
-                  oliviaCollaborator: oliviaCollaborator
+                  oliviaCollaborator: oliviaCollaborator,
+                  janeCollaborator: janeCollaboratorArchived
                 }
               },
               johnInnovation: {
@@ -795,6 +805,7 @@ export class CompleteScenarioBuilder {
                   adamCollaborator: adamCollaborator,
                   elisaPendingCollaborator: elisaPendingCollaborator,
                   janeCollaborator: janeCollaborator,
+                  janeCollaboratorArchived: janeCollaboratorArchived,
                   sebastiaoCollaborator: sebastiaoCollaborator
                 },
                 sections: {
