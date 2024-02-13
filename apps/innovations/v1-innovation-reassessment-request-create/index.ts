@@ -60,7 +60,7 @@ export default openApi(
       tags: ['[v1] Innovation Assessments'],
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       requestBody: SwaggerHelper.bodyJ2S(BodySchema, {
-        description: 'Create a reassessment request for an innovation.',
+        description: 'Create a reassessment request for an innovation.'
       }),
       responses: {
         200: { description: 'Returns the reassessment request and the cloned assessment id' },

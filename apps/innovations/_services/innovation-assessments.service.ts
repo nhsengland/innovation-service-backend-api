@@ -406,7 +406,15 @@ export class InnovationAssessmentsService extends BaseService {
 
     const innovation = await connection
       .createQueryBuilder(InnovationEntity, 'innovation')
-      .select(['innovation.id', 'innovation.status', 'support.id', 'support.status', 'support.archiveSnapshot'])
+      .select([
+        'innovation.id',
+        'innovation.status',
+        'innovationOwner.id',
+        'support.id',
+        'support.status',
+        'support.archiveSnapshot'
+      ])
+      .leftJoin('innovation.owner', 'innovationOwner')
       .innerJoin('innovation.innovationSupports', 'support')
       .where('innovation.id = :innovationId', { innovationId })
       .getOne();
@@ -416,6 +424,14 @@ export class InnovationAssessmentsService extends BaseService {
       innovation.innovationSupports?.some(s => s.status === InnovationSupportStatusEnum.ENGAGING)
     ) {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_CANNOT_REQUEST_REASSESSMENT);
+    }
+
+    if (
+      innovation &&
+      innovation.status === InnovationStatusEnum.ARCHIVED &&
+      innovation.owner?.id !== domainContext.id
+    ) {
+      throw new ForbiddenError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_MUST_BE_OWNER);
     }
 
     // Get the latest assessment record.

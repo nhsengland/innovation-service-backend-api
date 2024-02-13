@@ -55,6 +55,7 @@ describe('Innovation Assessments Suite', () => {
   const innovationWithoutAssessment = scenario.users.adamInnovator.innovations.adamInnovation;
   const innovationWithAssessmentInProgress =
     scenario.users.ottoOctaviusInnovator.innovations.brainComputerInterfaceInnovation;
+  const innovationWithArchivedStatus = scenario.users.johnInnovator.innovations.johnInnovationArchived;
 
   describe('getInnovationAssessmentInfo', () => {
     const naUser = DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor);
@@ -379,6 +380,17 @@ describe('Innovation Assessments Suite', () => {
           em
         )
       ).rejects.toThrowError(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND));
+    });
+
+    it('should not create a reassessment if the innovation is in archived status and user is a collaborator', async () => {
+      await expect(async () =>
+        sut.createInnovationReassessment(
+          DTOsHelper.getUserRequestContext(scenario.users.janeInnovator),
+          innovationWithArchivedStatus.id,
+          { updatedInnovationRecord: 'YES', description: randText() },
+          em
+        )
+      ).rejects.toThrow(new ForbiddenError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_MUST_BE_OWNER));
     });
 
     it('should not create a reassessment if the innovation has ongoing supports', async () => {
