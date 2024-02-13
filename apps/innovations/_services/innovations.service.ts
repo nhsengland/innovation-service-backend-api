@@ -2205,15 +2205,7 @@ export class InnovationsService extends BaseService {
 
     const supports = await em
       .createQueryBuilder(InnovationSupportEntity, 'support')
-      .select([
-        'support.id',
-        'support.status',
-        'support.updatedBy',
-        'userRole.id',
-        'userRole.role',
-        'user.id',
-        'unit.id'
-      ])
+      .select(['support.id', 'support.status', 'userRole.role', 'user.id', 'unit.id'])
       .innerJoin('support.organisationUnit', 'unit')
       .innerJoin('support.innovation', 'innovation')
       .leftJoin('support.userRoles', 'userRole')

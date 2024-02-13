@@ -99,40 +99,4 @@ describe('Notifications / _handlers / innovation-stop-sharing suite', () => {
       });
     });
   });
-
-  // describe('SH03_INNOVATION_STOPPED_SHARED_TO_SELF', () => {
-  //   it('should send an email to innovation owner', async () => {
-  //     await testEmails(InnovationStopSharingHandler, 'SH03_INNOVATION_STOPPED_SHARED_TO_SELF', {
-  //       notificationPreferenceType: 'INNOVATION_MANAGEMENT',
-  //       requestUser: DTOsHelper.getUserRequestContext(requestUser),
-  //       recipients: [DTOsHelper.getRecipientUser(requestUser)],
-  //       inputData: {
-  //         innovationId: innovation.id,
-  //         message,
-  //         affectedUsers: []
-  //       },
-  //       outputData: {
-  //         innovation_name: innovation.name,
-  //         innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.INNOVATOR, innovation.id)
-  //       },
-  //       options: { includeSelf: true }
-  //     });
-  //   });
-
-  //   it('should send an in-app to innovation owner', async () => {
-  //     await testInApps(InnovationStopSharingHandler, 'SH03_INNOVATION_STOPPED_SHARED_TO_SELF', {
-  //       context: { type: 'INNOVATION_MANAGEMENT', id: innovation.id },
-  //       innovationId: innovation.id,
-  //       requestUser: DTOsHelper.getUserRequestContext(requestUser),
-  //       recipients: [DTOsHelper.getRecipientUser(requestUser)],
-  //       inputData: {
-  //         innovationId: innovation.id,
-  //         message,
-  //         affectedUsers: []
-  //       },
-  //       outputData: { innovationName: innovation.name },
-  //       options: { includeSelf: true }
-  //     });
-  //   });
-  // });
 });
