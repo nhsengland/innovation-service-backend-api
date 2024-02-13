@@ -32,7 +32,7 @@ describe('Notifications / _handlers / account-deletion suite', () => {
               withPendingTransfer: [
                 { id: innovation.id, name: innovation.name, transferExpireDate: transferExpireDate }
               ],
-              withoutPendingTransfer: []
+              withoutPendingTransfer: { innovations: [], affectedUsers: [] }
             }
           },
           outputData: {
@@ -54,7 +54,7 @@ describe('Notifications / _handlers / account-deletion suite', () => {
               withPendingTransfer: [
                 { id: innovation.id, name: innovation.name, transferExpireDate: transferExpireDate }
               ],
-              withoutPendingTransfer: []
+              withoutPendingTransfer: { innovations: [], affectedUsers: [] }
             }
           },
           outputData: { innovationName: innovation.name }
@@ -73,7 +73,7 @@ describe('Notifications / _handlers / account-deletion suite', () => {
               withPendingTransfer: [
                 { id: innovation.id, name: innovation.name, transferExpireDate: transferExpireDate }
               ],
-              withoutPendingTransfer: []
+              withoutPendingTransfer: { innovations: [], affectedUsers: [] }
             }
           },
           MocksHelper.mockContext()
@@ -101,7 +101,15 @@ describe('Notifications / _handlers / account-deletion suite', () => {
             inputData: {
               innovations: {
                 withPendingTransfer: [],
-                withoutPendingTransfer: [{ id: innovation.id, name: innovation.name }]
+                withoutPendingTransfer: {
+                  innovations: [{ id: innovation.id, name: innovation.name }],
+                  affectedUsers: [
+                    {
+                      userId: scenario.users.janeInnovator.id,
+                      userType: scenario.users.janeInnovator.roles.innovatorRole.role
+                    }
+                  ]
+                }
               }
             },
             outputData: {
@@ -123,7 +131,15 @@ describe('Notifications / _handlers / account-deletion suite', () => {
             inputData: {
               innovations: {
                 withPendingTransfer: [],
-                withoutPendingTransfer: [{ id: innovation.id, name: innovation.name }]
+                withoutPendingTransfer: {
+                  innovations: [{ id: innovation.id, name: innovation.name }],
+                  affectedUsers: [
+                    {
+                      userId: scenario.users.janeInnovator.id,
+                      userType: scenario.users.janeInnovator.roles.innovatorRole.role
+                    }
+                  ]
+                }
               }
             },
             outputData: { innovationName: innovation.name }
@@ -143,7 +159,7 @@ describe('Notifications / _handlers / account-deletion suite', () => {
               withPendingTransfer: [
                 { id: innovation.id, name: innovation.name, transferExpireDate: transferExpireDate }
               ],
-              withoutPendingTransfer: []
+              withoutPendingTransfer: { innovations: [], affectedUsers: [] }
             }
           },
           MocksHelper.mockContext()

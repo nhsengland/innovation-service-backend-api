@@ -351,7 +351,7 @@ export class DomainUsersService {
           }
         );
 
-        await this.domainInnovationsService.withdrawInnovations(
+        const withdrawResponse = await this.domainInnovationsService.withdrawInnovations(
           { id: dbUser.id, roleId: userInnovatorRole.id },
           dbInnovations.filter(i => i.expirationTransferDate === null).map(item => ({ id: item.id, reason: null })),
           transaction
@@ -389,7 +389,11 @@ export class DomainUsersService {
         await this.notifierService.send(domainContext, NotifierTypeEnum.ACCOUNT_DELETION, {
           innovations: {
             withPendingTransfer: innovationsWithPendingTransfer,
-            withoutPendingTransfer: innovationsWithoutPendingTransfer
+            withoutPendingTransfer: {
+              innovations: innovationsWithoutPendingTransfer,
+              affectedUsers:
+                withdrawResponse[0]?.affectedUsers.filter(u => u.userType === ServiceRoleEnum.INNOVATOR) ?? []
+            }
           }
         });
       }

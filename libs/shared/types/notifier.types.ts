@@ -13,7 +13,17 @@ export type NotifierTemplatesType = {
   [NotifierTypeEnum.ACCOUNT_DELETION]: {
     innovations: {
       withPendingTransfer: { id: string; name: string; transferExpireDate: string }[];
-      withoutPendingTransfer: { id: string; name: string }[];
+      withoutPendingTransfer: {
+        innovations: {
+          id: string;
+          name: string;
+        }[];
+        affectedUsers: {
+          userId: string;
+          userType: ServiceRoleEnum;
+          unitId?: string;
+        }[];
+      };
     };
   };
 

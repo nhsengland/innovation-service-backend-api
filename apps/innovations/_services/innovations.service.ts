@@ -2208,8 +2208,8 @@ export class InnovationsService extends BaseService {
       .select(['support.id', 'support.status', 'userRole.role', 'user.id', 'unit.id'])
       .innerJoin('support.organisationUnit', 'unit')
       .innerJoin('support.innovation', 'innovation')
-      .leftJoin('support.userRoles', 'userRole')
-      .leftJoin('userRole.user', 'user', "user.status <> 'DELETED'")
+      .innerJoin('support.userRoles', 'userRole')
+      .innerJoin('userRole.user', 'user', "user.status <> 'DELETED'")
       .where('innovation.id = :innovationId', { innovationId })
       .andWhere('unit.organisation IN (:...ids)', { ids: deletedShares })
       .getMany();
@@ -2230,6 +2230,15 @@ export class InnovationsService extends BaseService {
       // Delete shares
       if (deletedShares.length > 0) {
         // Check for active supports
+
+        // const supports = await transaction
+        //   .createQueryBuilder(InnovationSupportEntity, 'support')
+        //   .select(['support.id', 'support.status', 'unit.id'])
+        //   .innerJoin('support.innovation', 'innovation')
+        //   .innerJoin('support.organisationUnit', 'unit')
+        //   .where('innovation.id = :innovationId', { innovationId })
+        //   .andWhere('unit.organisation IN (:...ids)', { ids: deletedShares })
+        //   .getMany();
 
         const supportIds = supports.map(support => support.id);
         if (supportIds.length > 0) {
