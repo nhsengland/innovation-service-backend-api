@@ -65,9 +65,15 @@ export class AccountDeletionHandler extends BaseHandler<
   private async DA02_OWNER_DELETED_ACCOUNT_WITHOUT_PENDING_TRANSFER_TO_COLLABORATOR(
     innovation: NotifierTemplatesType[NotifierTypeEnum.ACCOUNT_DELETION]['innovations']['withoutPendingTransfer']['innovations'][number]
   ): Promise<void> {
-    const collaborators = await this.recipientsService.getInnovationActiveCollaborators(innovation.id);
+    const collaborators = this.inputData.innovations.withoutPendingTransfer.affectedUsers;
     if (collaborators.length > 0) {
-      const recipients = await this.recipientsService.getUsersRecipient(collaborators, ServiceRoleEnum.INNOVATOR);
+      const recipients = await this.recipientsService.usersBagToRecipients(
+        collaborators.map(u => ({
+          id: u.userId,
+          userType: u.userType,
+          organisationUnit: u.unitId
+        }))
+      );
 
       this.notify('DA02_OWNER_DELETED_ACCOUNT_WITHOUT_PENDING_TRANSFER_TO_COLLABORATOR', recipients, {
         email: {
