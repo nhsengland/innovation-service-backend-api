@@ -11,7 +11,10 @@ export type NotifierTemplatesType = {
   // Account
   [NotifierTypeEnum.ACCOUNT_CREATION]: Record<string, never>;
   [NotifierTypeEnum.ACCOUNT_DELETION]: {
-    innovations: { id: string; name: string; transferExpireDate: string }[];
+    innovations: {
+      withPendingTransfer: { id: string; name: string; transferExpireDate: string }[];
+      withoutPendingTransfer: { id: string; name: string }[];
+    };
   };
 
   // Admin
@@ -47,10 +50,10 @@ export type NotifierTemplatesType = {
   // // Stop Sharing
   [NotifierTypeEnum.INNOVATION_STOP_SHARING]: {
     innovationId: string;
-    message: string;
+    organisationName: string;
     affectedUsers: {
-      id: string;
-      role: ServiceRoleEnum;
+      userId: string;
+      userType: ServiceRoleEnum;
       unitId?: string;
     }[];
   };

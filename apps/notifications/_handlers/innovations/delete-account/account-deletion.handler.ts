@@ -18,15 +18,23 @@ export class AccountDeletionHandler extends BaseHandler<
   }
 
   async run(): Promise<this> {
-    for (const innovation of this.inputData.innovations) {
-      await this.DA01_OWNER_DELETED_ACCOUNT_WITH_PENDING_TRANSFER_TO_COLLABORATOR(innovation);
-      await this.DA02_OWNER_DELETED_ACCOUNT_WITHOUT_PENDING_TRANSFER_TO_COLLABORATOR(innovation);
+    if (this.inputData.innovations.withPendingTransfer.length) {
+      for (const innovation of this.inputData.innovations.withPendingTransfer) {
+        await this.DA01_OWNER_DELETED_ACCOUNT_WITH_PENDING_TRANSFER_TO_COLLABORATOR(innovation);
+      }
     }
+
+    if (this.inputData.innovations.withoutPendingTransfer.length) {
+      for (const innovation of this.inputData.innovations.withoutPendingTransfer) {
+        await this.DA02_OWNER_DELETED_ACCOUNT_WITHOUT_PENDING_TRANSFER_TO_COLLABORATOR(innovation);
+      }
+    }
+
     return this;
   }
 
   private async DA01_OWNER_DELETED_ACCOUNT_WITH_PENDING_TRANSFER_TO_COLLABORATOR(
-    innovation: NotifierTemplatesType[NotifierTypeEnum.ACCOUNT_DELETION]['innovations'][number]
+    innovation: NotifierTemplatesType[NotifierTypeEnum.ACCOUNT_DELETION]['innovations']['withPendingTransfer'][number]
   ): Promise<void> {
     const collaborators = await this.recipientsService.getInnovationActiveCollaborators(innovation.id);
     if (collaborators.length > 0) {
@@ -55,7 +63,7 @@ export class AccountDeletionHandler extends BaseHandler<
   }
 
   private async DA02_OWNER_DELETED_ACCOUNT_WITHOUT_PENDING_TRANSFER_TO_COLLABORATOR(
-    innovation: NotifierTemplatesType[NotifierTypeEnum.ACCOUNT_DELETION]['innovations'][number]
+    innovation: NotifierTemplatesType[NotifierTypeEnum.ACCOUNT_DELETION]['innovations']['withoutPendingTransfer'][number]
   ): Promise<void> {
     const collaborators = await this.recipientsService.getInnovationActiveCollaborators(innovation.id);
     if (collaborators.length > 0) {

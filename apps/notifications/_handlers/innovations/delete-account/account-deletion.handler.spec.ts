@@ -28,7 +28,12 @@ describe('Notifications / _handlers / account-deletion suite', () => {
           requestUser: DTOsHelper.getUserRequestContext(requestUser),
           recipients: [DTOsHelper.getRecipientUser(scenario.users.janeInnovator)],
           inputData: {
-            innovations: [{ id: innovation.id, name: innovation.name, transferExpireDate: transferExpireDate }]
+            innovations: {
+              withPendingTransfer: [
+                { id: innovation.id, name: innovation.name, transferExpireDate: transferExpireDate }
+              ],
+              withoutPendingTransfer: []
+            }
           },
           outputData: {
             expiry_date: transferExpireDate,
@@ -45,7 +50,12 @@ describe('Notifications / _handlers / account-deletion suite', () => {
           requestUser: DTOsHelper.getUserRequestContext(requestUser),
           recipients: [DTOsHelper.getRecipientUser(scenario.users.janeInnovator)],
           inputData: {
-            innovations: [{ id: innovation.id, name: innovation.name, transferExpireDate: transferExpireDate }]
+            innovations: {
+              withPendingTransfer: [
+                { id: innovation.id, name: innovation.name, transferExpireDate: transferExpireDate }
+              ],
+              withoutPendingTransfer: []
+            }
           },
           outputData: { innovationName: innovation.name }
         });
@@ -59,7 +69,12 @@ describe('Notifications / _handlers / account-deletion suite', () => {
         const handler = new AccountDeletionHandler(
           DTOsHelper.getUserRequestContext(requestUser),
           {
-            innovations: [{ id: innovation.id, name: innovation.name, transferExpireDate: transferExpireDate }]
+            innovations: {
+              withPendingTransfer: [
+                { id: innovation.id, name: innovation.name, transferExpireDate: transferExpireDate }
+              ],
+              withoutPendingTransfer: []
+            }
           },
           MocksHelper.mockContext()
         );

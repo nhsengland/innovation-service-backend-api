@@ -65,9 +65,8 @@ export const EmailTemplates = {
   AI02_INNOVATION_ARCHIVED_TO_COLLABORATORS: '66fcdcfd-a2a4-4d58-a1a2-978eb443b1c0',
   AI03_INNOVATION_ARCHIVED_TO_ENGAGING_QA_A: 'e3f5206f-74be-4890-bead-850a0cd3e261',
   AI04_INNOVATION_ARCHIVED_TO_NA_DURING_NEEDS_ASSESSMENT: 'd6eb2d9b-48bd-46bf-a16b-650920900a73',
-  SH01_INNOVATION_STOPPED_SHARED_TO_ASSIGNED_USERS: 'ab51f9eb-8826-4ab4-8e8b-97acd8e2edf7',
-  SH03_INNOVATION_STOPPED_SHARED_TO_SELF: '42d32a18-95dc-4b0e-9d82-35a96e9c033d',
   SH04_INNOVATION_STOPPED_SHARING_WITH_INDIVIDUAL_ORG_TO_OWNER: '3ad7af90-a56e-42a0-b3b7-4ca3878c1694',
+  SH05_INNOVATION_STOPPED_SHARING_WITH_INDIVIDUAL_ORG_TO_QA_A: '9664bb38-d009-423d-a4bb-5337c11b4ca8',
   DA01_OWNER_DELETED_ACCOUNT_WITH_PENDING_TRANSFER_TO_COLLABORATOR: '5c8f9de0-09d3-4e33-8986-387fb5c29224',
   DA02_OWNER_DELETED_ACCOUNT_WITHOUT_PENDING_TRANSFER_TO_COLLABORATOR: '4d05e6f6-eb9b-4517-a786-b4df950e16cd',
   MC01_COLLABORATOR_INVITE_EXISTING_USER: '62b406b3-a17e-4724-8d0d-ff0de839a829',
@@ -353,19 +352,13 @@ export type EmailTemplatesType = {
     innovation_name: string;
     assessment_type: 'assessment' | 'reassessment';
   };
-  SH01_INNOVATION_STOPPED_SHARED_TO_ASSIGNED_USERS: {
-    innovation_name: string;
-    innovator_name: string;
-    comment: string;
-  };
-  SH03_INNOVATION_STOPPED_SHARED_TO_SELF: {
-    innovation_name: string;
-    innovation_overview_url: string;
-  };
   SH04_INNOVATION_STOPPED_SHARING_WITH_INDIVIDUAL_ORG_TO_OWNER: {
     innovation_name: string;
     organisation_name: string;
     data_sharing_preferences_url: string;
+  };
+  SH05_INNOVATION_STOPPED_SHARING_WITH_INDIVIDUAL_ORG_TO_QA_A: {
+    innovation_name: string;
   };
   DA01_OWNER_DELETED_ACCOUNT_WITH_PENDING_TRANSFER_TO_COLLABORATOR: {
     innovation_name: string;

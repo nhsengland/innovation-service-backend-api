@@ -2162,6 +2162,11 @@ export class InnovationsService extends BaseService {
   ): Promise<void> {
     const em = entityManager ?? this.sqlConnection.manager;
 
+    const allOrganisations = await em
+      .createQueryBuilder(OrganisationEntity, 'organisation')
+      .select(['organisation.id', 'organisation.name'])
+      .getMany();
+
     // Sanity check if all organisation exists.
     const organisations = await em
       .createQueryBuilder(OrganisationEntity, 'organisation')
@@ -2192,18 +2197,47 @@ export class InnovationsService extends BaseService {
     const addedShares = organisationShares.filter(s => !oldSharesSet.has(s));
     const deletedShares = oldShares.filter(s => !sharesSet.has(s));
 
+    const affectedUsers: {
+      userId: string;
+      userType: ServiceRoleEnum;
+      unitId?: string;
+    }[] = [];
+
+    const supports = await em
+      .createQueryBuilder(InnovationSupportEntity, 'support')
+      .select([
+        'support.id',
+        'support.status',
+        'support.updatedBy',
+        'userRole.id',
+        'userRole.role',
+        'user.id',
+        'unit.id'
+      ])
+      .innerJoin('support.organisationUnit', 'unit')
+      .innerJoin('support.innovation', 'innovation')
+      .leftJoin('support.userRoles', 'userRole')
+      .leftJoin('userRole.user', 'user', "user.status <> 'DELETED'")
+      .where('innovation.id = :innovationId', { innovationId })
+      .andWhere('unit.organisation IN (:...ids)', { ids: deletedShares })
+      .getMany();
+
+    affectedUsers.push(
+      ...supports.flatMap(item =>
+        item.userRoles
+          .filter(su => [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR].includes(su.role))
+          .map(su => ({
+            userId: su.user.id,
+            userType: su.role as unknown as ServiceRoleEnum,
+            unitId: su.organisationUnitId
+          }))
+      )
+    );
+
     await em.transaction(async transaction => {
       // Delete shares
       if (deletedShares.length > 0) {
         // Check for active supports
-        const supports = await transaction
-          .createQueryBuilder(InnovationSupportEntity, 'support')
-          .select(['support.id', 'support.status', 'unit.id'])
-          .innerJoin('support.innovation', 'innovation')
-          .innerJoin('support.organisationUnit', 'unit')
-          .where('innovation.id = :innovationId', { innovationId })
-          .andWhere('unit.organisation IN (:...ids)', { ids: deletedShares })
-          .getMany();
 
         const supportIds = supports.map(support => support.id);
         if (supportIds.length > 0) {
@@ -2278,6 +2312,14 @@ export class InnovationsService extends BaseService {
       await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_DELAYED_SHARE, {
         innovationId: innovation.id,
         newSharedOrgIds: addedShares
+      });
+    }
+
+    for (const share of deletedShares) {
+      await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_STOP_SHARING, {
+        innovationId: innovation.id,
+        organisationName: allOrganisations.find(org => org.id === share)?.name ?? '',
+        affectedUsers: affectedUsers
       });
     }
   }

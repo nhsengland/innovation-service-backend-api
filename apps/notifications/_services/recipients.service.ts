@@ -931,8 +931,8 @@ export class RecipientsService extends BaseService {
       .getMany();
 
     const suggestedUnits = new Set(
-      suggestions.flatMap(
-        s => (s.suggestedOrganisationUnits ?? [])?.map(su => ({ unitId: su.id, orgId: su.organisationId }))
+      suggestions.flatMap(s =>
+        (s.suggestedOrganisationUnits ?? [])?.map(su => ({ unitId: su.id, orgId: su.organisationId }))
       )
     );
 

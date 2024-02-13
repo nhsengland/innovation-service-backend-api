@@ -206,15 +206,12 @@ export type InAppTemplatesType = {
     innovationName: string;
     assessmentType: 'assessment' | 'reassessment';
   };
-  SH01_INNOVATION_STOPPED_SHARED_TO_ASSIGNED_USERS: {
-    innovationName: string;
-  };
-  SH03_INNOVATION_STOPPED_SHARED_TO_SELF: {
-    innovationName: string;
-  };
   SH04_INNOVATION_STOPPED_SHARING_WITH_INDIVIDUAL_ORG_TO_OWNER: {
     innovationName: string;
     organisationName: string;
+  };
+  SH05_INNOVATION_STOPPED_SHARING_WITH_INDIVIDUAL_ORG_TO_QA_A: {
+    innovationName: string;
   };
   DA01_OWNER_DELETED_ACCOUNT_WITH_PENDING_TRANSFER_TO_COLLABORATOR: {
     innovationName: string;

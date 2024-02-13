@@ -324,6 +324,7 @@ export class DomainUsersService {
     }
 
     const innovationsWithPendingTransfer: { id: string; name: string; transferExpireDate: string }[] = [];
+    const innovationsWithoutPendingTransfer: { id: string; name: string }[] = [];
 
     const result = this.sqlConnection.transaction(async transaction => {
       // If user has innovator role, deals with it's innovations.
@@ -356,33 +357,41 @@ export class DomainUsersService {
           transaction
         );
 
-        for (const dbInnovation of dbInnovations.filter(i => i.expirationTransferDate !== null)) {
-          innovationsWithPendingTransfer.push({
-            id: dbInnovation.id,
-            name: dbInnovation.name,
-            transferExpireDate: dbInnovation.expirationTransferDate
-              ? dbInnovation.expirationTransferDate.toDateString()
-              : ''
-          });
+        for (const dbInnovation of dbInnovations) {
+          if (dbInnovation.expirationTransferDate) {
+            innovationsWithPendingTransfer.push({
+              id: dbInnovation.id,
+              name: dbInnovation.name,
+              transferExpireDate: dbInnovation.expirationTransferDate
+                ? dbInnovation.expirationTransferDate.toDateString()
+                : ''
+            });
 
-          await this.sqlConnection.getRepository(InnovationEntity).update(
-            {
-              id: dbInnovation.id
-            },
-            {
-              updatedBy: dbUser.id,
-              owner: null,
-              expires_at: dbInnovation.expirationTransferDate
-            }
-          );
+            await this.sqlConnection.getRepository(InnovationEntity).update(
+              {
+                id: dbInnovation.id
+              },
+              {
+                updatedBy: dbUser.id,
+                owner: null,
+                expires_at: dbInnovation.expirationTransferDate
+              }
+            );
+          } else {
+            innovationsWithoutPendingTransfer.push({
+              id: dbInnovation.id,
+              name: dbInnovation.name
+            });
+          }
         }
 
-        // Send notification to collaborators if there are innovations with pending transfer
-        if (innovationsWithPendingTransfer.length > 0) {
-          await this.notifierService.send(domainContext, NotifierTypeEnum.ACCOUNT_DELETION, {
-            innovations: innovationsWithPendingTransfer
-          });
-        }
+        // Send notification to collaborators
+        await this.notifierService.send(domainContext, NotifierTypeEnum.ACCOUNT_DELETION, {
+          innovations: {
+            withPendingTransfer: innovationsWithPendingTransfer,
+            withoutPendingTransfer: innovationsWithoutPendingTransfer
+          }
+        });
       }
 
       await transaction.update(UserRoleEntity, { user: { id: dbUser.id } }, { isActive: false });

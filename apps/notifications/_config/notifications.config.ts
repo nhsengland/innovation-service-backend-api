@@ -268,17 +268,26 @@ export const NOTIFICATIONS_CONFIG = {
   [NotifierTypeEnum.ACCOUNT_DELETION]: {
     handler: AccountDeletionHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.ACCOUNT_DELETION]>({
-      innovations: Joi.array()
-        .items(
-          Joi.object({
-            id: Joi.string().guid().required(),
-            name: Joi.string().required(),
-            transferExpireDate: Joi.date().required()
-          })
-        )
-        .min(1)
-        .required()
-    }).required()
+      innovations: Joi.object({
+        withPendingTransfer: Joi.array()
+          .items(
+            Joi.object({
+              id: Joi.string().guid().required(),
+              name: Joi.string().required(),
+              transferExpireDate: Joi.date().required()
+            })
+          )
+          .required(),
+        withoutPendingTransfer: Joi.array()
+          .items(
+            Joi.object({
+              id: Joi.string().guid().required(),
+              name: Joi.string().required()
+            })
+          )
+          .required()
+      }).required()
+    })
   },
   // // Collaborators
   [NotifierTypeEnum.COLLABORATOR_INVITE]: {
@@ -305,18 +314,18 @@ export const NOTIFICATIONS_CONFIG = {
     handler: InnovationStopSharingHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_STOP_SHARING]>({
       innovationId: Joi.string().guid().required(),
+      organisationName: Joi.string().required(),
       affectedUsers: Joi.array()
         .items(
           Joi.object({
-            id: Joi.string().guid().required(),
-            role: Joi.string()
+            userId: Joi.string().guid().required(),
+            userType: Joi.string()
               .valid(...Object.values(ServiceRoleEnum))
               .required(),
             unitId: Joi.string().guid().optional()
           })
         )
-        .required(),
-      message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xs).trim().required()
+        .required()
     }).required()
   },
   // // Archived
@@ -339,7 +348,6 @@ export const NOTIFICATIONS_CONFIG = {
             unitId: Joi.string().guid()
           })
         )
-        .min(1)
         .required()
     }).required()
   },
