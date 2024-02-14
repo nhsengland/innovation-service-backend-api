@@ -2231,22 +2231,24 @@ export class InnovationsService extends BaseService {
           .select(['support.id', 'support.status', 'userRole.role', 'user.id', 'unit.id'])
           .innerJoin('support.innovation', 'innovation')
           .innerJoin('support.organisationUnit', 'unit')
-          .innerJoin('support.userRoles', 'userRole')
-          .innerJoin('userRole.user', 'user', "user.status <> 'DELETED'")
+          .leftJoin('support.userRoles', 'userRole')
+          .leftJoin('userRole.user', 'user', "user.status <> 'DELETED'")
           .where('innovation.id = :innovationId', { innovationId })
           .andWhere('unit.organisation IN (:...ids)', { ids: deletedShares })
           .getMany();
 
         toReturn.push({
           affectedUsers: [
-            ...supports.flatMap(item =>
-              item.userRoles
-                .filter(su => [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR].includes(su.role))
-                .map(su => ({
-                  userId: su.user.id,
-                  userType: su.role as unknown as ServiceRoleEnum
-                }))
-            )
+            ...supports
+              .filter(support => support.userRoles !== null)
+              .flatMap(item =>
+                item.userRoles
+                  .filter(su => [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR].includes(su.role))
+                  .map(su => ({
+                    userId: su.user.id,
+                    userType: su.role as unknown as ServiceRoleEnum
+                  }))
+              )
           ]
         });
 
