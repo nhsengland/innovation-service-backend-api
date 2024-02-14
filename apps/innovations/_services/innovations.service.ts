@@ -69,6 +69,7 @@ export const InnovationListSelectType = [
   'id',
   'name',
   'status',
+  'statusUpdatedAt',
   'groupedStatus',
   'submittedAt',
   'updatedAt',
@@ -2678,6 +2679,7 @@ export class InnovationsService extends BaseService {
     return pick(input, [
       'id',
       'name',
+      'statusUpdatedAt',
       'submittedAt',
       'groupedStatus',
       'updatedAt',

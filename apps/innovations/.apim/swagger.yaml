@@ -1072,6 +1072,7 @@ paths:
                 - id
                 - name
                 - status
+                - statusUpdatedAt
                 - groupedStatus
                 - submittedAt
                 - updatedAt
