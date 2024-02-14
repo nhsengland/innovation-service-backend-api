@@ -1,10 +1,10 @@
 import azureFunction from '.';
 
-import { randText, randUuid } from '@ngneat/falso';
+import { randText } from '@ngneat/falso';
 import { NotFoundError, UserErrorsEnum } from '@users/shared/errors';
-import { DomainUsersService } from '@users/shared/services';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@users/shared/tests';
 import type { ErrorResponseType } from '@users/shared/types';
+import { UsersService } from '../_services/users.service';
 
 jest.mock('@users/shared/decorators', () => ({
   JwtDecoder: jest.fn().mockImplementation(() => (_: any, __: string, descriptor: PropertyDescriptor) => {
@@ -22,8 +22,7 @@ beforeAll(async () => {
   await testsHelper.init();
 });
 
-const expected = { id: randUuid() };
-const mock = jest.spyOn(DomainUsersService.prototype, 'deleteUser').mockResolvedValue(expected);
+const mock = jest.spyOn(UsersService.prototype, 'deleteUser').mockResolvedValue();
 
 afterEach(() => {
   jest.clearAllMocks();
