@@ -535,6 +535,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
         .save();
 
       const unitInfo = await sut.getSupportSummaryUnitInfo(
+        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
         innovation.id,
         scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id,
         em
@@ -612,6 +613,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
     it("should throw NotFoundError when innovation doesn't exist", async () => {
       await expect(() =>
         sut.getSupportSummaryUnitInfo(
+          DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
           randUuid(),
           scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id,
           em

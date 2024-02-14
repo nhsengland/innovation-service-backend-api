@@ -24,7 +24,7 @@ class V1InnovationFilesList {
     try {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
-      await authorizationService
+      const auth = await authorizationService
         .validate(context)
         .setInnovation(params.innovationId)
         .checkAssessmentType()
@@ -38,7 +38,11 @@ class V1InnovationFilesList {
 
       const { skip, take, order, ...filters } = queryParams;
 
-      const result = await innovationFileService.getFilesList(params.innovationId, filters, { skip, take, order });
+      const result = await innovationFileService.getFilesList(auth.getContext(), params.innovationId, filters, {
+        skip,
+        take,
+        order
+      });
 
       context.res = ResponseHelper.Ok<ResponseDTO>({
         count: result.count,

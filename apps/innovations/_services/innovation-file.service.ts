@@ -2,7 +2,7 @@ import { inject, injectable } from 'inversify';
 import { basename, extname } from 'path';
 
 import { randomUUID } from 'crypto';
-import type { EntityManager } from 'typeorm';
+import { Brackets, type EntityManager } from 'typeorm';
 
 import { MAX_FILES_ALLOWED } from '@innovations/shared/constants';
 import {
@@ -30,7 +30,12 @@ import { allowFileUploads } from '@innovations/shared/schemas/innovation-record/
 import type { DocumentType202304 } from '@innovations/shared/schemas/innovation-record/202304/document.types';
 import type { FileStorageService, IdentityProviderService, NotifierService } from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import type { DomainContextType, IdentityUserInfo } from '@innovations/shared/types';
+import {
+  isAccessorDomainContextType,
+  isAssessmentDomainContextType,
+  type DomainContextType,
+  type IdentityUserInfo
+} from '@innovations/shared/types';
 
 import { AuthErrorsEnum } from '@innovations/shared/services/auth/authorization-validation.model';
 import type {
@@ -51,6 +56,7 @@ export class InnovationFileService extends BaseService {
   }
 
   async getFilesList(
+    domainContext: DomainContextType,
     innovationId: string,
     filters: {
       name?: string;
@@ -156,6 +162,17 @@ export class InnovationFileService extends BaseService {
           });
         }
       }
+    }
+
+    // A/QA/NA cannot see files uploaded after the innovation is archived
+    if (isAccessorDomainContextType(domainContext) || isAssessmentDomainContextType(domainContext)) {
+      query.andWhere(
+        new Brackets(qb => {
+          qb.where('innovation.status <> :archivedStatus', { archivedStatus: InnovationStatusEnum.ARCHIVED }).orWhere(
+            'file.createdAt < innovation.statusUpdatedAt'
+          );
+        })
+      );
     }
 
     // Pagination and ordering.

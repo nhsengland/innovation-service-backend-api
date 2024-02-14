@@ -826,6 +826,7 @@ export class InnovationSupportsService extends BaseService {
   }
 
   async getSupportSummaryUnitInfo(
+    domainContext: DomainContextType,
     innovationId: string,
     unitId: string,
     entityManager?: EntityManager
@@ -929,7 +930,7 @@ export class InnovationSupportsService extends BaseService {
           break;
         case InnovationSupportLogTypeEnum.PROGRESS_UPDATE:
           {
-            const file = await this.getProgressUpdateFile(innovationId, supportLog.id);
+            const file = await this.getProgressUpdateFile(domainContext, innovationId, supportLog.id);
 
             summary.push({
               ...defaultSummary,
@@ -1068,7 +1069,7 @@ export class InnovationSupportsService extends BaseService {
     }
 
     await connection.transaction(async transaction => {
-      const file = await this.getProgressUpdateFile(innovationId, progressId);
+      const file = await this.getProgressUpdateFile(domainContext, innovationId, progressId);
       if (file) {
         await this.innovationFileService.deleteFile(domainContext, file.id, transaction);
       }
@@ -1193,6 +1194,7 @@ export class InnovationSupportsService extends BaseService {
   }
 
   private async getProgressUpdateFile(
+    domainContext: DomainContextType,
     innovationId: string,
     progressId: string
   ): Promise<
@@ -1209,6 +1211,7 @@ export class InnovationSupportsService extends BaseService {
     | undefined
   > {
     const files = await this.innovationFileService.getFilesList(
+      domainContext,
       innovationId,
       { contextId: progressId },
       { skip: 0, take: 1, order: { createdAt: 'ASC' } }
