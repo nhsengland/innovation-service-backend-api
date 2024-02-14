@@ -37,6 +37,7 @@ class V1InnovationThreadCreate {
         .checkAccessorType()
         .checkAssessmentType()
         .checkInnovation()
+        .checkNotArchived()
         .verify();
 
       const domainContext = auth.getContext();
