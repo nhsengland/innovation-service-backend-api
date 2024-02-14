@@ -2213,7 +2213,7 @@ export class InnovationsService extends BaseService {
     const addedShares = organisationShares.filter(s => !oldSharesSet.has(s));
     const deletedShares = oldShares.filter(s => !sharesSet.has(s));
 
-    const temTransaction = await em.transaction(async transaction => {
+    const emTransaction = await em.transaction(async transaction => {
       const toReturn: {
         userId: string;
         userType: ServiceRoleEnum;
@@ -2321,7 +2321,7 @@ export class InnovationsService extends BaseService {
       userId: string;
       userType: ServiceRoleEnum;
       unitId?: string;
-    }[] = temTransaction;
+    }[] = emTransaction;
 
     if (addedShares.length > 0 && innovation.status === InnovationStatusEnum.IN_PROGRESS) {
       await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_DELAYED_SHARE, {
