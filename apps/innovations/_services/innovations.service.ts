@@ -2215,9 +2215,11 @@ export class InnovationsService extends BaseService {
 
     const emTransaction = await em.transaction(async transaction => {
       const toReturn: {
-        userId: string;
-        userType: ServiceRoleEnum;
-        unitId?: string;
+        affectedUsers: {
+          userId: string;
+          userType: ServiceRoleEnum;
+          unitId?: string;
+        }[];
       }[] = [];
 
       // Delete shares
@@ -2235,16 +2237,18 @@ export class InnovationsService extends BaseService {
           .andWhere('unit.organisation IN (:...ids)', { ids: deletedShares })
           .getMany();
 
-        toReturn.push(
-          ...supports.flatMap(item =>
-            item.userRoles
-              .filter(su => [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR].includes(su.role))
-              .map(su => ({
-                userId: su.user.id,
-                userType: su.role as unknown as ServiceRoleEnum
-              }))
-          )
-        );
+        toReturn.push({
+          affectedUsers: [
+            ...supports.flatMap(item =>
+              item.userRoles
+                .filter(su => [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR].includes(su.role))
+                .map(su => ({
+                  userId: su.user.id,
+                  userType: su.role as unknown as ServiceRoleEnum
+                }))
+            )
+          ]
+        });
 
         const supportIds = supports.map(support => support.id);
         if (supportIds.length > 0) {
@@ -2321,7 +2325,7 @@ export class InnovationsService extends BaseService {
       userId: string;
       userType: ServiceRoleEnum;
       unitId?: string;
-    }[] = emTransaction;
+    }[] = emTransaction[0]?.affectedUsers ?? [];
 
     if (addedShares.length > 0 && innovation.status === InnovationStatusEnum.IN_PROGRESS) {
       await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_DELAYED_SHARE, {
