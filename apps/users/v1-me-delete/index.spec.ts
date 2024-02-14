@@ -1,6 +1,6 @@
 import azureFunction from '.';
 
-import { randUuid } from '@ngneat/falso';
+import { randText, randUuid } from '@ngneat/falso';
 import { NotFoundError, UserErrorsEnum } from '@users/shared/errors';
 import { DomainUsersService } from '@users/shared/services';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@users/shared/tests';
@@ -30,14 +30,15 @@ afterEach(() => {
 });
 
 describe('v1-me-delete Suite', () => {
-  describe('200', () => {
+  describe('204', () => {
     it('should delete the user', async () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.johnInnovator)
+        .setBody({ reason: randText() })
         .call<never>(azureFunction);
 
-      expect(result.body).toStrictEqual(expected);
-      expect(result.status).toBe(200);
+      expect(result.status).toBe(204);
+      expect(result.body).toBeUndefined();
       expect(mock).toHaveBeenCalledTimes(1);
     });
   });
@@ -47,6 +48,7 @@ describe('v1-me-delete Suite', () => {
       mock.mockRejectedValueOnce(new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND));
       const res = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.johnInnovator)
+        .setBody({ reason: randText() })
         .call<ErrorResponseType>(azureFunction);
       expect(res.status).toBe(404);
       expect(res.body.error).toBe(UserErrorsEnum.USER_SQL_NOT_FOUND);

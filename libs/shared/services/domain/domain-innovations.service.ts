@@ -158,6 +158,9 @@ export class DomainInnovationsService {
     }
   }
 
+  /**
+   * @deprecated this method can be removed after all the changes to archive are done
+   */
   async withdrawInnovations(
     user: { id: string; roleId: string },
     innovations: { id: string; reason: null | string }[],
@@ -275,19 +278,13 @@ export class DomainInnovationsService {
         await this.bulkUpdateCollaboratorStatusByInnovation(
           em,
           { id: userId },
-          {
-            current: InnovationCollaboratorStatusEnum.ACTIVE,
-            next: InnovationCollaboratorStatusEnum.REMOVED
-          },
+          { current: InnovationCollaboratorStatusEnum.ACTIVE, next: InnovationCollaboratorStatusEnum.REMOVED },
           dbInnovation.id
         );
         await this.bulkUpdateCollaboratorStatusByInnovation(
           em,
           { id: userId },
-          {
-            current: InnovationCollaboratorStatusEnum.PENDING,
-            next: InnovationCollaboratorStatusEnum.CANCELLED
-          },
+          { current: InnovationCollaboratorStatusEnum.PENDING, next: InnovationCollaboratorStatusEnum.CANCELLED },
           dbInnovation.id
         );
 
@@ -340,17 +337,12 @@ export class DomainInnovationsService {
           .execute();
 
         // Reject PENDING transfer requests
-        await em.getRepository(InnovationTransferEntity).update(
-          {
-            innovation: { id: dbInnovation.id },
-            status: InnovationTransferStatusEnum.PENDING
-          },
-          {
-            finishedAt: new Date().toISOString(),
-            status: InnovationTransferStatusEnum.CANCELED,
-            updatedBy: userId
-          }
-        );
+        await em
+          .getRepository(InnovationTransferEntity)
+          .update(
+            { innovation: { id: dbInnovation.id }, status: InnovationTransferStatusEnum.PENDING },
+            { finishedAt: new Date().toISOString(), status: InnovationTransferStatusEnum.CANCELED, updatedBy: userId }
+          );
 
         // Delete all unopened notifications related with this innovation
         const unopenedNotificationsIds = await em
@@ -362,9 +354,7 @@ export class DomainInnovationsService {
           .andWhere('userNotification.read_at IS NULL')
           .getMany();
 
-        await em.softDelete(NotificationUserEntity, {
-          id: In(unopenedNotificationsIds.map(c => c.id))
-        });
+        await em.softDelete(NotificationUserEntity, { id: In(unopenedNotificationsIds.map(c => c.id)) });
 
         affectedUsers.push(
           ...dbInnovation.innovationSupports.flatMap(item =>
@@ -435,7 +425,6 @@ export class DomainInnovationsService {
   > {
     const em = entityManager ?? this.sqlConnection.manager;
 
-    // TODO: Will need to add logic to push ASSESSMENT users to implement notification AI04, decision currently on hold by client.
     const dbInnovations = await em
       .createQueryBuilder(InnovationEntity, 'innovation')
       .select(['innovation.id', 'innovation.status'])
@@ -456,6 +445,21 @@ export class DomainInnovationsService {
 
     return await em.transaction(async transaction => {
       for (const innovation of archivedInnovationsInfo) {
+        // TODO: this is not being used for now, commented for when we add this support
+        // if (innovation.prevStatus === InnovationStatusEnum.NEEDS_ASSESSMENT) {
+        //   const assignedNa = await em
+        //     .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
+        //     .select(['assessment.id', 'assignedUser.id'])
+        //     .innerJoin('assessment.assignTo', 'assignedUser')
+        //     .where('assessment.innovation_id = :innovationId', { innovationId: innovation.id })
+        //     .andWhere('assessment.finished_at IS NULL')
+        //     .andWhere('assignedUser.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED })
+        //     .getOne();
+        //   if (assignedNa && assignedNa.assignTo) {
+        //     innovation.affectedUsers.push({ userId: assignedNa.assignTo.id, userType: ServiceRoleEnum.ASSESSMENT });
+        //   }
+        // }
+
         const supports = await transaction
           .createQueryBuilder(InnovationSupportEntity, 'support')
           .select([
@@ -565,6 +569,99 @@ export class DomainInnovationsService {
       }
 
       return archivedInnovationsInfo;
+    });
+  }
+
+  /**
+   * This method contains the rules to archive innovations that is side-effect from a delete account.
+   * Due to being a side-effect from delete account this "archival" process contains additional rules
+   * from the normal archiveInnovations (@see archiveInnovations).
+   * This function does:
+   * 1. Run the archive innovations rules
+   * 2. Reject PENDING transfer requests
+   * 3. Remove existing collaborators and pending invites
+   * 4. Delete unopened notifications
+   *
+   * @returns information related with the archived innovations, this information is mostly
+   * used for things outside he core of archive innovations (e.g., send notifications)
+   */
+  async archiveInnovationsWithDeleteSideffects(
+    domainContext: DomainContextType,
+    innovations: { id: string; reason: string }[],
+    entityManager?: EntityManager
+  ): Promise<
+    {
+      id: string;
+      prevStatus: InnovationStatusEnum;
+      reason: string;
+      affectedUsers: { userId: string; userType: ServiceRoleEnum; unitId?: string }[];
+    }[]
+  > {
+    if (innovations.length === 0) return [];
+
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    return await em.transaction(async transaction => {
+      // Run the archive innovations rules
+      const archivedInnovations = await this.archiveInnovations(domainContext, innovations, transaction);
+
+      // Run additional side-effects
+      for (const innovation of archivedInnovations) {
+        // Reject PENDING transfer requests
+        await transaction.update(
+          InnovationTransferEntity,
+          { innovation: { id: innovation.id }, status: InnovationTransferStatusEnum.PENDING },
+          {
+            finishedAt: new Date().toISOString(),
+            status: InnovationTransferStatusEnum.CANCELED,
+            updatedBy: domainContext.id
+          }
+        );
+
+        // Add active collaborators to affected users
+        const activeCollaborators = await transaction
+          .createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
+          .select(['collaborator.id', 'collaborator.innovation_id', 'user.id'])
+          .innerJoin('collaborator.user', 'user')
+          .where('collaborator.innovation_id = :innovationId', { innovationId: innovation.id })
+          .andWhere('collaborator.status = :collaboratorActiveStatus', {
+            collaboratorActiveStatus: InnovationCollaboratorStatusEnum.ACTIVE
+          })
+          .andWhere('user.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED })
+          .getMany();
+        if (activeCollaborators.length > 0) {
+          innovation.affectedUsers.push(
+            ...activeCollaborators.map(c => ({ userId: c.user?.id ?? '', userType: ServiceRoleEnum.INNOVATOR }))
+          );
+        }
+
+        // Remove existing collaborators
+        await this.bulkUpdateCollaboratorStatusByInnovation(
+          transaction,
+          { id: domainContext.id },
+          { current: InnovationCollaboratorStatusEnum.ACTIVE, next: InnovationCollaboratorStatusEnum.REMOVED },
+          innovation.id
+        );
+        await this.bulkUpdateCollaboratorStatusByInnovation(
+          transaction,
+          { id: domainContext.id },
+          { current: InnovationCollaboratorStatusEnum.PENDING, next: InnovationCollaboratorStatusEnum.CANCELLED },
+          innovation.id
+        );
+
+        // Delete unopened notifications
+        const unopenedNotificationsIds = await transaction
+          .createQueryBuilder(NotificationUserEntity, 'userNotification')
+          .select(['userNotification.id'])
+          .innerJoin('userNotification.notification', 'notification')
+          .innerJoin('notification.innovation', 'innovation')
+          .where('innovation.id = :innovationId', { innovationId: innovation.id })
+          .andWhere('userNotification.read_at IS NULL')
+          .getMany();
+        await em.softDelete(NotificationUserEntity, { id: In(unopenedNotificationsIds.map(c => c.id)) });
+      }
+
+      return archivedInnovations;
     });
   }
 
