@@ -73,7 +73,6 @@ export class InnovationStopSharingHandler extends BaseHandler<
     name: string;
     ownerId?: string;
   }): Promise<void> {
-    await this.recipientsService.getRecipientsByRoleId(this.inputData.affectedUsers.roleIds);
     const assignedQAs = await this.recipientsService.getRecipientsByRoleId(this.inputData.affectedUsers.roleIds);
 
     this.notify('SH05_INNOVATION_STOPPED_SHARING_WITH_INDIVIDUAL_ORG_TO_QA_A', assignedQAs, {
