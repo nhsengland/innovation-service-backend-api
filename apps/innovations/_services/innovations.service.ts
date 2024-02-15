@@ -2178,13 +2178,19 @@ export class InnovationsService extends BaseService {
     entityManager?: EntityManager
   ): Promise<void> {
     const em = entityManager ?? this.sqlConnection.manager;
+    const sharesSet = new Set(organisationShares);
+
+    const allOrganisations = await em
+      .createQueryBuilder(OrganisationEntity, 'organisation')
+      .select(['organisation.id', 'organisation.name'])
+      .getMany();
+
+    // const organisationsMap = new Map(allOrganisations.map(o => [o.id, o.name]));
+
+    // Organisations that we want to share with
+    const organisations = allOrganisations.filter(o => sharesSet.has(o.id));
 
     // Sanity check if all organisation exists.
-    const organisations = await em
-      .createQueryBuilder(OrganisationEntity, 'organisation')
-      .select('organisation.name')
-      .where('organisation.id IN (:...organisationIds)', { organisationIds: organisationShares })
-      .getMany();
     if (organisations.length != organisationShares.length) {
       throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATIONS_NOT_FOUND, {
         details: { error: 'Unknown organisations' }
@@ -2204,7 +2210,6 @@ export class InnovationsService extends BaseService {
 
     const oldShares = innovation.organisationShares.map(o => o.id);
     const oldSharesSet = new Set(oldShares);
-    const sharesSet = new Set(organisationShares);
 
     const addedShares = organisationShares.filter(s => !oldSharesSet.has(s));
     const deletedShares = oldShares.filter(s => !sharesSet.has(s));
@@ -2296,6 +2301,14 @@ export class InnovationsService extends BaseService {
         innovationId: innovation.id,
         newSharedOrgIds: addedShares
       });
+    }
+
+    if (deletedShares.length > 0) {
+      for (const share of deletedShares) {
+        await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_STOP_SHARING, {
+          innovationId: innovation.id
+        });
+      }
     }
   }
 
