@@ -305,18 +305,10 @@ export const NOTIFICATIONS_CONFIG = {
     handler: InnovationStopSharingHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_STOP_SHARING]>({
       innovationId: Joi.string().guid().required(),
-      affectedUsers: Joi.array()
-        .items(
-          Joi.object({
-            id: Joi.string().guid().required(),
-            role: Joi.string()
-              .valid(...Object.values(ServiceRoleEnum))
-              .required(),
-            unitId: Joi.string().guid().optional()
-          })
-        )
-        .required(),
-      message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xs).trim().required()
+      supportUnitId: Joi.string().required(),
+      affectedUsers: Joi.object({
+        roleIds: Joi.array().items(Joi.string().guid().required())
+      }).required()
     }).required()
   },
   // // Archived

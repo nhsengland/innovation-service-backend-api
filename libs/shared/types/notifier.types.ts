@@ -47,12 +47,8 @@ export type NotifierTemplatesType = {
   // // Stop Sharing
   [NotifierTypeEnum.INNOVATION_STOP_SHARING]: {
     innovationId: string;
-    message: string;
-    affectedUsers: {
-      id: string;
-      role: ServiceRoleEnum;
-      unitId?: string;
-    }[];
+    supportUnitId: string;
+    affectedUsers: { roleIds: string[] };
   };
   // // Archive
   [NotifierTypeEnum.INNOVATION_ARCHIVE]: {

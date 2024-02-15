@@ -2185,8 +2185,6 @@ export class InnovationsService extends BaseService {
       .select(['organisation.id', 'organisation.name'])
       .getMany();
 
-    // const organisationsMap = new Map(allOrganisations.map(o => [o.id, o.name]));
-
     // Organisations that we want to share with
     const organisations = allOrganisations.filter(o => sharesSet.has(o.id));
 
@@ -2214,18 +2212,39 @@ export class InnovationsService extends BaseService {
     const addedShares = organisationShares.filter(s => !oldSharesSet.has(s));
     const deletedShares = oldShares.filter(s => !sharesSet.has(s));
 
-    await em.transaction(async transaction => {
+    const emTransaction = await em.transaction(async transaction => {
+      const toReturn: {
+        innovationId: string;
+        supportUnitId: string;
+        affectedUsers: {
+          roleIds: string[];
+        };
+      }[] = [];
+
       // Delete shares
       if (deletedShares.length > 0) {
         // Check for active supports
         const supports = await transaction
           .createQueryBuilder(InnovationSupportEntity, 'support')
-          .select(['support.id', 'support.status', 'unit.id'])
+          .select(['support.id', 'support.status', 'userRole.role', 'user.id', 'unit.id'])
           .innerJoin('support.innovation', 'innovation')
           .innerJoin('support.organisationUnit', 'unit')
+          .leftJoin('support.userRoles', 'userRole')
+          .leftJoin('userRole.user', 'user', "user.status <> 'DELETED'")
           .where('innovation.id = :innovationId', { innovationId })
           .andWhere('unit.organisation IN (:...ids)', { ids: deletedShares })
           .getMany();
+        const arr: [] = [];
+
+        supports.forEach(support =>
+          toReturn.push({
+            innovationId: innovation.id,
+            supportUnitId: support.organisationUnit.id,
+            affectedUsers: {
+              roleIds: [...supports.flatMap(support => support.userRoles.map(userRole => userRole.id))]
+            }
+          })
+        );
 
         const supportIds = supports.map(support => support.id);
         if (supportIds.length > 0) {
@@ -2294,6 +2313,8 @@ export class InnovationsService extends BaseService {
         { organisations: organisations.map(o => o.name) }
       );
       await transaction.save(InnovationEntity, innovation);
+
+      return toReturn;
     });
 
     if (addedShares.length > 0 && innovation.status === InnovationStatusEnum.IN_PROGRESS) {
@@ -2304,9 +2325,11 @@ export class InnovationsService extends BaseService {
     }
 
     if (deletedShares.length > 0) {
-      for (const share of deletedShares) {
+      for (const share of emTransaction) {
         await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_STOP_SHARING, {
-          innovationId: innovation.id
+          innovationId: innovation.id,
+          supportUnitId: share.supportUnitId,
+          affectedUsers: { roleIds: [...share.affectedUsers.roleIds] }
         });
       }
     }
