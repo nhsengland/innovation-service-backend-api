@@ -694,6 +694,34 @@ describe('Services / Innovation File service suite', () => {
       }
     );
 
+    describe('When innovation is archived', () => {
+      beforeEach(async () => {
+        await em.update(InnovationEntity, { id: innovation.id }, { status: InnovationStatusEnum.ARCHIVED });
+      });
+
+      it('should allow delete if is from an innovator and is a section file', async () => {
+        const file = userMap.get('johnInnovator')!.file;
+        const result = await sut.getFileInfo(
+          DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
+          innovation.id,
+          file.id,
+          em
+        );
+        expect(result.canDelete).toBe(true);
+      });
+
+      it('should not allow deletion if is not an innovator', async () => {
+        const file = userMap.get('johnInnovator')!.file;
+        const result = await sut.getFileInfo(
+          DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+          innovation.id,
+          file.id,
+          em
+        );
+        expect(result.canDelete).toBe(false);
+      });
+    });
+
     describe('As any role', () => {
       describe("when I request a file information about a file that doesn't exist", () => {
         it('should return a not found error', async () => {
