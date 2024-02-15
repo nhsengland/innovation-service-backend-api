@@ -21,8 +21,7 @@ export class AccountDeletionHandler extends BaseHandler<
     for (const innovation of this.inputData.innovations) {
       if (innovation.transferExpireDate) {
         await this.DA01_OWNER_DELETED_ACCOUNT_WITH_PENDING_TRANSFER_TO_COLLABORATOR(innovation);
-      }
-      if (innovation.affectedUsers) {
+      } else if (innovation.affectedUsers) {
         await this.DA02_OWNER_DELETED_ACCOUNT_WITHOUT_PENDING_TRANSFER_TO_COLLABORATOR(innovation);
       }
     }

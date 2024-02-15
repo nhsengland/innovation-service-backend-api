@@ -502,7 +502,10 @@ export class UsersService extends BaseService {
         await this.notifierService.send(domainContext, NotifierTypeEnum.ACCOUNT_DELETION, {
           innovations: [
             ...innovationsWithPendingTransfer,
-            ...archiveResponse.map(item => ({ id: item.id, affectedUsers: item.affectedUsers }))
+            ...archiveResponse.map(item => ({
+              id: item.id,
+              affectedUsers: item.affectedUsers.filter(user => user.userType === ServiceRoleEnum.INNOVATOR)
+            }))
           ]
         });
       }
