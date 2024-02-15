@@ -15,7 +15,7 @@ describe('Notifications / _handlers / innovation-stop-sharing suite', () => {
 
   const requestUser = scenario.users.johnInnovator;
   const innovation = requestUser.innovations.johnInnovation;
-  const supportUnitId = requestUser.innovations.johnInnovation.supports.supportByHealthOrgUnit.id;
+  const supportUnitId = scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id;
   const organisationName = scenario.organisations.healthOrg.name;
 
   describe('SH04_INNOVATION_STOPPED_SHARING_WITH_INDIVIDUAL_ORG_TO_OWNER', () => {
@@ -27,7 +27,7 @@ describe('Notifications / _handlers / innovation-stop-sharing suite', () => {
         inputData: {
           innovationId: innovation.id,
           supportUnitId: supportUnitId,
-          affectedUsers: []
+          affectedUsers: { roleIds: [] }
         },
         outputData: {
           innovation_name: innovation.name,
@@ -47,7 +47,7 @@ describe('Notifications / _handlers / innovation-stop-sharing suite', () => {
         inputData: {
           innovationId: innovation.id,
           supportUnitId: supportUnitId,
-          affectedUsers: []
+          affectedUsers: { roleIds: [] }
         },
         outputData: { innovationName: innovation.name, organisationName: organisationName },
         options: { includeSelf: true }
@@ -55,10 +55,10 @@ describe('Notifications / _handlers / innovation-stop-sharing suite', () => {
     });
   });
 
-  describe.skip('SH05_INNOVATION_STOPPED_SHARING_WITH_INDIVIDUAL_ORG_TO_QA_A', () => {
+  describe('SH05_INNOVATION_STOPPED_SHARING_WITH_INDIVIDUAL_ORG_TO_QA_A', () => {
     const assignedUsersRecipients = [
-      DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor),
-      DTOsHelper.getRecipientUser(scenario.users.samAccessor)
+      DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole'),
+      DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'healthAccessorRole')
     ];
 
     it('should send an email to assigned QA/A', async () => {
