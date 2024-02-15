@@ -529,6 +529,10 @@ export class InnovationFileService extends BaseService {
     status: InnovationStatusEnum,
     type: InnovationFileContextTypeEnum
   ): boolean {
+    if (status === InnovationStatusEnum.ARCHIVED && requestUserRole.role !== ServiceRoleEnum.INNOVATOR) {
+      return false;
+    }
+
     switch (requestUserRole.role) {
       case ServiceRoleEnum.INNOVATOR:
         // Check if the innovation is archived and the file is not an innovation section before delete (other roles are checked in the auth but innovator was whitelisted)
