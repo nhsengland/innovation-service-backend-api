@@ -272,7 +272,6 @@ export const NOTIFICATIONS_CONFIG = {
         .items(
           Joi.object({
             id: Joi.string().guid().required(),
-            name: Joi.string().required(),
             transferExpireDate: Joi.date().optional(),
             affectedUsers: Joi.array().items(
               Joi.object({

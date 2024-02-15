@@ -32,7 +32,6 @@ describe('Notifications / _handlers / account-deletion suite', () => {
             innovations: [
               {
                 id: innovation.id,
-                name: innovation.name,
                 transferExpireDate: transferExpireDate
               }
             ]
@@ -55,7 +54,6 @@ describe('Notifications / _handlers / account-deletion suite', () => {
             innovations: [
               {
                 id: innovation.id,
-                name: innovation.name,
                 transferExpireDate: transferExpireDate
               }
             ]
@@ -75,7 +73,6 @@ describe('Notifications / _handlers / account-deletion suite', () => {
             innovations: [
               {
                 id: innovation.id,
-                name: innovation.name,
                 transferExpireDate: transferExpireDate
               }
             ]
@@ -106,7 +103,6 @@ describe('Notifications / _handlers / account-deletion suite', () => {
               innovations: [
                 {
                   id: innovation.id,
-                  name: innovation.name,
                   affectedUsers: [
                     {
                       userId: scenario.users.janeInnovator.id,
@@ -136,7 +132,6 @@ describe('Notifications / _handlers / account-deletion suite', () => {
               innovations: [
                 {
                   id: innovation.id,
-                  name: innovation.name,
                   affectedUsers: [
                     {
                       userId: scenario.users.janeInnovator.id,
@@ -161,8 +156,7 @@ describe('Notifications / _handlers / account-deletion suite', () => {
           {
             innovations: [
               {
-                id: innovation.id,
-                name: innovation.name
+                id: innovation.id
               }
             ]
           },

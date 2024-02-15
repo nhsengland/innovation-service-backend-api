@@ -33,6 +33,8 @@ export class AccountDeletionHandler extends BaseHandler<
     innovation: NotifierTemplatesType[NotifierTypeEnum.ACCOUNT_DELETION]['innovations'][number]
   ): Promise<void> {
     const collaborators = await this.recipientsService.getInnovationActiveCollaborators(innovation.id);
+    const innovationInfo = await this.recipientsService.innovationInfo(innovation.id);
+
     if (collaborators.length > 0) {
       const recipients = await this.recipientsService.getUsersRecipient(collaborators, ServiceRoleEnum.INNOVATOR);
 
@@ -41,7 +43,7 @@ export class AccountDeletionHandler extends BaseHandler<
           notificationPreferenceType: null,
           params: {
             expiry_date: innovation.transferExpireDate ?? '',
-            innovation_name: innovation.name,
+            innovation_name: innovationInfo.name,
             innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.INNOVATOR, innovation.id)
           }
         },
@@ -52,7 +54,7 @@ export class AccountDeletionHandler extends BaseHandler<
             detail: 'DA01_OWNER_DELETED_ACCOUNT_WITH_PENDING_TRANSFER_TO_COLLABORATOR'
           },
           innovationId: innovation.id,
-          params: { innovationName: innovation.name }
+          params: { innovationName: innovationInfo.name }
         }
       });
     }
@@ -62,6 +64,8 @@ export class AccountDeletionHandler extends BaseHandler<
     innovation: NotifierTemplatesType[NotifierTypeEnum.ACCOUNT_DELETION]['innovations'][number]
   ): Promise<void> {
     const collaborators = innovation.affectedUsers ?? [];
+    const innovationInfo = await this.recipientsService.innovationInfo(innovation.id);
+
     if (collaborators.length > 0) {
       const recipients = await this.recipientsService.usersBagToRecipients(
         collaborators.map(u => ({
@@ -75,7 +79,7 @@ export class AccountDeletionHandler extends BaseHandler<
         email: {
           notificationPreferenceType: null,
           params: {
-            innovation_name: innovation.name
+            innovation_name: innovationInfo.name
           }
         },
         inApp: {
@@ -85,7 +89,7 @@ export class AccountDeletionHandler extends BaseHandler<
             detail: 'DA02_OWNER_DELETED_ACCOUNT_WITHOUT_PENDING_TRANSFER_TO_COLLABORATOR'
           },
           innovationId: innovation.id,
-          params: { innovationName: innovation.name }
+          params: { innovationName: innovationInfo.name }
         }
       });
     }

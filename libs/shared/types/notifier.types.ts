@@ -13,7 +13,6 @@ export type NotifierTemplatesType = {
   [NotifierTypeEnum.ACCOUNT_DELETION]: {
     innovations: {
       id: string;
-      name: string;
       transferExpireDate?: string;
       affectedUsers?: { userId: string; userType: ServiceRoleEnum; unitId?: string }[];
     }[];
