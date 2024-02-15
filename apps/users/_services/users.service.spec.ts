@@ -55,7 +55,7 @@ describe('Users / _services / users service suite', () => {
     notifierSendSpy.mockReset();
   });
 
-  describe('getUserPendingInnoavtionTranfers', () => {
+  describe('getUserPendingInnovationTranfers', () => {
     it('should get all the pending innovation transfers to the user', async () => {
       const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
       const otherInnovation = scenario.users.adamInnovator.innovations.adamInnovation;

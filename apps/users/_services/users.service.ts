@@ -481,7 +481,7 @@ export class UsersService extends BaseService {
               : ''
           });
 
-          await this.sqlConnection.getRepository(InnovationEntity).update(
+          await transaction.getRepository(InnovationEntity).update(
             { id: dbInnovation.id },
             { updatedBy: dbUser.id, owner: null, expires_at: dbInnovation.expirationTransferDate }
           );
