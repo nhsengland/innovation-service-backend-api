@@ -465,24 +465,23 @@ export class InnovationAssessmentsService extends BaseService {
       ) {
         await transaction.save(
           InnovationSupportEntity,
-          innovation.innovationSupports.map(support => {
-            const snapshot = support.archiveSnapshot;
-            if (snapshot) {
-              support.status =
-                snapshot.status !== InnovationSupportStatusEnum.ENGAGING
-                  ? snapshot.status
-                  : InnovationSupportStatusEnum.UNASSIGNED;
-              support.userRoles =
-                snapshot.status === InnovationSupportStatusEnum.WAITING
-                  ? snapshot.assignedAccessors.map(id => UserRoleEntity.new({ id }))
-                  : [];
-            } else {
-              // This will not happen, but to be sure.
-              support.status = InnovationSupportStatusEnum.UNASSIGNED;
-            }
-            support.archiveSnapshot = null;
-            return support;
-          })
+          innovation.innovationSupports
+            .filter(support => support.archiveSnapshot !== null)
+            .map(support => {
+              const snapshot = support.archiveSnapshot;
+              if (snapshot) {
+                support.status =
+                  snapshot.status !== InnovationSupportStatusEnum.ENGAGING
+                    ? snapshot.status
+                    : InnovationSupportStatusEnum.UNASSIGNED;
+                support.userRoles =
+                  snapshot.status === InnovationSupportStatusEnum.WAITING
+                    ? snapshot.assignedAccessors.map(id => UserRoleEntity.new({ id }))
+                    : [];
+              }
+              support.archiveSnapshot = null;
+              return support;
+            })
         );
       }
 
