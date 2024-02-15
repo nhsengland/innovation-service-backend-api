@@ -374,20 +374,22 @@ paths:
                 reason:
                   type: string
                   maxLength: 2000
-                  nullable: true
+              required:
+                - reason
               additionalProperties: false
       responses:
-        "200":
+        "204":
           description: User deleted successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: string
         "400":
-          description: Bad request.
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+        "500":
+          description: Internal server error
   /v1/me/innovations:
     get:
       description: Retrieves the user owned innovations.

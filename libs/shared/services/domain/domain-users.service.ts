@@ -302,6 +302,9 @@ export class DomainUsersService {
     }
   }
 
+  /**
+   * @deprected this can be removed, just living it to not mess a current notification story.
+   */
   async deleteUser(
     domainContext: DomainContextType,
     userId: string,
