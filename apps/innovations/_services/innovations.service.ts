@@ -2178,15 +2178,13 @@ export class InnovationsService extends BaseService {
     entityManager?: EntityManager
   ): Promise<void> {
     const em = entityManager ?? this.sqlConnection.manager;
-    const sharesSet = new Set(organisationShares);
 
-    const allOrganisations = await em
+    // Sanity check if all organisation exists.
+    const organisations = await em
       .createQueryBuilder(OrganisationEntity, 'organisation')
-      .select(['organisation.id', 'organisation.name'])
+      .select('organisation.name')
+      .where('organisation.id IN (:...organisationIds)', { organisationIds: organisationShares })
       .getMany();
-
-    // Organisations that we want to share with
-    const organisations = allOrganisations.filter(o => sharesSet.has(o.id));
 
     // Sanity check if all organisation exists.
     if (organisations.length != organisationShares.length) {
@@ -2208,6 +2206,7 @@ export class InnovationsService extends BaseService {
 
     const oldShares = innovation.organisationShares.map(o => o.id);
     const oldSharesSet = new Set(oldShares);
+    const sharesSet = new Set(organisationShares);
 
     const addedShares = organisationShares.filter(s => !oldSharesSet.has(s));
     const deletedShares = oldShares.filter(s => !sharesSet.has(s));
@@ -2234,7 +2233,6 @@ export class InnovationsService extends BaseService {
           .where('innovation.id = :innovationId', { innovationId })
           .andWhere('unit.organisation IN (:...ids)', { ids: deletedShares })
           .getMany();
-        const arr: [] = [];
 
         supports.forEach(support =>
           toReturn.push({
