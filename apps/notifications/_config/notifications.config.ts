@@ -273,7 +273,16 @@ export const NOTIFICATIONS_CONFIG = {
           Joi.object({
             id: Joi.string().guid().required(),
             name: Joi.string().required(),
-            transferExpireDate: Joi.date().required()
+            transferExpireDate: Joi.date().optional(),
+            affectedUsers: Joi.array().items(
+              Joi.object({
+                userId: Joi.string().guid().required(),
+                userType: Joi.string()
+                  .valid(...Object.values(ServiceRoleEnum))
+                  .required(),
+                unitId: Joi.string().guid()
+              })
+            )
           })
         )
         .min(1)

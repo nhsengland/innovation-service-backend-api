@@ -27,8 +27,15 @@ describe('Notifications / _handlers / account-deletion suite', () => {
           notificationPreferenceType: null,
           requestUser: DTOsHelper.getUserRequestContext(requestUser),
           recipients: [DTOsHelper.getRecipientUser(scenario.users.janeInnovator)],
+
           inputData: {
-            innovations: [{ id: innovation.id, name: innovation.name, transferExpireDate: transferExpireDate }]
+            innovations: [
+              {
+                id: innovation.id,
+                name: innovation.name,
+                transferExpireDate: transferExpireDate
+              }
+            ]
           },
           outputData: {
             expiry_date: transferExpireDate,
@@ -45,7 +52,13 @@ describe('Notifications / _handlers / account-deletion suite', () => {
           requestUser: DTOsHelper.getUserRequestContext(requestUser),
           recipients: [DTOsHelper.getRecipientUser(scenario.users.janeInnovator)],
           inputData: {
-            innovations: [{ id: innovation.id, name: innovation.name, transferExpireDate: transferExpireDate }]
+            innovations: [
+              {
+                id: innovation.id,
+                name: innovation.name,
+                transferExpireDate: transferExpireDate
+              }
+            ]
           },
           outputData: { innovationName: innovation.name }
         });
@@ -59,7 +72,99 @@ describe('Notifications / _handlers / account-deletion suite', () => {
         const handler = new AccountDeletionHandler(
           DTOsHelper.getUserRequestContext(requestUser),
           {
-            innovations: [{ id: innovation.id, name: innovation.name, transferExpireDate: transferExpireDate }]
+            innovations: [
+              {
+                id: innovation.id,
+                name: innovation.name,
+                transferExpireDate: transferExpireDate
+              }
+            ]
+          },
+          MocksHelper.mockContext()
+        );
+
+        await handler.run();
+        expect(handler.inApp).toHaveLength(0);
+        expect(handler.emails).toHaveLength(0);
+      });
+    });
+  });
+
+  describe('DA02_OWNER_DELETED_ACCOUNT_WITHOUT_PENDING_TRANSFER_TO_COLLABORATOR', () => {
+    const innovation = requestUser.innovations.johnInnovation;
+
+    describe('when the innovations has collaborators', () => {
+      it('should send an email to the collaborators', async () => {
+        await testEmails(
+          AccountDeletionHandler,
+          'DA02_OWNER_DELETED_ACCOUNT_WITHOUT_PENDING_TRANSFER_TO_COLLABORATOR',
+          {
+            notificationPreferenceType: null,
+            requestUser: DTOsHelper.getUserRequestContext(requestUser),
+            recipients: [DTOsHelper.getRecipientUser(scenario.users.janeInnovator)],
+            inputData: {
+              innovations: [
+                {
+                  id: innovation.id,
+                  name: innovation.name,
+                  affectedUsers: [
+                    {
+                      userId: scenario.users.janeInnovator.id,
+                      userType: scenario.users.janeInnovator.roles.innovatorRole.role
+                    }
+                  ]
+                }
+              ]
+            },
+            outputData: {
+              innovation_name: innovation.name
+            }
+          }
+        );
+      });
+
+      it('should send an in-app to assigned users', async () => {
+        await testInApps(
+          AccountDeletionHandler,
+          'DA02_OWNER_DELETED_ACCOUNT_WITHOUT_PENDING_TRANSFER_TO_COLLABORATOR',
+          {
+            context: { type: 'INNOVATION_MANAGEMENT', id: requestUser.id },
+            innovationId: innovation.id,
+            requestUser: DTOsHelper.getUserRequestContext(requestUser),
+            recipients: [DTOsHelper.getRecipientUser(scenario.users.janeInnovator)],
+            inputData: {
+              innovations: [
+                {
+                  id: innovation.id,
+                  name: innovation.name,
+                  affectedUsers: [
+                    {
+                      userId: scenario.users.janeInnovator.id,
+                      userType: scenario.users.janeInnovator.roles.innovatorRole.role
+                    }
+                  ]
+                }
+              ]
+            },
+            outputData: { innovationName: innovation.name }
+          }
+        );
+      });
+    });
+
+    describe('when the innovations has no collaborators', () => {
+      const innovation = requestUser.innovations.johnInnovationEmpty;
+
+      it('should not send an email or in-app', async () => {
+        const handler = new AccountDeletionHandler(
+          DTOsHelper.getUserRequestContext(requestUser),
+          {
+            innovations: [
+              {
+                id: innovation.id,
+                name: innovation.name
+              }
+            ]
           },
           MocksHelper.mockContext()
         );
