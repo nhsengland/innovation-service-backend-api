@@ -125,8 +125,7 @@ export class DomainInnovationsService {
           [
             {
               id: innovation.id,
-              reason:
-                'This innovation was archived, since the owner deleted the account and the pending transfer expired'
+              reason: 'The owner deleted their account and the request to transfer ownership expired.'
             }
           ],
           em
