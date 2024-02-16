@@ -134,7 +134,11 @@ export class DomainInnovationsService {
     }
   }
 
-  /** @deprecated */
+  /**
+   * expire transfer for all innovations with pending transfer expired.
+   * This method is used by the cron job.
+   * @param entityManager optional entity manager
+   */
   async withdrawExpiredInnovationsTransfers(entityManager?: EntityManager): Promise<void> {
     const em = entityManager ?? this.sqlConnection.manager;
 
