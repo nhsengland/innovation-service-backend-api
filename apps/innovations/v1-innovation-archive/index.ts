@@ -30,7 +30,15 @@ class V1InnovationPause {
         .validate(context)
         .setInnovation(params.innovationId)
         .checkInnovatorType()
-        .checkInnovation({ isOwner: true, status: [InnovationStatusEnum.IN_PROGRESS] })
+        .checkInnovation({
+          isOwner: true,
+          status: [
+            InnovationStatusEnum.CREATED,
+            InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
+            InnovationStatusEnum.NEEDS_ASSESSMENT,
+            InnovationStatusEnum.IN_PROGRESS
+          ]
+        })
         .verify();
       const domainContext = auth.getContext();
 
@@ -54,7 +62,7 @@ export default openApi(V1InnovationPause.httpTrigger as AzureFunction, '/v1/{inn
     parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     requestBody: SwaggerHelper.bodyJ2S(BodySchema),
     responses: {
-      200: { description: 'Innovation archived successfully.' }
+      204: { description: 'Innovation archived successfully.' }
     }
   }
 });

@@ -208,7 +208,7 @@ paths:
                 - message
               additionalProperties: false
       responses:
-        "200":
+        "204":
           description: Innovation archived successfully.
   /v1/{innovationId}/assessments/{assessmentId}:
     patch:
