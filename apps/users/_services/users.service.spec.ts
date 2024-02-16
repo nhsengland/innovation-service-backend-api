@@ -432,6 +432,8 @@ describe('Users / _services / users service suite', () => {
 
     it('should remove the user as the owner of innovations with pending transfers and send notification', async () => {
       const innoWithTransfer = johnInnovator.innovations.johnInnovation;
+      const innoWithoutTransferEmpty = johnInnovator.innovations.johnInnovationEmpty;
+      const innoWithoutTransferArchive = johnInnovator.innovations.johnInnovationArchived;
       await sut.deleteUser(DTOsHelper.getUserRequestContext(johnInnovator), { reason }, em);
 
       const dbInnovation = await em
@@ -446,7 +448,19 @@ describe('Users / _services / users service suite', () => {
       expect(dbInnovation.expires_at).toBeDefined();
       expect(dbInnovation.owner).toBeNull();
       expect(notifierSendSpy).toHaveBeenCalledWith(expect.anything(), NotifierTypeEnum.ACCOUNT_DELETION, {
-        innovations: [{ id: innoWithTransfer.id, name: innoWithTransfer.name, transferExpireDate: expect.anything() }]
+        innovations: [
+          { id: innoWithTransfer.id, transferExpireDate: expect.anything() },
+          { id: innoWithoutTransferEmpty.id, affectedUsers: [] },
+          {
+            id: innoWithoutTransferArchive.id,
+            affectedUsers: [
+              {
+                userId: scenario.users.janeInnovator.id,
+                userType: scenario.users.janeInnovator.roles.innovatorRole.role
+              }
+            ]
+          }
+        ]
       });
     });
 
@@ -511,10 +525,11 @@ describe('Users / _services / users service suite', () => {
 
         await sut.deleteUser(DTOsHelper.getUserRequestContext(johnInnovator), { reason }, em);
 
-        const dbNotification = await em.createQueryBuilder(NotificationUserEntity, 'userNotification')
+        const dbNotification = await em
+          .createQueryBuilder(NotificationUserEntity, 'userNotification')
           .select(['userNotification.id', 'userNotification.deletedAt'])
           .withDeleted()
-          .where('userNotification.notification_id = :notificationId', {notificationId: notification.id })
+          .where('userNotification.notification_id = :notificationId', { notificationId: notification.id })
           .getOneOrFail();
 
         expect(dbNotification.deletedAt).toBeDefined();

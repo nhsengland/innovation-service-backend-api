@@ -11,7 +11,11 @@ export type NotifierTemplatesType = {
   // Account
   [NotifierTypeEnum.ACCOUNT_CREATION]: Record<string, never>;
   [NotifierTypeEnum.ACCOUNT_DELETION]: {
-    innovations: { id: string; name: string; transferExpireDate: string }[];
+    innovations: {
+      id: string;
+      transferExpireDate?: string;
+      affectedUsers?: { userId: string; userType: ServiceRoleEnum; unitId?: string }[];
+    }[];
   };
 
   // Admin

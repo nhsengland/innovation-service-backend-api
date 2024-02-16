@@ -24,7 +24,13 @@ import {
 } from '@users/shared/enums';
 import { NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
 import type { PaginationQueryParamsType } from '@users/shared/helpers';
-import type { CacheConfigType, CacheService, DomainService, IdentityProviderService, NotifierService } from '@users/shared/services';
+import type {
+  CacheConfigType,
+  CacheService,
+  DomainService,
+  IdentityProviderService,
+  NotifierService
+} from '@users/shared/services';
 import SHARED_SYMBOLS from '@users/shared/services/symbols';
 
 import { BaseService } from './base.service';
@@ -429,7 +435,11 @@ export class UsersService extends BaseService {
     return data;
   }
 
-  async deleteUser(domainContext: DomainContextType, data: { reason: string }, entityManager?: EntityManager): Promise<void> {
+  async deleteUser(
+    domainContext: DomainContextType,
+    data: { reason: string },
+    entityManager?: EntityManager
+  ): Promise<void> {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const dbUser = await em
@@ -446,7 +456,7 @@ export class UsersService extends BaseService {
       throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
     }
 
-    const innovationsWithPendingTransfer: { id: string; name: string; transferExpireDate: string }[] = [];
+    const innovationsWithPendingTransfer: { id: string; transferExpireDate: string }[] = [];
 
     return em.transaction(async transaction => {
       // If user has innovator role, deals with it's innovations.
@@ -466,7 +476,7 @@ export class UsersService extends BaseService {
           { current: InnovationCollaboratorStatusEnum.ACTIVE, next: InnovationCollaboratorStatusEnum.LEFT }
         );
 
-        await this.domainService.innovations.archiveInnovationsWithDeleteSideffects(
+        const archiveResponse = await this.domainService.innovations.archiveInnovationsWithDeleteSideffects(
           domainContext,
           dbInnovations.filter(i => i.expirationTransferDate === null).map(i => ({ id: i.id, reason: data.reason })),
           transaction
@@ -475,24 +485,29 @@ export class UsersService extends BaseService {
         for (const dbInnovation of dbInnovations.filter(i => i.expirationTransferDate !== null)) {
           innovationsWithPendingTransfer.push({
             id: dbInnovation.id,
-            name: dbInnovation.name,
             transferExpireDate: dbInnovation.expirationTransferDate
               ? dbInnovation.expirationTransferDate.toDateString()
               : ''
           });
 
-          await transaction.getRepository(InnovationEntity).update(
-            { id: dbInnovation.id },
-            { updatedBy: dbUser.id, owner: null, expires_at: dbInnovation.expirationTransferDate }
-          );
+          await transaction
+            .getRepository(InnovationEntity)
+            .update(
+              { id: dbInnovation.id },
+              { updatedBy: dbUser.id, owner: null, expires_at: dbInnovation.expirationTransferDate }
+            );
         }
 
         // Send notification to collaborators if there are innovations with pending transfer
-        if (innovationsWithPendingTransfer.length > 0) {
-          await this.notifierService.send(domainContext, NotifierTypeEnum.ACCOUNT_DELETION, {
-            innovations: innovationsWithPendingTransfer
-          });
-        }
+        await this.notifierService.send(domainContext, NotifierTypeEnum.ACCOUNT_DELETION, {
+          innovations: [
+            ...innovationsWithPendingTransfer,
+            ...archiveResponse.map(item => ({
+              id: item.id,
+              affectedUsers: item.affectedUsers.filter(user => user.userType === ServiceRoleEnum.INNOVATOR)
+            }))
+          ]
+        });
       }
 
       await transaction.update(UserRoleEntity, { user: { id: dbUser.id } }, { isActive: false });

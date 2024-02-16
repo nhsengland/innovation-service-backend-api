@@ -40,11 +40,6 @@ export class DomainService {
 
   setConnection(connection: DataSource): void {
     this._innovations = new DomainInnovationsService(connection, this.identityProviderService, this.notifierService);
-    this._users = new DomainUsersService(
-      connection,
-      this.identityProviderService,
-      this._innovations,
-      this.notifierService
-    );
+    this._users = new DomainUsersService(connection, this.identityProviderService);
   }
 }

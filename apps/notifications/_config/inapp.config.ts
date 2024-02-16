@@ -215,6 +215,9 @@ export type InAppTemplatesType = {
   DA01_OWNER_DELETED_ACCOUNT_WITH_PENDING_TRANSFER_TO_COLLABORATOR: {
     innovationName: string;
   };
+  DA02_OWNER_DELETED_ACCOUNT_WITHOUT_PENDING_TRANSFER_TO_COLLABORATOR: {
+    innovationName: string;
+  };
   MC01_COLLABORATOR_INVITE_EXISTING_USER: {
     requestUserName: string;
     innovationName: string;
