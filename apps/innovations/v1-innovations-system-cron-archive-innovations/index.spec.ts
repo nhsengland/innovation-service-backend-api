@@ -9,14 +9,14 @@ beforeAll(async () => {
   await testsHelper.init();
 });
 
-const mock = jest.spyOn(DomainInnovationsService.prototype, 'withdrawExpiredInnovations').mockResolvedValue();
+const mock = jest.spyOn(DomainInnovationsService.prototype, 'archiveExpiredInnovations').mockResolvedValue();
 
 afterEach(() => {
   jest.clearAllMocks();
 });
 
-describe('v1-innovations-system-cron-withdraw-innovations', () => {
-  it('should withdraw expired innovations', async () => {
+describe('v1-innovations-system-cron-archive-innovations', () => {
+  it('should archive expired innovations', async () => {
     await azureFunction();
     expect(mock).toHaveBeenCalledTimes(1);
   });

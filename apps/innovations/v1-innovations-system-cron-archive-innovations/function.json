@@ -2,7 +2,7 @@
   "bindings": [
     {
       "schedule": "0 0 2 * * *",
-      "name": "myTimerWithdrawInnovations",
+      "name": "myTimerArchiveInnovations",
       "type": "timerTrigger",
       "direction": "in"
     }

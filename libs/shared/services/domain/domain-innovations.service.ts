@@ -42,7 +42,13 @@ import {
   UnprocessableEntityError
 } from '../../errors';
 import { TranslationHelper } from '../../helpers';
-import type { ActivitiesParamsType, DomainContextType, IdentityUserInfo, SupportLogParams } from '../../types';
+import type {
+  ActivitiesParamsType,
+  DomainContextType,
+  IdentityUserInfo,
+  InnovatorDomainContextType,
+  SupportLogParams
+} from '../../types';
 import type { IdentityProviderService } from '../integrations/identity-provider.service';
 import type { NotifierService } from '../integrations/notifier.service';
 
@@ -62,11 +68,11 @@ export class DomainInnovationsService {
   }
 
   /**
-   * withdraws all expired innovations.
+   * archives all expired innovations.
    * This method is used by the cron job.
    * @param entityManager optional entity manager
    */
-  async withdrawExpiredInnovations(entityManager?: EntityManager): Promise<void> {
+  async archiveExpiredInnovations(entityManager?: EntityManager): Promise<void> {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const dbInnovations = await em
@@ -75,9 +81,58 @@ export class DomainInnovationsService {
       .where('innovations.expires_at < :now', { now: new Date().toISOString() })
       .getMany();
 
-    await this.withdrawInnovations(
-      { id: '', roleId: '' },
-      dbInnovations.map(item => ({ id: item.id, reason: null }))
+    const transfer = await em
+      .createQueryBuilder(InnovationTransferEntity, 'transfer')
+      .select(['transfer.id', 'transfer.createdBy'])
+      .where('transfer.innovation_id = :innovationId', { innovationId: dbInnovations[0]!.id }) // We are verifying above
+      .orderBy('transfer.updatedAt', 'DESC')
+      .getOne();
+
+    if (!transfer) {
+      return; // this will never happen
+    }
+
+    const userRole = await em
+      .createQueryBuilder(UserRoleEntity, 'userRole')
+      .withDeleted()
+      .select([
+        'userRole.id',
+        'user.id',
+        'user.identityId',
+        'organisation.id',
+        'organisation.name',
+        'organisation.acronym'
+      ])
+      .innerJoin('userRole.user', 'user')
+      .innerJoin('userRole.organisation', 'organisation')
+      .where('user_id = :userId', { userId: transfer.createdBy })
+      .andWhere('role = :innovatorRole', { innovatorRole: ServiceRoleEnum.INNOVATOR })
+      .getOne();
+
+    if (!userRole) {
+      return; // this will never happen
+    }
+
+    const domainContext: InnovatorDomainContextType = {
+      id: userRole.user.id,
+      identityId: userRole.user.identityId,
+      organisation: {
+        id: userRole.organisation!.id,
+        name: userRole.organisation!.name,
+        acronym: userRole.organisation!.acronym
+      },
+      currentRole: {
+        id: userRole.id,
+        role: ServiceRoleEnum.INNOVATOR
+      }
+    };
+
+    await this.archiveInnovationsWithDeleteSideffects(
+      domainContext,
+      dbInnovations.map(i => ({
+        id: i.id,
+        reason: 'This innovation was archived, since the owner deleted the account and the pending transfer expired'
+      }))
     );
   }
 
