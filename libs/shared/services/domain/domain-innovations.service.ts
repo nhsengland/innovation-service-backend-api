@@ -81,6 +81,10 @@ export class DomainInnovationsService {
       .where('innovations.expires_at < :now', { now: new Date().toISOString() })
       .getMany();
 
+    if (!dbInnovations.length) {
+      return;
+    }
+
     const transfer = await em
       .createQueryBuilder(InnovationTransferEntity, 'transfer')
       .select(['transfer.id', 'transfer.createdBy'])
