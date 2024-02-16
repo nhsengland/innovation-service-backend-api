@@ -77,69 +77,65 @@ export class DomainInnovationsService {
 
     const dbInnovations = await em
       .createQueryBuilder(InnovationEntity, 'innovations')
-      .select(['innovations.id'])
+      .select(['innovations.id', 'transfers.id', 'transfers.createdBy'])
+      .innerJoin('innovation.transfers', 'transfers', 'status = :status', {
+        status: InnovationTransferStatusEnum.PENDING
+      })
       .where('innovations.expires_at < :now', { now: new Date().toISOString() })
       .getMany();
 
-    if (!dbInnovations.length) {
-      return;
-    }
+    for (const innovation of dbInnovations) {
+      if (innovation.transfers[0]) {
+        const userRole = await em
+          .createQueryBuilder(UserRoleEntity, 'userRole')
+          .select([
+            'userRole.id',
+            'user.id',
+            'user.identityId',
+            'organisation.id',
+            'organisation.name',
+            'organisation.acronym'
+          ])
+          .innerJoin('userRole.user', 'user')
+          .innerJoin('userRole.organisation', 'organisation')
+          .where('user_id = :userId', { userId: innovation.transfers[0].createdBy })
+          .andWhere('role = :innovatorRole', { innovatorRole: ServiceRoleEnum.INNOVATOR })
+          .getOne();
 
-    const transfer = await em
-      .createQueryBuilder(InnovationTransferEntity, 'transfer')
-      .select(['transfer.id', 'transfer.createdBy'])
-      .where('transfer.innovation_id = :innovationId', { innovationId: dbInnovations[0]!.id }) // We are verifying above
-      .orderBy('transfer.updatedAt', 'DESC')
-      .getOne();
+        if (!userRole?.organisation) {
+          return; // this will never happen
+        }
 
-    if (!transfer) {
-      return; // this will never happen
-    }
+        const domainContext: InnovatorDomainContextType = {
+          id: userRole.user.id,
+          identityId: userRole.user.identityId,
+          organisation: {
+            id: userRole.organisation.id,
+            name: userRole.organisation.name,
+            acronym: userRole.organisation.acronym
+          },
+          currentRole: {
+            id: userRole.id,
+            role: ServiceRoleEnum.INNOVATOR
+          }
+        };
 
-    const userRole = await em
-      .createQueryBuilder(UserRoleEntity, 'userRole')
-      .withDeleted()
-      .select([
-        'userRole.id',
-        'user.id',
-        'user.identityId',
-        'organisation.id',
-        'organisation.name',
-        'organisation.acronym'
-      ])
-      .innerJoin('userRole.user', 'user')
-      .innerJoin('userRole.organisation', 'organisation')
-      .where('user_id = :userId', { userId: transfer.createdBy })
-      .andWhere('role = :innovatorRole', { innovatorRole: ServiceRoleEnum.INNOVATOR })
-      .getOne();
-
-    if (!userRole) {
-      return; // this will never happen
-    }
-
-    const domainContext: InnovatorDomainContextType = {
-      id: userRole.user.id,
-      identityId: userRole.user.identityId,
-      organisation: {
-        id: userRole.organisation!.id,
-        name: userRole.organisation!.name,
-        acronym: userRole.organisation!.acronym
-      },
-      currentRole: {
-        id: userRole.id,
-        role: ServiceRoleEnum.INNOVATOR
+        await this.archiveInnovationsWithDeleteSideffects(
+          domainContext,
+          [
+            {
+              id: innovation.id,
+              reason:
+                'This innovation was archived, since the owner deleted the account and the pending transfer expired'
+            }
+          ],
+          em
+        );
       }
-    };
-
-    await this.archiveInnovationsWithDeleteSideffects(
-      domainContext,
-      dbInnovations.map(i => ({
-        id: i.id,
-        reason: 'This innovation was archived, since the owner deleted the account and the pending transfer expired'
-      }))
-    );
+    }
   }
 
+  /** @deprecated */
   async withdrawExpiredInnovationsTransfers(entityManager?: EntityManager): Promise<void> {
     const em = entityManager ?? this.sqlConnection.manager;
 
@@ -604,7 +600,8 @@ export class DomainInnovationsService {
             archivedStatus: () => 'status',
             status: InnovationStatusEnum.ARCHIVED,
             statusUpdatedAt: archivedAt,
-            updatedBy: domainContext.id
+            updatedBy: domainContext.id,
+            expires_at: null
           }
         );
 
