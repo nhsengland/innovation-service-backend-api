@@ -443,22 +443,44 @@ export class DomainInnovationsService {
       };
     });
 
+    const archivedAt = new Date();
+
     return await em.transaction(async transaction => {
       for (const innovation of archivedInnovationsInfo) {
-        // TODO: this is not being used for now, commented for when we add this support
-        // if (innovation.prevStatus === InnovationStatusEnum.NEEDS_ASSESSMENT) {
-        //   const assignedNa = await em
-        //     .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
-        //     .select(['assessment.id', 'assignedUser.id'])
-        //     .innerJoin('assessment.assignTo', 'assignedUser')
-        //     .where('assessment.innovation_id = :innovationId', { innovationId: innovation.id })
-        //     .andWhere('assessment.finished_at IS NULL')
-        //     .andWhere('assignedUser.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED })
-        //     .getOne();
-        //   if (assignedNa && assignedNa.assignTo) {
-        //     innovation.affectedUsers.push({ userId: assignedNa.assignTo.id, userType: ServiceRoleEnum.ASSESSMENT });
-        //   }
-        // }
+        if (innovation.prevStatus === InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT) {
+          await transaction.save(
+            InnovationAssessmentEntity,
+            InnovationAssessmentEntity.new({
+              description: '',
+              innovation: InnovationEntity.new({ id: innovation.id }),
+              assignTo: null,
+              createdBy: domainContext.id,
+              updatedBy: domainContext.id,
+              finishedAt: archivedAt
+            })
+          );
+        }
+        if (innovation.prevStatus === InnovationStatusEnum.NEEDS_ASSESSMENT) {
+          const assessment = await em
+            .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
+            .select(['assessment.id', 'assignedUser.id'])
+            .innerJoin('assessment.assignTo', 'assignedUser')
+            .where('assessment.innovation_id = :innovationId', { innovationId: innovation.id })
+            .andWhere('assignedUser.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED })
+            .getOne();
+          if (assessment) {
+            // Complete the current assessment
+            transaction.update(
+              InnovationAssessmentEntity,
+              { id: assessment.id },
+              { finishedAt: archivedAt, updatedBy: domainContext.id }
+            );
+
+            if (assessment.assignTo) {
+              innovation.affectedUsers.push({ userId: assessment.assignTo.id, userType: ServiceRoleEnum.ASSESSMENT });
+            }
+          }
+        }
 
         const supports = await transaction
           .createQueryBuilder(InnovationSupportEntity, 'support')
@@ -487,8 +509,6 @@ export class DomainInnovationsService {
             }))
           )
         );
-
-        const archivedAt = new Date();
 
         const sections = await transaction
           .createQueryBuilder(InnovationSectionEntity, 'section')

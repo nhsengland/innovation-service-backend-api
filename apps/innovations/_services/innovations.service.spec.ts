@@ -3,7 +3,8 @@ import {
   InnovationExportRequestEntity,
   InnovationSupportEntity,
   InnovationTaskEntity,
-  NotificationUserEntity
+  NotificationUserEntity,
+  InnovationAssessmentEntity
 } from '@innovations/shared/entities';
 import { ActivityEnum, ActivityTypeEnum, NotifierTypeEnum } from '@innovations/shared/enums';
 import {
@@ -580,6 +581,43 @@ describe('Innovations / _services / innovations suite', () => {
           supportStatus: InnovationSupportStatusEnum.CLOSED
         }
       );
+    });
+
+    describe('Needs assessment side-effects', () => {
+      const ottoOctavius = scenario.users.ottoOctaviusInnovator;
+
+      it('should and complete assessment when innovation is in NEEDS_ASSESSMENT', async () => {
+        const naInProgress = ottoOctavius.innovations.brainComputerInterfaceInnovation;
+
+        await sut.archiveInnovation(DTOsHelper.getUserRequestContext(ottoOctavius), naInProgress.id, { message }, em);
+
+        const dbAssessment = await em
+          .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
+          .select(['assessment.id', 'assessment.finishedAt', 'assessment.updatedBy'])
+          .where('assessment.innovation_id = :innovationId', { innovationId: naInProgress.id })
+          .getOneOrFail();
+
+        expect(dbAssessment.id).toBe(naInProgress.assessmentInProgress.id);
+        expect(dbAssessment.finishedAt).toBeDefined();
+        expect(dbAssessment.updatedBy).toBe(ottoOctavius.id);
+      });
+
+      it('should create and complete an assessment when innovation is in WAITING_NEEDS_ASSESSMENT', async () => {
+        const waitingNa = ottoOctavius.innovations.powerSourceInnovation;
+
+        await sut.archiveInnovation(DTOsHelper.getUserRequestContext(ottoOctavius), waitingNa.id, { message }, em);
+
+        const dbAssessment = await em
+          .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
+          .select(['assessment.id', 'assessment.finishedAt', 'assessment.updatedBy', 'assessment.createdBy'])
+          .where('assessment.innovation_id = :innovationId', { innovationId: waitingNa.id })
+          .getOneOrFail();
+
+        expect(dbAssessment.id).toBeDefined();
+        expect(dbAssessment.finishedAt).toBeDefined();
+        expect(dbAssessment.updatedBy).toBe(ottoOctavius.id);
+        expect(dbAssessment.createdBy).toBe(ottoOctavius.id);
+      });
     });
   });
 
