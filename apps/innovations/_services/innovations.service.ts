@@ -2239,7 +2239,7 @@ export class InnovationsService extends BaseService {
             innovationId: innovation.id,
             supportUnitId: support.organisationUnit.id,
             affectedUsers: {
-              roleIds: [...supports.flatMap(support => support.userRoles.map(userRole => userRole.id))]
+              roleIds: support.userRoles.map(userRole => userRole.id)
             }
           })
         );
