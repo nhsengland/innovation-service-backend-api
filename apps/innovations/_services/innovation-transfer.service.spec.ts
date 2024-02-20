@@ -322,7 +322,7 @@ describe('Innovations / _services / innovation transfer suite', () => {
       expect(deleteCollabSpy).toHaveBeenCalled();
     });
 
-    it('should withdraw innovation without owner when changing transfer to COMPLETED', async () => {
+    it('should withdraw innovation without owner when changing transfer to DECLINED', async () => {
       const dbInnovation = await em
         .createQueryBuilder(InnovationEntity, 'innovation')
         .where('innovation.id = :innovationId', {
@@ -334,13 +334,13 @@ describe('Innovations / _services / innovation transfer suite', () => {
         .spyOn(DomainInnovationsService.prototype, 'getInnovationInfo')
         .mockResolvedValueOnce({ ...dbInnovation, owner: null } as InnovationEntity);
 
-      const withdrawInnovationSpy = jest.spyOn(DomainInnovationsService.prototype, 'withdrawInnovations');
+      const withdrawInnovationSpy = jest.spyOn(
+        DomainInnovationsService.prototype,
+        'archiveInnovationsWithDeleteSideffects'
+      );
 
       const result = await sut.updateInnovationTransferStatus(
-        {
-          id: scenario.users.janeInnovator.id,
-          identityId: scenario.users.janeInnovator.identityId
-        },
+        { id: scenario.users.janeInnovator.id, identityId: scenario.users.janeInnovator.identityId },
         DTOsHelper.getUserRequestContext(scenario.users.janeInnovator),
         scenario.users.johnInnovator.innovations.johnInnovation.transfer.id,
         InnovationTransferStatusEnum.DECLINED,
