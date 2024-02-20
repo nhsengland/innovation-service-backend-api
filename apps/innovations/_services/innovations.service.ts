@@ -2214,8 +2214,8 @@ export class InnovationsService extends BaseService {
     const emTransaction = await em.transaction(async transaction => {
       const toReturn: {
         innovationId: string;
-        supportUnitId: string;
-        affectedUsers: {
+        organisationId: string;
+        affectedUsers?: {
           roleIds: string[];
         };
       }[] = [];
@@ -2225,7 +2225,15 @@ export class InnovationsService extends BaseService {
         // Check for active supports
         const supports = await transaction
           .createQueryBuilder(InnovationSupportEntity, 'support')
-          .select(['support.id', 'support.status', 'userRole.role', 'user.id', 'unit.id'])
+          .select([
+            'support.id',
+            'support.status',
+            'userRole.role',
+            'userRole.id',
+            'user.id',
+            'unit.id',
+            'unit.organisationId'
+          ])
           .innerJoin('support.innovation', 'innovation')
           .innerJoin('support.organisationUnit', 'unit')
           .leftJoin('support.userRoles', 'userRole')
@@ -2234,15 +2242,29 @@ export class InnovationsService extends BaseService {
           .andWhere('unit.organisation IN (:...ids)', { ids: deletedShares })
           .getMany();
 
-        supports.forEach(support =>
-          toReturn.push({
-            innovationId: innovation.id,
-            supportUnitId: support.organisationUnit.id,
-            affectedUsers: {
-              roleIds: support.userRoles.map(userRole => userRole.id)
-            }
-          })
-        );
+        const supportsOrgIdMap = new Map(supports.map(support => [support.organisationUnit.organisationId, support]));
+
+        deletedShares.forEach(share => {
+          /*
+          check if deletedShare is in support, if so add affected users,
+          otherwise just add organisationId
+          */
+          const support = supportsOrgIdMap.get(share);
+          if (support) {
+            toReturn.push({
+              innovationId: innovation.id,
+              organisationId: support.organisationUnit.organisationId,
+              affectedUsers: {
+                roleIds: support.userRoles.map(userRole => userRole.id)
+              }
+            });
+          } else {
+            toReturn.push({
+              innovationId: innovation.id,
+              organisationId: share
+            });
+          }
+        });
 
         const supportIds = supports.map(support => support.id);
         if (supportIds.length > 0) {
@@ -2326,8 +2348,14 @@ export class InnovationsService extends BaseService {
       for (const share of emTransaction) {
         await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_STOP_SHARING, {
           innovationId: innovation.id,
-          supportUnitId: share.supportUnitId,
-          affectedUsers: { roleIds: [...share.affectedUsers.roleIds] }
+          organisationId: share.organisationId,
+          ...(share.affectedUsers
+            ? {
+                affectedUsers: {
+                  roleIds: share.affectedUsers.roleIds
+                }
+              }
+            : null)
         });
       }
     }

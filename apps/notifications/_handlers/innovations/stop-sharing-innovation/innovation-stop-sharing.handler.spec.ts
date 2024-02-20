@@ -15,7 +15,7 @@ describe('Notifications / _handlers / innovation-stop-sharing suite', () => {
 
   const requestUser = scenario.users.johnInnovator;
   const innovation = requestUser.innovations.johnInnovation;
-  const supportUnitId = scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id;
+  const organisationId = scenario.organisations.healthOrg.id;
   const organisationName = scenario.organisations.healthOrg.name;
 
   describe('SH04_INNOVATION_STOPPED_SHARING_WITH_INDIVIDUAL_ORG_TO_OWNER', () => {
@@ -26,8 +26,7 @@ describe('Notifications / _handlers / innovation-stop-sharing suite', () => {
         recipients: [DTOsHelper.getRecipientUser(requestUser)],
         inputData: {
           innovationId: innovation.id,
-          supportUnitId: supportUnitId,
-          affectedUsers: { roleIds: [] }
+          organisationId: organisationId
         },
         outputData: {
           innovation_name: innovation.name,
@@ -46,8 +45,7 @@ describe('Notifications / _handlers / innovation-stop-sharing suite', () => {
         recipients: [DTOsHelper.getRecipientUser(requestUser)],
         inputData: {
           innovationId: innovation.id,
-          supportUnitId: supportUnitId,
-          affectedUsers: { roleIds: [] }
+          organisationId: organisationId
         },
         outputData: { innovationName: innovation.name, organisationName: organisationName },
         options: { includeSelf: true }
@@ -68,7 +66,7 @@ describe('Notifications / _handlers / innovation-stop-sharing suite', () => {
         recipients: assignedUsersRecipients,
         inputData: {
           innovationId: innovation.id,
-          supportUnitId: supportUnitId,
+          organisationId: organisationId,
           affectedUsers: { roleIds: [...innovation.supports.supportByHealthOrgUnit.userRoles] }
         },
         outputData: {
@@ -85,7 +83,7 @@ describe('Notifications / _handlers / innovation-stop-sharing suite', () => {
         recipients: assignedUsersRecipients,
         inputData: {
           innovationId: innovation.id,
-          supportUnitId: supportUnitId,
+          organisationId: organisationId,
           affectedUsers: { roleIds: [...innovation.supports.supportByHealthOrgUnit.userRoles] }
         },
         outputData: { innovationName: innovation.name }

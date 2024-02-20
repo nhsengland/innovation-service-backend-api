@@ -25,7 +25,7 @@ export class InnovationStopSharingHandler extends BaseHandler<
       await this.SH04_INNOVATION_STOPPED_SHARING_WITH_INDIVIDUAL_ORG_TO_OWNER(innovation);
     }
 
-    if (this.inputData.affectedUsers.roleIds.length) {
+    if (this.inputData.affectedUsers) {
       await this.SH05_INNOVATION_STOPPED_SHARING_WITH_INDIVIDUAL_ORG_TO_QA_A(innovation);
     }
 
@@ -41,14 +41,14 @@ export class InnovationStopSharingHandler extends BaseHandler<
     if (!recipient) {
       return;
     }
-    const organisationUnitInfo = await this.recipientsService.organisationUnitInfo(this.inputData.supportUnitId);
+    const organisationInfo = await this.recipientsService.organisationInfo(this.inputData?.organisationId ?? '');
 
     this.notify('SH04_INNOVATION_STOPPED_SHARING_WITH_INDIVIDUAL_ORG_TO_OWNER', [recipient], {
       email: {
         notificationPreferenceType: 'INNOVATION_MANAGEMENT',
         params: {
           innovation_name: innovation.name,
-          organisation_name: organisationUnitInfo.organisation.name,
+          organisation_name: organisationInfo.name,
           data_sharing_preferences_url: dataSharingPreferencesUrl(ServiceRoleEnum.INNOVATOR, innovation.id)
         },
         options: { includeSelf: true }
@@ -62,7 +62,7 @@ export class InnovationStopSharingHandler extends BaseHandler<
         innovationId: innovation.id,
         params: {
           innovationName: innovation.name,
-          organisationName: organisationUnitInfo.organisation.name
+          organisationName: organisationInfo.name
         },
         options: { includeSelf: true }
       }
@@ -73,7 +73,7 @@ export class InnovationStopSharingHandler extends BaseHandler<
     name: string;
     ownerId?: string;
   }): Promise<void> {
-    const assignedQAs = await this.recipientsService.getRecipientsByRoleId(this.inputData.affectedUsers.roleIds);
+    const assignedQAs = await this.recipientsService.getRecipientsByRoleId(this.inputData.affectedUsers?.roleIds ?? []);
 
     this.notify('SH05_INNOVATION_STOPPED_SHARING_WITH_INDIVIDUAL_ORG_TO_QA_A', assignedQAs, {
       email: {
