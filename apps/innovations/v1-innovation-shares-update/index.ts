@@ -29,7 +29,6 @@ class V1InnovationSharesUpdate {
         .setInnovation(params.innovationId)
         .checkInnovatorType()
         .checkInnovation()
-        .checkNotArchived()
         .verify();
 
       await innovationsService.updateInnovationShares(auth.getContext(), params.innovationId, body.organisations);
