@@ -2067,6 +2067,8 @@ export class InnovationsService extends BaseService {
       .select('organisation.name')
       .where('organisation.id IN (:...organisationIds)', { organisationIds: organisationShares })
       .getMany();
+
+    // Sanity check if all organisation exists.
     if (organisations.length != organisationShares.length) {
       throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATIONS_NOT_FOUND, {
         details: { error: 'Unknown organisations' }
@@ -2091,18 +2093,60 @@ export class InnovationsService extends BaseService {
     const addedShares = organisationShares.filter(s => !oldSharesSet.has(s));
     const deletedShares = oldShares.filter(s => !sharesSet.has(s));
 
-    await em.transaction(async transaction => {
+    const emTransaction = await em.transaction(async transaction => {
+      const toReturn: {
+        innovationId: string;
+        organisationId: string;
+        affectedUsers?: {
+          roleIds: string[];
+        };
+      }[] = [];
+
       // Delete shares
       if (deletedShares.length > 0) {
         // Check for active supports
         const supports = await transaction
           .createQueryBuilder(InnovationSupportEntity, 'support')
-          .select(['support.id', 'support.status', 'unit.id'])
+          .select([
+            'support.id',
+            'support.status',
+            'userRole.role',
+            'userRole.id',
+            'user.id',
+            'unit.id',
+            'unit.organisationId'
+          ])
           .innerJoin('support.innovation', 'innovation')
           .innerJoin('support.organisationUnit', 'unit')
+          .leftJoin('support.userRoles', 'userRole')
+          .leftJoin('userRole.user', 'user', "user.status <> 'DELETED'")
           .where('innovation.id = :innovationId', { innovationId })
           .andWhere('unit.organisation IN (:...ids)', { ids: deletedShares })
           .getMany();
+
+        const supportsOrgIdMap = new Map(supports.map(support => [support.organisationUnit.organisationId, support]));
+
+        deletedShares.forEach(share => {
+          /*
+          check if deletedShare is in support, if so add affected users,
+          otherwise just add organisationId
+          */
+          const support = supportsOrgIdMap.get(share);
+          if (support) {
+            toReturn.push({
+              innovationId: innovation.id,
+              organisationId: support.organisationUnit.organisationId,
+              affectedUsers: {
+                roleIds: support.userRoles.map(userRole => userRole.id)
+              }
+            });
+          } else {
+            toReturn.push({
+              innovationId: innovation.id,
+              organisationId: share
+            });
+          }
+        });
 
         const supportIds = supports.map(support => support.id);
         if (supportIds.length > 0) {
@@ -2171,6 +2215,8 @@ export class InnovationsService extends BaseService {
         { organisations: organisations.map(o => o.name) }
       );
       await transaction.save(InnovationEntity, innovation);
+
+      return toReturn;
     });
 
     if (addedShares.length > 0 && innovation.status === InnovationStatusEnum.IN_PROGRESS) {
@@ -2178,6 +2224,22 @@ export class InnovationsService extends BaseService {
         innovationId: innovation.id,
         newSharedOrgIds: addedShares
       });
+    }
+
+    if (deletedShares.length > 0) {
+      for (const share of emTransaction) {
+        await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_STOP_SHARING, {
+          innovationId: innovation.id,
+          organisationId: share.organisationId,
+          ...(share.affectedUsers
+            ? {
+                affectedUsers: {
+                  roleIds: share.affectedUsers.roleIds
+                }
+              }
+            : null)
+        });
+      }
     }
   }
 
