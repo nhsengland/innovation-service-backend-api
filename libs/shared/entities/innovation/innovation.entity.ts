@@ -69,8 +69,8 @@ export class InnovationEntity extends BaseEntity {
   @Column({ name: 'main_category', type: 'nvarchar', nullable: true })
   mainCategory: null | CurrentCatalogTypes.catalogCategory;
 
-  @Column({ name: 'withdraw_reason', type: 'nvarchar', nullable: true })
-  withdrawReason: null | string;
+  @Column({ name: 'archive_reason', type: 'nvarchar', nullable: true })
+  archiveReason: null | string;
 
   @ManyToOne(() => UserEntity, { nullable: true })
   @JoinColumn({ name: 'owner_id' })
