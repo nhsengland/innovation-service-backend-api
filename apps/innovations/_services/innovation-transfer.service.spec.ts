@@ -322,7 +322,7 @@ describe('Innovations / _services / innovation transfer suite', () => {
       expect(deleteCollabSpy).toHaveBeenCalled();
     });
 
-    it('should withdraw innovation without owner when changing transfer to DECLINED', async () => {
+    it('should archive innovation without owner when changing transfer to DECLINED', async () => {
       const dbInnovation = await em
         .createQueryBuilder(InnovationEntity, 'innovation')
         .where('innovation.id = :innovationId', {
@@ -334,7 +334,7 @@ describe('Innovations / _services / innovation transfer suite', () => {
         .spyOn(DomainInnovationsService.prototype, 'getInnovationInfo')
         .mockResolvedValueOnce({ ...dbInnovation, owner: null } as InnovationEntity);
 
-      const withdrawInnovationSpy = jest.spyOn(
+      const archiveInnovationSpy = jest.spyOn(
         DomainInnovationsService.prototype,
         'archiveInnovationsWithDeleteSideffects'
       );
@@ -348,7 +348,7 @@ describe('Innovations / _services / innovation transfer suite', () => {
       );
 
       expect(result.id).toBeDefined();
-      expect(withdrawInnovationSpy).toHaveBeenCalled();
+      expect(archiveInnovationSpy).toHaveBeenCalled();
     });
 
     it('should throw a not found error when the transfer is not found', async () => {
