@@ -42,12 +42,7 @@ import {
   UnprocessableEntityError
 } from '../../errors';
 import { TranslationHelper } from '../../helpers';
-import type {
-  ActivitiesParamsType,
-  DomainContextType,
-  IdentityUserInfo,
-  SupportLogParams
-} from '../../types';
+import type { ActivitiesParamsType, DomainContextType, IdentityUserInfo, SupportLogParams } from '../../types';
 import type { IdentityProviderService } from '../integrations/identity-provider.service';
 import type { NotifierService } from '../integrations/notifier.service';
 import type { DomainUsersService } from './domain-users.service';
@@ -79,7 +74,7 @@ export class DomainInnovationsService {
     const dbInnovations = await em
       .createQueryBuilder(InnovationEntity, 'innovations')
       .select(['innovations.id', 'transfers.id', 'transfers.createdBy'])
-      .innerJoin('innovation.transfers', 'transfers', 'status = :status', {
+      .innerJoin('innovations.transfers', 'transfers', 'status = :status', {
         status: InnovationTransferStatusEnum.PENDING
       })
       .where('innovations.expires_at < :now', { now: new Date().toISOString() })
