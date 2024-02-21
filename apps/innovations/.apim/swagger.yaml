@@ -4919,44 +4919,6 @@ paths:
           description: The innovation transfer does not exist
         "500":
           description: An error occurred while updating the innovation transfer status
-  /v1/{innovationId}/withdraw:
-    patch:
-      summary: Withdraw an innovation
-      description: Withdraw an innovation.
-      operationId: v1-innovation-withdraw
-      tags:
-        - Innovation
-      parameters:
-        - name: innovationId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                message:
-                  type: string
-                  maxLength: 200
-                  nullable: true
-                  description: Message provided when withdrawing an innovation
-              additionalProperties: false
-      responses:
-        "200":
-          description: Innovation withdrawn successfully.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    description: Innovation ID
   /v1/{innovationId}/export-requests:
     post:
       operationId: v1-innovations-export-requests-create

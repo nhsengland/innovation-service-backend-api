@@ -60,7 +60,6 @@ export const EmailTemplates = {
   RE01_EXPORT_REQUEST_SUBMITTED: 'b5f4e789-bdfc-496a-9b27-dbf6c2259ebc',
   RE02_EXPORT_REQUEST_APPROVED: '209f1bff-efdf-4631-8b2a-2f3982ff498d',
   RE03_EXPORT_REQUEST_REJECTED: 'ed2fd3b2-a5a6-472b-86c9-7a837638fc41',
-  WI01_INNOVATION_WITHDRAWN: '29d46f19-a64e-47e8-8c8b-f9bf6822b246',
   AI01_INNOVATION_ARCHIVED_TO_SELF: '5a257a85-5681-4e8a-8d64-22227d80c3a6',
   AI02_INNOVATION_ARCHIVED_TO_COLLABORATORS: '66fcdcfd-a2a4-4d58-a1a2-978eb443b1c0',
   AI03_INNOVATION_ARCHIVED_TO_ENGAGING_QA_A: 'e3f5206f-74be-4890-bead-850a0cd3e261',
@@ -334,9 +333,6 @@ export type EmailTemplatesType = {
     innovator_name: string;
     innovation_name: string;
     reject_comment: string;
-  };
-  WI01_INNOVATION_WITHDRAWN: {
-    innovation_name: string;
   };
   AI01_INNOVATION_ARCHIVED_TO_SELF: {
     innovation_name: string;

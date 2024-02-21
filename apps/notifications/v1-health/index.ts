@@ -148,20 +148,6 @@ class V1Health {
       //     });
       //     break;
 
-      //   case NotifierTypeEnum.INNOVATION_WITHDRAWN:
-      //     await notifierService.send(requestInnovator, NotifierTypeEnum.INNOVATION_WITHDRAWN, {
-      //       innovation: {
-      //         id: '2CE7E825-3FCD-EC11-997E-0050F25A43BD',
-      //         name: 'ArchivalTest03',
-      //         assignedUserIds: [
-      //           '829E13B3-242A-4DC5-BDB9-3F45FA0BF307',
-      //           'B7E3DE07-A826-4E15-ADCC-E8CCA874D65E',
-      //           'E4CD3C50-C600-4DF3-8ED4-A426A78FC618'
-      //         ]
-      //       }
-      //     });
-      //     break;
-
       //   case NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_CREATION:
       //     await notifierService.send(requestInnovator, NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_CREATION, {
       //       innovationId: '33657D84-30D8-EC11-B656-0050F25A2AF6',

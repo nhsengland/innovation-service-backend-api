@@ -189,9 +189,6 @@ export type InAppTemplatesType = {
     innovationName: string;
     exportRequestId: string;
   };
-  WI01_INNOVATION_WITHDRAWN: {
-    innovationName: string;
-  };
   AI01_INNOVATION_ARCHIVED_TO_SELF: {
     innovationName: string;
   };

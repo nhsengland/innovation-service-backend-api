@@ -30,7 +30,6 @@ import {
   InnovationTransferOwnershipCreationHandler,
   InnovationTransferOwnershipExpirationHandler,
   InnovationTransferOwnershipReminderHandler,
-  InnovationWithdrawnHandler,
   LockUserHandler,
   MessageCreationHandler,
   NeedsAssessmentAssessorUpdateHandler,
@@ -240,28 +239,6 @@ export const NOTIFICATIONS_CONFIG = {
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.EXPORT_REQUEST_FEEDBACK]>({
       innovationId: Joi.string().guid().required(),
       exportRequestId: Joi.string().guid().required()
-    }).required()
-  },
-  // // Withdraw
-  [NotifierTypeEnum.INNOVATION_WITHDRAWN]: {
-    handler: InnovationWithdrawnHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_WITHDRAWN]>({
-      innovation: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_WITHDRAWN]['innovation']>({
-        id: Joi.string().guid().required(),
-        name: Joi.string().required(),
-        affectedUsers: Joi.array()
-          .items(
-            Joi.object({
-              userId: Joi.string().guid().required(),
-              userType: Joi.string()
-                .valid(...Object.values(ServiceRoleEnum))
-                .required(),
-              unitId: Joi.string().guid()
-            })
-          )
-          .min(1)
-          .required()
-      }).required()
     }).required()
   },
   // // Delete Account

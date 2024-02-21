@@ -2310,43 +2310,6 @@ export class InnovationsService extends BaseService {
     };
   }
 
-  async withdrawInnovation(
-    context: DomainContextType,
-    innovationId: string,
-    reason: string,
-    entityManager?: EntityManager
-  ): Promise<{ id: string }> {
-    const connection = entityManager ?? this.sqlConnection.manager;
-
-    const dbInnovation = await connection
-      .createQueryBuilder(InnovationEntity, 'innovations')
-      .select(['innovations.id'])
-      .where('innovations.id = :innovationId', { innovationId })
-      .getOne();
-    if (!dbInnovation) {
-      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
-    }
-
-    const savedInnovations = await connection.transaction(async transaction => {
-      return this.domainService.innovations.withdrawInnovations(
-        { id: context.id, roleId: context.currentRole.id },
-        [{ id: dbInnovation.id, reason }],
-        transaction
-      );
-    });
-
-    for (const savedInnovation of savedInnovations) {
-      await this.notifierService.send(context, NotifierTypeEnum.INNOVATION_WITHDRAWN, {
-        innovation: {
-          id: savedInnovation.id,
-          name: savedInnovation.name,
-          affectedUsers: savedInnovation.affectedUsers
-        }
-      });
-    }
-    return { id: dbInnovation.id };
-  }
-
   async getInnovationActivitiesLog(
     innovationId: string,
     filters: {
