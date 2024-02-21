@@ -417,12 +417,13 @@ describe('Innovations / _services / innovations suite', () => {
 
       const dbInnovation = await em
         .createQueryBuilder(InnovationEntity, 'innovation')
-        .select(['innovation.status', 'innovation.archivedStatus'])
+        .select(['innovation.status', 'innovation.archiveReason', 'innovation.archivedStatus'])
         .where('innovation.id = :innovationId', { innovationId: innovation.id })
-        .getOne();
+        .getOneOrFail();
 
-      expect(dbInnovation?.status).toBe(InnovationStatusEnum.ARCHIVED);
-      expect(dbInnovation?.archivedStatus).toBe(innovation.status);
+      expect(dbInnovation.status).toBe(InnovationStatusEnum.ARCHIVED);
+      expect(dbInnovation.archivedStatus).toBe(innovation.status);
+      expect(dbInnovation.archiveReason).toBe(message);
     });
 
     it('should cancel all open tasks', async () => {

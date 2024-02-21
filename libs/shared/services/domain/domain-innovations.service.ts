@@ -351,6 +351,7 @@ export class DomainInnovationsService {
           {
             archivedStatus: () => 'status',
             status: InnovationStatusEnum.ARCHIVED,
+            archiveReason: innovation.reason,
             statusUpdatedAt: archivedAt,
             updatedBy: domainContext.id,
             expires_at: null
