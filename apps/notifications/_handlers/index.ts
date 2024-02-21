@@ -19,7 +19,6 @@ export { InnovationStopSharingHandler } from './innovations/stop-sharing-innovat
 export { InnovationArchiveHandler } from './innovations/archive-innovation/innovation-archive.handler';
 export { InnovationTransferOwnershipCompletedHandler } from './innovations/transfer-innovation/innovation-transfer-ownership-completed.handler';
 export { InnovationTransferOwnershipCreationHandler } from './innovations/transfer-innovation/innovation-transfer-ownership-creation.handler';
-export { InnovationWithdrawnHandler } from './innovations/withdraw-innovation/innovation-withdrawn.handler';
 export { MessageCreationHandler } from './messages/message-creation.handler';
 export { ThreadAddFollowersHandler } from './messages/thread-add-followers.handler';
 export { ThreadCreationHandler } from './messages/thread-creation.handler';

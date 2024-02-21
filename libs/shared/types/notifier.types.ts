@@ -77,18 +77,6 @@ export type NotifierTemplatesType = {
     innovationId: string;
     transferId: string;
   };
-  // // Withdraw
-  [NotifierTypeEnum.INNOVATION_WITHDRAWN]: {
-    innovation: {
-      id: string;
-      name: string;
-      affectedUsers: {
-        userId: string;
-        userType: ServiceRoleEnum;
-        unitId?: string;
-      }[];
-    };
-  };
   // // Export Request
   [NotifierTypeEnum.EXPORT_REQUEST_SUBMITTED]: {
     innovationId: string;
