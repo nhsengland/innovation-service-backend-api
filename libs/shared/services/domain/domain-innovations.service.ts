@@ -42,15 +42,10 @@ import {
   UnprocessableEntityError
 } from '../../errors';
 import { TranslationHelper } from '../../helpers';
-import type {
-  ActivitiesParamsType,
-  DomainContextType,
-  IdentityUserInfo,
-  InnovatorDomainContextType,
-  SupportLogParams
-} from '../../types';
+import type { ActivitiesParamsType, DomainContextType, IdentityUserInfo, SupportLogParams } from '../../types';
 import type { IdentityProviderService } from '../integrations/identity-provider.service';
 import type { NotifierService } from '../integrations/notifier.service';
+import type { DomainUsersService } from './domain-users.service';
 
 export class DomainInnovationsService {
   innovationRepository: Repository<InnovationEntity>;
@@ -60,7 +55,8 @@ export class DomainInnovationsService {
   constructor(
     private sqlConnection: DataSource,
     private identityProviderService: IdentityProviderService,
-    private notifierService: NotifierService
+    private notifierService: NotifierService,
+    private domainUsersService: DomainUsersService
   ) {
     this.innovationRepository = this.sqlConnection.getRepository(InnovationEntity);
     this.innovationSupportRepository = this.sqlConnection.getRepository(InnovationSupportEntity);
@@ -78,7 +74,7 @@ export class DomainInnovationsService {
     const dbInnovations = await em
       .createQueryBuilder(InnovationEntity, 'innovations')
       .select(['innovations.id', 'transfers.id', 'transfers.createdBy'])
-      .innerJoin('innovation.transfers', 'transfers', 'status = :status', {
+      .innerJoin('innovations.transfers', 'transfers', 'status = :status', {
         status: InnovationTransferStatusEnum.PENDING
       })
       .where('innovations.expires_at < :now', { now: new Date().toISOString() })
@@ -86,39 +82,13 @@ export class DomainInnovationsService {
 
     for (const innovation of dbInnovations) {
       if (innovation.transfers[0]) {
-        const userRole = await em
-          .createQueryBuilder(UserRoleEntity, 'userRole')
-          .select([
-            'userRole.id',
-            'user.id',
-            'user.identityId',
-            'organisation.id',
-            'organisation.name',
-            'organisation.acronym'
-          ])
-          .innerJoin('userRole.user', 'user')
-          .innerJoin('userRole.organisation', 'organisation')
-          .where('user_id = :userId', { userId: innovation.transfers[0].createdBy })
-          .andWhere('role = :innovatorRole', { innovatorRole: ServiceRoleEnum.INNOVATOR })
-          .getOne();
-
-        if (!userRole?.organisation) {
+        const domainContext = await this.domainUsersService.getInnovatorDomainContextByRoleId(
+          innovation.transfers[0].createdBy,
+          em
+        );
+        if (!domainContext) {
           return; // this will never happen
         }
-
-        const domainContext: InnovatorDomainContextType = {
-          id: userRole.user.id,
-          identityId: userRole.user.identityId,
-          organisation: {
-            id: userRole.organisation.id,
-            name: userRole.organisation.name,
-            acronym: userRole.organisation.acronym
-          },
-          currentRole: {
-            id: userRole.id,
-            role: ServiceRoleEnum.INNOVATOR
-          }
-        };
 
         await this.archiveInnovationsWithDeleteSideffects(
           domainContext,

@@ -9,7 +9,7 @@ import {
   UserErrorsEnum
 } from '../../errors';
 import { TranslationHelper } from '../../helpers';
-import type { RoleType } from '../../types';
+import type { InnovatorDomainContextType, RoleType } from '../../types';
 
 import { UserPreferenceEntity } from '../../entities/user/user-preference.entity';
 import { UserRoleEntity, roleEntity2RoleType } from '../../entities/user/user-role.entity';
@@ -391,6 +391,49 @@ export class DomainUsersService {
         const r: never = role;
         throw new NotImplementedError(GenericErrorsEnum.NOT_IMPLEMENTED_ERROR, { details: r });
     }
+  }
+
+  /**
+   * Given a user id from an innovator builds the associated domain context.
+   *
+   * @returns the innovator domain context or null if the user isn't "valid" (e.g., not an innovator)
+   */
+  async getInnovatorDomainContextByRoleId(
+    userId: string,
+    entityManager?: EntityManager
+  ): Promise<null | InnovatorDomainContextType> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const role = await em
+      .createQueryBuilder(UserRoleEntity, 'userRole')
+      .select([
+        'userRole.id',
+        'user.id',
+        'user.identityId',
+        'organisation.id',
+        'organisation.name',
+        'organisation.acronym'
+      ])
+      .innerJoin('userRole.user', 'user')
+      .innerJoin('userRole.organisation', 'organisation')
+      .where('user_id = :userId', { userId })
+      .andWhere('role = :innovatorRole', { innovatorRole: ServiceRoleEnum.INNOVATOR })
+      .getOne();
+
+    if (!role?.organisation) {
+      return null;
+    }
+
+    return {
+      id: role.user.id,
+      identityId: role.user.identityId,
+      organisation: {
+        id: role.organisation.id,
+        name: role.organisation.name,
+        acronym: role.organisation.acronym
+      },
+      currentRole: { id: role.id, role: ServiceRoleEnum.INNOVATOR }
+    };
   }
 
   private async getUserIdentityIdByEmail(email: string): Promise<string> {
