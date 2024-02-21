@@ -13,7 +13,7 @@ export const ParamsSchema = Joi.object<ParamsType>({
 }).required();
 
 export type BodyType = {
-  status: Exclude<InnovationSupportStatusEnum, 'UNASSIGNED' | 'WITHDRAWN'>;
+  status: Exclude<InnovationSupportStatusEnum, 'UNASSIGNED'>;
   message: string;
   accessors?: { id: string; userRoleId: string }[];
 };

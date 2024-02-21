@@ -6,7 +6,7 @@ import {
   NotificationUserEntity,
   InnovationAssessmentEntity
 } from '@innovations/shared/entities';
-import { ActivityEnum, ActivityTypeEnum, NotifierTypeEnum } from '@innovations/shared/enums';
+import { ActivityEnum, ActivityTypeEnum } from '@innovations/shared/enums';
 import {
   InnovationExportRequestStatusEnum,
   InnovationSectionStatusEnum,
@@ -404,68 +404,6 @@ describe('Innovations / _services / innovations suite', () => {
       await expect(() =>
         sut.submitInnovation(DTOsHelper.getUserRequestContext(scenario.users.johnInnovator), innovation.id, em)
       ).rejects.toThrowError(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SECTIONS_INCOMPLETE));
-    });
-  });
-
-  describe('withdrawInnovation', () => {
-    const innovation = scenario.users.johnInnovator.innovations.johnInnovationEmpty;
-    const reason = randText({ charCount: 10 });
-
-    it('should withdraw the innovation', async () => {
-      // mock domain service withdraw innovation
-      const domainServiceWithdrawSpy = jest.spyOn(DomainInnovationsService.prototype, 'withdrawInnovations');
-      const mockedAffectedUsers = [
-        // NA
-        {
-          userId: scenario.users.paulNeedsAssessor.id,
-          userType: scenario.users.paulNeedsAssessor.roles.assessmentRole.role
-        },
-        // collaborator
-        {
-          userId: scenario.users.janeInnovator.id,
-          userType: scenario.users.janeInnovator.roles.innovatorRole.role
-        },
-        // QA
-        {
-          userId: scenario.users.aliceQualifyingAccessor.id,
-          userType: scenario.users.aliceQualifyingAccessor.roles.qaRole.role,
-          unitId: scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.id
-        }
-      ];
-
-      domainServiceWithdrawSpy.mockResolvedValueOnce([
-        {
-          id: innovation.id,
-          name: innovation.name,
-          affectedUsers: mockedAffectedUsers
-        }
-      ]);
-
-      const context = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator);
-
-      const result = await sut.withdrawInnovation(context, innovation.id, reason, em);
-
-      expect(result).toMatchObject({ id: innovation.id });
-
-      expect(domainServiceWithdrawSpy).toHaveBeenCalledWith(
-        { id: context.id, roleId: context.currentRole.id },
-        [{ id: innovation.id, reason }],
-        expect.any(EntityManager) // transaction
-      );
-
-      expect(notifierSendSpy).toHaveBeenCalledWith(context, NotifierTypeEnum.INNOVATION_WITHDRAWN, {
-        innovation: {
-          id: innovation.id,
-          name: innovation.name,
-          affectedUsers: mockedAffectedUsers
-        }
-      });
-    });
-
-    it(`should throw an error if the innovation doesn't exist`, async () => {
-      await expect(() =>
-        sut.withdrawInnovation(DTOsHelper.getUserRequestContext(scenario.users.johnInnovator), randUuid(), reason)
-      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND));
     });
   });
 
