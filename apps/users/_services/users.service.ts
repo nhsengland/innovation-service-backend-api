@@ -522,4 +522,19 @@ export class UsersService extends BaseService {
       await this.identityProviderService.deleteUser(dbUser.identityId);
     });
   }
+
+  async upsertUserMfa(
+    domainContext: DomainContextType,
+    data: { type: 'none' } | { type: 'email' } | { type: 'phone'; phoneNumber: string }
+  ): Promise<void> {
+    const type = await this.identityProviderService.getMfaExtensionType(domainContext.identityId);
+
+    if (data.type === 'phone') {
+      await this.identityProviderService.upsertMfaPhoneNumber(domainContext.identityId, data.phoneNumber);
+    } else if (data.type === type) {
+      return;
+    }
+
+    await this.identityProviderService.updateMfaExtensionType(domainContext.identityId, data.type);
+  }
 }
