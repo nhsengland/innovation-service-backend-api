@@ -40,9 +40,8 @@ class V1InnovationPause {
           ]
         })
         .verify();
-      const domainContext = auth.getContext();
 
-      await innovationsService.archiveInnovation(domainContext, params.innovationId, { message: body.message });
+      await innovationsService.archiveInnovation(auth.getContext(), params.innovationId, { message: body.message });
 
       context.res = ResponseHelper.NoContent();
       return;

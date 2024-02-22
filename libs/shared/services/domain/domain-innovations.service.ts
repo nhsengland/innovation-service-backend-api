@@ -234,27 +234,19 @@ export class DomainInnovationsService {
 
     return await em.transaction(async transaction => {
       for (const innovation of archivedInnovationsInfo) {
-        if (innovation.prevStatus === InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT) {
-          await transaction.save(
-            InnovationAssessmentEntity,
-            InnovationAssessmentEntity.new({
-              description: '',
-              innovation: InnovationEntity.new({ id: innovation.id }),
-              assignTo: null,
-              createdBy: domainContext.id,
-              updatedBy: domainContext.id,
-              finishedAt: archivedAt
-            })
-          );
-        }
-        if (innovation.prevStatus === InnovationStatusEnum.NEEDS_ASSESSMENT) {
+        if (
+          innovation.prevStatus === InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT ||
+          innovation.prevStatus === InnovationStatusEnum.NEEDS_ASSESSMENT
+        ) {
           const assessment = await em
             .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
             .select(['assessment.id', 'assignedUser.id'])
-            .innerJoin('assessment.assignTo', 'assignedUser')
+            .leftJoin('assessment.assignTo', 'assignedUser', 'assignedUser.status <> :userDeleted', {
+              userDeleted: UserStatusEnum.DELETED
+            })
             .where('assessment.innovation_id = :innovationId', { innovationId: innovation.id })
-            .andWhere('assignedUser.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED })
             .getOne();
+
           if (assessment) {
             // Complete the current assessment
             transaction.update(
@@ -266,6 +258,19 @@ export class DomainInnovationsService {
             if (assessment.assignTo) {
               innovation.affectedUsers.push({ userId: assessment.assignTo.id, userType: ServiceRoleEnum.ASSESSMENT });
             }
+          } else {
+            // This innovation never had an assessment so we need to create and complete one
+            await transaction.save(
+              InnovationAssessmentEntity,
+              InnovationAssessmentEntity.new({
+                description: '',
+                innovation: InnovationEntity.new({ id: innovation.id }),
+                assignTo: null,
+                createdBy: domainContext.id,
+                updatedBy: domainContext.id,
+                finishedAt: archivedAt
+              })
+            );
           }
         }
 
