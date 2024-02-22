@@ -1,5 +1,5 @@
 import type { Context } from '@azure/functions';
-import { ServiceRoleEnum, type NotifierTypeEnum, InnovationStatusEnum } from '@notifications/shared/enums';
+import { ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { innovationOverviewUrl } from '../../../_helpers/url.helper';
 import { BaseHandler } from '../../base.handler';
@@ -155,7 +155,7 @@ export class InnovationArchiveHandler extends BaseHandler<
         .filter(u => u.userType === ServiceRoleEnum.ASSESSMENT)
     );
 
-    if (!previousAssessor || this.inputData.previousStatus !== InnovationStatusEnum.ARCHIVED) {
+    if (!previousAssessor.length) {
       return;
     }
 
