@@ -55,7 +55,8 @@ describe('v1-innovation-suggestions Suite', () => {
   describe('Access', () => {
     it.each([
       ['Admin', 403, scenario.users.allMighty],
-      ['QA', 403, scenario.users.aliceQualifyingAccessor],
+      ['QA', 200, scenario.users.aliceQualifyingAccessor],
+      ['QA', 200, scenario.users.ingridAccessor],
       ['NA', 403, scenario.users.paulNeedsAssessor],
       ['Innovator owner', 200, scenario.users.johnInnovator],
       ['Innovator collaborator', 200, scenario.users.janeInnovator],
