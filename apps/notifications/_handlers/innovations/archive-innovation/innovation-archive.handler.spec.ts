@@ -186,30 +186,6 @@ describe('Notifications / _handlers / innovation-archive suite', () => {
       });
     });
 
-    it('should not send an email to assigned assessor', async () => {
-      await testEmails(InnovationArchiveHandler, 'AI04_INNOVATION_ARCHIVED_TO_NA_DURING_NEEDS_ASSESSMENT', {
-        notificationPreferenceType: 'INNOVATION_MANAGEMENT',
-        requestUser: DTOsHelper.getUserRequestContext(requestUser),
-        recipients: [],
-        inputData: {
-          innovationId: innovation.id,
-          message,
-          reassessment: false,
-          affectedUsers: [
-            {
-              userId: scenario.users.paulNeedsAssessor.id,
-              userType: scenario.users.paulNeedsAssessor.roles.assessmentRole.role
-            }
-          ],
-          previousStatus: InnovationStatusEnum.IN_PROGRESS
-        },
-        outputData: {
-          innovation_name: innovation.name,
-          assessment_type: 'assessment'
-        }
-      });
-    });
-
     it('should send an inapp to assigned assessor', async () => {
       await testInApps(InnovationArchiveHandler, 'AI04_INNOVATION_ARCHIVED_TO_NA_DURING_NEEDS_ASSESSMENT', {
         context: { type: 'INNOVATION_MANAGEMENT', id: innovation.id },

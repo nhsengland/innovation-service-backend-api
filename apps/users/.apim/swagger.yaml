@@ -569,7 +569,6 @@ paths:
                       - RE01_EXPORT_REQUEST_SUBMITTED
                       - RE02_EXPORT_REQUEST_APPROVED
                       - RE03_EXPORT_REQUEST_REJECTED
-                      - WI01_INNOVATION_WITHDRAWN
                       - AI01_INNOVATION_ARCHIVED_TO_SELF
                       - AI02_INNOVATION_ARCHIVED_TO_COLLABORATORS
                       - AI03_INNOVATION_ARCHIVED_TO_ENGAGING_QA_A
@@ -773,7 +772,6 @@ paths:
                             - RE01_EXPORT_REQUEST_SUBMITTED
                             - RE02_EXPORT_REQUEST_APPROVED
                             - RE03_EXPORT_REQUEST_REJECTED
-                            - WI01_INNOVATION_WITHDRAWN
                             - AI01_INNOVATION_ARCHIVED_TO_SELF
                             - AI02_INNOVATION_ARCHIVED_TO_COLLABORATORS
                             - AI03_INNOVATION_ARCHIVED_TO_ENGAGING_QA_A

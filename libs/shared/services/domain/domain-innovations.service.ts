@@ -208,6 +208,7 @@ export class DomainInnovationsService {
       prevStatus: InnovationStatusEnum;
       reason: string;
       affectedUsers: { userId: string; userType: ServiceRoleEnum; unitId?: string }[];
+      isReassessment: boolean;
     }[]
   > {
     const em = entityManager ?? this.sqlConnection.manager;
@@ -218,7 +219,7 @@ export class DomainInnovationsService {
       .where('innovation.id IN (:...innovationIds)', { innovationIds: innovations.map(i => i.id) })
       .getMany();
 
-    const archivedInnovationsInfo = innovations.map(innovation => {
+    const archivedInnovationsInfoPromises = innovations.map(async innovation => {
       const dbInno = dbInnovations.find(i => i.id === innovation.id);
       if (!dbInno) throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
 
@@ -226,9 +227,12 @@ export class DomainInnovationsService {
         id: innovation.id,
         reason: innovation.reason,
         prevStatus: dbInno.status,
-        affectedUsers: [] as { userId: string; userType: ServiceRoleEnum; unitId?: string }[]
+        affectedUsers: [] as { userId: string; userType: ServiceRoleEnum; unitId?: string }[],
+        isReassessment: !!(await dbInno.reassessmentRequests).length
       };
     });
+
+    const archivedInnovationsInfo = await Promise.all(archivedInnovationsInfoPromises);
 
     const archivedAt = new Date();
 
