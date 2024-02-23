@@ -557,4 +557,49 @@ describe('Users / _services / users service suite', () => {
       expect(nActiveRoles).toBe(0);
     });
   });
+
+  describe('upsertUserMfa', () => {
+    const getMfaExtensionTypeSpy = jest.spyOn(IdentityProviderService.prototype, 'getMfaExtensionType');
+    const upsertMfaPhoneNumberSpy = jest
+      .spyOn(IdentityProviderService.prototype, 'upsertMfaPhoneNumber')
+      .mockResolvedValue();
+    const updateMfaExtensionTypeSpy = jest
+      .spyOn(IdentityProviderService.prototype, 'updateMfaExtensionType')
+      .mockResolvedValue();
+
+    beforeEach(() => {
+      getMfaExtensionTypeSpy.mockReset();
+      upsertMfaPhoneNumberSpy.mockReset();
+      updateMfaExtensionTypeSpy.mockReset();
+    });
+
+    it.each([
+      ['none', 'email'],
+      ['email', 'none'],
+      ['phone', 'email']
+    ])('should update user mfa to %s', async (toType, fromType) => {
+      getMfaExtensionTypeSpy.mockResolvedValue(fromType as any);
+
+      await sut.upsertUserMfa(
+        DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
+        toType === 'phone' ? { type: 'phone', phoneNumber: randPhoneNumber() } : { type: toType as any }
+      );
+
+      if (toType === 'phone') {
+        expect(upsertMfaPhoneNumberSpy).toHaveBeenCalled();
+      }
+      expect(updateMfaExtensionTypeSpy).toHaveBeenCalled();
+    });
+
+    it.each([
+      ['none', 'none'],
+      ['email', 'email']
+    ])("should't update when changing from %s to %s", async (fromType, toType) => {
+      getMfaExtensionTypeSpy.mockResolvedValue(fromType as any);
+
+      await sut.upsertUserMfa(DTOsHelper.getUserRequestContext(scenario.users.johnInnovator), { type: toType as any });
+
+      expect(updateMfaExtensionTypeSpy).not.toHaveBeenCalled();
+    });
+  });
 });

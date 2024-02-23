@@ -6,6 +6,7 @@ import {
   GenericErrorsEnum,
   InternalServerError,
   NotFoundError,
+  BadRequestError,
   ServiceUnavailableError,
   UserErrorsEnum
 } from '../../errors';
@@ -73,6 +74,11 @@ export class IdentityProviderService {
   };
   private sessionData: { token: string; expiresAt: number } = { token: '', expiresAt: 0 };
   private cache: CacheConfigType['IdentityUserInfo'];
+  private constants = {
+    // More info https://learn.microsoft.com/en-us/graph/api/resources/phoneauthenticationmethod?view=graph-rest-1.0#properties
+    mfa_mobile_id: '3179e48a-750b-4051-897c-87b9720928f7',
+    mfa_extension_key: `extension_${process.env['AD_EXTENSION_ID'] ?? ''}_mfaByPhoneOrEmail`
+  };
 
   constructor(
     @inject(SHARED_SYMBOLS.CacheService) cacheService: CacheService,
@@ -126,6 +132,8 @@ export class IdentityProviderService {
         return new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
       case 401:
         return new InternalServerError(GenericErrorsEnum.SERVICE_IDENTIY_UNAUTHORIZED);
+      case 400:
+        return new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD, { message });
       default:
         return new ServiceUnavailableError(GenericErrorsEnum.SERVICE_SQL_UNAVAILABLE, {
           details: { message }
@@ -398,5 +406,76 @@ export class IdentityProviderService {
       });
 
     await this.cache.delete(identityId);
+  }
+
+  async getMfaExtensionType(identityId: string): Promise<'none' | 'email' | 'phone'> {
+    await this.verifyAccessToken();
+
+    const response = await axios
+      .get<any>(`https://graph.microsoft.com/v1.0/users/${identityId}?$select=${this.constants.mfa_extension_key}`, {
+        headers: { Authorization: `Bearer ${this.sessionData.token}` }
+      })
+      .catch(error => {
+        throw this.getError(error.response.status, error.response.data.message);
+      });
+
+    return response.data[this.constants.mfa_extension_key] ?? 'none';
+  }
+
+  async updateMfaExtensionType(identityId: string, type: 'none' | 'email' | 'phone'): Promise<void> {
+    await this.verifyAccessToken();
+
+    await axios
+      .patch<any>(
+        `https://graph.microsoft.com/v1.0/users/${identityId}`,
+        { [this.constants.mfa_extension_key]: type },
+        { headers: { Authorization: `Bearer ${this.sessionData.token}` } }
+      )
+      .catch(error => {
+        throw this.getError(error.response.status, error.response.data.message);
+      });
+  }
+
+  async getMfaPhoneNumber(identityId: string): Promise<string | null> {
+    await this.verifyAccessToken();
+
+    try {
+      const response = await axios.get<{ id: string; phoneNumber: string; phoneType: string; smsSignInState: string }>(
+        `https://graph.microsoft.com/v1.0/users/${identityId}/authentication/phoneMethods/${this.constants.mfa_mobile_id}`,
+        { headers: { Authorization: `Bearer ${this.sessionData.token}` } }
+      );
+      return response.data.phoneNumber;
+    } catch (error: any) {
+      // It means the user doesn't have a phone number created
+      if (error.response.status === 404) {
+        return null;
+      }
+      throw this.getError(error.response.status, error.response.data.message);
+    }
+  }
+
+  async upsertMfaPhoneNumber(identityId: string, phoneNumber: string): Promise<void> {
+    const curPhoneNumber = await this.getMfaPhoneNumber(identityId);
+
+    // No need to hit B2C if the user is trying to update to the same phone.
+    if (curPhoneNumber === phoneNumber) return;
+
+    try {
+      if (curPhoneNumber !== null) {
+        await axios.patch<any>(
+          `https://graph.microsoft.com/v1.0/users/${identityId}/authentication/phoneMethods/${this.constants.mfa_mobile_id}`,
+          { phoneNumber, phoneType: 'mobile' },
+          { headers: { Authorization: `Bearer ${this.sessionData.token}` } }
+        );
+      } else {
+        await axios.post<any>(
+          `https://graph.microsoft.com/v1.0/users/${identityId}/authentication/phoneMethods`,
+          { phoneNumber, phoneType: 'mobile' },
+          { headers: { Authorization: `Bearer ${this.sessionData.token}` } }
+        );
+      }
+    } catch (error: any) {
+      throw this.getError(error.response.status, error.response.data.error.message);
+    }
   }
 }
