@@ -6,6 +6,7 @@ import {
   GenericErrorsEnum,
   InternalServerError,
   NotFoundError,
+  BadRequestError,
   ServiceUnavailableError,
   UserErrorsEnum
 } from '../../errors';
@@ -131,6 +132,8 @@ export class IdentityProviderService {
         return new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
       case 401:
         return new InternalServerError(GenericErrorsEnum.SERVICE_IDENTIY_UNAUTHORIZED);
+      case 400:
+        return new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD, { message });
       default:
         return new ServiceUnavailableError(GenericErrorsEnum.SERVICE_SQL_UNAVAILABLE, {
           details: { message }
@@ -472,7 +475,7 @@ export class IdentityProviderService {
         );
       }
     } catch (error: any) {
-      throw this.getError(error.response.status, error.response.data.message);
+      throw this.getError(error.response.status, error.response.data.error.message);
     }
   }
 }
