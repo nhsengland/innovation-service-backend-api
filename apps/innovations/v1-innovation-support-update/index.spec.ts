@@ -77,4 +77,23 @@ describe('v1-innovation-support-update', () => {
       expect(result.status).toBe(status);
     });
   });
+
+  it.each([['QA', 409, scenario.users.aliceQualifyingAccessor]])(
+    'access with user %s should give conflict if innovation is archived',
+    async (_role: string, status: number, user: TestUserType) => {
+      const result = await new AzureHttpTriggerBuilder()
+        .setAuth(user)
+        .setParams<ParamsType>({
+          innovationId: scenario.users.johnInnovator.innovations.johnInnovationArchived.id,
+          supportId: randUuid()
+        })
+        .setBody<BodyType>({
+          message: randText(),
+          status: InnovationSupportStatusEnum.WAITING
+        })
+        .call<ErrorResponseType>(azureFunction);
+
+      expect(result.status).toBe(status);
+    }
+  );
 });
