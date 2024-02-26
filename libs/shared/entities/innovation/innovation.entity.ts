@@ -39,8 +39,8 @@ export class InnovationEntity extends BaseEntity {
   @Column({ type: 'simple-enum', enum: InnovationStatusEnum, nullable: false })
   status: InnovationStatusEnum;
 
-  @Column({ name: 'archived_status', type: 'simple-enum', enum: InnovationStatusEnum, nullable: false })
-  archivedStatus: InnovationStatusEnum;
+  @Column({ name: 'archived_status', type: 'simple-enum', enum: InnovationStatusEnum, nullable: true })
+  archivedStatus: null | InnovationStatusEnum;
 
   @Column({ name: 'status_updated_at', type: 'datetime2' })
   statusUpdatedAt: Date;
