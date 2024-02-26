@@ -1691,6 +1691,7 @@ export class InnovationsService extends BaseService {
     description: null | string;
     version: string;
     status: InnovationStatusEnum;
+    archiveStatus?: InnovationStatusEnum;
     groupedStatus: InnovationGroupedStatusEnum;
     statusUpdatedAt: Date;
     submittedAt: null | Date;
@@ -1733,6 +1734,7 @@ export class InnovationsService extends BaseService {
         'innovation.description',
         'innovation.status',
         'innovation.statusUpdatedAt',
+        'innovation.archivedStatus',
         'innovation.lastAssessmentRequestAt',
         'innovation.countryName',
         'innovation.postcode',
@@ -1878,6 +1880,7 @@ export class InnovationsService extends BaseService {
       postCode: innovation.postcode,
       categories,
       otherCategoryDescription: documentData.otherCategoryDescription,
+      ...(innovation.archivedStatus ? { archiveStatus: innovation.archivedStatus } : {}),
       ...(innovation.owner && ownerPreferences
         ? {
             owner: {

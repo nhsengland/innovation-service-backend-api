@@ -36,7 +36,6 @@ class V1InnovationInfo {
         .setInnovation(params.innovationId)
         .checkInnovation()
         .verify();
-
       const domainContext = auth.getContext();
 
       const result = await innovationsService.getInnovationInfo(domainContext, params.innovationId, queryParams);
@@ -53,6 +52,7 @@ class V1InnovationInfo {
         postCode: result.postCode,
         categories: result.categories,
         otherCategoryDescription: result.otherCategoryDescription,
+        archivedStatus: result.archiveStatus,
         ...(result.owner === undefined
           ? {}
           : {
