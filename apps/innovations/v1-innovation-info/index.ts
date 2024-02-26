@@ -52,7 +52,7 @@ class V1InnovationInfo {
         postCode: result.postCode,
         categories: result.categories,
         otherCategoryDescription: result.otherCategoryDescription,
-        archivedStatus: result.archivedStatus,
+        ...(result.archivedStatus ? { archivedStatus: result.archivedStatus } : {}),
         ...(result.owner === undefined
           ? {}
           : {
