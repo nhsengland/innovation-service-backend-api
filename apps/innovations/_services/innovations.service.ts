@@ -2392,7 +2392,7 @@ export class InnovationsService extends BaseService {
       const p: string[] = [];
 
       p.push(item.createdBy);
-      if (params.interveningUserId) {
+      if (params.interveningUserId !== undefined) {
         p.push(params.interveningUserId);
       }
 
@@ -2408,7 +2408,7 @@ export class InnovationsService extends BaseService {
 
         params.actionUserName = usersInfo.get(item.createdBy)?.displayName ?? '[deleted account]';
 
-        if (params.interveningUserId) {
+        if (params.interveningUserId !== undefined) {
           params.interveningUserName = usersInfo.get(params.interveningUserId)?.displayName ?? '[deleted account]';
         }
 
