@@ -523,6 +523,19 @@ export class UsersService extends BaseService {
     });
   }
 
+  async getUserMfaInfo(
+    domainContext: DomainContextType
+  ): Promise<{ type: 'none' } | { type: 'email' } | { type: 'phone'; phoneNumber?: string }> {
+    const type = await this.identityProviderService.getMfaExtensionType(domainContext.identityId);
+
+    if (type === 'phone') {
+      const phoneNumber = await this.identityProviderService.getMfaPhoneNumber(domainContext.identityId);
+      return { type, phoneNumber: phoneNumber ?? undefined };
+    }
+
+    return { type };
+  }
+
   async upsertUserMfa(
     domainContext: DomainContextType,
     data: { type: 'none' } | { type: 'email' } | { type: 'phone'; phoneNumber: string }

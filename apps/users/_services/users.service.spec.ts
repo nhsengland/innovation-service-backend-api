@@ -594,12 +594,49 @@ describe('Users / _services / users service suite', () => {
     it.each([
       ['none', 'none'],
       ['email', 'email']
-    ])("should't update when changing from %s to %s", async (fromType, toType) => {
+    ])("shouldn't update when changing from %s to %s", async (fromType, toType) => {
       getMfaExtensionTypeSpy.mockResolvedValue(fromType as any);
 
       await sut.upsertUserMfa(DTOsHelper.getUserRequestContext(scenario.users.johnInnovator), { type: toType as any });
 
       expect(updateMfaExtensionTypeSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getUserMfaInfo', () => {
+    const johnDomainContext = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator);
+    const getMfaExtensionTypeSpy = jest.spyOn(IdentityProviderService.prototype, 'getMfaExtensionType');
+    const getMfaPhoneNumberSpy = jest.spyOn(IdentityProviderService.prototype, 'getMfaPhoneNumber');
+
+    const phone = randPhoneNumber();
+
+    beforeEach(() => {
+      getMfaExtensionTypeSpy.mockReset();
+      getMfaPhoneNumberSpy.mockReset();
+    });
+
+    it.each([['none'], ['email'], ['phone']])('should return the right type of mfa (%s)', async type => {
+      getMfaExtensionTypeSpy.mockReturnValue(type as any);
+      if (type === 'phone') {
+        getMfaPhoneNumberSpy.mockResolvedValue(phone);
+      }
+
+      const mfaInfo = await sut.getUserMfaInfo(johnDomainContext);
+
+      expect(mfaInfo).toMatchObject({
+        type,
+        ...(type === 'phone' ? { phoneNumber: phone } : {})
+      });
+    });
+
+    // B2C defined number through journey is "invalid" so the first time we should not return it
+    it('should not return the phone number if is invalid', async () => {
+      getMfaExtensionTypeSpy.mockReturnValue('phone' as any);
+      getMfaPhoneNumberSpy.mockResolvedValue(null);
+
+      const mfaInfo = await sut.getUserMfaInfo(johnDomainContext);
+
+      expect(mfaInfo).toMatchObject({ type: 'phone' });
     });
   });
 });
