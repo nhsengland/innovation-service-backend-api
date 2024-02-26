@@ -30,6 +30,7 @@ class V1InnovationSupportCreate {
         .setInnovation(params.innovationId)
         .checkAccessorType({ organisationRole: [ServiceRoleEnum.QUALIFYING_ACCESSOR] })
         .checkInnovation()
+        .checkNotArchived()
         .verify();
       const domainContext = auth.getContext();
 
