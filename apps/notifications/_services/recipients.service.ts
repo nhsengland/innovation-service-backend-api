@@ -7,6 +7,7 @@ import {
   InnovationTransferEntity,
   NotificationPreferenceEntity,
   OrganisationUnitEntity,
+  OrganisationEntity,
   SupportKPIViewEntity,
   UserEntity,
   UserRoleEntity
@@ -578,6 +579,28 @@ export class RecipientsService extends BaseService {
     );
   }
 
+  async organisationInfo(organisationId: string): Promise<{
+    id: string;
+    name: string;
+    acronym: null | string;
+  }> {
+    const dbOrganisation = await this.sqlConnection
+      .createQueryBuilder(OrganisationEntity, 'organisation')
+      .select(['organisation.id', 'organisation.name', 'organisation.acronym'])
+      .where('organisation.id = :organisationId', { organisationId })
+      .getOne();
+
+    if (!dbOrganisation) {
+      throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND);
+    }
+
+    return {
+      id: dbOrganisation.id,
+      name: dbOrganisation.name,
+      acronym: dbOrganisation.acronym
+    };
+  }
+
   async organisationUnitInfo(organisationUnitId: string): Promise<{
     organisation: { id: string; name: string; acronym: null | string };
     organisationUnit: { id: string; name: string; acronym: string };
@@ -931,8 +954,8 @@ export class RecipientsService extends BaseService {
       .getMany();
 
     const suggestedUnits = new Set(
-      suggestions.flatMap(
-        s => (s.suggestedOrganisationUnits ?? [])?.map(su => ({ unitId: su.id, orgId: su.organisationId }))
+      suggestions.flatMap(s =>
+        (s.suggestedOrganisationUnits ?? [])?.map(su => ({ unitId: su.id, orgId: su.organisationId }))
       )
     );
 

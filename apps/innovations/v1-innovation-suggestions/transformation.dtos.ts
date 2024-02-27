@@ -1,12 +1,3 @@
-import type { InnovationSuggestionAccessor } from '../_types/innovation.types';
+import type { InnovationSuggestionsType } from '../_types/innovation.types';
 
-export type ResponseDTO = {
-  accessors: InnovationSuggestionAccessor[];
-  assessment: {
-    suggestedOrganisations: {
-      id: string;
-      name: string;
-      acronym: string | null;
-    }[];
-  };
-};
+export type ResponseDTO = InnovationSuggestionsType;

@@ -1,7 +1,7 @@
 import { container } from '../_config';
 
 import { MAX_FILES_ALLOWED } from '@innovations/shared/constants';
-import { InnovationFileEntity } from '@innovations/shared/entities';
+import { InnovationEntity, InnovationFileEntity } from '@innovations/shared/entities';
 import {
   InnovationFileContextTypeEnum,
   InnovationStatusEnum,
@@ -9,12 +9,14 @@ import {
   ServiceRoleEnum
 } from '@innovations/shared/enums';
 import {
+  ConflictError,
   ForbiddenError,
   InnovationErrorsEnum,
   NotFoundError,
   UnprocessableEntityError
 } from '@innovations/shared/errors';
 import { FileStorageService, NotifierService } from '@innovations/shared/services';
+import { AuthErrorsEnum } from '@innovations/shared/services/auth/authorization-validation.model';
 import { CompleteScenarioType, MocksHelper, TestsHelper } from '@innovations/shared/tests';
 import { InnovationFileBuilder, type TestFileType } from '@innovations/shared/tests/builders/innovation-file.builder';
 import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
@@ -49,6 +51,7 @@ describe('Services / Innovation File service suite', () => {
 
   describe('getFilesList', () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+    const context = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, 'innovatorRole');
 
     it('should return the list of files without using filters and fields, paginated and orded by name', async () => {
       const firstFileOrderedByName = { file: innovation.files.sectionFileByJohn, url: randUrl() };
@@ -59,7 +62,13 @@ describe('Services / Innovation File service suite', () => {
         .mockReturnValueOnce(firstFileOrderedByName.url)
         .mockReturnValueOnce(secondFileOrderedByName.url);
 
-      const files = await sut.getFilesList(innovation.id, {}, { take: 2, skip: 0, order: { name: 'ASC' } }, em);
+      const files = await sut.getFilesList(
+        context,
+        innovation.id,
+        {},
+        { take: 2, skip: 0, order: { name: 'ASC' } },
+        em
+      );
 
       expect(files).toMatchObject({
         count: Object.keys(innovation.files).length,
@@ -84,6 +93,7 @@ describe('Services / Innovation File service suite', () => {
       jest.spyOn(FileStorageService.prototype, 'getDownloadUrl').mockReturnValueOnce(paulFile.url);
 
       const files = await sut.getFilesList(
+        context,
         innovation.id,
         { name: paulFile.file.name },
         { take: 20, skip: 0, order: { name: 'ASC' } },
@@ -120,6 +130,7 @@ describe('Services / Innovation File service suite', () => {
         .mockReturnValueOnce(innovationCreatedAfterTodayFile.url);
 
       const files = await sut.getFilesList(
+        context,
         innovation.id,
         { uploadedBy: [ServiceRoleEnum.INNOVATOR] },
         { take: 20, skip: 0, order: { createdAt: 'ASC' } },
@@ -169,6 +180,7 @@ describe('Services / Innovation File service suite', () => {
         .mockReturnValueOnce(innovationCollaboratorFile.url);
 
       const files = await sut.getFilesList(
+        context,
         innovation.id,
         { contextTypes: [InnovationFileContextTypeEnum.INNOVATION_SECTION] },
         { take: 2, skip: 0, order: { createdAt: 'ASC' } },
@@ -206,6 +218,7 @@ describe('Services / Innovation File service suite', () => {
         .mockReturnValueOnce(innovationFileByAlice.url);
 
       const files = await sut.getFilesList(
+        context,
         innovation.id,
         { contextId: innovation.id },
         { take: 3, skip: 0, order: { createdAt: 'ASC' } },
@@ -252,6 +265,7 @@ describe('Services / Innovation File service suite', () => {
         .mockReturnValueOnce(innovationFileByIngrid.url);
 
       const files = await sut.getFilesList(
+        context,
         innovation.id,
         { units: [scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id] },
         { take: 3, skip: 0, order: { createdAt: 'ASC' } },
@@ -290,6 +304,7 @@ describe('Services / Innovation File service suite', () => {
       jest.spyOn(FileStorageService.prototype, 'getDownloadUrl').mockReturnValueOnce(futureFile.url);
 
       const files = await sut.getFilesList(
+        context,
         innovation.id,
         {
           dateFilter: [
@@ -324,6 +339,7 @@ describe('Services / Innovation File service suite', () => {
       jest.spyOn(FileStorageService.prototype, 'getDownloadUrl').mockReturnValueOnce(innovationDeletedUserFile.url);
 
       const files = await sut.getFilesList(
+        context,
         innovation.id,
         { name: innovationDeletedUserFile.file.name },
         { take: 20, skip: 0, order: { createdAt: 'ASC' } },
@@ -355,6 +371,7 @@ describe('Services / Innovation File service suite', () => {
         .mockReturnValueOnce(innovationCollaboratorFile.url);
 
       const files = await sut.getFilesList(
+        context,
         innovation.id,
         { uploadedBy: [ServiceRoleEnum.INNOVATOR] },
         { take: 3, skip: 0, order: { createdAt: 'ASC' } },
@@ -402,6 +419,7 @@ describe('Services / Innovation File service suite', () => {
         .mockReturnValueOnce(innovationOwnerFile.url);
 
       const files = await sut.getFilesList(
+        context,
         innovation.id,
         { uploadedBy: [ServiceRoleEnum.INNOVATOR] },
         { take: 4, skip: 0, order: { contextType: 'ASC' } },
@@ -438,6 +456,7 @@ describe('Services / Innovation File service suite', () => {
 
     it('should return an empty array when no files are found', async () => {
       const files = await sut.getFilesList(
+        context,
         innovation.id,
         { name: randAirportName() },
         { take: 20, skip: 0, order: { name: 'ASC' } },
@@ -446,6 +465,56 @@ describe('Services / Innovation File service suite', () => {
 
       expect(files.count).toBe(0);
       expect(files.data).toHaveLength(0);
+    });
+
+    describe('archived innovations', () => {
+      const mock = jest.spyOn(FileStorageService.prototype, 'getDownloadUrl').mockReturnValue(randUrl());
+      const innovationFiles = scenario.users.johnInnovator.innovations.johnInnovation.files;
+
+      beforeEach(async () => {
+        await em.update(
+          InnovationEntity,
+          { id: innovation.id },
+          { status: InnovationStatusEnum.ARCHIVED, statusUpdatedAt: new Date() }
+        );
+      });
+
+      afterAll(() => {
+        mock.mockRestore();
+      });
+
+      it.each([
+        ['innovator', scenario.users.johnInnovator],
+        ['admin', scenario.users.allMighty]
+      ])('should return the list of all files for an archived innovation as %s', async (_label, user) => {
+        scenario.users.johnInnovator.innovations.johnInnovation;
+        const files = await sut.getFilesList(
+          DTOsHelper.getUserRequestContext(user),
+          innovation.id,
+          {},
+          { take: 20, skip: 0, order: { name: 'ASC' } },
+          em
+        );
+        expect(files.data.length).toBe(Object.values(innovationFiles).length);
+      });
+
+      it.each([
+        ['qualifying accessor', scenario.users.aliceQualifyingAccessor],
+        ['accessor', scenario.users.samAccessor],
+        ['needs assessment', scenario.users.paulNeedsAssessor]
+      ])('should exclude files uploaded after archive for A/QA/NA roles', async (_label, user) => {
+        scenario.users.johnInnovator.innovations.johnInnovation;
+        const files = await sut.getFilesList(
+          DTOsHelper.getUserRequestContext(user),
+          innovation.id,
+          {},
+          { take: 20, skip: 0, order: { name: 'ASC' } },
+          em
+        );
+        // there is one file in the future so it's after the archive (now)
+        expect(files.data.length).toBe(Object.values(innovationFiles).length - 1);
+        expect(files.data.some(f => f.id === innovationFiles.innovationFileUploadedAfterToday.id)).toBe(false);
+      });
     });
   });
 
@@ -625,6 +694,34 @@ describe('Services / Innovation File service suite', () => {
       }
     );
 
+    describe('When innovation is archived', () => {
+      beforeEach(async () => {
+        await em.update(InnovationEntity, { id: innovation.id }, { status: InnovationStatusEnum.ARCHIVED });
+      });
+
+      it('should allow delete if is from an innovator and is a section file', async () => {
+        const file = userMap.get('johnInnovator')!.file;
+        const result = await sut.getFileInfo(
+          DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
+          innovation.id,
+          file.id,
+          em
+        );
+        expect(result.canDelete).toBe(true);
+      });
+
+      it('should not allow deletion if is not an innovator', async () => {
+        const file = userMap.get('johnInnovator')!.file;
+        const result = await sut.getFileInfo(
+          DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+          innovation.id,
+          file.id,
+          em
+        );
+        expect(result.canDelete).toBe(false);
+      });
+    });
+
     describe('As any role', () => {
       describe("when I request a file information about a file that doesn't exist", () => {
         it('should return a not found error', async () => {
@@ -751,6 +848,57 @@ describe('Services / Innovation File service suite', () => {
             em
           )
         ).rejects.toThrowError(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_FILE_FORBIDDEN_SECTION));
+      });
+
+      it.each([
+        [InnovationFileContextTypeEnum.INNOVATION_SECTION, 'INNOVATION_DESCRIPTION'],
+        [InnovationFileContextTypeEnum.INNOVATION_EVIDENCE, randUuid()]
+      ])('should allow uploading %s if the innovation is archived', async (type, id) => {
+        const innovation = scenario.users.johnInnovator.innovations.johnInnovationArchived;
+        const data = {
+          context: { id, type },
+          name: randFileName(),
+          file: {
+            id: randFileName(),
+            name: randFileName(),
+            size: randNumber(),
+            extension: 'pdf'
+          }
+        };
+
+        const file = await sut.createFile(
+          DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, 'innovatorRole'),
+          innovation.id,
+          data,
+          innovation.status,
+          em
+        );
+
+        expect(file).toHaveProperty('id');
+      });
+
+      it("shouldn't allow uploading other files if the innovation is archived", async () => {
+        const innovation = scenario.users.johnInnovator.innovations.johnInnovationArchived;
+        const data = {
+          context: { type: InnovationFileContextTypeEnum.INNOVATION, id: '' },
+          name: randFileName(),
+          file: {
+            id: randFileName(),
+            name: randFileName(),
+            size: randNumber(),
+            extension: 'pdf'
+          }
+        };
+
+        await expect(() =>
+          sut.createFile(
+            DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, 'innovatorRole'),
+            scenario.users.johnInnovator.innovations.johnInnovationArchived.id,
+            data,
+            innovation.status,
+            em
+          )
+        ).rejects.toThrow(new ConflictError(AuthErrorsEnum.AUTH_INNOVATION_ARCHIVED_CONFLICT));
       });
     });
 
@@ -1057,6 +1205,30 @@ describe('Services / Innovation File service suite', () => {
         ['innovation collaborator', innovation.files.sectionFileByJane.id]
       ])('should throw an error if the file was created by a %s', async (_: string, fileId: string) => {
         await expect(() => sut.deleteFile(domainContext, fileId, em)).rejects.toThrowError(
+          new ForbiddenError(InnovationErrorsEnum.INNOVATION_FILE_NO_PERMISSION_TO_DELETE)
+        );
+      });
+    });
+
+    describe('when Innovator deletes archived innovation file', () => {
+      const sectionFile = innovation.files.sectionFileByJohn.id;
+      const evidenceFile = innovation.files.evidenceFileByJohn.id;
+      const notSectionFile = innovation.files.innovationFileByDeletedUser.id;
+      const domainContext = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, 'innovatorRole');
+
+      it("should delete the file if it's a section file", async () => {
+        await em.update(InnovationEntity, { id: innovation.id }, { status: InnovationStatusEnum.ARCHIVED });
+        await sut.deleteFile(domainContext, sectionFile, em);
+      });
+
+      it("should delete the file if it's a evidence file", async () => {
+        await em.update(InnovationEntity, { id: innovation.id }, { status: InnovationStatusEnum.ARCHIVED });
+        await sut.deleteFile(domainContext, evidenceFile, em);
+      });
+
+      it('should fail if the file is not a section file', async () => {
+        await em.update(InnovationEntity, { id: innovation.id }, { status: InnovationStatusEnum.ARCHIVED });
+        await expect(() => sut.deleteFile(domainContext, notSectionFile, em)).rejects.toThrow(
           new ForbiddenError(InnovationErrorsEnum.INNOVATION_FILE_NO_PERMISSION_TO_DELETE)
         );
       });

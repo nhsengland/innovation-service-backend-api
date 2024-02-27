@@ -55,6 +55,7 @@ describe('Innovation Assessments Suite', () => {
   const innovationWithoutAssessment = scenario.users.adamInnovator.innovations.adamInnovation;
   const innovationWithAssessmentInProgress =
     scenario.users.ottoOctaviusInnovator.innovations.brainComputerInterfaceInnovation;
+  const innovationWithArchivedStatus = scenario.users.johnInnovator.innovations.johnInnovationArchived;
 
   describe('getInnovationAssessmentInfo', () => {
     const naUser = DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor);
@@ -331,6 +332,45 @@ describe('Innovation Assessments Suite', () => {
       });
     });
 
+    it('should create a ressessment and restore old supports', async () => {
+      await em.update(
+        InnovationSupportEntity,
+        { innovation: { id: innovationWithAssessment.id } },
+        { status: InnovationSupportStatusEnum.CLOSED }
+      );
+      await em.update(InnovationEntity, { id: innovationWithAssessment.id }, { status: InnovationStatusEnum.ARCHIVED });
+
+      await sut.createInnovationReassessment(
+        DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
+        innovationWithAssessment.id,
+        { updatedInnovationRecord: 'YES', description: randText() },
+        em
+      );
+
+      const supports = await em
+        .createQueryBuilder(InnovationSupportEntity, 'support')
+        .select(['support.id', 'support.status', 'userRoles.id'])
+        .leftJoin('support.userRoles', 'userRoles')
+        .where('support.innovation_id = :innovationId', { innovationId: innovationWithAssessment.id })
+        .getMany();
+
+      const prevSupports = [
+        innovationWithAssessment.supports.supportByHealthOrgUnit,
+        innovationWithAssessment.supports.supportByMedTechOrgUnit,
+        innovationWithAssessment.supports.supportByHealthOrgAiUnit
+      ];
+      for (const prevSupport of prevSupports) {
+        const current = supports.find(s => s.id === prevSupport.id);
+        if (prevSupport.status === InnovationSupportStatusEnum.ENGAGING) {
+          expect(current?.status).toBe(InnovationSupportStatusEnum.UNASSIGNED);
+          expect(current?.userRoles).toHaveLength(0);
+        } else {
+          expect(current?.status).toBe(prevSupport.status);
+          expect(current?.userRoles.map(r => r.id)).toMatchObject(prevSupport.userRoles);
+        }
+      }
+    });
+
     it('should not create a reassessment if the innovation has no assessment', async () => {
       await expect(async () =>
         sut.createInnovationReassessment(
@@ -340,6 +380,17 @@ describe('Innovation Assessments Suite', () => {
           em
         )
       ).rejects.toThrowError(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND));
+    });
+
+    it('should not create a reassessment if the innovation is in archived status and user is a collaborator', async () => {
+      await expect(async () =>
+        sut.createInnovationReassessment(
+          DTOsHelper.getUserRequestContext(scenario.users.janeInnovator),
+          innovationWithArchivedStatus.id,
+          { updatedInnovationRecord: 'YES', description: randText() },
+          em
+        )
+      ).rejects.toThrow(new ForbiddenError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_MUST_BE_OWNER));
     });
 
     it('should not create a reassessment if the innovation has ongoing supports', async () => {

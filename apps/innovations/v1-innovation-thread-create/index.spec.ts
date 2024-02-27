@@ -89,5 +89,30 @@ describe('v1-innovation-thread-create Suite', () => {
 
       expect(result.status).toBe(status);
     });
+
+    it.each([
+      ['QA', 409, scenario.users.aliceQualifyingAccessor],
+      ['A', 409, scenario.users.ingridAccessor],
+      ['NA', 409, scenario.users.paulNeedsAssessor],
+      ['Innovator owner', 409, scenario.users.johnInnovator],
+      ['Innovator collaborator', 409, scenario.users.janeInnovator]
+    ])(
+      'access with user %s should give conflict in the thread',
+      async (_role: string, status: number, user: TestUserType) => {
+        const result = await new AzureHttpTriggerBuilder()
+          .setAuth(user)
+          .setParams<ParamsType>({
+            innovationId: scenario.users.johnInnovator.innovations.johnInnovationArchived.id
+          })
+          .setBody<BodyType>({
+            message: randText(),
+            subject: randText(),
+            followerUserRoleIds: [randUuid()]
+          })
+          .call<ErrorResponseType>(azureFunction);
+
+        expect(result.status).toBe(status);
+      }
+    );
   });
 });

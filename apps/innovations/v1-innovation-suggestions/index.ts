@@ -27,6 +27,7 @@ class V1InnovationsSuggestionList {
         .validate(context)
         .setInnovation(params.innovationId)
         .checkInnovatorType()
+        .checkAccessorType()
         .checkInnovation()
         .verify();
 

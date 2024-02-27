@@ -3,6 +3,7 @@ import type { EntityManager } from 'typeorm';
 
 import {
   InnovationCollaboratorEntity,
+  InnovationEntity,
   InnovationTransferEntity,
   OrganisationEntity,
   TermsOfUseEntity,
@@ -23,10 +24,17 @@ import {
 } from '@users/shared/enums';
 import { NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
 import type { PaginationQueryParamsType } from '@users/shared/helpers';
-import type { CacheConfigType, CacheService, IdentityProviderService, NotifierService } from '@users/shared/services';
+import type {
+  CacheConfigType,
+  CacheService,
+  DomainService,
+  IdentityProviderService,
+  NotifierService
+} from '@users/shared/services';
 import SHARED_SYMBOLS from '@users/shared/services/symbols';
 
 import { BaseService } from './base.service';
+import type { DomainContextType } from '@users/shared/types';
 
 @injectable()
 export class UsersService extends BaseService {
@@ -36,7 +44,8 @@ export class UsersService extends BaseService {
     @inject(SHARED_SYMBOLS.CacheService) cacheService: CacheService,
     @inject(SHARED_SYMBOLS.IdentityProviderService)
     private identityProviderService: IdentityProviderService,
-    @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService
+    @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
+    @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService
   ) {
     super();
     this.cache = cacheService.get('IdentityUserInfo');
@@ -424,5 +433,121 @@ export class UsersService extends BaseService {
     }));
 
     return data;
+  }
+
+  async deleteUser(
+    domainContext: DomainContextType,
+    data: { reason: string },
+    entityManager?: EntityManager
+  ): Promise<void> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const dbUser = await em
+      .createQueryBuilder(UserEntity, 'user')
+      .innerJoinAndSelect('user.serviceRoles', 'roles')
+      .where('user.id = :userId', { userId: domainContext.id })
+      .getOne();
+    if (!dbUser) {
+      throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND);
+    }
+
+    const user = await this.identityProviderService.getUserInfo(dbUser.identityId);
+    if (!user) {
+      throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
+    }
+
+    const innovationsWithPendingTransfer: { id: string; transferExpireDate: string }[] = [];
+
+    return em.transaction(async transaction => {
+      // If user has innovator role, deals with it's innovations.
+      const userInnovatorRole = dbUser.serviceRoles.find(item => item.role === ServiceRoleEnum.INNOVATOR);
+
+      if (userInnovatorRole) {
+        const dbInnovations = await this.domainService.innovations.getInnovationsByOwnerId(dbUser.id, transaction);
+
+        await this.domainService.innovations.bulkUpdateCollaboratorStatusByEmail(
+          transaction,
+          { id: dbUser.id, email: user.email },
+          { current: InnovationCollaboratorStatusEnum.PENDING, next: InnovationCollaboratorStatusEnum.DECLINED }
+        );
+        await this.domainService.innovations.bulkUpdateCollaboratorStatusByEmail(
+          transaction,
+          { id: dbUser.id, email: user.email },
+          { current: InnovationCollaboratorStatusEnum.ACTIVE, next: InnovationCollaboratorStatusEnum.LEFT }
+        );
+
+        const archiveResponse = await this.domainService.innovations.archiveInnovationsWithDeleteSideffects(
+          domainContext,
+          dbInnovations.filter(i => i.expirationTransferDate === null).map(i => ({ id: i.id, reason: data.reason })),
+          transaction
+        );
+
+        for (const dbInnovation of dbInnovations.filter(i => i.expirationTransferDate !== null)) {
+          innovationsWithPendingTransfer.push({
+            id: dbInnovation.id,
+            transferExpireDate: dbInnovation.expirationTransferDate
+              ? dbInnovation.expirationTransferDate.toDateString()
+              : ''
+          });
+
+          await transaction
+            .getRepository(InnovationEntity)
+            .update(
+              { id: dbInnovation.id },
+              { updatedBy: dbUser.id, owner: null, expires_at: dbInnovation.expirationTransferDate }
+            );
+        }
+
+        // Send notification to collaborators if there are innovations with pending transfer
+        await this.notifierService.send(domainContext, NotifierTypeEnum.ACCOUNT_DELETION, {
+          innovations: [
+            ...innovationsWithPendingTransfer,
+            ...archiveResponse.map(item => ({
+              id: item.id,
+              affectedUsers: item.affectedUsers.filter(user => user.userType === ServiceRoleEnum.INNOVATOR)
+            }))
+          ]
+        });
+      }
+
+      await transaction.update(UserRoleEntity, { user: { id: dbUser.id } }, { isActive: false });
+
+      await transaction.update(
+        UserEntity,
+        { id: dbUser.id },
+        { deleteReason: data.reason, status: UserStatusEnum.DELETED }
+      );
+
+      // If all went well, deleted from B2C.
+      await this.identityProviderService.deleteUser(dbUser.identityId);
+    });
+  }
+
+  async getUserMfaInfo(
+    domainContext: DomainContextType
+  ): Promise<{ type: 'none' } | { type: 'email' } | { type: 'phone'; phoneNumber?: string }> {
+    const type = await this.identityProviderService.getMfaExtensionType(domainContext.identityId);
+
+    if (type === 'phone') {
+      const phoneNumber = await this.identityProviderService.getMfaPhoneNumber(domainContext.identityId);
+      return { type, phoneNumber: phoneNumber ?? undefined };
+    }
+
+    return { type };
+  }
+
+  async upsertUserMfa(
+    domainContext: DomainContextType,
+    data: { type: 'none' } | { type: 'email' } | { type: 'phone'; phoneNumber: string }
+  ): Promise<void> {
+    const type = await this.identityProviderService.getMfaExtensionType(domainContext.identityId);
+
+    if (data.type === 'phone') {
+      await this.identityProviderService.upsertMfaPhoneNumber(domainContext.identityId, data.phoneNumber);
+    } else if (data.type === type) {
+      return;
+    }
+
+    await this.identityProviderService.updateMfaExtensionType(domainContext.identityId, data.type);
   }
 }

@@ -3,7 +3,7 @@ import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
 import { InnovationStatusEnum } from '@innovations/shared/enums';
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import type { AuthorizationService } from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { CustomContextType } from '@innovations/shared/types';
@@ -31,9 +31,7 @@ class V1InnovationReassessmentRequestCreate {
         .validate(context)
         .setInnovation(params.innovationId)
         .checkInnovatorType()
-        .checkInnovation({
-          status: [InnovationStatusEnum.IN_PROGRESS, InnovationStatusEnum.PAUSED]
-        })
+        .checkInnovation({ status: [InnovationStatusEnum.IN_PROGRESS, InnovationStatusEnum.ARCHIVED] })
         .verify();
       const domainContext = auth.getContext();
 
@@ -60,64 +58,18 @@ export default openApi(
       description: 'Create a reassessment request for an innovation.',
       summary: 'Create a reassessment request for an innovation.',
       tags: ['[v1] Innovation Assessments'],
-      parameters: [
-        {
-          name: 'innovationId',
-          in: 'path',
-          description: 'Innovation ID',
-          required: true,
-          schema: {
-            type: 'string',
-            format: 'uuid'
-          }
-        }
-      ],
-      requestBody: {
-        description: 'Create a reassessment request for an innovation.',
-        required: true,
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                updatedInnovationRecord: {
-                  type: 'string',
-                  description: 'Updated innovation record since submitting the last assessment.',
-                  example: 'YES'
-                },
-                description: {
-                  type: 'string',
-                  description:
-                    'Changes made to the innovation since submitting the last assessment and what support you need next'
-                }
-              },
-              required: ['updatedInnovationRecord', 'changes']
-            }
-          }
-        }
-      },
+      parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
+      requestBody: SwaggerHelper.bodyJ2S(BodySchema, {
+        description: 'Create a reassessment request for an innovation.'
+      }),
       responses: {
-        200: {
-          description: 'Returns the reassessment request and the cloned assessment id'
-        },
-        400: {
-          description: 'Bad request'
-        },
-        401: {
-          description: 'Unauthorized'
-        },
-        403: {
-          description: 'Forbidden'
-        },
-        404: {
-          description: 'Not found'
-        },
-        422: {
-          description: 'Unprocessable entity'
-        },
-        500: {
-          description: 'Internal server error'
-        }
+        200: { description: 'Returns the reassessment request and the cloned assessment id' },
+        400: { description: 'Bad request' },
+        401: { description: 'Unauthorized' },
+        403: { description: 'Forbidden' },
+        404: { description: 'Not found' },
+        422: { description: 'Unprocessable entity' },
+        500: { description: 'Internal server error' }
       }
     }
   }

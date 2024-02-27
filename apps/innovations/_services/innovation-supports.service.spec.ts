@@ -483,6 +483,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
 
     it('should return the unit information', async () => {
+      const johnInnovator = scenario.users.johnInnovator;
       const jamieMadrox = scenario.users.jamieMadroxAccessor;
       const alice = scenario.users.aliceQualifyingAccessor;
       const paul = scenario.users.paulNeedsAssessor;
@@ -516,14 +517,48 @@ describe('Innovations / _services / innovation-supports suite', () => {
         .setCreatedBy(jamieMadrox, jamieMadrox.roles.aiRole)
         .setParams({ title: randText() })
         .save();
+      // Archive Innovation
+      const archiveInnovationUpdate = await new InnovationSupportLogBuilder(em)
+        .setInnovation(innovation.id)
+        .setLogType(InnovationSupportLogTypeEnum.INNOVATION_ARCHIVED)
+        .setSupportStatus(InnovationSupportStatusEnum.CLOSED)
+        .setCreatedBy(johnInnovator, johnInnovator.roles.innovatorRole)
+        .setOrganisationUnit(jamieMadrox.roles.aiRole.organisationUnit!.id)
+        .save();
+      // Innovator stop share Innovation
+      const stopShareUpdate = await new InnovationSupportLogBuilder(em)
+        .setInnovation(innovation.id)
+        .setLogType(InnovationSupportLogTypeEnum.STOP_SHARE)
+        .setSupportStatus(InnovationSupportStatusEnum.CLOSED)
+        .setCreatedBy(johnInnovator, johnInnovator.roles.innovatorRole)
+        .setOrganisationUnit(jamieMadrox.roles.aiRole.organisationUnit!.id)
+        .save();
 
       const unitInfo = await sut.getSupportSummaryUnitInfo(
+        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
         innovation.id,
         scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id,
         em
       );
 
       expect(unitInfo).toMatchObject([
+        {
+          id: stopShareUpdate.id,
+          createdAt: stopShareUpdate.createdAt,
+          createdBy: { id: johnInnovator.id, name: johnInnovator.name, displayRole: 'Owner' },
+          type: 'STOP_SHARE',
+          params: { supportStatus: InnovationSupportStatusEnum.CLOSED }
+        },
+        {
+          id: archiveInnovationUpdate.id,
+          createdAt: archiveInnovationUpdate.createdAt,
+          createdBy: { id: johnInnovator.id, name: johnInnovator.name, displayRole: 'Owner' },
+          type: 'INNOVATION_ARCHIVED',
+          params: {
+            supportStatus: InnovationSupportStatusEnum.CLOSED,
+            message: archiveInnovationUpdate.description
+          }
+        },
         {
           id: progressUpdate.id,
           createdAt: progressUpdate.createdAt,
@@ -578,6 +613,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
     it("should throw NotFoundError when innovation doesn't exist", async () => {
       await expect(() =>
         sut.getSupportSummaryUnitInfo(
+          DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
           randUuid(),
           scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id,
           em

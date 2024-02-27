@@ -202,6 +202,14 @@ export class CompleteScenarioBuilder {
         .setStatus(InnovationStatusEnum.IN_PROGRESS)
         .save();
 
+      // Archived Innovation owned by johnInnovator with janeCollaboratorArchive as ACTIVE collaborator
+      const johnInnovationArchived = await new InnovationBuilder(entityManager)
+        .setOwner(johnInnovator.id)
+        .setStatus(InnovationStatusEnum.ARCHIVED)
+        .shareWith([healthOrg, medTechOrg])
+        .addSection('INNOVATION_DESCRIPTION')
+        .save();
+
       // Jane Innovator specs:
       // Collaborator on jonhInnovation
       const janeInnovator = await new UserBuilder(entityManager)
@@ -215,6 +223,14 @@ export class CompleteScenarioBuilder {
         .setEmail(janeInnovator.email)
         .setRole()
         .setInnovation(johnInnovation.id)
+        .save();
+
+      // Add janeInnovator as a collaborator on johnInnovationArchived
+      const janeCollaboratorArchived = await new InnovationCollaboratorBuilder(entityManager)
+        .setUser(janeInnovator.id)
+        .setEmail(janeInnovator.email)
+        .setRole()
+        .setInnovation(johnInnovationArchived.id)
         .save();
 
       // Add elisaPendingCollaborator as a pending collaborator on johnInnovation
@@ -280,6 +296,13 @@ export class CompleteScenarioBuilder {
         .setInnovation(johnInnovation.id)
         .setCreatedBy(aliceQualifyingAccessor, aliceQualifyingAccessor.roles['qaRole']!)
         .setSupportStatus(InnovationSupportStatusEnum.UNASSIGNED)
+        .save();
+
+      // Add a boilerplate support to the john archived innovation
+      await new InnovationSupportBuilder(entityManager)
+        .setStatus(InnovationSupportStatusEnum.CLOSED)
+        .setInnovation(johnInnovationArchived.id)
+        .setOrganisationUnit(healthOrgUnit.id)
         .save();
 
       // task on johnInnovation created by Alice (QA)
@@ -702,6 +725,12 @@ export class CompleteScenarioBuilder {
             roles: { innovatorRole: johnInnovator.roles['innovatorRole']! },
             innovations: {
               johnInnovationEmpty: johnInnovationEmpty,
+              johnInnovationArchived: {
+                ...johnInnovationArchived,
+                collaborators: {
+                  janeCollaborator: janeCollaboratorArchived
+                }
+              },
               johnInnovation: {
                 ...johnInnovation,
                 supports: {
@@ -760,6 +789,7 @@ export class CompleteScenarioBuilder {
                   adamCollaborator: adamCollaborator,
                   elisaPendingCollaborator: elisaPendingCollaborator,
                   janeCollaborator: janeCollaborator,
+                  janeCollaboratorArchived: janeCollaboratorArchived,
                   sebastiaoCollaborator: sebastiaoCollaborator
                 },
                 sections: {

@@ -1,6 +1,7 @@
 import type { ServiceRoleEnum } from '../enums';
 import type {
   InnovationCollaboratorStatusEnum,
+  InnovationStatusEnum,
   InnovationSupportStatusEnum,
   InnovationTaskStatusEnum
 } from '../enums/innovation.enums';
@@ -10,7 +11,11 @@ export type NotifierTemplatesType = {
   // Account
   [NotifierTypeEnum.ACCOUNT_CREATION]: Record<string, never>;
   [NotifierTypeEnum.ACCOUNT_DELETION]: {
-    innovations: { id: string; name: string; transferExpireDate: string }[];
+    innovations: {
+      id: string;
+      transferExpireDate?: string;
+      affectedUsers?: { userId: string; userType: ServiceRoleEnum; unitId?: string }[];
+    }[];
   };
 
   // Admin
@@ -46,10 +51,20 @@ export type NotifierTemplatesType = {
   // // Stop Sharing
   [NotifierTypeEnum.INNOVATION_STOP_SHARING]: {
     innovationId: string;
+    organisationId: string;
+    affectedUsers?: {
+      roleIds: string[];
+    };
+  };
+  // // Archive
+  [NotifierTypeEnum.INNOVATION_ARCHIVE]: {
+    innovationId: string;
     message: string;
+    previousStatus: InnovationStatusEnum;
+    reassessment: boolean;
     affectedUsers: {
-      id: string;
-      role: ServiceRoleEnum;
+      userId: string;
+      userType: ServiceRoleEnum;
       unitId?: string;
     }[];
   };
@@ -61,18 +76,6 @@ export type NotifierTemplatesType = {
   [NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_COMPLETED]: {
     innovationId: string;
     transferId: string;
-  };
-  // // Withdraw
-  [NotifierTypeEnum.INNOVATION_WITHDRAWN]: {
-    innovation: {
-      id: string;
-      name: string;
-      affectedUsers: {
-        userId: string;
-        userType: ServiceRoleEnum;
-        unitId?: string;
-      }[];
-    };
   };
   // // Export Request
   [NotifierTypeEnum.EXPORT_REQUEST_SUBMITTED]: {

@@ -86,5 +86,25 @@ describe('v1-innovation-thread-unfollow', () => {
         expect(result.status).toBe(status);
       }
     );
+
+    it.each([
+      ['QA', 409, scenario.users.aliceQualifyingAccessor, 'qaRole'],
+      ['A', 409, scenario.users.ingridAccessor, 'accessorRole'],
+      ['NA', 409, scenario.users.paulNeedsAssessor, 'assessmentRole']
+    ])(
+      'access with user %s should give conflict in the unfollow',
+      async (_role: string, status: number, user: TestUserType, role: string) => {
+        const result = await new AzureHttpTriggerBuilder()
+          .setAuth(user)
+          .setParams<ParamsType>({
+            innovationId: scenario.users.johnInnovator.innovations.johnInnovationArchived.id,
+            threadId: randUuid(),
+            roleId: user.roles[role]!.id
+          })
+          .call<ErrorResponseType>(azureFunction);
+
+        expect(result.status).toBe(status);
+      }
+    );
   });
 });

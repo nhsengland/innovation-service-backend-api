@@ -122,6 +122,11 @@ export type InnovationSuggestionsType = {
       id: string;
       name: string;
       acronym: string | null;
+      organisationUnits: {
+        id: string;
+        name: string;
+        acronym: string | null;
+      }[];
     }[];
   };
 };
@@ -136,6 +141,11 @@ export type InnovationSuggestionAccessor = {
     id: string;
     name: string;
     acronym: string | null;
+    organisationUnits: {
+      id: string;
+      name: string;
+      acronym: string | null;
+    }[];
   }[];
 };
 

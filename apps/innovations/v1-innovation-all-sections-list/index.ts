@@ -28,6 +28,7 @@ class GetInnovationAllSectionsList {
       const auth = await authorizationService
         .validate(context)
         .setInnovation(params.innovationId)
+        .checkAdminType()
         .checkAssessmentType()
         .checkAccessorType()
         .checkInnovatorType()

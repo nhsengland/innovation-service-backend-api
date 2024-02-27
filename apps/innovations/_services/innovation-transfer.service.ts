@@ -290,8 +290,8 @@ export class InnovationTransferService extends BaseService {
     }
 
     // Update the transfer with new status & innovation with new owner if status is complete
-    return connection.transaction(async transactionManager => {
-      const savedTransfer = await transactionManager.save(InnovationTransferEntity, {
+    return connection.transaction(async transaction => {
+      const savedTransfer = await transaction.save(InnovationTransferEntity, {
         ...transfer,
         status,
         updatedBy: requestUser.id,
@@ -314,11 +314,11 @@ export class InnovationTransferService extends BaseService {
                 ? InnovationCollaboratorStatusEnum.ACTIVE
                 : InnovationCollaboratorStatusEnum.LEFT
             },
-            transactionManager
+            transaction
           );
         }
 
-        await transactionManager.update(
+        await transaction.update(
           InnovationEntity,
           { id: transfer.innovation.id },
           {
@@ -328,10 +328,10 @@ export class InnovationTransferService extends BaseService {
           }
         );
 
-        await this.collaboratorsService.deleteCollaborator(transfer.innovation.id, transfer.email, transactionManager);
+        await this.collaboratorsService.deleteCollaborator(transfer.innovation.id, transfer.email, transaction);
 
         await this.domainService.innovations.addActivityLog(
-          transactionManager,
+          transaction,
           {
             innovationId: transfer.innovation.id,
             activity: ActivityEnum.OWNERSHIP_TRANSFER,
@@ -349,11 +349,22 @@ export class InnovationTransferService extends BaseService {
 
         // It should run if there is no innovation owner
         if (innovation && !innovation.owner) {
-          await this.domainService.innovations.withdrawInnovations(
-            { id: '', roleId: '' },
-            [{ id: transfer.innovation.id, reason: null }],
-            transactionManager
+          const domainContext = await this.domainService.users.getInnovatorDomainContextByRoleId(
+            transfer.createdBy,
+            transaction
           );
+          if (domainContext) {
+            await this.domainService.innovations.archiveInnovationsWithDeleteSideffects(
+              domainContext,
+              [
+                {
+                  id: innovation.id,
+                  reason: 'The owner deleted their account and the request to transfer ownership was declined.'
+                }
+              ],
+              transaction
+            );
+          }
         }
       }
 

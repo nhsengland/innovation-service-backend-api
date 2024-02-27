@@ -4,9 +4,11 @@ import {
   InnovationAssessmentEntity,
   InnovationEntity,
   InnovationReassessmentRequestEntity,
+  InnovationSupportEntity,
   OrganisationEntity,
   OrganisationUnitEntity,
-  UserEntity
+  UserEntity,
+  UserRoleEntity
 } from '@innovations/shared/entities';
 import {
   ActivityEnum,
@@ -389,7 +391,7 @@ export class InnovationAssessmentsService extends BaseService {
   }
 
   /**
-   * @param user - The user requesting the action. In this case, it's an innovator.
+   * @param domainContext - The user requesting the action. In this case, it's an innovator.
    * @param innovationId
    * @param data - The data to be used to create the new assessment request.
    * @returns - The assessment request id and the new assessment id.
@@ -402,18 +404,34 @@ export class InnovationAssessmentsService extends BaseService {
   ): Promise<{ assessment: { id: string }; reassessment: { id: string } }> {
     const connection = entityManager ?? this.sqlConnection.manager;
 
-    // If it has at least one ongoing support, cannot request reassessment.
-    const hasOngoingSupports = await connection
+    const innovation = await connection
       .createQueryBuilder(InnovationEntity, 'innovation')
-      .innerJoin('innovation.innovationSupports', 'supports')
+      .select([
+        'innovation.id',
+        'innovation.status',
+        'innovationOwner.id',
+        'support.id',
+        'support.status',
+        'support.archiveSnapshot'
+      ])
+      .leftJoin('innovation.owner', 'innovationOwner')
+      .innerJoin('innovation.innovationSupports', 'support')
       .where('innovation.id = :innovationId', { innovationId })
-      .andWhere('innovation.status = :innovationStatus', {
-        innovationStatus: InnovationStatusEnum.IN_PROGRESS
-      })
-      .andWhere('supports.status = :engagingStatus', { engagingStatus: InnovationSupportStatusEnum.ENGAGING })
-      .getCount();
-    if (hasOngoingSupports > 0) {
+      .getOne();
+    if (
+      innovation &&
+      innovation.status === InnovationStatusEnum.IN_PROGRESS &&
+      innovation.innovationSupports?.some(s => s.status === InnovationSupportStatusEnum.ENGAGING)
+    ) {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_CANNOT_REQUEST_REASSESSMENT);
+    }
+
+    if (
+      innovation &&
+      innovation.status === InnovationStatusEnum.ARCHIVED &&
+      innovation.owner?.id !== domainContext.id
+    ) {
+      throw new ForbiddenError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_MUST_BE_OWNER);
     }
 
     // Get the latest assessment record.
@@ -430,6 +448,7 @@ export class InnovationAssessmentsService extends BaseService {
     }
 
     const result = await connection.transaction(async transaction => {
+      // 0. Restore old supports if they exist and innovation is ARCHIVED
       // 1. Update the innovation status to WAITING_NEEDS_ASSESSMENT
       // 2. Soft deletes the previous assessment record
       // 3. Create a new assessment record copied from the previously soft deleted one and sets deleted_at = NULL
@@ -439,6 +458,33 @@ export class InnovationAssessmentsService extends BaseService {
 
       const now = new Date();
 
+      if (
+        innovation &&
+        innovation.status === InnovationStatusEnum.ARCHIVED &&
+        innovation.innovationSupports.length > 0
+      ) {
+        await transaction.save(
+          InnovationSupportEntity,
+          innovation.innovationSupports
+            .filter(support => support.archiveSnapshot !== null)
+            .map(support => {
+              const snapshot = support.archiveSnapshot;
+              if (snapshot) {
+                support.status =
+                  snapshot.status !== InnovationSupportStatusEnum.ENGAGING
+                    ? snapshot.status
+                    : InnovationSupportStatusEnum.UNASSIGNED;
+                support.userRoles =
+                  snapshot.status === InnovationSupportStatusEnum.WAITING
+                    ? snapshot.assignedAccessors.map(id => UserRoleEntity.new({ id }))
+                    : [];
+              }
+              support.archiveSnapshot = null;
+              return support;
+            })
+        );
+      }
+
       await transaction.update(
         InnovationEntity,
         { id: assessment.innovation.id },
@@ -446,6 +492,7 @@ export class InnovationAssessmentsService extends BaseService {
           lastAssessmentRequestAt: now,
           status: InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
           statusUpdatedAt: now,
+          archivedStatus: null,
           updatedBy: assessment.createdBy
         }
       );

@@ -180,6 +180,36 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
+  /v1/{innovationId}/archive:
+    patch:
+      summary: Archive an innovation
+      description: Archive an innovation.
+      operationId: v1-innovation-archive
+      tags:
+        - Innovation
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  maxLength: 2000
+              required:
+                - message
+              additionalProperties: false
+      responses:
+        "204":
+          description: Innovation archived successfully.
   /v1/{innovationId}/assessments/{assessmentId}:
     patch:
       summary: Update the assigned assessor of an innovation.
@@ -1042,6 +1072,7 @@ paths:
                 - id
                 - name
                 - status
+                - statusUpdatedAt
                 - groupedStatus
                 - submittedAt
                 - updatedAt
@@ -1062,6 +1093,8 @@ paths:
                 - support.id
                 - support.status
                 - support.updatedAt
+                - support.updatedBy
+                - support.closedReason
                 - owner.id
                 - owner.name
                 - owner.companyName
@@ -1084,6 +1117,7 @@ paths:
                 - RECEIVING_SUPPORT
                 - NO_ACTIVE_SUPPORT
                 - AWAITING_NEEDS_REASSESSMENT
+                - ARCHIVED
         - name: involvedAACProgrammes
           in: query
           required: false
@@ -1725,7 +1759,6 @@ paths:
                   type: string
                   enum:
                     - IN_PROGRESS
-                    - COMPLETE
                 x-required: true
               - type: array
                 items:
@@ -1736,8 +1769,7 @@ paths:
                     - NEEDS_ASSESSMENT
                     - IN_PROGRESS
                     - WITHDRAWN
-                    - COMPLETE
-                    - PAUSED
+                    - ARCHIVED
         - name: engagingOrganisations
           in: query
           required: false
@@ -1781,6 +1813,7 @@ paths:
                 - NO_ACTIVE_SUPPORT
                 - AWAITING_NEEDS_REASSESSMENT
                 - WITHDRAWN
+                - ARCHIVED
         - name: assignedToMe
           in: query
           required: false
@@ -2712,45 +2745,6 @@ paths:
           description: Success
         "400":
           description: Invalid payload
-  /v1/{innovationId}/pause:
-    patch:
-      summary: Pause an innovation
-      description: Pause an innovation.
-      operationId: v1-innovation-pause
-      tags:
-        - Innovation
-      parameters:
-        - name: innovationId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                message:
-                  type: string
-                  maxLength: 200
-                  description: Message provided when pausing an innovation
-              required:
-                - message
-              additionalProperties: false
-      responses:
-        "200":
-          description: Innovation paused successfully.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    description: Innovation ID
   /v1/{innovationId}/pdf:
     post:
       description: Generate PDF for an innovation
@@ -2837,7 +2831,6 @@ paths:
       parameters:
         - name: innovationId
           in: path
-          description: Innovation ID
           required: true
           schema:
             type: string
@@ -2852,15 +2845,16 @@ paths:
               properties:
                 updatedInnovationRecord:
                   type: string
-                  description: Updated innovation record since submitting the last assessment.
-                  example: YES
+                  enum:
+                    - YES
+                    - NO
                 description:
                   type: string
-                  description: Changes made to the innovation since submitting the last assessment
-                    and what support you need next
+                  maxLength: 500
               required:
                 - updatedInnovationRecord
-                - changes
+                - description
+              additionalProperties: false
       responses:
         "200":
           description: Returns the reassessment request and the cloned assessment id
@@ -4925,44 +4919,6 @@ paths:
           description: The innovation transfer does not exist
         "500":
           description: An error occurred while updating the innovation transfer status
-  /v1/{innovationId}/withdraw:
-    patch:
-      summary: Withdraw an innovation
-      description: Withdraw an innovation.
-      operationId: v1-innovation-withdraw
-      tags:
-        - Innovation
-      parameters:
-        - name: innovationId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                message:
-                  type: string
-                  maxLength: 200
-                  nullable: true
-                  description: Message provided when withdrawing an innovation
-              additionalProperties: false
-      responses:
-        "200":
-          description: Innovation withdrawn successfully.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    description: Innovation ID
   /v1/{innovationId}/export-requests:
     post:
       operationId: v1-innovations-export-requests-create

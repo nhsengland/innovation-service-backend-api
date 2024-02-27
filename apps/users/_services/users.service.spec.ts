@@ -7,10 +7,14 @@ import {
   TermsOfUseEntity,
   TermsOfUseUserEntity,
   UserEntity,
-  UserPreferenceEntity
+  UserPreferenceEntity,
+  InnovationEntity,
+  UserRoleEntity,
+  NotificationUserEntity
 } from '@users/shared/entities';
 import {
   InnovationCollaboratorStatusEnum,
+  InnovationStatusEnum,
   NotifierTypeEnum,
   PhoneUserPreferenceEnum,
   ServiceRoleEnum,
@@ -23,6 +27,9 @@ import { TestsHelper } from '@users/shared/tests';
 import { EntityManager } from 'typeorm';
 import SYMBOLS from './symbols';
 import { UsersService } from './users.service';
+import { DTOsHelper } from '@users/shared/tests/helpers/dtos.helper';
+import { InnovationCollaboratorBuilder } from '@users/shared/tests/builders/innovation-collaborator.builder';
+import { NotificationBuilder } from '@users/shared/tests/builders/notification.builder';
 
 describe('Users / _services / users service suite', () => {
   let sut: UsersService;
@@ -48,7 +55,7 @@ describe('Users / _services / users service suite', () => {
     notifierSendSpy.mockReset();
   });
 
-  describe('getUserPendingInnoavtionTranfers', () => {
+  describe('getUserPendingInnovationTranfers', () => {
     it('should get all the pending innovation transfers to the user', async () => {
       const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
       const otherInnovation = scenario.users.adamInnovator.innovations.adamInnovation;
@@ -415,6 +422,221 @@ describe('Users / _services / users service suite', () => {
       );
 
       expect(result).toHaveLength(0);
+    });
+  });
+
+  describe('deleteUser()', () => {
+    const johnInnovator = scenario.users.johnInnovator;
+    const janeInnovator = scenario.users.janeInnovator;
+    const reason = randText();
+
+    it('should remove the user as the owner of innovations with pending transfers and send notification', async () => {
+      const innoWithTransfer = johnInnovator.innovations.johnInnovation;
+      const innoWithoutTransferEmpty = johnInnovator.innovations.johnInnovationEmpty;
+      const innoWithoutTransferArchive = johnInnovator.innovations.johnInnovationArchived;
+      await sut.deleteUser(DTOsHelper.getUserRequestContext(johnInnovator), { reason }, em);
+
+      const dbInnovation = await em
+        .createQueryBuilder(InnovationEntity, 'innovation')
+        .select(['innovation.id', 'innovation.status', 'owner.id', 'innovation.expires_at'])
+        .leftJoin('innovation.owner', 'owner')
+        .where('innovation.id = :innovationId', { innovationId: innoWithTransfer.id })
+        .getOneOrFail();
+
+      expect(dbInnovation.id).toBe(innoWithTransfer.id);
+      expect(dbInnovation.status).toBe(innoWithTransfer.status);
+      expect(dbInnovation.expires_at).toBeDefined();
+      expect(dbInnovation.owner).toBeNull();
+      expect(notifierSendSpy).toHaveBeenCalledWith(expect.anything(), NotifierTypeEnum.ACCOUNT_DELETION, {
+        innovations: [
+          { id: innoWithTransfer.id, transferExpireDate: expect.anything() },
+          { id: innoWithoutTransferEmpty.id, affectedUsers: [] },
+          {
+            id: innoWithoutTransferArchive.id,
+            affectedUsers: [
+              {
+                userId: scenario.users.janeInnovator.id,
+                userType: scenario.users.janeInnovator.roles.innovatorRole.role
+              }
+            ]
+          }
+        ]
+      });
+    });
+
+    it('should remove all collaborations from user', async () => {
+      await sut.deleteUser(DTOsHelper.getUserRequestContext(janeInnovator), { reason }, em);
+
+      const activeOrPendingCollaborations = await em
+        .createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
+        .where('collaborator.user_id = :userId', { userId: scenario.users.janeInnovator.id })
+        .andWhere('collaborator.status IN (:...status)', {
+          status: [InnovationCollaboratorStatusEnum.ACTIVE, InnovationCollaboratorStatusEnum.PENDING]
+        })
+        .getCount();
+
+      expect(activeOrPendingCollaborations).toBe(0);
+    });
+
+    describe('when innovations without pending transfers', () => {
+      it('should archive all innovations without pending transfers', async () => {
+        const innoWithoutTransfer = johnInnovator.innovations.johnInnovationEmpty;
+        await sut.deleteUser(DTOsHelper.getUserRequestContext(johnInnovator), { reason }, em);
+
+        const dbInnovation = await em
+          .createQueryBuilder(InnovationEntity, 'innovation')
+          .select(['innovation.id', 'innovation.status', 'innovation.expires_at'])
+          .where('innovation.id = :innovationId', { innovationId: innoWithoutTransfer.id })
+          .getOneOrFail();
+
+        expect(dbInnovation.id).toBe(innoWithoutTransfer.id);
+        expect(dbInnovation.status).toBe(InnovationStatusEnum.ARCHIVED);
+        expect(dbInnovation.expires_at).toBeNull();
+      });
+
+      it('should remove active and pending collaborators', async () => {
+        const innoWithoutTransfer = johnInnovator.innovations.johnInnovationEmpty;
+        await new InnovationCollaboratorBuilder(em)
+          .setUser(johnInnovator.id)
+          .setEmail(janeInnovator.email)
+          .setInnovation(innoWithoutTransfer.id)
+          .save();
+
+        await sut.deleteUser(DTOsHelper.getUserRequestContext(johnInnovator), { reason }, em);
+
+        const activeOrPendingCollaborators = await em
+          .createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
+          .where('collaborator.innovation_id = :innovationId', { innovationId: innoWithoutTransfer.id })
+          .andWhere('collaborator.status IN (:...status)', {
+            status: [InnovationCollaboratorStatusEnum.ACTIVE, InnovationCollaboratorStatusEnum.PENDING]
+          })
+          .getCount();
+
+        expect(activeOrPendingCollaborators).toBe(0);
+      });
+
+      it('should clear unread notifications', async () => {
+        const innoWithoutTransfer = johnInnovator.innovations.johnInnovationEmpty;
+        const notification = await new NotificationBuilder(em)
+          .addNotificationUser(johnInnovator)
+          .setInnovation(innoWithoutTransfer.id)
+          .setContext('SUPPORT', 'ST02_SUPPORT_STATUS_TO_OTHER', randUuid())
+          .save();
+
+        await sut.deleteUser(DTOsHelper.getUserRequestContext(johnInnovator), { reason }, em);
+
+        const dbNotification = await em
+          .createQueryBuilder(NotificationUserEntity, 'userNotification')
+          .select(['userNotification.id', 'userNotification.deletedAt'])
+          .withDeleted()
+          .where('userNotification.notification_id = :notificationId', { notificationId: notification.id })
+          .getOneOrFail();
+
+        expect(dbNotification.deletedAt).toBeDefined();
+      });
+    });
+
+    it('should delete the user and associated roles', async () => {
+      await sut.deleteUser(DTOsHelper.getUserRequestContext(johnInnovator), { reason }, em);
+
+      const user = await em
+        .createQueryBuilder(UserEntity, 'user')
+        .select(['user.id', 'user.status', 'user.deleteReason'])
+        .where('user.id = :userId', { userId: johnInnovator.id })
+        .getOneOrFail();
+
+      const nActiveRoles = await em
+        .createQueryBuilder(UserRoleEntity, 'role')
+        .where('role.user_id = :userId', { userId: johnInnovator.id })
+        .andWhere('role.isActive = :active', { active: true })
+        .getCount();
+
+      expect(user.id).toBe(johnInnovator.id);
+      expect(user.status).toBe(UserStatusEnum.DELETED);
+      expect(user.deleteReason).toBe(reason);
+      expect(nActiveRoles).toBe(0);
+    });
+  });
+
+  describe('upsertUserMfa', () => {
+    const getMfaExtensionTypeSpy = jest.spyOn(IdentityProviderService.prototype, 'getMfaExtensionType');
+    const upsertMfaPhoneNumberSpy = jest
+      .spyOn(IdentityProviderService.prototype, 'upsertMfaPhoneNumber')
+      .mockResolvedValue();
+    const updateMfaExtensionTypeSpy = jest
+      .spyOn(IdentityProviderService.prototype, 'updateMfaExtensionType')
+      .mockResolvedValue();
+
+    beforeEach(() => {
+      getMfaExtensionTypeSpy.mockReset();
+      upsertMfaPhoneNumberSpy.mockReset();
+      updateMfaExtensionTypeSpy.mockReset();
+    });
+
+    it.each([
+      ['none', 'email'],
+      ['email', 'none'],
+      ['phone', 'email']
+    ])('should update user mfa to %s', async (toType, fromType) => {
+      getMfaExtensionTypeSpy.mockResolvedValue(fromType as any);
+
+      await sut.upsertUserMfa(
+        DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
+        toType === 'phone' ? { type: 'phone', phoneNumber: randPhoneNumber() } : { type: toType as any }
+      );
+
+      if (toType === 'phone') {
+        expect(upsertMfaPhoneNumberSpy).toHaveBeenCalled();
+      }
+      expect(updateMfaExtensionTypeSpy).toHaveBeenCalled();
+    });
+
+    it.each([
+      ['none', 'none'],
+      ['email', 'email']
+    ])("shouldn't update when changing from %s to %s", async (fromType, toType) => {
+      getMfaExtensionTypeSpy.mockResolvedValue(fromType as any);
+
+      await sut.upsertUserMfa(DTOsHelper.getUserRequestContext(scenario.users.johnInnovator), { type: toType as any });
+
+      expect(updateMfaExtensionTypeSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getUserMfaInfo', () => {
+    const johnDomainContext = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator);
+    const getMfaExtensionTypeSpy = jest.spyOn(IdentityProviderService.prototype, 'getMfaExtensionType');
+    const getMfaPhoneNumberSpy = jest.spyOn(IdentityProviderService.prototype, 'getMfaPhoneNumber');
+
+    const phone = randPhoneNumber();
+
+    beforeEach(() => {
+      getMfaExtensionTypeSpy.mockReset();
+      getMfaPhoneNumberSpy.mockReset();
+    });
+
+    it.each([['none'], ['email'], ['phone']])('should return the right type of mfa (%s)', async type => {
+      getMfaExtensionTypeSpy.mockReturnValue(type as any);
+      if (type === 'phone') {
+        getMfaPhoneNumberSpy.mockResolvedValue(phone);
+      }
+
+      const mfaInfo = await sut.getUserMfaInfo(johnDomainContext);
+
+      expect(mfaInfo).toMatchObject({
+        type,
+        ...(type === 'phone' ? { phoneNumber: phone } : {})
+      });
+    });
+
+    // B2C defined number through journey is "invalid" so the first time we should not return it
+    it('should not return the phone number if is invalid', async () => {
+      getMfaExtensionTypeSpy.mockReturnValue('phone' as any);
+      getMfaPhoneNumberSpy.mockResolvedValue(null);
+
+      const mfaInfo = await sut.getUserMfaInfo(johnDomainContext);
+
+      expect(mfaInfo).toMatchObject({ type: 'phone' });
     });
   });
 });

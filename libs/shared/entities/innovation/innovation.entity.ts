@@ -39,6 +39,9 @@ export class InnovationEntity extends BaseEntity {
   @Column({ type: 'simple-enum', enum: InnovationStatusEnum, nullable: false })
   status: InnovationStatusEnum;
 
+  @Column({ name: 'archived_status', type: 'simple-enum', enum: InnovationStatusEnum, nullable: true })
+  archivedStatus: null | InnovationStatusEnum;
+
   @Column({ name: 'status_updated_at', type: 'datetime2' })
   statusUpdatedAt: Date;
 
@@ -66,8 +69,8 @@ export class InnovationEntity extends BaseEntity {
   @Column({ name: 'main_category', type: 'nvarchar', nullable: true })
   mainCategory: null | CurrentCatalogTypes.catalogCategory;
 
-  @Column({ name: 'withdraw_reason', type: 'nvarchar', nullable: true })
-  withdrawReason: null | string;
+  @Column({ name: 'archive_reason', type: 'nvarchar', nullable: true })
+  archiveReason: null | string;
 
   @ManyToOne(() => UserEntity, { nullable: true })
   @JoinColumn({ name: 'owner_id' })

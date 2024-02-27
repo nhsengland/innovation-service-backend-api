@@ -189,16 +189,31 @@ export type InAppTemplatesType = {
     innovationName: string;
     exportRequestId: string;
   };
-  WI01_INNOVATION_WITHDRAWN: {
+  AI01_INNOVATION_ARCHIVED_TO_SELF: {
     innovationName: string;
   };
-  SH01_INNOVATION_STOPPED_SHARED_TO_ASSIGNED_USERS: {
+  AI02_INNOVATION_ARCHIVED_TO_COLLABORATORS: {
     innovationName: string;
   };
-  SH03_INNOVATION_STOPPED_SHARED_TO_SELF: {
+  AI03_INNOVATION_ARCHIVED_TO_ENGAGING_QA_A: {
+    innovationName: string;
+    archivedUrl: string;
+  };
+  AI04_INNOVATION_ARCHIVED_TO_NA_DURING_NEEDS_ASSESSMENT: {
+    innovationName: string;
+    assessmentType: 'assessment' | 'reassessment';
+  };
+  SH04_INNOVATION_STOPPED_SHARING_WITH_INDIVIDUAL_ORG_TO_OWNER: {
+    innovationName: string;
+    organisationName: string;
+  };
+  SH05_INNOVATION_STOPPED_SHARING_WITH_INDIVIDUAL_ORG_TO_QA_A: {
     innovationName: string;
   };
   DA01_OWNER_DELETED_ACCOUNT_WITH_PENDING_TRANSFER_TO_COLLABORATOR: {
+    innovationName: string;
+  };
+  DA02_OWNER_DELETED_ACCOUNT_WITHOUT_PENDING_TRANSFER_TO_COLLABORATOR: {
     innovationName: string;
   };
   MC01_COLLABORATOR_INVITE_EXISTING_USER: {

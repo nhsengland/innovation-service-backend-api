@@ -33,6 +33,7 @@ class V1InnovationThreadFollowersUpdate {
         .checkAccessorType()
         .checkAssessmentType()
         .checkInnovation()
+        .checkNotArchived()
         .verify();
 
       await threadsService.addFollowersToThread(auth.getContext(), pathParams.threadId, body.followerUserRoleIds, true);

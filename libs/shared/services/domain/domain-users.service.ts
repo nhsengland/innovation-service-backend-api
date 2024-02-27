@@ -1,12 +1,6 @@
 import type { DataSource, EntityManager, Repository } from 'typeorm';
 
-import {
-  InnovationCollaboratorStatusEnum,
-  NotifierTypeEnum,
-  PhoneUserPreferenceEnum,
-  ServiceRoleEnum,
-  UserStatusEnum
-} from '../../enums';
+import { PhoneUserPreferenceEnum, ServiceRoleEnum, UserStatusEnum } from '../../enums';
 import {
   GenericErrorsEnum,
   InternalServerError,
@@ -15,24 +9,19 @@ import {
   UserErrorsEnum
 } from '../../errors';
 import { TranslationHelper } from '../../helpers';
-import type { DomainContextType, RoleType } from '../../types';
+import type { InnovatorDomainContextType, RoleType } from '../../types';
 
-import { InnovationEntity } from '../../entities/innovation/innovation.entity';
 import { UserPreferenceEntity } from '../../entities/user/user-preference.entity';
 import { UserRoleEntity, roleEntity2RoleType } from '../../entities/user/user-role.entity';
 import { UserEntity } from '../../entities/user/user.entity';
 import type { IdentityProviderService } from '../integrations/identity-provider.service';
-import type { NotifierService } from '../integrations/notifier.service';
-import type { DomainInnovationsService } from './domain-innovations.service';
 
 export class DomainUsersService {
   private userRepository: Repository<UserEntity>;
 
   constructor(
     private sqlConnection: DataSource,
-    private identityProviderService: IdentityProviderService,
-    private domainInnovationsService: DomainInnovationsService,
-    private notifierService: NotifierService
+    private identityProviderService: IdentityProviderService
   ) {
     this.userRepository = this.sqlConnection.getRepository(UserEntity);
   }
@@ -302,109 +291,6 @@ export class DomainUsersService {
     }
   }
 
-  async deleteUser(
-    domainContext: DomainContextType,
-    userId: string,
-    data: { reason: null | string }
-  ): Promise<{ id: string }> {
-    const dbUser = await this.sqlConnection
-      .createQueryBuilder(UserEntity, 'user')
-      .innerJoinAndSelect('user.serviceRoles', 'roles')
-      .where('user.id = :userId', { userId })
-      .getOne();
-
-    if (!dbUser) {
-      throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND);
-    }
-
-    const user = await this.identityProviderService.getUserInfo(dbUser.identityId);
-
-    if (!user) {
-      throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
-    }
-
-    const innovationsWithPendingTransfer: { id: string; name: string; transferExpireDate: string }[] = [];
-
-    const result = this.sqlConnection.transaction(async transaction => {
-      // If user has innovator role, deals with it's innovations.
-      const userInnovatorRole = dbUser.serviceRoles.find(item => item.role === ServiceRoleEnum.INNOVATOR);
-
-      if (userInnovatorRole) {
-        const dbInnovations = await this.domainInnovationsService.getInnovationsByOwnerId(dbUser.id, transaction);
-
-        await this.domainInnovationsService.bulkUpdateCollaboratorStatusByEmail(
-          transaction,
-          { id: dbUser.id, email: user.email },
-          {
-            current: InnovationCollaboratorStatusEnum.PENDING,
-            next: InnovationCollaboratorStatusEnum.DECLINED
-          }
-        );
-
-        await this.domainInnovationsService.bulkUpdateCollaboratorStatusByEmail(
-          transaction,
-          { id: dbUser.id, email: user.email },
-          {
-            current: InnovationCollaboratorStatusEnum.ACTIVE,
-            next: InnovationCollaboratorStatusEnum.LEFT
-          }
-        );
-
-        await this.domainInnovationsService.withdrawInnovations(
-          { id: dbUser.id, roleId: userInnovatorRole.id },
-          dbInnovations.filter(i => i.expirationTransferDate === null).map(item => ({ id: item.id, reason: null })),
-          transaction
-        );
-
-        for (const dbInnovation of dbInnovations.filter(i => i.expirationTransferDate !== null)) {
-          innovationsWithPendingTransfer.push({
-            id: dbInnovation.id,
-            name: dbInnovation.name,
-            transferExpireDate: dbInnovation.expirationTransferDate
-              ? dbInnovation.expirationTransferDate.toDateString()
-              : ''
-          });
-
-          await this.sqlConnection.getRepository(InnovationEntity).update(
-            {
-              id: dbInnovation.id
-            },
-            {
-              updatedBy: dbUser.id,
-              owner: null,
-              expires_at: dbInnovation.expirationTransferDate
-            }
-          );
-        }
-
-        // Send notification to collaborators if there are innovations with pending transfer
-        if (innovationsWithPendingTransfer.length > 0) {
-          await this.notifierService.send(domainContext, NotifierTypeEnum.ACCOUNT_DELETION, {
-            innovations: innovationsWithPendingTransfer
-          });
-        }
-      }
-
-      await transaction.update(UserRoleEntity, { user: { id: dbUser.id } }, { isActive: false });
-
-      await transaction.update(
-        UserEntity,
-        { id: dbUser.id },
-        {
-          deleteReason: data.reason,
-          status: UserStatusEnum.DELETED
-        }
-      );
-
-      // If all went well, deleted from B2C.
-      await this.identityProviderService.deleteUser(dbUser.identityId);
-
-      return { id: dbUser.id };
-    });
-
-    return result;
-  }
-
   async getUserRoles(userId: string): Promise<RoleType[]> {
     const dbRoles = await this.sqlConnection
       .createQueryBuilder(UserRoleEntity, 'userRole')
@@ -505,6 +391,49 @@ export class DomainUsersService {
         const r: never = role;
         throw new NotImplementedError(GenericErrorsEnum.NOT_IMPLEMENTED_ERROR, { details: r });
     }
+  }
+
+  /**
+   * Given a user id from an innovator builds the associated domain context.
+   *
+   * @returns the innovator domain context or null if the user isn't "valid" (e.g., not an innovator)
+   */
+  async getInnovatorDomainContextByRoleId(
+    userId: string,
+    entityManager?: EntityManager
+  ): Promise<null | InnovatorDomainContextType> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const role = await em
+      .createQueryBuilder(UserRoleEntity, 'userRole')
+      .select([
+        'userRole.id',
+        'user.id',
+        'user.identityId',
+        'organisation.id',
+        'organisation.name',
+        'organisation.acronym'
+      ])
+      .innerJoin('userRole.user', 'user')
+      .innerJoin('userRole.organisation', 'organisation')
+      .where('user_id = :userId', { userId })
+      .andWhere('role = :innovatorRole', { innovatorRole: ServiceRoleEnum.INNOVATOR })
+      .getOne();
+
+    if (!role?.organisation) {
+      return null;
+    }
+
+    return {
+      id: role.user.id,
+      identityId: role.user.identityId,
+      organisation: {
+        id: role.organisation.id,
+        name: role.organisation.name,
+        acronym: role.organisation.acronym
+      },
+      currentRole: { id: role.id, role: ServiceRoleEnum.INNOVATOR }
+    };
   }
 
   private async getUserIdentityIdByEmail(email: string): Promise<string> {

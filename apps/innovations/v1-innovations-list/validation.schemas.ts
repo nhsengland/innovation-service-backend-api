@@ -88,7 +88,7 @@ export const LegacyQueryParamsSchema = JoiHelper.PaginationJoiSchema({
       is: 'ACCESSOR',
       then: JoiHelper.AppCustomJoi()
         .stringArray()
-        .items(Joi.string().valid(InnovationStatusEnum.IN_PROGRESS, InnovationStatusEnum.COMPLETE))
+        .items(Joi.string().valid(InnovationStatusEnum.IN_PROGRESS))
         .required(),
       otherwise: JoiHelper.AppCustomJoi()
         .stringArray()
@@ -229,6 +229,7 @@ export const NewQueryParamsSchema = JoiHelper.PaginationJoiSchema({
         is: ServiceRoleEnum.ACCESSOR,
         then: Joi.object({
           assignedToMe: Joi.boolean().optional(),
+          closedByMyOrganisation: Joi.boolean().optional(),
           suggestedOnly: Joi.boolean().optional(),
           supportStatuses: JoiHelper.AppCustomJoi()
             .stringArray()
@@ -240,6 +241,7 @@ export const NewQueryParamsSchema = JoiHelper.PaginationJoiSchema({
         is: ServiceRoleEnum.QUALIFYING_ACCESSOR,
         then: Joi.object({
           assignedToMe: Joi.boolean().optional(),
+          closedByMyOrganisation: Joi.boolean().optional(),
           suggestedOnly: Joi.boolean().optional(),
           supportStatuses: JoiHelper.AppCustomJoi()
             .stringArray()

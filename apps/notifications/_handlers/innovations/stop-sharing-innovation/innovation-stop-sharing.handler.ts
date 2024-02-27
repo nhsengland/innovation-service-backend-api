@@ -1,12 +1,13 @@
 import type { Context } from '@azure/functions';
 import { ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
-import { innovationOverviewUrl } from '../../../_helpers/url.helper';
+import { dataSharingPreferencesUrl } from '../../../_helpers/url.helper';
 import { BaseHandler } from '../../base.handler';
 
 export class InnovationStopSharingHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_STOP_SHARING,
-  'SH01_INNOVATION_STOPPED_SHARED_TO_ASSIGNED_USERS' | 'SH03_INNOVATION_STOPPED_SHARED_TO_SELF'
+  | 'SH04_INNOVATION_STOPPED_SHARING_WITH_INDIVIDUAL_ORG_TO_OWNER'
+  | 'SH05_INNOVATION_STOPPED_SHARING_WITH_INDIVIDUAL_ORG_TO_QA_A'
 > {
   constructor(
     requestUser: DomainContextType,
@@ -21,52 +22,17 @@ export class InnovationStopSharingHandler extends BaseHandler<
 
     // Always send a "receipt" to the owner
     if (innovation.ownerId) {
-      await this.SH03_INNOVATION_STOPPED_SHARED_TO_SELF(innovation);
+      await this.SH04_INNOVATION_STOPPED_SHARING_WITH_INDIVIDUAL_ORG_TO_OWNER(innovation);
     }
 
-    // Send the email for the assigned NA or QA/A
-    if (this.inputData.affectedUsers.length > 0) {
-      await this.SH01_INNOVATION_STOPPED_SHARED_TO_ASSIGNED_USERS(innovation);
+    if (this.inputData.affectedUsers) {
+      await this.SH05_INNOVATION_STOPPED_SHARING_WITH_INDIVIDUAL_ORG_TO_QA_A(innovation);
     }
 
     return this;
   }
 
-  private async SH01_INNOVATION_STOPPED_SHARED_TO_ASSIGNED_USERS(innovation: {
-    id: string;
-    name: string;
-  }): Promise<void> {
-    const recipients = await this.recipientsService.usersBagToRecipients(
-      this.inputData.affectedUsers.map(u => ({
-        id: u.id,
-        userType: u.role,
-        organisationUnit: u.unitId
-      }))
-    );
-    const requestUserName = await this.getRequestUserName();
-
-    this.notify('SH01_INNOVATION_STOPPED_SHARED_TO_ASSIGNED_USERS', recipients, {
-      email: {
-        notificationPreferenceType: 'INNOVATION_MANAGEMENT',
-        params: {
-          innovation_name: innovation.name,
-          innovator_name: requestUserName,
-          comment: this.inputData.message
-        }
-      },
-      inApp: {
-        context: {
-          id: innovation.id,
-          type: 'INNOVATION_MANAGEMENT',
-          detail: 'SH01_INNOVATION_STOPPED_SHARED_TO_ASSIGNED_USERS'
-        },
-        innovationId: innovation.id,
-        params: { innovationName: innovation.name }
-      }
-    });
-  }
-
-  private async SH03_INNOVATION_STOPPED_SHARED_TO_SELF(innovation: {
+  private async SH04_INNOVATION_STOPPED_SHARING_WITH_INDIVIDUAL_ORG_TO_OWNER(innovation: {
     id: string;
     name: string;
     ownerId?: string;
@@ -75,13 +41,15 @@ export class InnovationStopSharingHandler extends BaseHandler<
     if (!recipient) {
       return;
     }
+    const organisationInfo = await this.recipientsService.organisationInfo(this.inputData?.organisationId ?? '');
 
-    this.notify('SH03_INNOVATION_STOPPED_SHARED_TO_SELF', [recipient], {
+    this.notify('SH04_INNOVATION_STOPPED_SHARING_WITH_INDIVIDUAL_ORG_TO_OWNER', [recipient], {
       email: {
         notificationPreferenceType: 'INNOVATION_MANAGEMENT',
         params: {
           innovation_name: innovation.name,
-          innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.INNOVATOR, innovation.id)
+          organisation_name: organisationInfo.name,
+          data_sharing_preferences_url: dataSharingPreferencesUrl(ServiceRoleEnum.INNOVATOR, innovation.id)
         },
         options: { includeSelf: true }
       },
@@ -89,11 +57,41 @@ export class InnovationStopSharingHandler extends BaseHandler<
         context: {
           id: innovation.id,
           type: 'INNOVATION_MANAGEMENT',
-          detail: 'SH03_INNOVATION_STOPPED_SHARED_TO_SELF'
+          detail: 'SH04_INNOVATION_STOPPED_SHARING_WITH_INDIVIDUAL_ORG_TO_OWNER'
         },
         innovationId: innovation.id,
-        params: { innovationName: innovation.name },
+        params: {
+          innovationName: innovation.name,
+          organisationName: organisationInfo.name
+        },
         options: { includeSelf: true }
+      }
+    });
+  }
+  private async SH05_INNOVATION_STOPPED_SHARING_WITH_INDIVIDUAL_ORG_TO_QA_A(innovation: {
+    id: string;
+    name: string;
+    ownerId?: string;
+  }): Promise<void> {
+    const assignedQAs = await this.recipientsService.getRecipientsByRoleId(this.inputData.affectedUsers?.roleIds ?? []);
+
+    this.notify('SH05_INNOVATION_STOPPED_SHARING_WITH_INDIVIDUAL_ORG_TO_QA_A', assignedQAs, {
+      email: {
+        notificationPreferenceType: 'INNOVATION_MANAGEMENT',
+        params: {
+          innovation_name: innovation.name
+        }
+      },
+      inApp: {
+        context: {
+          id: innovation.id,
+          type: 'INNOVATION_MANAGEMENT',
+          detail: 'SH05_INNOVATION_STOPPED_SHARING_WITH_INDIVIDUAL_ORG_TO_QA_A'
+        },
+        innovationId: innovation.id,
+        params: {
+          innovationName: innovation.name
+        }
       }
     });
   }

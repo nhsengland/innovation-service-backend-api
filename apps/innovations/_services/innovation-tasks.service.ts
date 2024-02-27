@@ -134,35 +134,43 @@ export class InnovationTasksService extends BaseService {
       if (!filters.allTasks) {
         query.andWhere('task.innovation_support_id IS NULL');
       }
-      query.andWhere('innovation.status IN (:...assessmentInnovationStatus)', {
-        assessmentInnovationStatus: [
-          InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
-          InnovationStatusEnum.NEEDS_ASSESSMENT,
-          InnovationStatusEnum.IN_PROGRESS
-        ]
-      });
+      query.andWhere(
+        '(innovation.status IN (:...assessmentInnovationStatus) OR (innovation.status = :innovationArchivedStatus AND innovation.archivedStatus IN (:...assessmentInnovationStatus)))',
+        {
+          assessmentInnovationStatus: [
+            InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
+            InnovationStatusEnum.NEEDS_ASSESSMENT,
+            InnovationStatusEnum.IN_PROGRESS
+          ],
+          innovationArchivedStatus: InnovationStatusEnum.ARCHIVED
+        }
+      );
     }
 
     if (isAccessorDomainContextType(domainContext)) {
-      query.innerJoin('innovation.organisationShares', 'shares');
-      query.leftJoin(
-        'innovation.innovationSupports',
-        'accessorSupports',
-        'accessorSupports.organisation_unit_id = :accessorSupportsOrganisationUnitId',
-        { accessorSupportsOrganisationUnitId: domainContext.organisation.organisationUnit.id }
-      );
-      query.andWhere('innovation.status IN (:...accessorInnovationStatus)', {
-        accessorInnovationStatus: [InnovationStatusEnum.IN_PROGRESS, InnovationStatusEnum.COMPLETE]
-      });
-      query.andWhere('shares.id = :accessorOrganisationId', {
-        accessorOrganisationId: domainContext.organisation.id
-      });
+      query
+        .innerJoin('innovation.organisationShares', 'shares')
+        .leftJoin(
+          'innovation.innovationSupports',
+          'accessorSupports',
+          'accessorSupports.organisation_unit_id = :accessorSupportsOrganisationUnitId',
+          { accessorSupportsOrganisationUnitId: domainContext.organisation.organisationUnit.id }
+        )
+        .andWhere(
+          '(innovation.status IN (:...innovationStatus) OR (innovation.status = :innovationArchivedStatus AND innovation.archivedStatus IN (:...innovationStatus)))',
+          {
+            innovationStatus: [InnovationStatusEnum.IN_PROGRESS],
+            innovationArchivedStatus: InnovationStatusEnum.ARCHIVED
+          }
+        )
+        .andWhere('shares.id = :accessorOrganisationId', {
+          accessorOrganisationId: domainContext.organisation.id
+        });
 
       if (domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR) {
         query.andWhere('accessorSupports.status IN (:...accessorSupportsSupportStatuses01)', {
           accessorSupportsSupportStatuses01: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.CLOSED]
         });
-        // query.andWhere('accessorSupports.organisation_unit_id = :organisationUnitId ', { organisationUnitId: user.organisationUnitId });
       }
 
       if (!filters.allTasks) {

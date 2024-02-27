@@ -133,6 +133,9 @@ export class InnovationBuilder extends BaseBuilder {
 
   setStatus(status: InnovationStatusEnum): this {
     this.innovation.status = status;
+    if (status === InnovationStatusEnum.ARCHIVED) {
+      this.innovation.archivedStatus = InnovationStatusEnum.IN_PROGRESS;
+    }
     return this;
   }
 

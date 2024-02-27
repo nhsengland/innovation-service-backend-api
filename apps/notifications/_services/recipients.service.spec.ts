@@ -297,6 +297,13 @@ describe('Notifications / _services / recipients service suite', () => {
           status: scenario.users.johnInnovator.innovations.johnInnovation.collaborators.janeCollaborator.status,
           innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
           innovationName: scenario.users.johnInnovator.innovations.johnInnovation.name
+        },
+        {
+          collaborationId:
+            scenario.users.johnInnovator.innovations.johnInnovationArchived.collaborators.janeCollaborator.id,
+          status: scenario.users.johnInnovator.innovations.johnInnovationArchived.collaborators.janeCollaborator.status,
+          innovationId: scenario.users.johnInnovator.innovations.johnInnovationArchived.id,
+          innovationName: scenario.users.johnInnovator.innovations.johnInnovationArchived.name
         }
       ]);
     });

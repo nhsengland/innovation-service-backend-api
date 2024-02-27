@@ -1,9 +1,10 @@
 const TRANSLATIONS = {
   DEFAULT_MESSAGES: {
     EXPORT_REQUEST: {
-      STOP_SHARING:
-        'Since the innovator stopped sharing his innovation, this export request was rejected automatically.',
-      WITHDRAW: 'Since the innovator withdrew his innovation, this export request was automatically rejected.'
+      // TODO: This will be cleaned up after archive feature
+      WITHDRAW: 'Since the innovator withdrew his innovation, this export request was automatically rejected.',
+      STOP_SHARING: 'This export request was rejected automatically, as the innovator has stopped sharing their innovation with this organisation.',
+      ARCHIVE: 'This export request was rejected automatically, as the innovator has archived this innovation.'
     }
   },
   SUPPORT_STATUS: {

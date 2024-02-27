@@ -7,7 +7,7 @@ import {
   InnovationSupportStatusEnum,
   ServiceRoleEnum
 } from '../../enums';
-import { ForbiddenError, UnprocessableEntityError } from '../../errors';
+import { ForbiddenError, UnprocessableEntityError, ConflictError } from '../../errors';
 import type { DomainContextType, DomainUserInfoType } from '../../types';
 import type { DomainService } from '../domain/domain.service';
 
@@ -27,6 +27,7 @@ export enum AuthErrorsEnum {
   AUTH_INNOVATION_UNAUTHORIZED = 'AUTH.0102',
   AUTH_INNOVATION_STATUS_NOT_ALLOWED = 'AUTH.0103',
   AUTH_INNOVATION_NOT_OWNER = 'AUTH.0104',
+  AUTH_INNOVATION_ARCHIVED_CONFLICT = 'AUTH.0105',
   AUTH_MISSING_ORGANISATION_UNIT_CONTEXT = 'AUTH.0201',
   AUTH_MISSING_ORGANISATION_CONTEXT = 'AUTH.0202',
   AUTH_MISSING_CURRENT_ROLE = 'AUTH.0203',
@@ -43,7 +44,8 @@ enum UserValidationKeys {
   checkInnovatorType = 'innovatorTypeValidation'
 }
 enum InnovationValidationKeys {
-  checkInnovation = 'innovationValidation'
+  checkInnovation = 'innovationValidation',
+  checkNotArchived = 'checkNotArchivedValidation'
 }
 
 export class AuthorizationValidationModel {
@@ -237,6 +239,37 @@ export class AuthorizationValidationModel {
     return null;
   }
 
+  checkNotArchived(config?: { whitelist: ServiceRoleEnum[] } | { blacklist: ServiceRoleEnum[] }): this {
+    this.innovationValidations.set(InnovationValidationKeys.checkNotArchived, () =>
+      this.innovationNotArchivedValidation(config)
+    );
+    return this;
+  }
+  private innovationNotArchivedValidation(
+    config?: { whitelist: ServiceRoleEnum[] } | { blacklist: ServiceRoleEnum[] }
+  ): null | AuthErrorsEnum {
+    if (!this.innovation.data) {
+      return AuthErrorsEnum.AUTH_INNOVATION_UNAUTHORIZED;
+    }
+
+    const currentRole = this.getContext().currentRole.role;
+    if (this.innovation.data.status === InnovationStatusEnum.ARCHIVED) {
+      // If no config is defined it blocks everything if the status is archived.
+      if (!config) {
+        return AuthErrorsEnum.AUTH_INNOVATION_ARCHIVED_CONFLICT;
+      }
+      // If whitelist config is defined let's the whitelisted "pass" and blocks all the others.
+      if ('whitelist' in config) {
+        return config.whitelist.includes(currentRole) ? null : AuthErrorsEnum.AUTH_INNOVATION_ARCHIVED_CONFLICT;
+      }
+      // If blacklist config is defined blocks the blacklisted and allows the others.
+      if ('blacklist' in config) {
+        return config.blacklist.includes(currentRole) ? AuthErrorsEnum.AUTH_INNOVATION_ARCHIVED_CONFLICT : null;
+      }
+    }
+    return null;
+  }
+
   async verify(): Promise<this> {
     let validations: (null | AuthErrorsEnum)[] = [];
 
@@ -355,8 +388,11 @@ export class AuthorizationValidationModel {
       }
 
       this.innovationValidations.forEach(checkMethod => validations.push(checkMethod())); // This will run the validation itself and return the result to the array.
-      if (!validations.some(item => item === null)) {
+      if (validations.some(item => item !== null)) {
         const error = validations.find(item => item !== null) || AuthErrorsEnum.AUTH_USER_UNAUTHORIZED;
+        if (error === AuthErrorsEnum.AUTH_INNOVATION_ARCHIVED_CONFLICT) {
+          throw new ConflictError(error);
+        }
         throw new ForbiddenError(error);
       }
     }
@@ -409,7 +445,8 @@ export class AuthorizationValidationModel {
         assessmentInnovationStatus: [
           InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
           InnovationStatusEnum.NEEDS_ASSESSMENT,
-          InnovationStatusEnum.IN_PROGRESS
+          InnovationStatusEnum.IN_PROGRESS,
+          InnovationStatusEnum.ARCHIVED
         ]
       });
     }
@@ -430,13 +467,23 @@ export class AuthorizationValidationModel {
         throw new ForbiddenError(AuthErrorsEnum.AUTH_INNOVATION_UNAUTHORIZED);
       }
 
-      query.innerJoin('innovation.organisationShares', 'innovationShares');
-      query.andWhere('innovation.status IN (:...accessorInnovationStatus)', {
-        accessorInnovationStatus: [InnovationStatusEnum.IN_PROGRESS, InnovationStatusEnum.COMPLETE]
-      });
-      query.andWhere('innovationShares.id = :accessorOrganisationId', {
-        accessorOrganisationId: context.organisation.id
-      });
+      query
+        .innerJoin('innovation.organisationShares', 'innovationShares')
+        .andWhere(
+          new Brackets(qb => {
+            qb.where('innovation.status IN (:...accessorInnovationStatus)', {
+              accessorInnovationStatus: [InnovationStatusEnum.IN_PROGRESS]
+            }).orWhere(
+              'innovation.status = :archivedStatus AND innovation.archivedStatus IN (:...accessorInnovationStatus)',
+              {
+                archivedStatus: InnovationStatusEnum.ARCHIVED
+              }
+            );
+          })
+        )
+        .andWhere('innovationShares.id = :accessorOrganisationId', {
+          accessorOrganisationId: context.organisation.id
+        });
 
       if (context.currentRole.role === ServiceRoleEnum.ACCESSOR) {
         query.innerJoin('innovation.innovationSupports', 'innovationSupports');

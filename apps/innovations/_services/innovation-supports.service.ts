@@ -176,7 +176,15 @@ export class InnovationSupportsService extends BaseService {
 
     const assessmentQuery = this.sqlConnection
       .createQueryBuilder(InnovationAssessmentEntity, 'assessments')
-      .select(['assessments.id', 'organisationUnit.id', 'organisation.id', 'organisation.name', 'organisation.acronym'])
+      .select([
+        'assessments.id',
+        'organisation.id',
+        'organisation.name',
+        'organisation.acronym',
+        'organisationUnit.id',
+        'organisationUnit.name',
+        'organisationUnit.acronym'
+      ])
       .leftJoin('assessments.organisationUnits', 'organisationUnit')
       .leftJoin('organisationUnit.organisation', 'organisation')
       .where('assessments.innovation_id = :innovationId', { innovationId })
@@ -190,12 +198,34 @@ export class InnovationSupportsService extends BaseService {
     };
 
     if (innovationAssessment) {
-      result.assessment = {
-        suggestedOrganisations: [
-          // remove duplicates
-          ...new Map(innovationAssessment.organisationUnits.map(ou => [ou.organisation.id, ou.organisation])).values()
-        ].sort((a, b) => a.name.localeCompare(b.name)) // sort by org name
-      };
+      innovationAssessment.organisationUnits.forEach(ou => {
+        // try to find suggested organisation
+        const suggestedOrganisation = result.assessment.suggestedOrganisations.find(so => so.id === ou.organisation.id);
+
+        // if suggested organisation exists in suggestedOrganisations, append unit to it
+        if (suggestedOrganisation) {
+          suggestedOrganisation.organisationUnits.push({
+            id: ou.id,
+            name: ou.name,
+            acronym: ou.acronym
+          });
+
+          // otherwise, create and append organisation to suggestedOrganisations
+        } else {
+          result.assessment.suggestedOrganisations.push({
+            id: ou.organisation.id,
+            name: ou.organisation.name,
+            acronym: ou.organisation.acronym,
+            organisationUnits: [
+              {
+                id: ou.id,
+                name: ou.name,
+                acronym: ou.acronym
+              }
+            ]
+          });
+        }
+      });
     }
 
     if (supportLogs.length) {
@@ -826,6 +856,7 @@ export class InnovationSupportsService extends BaseService {
   }
 
   async getSupportSummaryUnitInfo(
+    domainContext: DomainContextType,
     innovationId: string,
     unitId: string,
     entityManager?: EntityManager
@@ -929,7 +960,7 @@ export class InnovationSupportsService extends BaseService {
           break;
         case InnovationSupportLogTypeEnum.PROGRESS_UPDATE:
           {
-            const file = await this.getProgressUpdateFile(innovationId, supportLog.id);
+            const file = await this.getProgressUpdateFile(domainContext, innovationId, supportLog.id);
 
             summary.push({
               ...defaultSummary,
@@ -947,6 +978,23 @@ export class InnovationSupportsService extends BaseService {
             ...defaultSummary,
             type: 'SUGGESTED_ORGANISATION',
             params: {}
+          });
+          break;
+        case InnovationSupportLogTypeEnum.INNOVATION_ARCHIVED:
+          summary.push({
+            ...defaultSummary,
+            type: 'INNOVATION_ARCHIVED',
+            params: {
+              supportStatus: supportLog.innovationSupportStatus ?? InnovationSupportStatusEnum.CLOSED,
+              message: supportLog.description
+            }
+          });
+          break;
+        case InnovationSupportLogTypeEnum.STOP_SHARE:
+          summary.push({
+            ...defaultSummary,
+            type: 'STOP_SHARE',
+            params: { supportStatus: supportLog.innovationSupportStatus ?? InnovationSupportStatusEnum.CLOSED }
           });
           break;
       }
@@ -1051,7 +1099,7 @@ export class InnovationSupportsService extends BaseService {
     }
 
     await connection.transaction(async transaction => {
-      const file = await this.getProgressUpdateFile(innovationId, progressId);
+      const file = await this.getProgressUpdateFile(domainContext, innovationId, progressId);
       if (file) {
         await this.innovationFileService.deleteFile(domainContext, file.id, transaction);
       }
@@ -1139,43 +1187,83 @@ export class InnovationSupportsService extends BaseService {
     const query = em
       .createQueryBuilder()
       .from(InnovationSupportLogEntity, 'sl')
-      .select(['whom.id', 'whom.name', 'whom.acronym', 'suggested.id', 'suggested.name', 'suggested.acronym'])
+      .select([
+        'whom.id',
+        'whom.name',
+        'whom.acronym',
+        'suggested_org.id',
+        'suggested_org.name',
+        'suggested_org.acronym',
+        'suggested_unit.id',
+        'suggested_unit.name',
+        'suggested_unit.acronym'
+      ])
       .innerJoin('innovation_support_log_organisation_unit', 'slou', 'slou.innovation_support_log_id = sl.id')
       .innerJoin('organisation_unit', 'whom_unit', 'whom_unit.id = sl.organisation_unit_id')
       .innerJoin('organisation', 'whom', 'whom.id = whom_unit.organisation_id')
       .innerJoin('organisation_unit', 'suggested_unit', 'suggested_unit.id = slou.organisation_unit_id')
-      .innerJoin('organisation', 'suggested', 'suggested.id = suggested_unit.organisation_id')
+      .innerJoin('organisation', 'suggested_org', 'suggested_org.id = suggested_unit.organisation_id')
       .where('sl.innovation_id = :innovationId', { innovationId })
       .andWhere('sl.type = :type', { type: InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION })
       .groupBy('whom.id')
       .addGroupBy('whom.name')
       .addGroupBy('whom.acronym')
-      .addGroupBy('suggested.id')
-      .addGroupBy('suggested.name')
-      .addGroupBy('suggested.acronym')
+      .addGroupBy('suggested_org.id')
+      .addGroupBy('suggested_org.name')
+      .addGroupBy('suggested_org.acronym')
+      .addGroupBy('suggested_unit.id')
+      .addGroupBy('suggested_unit.name')
+      .addGroupBy('suggested_unit.acronym')
       .orderBy('whom.name', 'ASC')
-      .addOrderBy('suggested.name', 'ASC');
+      .addOrderBy('suggested_org.name', 'ASC')
+      .addOrderBy('suggested_unit.name', 'ASC');
 
     const rows = await query.getRawMany();
 
-    for (const row of rows) {
+    rows.forEach(row => {
+      // if suggestor organisation (whom) doesn't exist in res, set in res
       if (!res.has(row.whom_id)) {
         res.set(row.whom_id, {
           organisation: { id: row.whom_id, name: row.whom_name, acronym: row.whom_acronym },
           suggestedOrganisations: []
         });
       }
-      res.get(row.whom_id)?.suggestedOrganisations.push({
-        id: row.suggested_id,
-        name: row.suggested_name,
-        acronym: row.suggested_acronym
-      });
-    }
+
+      // try to find suggested organisation
+      const suggestedOrganisation = res
+        .get(row.whom_id)
+        ?.suggestedOrganisations.find(so => so.id === row.suggested_org_id);
+
+      // if suggested organisation exists in res, append unit to it
+      if (suggestedOrganisation) {
+        suggestedOrganisation.organisationUnits.push({
+          id: row.suggested_unit_id,
+          name: row.suggested_unit_name,
+          acronym: row.suggested_unit_acronym
+        });
+
+        // otherwise, create and append organisation to suggestedOrganisations
+      } else {
+        res.get(row.whom_id)?.suggestedOrganisations.push({
+          id: row.suggested_org_id,
+          name: row.suggested_org_name,
+          acronym: row.suggested_org_acronym,
+          organisationUnits: [
+            {
+              id: row.suggested_unit_id,
+              name: row.suggested_unit_name,
+              acronym: row.suggested_unit_acronym
+            }
+          ]
+        });
+      }
+    });
 
     return [...res.values()];
   }
 
   private async getProgressUpdateFile(
+    domainContext: DomainContextType,
     innovationId: string,
     progressId: string
   ): Promise<
@@ -1192,6 +1280,7 @@ export class InnovationSupportsService extends BaseService {
     | undefined
   > {
     const files = await this.innovationFileService.getFilesList(
+      domainContext,
       innovationId,
       { contextId: progressId },
       { skip: 0, take: 1, order: { createdAt: 'ASC' } }

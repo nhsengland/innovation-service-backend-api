@@ -28,9 +28,12 @@ class V1InnovationThreadMessageUpdate {
       // can alter it.
       const auth = await authorizationService
         .validate(context)
+        .setInnovation(pathParams.innovationId)
         .checkInnovatorType()
         .checkAccessorType()
         .checkAssessmentType()
+        .checkInnovation()
+        .checkNotArchived()
         .verify();
 
       const requestUser = auth.getUserInfo();

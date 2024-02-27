@@ -3,6 +3,7 @@ import Joi from 'joi';
 import { TEXTAREA_LENGTH_LIMIT } from '@notifications/shared/constants';
 import {
   InnovationCollaboratorStatusEnum,
+  InnovationStatusEnum,
   InnovationSupportStatusEnum,
   InnovationTaskStatusEnum,
   NotifierTypeEnum,
@@ -21,6 +22,7 @@ import {
   IdleSupportAccessorHandler,
   IdleSupportInnovatorHandler,
   IncompleteRecordHandler,
+  InnovationArchiveHandler,
   InnovationDelayedSharedSuggestionHandler,
   InnovationStopSharingHandler,
   InnovationSubmittedHandler,
@@ -28,7 +30,6 @@ import {
   InnovationTransferOwnershipCreationHandler,
   InnovationTransferOwnershipExpirationHandler,
   InnovationTransferOwnershipReminderHandler,
-  InnovationWithdrawnHandler,
   LockUserHandler,
   MessageCreationHandler,
   NeedsAssessmentAssessorUpdateHandler,
@@ -240,28 +241,6 @@ export const NOTIFICATIONS_CONFIG = {
       exportRequestId: Joi.string().guid().required()
     }).required()
   },
-  // // Withdraw
-  [NotifierTypeEnum.INNOVATION_WITHDRAWN]: {
-    handler: InnovationWithdrawnHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_WITHDRAWN]>({
-      innovation: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_WITHDRAWN]['innovation']>({
-        id: Joi.string().guid().required(),
-        name: Joi.string().required(),
-        affectedUsers: Joi.array()
-          .items(
-            Joi.object({
-              userId: Joi.string().guid().required(),
-              userType: Joi.string()
-                .valid(...Object.values(ServiceRoleEnum))
-                .required(),
-              unitId: Joi.string().guid()
-            })
-          )
-          .min(1)
-          .required()
-      }).required()
-    }).required()
-  },
   // // Delete Account
   [NotifierTypeEnum.ACCOUNT_DELETION]: {
     handler: AccountDeletionHandler,
@@ -270,8 +249,18 @@ export const NOTIFICATIONS_CONFIG = {
         .items(
           Joi.object({
             id: Joi.string().guid().required(),
-            name: Joi.string().required(),
-            transferExpireDate: Joi.date().required()
+            transferExpireDate: Joi.date().optional(),
+            affectedUsers: Joi.array()
+              .items(
+                Joi.object({
+                  userId: Joi.string().guid().required(),
+                  userType: Joi.string()
+                    .valid(...Object.values(ServiceRoleEnum))
+                    .required(),
+                  unitId: Joi.string().guid().optional()
+                })
+              )
+              .optional()
           })
         )
         .min(1)
@@ -303,18 +292,33 @@ export const NOTIFICATIONS_CONFIG = {
     handler: InnovationStopSharingHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_STOP_SHARING]>({
       innovationId: Joi.string().guid().required(),
+      organisationId: Joi.string().required(),
+      affectedUsers: Joi.object({
+        roleIds: Joi.array().items(Joi.string().guid().required())
+      }).optional()
+    }).required()
+  },
+  // // Archived
+  [NotifierTypeEnum.INNOVATION_ARCHIVE]: {
+    handler: InnovationArchiveHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_ARCHIVE]>({
+      innovationId: Joi.string().guid().required(),
+      message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).trim().required(),
+      reassessment: Joi.boolean().strict().required(),
+      previousStatus: Joi.string()
+        .valid(...Object.values(InnovationStatusEnum))
+        .required(),
       affectedUsers: Joi.array()
         .items(
           Joi.object({
-            id: Joi.string().guid().required(),
-            role: Joi.string()
+            userId: Joi.string().guid().required(),
+            userType: Joi.string()
               .valid(...Object.values(ServiceRoleEnum))
               .required(),
-            unitId: Joi.string().guid().optional()
+            unitId: Joi.string().guid()
           })
         )
-        .required(),
-      message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xs).trim().required()
+        .required()
     }).required()
   },
   // // Transfer Ownership

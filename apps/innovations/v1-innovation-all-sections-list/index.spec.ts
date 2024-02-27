@@ -52,7 +52,7 @@ describe('v1-innovation-all-sections-list Suite', () => {
 
   describe('Access', () => {
     it.each([
-      ['Admin', 403, scenario.users.allMighty],
+      ['Admin', 200, scenario.users.allMighty],
       ['QA', 200, scenario.users.aliceQualifyingAccessor],
       ['NA', 200, scenario.users.paulNeedsAssessor],
       ['Innovator', 200, scenario.users.johnInnovator]
