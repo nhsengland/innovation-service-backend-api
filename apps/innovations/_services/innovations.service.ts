@@ -2286,7 +2286,10 @@ export class InnovationsService extends BaseService {
           lastAssessmentRequestAt: now,
           status: InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
           statusUpdatedAt: now,
-          updatedBy: domainContext.id
+          updatedBy: domainContext.id,
+          // In case the innovation was archived during the CREATED status
+          archivedStatus: null,
+          archiveReason: null
         }
       );
 
