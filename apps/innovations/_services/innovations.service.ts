@@ -1638,11 +1638,11 @@ export class InnovationsService extends BaseService {
       ...(fields.includes('closedReason') && {
         closedReason:
           item.supports?.[0]?.status === InnovationSupportStatusEnum.CLOSED
-            ? item.status === 'ARCHIVED'
-              ? 'ARCHIVED'
-              : item.organisationShares?.length
-                ? 'CLOSED'
-                : 'STOPPED_SHARED'
+            ? !item.organisationShares?.length
+              ? 'STOPPED_SHARED'
+              : item.status === 'ARCHIVED'
+                ? 'ARCHIVED'
+                : 'CLOSED'
             : null
       })
     };
