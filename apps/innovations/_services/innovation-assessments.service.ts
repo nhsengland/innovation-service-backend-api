@@ -493,6 +493,7 @@ export class InnovationAssessmentsService extends BaseService {
           status: InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
           statusUpdatedAt: now,
           archivedStatus: null,
+          archiveReason: null,
           updatedBy: assessment.createdBy
         }
       );
