@@ -44,15 +44,13 @@ describe('v1-me-mfa-info Suite', () => {
 
   describe('Access', () => {
     it.each([
-      ['Admin', 403, scenario.users.allMighty],
-      ['QA', 403, scenario.users.aliceQualifyingAccessor],
-      ['A', 403, scenario.users.ingridAccessor],
-      ['NA', 403, scenario.users.paulNeedsAssessor],
+      ['Admin', 200, scenario.users.allMighty],
+      ['QA', 200, scenario.users.aliceQualifyingAccessor],
+      ['A', 200, scenario.users.ingridAccessor],
+      ['NA', 200, scenario.users.paulNeedsAssessor],
       ['Innovator', 200, scenario.users.johnInnovator]
     ])('access with user %s should give %i', async (_role: string, status: number, user: TestUserType) => {
-      const result = await new AzureHttpTriggerBuilder()
-        .setAuth(user)
-        .call<ErrorResponseType>(azureFunction);
+      const result = await new AzureHttpTriggerBuilder().setAuth(user).call<ErrorResponseType>(azureFunction);
 
       expect(result.status).toBe(status);
     });

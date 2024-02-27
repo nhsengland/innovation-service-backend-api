@@ -20,7 +20,12 @@ class V1MeMfaInfo {
     const usersService = container.get<UsersService>(SYMBOLS.UsersService);
 
     try {
-      const auth = await authorizationService.validate(context).checkInnovatorType().verify();
+      const auth = await authorizationService.validate(context)
+      .checkInnovatorType()
+      .checkAssessmentType()
+      .checkAccessorType()
+      .checkAdminType()
+      .verify();
 
       const result = await usersService.getUserMfaInfo(auth.getContext());
 

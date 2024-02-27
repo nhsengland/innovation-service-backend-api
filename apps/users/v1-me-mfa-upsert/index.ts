@@ -22,7 +22,13 @@ class V1MeMfaUpsert {
     try {
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
-      const auth = await authorizationService.validate(context).checkInnovatorType().verify();
+      const auth = await authorizationService
+        .validate(context)
+        .checkInnovatorType()
+        .checkAssessmentType()
+        .checkAccessorType()
+        .checkAdminType()
+        .verify();
 
       await usersService.upsertUserMfa(auth.getContext(), body);
 
