@@ -3688,9 +3688,6 @@ paths:
             schema:
               type: object
               properties:
-                title:
-                  type: string
-                  maxLength: 100
                 description:
                   type: string
                   maxLength: 2000
@@ -3728,8 +3725,41 @@ paths:
                     - name
                     - file
                   additionalProperties: false
+                params:
+                  anyOf:
+                    - type: object
+                      properties:
+                        title:
+                          type: string
+                          maxLength: 100
+                      required:
+                        - title
+                      additionalProperties: false
+                    - type: object
+                      properties:
+                        categories:
+                          type: array
+                          items:
+                            type: string
+                            maxLength: 100
+                      required:
+                        - categories
+                      additionalProperties: false
+                    - type: object
+                      properties:
+                        category:
+                          type: string
+                          maxLength: 100
+                        subCategories:
+                          type: array
+                          items:
+                            type: string
+                            maxLength: 100
+                      required:
+                        - category
+                        - subCategories
+                      additionalProperties: false
               required:
-                - title
                 - description
               additionalProperties: false
       responses:

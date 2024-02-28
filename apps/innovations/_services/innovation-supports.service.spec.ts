@@ -568,7 +568,10 @@ describe('Innovations / _services / innovation-supports suite', () => {
             displayRole: TranslationHelper.translate(`SERVICE_ROLES.${jamieMadrox.roles.aiRole.role}`)
           },
           type: 'PROGRESS_UPDATE',
-          params: { title: progressUpdate.params?.title, message: progressUpdate.description }
+          params: {
+            title: progressUpdate.params && 'title' in progressUpdate.params ? progressUpdate.params.title : '',
+            message: progressUpdate.description
+          }
         },
         {
           id: statusUpdate.id,
@@ -981,7 +984,10 @@ describe('Innovations / _services / innovation-supports suite', () => {
 
     it('should create a support summary when a unit is engaging without a file', async () => {
       const domainContext = DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole');
-      const data = { title: randText(), description: randText() };
+      const data: Parameters<InnovationSupportsService['createProgressUpdate']>[2] = {
+        description: randText(),
+        params: { title: randText() }
+      };
       const dbProgressId = randUuid();
 
       supportLogSpy.mockResolvedValue({ id: dbProgressId });
@@ -1006,7 +1012,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           description: data.description,
           supportStatus: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByHealthOrgUnit.status,
           unitId: domainContext.organisation?.organisationUnit?.id,
-          params: { title: data.title }
+          params: data.params
         }
       );
       expect(fileExists).toBe(0);
@@ -1015,8 +1021,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
     it('should create a support summary when a unit is engaging with a file', async () => {
       const domainContext = DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole');
       const dbProgressId = randUuid();
-      const data = {
-        title: randText(),
+      const data: Parameters<InnovationSupportsService['createProgressUpdate']>[2] = {
         description: randText(),
         document: {
           name: randFileName(),
@@ -1026,7 +1031,8 @@ describe('Innovations / _services / innovation-supports suite', () => {
             size: randNumber(),
             extension: randFileExt()
           }
-        }
+        },
+        params: { title: randText() }
       };
 
       supportLogSpy.mockResolvedValue({ id: dbProgressId });
@@ -1051,7 +1057,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           description: data.description,
           supportStatus: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByHealthOrgUnit.status,
           unitId: domainContext.organisation?.organisationUnit?.id,
-          params: { title: data.title }
+          params: data.params
         }
       );
       expect(fileExists).toBe(1);
@@ -1062,7 +1068,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
         sut.createProgressUpdate(
           DTOsHelper.getUserRequestContext(scenario.users.allMighty),
           innovationId,
-          { title: randText(), description: randText() },
+          { description: randText(), params: { title: randText() } },
           em
         )
       ).rejects.toThrowError(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND));
@@ -1073,7 +1079,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
         sut.createProgressUpdate(
           DTOsHelper.getUserRequestContext(scenario.users.samAccessor, 'accessorRole'),
           scenario.users.adamInnovator.innovations.adamInnovation.id,
-          { title: randText(), description: randText() },
+          { description: randText(), params: { title: randText() } },
           em
         )
       ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND));
@@ -1090,7 +1096,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
         sut.createProgressUpdate(
           DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole'),
           innovationId,
-          { title: randText(), description: randText() },
+          { description: randText(), params: { title: randText() } },
           em
         )
       ).rejects.toThrowError(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UNIT_NOT_ENGAGING));
