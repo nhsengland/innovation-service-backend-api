@@ -5197,3 +5197,32 @@ paths:
                     description: Unique identifier for innovation object
         "400":
           description: Invalid innovation payload
+  /v1/{innovationId}/validate:
+    get:
+      description: Get validation information.
+      operationId: v1-innovations-validate
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            description: Id of the innovation.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  validations:
+                    type: object
+                    description: Validation data.
+        "400":
+          description: Bad request.
+        "401":
+          description: The user is not authorized to access validation data.
+        "500":
+          description: An error occurred while fetching the validation data.

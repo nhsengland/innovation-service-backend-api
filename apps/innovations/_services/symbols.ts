@@ -1,16 +1,17 @@
 export const SYMBOLS = {
-  InnovationTasksService: Symbol.for('InnovationTasksService'),
   InnovationAssessmentsService: Symbol.for('InnovationAssessmentsService'),
+  InnovationCollaboratorsService: Symbol.for('InnovationCollaboratorsService'),
+  InnovationExportRequestService: Symbol.for('InnovationExportRequestService'),
   InnovationFileService: Symbol.for('InnovationFileService'),
+  InnovationsService: Symbol.for('InnovationsService'),
   InnovationSectionsService: Symbol.for('InnovationSectionsService'),
   InnovationSupportsService: Symbol.for('InnovationSupportsService'),
+  InnovationTasksService: Symbol.for('InnovationTasksService'),
   InnovationThreadsService: Symbol.for('InnovationThreadsService'),
   InnovationTransferService: Symbol.for('InnovationTransferService'),
-  InnovationsService: Symbol.for('InnovationsService'),
-  InnovationCollaboratorsService: Symbol.for('InnovationCollaboratorsService'),
   ExportFileService: Symbol.for('ExportFileService'),
   StatisticsService: Symbol.for('StatisticsService'),
-  InnovationExportRequestService: Symbol.for('InnovationExportRequestService')
+  ValidationService: Symbol.for('ValidationService')
 };
 
 export default SYMBOLS;
