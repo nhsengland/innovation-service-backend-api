@@ -1638,11 +1638,11 @@ export class InnovationsService extends BaseService {
       ...(fields.includes('closedReason') && {
         closedReason:
           item.supports?.[0]?.status === InnovationSupportStatusEnum.CLOSED
-            ? item.status === 'ARCHIVED'
-              ? 'ARCHIVED'
-              : item.organisationShares?.length
-                ? 'CLOSED'
-                : 'STOPPED_SHARED'
+            ? !item.organisationShares?.length
+              ? 'STOPPED_SHARED'
+              : item.status === 'ARCHIVED'
+                ? 'ARCHIVED'
+                : 'CLOSED'
             : null
       })
     };
@@ -2286,7 +2286,10 @@ export class InnovationsService extends BaseService {
           lastAssessmentRequestAt: now,
           status: InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
           statusUpdatedAt: now,
-          updatedBy: domainContext.id
+          updatedBy: domainContext.id,
+          // In case the innovation was archived during the CREATED status
+          archivedStatus: null,
+          archiveReason: null
         }
       );
 
