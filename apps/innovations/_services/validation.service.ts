@@ -44,11 +44,7 @@ export class ValidationService extends BaseService {
    * check if the innovation support was given status on a particular date
    * @param _domainContext
    * @param _innovationId
-   * @param data
-   *   - year: the year
-   *   - month: the month
-   *   - day: the day
-   *   - status: the support status
+   * @param data the input data (supportId, year, month, day, status)
    * @param entityManager
    */
   async checkIfSupportStatusAtDate(
@@ -68,7 +64,7 @@ export class ValidationService extends BaseService {
     const date = new Date(data.year, data.month - 1, data.day);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    date.setHours(0, 0, 0, 0);
+    date?.setHours(0, 0, 0, 0);
     // Ensuring that the date is the same, invalid date will return NaN and semi valid date (ie: 2023-11-31) will return a different date (ie: 2023-12-01)
     if (date?.getDate() !== data.day) {
       throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD, { message: 'Invalid date' });
