@@ -23,7 +23,7 @@ beforeAll(async () => {
   await testsHelper.init();
 });
 
-const expected = [{ rule: 'checkSupportEngaging' as const, valid: true }];
+const expected = [{ rule: 'checkIfSupportStatusAtDate' as const, valid: true }];
 const mock = jest.spyOn(ValidationService.prototype, 'validate').mockResolvedValue(expected);
 
 afterEach(() => {
@@ -37,7 +37,7 @@ describe('v1-innovation-validate Suite', () => {
         .setAuth(scenario.users.allMighty)
         .setParams<ParamsType>({ innovationId: randUuid() })
         .setQuery<QueryParamsType>({
-          operation: 'checkSupportEngaging'
+          operation: 'checkIfSupportStatusAtDate'
         })
         .call<never>(azureFunction);
 
@@ -59,7 +59,7 @@ describe('v1-innovation-validate Suite', () => {
         .setAuth(user)
         .setParams<ParamsType>({ innovationId: randUuid() })
         .setQuery<QueryParamsType>({
-          operation: 'checkSupportEngaging'
+          operation: 'checkIfSupportStatusAtDate'
         })
         .call<ErrorResponseType>(azureFunction);
 
