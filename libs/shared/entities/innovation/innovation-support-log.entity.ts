@@ -7,6 +7,7 @@ import { UserRoleEntity } from '../user/user-role.entity';
 import { InnovationEntity } from './innovation.entity';
 
 import { InnovationSupportLogTypeEnum, InnovationSupportStatusEnum } from '../../enums/innovation.enums';
+import type { SupportLogProgressUpdate } from 'libs/shared/types';
 
 @Entity('innovation_support_log')
 export class InnovationSupportLogEntity extends BaseEntity {
@@ -23,7 +24,7 @@ export class InnovationSupportLogEntity extends BaseEntity {
   description: string;
 
   @Column({ name: 'params', type: 'simple-json', nullable: true })
-  params: null | { title: string };
+  params: null | SupportLogProgressUpdate['params'];
 
   @ManyToOne(() => InnovationEntity, { nullable: false })
   @JoinColumn({ name: 'innovation_id' })

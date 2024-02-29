@@ -30,7 +30,7 @@ import {
   UnprocessableEntityError
 } from '@innovations/shared/errors';
 import type { DomainService, NotifierService } from '@innovations/shared/services';
-import type { DomainContextType } from '@innovations/shared/types';
+import type { DomainContextType, SupportLogProgressUpdate } from '@innovations/shared/types';
 
 import { InnovationThreadSubjectEnum } from '../_enums/innovation.enums';
 import type {
@@ -966,7 +966,8 @@ export class InnovationSupportsService extends BaseService {
               ...defaultSummary,
               type: 'PROGRESS_UPDATE',
               params: {
-                title: supportLog.params?.title ?? '', // will always exists in type PROGRESS_UPDATE
+                // TODO: Handle this differently
+                title: supportLog.params && 'title' in supportLog.params ? supportLog.params.title : '', // will always exists in type PROGRESS_UPDATE
                 message: supportLog.description,
                 ...(file ? { file: { id: file.id, name: file.name, url: file.file.url } } : {})
               }
@@ -1006,11 +1007,7 @@ export class InnovationSupportsService extends BaseService {
   async createProgressUpdate(
     domainContext: DomainContextType,
     innovationId: string,
-    data: {
-      title: string;
-      description: string;
-      document?: InnovationFileType;
-    },
+    data: { description: string; document?: InnovationFileType; params: SupportLogProgressUpdate['params'] },
     entityManager?: EntityManager
   ): Promise<void> {
     const connection = entityManager ?? this.sqlConnection.manager;
@@ -1027,11 +1024,11 @@ export class InnovationSupportsService extends BaseService {
       .where('support.innovation_id = :innovationId', { innovationId })
       .andWhere('support.organisation_unit_id = :unitId', { unitId })
       .getOne();
-
     if (!support) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
     }
 
+    // TODO: This check will have to check with the progress updates done in the past
     if (!(support.status === InnovationSupportStatusEnum.ENGAGING)) {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UNIT_NOT_ENGAGING);
     }
@@ -1046,7 +1043,7 @@ export class InnovationSupportsService extends BaseService {
           description: data.description,
           supportStatus: support.status,
           unitId,
-          params: { title: data.title }
+          params: data.params
         }
       );
 
