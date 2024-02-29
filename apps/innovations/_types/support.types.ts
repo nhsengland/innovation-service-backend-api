@@ -1,4 +1,5 @@
 import type { InnovationSupportStatusEnum } from '@innovations/shared/enums';
+import type { SupportLogProgressUpdate } from '@innovations/shared/types';
 
 export type SupportSummaryUnitInfo = {
   id: string;
@@ -25,10 +26,9 @@ type SuggestedOrganisationData = {
 type ProgressUpdateData = {
   type: 'PROGRESS_UPDATE';
   params: {
-    title: string;
     message: string;
     file?: { id: string; name: string; url: string };
-  };
+  } & SupportLogProgressUpdate['params'];
 };
 
 type InnovationArchivedData = {

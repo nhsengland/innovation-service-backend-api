@@ -962,16 +962,17 @@ export class InnovationSupportsService extends BaseService {
           {
             const file = await this.getProgressUpdateFile(domainContext, innovationId, supportLog.id);
 
-            summary.push({
-              ...defaultSummary,
-              type: 'PROGRESS_UPDATE',
-              params: {
-                // TODO: Handle this differently
-                title: supportLog.params && 'title' in supportLog.params ? supportLog.params.title : '', // will always exists in type PROGRESS_UPDATE
-                message: supportLog.description,
-                ...(file ? { file: { id: file.id, name: file.name, url: file.file.url } } : {})
-              }
-            });
+            if(supportLog.params) {
+              summary.push({
+                ...defaultSummary,
+                type: 'PROGRESS_UPDATE',
+                params: {
+                  message: supportLog.description,
+                  ...(supportLog.params),
+                  ...(file ? { file: { id: file.id, name: file.name, url: file.file.url } } : {})
+                }
+              });
+            }
           }
           break;
         case InnovationSupportLogTypeEnum.ASSESSMENT_SUGGESTION:
