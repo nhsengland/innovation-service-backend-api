@@ -21,8 +21,9 @@ class V1InnovationsValidate {
     const validationService = container.get<ValidationService>(SYMBOLS.ValidationService);
 
     try {
+      const { operation, ...inputData } = request.query;
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
-      const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
+      const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, { operation });
 
       // All roles will have access to this endpoint and skipping innovation validation since the checks will do it
       const auth = await authorizationService.validate(context).verify();
@@ -32,7 +33,7 @@ class V1InnovationsValidate {
         auth.getContext(),
         queryParams.operation,
         params.innovationId,
-        request.query
+        inputData
       );
       context.res = ResponseHelper.Ok<ResponseDTO>({ validations: res });
 

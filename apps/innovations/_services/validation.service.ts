@@ -1,10 +1,15 @@
-import { JoiHelper } from '@innovations/shared/helpers';
-import type { DomainContextType } from '@innovations/shared/types';
 import { injectable } from 'inversify';
 import Joi from 'joi';
+import type { EntityManager } from 'typeorm';
+
+import { InnovationSupportStatusEnum } from '@innovations/shared/enums';
+import { BadRequestError, GenericErrorsEnum } from '@innovations/shared/errors';
+import { JoiHelper } from '@innovations/shared/helpers';
+import type { DomainContextType } from '@innovations/shared/types';
+
 import { BaseService } from './base.service';
 
-export const ValidationRules = ['checkSupportEngaging'] as const;
+export const ValidationRules = ['checkIfSupportStatusAtDate'] as const;
 export type ValidationRules = (typeof ValidationRules)[number];
 export type ValidationResult = {
   rule: ValidationRules;
@@ -16,10 +21,16 @@ export type ValidationResult = {
 export class ValidationService extends BaseService {
   // Configuration
   private readonly config = {
-    checkSupportEngaging: {
-      handler: this.checkEngagingSupport,
+    checkIfSupportStatusAtDate: {
+      handler: this.checkIfSupportStatusAtDate.bind(this),
       joiDefinition: Joi.object({
-        supportId: Joi.string().guid().required()
+        supportId: Joi.string().guid().required(),
+        year: Joi.number().integer().min(1900).max(2100).required(),
+        month: Joi.number().integer().min(1).max(12).required(),
+        day: Joi.number().integer().min(1).max(31).required(),
+        status: Joi.string()
+          .valid(...Object.values(InnovationSupportStatusEnum))
+          .required()
       }).required()
     }
   };
@@ -29,12 +40,58 @@ export class ValidationService extends BaseService {
     super();
   }
 
-  async checkEngagingSupport(
+  /**
+   * check if the innovation support was given status on a particular date
+   * @param _domainContext
+   * @param _innovationId
+   * @param data the input data (supportId, year, month, day, status)
+   * @param entityManager
+   */
+  async checkIfSupportStatusAtDate(
     _domainContext: DomainContextType,
     _innovationId: string,
-    _data: { year: number; month: number; day: number }
+    data: {
+      supportId: string;
+      year: number;
+      month: number;
+      day: number;
+      status: InnovationSupportStatusEnum;
+    },
+    entityManager?: EntityManager
   ): Promise<ValidationResult> {
-    throw new Error('Method not implemented.');
+    const em = entityManager ?? this.sqlConnection.manager;
+    const dateString = `${data.year}-${data.month}-${data.day}`;
+    const date = new Date(data.year, data.month - 1, data.day);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    date?.setHours(0, 0, 0, 0);
+    // Ensuring that the date is the same, invalid date will return NaN and semi valid date (ie: 2023-11-31) will return a different date (ie: 2023-12-01)
+    if (date?.getDate() !== data.day) {
+      throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD, { message: 'Invalid date' });
+    }
+
+    if (date > today) {
+      throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD, { message: 'Date cannot be in the future' });
+    }
+
+    const result = await em.query(
+      `SELECT TOP 1 1 from innovation_support
+    FOR SYSTEM_TIME ALL
+    WHERE
+    status = @0
+    AND id = @1
+    AND DATEDIFF(day, valid_from, @2) >= 0
+    AND DATEDIFF(day, valid_to, @2) <= 0`,
+      [data.status, data.supportId, dateString]
+    );
+
+    return result.length
+      ? { rule: 'checkIfSupportStatusAtDate', valid: true }
+      : {
+          rule: 'checkIfSupportStatusAtDate',
+          valid: false,
+          details: { message: `Support status ${data.status} was not valid on ${dateString}` }
+        };
   }
 
   /**
