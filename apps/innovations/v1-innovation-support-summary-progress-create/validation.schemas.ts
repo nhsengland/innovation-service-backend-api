@@ -15,6 +15,7 @@ export type BodyType = {
   description: string;
   document?: InnovationFileType;
   params: SupportLogProgressUpdate['params'];
+  createdAt?: Date;
 };
 export const BodySchema = Joi.object<BodyType>({
   description: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).required(),
@@ -26,5 +27,6 @@ export const BodySchema = Joi.object<BodyType>({
       category: Joi.string().max(100).required(),
       subCategories: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().max(100)).required()
     })
-  ])
+  ]),
+  createdAt: Joi.date()
 }).required();

@@ -45,6 +45,7 @@ import { BaseService } from './base.service';
 import type { InnovationFileService } from './innovation-file.service';
 import type { InnovationThreadsService } from './innovation-threads.service';
 import SYMBOLS from './symbols';
+import type { ValidationService } from './validation.service';
 
 type UnitSupportInformationType = {
   id: string;
@@ -69,7 +70,8 @@ export class InnovationSupportsService extends BaseService {
     @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
     @inject(SYMBOLS.InnovationThreadsService)
     private innovationThreadsService: InnovationThreadsService,
-    @inject(SYMBOLS.InnovationFileService) private innovationFileService: InnovationFileService
+    @inject(SYMBOLS.InnovationFileService) private innovationFileService: InnovationFileService,
+    @inject(SYMBOLS.ValidationService) private validationService: ValidationService
   ) {
     super();
   }
@@ -962,13 +964,13 @@ export class InnovationSupportsService extends BaseService {
           {
             const file = await this.getProgressUpdateFile(domainContext, innovationId, supportLog.id);
 
-            if(supportLog.params) {
+            if (supportLog.params) {
               summary.push({
                 ...defaultSummary,
                 type: 'PROGRESS_UPDATE',
                 params: {
                   message: supportLog.description,
-                  ...(supportLog.params),
+                  ...supportLog.params,
                   ...(file ? { file: { id: file.id, name: file.name, url: file.file.url } } : {})
                 }
               });
@@ -1008,7 +1010,12 @@ export class InnovationSupportsService extends BaseService {
   async createProgressUpdate(
     domainContext: DomainContextType,
     innovationId: string,
-    data: { description: string; document?: InnovationFileType; params: SupportLogProgressUpdate['params'] },
+    data: {
+      description: string;
+      document?: InnovationFileType;
+      params: SupportLogProgressUpdate['params'];
+      createdAt?: Date;
+    },
     entityManager?: EntityManager
   ): Promise<void> {
     const connection = entityManager ?? this.sqlConnection.manager;
@@ -1029,9 +1036,22 @@ export class InnovationSupportsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
     }
 
-    // TODO: This check will have to check with the progress updates done in the past
-    if (!(support.status === InnovationSupportStatusEnum.ENGAGING)) {
-      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UNIT_NOT_ENGAGING);
+    // If we have a created date and it's different from today check if the support was engaging otherwise check current
+    if (data.createdAt && data.createdAt.getDate() !== new Date().getDate()) {
+      const res = await this.validationService.checkIfSupportStatusAtDate(domainContext, innovationId, {
+        supportId: support.id,
+        date: data.createdAt,
+        status: InnovationSupportStatusEnum.ENGAGING
+      });
+
+      if (!res.valid) {
+        throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UNIT_NOT_ENGAGING);
+      }
+    } else {
+      data.createdAt = undefined; // We don't need to store the date if it's today
+      if (!(support.status === InnovationSupportStatusEnum.ENGAGING)) {
+        throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UNIT_NOT_ENGAGING);
+      }
     }
 
     await connection.transaction(async transaction => {
@@ -1062,6 +1082,15 @@ export class InnovationSupportsService extends BaseService {
           support.innovation.status,
           transaction
         );
+      }
+
+      // created at needs a raw query to bypass typeorm, this shouldn't happen often so I'm doing an extra query just
+      // to update the date
+      if (data.createdAt) {
+        await transaction.query(`UPDATE innovation_support_log SET created_at = @0 WHERE id = @1`, [
+          data.createdAt,
+          savedLog.id
+        ]);
       }
     });
 

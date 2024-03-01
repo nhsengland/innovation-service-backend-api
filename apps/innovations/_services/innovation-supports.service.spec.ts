@@ -30,12 +30,13 @@ import { TestsHelper } from '@innovations/shared/tests';
 import { InnovationSupportLogBuilder } from '@innovations/shared/tests/builders/innovation-support-log.builder';
 import { InnovationSupportBuilder } from '@innovations/shared/tests/builders/innovation-support.builder';
 import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
-import { randFileExt, randFileName, randNumber, randText, randUuid } from '@ngneat/falso';
+import { randFileExt, randFileName, randNumber, randPastDate, randText, randUuid } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 import { InnovationFileService } from './innovation-file.service';
 import type { InnovationSupportsService } from './innovation-supports.service';
 import { InnovationThreadsService } from './innovation-threads.service';
 import SYMBOLS from './symbols';
+import { ValidationService } from './validation.service';
 
 describe('Innovations / _services / innovation-supports suite', () => {
   let sut: InnovationSupportsService;
@@ -1100,6 +1101,42 @@ describe('Innovations / _services / innovation-supports suite', () => {
           em
         )
       ).rejects.toThrowError(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UNIT_NOT_ENGAGING));
+    });
+
+    describe('create past progress update', () => {
+      const mock = jest.spyOn(ValidationService.prototype, 'checkIfSupportStatusAtDate');
+
+      afterAll(() => mock.mockRestore());
+
+      it('should create a progress update in the past', async () => {
+        mock.mockResolvedValueOnce({ rule: 'checkIfSupportStatusAtDate', valid: true });
+        const createdAt = randPastDate();
+        createdAt.setHours(0, 0, 0, 0);
+
+        await sut.createProgressUpdate(
+          DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole'),
+          innovationId,
+          { description: randText(), params: { title: randText() }, createdAt },
+          em
+        );
+
+        await em
+          .createQueryBuilder(InnovationSupportLogEntity, 'log')
+          .where('log.createdAt = :createdAt', { createdAt })
+          .getOneOrFail();
+      });
+
+      it('should throw an UnprocessableEntityError if the date is invalid', async () => {
+        mock.mockResolvedValueOnce({ rule: 'checkIfSupportStatusAtDate', valid: false });
+        await expect(() =>
+          sut.createProgressUpdate(
+            DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole'),
+            innovationId,
+            { description: randText(), params: { title: randText() }, createdAt: randPastDate() },
+            em
+          )
+        ).rejects.toThrow(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UNIT_NOT_ENGAGING));
+      });
     });
   });
 

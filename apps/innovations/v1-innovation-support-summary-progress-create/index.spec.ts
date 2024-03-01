@@ -1,12 +1,12 @@
 import azureFunction from '.';
 
+import { GenericErrorsEnum } from '@innovations/shared/errors';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@innovations/shared/tests';
 import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@innovations/shared/types';
 import { randText } from '@ngneat/falso';
 import { InnovationSupportsService } from '../_services/innovation-supports.service';
 import type { BodyType, ParamsType } from './validation.schemas';
-import { GenericErrorsEnum } from '@innovations/shared/errors';
 
 jest.mock('@innovations/shared/decorators', () => ({
   JwtDecoder: jest.fn().mockImplementation(() => (_: any, __: string, descriptor: PropertyDescriptor) => {
