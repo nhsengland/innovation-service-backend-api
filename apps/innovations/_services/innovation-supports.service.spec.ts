@@ -1110,13 +1110,12 @@ describe('Innovations / _services / innovation-supports suite', () => {
 
       it('should create a progress update in the past', async () => {
         mock.mockResolvedValueOnce({ rule: 'checkIfSupportStatusAtDate', valid: true });
-        const createdAt = randPastDate();
-        createdAt.setHours(0, 0, 0, 0);
+        const createdAt = randPastDate().toISOString().split('T')[0]!;
 
         await sut.createProgressUpdate(
           DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole'),
           innovationId,
-          { description: randText(), params: { title: randText() }, createdAt },
+          { description: randText(), params: { title: randText() }, createdAt: new Date(createdAt) },
           em
         );
 
