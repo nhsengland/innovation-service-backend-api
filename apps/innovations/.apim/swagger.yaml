@@ -3759,6 +3759,9 @@ paths:
                         - category
                         - subCategories
                       additionalProperties: false
+                createdAt:
+                  type: string
+                  format: date-time
               required:
                 - description
               additionalProperties: false

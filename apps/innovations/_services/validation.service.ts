@@ -25,9 +25,7 @@ export class ValidationService extends BaseService {
       handler: this.checkIfSupportStatusAtDate.bind(this),
       joiDefinition: Joi.object({
         supportId: Joi.string().guid().required(),
-        year: Joi.number().integer().min(1900).max(2100).required(),
-        month: Joi.number().integer().min(1).max(12).required(),
-        day: Joi.number().integer().min(1).max(31).required(),
+        date: Joi.date().required(),
         status: Joi.string()
           .valid(...Object.values(InnovationSupportStatusEnum))
           .required()
@@ -52,23 +50,17 @@ export class ValidationService extends BaseService {
     _innovationId: string,
     data: {
       supportId: string;
-      year: number;
-      month: number;
-      day: number;
+      date: Date;
       status: InnovationSupportStatusEnum;
     },
     entityManager?: EntityManager
   ): Promise<ValidationResult> {
     const em = entityManager ?? this.sqlConnection.manager;
-    const dateString = `${data.year}-${data.month}-${data.day}`;
-    const date = new Date(data.year, data.month - 1, data.day);
+    const date = data.date;
+    const dateString = date.toISOString().split('T')[0];
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    date?.setHours(0, 0, 0, 0);
-    // Ensuring that the date is the same, invalid date will return NaN and semi valid date (ie: 2023-11-31) will return a different date (ie: 2023-12-01)
-    if (date?.getDate() !== data.day) {
-      throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD, { message: 'Invalid date' });
-    }
+    date.setHours(0, 0, 0, 0);
 
     if (date > today) {
       throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD, { message: 'Date cannot be in the future' });
