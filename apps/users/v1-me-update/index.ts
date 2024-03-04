@@ -20,6 +20,7 @@ import {
   InnovatorBodySchema,
   InnovatorBodyType
 } from './validation.schemas';
+import { boolean } from 'joi';
 
 class V1MeUpdate {
   @JwtDecoder()
@@ -134,6 +135,55 @@ export default openApi(V1MeUpdate.httpTrigger as AzureFunction, '/v1/me', {
                     type: 'string',
                     description: 'The size of the organisation',
                     example: 'small'
+                  }
+                }
+              },
+              howDidYouFindUsAnswers: {
+                type: 'object',
+                properties: {
+                  event: {
+                    type: 'boolean',
+                    description: "Whether this field's checkbox was selected or not"
+                  },
+                  eventComment: {
+                    type: 'string',
+                    description: 'Mandatory comment for "event" field, if selected'
+                  },
+                  reading: {
+                    type: 'boolean',
+                    description: "Whether this field's checkbox was selected or not"
+                  },
+                  redingComment: {
+                    type: 'string',
+                    description: 'Mandatory comment for "reading" field, if selected'
+                  },
+                  recommendationColleague: {
+                    type: 'boolean',
+                    description: "Whether this field's checkbox was selected or not"
+                  },
+                  recommendationOrg: {
+                    type: 'boolean',
+                    description: "Whether this field's checkbox was selected or not"
+                  },
+                  recommendationOrgComment: {
+                    type: 'string',
+                    description: 'Mandatory comment for "recommendationOrg" field, if selected'
+                  },
+                  searchEngine: {
+                    type: 'boolean',
+                    description: "Whether this field's checkbox was selected or not"
+                  },
+                  socialMedia: {
+                    type: 'boolean',
+                    description: "Whether this field's checkbox was selected or not"
+                  },
+                  other: {
+                    type: 'boolean',
+                    description: "Whether this field's checkbox was selected or not"
+                  },
+                  otherComment: {
+                    type: 'string',
+                    description: 'Mandatory comment for "other" field, if selected'
                   }
                 }
               }
