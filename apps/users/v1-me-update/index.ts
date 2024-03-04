@@ -20,7 +20,6 @@ import {
   InnovatorBodySchema,
   InnovatorBodyType
 } from './validation.schemas';
-import { boolean } from 'joi';
 
 class V1MeUpdate {
   @JwtDecoder()

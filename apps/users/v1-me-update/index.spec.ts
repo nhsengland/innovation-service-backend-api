@@ -47,7 +47,7 @@ describe('v1-me-update Suite', () => {
       id: scenario.users.johnInnovator.roles.innovatorRole.organisation?.id ?? randUuid(),
       isShadow: true
     },
-    howDidYouFindUsAnswers: null
+    howDidYouFindUsAnswers: {}
   };
   describe('200', () => {
     it.each([
