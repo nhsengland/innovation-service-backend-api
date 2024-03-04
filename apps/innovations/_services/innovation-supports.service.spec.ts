@@ -991,7 +991,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
       };
       const dbProgressId = randUuid();
 
-      supportLogSpy.mockResolvedValue({ id: dbProgressId });
+      supportLogSpy.mockResolvedValueOnce({ id: dbProgressId });
 
       await sut.createProgressUpdate(domainContext, innovationId, data, em);
 
@@ -1036,7 +1036,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
         params: { title: randText() }
       };
 
-      supportLogSpy.mockResolvedValue({ id: dbProgressId });
+      supportLogSpy.mockResolvedValueOnce({ id: dbProgressId });
 
       await sut.createProgressUpdate(domainContext, innovationId, data, em);
 
@@ -1110,12 +1110,12 @@ describe('Innovations / _services / innovation-supports suite', () => {
 
       it('should create a progress update in the past', async () => {
         mock.mockResolvedValueOnce({ rule: 'checkIfSupportStatusAtDate', valid: true });
-        const createdAt = randPastDate().toISOString().split('T')[0]!;
+        const createdAt = randPastDate();
 
         await sut.createProgressUpdate(
           DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole'),
           innovationId,
-          { description: randText(), params: { title: randText() }, createdAt: new Date(createdAt) },
+          { description: randText(), params: { title: randText() }, createdAt },
           em
         );
 

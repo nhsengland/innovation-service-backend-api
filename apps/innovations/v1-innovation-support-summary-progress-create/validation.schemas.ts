@@ -28,5 +28,5 @@ export const BodySchema = Joi.object<BodyType>({
       subCategories: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().max(100)).required()
     })
   ]),
-  createdAt: Joi.date()
+  createdAt: Joi.date().max('now')
 }).required();
