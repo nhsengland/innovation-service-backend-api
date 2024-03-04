@@ -143,7 +143,8 @@ export default openApi(V1MeUpdate.httpTrigger as AzureFunction, '/v1/me', {
                 properties: {
                   event: {
                     type: 'boolean',
-                    description: "Whether this field's checkbox was selected or not"
+                    description: "Whether this field's checkbox was selected or not",
+                    example: false
                   },
                   eventComment: {
                     type: 'string',
@@ -151,39 +152,48 @@ export default openApi(V1MeUpdate.httpTrigger as AzureFunction, '/v1/me', {
                   },
                   reading: {
                     type: 'boolean',
-                    description: "Whether this field's checkbox was selected or not"
+                    description: "Whether this field's checkbox was selected or not",
+                    example: false
                   },
                   redingComment: {
                     type: 'string',
-                    description: 'Mandatory comment for "reading" field, if selected'
+                    description: 'Mandatory comment for "reading" field, if selected',
+                    example: 'An article on Linkedin'
                   },
                   recommendationColleague: {
                     type: 'boolean',
-                    description: "Whether this field's checkbox was selected or not"
+                    description: "Whether this field's checkbox was selected or not",
+                    example: false
                   },
                   recommendationOrg: {
                     type: 'boolean',
-                    description: "Whether this field's checkbox was selected or not"
+                    description: "Whether this field's checkbox was selected or not",
+                    example: false
                   },
                   recommendationOrgComment: {
                     type: 'string',
-                    description: 'Mandatory comment for "recommendationOrg" field, if selected'
+                    description: 'Mandatory comment for "recommendationOrg" field, if selected',
+                    example: 'Someone at NICE'
                   },
                   searchEngine: {
                     type: 'boolean',
-                    description: "Whether this field's checkbox was selected or not"
+                    description: "Whether this field's checkbox was selected or not",
+                    example: false
                   },
                   socialMedia: {
                     type: 'boolean',
-                    description: "Whether this field's checkbox was selected or not"
+                    description: "Whether this field's checkbox was selected or not",
+                    example: false
                   },
                   other: {
                     type: 'boolean',
-                    description: "Whether this field's checkbox was selected or not"
+                    description: "Whether this field's checkbox was selected or not",
+                    example: false
                   },
                   otherComment: {
                     type: 'string',
-                    description: 'Mandatory comment for "other" field, if selected'
+                    description: 'Mandatory comment for "other" field, if selected',
+                    example: 'Colleague who has used the service before'
                   }
                 }
               }
