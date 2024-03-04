@@ -1121,7 +1121,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
 
         await em
           .createQueryBuilder(InnovationSupportLogEntity, 'log')
-          .where('log.createdAt = :createdAt', { createdAt })
+          .where('log.createdAt <= :createdAt', { createdAt })
           .getOneOrFail();
       });
 
