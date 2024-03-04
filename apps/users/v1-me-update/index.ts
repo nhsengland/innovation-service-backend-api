@@ -71,7 +71,8 @@ class V1MeUpdate {
             contactByPhoneTimeframe: innovatorBody.contactByPhoneTimeframe,
             contactDetails: innovatorBody.contactDetails,
             ...(innovatorBody.mobilePhone !== undefined ? { mobilePhone: innovatorBody.mobilePhone } : {}),
-            organisation: innovatorBody.organisation
+            organisation: innovatorBody.organisation,
+            howDidYouFindUsAnswers: innovatorBody.howDidYouFindUsAnswers
           }
         );
 

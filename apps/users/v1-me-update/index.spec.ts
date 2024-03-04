@@ -46,7 +46,8 @@ describe('v1-me-update Suite', () => {
     organisation: {
       id: scenario.users.johnInnovator.roles.innovatorRole.organisation?.id ?? randUuid(),
       isShadow: true
-    }
+    },
+    howDidYouFindUsAnswers: null
   };
   describe('200', () => {
     it.each([
@@ -67,7 +68,7 @@ describe('v1-me-update Suite', () => {
     it('should update other fields as innovator', async () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.johnInnovator)
-        .setBody<InnovatorBodyType>({ ...innovatorBody, mobilePhone: '1234' })
+        .setBody<InnovatorBodyType>({ ...innovatorBody, mobilePhone: '1234', howDidYouFindUsAnswers: {} })
         .call<ResponseDTO>(azureFunction);
 
       expect(result.body).toStrictEqual(expected);
@@ -91,7 +92,8 @@ describe('v1-me-update Suite', () => {
           organisation: {
             id: randUuid(),
             isShadow: true
-          }
+          },
+          howDidYouFindUsAnswers: {}
         })
         .call<ResponseDTO>(azureFunction);
 

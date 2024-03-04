@@ -35,6 +35,7 @@ import SHARED_SYMBOLS from '@users/shared/services/symbols';
 
 import { BaseService } from './base.service';
 import type { DomainContextType } from '@users/shared/types';
+import type { HowDidYouFindUsAnswersType } from '@users/shared/entities/user/user.entity';
 
 @injectable()
 export class UsersService extends BaseService {
@@ -184,6 +185,7 @@ export class UsersService extends BaseService {
         description?: null | string;
         registrationNumber?: null | string;
       };
+      howDidYouFindUsAnswers?: HowDidYouFindUsAnswersType;
     },
     entityManager?: EntityManager
   ): Promise<{ id: string }> {
@@ -200,7 +202,10 @@ export class UsersService extends BaseService {
         // If user does not have firstTimeSignInAt, it means this is the first time the user is signing in
         // Updates the firstTimeSignInAt with the current date.
         if (!user.firstTimeSignInAt) {
-          await transaction.getRepository(UserEntity).update(user.id, { firstTimeSignInAt: new Date().toISOString() });
+          await transaction.getRepository(UserEntity).update(user.id, {
+            firstTimeSignInAt: new Date().toISOString(),
+            howDidYouFindUsAnswers: data.howDidYouFindUsAnswers
+          });
         }
 
         if (data.organisation) {

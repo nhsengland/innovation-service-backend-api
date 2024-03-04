@@ -187,7 +187,8 @@ describe('Users / _services / users service suite', () => {
           size: randText(),
           description: randText({ charCount: 20 }),
           registrationNumber: randText()
-        }
+        },
+        howDidYouFindUsAnswers: {}
       };
 
       const result = await sut.updateUserInfo(
