@@ -185,7 +185,7 @@ export class UsersService extends BaseService {
         description?: null | string;
         registrationNumber?: null | string;
       };
-      howDidYouFindUsAnswers?: HowDidYouFindUsAnswersType;
+      howDidYouFindUsAnswers: HowDidYouFindUsAnswersType;
     },
     entityManager?: EntityManager
   ): Promise<{ id: string }> {
@@ -204,7 +204,9 @@ export class UsersService extends BaseService {
         if (!user.firstTimeSignInAt) {
           await transaction.getRepository(UserEntity).update(user.id, {
             firstTimeSignInAt: new Date().toISOString(),
-            howDidYouFindUsAnswers: data.howDidYouFindUsAnswers
+            howDidYouFindUsAnswers: Object.fromEntries(
+              Object.entries(data.howDidYouFindUsAnswers).filter(([_k, v]) => v)
+            )
           });
         }
 

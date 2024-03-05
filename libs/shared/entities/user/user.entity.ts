@@ -40,7 +40,7 @@ export class UserEntity extends BaseEntity {
   @Column({ name: 'delete_reason', type: 'nvarchar', nullable: true })
   deleteReason: null | string;
 
-  @Column({ name: 'how_did_you_find_us_answers', type: 'simple-json' })
+  @Column({ name: 'how_did_you_find_us_answers', type: 'simple-json', select: false })
   howDidYouFindUsAnswers: null | HowDidYouFindUsAnswersType;
 
   @OneToMany(() => UserRoleEntity, record => record.user, { cascade: ['update', 'insert'] })
