@@ -146,7 +146,8 @@ describe('Users / _services / users service suite', () => {
     ])('should update %s identity info', async (userType, user) => {
       const result = await sut.updateUserInfo({ id: user.id, identityId: user.identityId }, userType, {
         displayName: newName,
-        mobilePhone: newPhoneNumber
+        mobilePhone: newPhoneNumber,
+        howDidYouFindUsAnswers: {}
       });
 
       expect(result).toMatchObject({ id: user.id });
@@ -165,7 +166,8 @@ describe('Users / _services / users service suite', () => {
       await sut.updateUserInfo({ id: user.id, identityId: user.identityId }, userType, {
         displayName: newName,
         mobilePhone: newPhoneNumber,
-        contactByPhone: true
+        contactByPhone: true,
+        howDidYouFindUsAnswers: {}
       });
 
       expect(userPreferencesSpy).toHaveBeenCalledTimes(0);
