@@ -3686,85 +3686,162 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                description:
-                  type: string
-                  maxLength: 2000
-                document:
-                  type: object
+              anyOf:
+                - type: object
                   properties:
-                    name:
-                      type: string
-                      maxLength: 100
                     description:
                       type: string
-                      maxLength: 500
-                    file:
+                      maxLength: 2000
+                    document:
                       type: object
                       properties:
-                        id:
-                          type: string
-                          maxLength: 100
                         name:
                           type: string
                           maxLength: 100
-                        size:
-                          type: number
-                          format: float
-                        extension:
+                        description:
                           type: string
-                          maxLength: 4
+                          maxLength: 500
+                        file:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              maxLength: 100
+                            name:
+                              type: string
+                              maxLength: 100
+                            size:
+                              type: number
+                              format: float
+                            extension:
+                              type: string
+                              maxLength: 4
+                          required:
+                            - id
+                            - name
+                            - size
+                            - extension
+                          additionalProperties: false
                       required:
-                        - id
                         - name
-                        - size
-                        - extension
+                        - file
                       additionalProperties: false
+                    createdAt:
+                      type: string
+                      format: date-time
+                    title:
+                      type: string
+                      maxLength: 100
                   required:
-                    - name
-                    - file
+                    - description
+                    - title
                   additionalProperties: false
-                params:
-                  anyOf:
-                    - type: object
+                - type: object
+                  properties:
+                    description:
+                      type: string
+                      maxLength: 2000
+                    document:
+                      type: object
                       properties:
-                        title:
+                        name:
                           type: string
                           maxLength: 100
+                        description:
+                          type: string
+                          maxLength: 500
+                        file:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              maxLength: 100
+                            name:
+                              type: string
+                              maxLength: 100
+                            size:
+                              type: number
+                              format: float
+                            extension:
+                              type: string
+                              maxLength: 4
+                          required:
+                            - id
+                            - name
+                            - size
+                            - extension
+                          additionalProperties: false
                       required:
-                        - title
+                        - name
+                        - file
                       additionalProperties: false
-                    - type: object
+                    createdAt:
+                      type: string
+                      format: date-time
+                    categories:
+                      type: array
+                      items:
+                        type: string
+                        maxLength: 100
+                  required:
+                    - description
+                    - categories
+                  additionalProperties: false
+                - type: object
+                  properties:
+                    description:
+                      type: string
+                      maxLength: 2000
+                    document:
+                      type: object
                       properties:
-                        categories:
-                          type: array
-                          items:
-                            type: string
-                            maxLength: 100
-                      required:
-                        - categories
-                      additionalProperties: false
-                    - type: object
-                      properties:
-                        category:
+                        name:
                           type: string
                           maxLength: 100
-                        subCategories:
-                          type: array
-                          items:
-                            type: string
-                            maxLength: 100
+                        description:
+                          type: string
+                          maxLength: 500
+                        file:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              maxLength: 100
+                            name:
+                              type: string
+                              maxLength: 100
+                            size:
+                              type: number
+                              format: float
+                            extension:
+                              type: string
+                              maxLength: 4
+                          required:
+                            - id
+                            - name
+                            - size
+                            - extension
+                          additionalProperties: false
                       required:
-                        - category
-                        - subCategories
+                        - name
+                        - file
                       additionalProperties: false
-                createdAt:
-                  type: string
-                  format: date-time
-              required:
-                - description
-              additionalProperties: false
+                    createdAt:
+                      type: string
+                      format: date-time
+                    category:
+                      type: string
+                      maxLength: 100
+                    subCategories:
+                      type: array
+                      items:
+                        type: string
+                        maxLength: 100
+                  required:
+                    - description
+                    - category
+                    - subCategories
+                  additionalProperties: false
       responses:
         "201":
           description: Creates a new progress update

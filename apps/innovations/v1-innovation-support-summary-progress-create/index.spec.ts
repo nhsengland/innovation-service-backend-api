@@ -41,7 +41,7 @@ describe('v1-innovation-support-summary-progress-create', () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.aliceQualifyingAccessor)
         .setParams<ParamsType>({ innovationId })
-        .setBody<BodyType>({ description: randText(), params })
+        .setBody<BodyType>({ description: randText(), ...params })
         .call<never>(azureFunction);
 
       expect(result.status).toBe(201);
@@ -55,7 +55,7 @@ describe('v1-innovation-support-summary-progress-create', () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.aliceQualifyingAccessor)
         .setParams<ParamsType>({ innovationId })
-        .setBody<BodyType>({ description: randText(), params: {} as any })
+        .setBody<BodyType>({ description: randText() } as any)
         .call<ErrorResponseType>(azureFunction);
 
       expect(result.body).toMatchObject({ error: GenericErrorsEnum.INVALID_PAYLOAD, message: 'Invalid request' });
@@ -77,7 +77,7 @@ describe('v1-innovation-support-summary-progress-create', () => {
         .setParams<ParamsType>({ innovationId })
         .setBody<BodyType>({
           description: randText(),
-          params: { title: randText() }
+          title: randText()
         })
         .call<ErrorResponseType>(azureFunction);
 
@@ -95,7 +95,7 @@ describe('v1-innovation-support-summary-progress-create', () => {
           .setParams<ParamsType>({
             innovationId: scenario.users.johnInnovator.innovations.johnInnovationArchived.id
           })
-          .setBody<BodyType>({ description: randText(), params: { title: randText() } })
+          .setBody<BodyType>({ description: randText(), title: randText() })
           .call<ErrorResponseType>(azureFunction);
 
         expect(result.status).toBe(409);

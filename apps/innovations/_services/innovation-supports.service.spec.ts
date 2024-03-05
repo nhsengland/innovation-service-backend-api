@@ -987,7 +987,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
       const domainContext = DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole');
       const data: Parameters<InnovationSupportsService['createProgressUpdate']>[2] = {
         description: randText(),
-        params: { title: randText() }
+        title: randText()
       };
       const dbProgressId = randUuid();
 
@@ -1013,7 +1013,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           description: data.description,
           supportStatus: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByHealthOrgUnit.status,
           unitId: domainContext.organisation?.organisationUnit?.id,
-          params: data.params
+          params: { title: data.title }
         }
       );
       expect(fileExists).toBe(0);
@@ -1033,7 +1033,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
             extension: randFileExt()
           }
         },
-        params: { title: randText() }
+        title: randText()
       };
 
       supportLogSpy.mockResolvedValueOnce({ id: dbProgressId });
@@ -1058,7 +1058,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           description: data.description,
           supportStatus: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByHealthOrgUnit.status,
           unitId: domainContext.organisation?.organisationUnit?.id,
-          params: data.params
+          params: { title: data.title }
         }
       );
       expect(fileExists).toBe(1);
@@ -1069,7 +1069,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
         sut.createProgressUpdate(
           DTOsHelper.getUserRequestContext(scenario.users.allMighty),
           innovationId,
-          { description: randText(), params: { title: randText() } },
+          { description: randText(), title: randText() },
           em
         )
       ).rejects.toThrowError(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND));
@@ -1080,7 +1080,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
         sut.createProgressUpdate(
           DTOsHelper.getUserRequestContext(scenario.users.samAccessor, 'accessorRole'),
           scenario.users.adamInnovator.innovations.adamInnovation.id,
-          { description: randText(), params: { title: randText() } },
+          { description: randText(), title: randText() },
           em
         )
       ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND));
@@ -1097,7 +1097,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
         sut.createProgressUpdate(
           DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole'),
           innovationId,
-          { description: randText(), params: { title: randText() } },
+          { description: randText(), title: randText() },
           em
         )
       ).rejects.toThrowError(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UNIT_NOT_ENGAGING));
@@ -1111,11 +1111,12 @@ describe('Innovations / _services / innovation-supports suite', () => {
       it('should create a progress update in the past', async () => {
         mock.mockResolvedValueOnce({ rule: 'checkIfSupportStatusAtDate', valid: true });
         const createdAt = randPastDate();
+        createdAt.setHours(0, 0, 0, 0); // There's issues with milliseconds comparison in tests and FE always sends 00:00:00 anyway
 
         await sut.createProgressUpdate(
           DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole'),
           innovationId,
-          { description: randText(), params: { title: randText() }, createdAt },
+          { description: randText(), title: randText(), createdAt },
           em
         );
 
@@ -1131,7 +1132,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           sut.createProgressUpdate(
             DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole'),
             innovationId,
-            { description: randText(), params: { title: randText() }, createdAt: randPastDate() },
+            { description: randText(), title: randText(), createdAt: randPastDate() },
             em
           )
         ).rejects.toThrow(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UNIT_NOT_ENGAGING));
