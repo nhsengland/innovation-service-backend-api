@@ -2,6 +2,7 @@ import Joi from 'joi';
 
 import { ORGANISATIONS_LENGTH_LIMITS } from '@users/shared/constants';
 import { PhoneUserPreferenceEnum } from '@users/shared/enums';
+import type { HowDidYouFindUsAnswersType } from '@users/shared/entities/user/user.entity';
 
 export type DefaultUserBodyType = {
   displayName: string;
@@ -26,6 +27,7 @@ export type InnovatorBodyType = {
     description?: null | string;
     registrationNumber?: null | string;
   };
+  howDidYouFindUsAnswers: HowDidYouFindUsAnswersType;
 };
 
 export const InnovatorBodySchema = Joi.object<InnovatorBodyType>({
@@ -56,5 +58,18 @@ export const InnovatorBodySchema = Joi.object<InnovatorBodyType>({
       otherwise: Joi.string().optional().allow(null)
     }),
     registrationNumber: Joi.string().max(ORGANISATIONS_LENGTH_LIMITS.registrationNumber).optional().allow(null)
+  }).required(),
+  howDidYouFindUsAnswers: Joi.object<HowDidYouFindUsAnswersType>({
+    event: Joi.boolean().optional(),
+    eventComment: Joi.string().optional(),
+    reading: Joi.boolean().optional(),
+    readingComment: Joi.string().optional(),
+    recommendationColleague: Joi.boolean().optional(),
+    recommendationOrg: Joi.boolean().optional(),
+    recommendationOrgComment: Joi.string().optional(),
+    searchEngine: Joi.boolean().optional(),
+    socialMedia: Joi.boolean().optional(),
+    other: Joi.boolean().optional(),
+    otherComment: Joi.string().optional()
   }).required()
 }).required();
