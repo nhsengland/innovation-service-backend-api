@@ -1013,9 +1013,8 @@ export class InnovationSupportsService extends BaseService {
     data: {
       description: string;
       document?: InnovationFileType;
-      params: SupportLogProgressUpdate['params'];
       createdAt?: Date;
-    },
+    } & SupportLogProgressUpdate['params'],
     entityManager?: EntityManager
   ): Promise<void> {
     const connection = entityManager ?? this.sqlConnection.manager;
@@ -1024,6 +1023,9 @@ export class InnovationSupportsService extends BaseService {
     if (!unitId) {
       throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
     }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { description, document, createdAt, ...params } = data;
 
     const support = await connection
       .createQueryBuilder(InnovationSupportEntity, 'support')
@@ -1064,7 +1066,7 @@ export class InnovationSupportsService extends BaseService {
           description: data.description,
           supportStatus: support.status,
           unitId,
-          params: data.params
+          params: params
         }
       );
 

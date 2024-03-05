@@ -14,19 +14,20 @@ export const ParamsSchema = Joi.object<ParamsType>({
 export type BodyType = {
   description: string;
   document?: InnovationFileType;
-  params: SupportLogProgressUpdate['params'];
   createdAt?: Date;
-};
-export const BodySchema = Joi.object<BodyType>({
+} & SupportLogProgressUpdate['params'];
+
+const BaseSchema = Joi.object<BodyType>({
   description: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).required(),
   document: InnovationFileSchema.optional(),
-  params: Joi.alternatives([
-    Joi.object({ title: Joi.string().max(100).required() }),
-    Joi.object({ categories: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().max(100)).required() }),
-    Joi.object({
-      category: Joi.string().max(100).required(),
-      subCategories: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().max(100)).required()
-    })
-  ]),
   createdAt: Joi.date().max('now')
-}).required();
+});
+
+export const BodySchema = Joi.alternatives([
+  BaseSchema.append({ title: Joi.string().max(100).required() }),
+  BaseSchema.append({ categories: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().max(100)).required() }),
+  BaseSchema.append({
+    category: Joi.string().max(100).required(),
+    subCategories: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().max(100)).required()
+  })
+]).required();
