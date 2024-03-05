@@ -1013,7 +1013,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           description: data.description,
           supportStatus: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByHealthOrgUnit.status,
           unitId: domainContext.organisation?.organisationUnit?.id,
-          title: data.title
+          params: { title: data.title }
         }
       );
       expect(fileExists).toBe(0);
@@ -1058,7 +1058,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           description: data.description,
           supportStatus: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByHealthOrgUnit.status,
           unitId: domainContext.organisation?.organisationUnit?.id,
-          title: data.title
+          params: { title: data.title }
         }
       );
       expect(fileExists).toBe(1);
@@ -1111,6 +1111,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
       it('should create a progress update in the past', async () => {
         mock.mockResolvedValueOnce({ rule: 'checkIfSupportStatusAtDate', valid: true });
         const createdAt = randPastDate();
+        createdAt.setHours(0, 0, 0, 0); // There's issues with milliseconds comparison in tests and FE always sends 00:00:00 anyway
 
         await sut.createProgressUpdate(
           DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole'),
