@@ -150,6 +150,7 @@ export type InnovationListFilters = {
   groupedStatuses: InnovationGroupedStatusEnum[];
   involvedAACProgrammes?: CurrentCatalogTypes.catalogInvolvedAACProgrammes[];
   keyHealthInequalities?: CurrentCatalogTypes.catalogKeyHealthInequalities[];
+  latestWorkedByMe?: boolean;
   locations?: InnovationLocationEnum[];
   search?: string;
   suggestedOnly?: boolean;
@@ -1056,7 +1057,9 @@ export class InnovationsService extends BaseService {
     // filters
     for (const [key, value] of Object.entries(params.filters ?? {})) {
       // add to do a as any for the filters as the value was evaluated as never but this should be safe to use
-      await (this.filtersHandlers[key as keyof typeof this.filtersHandlers] as any)(domainContext, query, value);
+      await (this.filtersHandlers[key as keyof typeof this.filtersHandlers] as any)(domainContext, query, value, {
+        pagination: params.pagination
+      });
     }
 
     // pagination and sorting (TODO create a function for this as it's getting more complex)
@@ -1296,12 +1299,14 @@ export class InnovationsService extends BaseService {
       | ((
           domainContext: DomainContextType,
           query: SelectQueryBuilder<InnovationListView>,
-          value: Required<InnovationListFilters>[k]
+          value: Required<InnovationListFilters>[k],
+          options?: { pagination: PaginationQueryParamsType<InnovationListSelectType> }
         ) => void | Promise<void>)
       | ((
           domainContext: DomainContextType,
           query: SelectQueryBuilder<InnovationListView>,
-          value: Required<InnovationListFilters>[k][]
+          value: Required<InnovationListFilters>[k][],
+          options?: { pagination: PaginationQueryParamsType<InnovationListSelectType> }
         ) => void | Promise<void>);
   } = {
     assignedToMe: this.addAssignedToMeFilter.bind(this),
@@ -1319,6 +1324,7 @@ export class InnovationsService extends BaseService {
     groupedStatuses: this.addInFilter('groupedStatuses', 'groupedStatus').bind(this),
     involvedAACProgrammes: this.addJsonArrayInFilter('involvedAACProgrammes').bind(this),
     keyHealthInequalities: this.addJsonArrayInFilter('keyHealthInequalities').bind(this),
+    latestWorkedByMe: this.addLatestWorkedByMeFilter.bind(this),
     locations: this.addLocationFilter.bind(this),
     search: this.addSearchFilter.bind(this),
     suggestedOnly: this.addSuggestedOnlyFilter.bind(this),
@@ -1415,6 +1421,25 @@ export class InnovationsService extends BaseService {
       }
       // Choose to do nothing instead of throwing an error if this is passed when not supposed (joi should handle it)
       // but as a behavior think it's better to ignore the filter than to throw an error
+    }
+  }
+
+  private addLatestWorkedByMeFilter(
+    domainContext: DomainContextType,
+    query: SelectQueryBuilder<InnovationListView>,
+    latestWorkedByMe: boolean,
+    options?: { pagination: PaginationQueryParamsType<InnovationListSelectType> }
+  ): void {
+    if (latestWorkedByMe) {
+      query.andWhere(
+        'innovation.id IN (SELECT innovation_id FROM audit WHERE user_id=:userId AND action IN (:...actions) GROUP BY innovation_id ORDER BY MAX(date) DESC OFFSET :offset ROWS FETCH NEXT :fetch ROWS ONLY)',
+        {
+          userId: domainContext.id,
+          actions: [ActionEnum.CREATE, ActionEnum.UPDATE],
+          offset: options?.pagination.skip,
+          fetch: options?.pagination.take
+        }
+      );
     }
   }
 

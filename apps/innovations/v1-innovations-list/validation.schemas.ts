@@ -224,7 +224,8 @@ export const NewQueryParamsSchema = JoiHelper.PaginationJoiSchema({
       {
         is: ServiceRoleEnum.ASSESSMENT,
         then: Joi.object({
-          assignedToMe: Joi.boolean().optional()
+          assignedToMe: Joi.boolean().optional(),
+          latestWorkedByMe: Joi.boolean().optional()
         })
       },
       {
