@@ -146,6 +146,7 @@ export type InnovationListFilters = {
   dateFilters?: { field: DateFilterFieldsType; startDate?: Date; endDate?: Date }[];
   diseasesAndConditions: string[];
   engagingOrganisations?: string[];
+  engagingUnits?: string[];
   groupedStatuses: InnovationGroupedStatusEnum[];
   involvedAACProgrammes?: CurrentCatalogTypes.catalogInvolvedAACProgrammes[];
   keyHealthInequalities?: CurrentCatalogTypes.catalogKeyHealthInequalities[];
@@ -153,6 +154,7 @@ export type InnovationListFilters = {
   search?: string;
   suggestedOnly?: boolean;
   supportStatuses?: InnovationSupportStatusEnum[];
+  supportUnit?: string;
   closedByMyOrganisation?: boolean;
 };
 
@@ -1043,7 +1045,12 @@ export class InnovationsService extends BaseService {
 
     // Nested object handlers and joins
     nestedObjects.forEach(join => {
-      this.joinHandlers[join as keyof typeof this.joinHandlers](domainContext, query, fieldGroups[join] as any[]);
+      this.joinHandlers[join as keyof typeof this.joinHandlers](
+        domainContext,
+        query,
+        fieldGroups[join] as any[],
+        params.filters
+      );
     });
 
     // filters
@@ -1059,7 +1066,7 @@ export class InnovationsService extends BaseService {
       if (value === 'ASC' || value === 'DESC') {
         // Special case for orders we might improve this in the future if it becomes the norm
         if (key.startsWith('owner.')) {
-          key = 'owner' + key.split('.')[1]!.charAt(0).toUpperCase() + key.split('.')[1]?.slice(1);
+          key = 'owner' + key.split('.')[1]?.charAt(0).toUpperCase() + key.split('.')[1]?.slice(1);
         }
         switch (key) {
           case 'owner.name':
@@ -1141,7 +1148,8 @@ export class InnovationsService extends BaseService {
     [k in InnovationListJoinTypes]: (
       domainContext: DomainContextType,
       query: SelectQueryBuilder<InnovationListView>,
-      value: InnovationListChildrenType<k> | any
+      value: InnovationListChildrenType<k> | any,
+      filters?: Partial<InnovationListFilters>
     ) => void;
   } = {
     assessment: this.withAssessment.bind(this),
@@ -1176,19 +1184,26 @@ export class InnovationsService extends BaseService {
   private withSupport(
     domainContext: DomainContextType,
     query: SelectQueryBuilder<InnovationListView>,
-    fields: InnovationListChildrenType<'support'>[] = ['id']
+    fields: InnovationListChildrenType<'support'>[] = ['id'],
+    filters?: Partial<InnovationListFilters>
   ): void {
     if (fields.length) {
-      if (!isAccessorDomainContextType(domainContext)) {
+      const unitId = isAccessorDomainContextType(domainContext)
+        ? domainContext.organisation.organisationUnit.id
+        : isAdminDomainContextType(domainContext) && filters?.supportUnit
+          ? filters.supportUnit
+          : null;
+
+      if (!unitId) {
         throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD, {
-          message: 'Support is only valid for accessor domain context'
+          message: 'Support is only valid for accessor domain context or admin with one engagingOrganisationUnit'
         });
       }
 
       query
         .addSelect((fields.filter(f => f !== 'closedReason') ?? ['id']).map(f => `support.${f}`))
         .leftJoin('innovation.supports', 'support', 'support.organisation_unit_id = :organisationUnitId', {
-          organisationUnitId: domainContext.organisation.organisationUnit.id
+          organisationUnitId: unitId
         })
         // Ignore archived innovations that never had any support or it would be messing with the status and support summary
         .andWhere('(innovation.status != :innovationArchivedStatus OR support.id IS NOT NULL) ', {
@@ -1298,13 +1313,17 @@ export class InnovationsService extends BaseService {
     engagingOrganisations: this.addJsonArrayInFilter('engagingOrganisations', {
       fieldSelector: '$.organisationId'
     }).bind(this),
+    engagingUnits: this.addJsonArrayInFilter('engagingUnits', {
+      fieldSelector: '$.unitId'
+    }).bind(this),
     groupedStatuses: this.addInFilter('groupedStatuses', 'groupedStatus').bind(this),
     involvedAACProgrammes: this.addJsonArrayInFilter('involvedAACProgrammes').bind(this),
     keyHealthInequalities: this.addJsonArrayInFilter('keyHealthInequalities').bind(this),
     locations: this.addLocationFilter.bind(this),
     search: this.addSearchFilter.bind(this),
     suggestedOnly: this.addSuggestedOnlyFilter.bind(this),
-    supportStatuses: this.addSupportFilter.bind(this)
+    supportStatuses: this.addSupportFilter.bind(this),
+    supportUnit: () => {} // this is handled in the withSupport handler for admin users and forbidden otherwise
   };
 
   /**

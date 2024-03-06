@@ -976,8 +976,7 @@ paths:
               enum:
                 - ASC
                 - DESC
-            default:
-              default: DESC
+            default: {}
         - name: careSettings
           in: query
           required: false
@@ -1061,6 +1060,14 @@ paths:
             type: array
             items:
               type: string
+        - name: engagingUnits
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              format: uuid
         - name: fields
           in: query
           required: false

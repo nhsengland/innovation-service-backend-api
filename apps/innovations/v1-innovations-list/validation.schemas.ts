@@ -161,7 +161,8 @@ export const LegacyQueryParamsSchema = JoiHelper.PaginationJoiSchema({
   .required();
 
 export const NewQueryParamsSchema = JoiHelper.PaginationJoiSchema({
-  orderKeys: Object.values(InnovationListSelectType)
+  orderKeys: Object.values(InnovationListSelectType),
+  defaultOrder: {} // The new innovation list doesn't have a default order and enforces the user to order by a selected field
 })
   .append<NewQueryParamsType>({
     careSettings: JoiHelper.AppCustomJoi()
@@ -186,6 +187,7 @@ export const NewQueryParamsSchema = JoiHelper.PaginationJoiSchema({
       .optional(),
     diseasesAndConditions: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().max(100)).optional(),
     engagingOrganisations: JoiHelper.AppCustomJoi().stringArray().items(Joi.string()).optional(),
+    engagingUnits: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().uuid()).optional(),
     fields: JoiHelper.AppCustomJoi()
       .stringArray()
       .items(Joi.string().valid(...Object.values(InnovationListSelectType)))
@@ -255,7 +257,15 @@ export const NewQueryParamsSchema = JoiHelper.PaginationJoiSchema({
           groupedStatuses: JoiHelper.AppCustomJoi()
             .stringArray()
             .items(Joi.string().valid(...Object.values(InnovationGroupedStatusEnum)))
-            .optional()
+            .optional(),
+          supportStatuses: JoiHelper.AppCustomJoi()
+            .stringArray()
+            .items(Joi.string().valid(...Object.values(InnovationSupportStatusEnum)))
+            .optional(),
+          supportUnit: Joi.when('supportStatuses', {
+            is: Joi.exist(),
+            then: Joi.string().uuid().required()
+          })
         })
       }
     ]

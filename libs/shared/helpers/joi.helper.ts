@@ -42,11 +42,11 @@ export class JoiHelper {
           return typeof value !== 'string'
             ? { value }
             : {
-              value: value
-                .replace(/(^,+)|(,+$)/gm, '')
-                .split(',')
-                .filter(item => item)
-            };
+                value: value
+                  .replace(/(^,+)|(,+$)/gm, '')
+                  .split(',')
+                  .filter(item => item)
+              };
         }
       },
 
@@ -94,6 +94,7 @@ export class JoiHelper {
     skip?: number;
     take?: number;
     maxTake?: number;
+    defaultOrder?: { [key: string]: 'ASC' | 'DESC' };
   }): Joi.ObjectSchema {
     return Joi.object({
       skip: Joi.number()
@@ -108,7 +109,7 @@ export class JoiHelper {
         // This validates if the format is { field: 'ASC' | 'DESC' } (and uppercase 'asc' to 'ASC').
         .pattern(Joi.string().valid(...data.orderKeys), Joi.string().valid('ASC', 'DESC').uppercase())
         .optional()
-        .default({ default: 'DESC' })
+        .default(data.defaultOrder ?? { default: 'DESC' })
     });
   }
 }
