@@ -86,6 +86,9 @@ export const InnovationListSelectType = [
   'postcode',
   // Relation fields
   'assessment.id',
+  'assessment.isExempt',
+  'assessment.assignedTo',
+  'assessment.updatedAt',
   'engagingOrganisations',
   'engagingUnits',
   'suggestedOrganisations',
@@ -104,7 +107,9 @@ export const InnovationListSelectType = [
 type InnovationListViewFields = Omit<InnovationListView, 'assessment' | 'supports' | 'ownerId'>;
 export type InnovationListSelectType =
   | keyof InnovationListViewFields
-  | `assessment.${keyof Pick<InnovationAssessmentEntity, 'id'>}`
+  | `assessment.${keyof Pick<InnovationAssessmentEntity, 'id' | 'updatedAt'>}`
+  | 'assessment.assignedTo'
+  | 'assessment.isExempt'
   | `support.${keyof Pick<InnovationSupportEntity, 'id' | 'status' | 'updatedAt' | 'updatedBy'>}`
   | 'support.closedReason'
   | 'owner.id'
@@ -1099,7 +1104,10 @@ export class InnovationsService extends BaseService {
     // postHandlers - optimize to only fetch once. This means that the fields handled here aren't sortable but it would
     // be really bad performant otherwise and for the names even worse.
     const needUsernameResolution =
-      nestedObjects.has('owner') || fieldGroups['engagingUnits'] || fieldGroups['support']?.includes('updatedBy');
+      nestedObjects.has('owner') ||
+      fieldGroups['engagingUnits'] ||
+      fieldGroups['support']?.includes('updatedBy') ||
+      fieldGroups['assessment']?.includes('assignedTo');
 
     const handlerMaps: {
       [k in keyof typeof this.postHandlers]: Awaited<ReturnType<(typeof this.postHandlers)[k]>>;
@@ -1167,7 +1175,22 @@ export class InnovationsService extends BaseService {
     fields: InnovationListChildrenType<'assessment'>[] = ['id']
   ): void {
     if (fields.length) {
-      query.addSelect(fields.map(f => `assessment.${f}`)).leftJoin('innovation.assessment', 'assessment');
+      query
+        .addSelect(fields.filter(f => !['assignedTo', 'isExempt'].includes(f)).map(f => `assessment.${f}`))
+        .leftJoin('innovation.assessment', 'assessment');
+
+      if (fields.includes('assignedTo')) {
+        query.leftJoin('assessment.assignTo', 'assessor');
+        query.addSelect('assessor.id');
+        // Special case when we only have the assessBy to preserve typeorm model
+        if (fields.length === 1) {
+          query.addSelect('assessment.id');
+        }
+      }
+
+      if (fields.includes('isExempt')) {
+        query.addSelect('assessment.exemptedAt');
+      }
     }
   }
 
@@ -1279,8 +1302,13 @@ export class InnovationsService extends BaseService {
     const usersSet = new Set<string>();
     // Add the owners and the engaging units accessors
     innovations.forEach(i => {
-      // We need to resolve the innovation owner name, the supports updatedBy (for the closedBy) and the engaging units accessors
-      [i.ownerId, i.supports?.[0]?.updatedBy, ...(i.engagingUnits?.flatMap(u => u.assignedAccessors) || [])]
+      // We need to resolve the innovation owner name, assessment assigned to, the supports updatedBy (for the closedBy) and the engaging units accessors
+      [
+        i.ownerId,
+        i.supports?.[0]?.updatedBy,
+        i.assessment?.assignTo?.id,
+        ...(i.engagingUnits?.flatMap(u => u.assignedAccessors) || [])
+      ]
         .filter(isString)
         .forEach(u => {
           usersSet.add(u);
@@ -1409,15 +1437,24 @@ export class InnovationsService extends BaseService {
         if (!query.expressionMap.aliases.find(item => item.name === 'support')) {
           this.withSupport(domainContext, query);
         }
-        query.innerJoin('support.userRoles', 'supportUserRoles');
-        query.andWhere('supportUserRoles.id = :userRoleId', {
+        query.innerJoin('support.userRoles', 'supportUserRoles').andWhere('supportUserRoles.id = :userRoleId', {
           userRoleId: domainContext.currentRole.id
         });
       }
       if (isAssessmentDomainContextType(domainContext)) {
-        throw new NotImplementedError(GenericErrorsEnum.NOT_IMPLEMENTED_ERROR, {
-          message: 'Assigned to me filter not implemented for Needs Assessment Team yet'
-        });
+        if (!query.expressionMap.aliases.find(item => item.name === 'assessment')) {
+          this.withAssessment(domainContext, query);
+        }
+        query
+          .innerJoin(
+            'user_role',
+            'assessmentRole',
+            'assessmentRole.user_id = assessment.assign_to_id AND assessmentRole.role = :assessmentRole AND assessmentRole.is_active = 1',
+            { assessmentRole: ServiceRoleEnum.ASSESSMENT }
+          )
+          .andWhere('assessment.assign_to_id = :assessmentRoleUserId', {
+            assessmentRoleUserId: domainContext.id
+          });
       }
       // Choose to do nothing instead of throwing an error if this is passed when not supposed (joi should handle it)
       // but as a behavior think it's better to ignore the filter than to throw an error
@@ -1605,35 +1642,12 @@ export class InnovationsService extends BaseService {
       postHandlers: { [k in keyof typeof this.postHandlers]: Awaited<ReturnType<(typeof this.postHandlers)[k]>> }
     ) => Partial<InnovationListFullResponseType[k]>;
   } = {
-    assessment: this.oneToOneDisplayMapping<'assessment'>('assessment').bind(this),
+    assessment: this.displayAssessment.bind(this),
     engagingUnits: this.displayEngagingUnits.bind(this),
     support: this.displaySupport.bind(this),
     owner: this.displayOwner.bind(this),
     statistics: this.displayStatistics.bind(this) // Finish the display of statistics
   };
-
-  /**
-   * Maps children fields from the view to the output on a 1:1.
-   *
-   * This can be used with both joins and nested objects (objects not used atm)
-   *
-   * @param child the element from the view we're mapping
-   * @returns the object for that element with all the selected fields
-   */
-  private oneToOneDisplayMapping<T extends keyof InnovationListView>(
-    child: T
-  ): (
-    item: InnovationListView,
-    fields: InnovationListChildrenType<'assessment'>[]
-  ) => Partial<InnovationListFullResponseType[T extends keyof InnovationListFullResponseType ? T : never]> {
-    return (item, fields) => {
-      const res = {} as any;
-      fields.forEach(field => {
-        res[field] = (item as any)[child]?.[field] ?? null;
-      });
-      return res;
-    };
-  }
 
   private displayEngagingUnits(
     item: InnovationListView,
@@ -1653,6 +1667,28 @@ export class InnovationsService extends BaseService {
         unitId: unit.unitId
       })) || null
     );
+  }
+
+  private displayAssessment(
+    item: InnovationListView,
+    fields: InnovationListChildrenType<'assessment'>[],
+    extra: PickHandlerReturnType<typeof this.postHandlers, 'users'>
+  ): Partial<InnovationListFullResponseType['assessment']> {
+    const res = {} as any;
+    fields.forEach(field => {
+      switch (field) {
+        case 'assignedTo':
+          res[field] = extra.users.get(item.assessment?.assignTo?.id ?? '')?.displayName ?? null;
+          item.assessment?.assignTo ?? null;
+          break;
+        case 'isExempt':
+          res[field] = !!item.assessment?.exemptedAt;
+          break;
+        default:
+          res[field] = item.assessment?.[field] ?? null;
+      }
+    });
+    return res;
   }
 
   private displaySupport(

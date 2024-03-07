@@ -1094,6 +1094,9 @@ paths:
                 - otherCategoryDescription
                 - postcode
                 - assessment.id
+                - assessment.isExempt
+                - assessment.assignedTo
+                - assessment.updatedAt
                 - engagingOrganisations
                 - engagingUnits
                 - suggestedOrganisations
