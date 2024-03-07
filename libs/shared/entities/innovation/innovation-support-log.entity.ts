@@ -7,7 +7,7 @@ import { UserRoleEntity } from '../user/user-role.entity';
 import { InnovationEntity } from './innovation.entity';
 
 import { InnovationSupportLogTypeEnum, InnovationSupportStatusEnum } from '../../enums/innovation.enums';
-import type { SupportLogProgressUpdate } from '@innovations/shared/types';
+import type { SupportLogProgressUpdate } from '../../types/domain.types';
 
 @Entity('innovation_support_log')
 export class InnovationSupportLogEntity extends BaseEntity {

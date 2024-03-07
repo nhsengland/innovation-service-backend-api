@@ -370,7 +370,7 @@ export class InnovationSectionsService extends BaseService {
         await this.updateDocumentSectionInfo(
           innovation.id,
           sectionKey,
-          { type: 'DRAFT', dataToUpdate, updatedBy: domainContext.id, updatedAt },
+          { dataToUpdate, updatedBy: domainContext.id, updatedAt },
           transaction
         );
       }
@@ -451,25 +451,11 @@ export class InnovationSectionsService extends BaseService {
 
       const savedSection = await transaction.save(InnovationSectionEntity, dbSection);
 
-      const document = await this.getInnovationDocument(
-        innovationId,
-        CurrentDocumentConfig.version,
-        'DRAFT',
-        transaction
-      );
-      const draftSection = this.getSectionData(document, sectionKey);
-
-      // Update submitted document
-      await this.updateDocumentSectionInfo(
+      // Submit document section info
+      await this.submitDocumentSectionInfo(
         innovationId,
         sectionKey,
-        {
-          type: 'SUBMIT',
-          dataToUpdate: draftSection,
-          description: `SECTION_SUBMITTED-${sectionKey}`,
-          updatedBy: domainContext.id,
-          updatedAt: now
-        },
+        { updatedBy: domainContext.id, updatedAt: now },
         transaction
       );
 
@@ -631,7 +617,7 @@ export class InnovationSectionsService extends BaseService {
       await this.updateDocumentSectionInfo(
         innovationId,
         `evidences[${evidenceIndex}]`,
-        { type: 'DRAFT', dataToUpdate: data, updatedBy: user.id, updatedAt },
+        { dataToUpdate: data, updatedBy: user.id, updatedAt },
         transaction
       );
 
@@ -675,7 +661,7 @@ export class InnovationSectionsService extends BaseService {
         await this.updateDocumentSectionInfo(
           innovationId,
           'evidences',
-          { type: 'DRAFT', dataToUpdate: evidences, updatedBy: domainContext.id, updatedAt },
+          { dataToUpdate: evidences, updatedBy: domainContext.id, updatedAt },
           transaction
         );
       }
@@ -804,43 +790,40 @@ export class InnovationSectionsService extends BaseService {
     };
   }
 
-  /**
-   * Method to update a specific section info
-   * This can be of two types:
-   * * DRAFT - saves the information on the document_draft structure
-   * * SUBMIT - saves the information on the document with a description and is_snapshot on
-   */
   private async updateDocumentSectionInfo(
     innovationId: string,
     sectionKey: string,
-    data: { dataToUpdate: { [key: string]: any } | { [key: string]: any }[]; updatedBy: string; updatedAt?: Date } & (
-      | { type: 'DRAFT' }
-      | { type: 'SUBMIT'; description: string }
-    ),
+    data: { dataToUpdate: { [key: string]: any } | { [key: string]: any }[]; updatedBy: string; updatedAt?: Date },
     em: EntityManager
   ): Promise<void> {
-    const updatedAt = data.updatedAt ?? new Date();
+    await em.query(
+      `UPDATE innovation_document_draft
+      SET document = JSON_MODIFY(document, @0, JSON_QUERY(@1)), updated_by=@2, updated_at=@3 WHERE id = @4`,
+      [`$.${sectionKey}`, JSON.stringify(data.dataToUpdate), data.updatedBy, data.updatedAt ?? new Date(), innovationId]
+    );
+  }
 
-    if (data.type === 'SUBMIT') {
-      await em.query(
-        `UPDATE innovation_document
-          SET document = JSON_MODIFY(document, @0, JSON_QUERY(@1)), updated_by=@2, updated_at=@3, is_snapshot=1, description=@4 WHERE id = @5`,
-        [
-          `$.${sectionKey}`,
-          JSON.stringify(data.dataToUpdate),
-          data.updatedBy,
-          updatedAt,
-          data.description,
-          innovationId
-        ]
-      );
-    } else {
-      await em.query(
-        `UPDATE innovation_document_draft
-          SET document = JSON_MODIFY(document, @0, JSON_QUERY(@1)), updated_by=@2, updated_at=@3 WHERE id = @4`,
-        [`$.${sectionKey}`, JSON.stringify(data.dataToUpdate), data.updatedBy, updatedAt, innovationId]
-      );
-    }
+  private async submitDocumentSectionInfo(
+    innovationId: string,
+    sectionKey: CurrentCatalogTypes.InnovationSections,
+    data: { updatedBy: string; updatedAt?: Date; description?: string },
+    em: EntityManager
+  ): Promise<void> {
+    const document = await this.getInnovationDocument(innovationId, CurrentDocumentConfig.version, 'DRAFT');
+    const draftSection = this.getSectionData(document, sectionKey);
+
+    await em.query(
+      `UPDATE innovation_document
+       SET document = JSON_MODIFY(document, @0, JSON_QUERY(@1)), updated_by=@2, updated_at=@3, is_snapshot=1, description=@4 WHERE id = @5`,
+      [
+        `$.${sectionKey}`,
+        JSON.stringify(draftSection),
+        data.updatedBy,
+        data.updatedAt ?? new Date(),
+        data.description ?? `SECTION_SUBMITTED-${sectionKey}`,
+        innovationId
+      ]
+    );
   }
 
   private async getSectionsInfoMap(
