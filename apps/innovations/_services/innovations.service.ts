@@ -16,7 +16,8 @@ import {
   NotificationUserEntity,
   OrganisationEntity,
   UserEntity,
-  UserRoleEntity
+  UserRoleEntity,
+  InnovationDocumentDraftEntity
 } from '@innovations/shared/entities';
 import {
   ActivityEnum,
@@ -60,7 +61,7 @@ import { createDocumentFromInnovation } from '@innovations/shared/entities/innov
 import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import { ActionEnum } from '@innovations/shared/services/integrations/audit.service';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import { groupBy, isString, mapValues, pick, snakeCase } from 'lodash';
+import { groupBy, isString, mapValues, omit, pick, snakeCase } from 'lodash';
 import { BaseService } from './base.service';
 
 // TODO move types
@@ -1191,6 +1192,7 @@ export class InnovationsService extends BaseService {
 
     // Only fetch the document version and category data (maybe create a helper for this in the future)
     const documentData = await connection
+      // TODO: DRAFT Change this
       .createQueryBuilder(InnovationDocumentEntity, 'innovationDocument')
       .select("JSON_QUERY(document, '$.INNOVATION_DESCRIPTION.categories')", 'categories')
       .addSelect(
@@ -1391,10 +1393,9 @@ export class InnovationsService extends BaseService {
         })
       );
 
-      await transaction.save(
-        InnovationDocumentEntity,
-        createDocumentFromInnovation(savedInnovation, { website: data.website })
-      );
+      const document = createDocumentFromInnovation(savedInnovation, { website: data.website });
+      await transaction.save(InnovationDocumentEntity, document);
+      await transaction.save(InnovationDocumentDraftEntity, omit(document, ['isSnapshot', 'description']));
 
       // Mark some section to status DRAFT.
       const sectionsToBeInDraft: CurrentCatalogTypes.InnovationSections[] = ['INNOVATION_DESCRIPTION'];

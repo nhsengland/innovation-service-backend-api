@@ -2,6 +2,7 @@ import { randBoolean, randCountry, randProduct, randText } from '@ngneat/falso';
 import type { DeepPartial, EntityManager } from 'typeorm';
 
 import { InnovationDocumentEntity } from '../../entities/innovation/innovation-document.entity';
+import { InnovationDocumentDraftEntity } from '../../entities/innovation/innovation-document-draft.entity';
 import { InnovationEntity } from '../../entities/innovation/innovation.entity';
 import { InnovationSectionStatusEnum, InnovationStatusEnum } from '../../enums/innovation.enums';
 import { NotFoundError } from '../../errors/errors.config';
@@ -172,6 +173,13 @@ export class InnovationBuilder extends BaseBuilder {
 
     await this.getEntityManager()
       .getRepository(InnovationDocumentEntity)
+      .save({
+        innovation: { id: savedInnovation.id },
+        version: this.document.version,
+        document: this.document
+      });
+    await this.getEntityManager()
+      .getRepository(InnovationDocumentDraftEntity)
       .save({
         innovation: { id: savedInnovation.id },
         version: this.document.version,
