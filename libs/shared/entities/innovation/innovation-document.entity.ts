@@ -61,7 +61,7 @@ export const createDocumentFromInnovation = (
     id: innovation.id,
     version: CurrentDocumentConfig.version,
     document: document,
-    isSnapshot: false,
+    isSnapshot: true,
     description: 'Initial document',
     innovation: innovation,
     createdAt: innovation.createdAt,
