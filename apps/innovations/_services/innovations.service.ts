@@ -1,5 +1,5 @@
 import { inject, injectable } from 'inversify';
-import { Brackets, EntityManager, In, ObjectLiteral, SelectQueryBuilder } from 'typeorm';
+import { Brackets, EntityManager, In, SelectQueryBuilder } from 'typeorm';
 
 import {
   ActivityLogEntity,
@@ -8,7 +8,6 @@ import {
   InnovationEntity,
   InnovationExportRequestEntity,
   InnovationListView,
-  InnovationReassessmentRequestEntity,
   InnovationSectionEntity,
   InnovationSupportEntity,
   InnovationTaskEntity,
@@ -86,6 +85,9 @@ export const InnovationListSelectType = [
   'postcode',
   // Relation fields
   'assessment.id',
+  'assessment.isExempt',
+  'assessment.assignedTo',
+  'assessment.updatedAt',
   'engagingOrganisations',
   'engagingUnits',
   'suggestedOrganisations',
@@ -104,7 +106,9 @@ export const InnovationListSelectType = [
 type InnovationListViewFields = Omit<InnovationListView, 'assessment' | 'supports' | 'ownerId'>;
 export type InnovationListSelectType =
   | keyof InnovationListViewFields
-  | `assessment.${keyof Pick<InnovationAssessmentEntity, 'id'>}`
+  | `assessment.${keyof Pick<InnovationAssessmentEntity, 'id' | 'updatedAt'>}`
+  | 'assessment.assignedTo'
+  | 'assessment.isExempt'
   | `support.${keyof Pick<InnovationSupportEntity, 'id' | 'status' | 'updatedAt' | 'updatedBy'>}`
   | 'support.closedReason'
   | 'owner.id'
@@ -139,6 +143,9 @@ export type InnovationListResponseType<S extends InnovationListSelectType, K ext
 export const DateFilterFieldsType = ['submittedAt', 'updatedAt', 'support.updatedAt'] as const;
 export type DateFilterFieldsType = (typeof DateFilterFieldsType)[number];
 
+export const HasAccessThroughKeys = ['owner', 'collaborator'] as const;
+export type HasAccessThroughKeys = (typeof HasAccessThroughKeys)[number];
+
 export type InnovationListFilters = {
   assignedToMe?: boolean;
   careSettings?: CurrentCatalogTypes.catalogCareSettings[];
@@ -146,13 +153,17 @@ export type InnovationListFilters = {
   dateFilters?: { field: DateFilterFieldsType; startDate?: Date; endDate?: Date }[];
   diseasesAndConditions: string[];
   engagingOrganisations?: string[];
+  engagingUnits?: string[];
   groupedStatuses: InnovationGroupedStatusEnum[];
+  hasAccessThrough?: HasAccessThroughKeys[];
   involvedAACProgrammes?: CurrentCatalogTypes.catalogInvolvedAACProgrammes[];
   keyHealthInequalities?: CurrentCatalogTypes.catalogKeyHealthInequalities[];
+  latestWorkedByMe?: boolean;
   locations?: InnovationLocationEnum[];
   search?: string;
   suggestedOnly?: boolean;
   supportStatuses?: InnovationSupportStatusEnum[];
+  supportUnit?: string;
   closedByMyOrganisation?: boolean;
 };
 
@@ -209,719 +220,6 @@ export class InnovationsService extends BaseService {
     }
   }
 
-  async getInnovationsList(
-    user: { id: string },
-    domainContext: DomainContextType,
-    filters: {
-      status: InnovationStatusEnum[];
-      name?: string;
-      mainCategories?: CurrentCatalogTypes.catalogCategory[];
-      locations?: InnovationLocationEnum[];
-      supportStatuses?: InnovationSupportStatusEnum[];
-      groupedStatuses?: InnovationGroupedStatusEnum[];
-      engagingOrganisations?: string[];
-      engagingOrganisationUnits?: string[];
-      assignedToMe?: boolean;
-      suggestedOnly?: boolean;
-      latestWorkedByMe?: boolean;
-      hasAccessThrough?: ('owner' | 'collaborator')[];
-      dateFilter?: { field: DateFilterFieldsType; startDate?: Date; endDate?: Date }[];
-      withDeleted?: boolean;
-      fields?: ('assessment' | 'supports' | 'notifications' | 'statistics' | 'groupedStatus')[];
-    },
-    pagination: PaginationQueryParamsType<
-      | 'name'
-      | 'location'
-      | 'mainCategory'
-      | 'submittedAt'
-      | 'updatedAt'
-      | 'assessmentStartedAt'
-      | 'assessmentFinishedAt'
-    >,
-    entityManager?: EntityManager
-  ): Promise<{
-    count: number;
-    data: {
-      id: string;
-      name: string;
-      description: null | string;
-      status: InnovationStatusEnum;
-      statusUpdatedAt: Date;
-      submittedAt: null | Date;
-      updatedAt: null | Date;
-      countryName: null | string;
-      postCode: null | string;
-      mainCategory: null | CurrentCatalogTypes.catalogCategory;
-      otherMainCategoryDescription: null | string;
-      groupedStatus?: InnovationGroupedStatusEnum;
-      assessment?: null | {
-        id: string;
-        createdAt: Date;
-        finishedAt: null | Date;
-        assignedTo?: { name: string };
-        reassessmentCount: number;
-        isExempted?: boolean;
-      };
-      supports?: {
-        id: string;
-        status: InnovationSupportStatusEnum;
-        updatedAt: Date;
-        organisation: {
-          id: string;
-          name: string;
-          acronym: null | string;
-          unit: {
-            id: string;
-            name: string;
-            acronym: string;
-            users?: {
-              name: string;
-              role: ServiceRoleEnum;
-            }[];
-          };
-        };
-      }[];
-      notifications?: number;
-      statistics?: { tasks: number; messages: number };
-    }[];
-  }> {
-    const connection = entityManager ?? this.sqlConnection.manager;
-
-    // Innovators don't require to fetch user names (maybe make this a parameter)
-    const fetchUsers = domainContext.currentRole.role !== ServiceRoleEnum.INNOVATOR;
-
-    //#region Innovation query with filters
-    const innovationFetchQuery = connection
-      .createQueryBuilder(InnovationEntity, 'innovations')
-      .select('innovations.id', 'innovations_id')
-      .addSelect('innovations.name', 'innovations_name')
-      .addSelect('innovations.description', 'innovations_description')
-      .addSelect('innovations.countryName', 'innovations_country_name')
-      .addSelect('innovations.mainCategory', 'innovations_main_category')
-      .addSelect('innovations.createdAt', 'innovations_created_at')
-      .addSelect('innovations.lastAssessmentRequestAt', 'innovations_last_assessment_request_at')
-      .addSelect('innovations.updatedAt', 'innovations_updated_at')
-      .addSelect('innovations.status', 'innovations_status')
-      .addSelect('innovations.statusUpdatedAt', 'innovations_status_updated_at')
-      .addSelect('innovations.postcode', 'innovations_postcode')
-      .addSelect('innovations.otherCategoryDescription', 'innovations_other_category_description');
-
-    // Assessment relations.
-    if (
-      filters.suggestedOnly ||
-      pagination.order.assessmentStartedAt ||
-      pagination.order.assessmentFinishedAt ||
-      (filters.assignedToMe && domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT)
-    ) {
-      innovationFetchQuery.leftJoin('innovations.assessments', 'assessments');
-
-      // These two are required for the order by
-      if (pagination.order.assessmentStartedAt || pagination.order.assessmentFinishedAt) {
-        innovationFetchQuery.addSelect('assessments.createdAt', 'assessments_created_at');
-        innovationFetchQuery.addSelect('assessments.finishedAt', 'assessments_finished_at');
-      }
-    }
-
-    // Last worked on.
-    if (filters.latestWorkedByMe) {
-      innovationFetchQuery.andWhere(
-        'innovations.id IN (SELECT innovation_id FROM audit WHERE user_id=:userId AND action IN (:...actions) GROUP BY innovation_id ORDER BY MAX(date) DESC OFFSET :offset ROWS FETCH NEXT :fetch ROWS ONLY)',
-        {
-          userId: user.id,
-          actions: [ActionEnum.CREATE, ActionEnum.UPDATE],
-          offset: pagination.skip,
-          fetch: pagination.take
-        }
-      );
-    }
-
-    if (domainContext.currentRole.role === ServiceRoleEnum.INNOVATOR) {
-      const conditions = new Map<'owner' | 'collaborator', { condition: string; parameters: ObjectLiteral }>([
-        [
-          'owner',
-          {
-            condition: 'innovations.owner_id = :innovatorUserId',
-            parameters: { innovatorUserId: user.id }
-          }
-        ],
-        ['collaborator', { condition: 'collaborator.user_id = :userId', parameters: { userId: user.id } }]
-      ]);
-
-      if (filters.hasAccessThrough && filters.hasAccessThrough.length > 0) {
-        if (!filters.hasAccessThrough.includes('owner')) {
-          conditions.delete('owner');
-        }
-
-        if (!filters.hasAccessThrough.includes('collaborator')) {
-          conditions.delete('collaborator');
-        }
-      }
-
-      if (conditions.has('collaborator')) {
-        innovationFetchQuery.leftJoin(
-          'innovations.collaborators',
-          'collaborator',
-          'collaborator.status = :collaboratorStatus',
-          { collaboratorStatus: InnovationCollaboratorStatusEnum.ACTIVE }
-        );
-      }
-
-      innovationFetchQuery.andWhere(
-        new Brackets(qb => {
-          for (const { condition, parameters } of conditions.values()) {
-            qb.orWhere(condition, parameters);
-          }
-        })
-      );
-    }
-
-    if (domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT) {
-      innovationFetchQuery.andWhere(
-        '(innovations.status IN (:...assessmentInnovationStatus) OR (innovations.status = :innovationArchivedStatus AND innovations.archivedStatus IN (:...assessmentInnovationStatus)))',
-        {
-          assessmentInnovationStatus: [
-            InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
-            InnovationStatusEnum.NEEDS_ASSESSMENT,
-            InnovationStatusEnum.IN_PROGRESS
-          ],
-          innovationArchivedStatus: InnovationStatusEnum.ARCHIVED
-        }
-      );
-    }
-
-    if (
-      domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR ||
-      domainContext.currentRole.role === ServiceRoleEnum.QUALIFYING_ACCESSOR
-    ) {
-      innovationFetchQuery.innerJoin('innovations.organisationShares', 'shares');
-      innovationFetchQuery.leftJoin(
-        'innovations.innovationSupports',
-        'accessorSupports',
-        'accessorSupports.organisation_unit_id = :accessorSupportsOrganisationUnitId',
-        { accessorSupportsOrganisationUnitId: domainContext.organisation?.organisationUnit?.id }
-      );
-      innovationFetchQuery.andWhere('innovations.status IN (:...accessorInnovationStatus)', {
-        accessorInnovationStatus: [InnovationStatusEnum.IN_PROGRESS]
-      });
-      innovationFetchQuery.andWhere('shares.id = :accessorOrganisationId', {
-        accessorOrganisationId: domainContext.organisation?.id
-      });
-
-      if (domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR) {
-        innovationFetchQuery.andWhere('accessorSupports.status IN (:...accessorSupportsSupportStatuses01)', {
-          accessorSupportsSupportStatuses01: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.CLOSED]
-        });
-      }
-
-      if (filters.supportStatuses && filters.supportStatuses.length > 0) {
-        innovationFetchQuery.andWhere(
-          `(accessorSupports.status IN (:...accessorSupportsSupportStatuses02) ${
-            filters.supportStatuses.includes(InnovationSupportStatusEnum.UNASSIGNED)
-              ? ' OR accessorSupports.status IS NULL'
-              : ''
-          })`,
-          { accessorSupportsSupportStatuses02: filters.supportStatuses }
-        );
-      }
-    }
-
-    if (domainContext.currentRole.role === ServiceRoleEnum.ADMIN && filters.withDeleted) {
-      innovationFetchQuery.withDeleted();
-    }
-
-    if (filters.groupedStatuses && filters.groupedStatuses.length > 0) {
-      innovationFetchQuery.innerJoin('innovations.innovationGroupedStatus', 'innovationGroupedStatus');
-      innovationFetchQuery.addSelect('innovationGroupedStatus.groupedStatus', 'innovationGroupedStatus_grouped_status');
-
-      innovationFetchQuery.andWhere('innovationGroupedStatus.groupedStatus IN (:...groupedStatuses)', {
-        groupedStatuses: filters.groupedStatuses
-      });
-    }
-
-    // Filters.
-    if (filters.status && filters.status.length > 0) {
-      innovationFetchQuery.andWhere('innovations.status IN (:...status) ', {
-        status: filters.status
-      });
-    }
-
-    if (filters.name) {
-      if (domainContext.currentRole.role === ServiceRoleEnum.ADMIN && filters.name.match(/^\S+@\S+$/)) {
-        const targetUser = await this.domainService.users.getUserByEmail(filters.name);
-
-        if (targetUser.length > 0 && targetUser[0]) {
-          innovationFetchQuery.andWhere('(innovations.owner_id = :userId OR innovations.name LIKE :name)', {
-            userId: targetUser[0].id,
-            name: `%${filters.name}%`
-          });
-        } else {
-          // This means that the user is NOT registered in the service.
-          innovationFetchQuery.andWhere('innovations.name LIKE :name', {
-            name: `%${filters.name}%`
-          });
-        }
-      } else {
-        innovationFetchQuery.andWhere('innovations.name LIKE :name', { name: `%${filters.name}%` });
-      }
-    }
-
-    if (filters.mainCategories && filters.mainCategories.length > 0) {
-      innovationFetchQuery.andWhere('innovations.main_category IN (:...mainCategories)', {
-        mainCategories: filters.mainCategories
-      });
-    }
-
-    if (filters.locations && filters.locations.length > 0) {
-      if (!filters.locations.includes(InnovationLocationEnum['Based outside UK'])) {
-        innovationFetchQuery.andWhere('innovations.country_name IN (:...locations)', {
-          locations: filters.locations
-        });
-      } else {
-        const knownLocations = Object.values(InnovationLocationEnum).filter(
-          item => item !== InnovationLocationEnum['Based outside UK']
-        );
-        const knownLocationsNotOnFilter = knownLocations.filter(item => !filters.locations?.includes(item));
-        const filterLocationsExceptOutsideUK = filters.locations.filter(
-          item => item !== InnovationLocationEnum['Based outside UK']
-        );
-
-        innovationFetchQuery.andWhere(
-          `(
-        1 <> 1
-        ${
-          filterLocationsExceptOutsideUK.length > 0
-            ? ' OR innovations.country_name  IN (:...filterLocationsExceptOutsideUK)'
-            : ''
-        }
-        ${
-          knownLocationsNotOnFilter.length > 0
-            ? ' OR innovations.country_name NOT IN (:...knownLocationsNotOnFilter)'
-            : ''
-        }
-        )`,
-          { filterLocationsExceptOutsideUK, knownLocationsNotOnFilter }
-        );
-      }
-    }
-
-    if (filters.engagingOrganisations && filters.engagingOrganisations.length > 0) {
-      innovationFetchQuery.andWhere(
-        `EXISTS (
-          SELECT eofilter_is.id
-          FROM innovation_support eofilter_is
-          INNER JOIN organisation_unit eofilter_ou ON eofilter_ou.id = eofilter_is.organisation_unit_id AND inactivated_at IS NULL AND eofilter_ou.deleted_at IS NULL
-          WHERE eofilter_is.innovation_id = innovations.id AND eofilter_ou.organisation_id IN (:...engagingOrganisationsFilterSupportStatuses) AND eofilter_is.deleted_at IS NULL)`,
-        { engagingOrganisationsFilterSupportStatuses: filters.engagingOrganisations }
-      );
-    }
-
-    // this is similar to assignedToMe for A/QAs but simplier. They never overlap since this is admin only, but we should probably refactor this.
-    if (filters.engagingOrganisationUnits && filters.engagingOrganisationUnits.length > 0) {
-      innovationFetchQuery
-        .innerJoin('innovations.innovationSupports', 'supports')
-        .andWhere('supports.organisation_unit_id IN (:...engagingOrganisationsUnits)', {
-          engagingOrganisationsUnits: filters.engagingOrganisationUnits
-        });
-
-      if (filters.supportStatuses && filters.supportStatuses.length > 0) {
-        innovationFetchQuery
-          .leftJoin(
-            'innovations.innovationSupports',
-            'accessorSupports',
-            'accessorSupports.organisation_unit_id IN (:...engagingOrganisationsUnits)',
-            { engagingOrganisationsUnits: filters.engagingOrganisationUnits }
-          )
-          .andWhere(`accessorSupports.status IN (:...supportStatuses)`, {
-            supportStatuses: filters.supportStatuses
-          });
-      }
-    }
-
-    if (filters.assignedToMe) {
-      if (domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT) {
-        innovationFetchQuery.andWhere('assessments.assign_to_id = :assignToId', {
-          assignToId: user.id
-        });
-      }
-
-      if ([ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR].includes(domainContext.currentRole.role)) {
-        innovationFetchQuery.innerJoin('innovations.innovationSupports', 'supports');
-        innovationFetchQuery.innerJoin('supports.userRoles', 'userRole');
-        innovationFetchQuery.innerJoin('userRole.user', 'supportingUsers');
-        innovationFetchQuery.andWhere('supportingUsers.id = :supportingUserId', {
-          supportingUserId: user.id
-        });
-        innovationFetchQuery.andWhere('userRole.organisation_unit_id = :orgUnitId', {
-          orgUnitId: domainContext.organisation?.organisationUnit?.id
-        });
-      }
-    }
-
-    if (filters.suggestedOnly) {
-      innovationFetchQuery.leftJoin('assessments.organisationUnits', 'assessmentOrganisationUnits');
-      innovationFetchQuery.leftJoin(
-        'innovations.innovationSupportLogs',
-        'supportLogs',
-        'supportLogs.type = :supportLogType',
-        { supportLogType: InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION }
-      );
-      innovationFetchQuery.leftJoin('supportLogs.suggestedOrganisationUnits', 'supportLogOrgUnit');
-
-      innovationFetchQuery.andWhere(
-        `(assessmentOrganisationUnits.id = :suggestedOrganisationUnitId OR supportLogOrgUnit.id =:suggestedOrganisationUnitId)`,
-        { suggestedOrganisationUnitId: domainContext.organisation?.organisationUnit?.id }
-      );
-    }
-
-    if (filters.dateFilter && filters.dateFilter.length > 0) {
-      const dateFilterKeyMap = new Map([['submittedAt', 'innovations.lastAssessmentRequestAt']]);
-
-      for (const dateFilter of filters.dateFilter) {
-        const filterKey = dateFilterKeyMap.get(dateFilter.field);
-        if (dateFilter.startDate) {
-          innovationFetchQuery.andWhere(`${filterKey} >= :startDate`, {
-            startDate: dateFilter.startDate
-          });
-        }
-
-        if (dateFilter.endDate) {
-          // This is needed because default TimeStamp for a DD/MM/YYYY date is 00:00:00
-          const beforeDateWithTimestamp = new Date(dateFilter.endDate);
-          beforeDateWithTimestamp.setDate(beforeDateWithTimestamp.getDate() + 1);
-
-          innovationFetchQuery.andWhere(`${filterKey} < :endDate`, {
-            endDate: beforeDateWithTimestamp
-          });
-        }
-      }
-    }
-
-    // Pagination and order is builtin in the latestWorkedByMe query, otherwise extra joins would be required... OR CTEs
-    if (!filters.latestWorkedByMe) {
-      // Pagination and ordering.
-      innovationFetchQuery.skip(pagination.skip);
-      innovationFetchQuery.take(pagination.take);
-
-      for (const [key, order] of Object.entries(pagination.order)) {
-        let field: string;
-        switch (key) {
-          case 'name':
-            field = 'innovations.name';
-            break;
-          case 'location':
-            field = 'innovations.countryName';
-            break;
-          case 'mainCategory':
-            field = 'innovations.mainCategory';
-            break;
-          case 'submittedAt':
-            field = 'innovations.lastAssessmentRequestAt';
-            break;
-          case 'updatedAt':
-            field = 'innovations.updatedAt';
-            break;
-          case 'assessmentStartedAt':
-            field = 'assessments.createdAt';
-            break;
-          case 'assessmentFinishedAt':
-            field = 'assessments.finishedAt';
-            break;
-          default:
-            field = 'innovations.createdAt';
-            break;
-        }
-        innovationFetchQuery.addOrderBy(field, order);
-      }
-    }
-
-    const [innovations, innovationsCount] = await innovationFetchQuery.getManyAndCount();
-    const innovationsIds = [...new Set(innovations.map(item => item.id))]; // there shouldn't be repeated ids, but just in case...
-    //#endregion
-
-    // Fallback fast if no innovations
-    if (innovationsCount === 0) return { count: 0, data: [] };
-
-    //#region fetch assessments
-    // Grab the assessments for the innovations (if required)
-    let assessmentsMap = new Map<string, InnovationAssessmentEntity>(); // not exactly InnovationAssessmentEntity, but just the required fields
-    let innovationsReassessmentCount = new Map<string, number>();
-    if (filters.fields?.includes('assessment')) {
-      const innovationsAssessmentsQuery = connection
-        .createQueryBuilder(InnovationAssessmentEntity, 'assessments')
-        .select('assessments.id', 'assessments_id')
-        .addSelect('assessments.createdAt', 'assessments_created_at')
-        .addSelect('assessments.finishedAt', 'assessments_finished_at')
-        .addSelect('assessments.exemptedAt', 'assessments_exempted_at')
-        .innerJoin('assessments.innovation', 'innovation')
-        .addSelect('innovation.id', 'innovation_id')
-        .where('assessments.innovation_id IN (:...innovationsIds)', { innovationsIds });
-
-      if (fetchUsers) {
-        innovationsAssessmentsQuery.leftJoin('assessments.assignTo', 'assignTo');
-        innovationsAssessmentsQuery.addSelect('assignTo.id', 'assignTo_id');
-        innovationsAssessmentsQuery.addSelect('assignTo.status', 'assignTo_status');
-      }
-
-      assessmentsMap = new Map((await innovationsAssessmentsQuery.getMany()).map(a => [a.innovation.id, a]));
-
-      // Required to count reassessments
-      innovationsReassessmentCount = new Map(
-        (
-          await connection
-            .createQueryBuilder(InnovationReassessmentRequestEntity, 'reassessments')
-            .select('innovation_id', 'innovation_id')
-            .addSelect('COUNT(*)', 'reassessments_count')
-            .where('innovation_id IN (:...innovationsIds)', { innovationsIds })
-            .groupBy('innovation_id')
-            .getRawMany()
-        ).map(r => [r.innovation_id, r.reassessments_count])
-      );
-    }
-    //#endregion
-
-    //#region fetch supporting organisations
-    // Grab the supporting organisations for the innovations (if required)
-    const supportingOrganisationsMap = new Map<string, InnovationSupportEntity[]>(); // not exactly InnovationSupportEntity, but just the required fields
-    if (filters.fields?.includes('supports')) {
-      const innovationsSupportsQuery = connection
-        .createQueryBuilder(InnovationSupportEntity, 'supports')
-        .select('supports.id', 'supports_id')
-        .addSelect('supports.status', 'supports_status')
-        .addSelect('supports.updatedAt', 'supports_updated_at')
-        .innerJoin('supports.innovation', 'innovation')
-        .addSelect('innovation.id', 'innovation_id')
-        .innerJoin('supports.organisationUnit', 'organisationUnit')
-        .addSelect('organisationUnit.id', 'organisationUnit_id')
-        .addSelect('organisationUnit.name', 'organisationUnit_name')
-        .addSelect('organisationUnit.acronym', 'organisationUnit_acronym')
-        .innerJoin('organisationUnit.organisation', 'organisation')
-        .addSelect('organisation.id', 'organisation_id')
-        .addSelect('organisation.name', 'organisation_name')
-        .addSelect('organisation.acronym', 'organisation_acronym')
-        .where('supports.innovation_id IN (:...innovationsIds)', { innovationsIds });
-
-      if (filters.engagingOrganisationUnits && filters.engagingOrganisationUnits.length > 0) {
-        innovationsSupportsQuery.andWhere('organisationUnit.id IN (:...engagingOrganisationUnits)', {
-          engagingOrganisationUnits: filters.engagingOrganisationUnits
-        });
-      }
-
-      if (fetchUsers) {
-        innovationsSupportsQuery
-          .leftJoin('supports.userRoles', 'userRole')
-          .addSelect('userRole.id', 'userRole_id')
-          .leftJoin('userRole.user', 'user')
-          .addSelect('user.id', 'user_id')
-          .addSelect('user.status', 'user_status');
-      }
-
-      (await innovationsSupportsQuery.getMany()).forEach(s => {
-        if (!supportingOrganisationsMap.has(s.innovation.id)) {
-          supportingOrganisationsMap.set(s.innovation.id, []);
-        }
-        supportingOrganisationsMap.get(s.innovation.id)?.push(s);
-      });
-    }
-    //#endregion
-
-    // Fetch users names.
-    let usersInfo = new Map<string, Awaited<ReturnType<DomainUsersService['getUsersList']>>[0]>();
-    if (fetchUsers) {
-      const assessmentUsersIds = new Set(
-        [...assessmentsMap.values()]
-          .filter(
-            (a): a is InnovationAssessmentEntity & { assignTo: { id: string } } =>
-              a.assignTo != null && a.assignTo?.status !== UserStatusEnum.DELETED
-          )
-          .map(a => a.assignTo.id)
-      );
-      const supportingUsersIds = new Set(
-        [...supportingOrganisationsMap.values()].flatMap(s =>
-          s.flatMap(support =>
-            support.userRoles.filter(item => item.user.status !== UserStatusEnum.DELETED).map(item => item.user.id)
-          )
-        )
-      );
-      usersInfo = new Map(
-        (
-          await this.domainService.users.getUsersList({
-            userIds: [...assessmentUsersIds, ...supportingUsersIds]
-          })
-        ).map(u => [u.id, u])
-      );
-    }
-
-    //#region notifications
-    // Notifications.
-    const notificationsMap = new Map<string, { notificationsUnread: number; tasks: number; messages: number }>(); // not exactly NotificationEntity, but just the required fields
-    if (filters.fields?.includes('notifications') || filters.fields?.includes('statistics')) {
-      const notificationsQuery = connection
-        .createQueryBuilder(NotificationEntity, 'notifications')
-        .select('notifications.id', 'notifications_id')
-        // .addSelect('notifications.type', 'notifications_type')
-        .innerJoin('notifications.innovation', 'innovation')
-        .addSelect('innovation.id', 'innovation_id')
-        .innerJoin(
-          'notifications.notificationUsers',
-          'notificationUsers',
-          'notificationUsers.user_role_id = :notificationUserId AND notificationUsers.read_at IS NULL',
-          { notificationUserId: domainContext.currentRole.id }
-        )
-        .where('notifications.innovation_id IN (:...innovationsIds)', { innovationsIds });
-
-      if (domainContext.organisation?.organisationUnit?.id) {
-        notificationsQuery.innerJoin('notificationUsers.userRole', 'userRole');
-        notificationsQuery
-          .innerJoin('userRole.organisationUnit', 'organisationUnit')
-          .where('organisationUnit.id = :orgUnitId', {
-            orgUnitId: domainContext.organisation.organisationUnit.id
-          });
-      }
-
-      if (filters.fields?.includes('statistics')) {
-        notificationsQuery
-          .addSelect('notifications.contextType', 'notifications_context_type')
-          .addSelect('notifications.contextDetail', 'notifications_context_detail')
-          .addSelect('notifications.params', 'notifications_params');
-      }
-
-      // Process the notification / statistics.
-      (await notificationsQuery.getMany()).forEach(n => {
-        if (!notificationsMap.has(n.innovation.id)) {
-          notificationsMap.set(n.innovation.id, {
-            notificationsUnread: 0,
-            tasks: 0,
-            messages: 0
-          });
-        }
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const notificationCounter = notificationsMap.get(n.innovation.id)!;
-        notificationCounter.notificationsUnread++;
-
-        if (filters.fields?.includes('statistics')) {
-          if (n.contextType === 'MESSAGES') {
-            notificationCounter.messages++;
-          }
-          if (
-            n.contextDetail === 'TA01_TASK_CREATION_TO_INNOVATOR' ||
-            n.contextDetail === 'TA06_TASK_REOPEN_TO_INNOVATOR'
-          ) {
-            notificationCounter.tasks++;
-          }
-        }
-      });
-    }
-
-    let innovationsGroupedStatus = new Map<string, InnovationGroupedStatusEnum>();
-    if (filters.fields?.includes('groupedStatus')) {
-      if (filters.groupedStatuses && filters.groupedStatuses.length > 0) {
-        // means that inner join was made
-        innovationsGroupedStatus = new Map(innovations.map(cur => [cur.id, cur.innovationGroupedStatus.groupedStatus]));
-      } else {
-        const innovationIds = innovations.map(i => i.id);
-        innovationsGroupedStatus = await this.domainService.innovations.getInnovationsGroupedStatus({ innovationIds });
-      }
-    }
-
-    return {
-      count: innovationsCount,
-      data: await Promise.all(
-        innovations.map(async innovation => {
-          let assessment:
-            | undefined
-            | null
-            | {
-                id: string;
-                createdAt: Date;
-                finishedAt: null | Date;
-                assignedTo?: { name: string };
-                reassessmentCount: number;
-              };
-          const supports = supportingOrganisationsMap.get(innovation.id);
-
-          // Assessment parsing.
-          if (filters.fields?.includes('assessment')) {
-            const assessmentRaw = assessmentsMap.get(innovation.id);
-            if (assessmentRaw) {
-              assessment = {
-                id: assessmentRaw.id,
-                createdAt: assessmentRaw.createdAt,
-                ...(assessmentRaw.assignTo && {
-                  assignedTo: { name: usersInfo.get(assessmentRaw.assignTo?.id)?.displayName ?? '' }
-                }),
-                finishedAt: assessmentRaw.finishedAt,
-                reassessmentCount: innovationsReassessmentCount.get(innovation.id) ?? 0,
-                ...(domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT
-                  ? { isExempted: !!assessmentRaw.exemptedAt }
-                  : {})
-              };
-            } else {
-              assessment = null;
-            }
-          }
-
-          return {
-            id: innovation.id,
-            name: innovation.name,
-            description: innovation.description,
-            status: innovation.status,
-            statusUpdatedAt: innovation.statusUpdatedAt,
-            submittedAt: innovation.lastAssessmentRequestAt,
-            updatedAt: innovation.updatedAt,
-            countryName: innovation.countryName,
-            postCode: innovation.postcode,
-            mainCategory: innovation.mainCategory,
-            otherMainCategoryDescription: innovation.otherCategoryDescription,
-
-            ...(filters.fields?.includes('groupedStatus') && {
-              groupedStatus:
-                innovationsGroupedStatus.get(innovation.id) ?? InnovationGroupedStatusEnum.RECORD_NOT_SHARED
-            }),
-            ...(assessment && { assessment }),
-            ...(supports && {
-              supports: supports.map(support => ({
-                id: support.id,
-                status: support.status,
-                updatedAt: support.updatedAt,
-                organisation: {
-                  id: support.organisationUnit.organisation.id,
-                  name: support.organisationUnit.organisation.name,
-                  acronym: support.organisationUnit.organisation.acronym,
-                  unit: {
-                    id: support.organisationUnit.id,
-                    name: support.organisationUnit.name,
-                    acronym: support.organisationUnit.acronym,
-                    // Users are only returned only for ENGAGING supports status, returning nothing on all other cases.
-                    ...((support.userRoles ?? []).length > 0 && {
-                      users: support.userRoles
-                        .map(su => ({
-                          name: usersInfo.get(su.user.id)?.displayName || '',
-                          role: su.role
-                        }))
-                        .filter(authUser => authUser.name)
-                    })
-                  }
-                }
-              }))
-            }),
-            // Add notifications
-            ...(filters.fields?.includes('notifications') && {
-              notifications: notificationsMap.get(innovation.id)?.notificationsUnread ?? 0
-            }),
-
-            // Add statistics
-            ...(filters.fields?.includes('statistics') && {
-              statistics: {
-                tasks: notificationsMap.get(innovation.id)?.tasks ?? 0,
-                messages: notificationsMap.get(innovation.id)?.messages ?? 0
-              }
-            })
-          };
-        })
-      )
-    };
-  }
-
   //#region innovationsListNew
   /**
    * graph like method to return list information
@@ -939,7 +237,7 @@ export class InnovationsService extends BaseService {
    * @param em optional entity manager
    * @returns list of innovations with only the selected fields
    */
-  async getInnovationsListNew<S extends InnovationListSelectType>(
+  async getInnovationsList<S extends InnovationListSelectType>(
     domainContext: DomainContextType,
     params: {
       fields: S[];
@@ -1043,13 +341,20 @@ export class InnovationsService extends BaseService {
 
     // Nested object handlers and joins
     nestedObjects.forEach(join => {
-      this.joinHandlers[join as keyof typeof this.joinHandlers](domainContext, query, fieldGroups[join] as any[]);
+      this.joinHandlers[join as keyof typeof this.joinHandlers](
+        domainContext,
+        query,
+        fieldGroups[join] as any[],
+        params.filters
+      );
     });
 
     // filters
     for (const [key, value] of Object.entries(params.filters ?? {})) {
       // add to do a as any for the filters as the value was evaluated as never but this should be safe to use
-      await (this.filtersHandlers[key as keyof typeof this.filtersHandlers] as any)(domainContext, query, value);
+      await (this.filtersHandlers[key as keyof typeof this.filtersHandlers] as any)(domainContext, query, value, {
+        pagination: params.pagination
+      });
     }
 
     // pagination and sorting (TODO create a function for this as it's getting more complex)
@@ -1059,7 +364,7 @@ export class InnovationsService extends BaseService {
       if (value === 'ASC' || value === 'DESC') {
         // Special case for orders we might improve this in the future if it becomes the norm
         if (key.startsWith('owner.')) {
-          key = 'owner' + key.split('.')[1]!.charAt(0).toUpperCase() + key.split('.')[1]?.slice(1);
+          key = 'owner' + key.split('.')[1]?.charAt(0).toUpperCase() + key.split('.')[1]?.slice(1);
         }
         switch (key) {
           case 'owner.name':
@@ -1089,7 +394,10 @@ export class InnovationsService extends BaseService {
     // postHandlers - optimize to only fetch once. This means that the fields handled here aren't sortable but it would
     // be really bad performant otherwise and for the names even worse.
     const needUsernameResolution =
-      nestedObjects.has('owner') || fieldGroups['engagingUnits'] || fieldGroups['support']?.includes('updatedBy');
+      nestedObjects.has('owner') ||
+      fieldGroups['engagingUnits'] ||
+      fieldGroups['support']?.includes('updatedBy') ||
+      fieldGroups['assessment']?.includes('assignedTo');
 
     const handlerMaps: {
       [k in keyof typeof this.postHandlers]: Awaited<ReturnType<(typeof this.postHandlers)[k]>>;
@@ -1141,7 +449,8 @@ export class InnovationsService extends BaseService {
     [k in InnovationListJoinTypes]: (
       domainContext: DomainContextType,
       query: SelectQueryBuilder<InnovationListView>,
-      value: InnovationListChildrenType<k> | any
+      value: InnovationListChildrenType<k> | any,
+      filters?: Partial<InnovationListFilters>
     ) => void;
   } = {
     assessment: this.withAssessment.bind(this),
@@ -1156,7 +465,22 @@ export class InnovationsService extends BaseService {
     fields: InnovationListChildrenType<'assessment'>[] = ['id']
   ): void {
     if (fields.length) {
-      query.addSelect(fields.map(f => `assessment.${f}`)).leftJoin('innovation.assessment', 'assessment');
+      query
+        .addSelect(fields.filter(f => !['assignedTo', 'isExempt'].includes(f)).map(f => `assessment.${f}`))
+        .leftJoin('innovation.assessment', 'assessment');
+
+      if (fields.includes('assignedTo')) {
+        query.leftJoin('assessment.assignTo', 'assessor');
+        query.addSelect('assessor.id');
+        // Special case when we only have the assessBy to preserve typeorm model
+        if (fields.length === 1) {
+          query.addSelect('assessment.id');
+        }
+      }
+
+      if (fields.includes('isExempt')) {
+        query.addSelect('assessment.exemptedAt');
+      }
     }
   }
 
@@ -1176,19 +500,26 @@ export class InnovationsService extends BaseService {
   private withSupport(
     domainContext: DomainContextType,
     query: SelectQueryBuilder<InnovationListView>,
-    fields: InnovationListChildrenType<'support'>[] = ['id']
+    fields: InnovationListChildrenType<'support'>[] = ['id'],
+    filters?: Partial<InnovationListFilters>
   ): void {
     if (fields.length) {
-      if (!isAccessorDomainContextType(domainContext)) {
+      const unitId = isAccessorDomainContextType(domainContext)
+        ? domainContext.organisation.organisationUnit.id
+        : isAdminDomainContextType(domainContext) && filters?.supportUnit
+          ? filters.supportUnit
+          : null;
+
+      if (!unitId) {
         throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD, {
-          message: 'Support is only valid for accessor domain context'
+          message: 'Support is only valid for accessor domain context or admin with one engagingOrganisationUnit'
         });
       }
 
       query
         .addSelect((fields.filter(f => f !== 'closedReason') ?? ['id']).map(f => `support.${f}`))
         .leftJoin('innovation.supports', 'support', 'support.organisation_unit_id = :organisationUnitId', {
-          organisationUnitId: domainContext.organisation.organisationUnit.id
+          organisationUnitId: unitId
         })
         // Ignore archived innovations that never had any support or it would be messing with the status and support summary
         .andWhere('(innovation.status != :innovationArchivedStatus OR support.id IS NOT NULL) ', {
@@ -1261,8 +592,13 @@ export class InnovationsService extends BaseService {
     const usersSet = new Set<string>();
     // Add the owners and the engaging units accessors
     innovations.forEach(i => {
-      // We need to resolve the innovation owner name, the supports updatedBy (for the closedBy) and the engaging units accessors
-      [i.ownerId, i.supports?.[0]?.updatedBy, ...(i.engagingUnits?.flatMap(u => u.assignedAccessors) || [])]
+      // We need to resolve the innovation owner name, assessment assigned to, the supports updatedBy (for the closedBy) and the engaging units accessors
+      [
+        i.ownerId,
+        i.supports?.[0]?.updatedBy,
+        i.assessment?.assignTo?.id,
+        ...(i.engagingUnits?.flatMap(u => u.assignedAccessors) || [])
+      ]
         .filter(isString)
         .forEach(u => {
           usersSet.add(u);
@@ -1281,12 +617,14 @@ export class InnovationsService extends BaseService {
       | ((
           domainContext: DomainContextType,
           query: SelectQueryBuilder<InnovationListView>,
-          value: Required<InnovationListFilters>[k]
+          value: Required<InnovationListFilters>[k],
+          options?: { pagination: PaginationQueryParamsType<InnovationListSelectType> }
         ) => void | Promise<void>)
       | ((
           domainContext: DomainContextType,
           query: SelectQueryBuilder<InnovationListView>,
-          value: Required<InnovationListFilters>[k][]
+          value: Required<InnovationListFilters>[k][],
+          options?: { pagination: PaginationQueryParamsType<InnovationListSelectType> }
         ) => void | Promise<void>);
   } = {
     assignedToMe: this.addAssignedToMeFilter.bind(this),
@@ -1298,13 +636,19 @@ export class InnovationsService extends BaseService {
     engagingOrganisations: this.addJsonArrayInFilter('engagingOrganisations', {
       fieldSelector: '$.organisationId'
     }).bind(this),
+    engagingUnits: this.addJsonArrayInFilter('engagingUnits', {
+      fieldSelector: '$.unitId'
+    }).bind(this),
     groupedStatuses: this.addInFilter('groupedStatuses', 'groupedStatus').bind(this),
+    hasAccessThrough: this.addHasAccessThroughFilters.bind(this),
     involvedAACProgrammes: this.addJsonArrayInFilter('involvedAACProgrammes').bind(this),
     keyHealthInequalities: this.addJsonArrayInFilter('keyHealthInequalities').bind(this),
+    latestWorkedByMe: this.addLatestWorkedByMeFilter.bind(this),
     locations: this.addLocationFilter.bind(this),
     search: this.addSearchFilter.bind(this),
     suggestedOnly: this.addSuggestedOnlyFilter.bind(this),
-    supportStatuses: this.addSupportFilter.bind(this)
+    supportStatuses: this.addSupportFilter.bind(this),
+    supportUnit: () => {} // this is handled in the withSupport handler for admin users and forbidden otherwise
   };
 
   /**
@@ -1384,18 +728,72 @@ export class InnovationsService extends BaseService {
         if (!query.expressionMap.aliases.find(item => item.name === 'support')) {
           this.withSupport(domainContext, query);
         }
-        query.innerJoin('support.userRoles', 'supportUserRoles');
-        query.andWhere('supportUserRoles.id = :userRoleId', {
+        query.innerJoin('support.userRoles', 'supportUserRoles').andWhere('supportUserRoles.id = :userRoleId', {
           userRoleId: domainContext.currentRole.id
         });
       }
       if (isAssessmentDomainContextType(domainContext)) {
-        throw new NotImplementedError(GenericErrorsEnum.NOT_IMPLEMENTED_ERROR, {
-          message: 'Assigned to me filter not implemented for Needs Assessment Team yet'
-        });
+        if (!query.expressionMap.aliases.find(item => item.name === 'assessment')) {
+          this.withAssessment(domainContext, query);
+        }
+        query
+          .innerJoin(
+            'user_role',
+            'assessmentRole',
+            'assessmentRole.user_id = assessment.assign_to_id AND assessmentRole.role = :assessmentRole AND assessmentRole.is_active = 1',
+            { assessmentRole: ServiceRoleEnum.ASSESSMENT }
+          )
+          .andWhere('assessment.assign_to_id = :assessmentRoleUserId', {
+            assessmentRoleUserId: domainContext.id
+          });
       }
       // Choose to do nothing instead of throwing an error if this is passed when not supposed (joi should handle it)
       // but as a behavior think it's better to ignore the filter than to throw an error
+    }
+  }
+
+  private addHasAccessThroughFilters(
+    domainContext: DomainContextType,
+    query: SelectQueryBuilder<InnovationListView>,
+    hasAccessThrough: HasAccessThroughKeys[]
+  ): void {
+    if (hasAccessThrough.length) {
+      query.andWhere(
+        new Brackets(qb => {
+          qb.where('1 <> 1'); // ugly shortcut to not worry about the first OR
+          if (hasAccessThrough.includes('owner')) {
+            qb.orWhere('innovation.ownerId = :userId', { userId: domainContext.id });
+          }
+          if (hasAccessThrough.includes('collaborator')) {
+            qb.orWhere(
+              'innovation.id IN (SELECT innovation_id FROM innovation_collaborator WHERE user_id = :userId AND status = :collaboratorActiveStatus)',
+              {
+                userId: domainContext.id,
+                collaboratorActiveStatus: InnovationCollaboratorStatusEnum.ACTIVE
+              }
+            );
+          }
+        })
+      );
+    }
+  }
+
+  private addLatestWorkedByMeFilter(
+    domainContext: DomainContextType,
+    query: SelectQueryBuilder<InnovationListView>,
+    latestWorkedByMe: boolean,
+    options?: { pagination: PaginationQueryParamsType<InnovationListSelectType> }
+  ): void {
+    if (latestWorkedByMe) {
+      query.andWhere(
+        'innovation.id IN (SELECT innovation_id FROM audit WHERE user_id=:userId AND action IN (:...actions) GROUP BY innovation_id ORDER BY MAX(date) DESC OFFSET :offset ROWS FETCH NEXT :fetch ROWS ONLY)',
+        {
+          userId: domainContext.id,
+          actions: [ActionEnum.CREATE, ActionEnum.UPDATE],
+          offset: options?.pagination.skip,
+          fetch: options?.pagination.take
+        }
+      );
     }
   }
 
@@ -1561,35 +959,12 @@ export class InnovationsService extends BaseService {
       postHandlers: { [k in keyof typeof this.postHandlers]: Awaited<ReturnType<(typeof this.postHandlers)[k]>> }
     ) => Partial<InnovationListFullResponseType[k]>;
   } = {
-    assessment: this.oneToOneDisplayMapping<'assessment'>('assessment').bind(this),
+    assessment: this.displayAssessment.bind(this),
     engagingUnits: this.displayEngagingUnits.bind(this),
     support: this.displaySupport.bind(this),
     owner: this.displayOwner.bind(this),
     statistics: this.displayStatistics.bind(this) // Finish the display of statistics
   };
-
-  /**
-   * Maps children fields from the view to the output on a 1:1.
-   *
-   * This can be used with both joins and nested objects (objects not used atm)
-   *
-   * @param child the element from the view we're mapping
-   * @returns the object for that element with all the selected fields
-   */
-  private oneToOneDisplayMapping<T extends keyof InnovationListView>(
-    child: T
-  ): (
-    item: InnovationListView,
-    fields: InnovationListChildrenType<'assessment'>[]
-  ) => Partial<InnovationListFullResponseType[T extends keyof InnovationListFullResponseType ? T : never]> {
-    return (item, fields) => {
-      const res = {} as any;
-      fields.forEach(field => {
-        res[field] = (item as any)[child]?.[field] ?? null;
-      });
-      return res;
-    };
-  }
 
   private displayEngagingUnits(
     item: InnovationListView,
@@ -1609,6 +984,28 @@ export class InnovationsService extends BaseService {
         unitId: unit.unitId
       })) || null
     );
+  }
+
+  private displayAssessment(
+    item: InnovationListView,
+    fields: InnovationListChildrenType<'assessment'>[],
+    extra: PickHandlerReturnType<typeof this.postHandlers, 'users'>
+  ): Partial<InnovationListFullResponseType['assessment']> {
+    const res = {} as any;
+    fields.forEach(field => {
+      switch (field) {
+        case 'assignedTo':
+          res[field] = extra.users.get(item.assessment?.assignTo?.id ?? '')?.displayName ?? null;
+          item.assessment?.assignTo ?? null;
+          break;
+        case 'isExempt':
+          res[field] = !!item.assessment?.exemptedAt;
+          break;
+        default:
+          res[field] = item.assessment?.[field] ?? null;
+      }
+    });
+    return res;
   }
 
   private displaySupport(
