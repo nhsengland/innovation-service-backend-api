@@ -219,7 +219,13 @@ export const NewQueryParamsSchema = JoiHelper.PaginationJoiSchema({
     switch: [
       {
         is: ServiceRoleEnum.INNOVATOR,
-        then: Joi.object({})
+        then: Joi.object({
+          hasAccessThrough: JoiHelper.AppCustomJoi()
+            .stringArray()
+            .items(Joi.string().valid(...HasAccessThroughKeys))
+            .default(['owner', 'collaborator'])
+            .min(1)
+        })
       },
       {
         is: ServiceRoleEnum.ASSESSMENT,

@@ -153,6 +153,7 @@ export type InnovationListFilters = {
   engagingOrganisations?: string[];
   engagingUnits?: string[];
   groupedStatuses: InnovationGroupedStatusEnum[];
+  hasAccessThrough?: ('owner' | 'collaborator')[];
   involvedAACProgrammes?: CurrentCatalogTypes.catalogInvolvedAACProgrammes[];
   keyHealthInequalities?: CurrentCatalogTypes.catalogKeyHealthInequalities[];
   latestWorkedByMe?: boolean;
@@ -1350,6 +1351,7 @@ export class InnovationsService extends BaseService {
       fieldSelector: '$.unitId'
     }).bind(this),
     groupedStatuses: this.addInFilter('groupedStatuses', 'groupedStatus').bind(this),
+    hasAccessThrough: this.addHasAccessThroughFilters.bind(this),
     involvedAACProgrammes: this.addJsonArrayInFilter('involvedAACProgrammes').bind(this),
     keyHealthInequalities: this.addJsonArrayInFilter('keyHealthInequalities').bind(this),
     latestWorkedByMe: this.addLatestWorkedByMeFilter.bind(this),
@@ -1458,6 +1460,32 @@ export class InnovationsService extends BaseService {
       }
       // Choose to do nothing instead of throwing an error if this is passed when not supposed (joi should handle it)
       // but as a behavior think it's better to ignore the filter than to throw an error
+    }
+  }
+
+  private addHasAccessThroughFilters(
+    domainContext: DomainContextType,
+    query: SelectQueryBuilder<InnovationListView>,
+    hasAccessThrough: ('owner' | 'collaborator')[]
+  ): void {
+    if (hasAccessThrough.length) {
+      query.andWhere(
+        new Brackets(qb => {
+          qb.where('1 <> 1'); // ugly shortcut to not worry about the first OR
+          if (hasAccessThrough.includes('owner')) {
+            qb.orWhere('innovation.ownerId = :userId', { userId: domainContext.id });
+          }
+          if (hasAccessThrough.includes('collaborator')) {
+            qb.orWhere(
+              'innovation.id IN (SELECT innovation_id FROM innovation_collaborator WHERE user_id = :userId AND status = :collaboratorActiveStatus)',
+              {
+                userId: domainContext.id,
+                collaboratorActiveStatus: InnovationCollaboratorStatusEnum.ACTIVE
+              }
+            );
+          }
+        })
+      );
     }
   }
 
