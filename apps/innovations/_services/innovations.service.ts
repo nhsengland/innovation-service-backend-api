@@ -4,6 +4,7 @@ import { Brackets, EntityManager, In, SelectQueryBuilder } from 'typeorm';
 import {
   ActivityLogEntity,
   InnovationAssessmentEntity,
+  InnovationDocumentDraftEntity,
   InnovationDocumentEntity,
   InnovationEntity,
   InnovationExportRequestEntity,
@@ -16,8 +17,7 @@ import {
   NotificationUserEntity,
   OrganisationEntity,
   UserEntity,
-  UserRoleEntity,
-  InnovationDocumentDraftEntity
+  UserRoleEntity
 } from '@innovations/shared/entities';
 import {
   ActivityEnum,
@@ -1129,13 +1129,10 @@ export class InnovationsService extends BaseService {
       .select([
         'innovation.id',
         'innovation.name',
-        'innovation.description',
         'innovation.status',
         'innovation.statusUpdatedAt',
         'innovation.archivedStatus',
         'innovation.lastAssessmentRequestAt',
-        'innovation.countryName',
-        'innovation.postcode',
         'innovation.createdAt',
         'innovationOwner.id',
         'innovationOwner.status',
@@ -1199,6 +1196,9 @@ export class InnovationsService extends BaseService {
         "JSON_VALUE(document, '$.INNOVATION_DESCRIPTION.otherCategoryDescription')",
         'otherCategoryDescription'
       )
+      .addSelect("JSON_VALUE(document, '$.INNOVATION_DESCRIPTION.description')", 'description')
+      .addSelect("JSON_VALUE(document, '$.INNOVATION_DESCRIPTION.countryName')", 'countryName')
+      .addSelect("JSON_VALUE(document, '$.INNOVATION_DESCRIPTION.postcode')", 'postcode')
       .addSelect('version', 'version')
       .where('innovationDocument.id = :innovationId', { innovationId: innovation.id })
       .getRawOne();
@@ -1269,14 +1269,14 @@ export class InnovationsService extends BaseService {
     return {
       id: innovation.id,
       name: innovation.name,
-      description: innovation.description,
+      description: documentData.description,
       version: documentData.version,
       status: innovation.status,
       groupedStatus: innovation.innovationGroupedStatus.groupedStatus,
       statusUpdatedAt: innovation.statusUpdatedAt,
       submittedAt: innovation.lastAssessmentRequestAt,
-      countryName: innovation.countryName,
-      postCode: innovation.postcode,
+      countryName: documentData.countryName,
+      postCode: documentData.postcode,
       categories,
       otherCategoryDescription: documentData.otherCategoryDescription,
       ...(innovation.archivedStatus ? { archivedStatus: innovation.archivedStatus } : {}),
@@ -1379,10 +1379,7 @@ export class InnovationsService extends BaseService {
         InnovationEntity.new({
           name: data.name,
 
-          countryName: data.countryName,
-          description: data.description,
           owner: UserEntity.new({ id: domainContext.id }),
-          postcode: data.postcode,
           status: InnovationStatusEnum.CREATED,
           statusUpdatedAt: new Date(),
 
@@ -1393,7 +1390,7 @@ export class InnovationsService extends BaseService {
         })
       );
 
-      const document = createDocumentFromInnovation(savedInnovation, { website: data.website });
+      const document = createDocumentFromInnovation(savedInnovation, data);
       await transaction.save(InnovationDocumentEntity, document);
       await transaction.save(InnovationDocumentDraftEntity, omit(document, ['isSnapshot', 'description']));
 
@@ -1415,11 +1412,7 @@ export class InnovationsService extends BaseService {
 
       await this.domainService.innovations.addActivityLog(
         transaction,
-        {
-          activity: ActivityEnum.INNOVATION_CREATION,
-          domainContext,
-          innovationId: savedInnovation.id
-        },
+        { activity: ActivityEnum.INNOVATION_CREATION, domainContext, innovationId: savedInnovation.id },
         {}
       );
 

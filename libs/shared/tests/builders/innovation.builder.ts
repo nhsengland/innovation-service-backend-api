@@ -33,8 +33,6 @@ export type TestInnovationType = {
 export class InnovationBuilder extends BaseBuilder {
   private innovation: DeepPartial<InnovationEntity> = {
     name: randProduct().title,
-    description: randProduct().description,
-    countryName: randCountry(),
     status: InnovationStatusEnum.CREATED,
     owner: null,
     assessments: [],
@@ -47,9 +45,9 @@ export class InnovationBuilder extends BaseBuilder {
     version: '202304',
     INNOVATION_DESCRIPTION: {
       name: this.innovation.name!,
-      description: this.innovation.description!,
-      countryName: this.innovation.countryName,
-      postcode: this.innovation.postcode ?? undefined,
+      description: randProduct().description,
+      countryName: randCountry(),
+      postcode: undefined,
 
       areas: ['COVID_19'],
       careSettings: ['INDUSTRY'],

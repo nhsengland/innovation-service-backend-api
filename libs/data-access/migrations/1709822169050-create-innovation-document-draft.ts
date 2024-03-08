@@ -1,6 +1,6 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class createInnovationDocumentDraftTable1709822169049 implements MigrationInterface {
+export class createInnovationDocumentDraftTable1709822169050 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       CREATE TABLE innovation_document_draft (
@@ -16,6 +16,9 @@ export class createInnovationDocumentDraftTable1709822169049 implements Migratio
         CONSTRAINT "CK_innovation_document_draft_document_is_json" CHECK (ISJSON(document)=1)
       );
     `);
+
+    // Make countryName since the field is not used anymore
+    await queryRunner.query(`ALTER TABLE "innovation" ALTER COLUMN "country_name" nvarchar(100) NULL;`);
 
     // TODO: still needs to add the migration
   }

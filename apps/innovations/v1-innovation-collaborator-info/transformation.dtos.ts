@@ -9,7 +9,6 @@ export type ResponseDTO = {
   innovation: {
     id: string;
     name: string;
-    description: null | string;
     owner?: {
       id: string;
       name?: string;
