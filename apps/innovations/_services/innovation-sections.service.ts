@@ -1,12 +1,12 @@
 import { inject, injectable } from 'inversify';
 
 import {
+  InnovationDocumentDraftEntity,
   InnovationDocumentEntity,
   InnovationEntity,
   InnovationSectionEntity,
   InnovationTaskEntity,
-  UserEntity,
-  InnovationDocumentDraftEntity
+  UserEntity
 } from '@innovations/shared/entities';
 import {
   ActivityEnum,
