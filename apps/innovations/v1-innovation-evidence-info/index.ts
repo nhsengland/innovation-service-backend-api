@@ -24,7 +24,7 @@ class GetInnovationEvidenceInfo {
     try {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
-      await authorizationService
+      const auth = await authorizationService
         .validate(context)
         .setInnovation(params.innovationId)
         .checkAssessmentType()
@@ -34,7 +34,11 @@ class GetInnovationEvidenceInfo {
         .checkInnovation()
         .verify();
 
-      const result = await innovationSectionsService.getInnovationEvidenceInfo(params.innovationId, params.evidenceId);
+      const result = await innovationSectionsService.getInnovationEvidenceInfo(
+        auth.getContext(),
+        params.innovationId,
+        params.evidenceId
+      );
 
       context.res = ResponseHelper.Ok<ResponseDTO>({
         id: result.id,

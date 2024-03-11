@@ -5,11 +5,7 @@ import { randomUUID } from 'crypto';
 import { Brackets, type EntityManager } from 'typeorm';
 
 import { MAX_FILES_ALLOWED } from '@innovations/shared/constants';
-import {
-  InnovationDocumentEntity,
-  InnovationFileEntity,
-  InnovationThreadMessageEntity
-} from '@innovations/shared/entities';
+import { InnovationFileEntity, InnovationThreadMessageEntity } from '@innovations/shared/entities';
 import {
   InnovationFileContextTypeEnum,
   InnovationStatusEnum,
@@ -44,13 +40,16 @@ import type {
   InnovationFileTypeWithContext
 } from '../_types/innovation.types';
 import { BaseService } from './base.service';
+import SYMBOLS from './symbols';
+import type { InnovationDocumentService } from './innovation-document.service';
 
 @injectable()
 export class InnovationFileService extends BaseService {
   constructor(
     @inject(SHARED_SYMBOLS.FileStorageService) private fileStorageService: FileStorageService,
     @inject(SHARED_SYMBOLS.IdentityProviderService) private identityProviderService: IdentityProviderService,
-    @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService
+    @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
+    @inject(SYMBOLS.InnovationDocumentService) private innovationDocumentService: InnovationDocumentService
   ) {
     super();
   }
@@ -213,7 +212,7 @@ export class InnovationFileService extends BaseService {
       .filter((u): u is string => u !== undefined);
     const usersInfo = await this.identityProviderService.getUsersMap(usersIds);
 
-    const contextMap = await this.files2ResolvedContexts(files, innovationId, connection);
+    const contextMap = await this.files2ResolvedContexts(domainContext, files, innovationId, connection);
 
     return {
       count,
@@ -312,7 +311,12 @@ export class InnovationFileService extends BaseService {
       createdByUser = await this.identityProviderService.getUserInfo(file.createdByUserRole.user.identityId);
     }
 
-    const [fileContext] = await this.contextMapper[file.contextType]([file.contextId], innovationId, connection);
+    const [fileContext] = await this.contextMapper[file.contextType](
+      [file.contextId],
+      innovationId,
+      domainContext.currentRole.role,
+      connection
+    );
 
     return {
       id: file.id,
@@ -566,6 +570,7 @@ export class InnovationFileService extends BaseService {
    * @returns a map of contextType:contextId -> context output for each file
    */
   private async files2ResolvedContexts(
+    domainContext: DomainContextType,
     files: { id: string; contextType: InnovationFileContextTypeEnum; contextId: string }[],
     innovationId: string,
     entityManager: EntityManager
@@ -582,7 +587,12 @@ export class InnovationFileService extends BaseService {
     const res = new Map<string, InnovationFileOutputContextType>();
 
     for (const [type, ids] of contextTypeIDsMap.entries()) {
-      const resolved = await this.contextMapper[type]([...ids], innovationId, entityManager);
+      const resolved = await this.contextMapper[type](
+        [...ids],
+        innovationId,
+        domainContext.currentRole.role,
+        entityManager
+      );
       resolved.forEach(ct => res.set(this.contextTypeId2Key(type, ct.id), ct));
     }
     return res;
@@ -591,24 +601,26 @@ export class InnovationFileService extends BaseService {
   // Helper mapper function for each file types
   private defaultContextMapper =
     <T extends InnovationFileContextTypeEnum>(contextType: T) =>
-    (ids: string[], _innovationId: string, _entityManager: EntityManager) => {
+    (ids: string[], _innovationId: string, _role: ServiceRoleEnum, _entityManager: EntityManager) => {
       return ids.map(id => ({ id, type: contextType }));
     };
 
   // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-  private evidenceContextMapper = async (ids: string[], innovationId: string, entityManager: EntityManager) => {
-    const innovationDocument = await entityManager
-      .createQueryBuilder(InnovationDocumentEntity, 'document')
-      .where('document.id = :innovationId', { innovationId })
-      .andWhere('document.version = :version', { version: CurrentDocumentConfig.version })
-      .getOne();
-
-    if (!innovationDocument || innovationDocument.document.version !== CurrentDocumentConfig.version) {
-      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
-    }
+  private evidenceContextMapper = async (
+    ids: string[],
+    innovationId: string,
+    role: ServiceRoleEnum,
+    entityManager: EntityManager
+  ) => {
+    const document = await this.innovationDocumentService.getInnovationDocument(
+      innovationId,
+      CurrentDocumentConfig.version,
+      this.innovationDocumentService.getDocumentTypeAccordingWithRole(role),
+      entityManager
+    );
 
     const evidenceMap = new Map(
-      (innovationDocument.document.evidences ?? []).map(e => [
+      (document.evidences ?? []).map(e => [
         e.id,
         e.description ?? TranslationHelper.translate(`EVIDENCE_SUBMIT_TYPES.${e.evidenceSubmitType}`)
       ])
@@ -622,7 +634,12 @@ export class InnovationFileService extends BaseService {
   };
 
   // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-  private messageContextMapper = async (ids: string[], _innovationId: string, entityManager: EntityManager) => {
+  private messageContextMapper = async (
+    ids: string[],
+    _innovationId: string,
+    _role: ServiceRoleEnum,
+    entityManager: EntityManager
+  ) => {
     const messagesMap = new Map(
       (
         await entityManager

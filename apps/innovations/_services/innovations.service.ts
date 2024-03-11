@@ -1188,9 +1188,13 @@ export class InnovationsService extends BaseService {
     }
 
     // Only fetch the document version and category data (maybe create a helper for this in the future)
-    const documentData = await connection
-      // TODO: DRAFT Change this
-      .createQueryBuilder(InnovationDocumentEntity, 'innovationDocument')
+    let documentDataQuery: SelectQueryBuilder<InnovationDocumentEntity | InnovationDocumentDraftEntity> =
+      connection.createQueryBuilder(InnovationDocumentEntity, 'innovationDocument');
+    if ([ServiceRoleEnum.INNOVATOR, ServiceRoleEnum.ADMIN].includes(domainContext.currentRole.role)) {
+      documentDataQuery = connection.createQueryBuilder(InnovationDocumentDraftEntity, 'innovationDocument');
+    }
+
+    const documentData = await documentDataQuery
       .select("JSON_QUERY(document, '$.INNOVATION_DESCRIPTION.categories')", 'categories')
       .addSelect(
         "JSON_VALUE(document, '$.INNOVATION_DESCRIPTION.otherCategoryDescription')",
