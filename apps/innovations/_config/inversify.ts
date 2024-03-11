@@ -3,6 +3,7 @@ import { container } from '@innovations/shared/config/inversify.config';
 import { ExportFileService } from '../_services/export-file-service';
 import { InnovationAssessmentsService } from '../_services/innovation-assessments.service';
 import { InnovationCollaboratorsService } from '../_services/innovation-collaborators.service';
+import { InnovationDocumentService } from '../_services/innovation-document.service';
 import { InnovationExportRequestService } from '../_services/innovation-export-request.service';
 import { InnovationFileService } from '../_services/innovation-file.service';
 import { InnovationSectionsService } from '../_services/innovation-sections.service';
@@ -45,6 +46,10 @@ container
 container
   .bind<InnovationExportRequestService>(SYMBOLS.InnovationExportRequestService)
   .to(InnovationExportRequestService)
+  .inSingletonScope();
+container
+  .bind<InnovationDocumentService>(SYMBOLS.InnovationDocumentService)
+  .to(InnovationDocumentService)
   .inSingletonScope();
 container.bind<InnovationsService>(SYMBOLS.InnovationsService).to(InnovationsService).inSingletonScope();
 container.bind<ExportFileService>(SYMBOLS.ExportFileService).to(ExportFileService).inSingletonScope();
