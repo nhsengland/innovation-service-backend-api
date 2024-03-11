@@ -460,7 +460,7 @@ export class InnovationSectionsService extends BaseService {
     const document = await this.innovationDocumentService.getInnovationDocument(
       innovationId,
       version ?? CurrentDocumentConfig.version,
-      'DRAFT',
+      this.innovationDocumentService.getDocumentTypeAccordingWithRole(domainContext.currentRole.role),
       em
     );
     const innovationSections = this.getDocumentSections(document).map(section => ({

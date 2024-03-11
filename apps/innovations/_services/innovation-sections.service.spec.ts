@@ -63,7 +63,7 @@ describe('Innovation Sections Suite', () => {
   });
 
   describe('getInnovationSectionInfo', () => {
-    it('should get submitted section info as assessment user', async () => {
+    it('should get submitted section info', async () => {
       const sectionsList = await sut.getInnovationSectionInfo(
         DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
         innovation.id,
@@ -73,42 +73,6 @@ describe('Innovation Sections Suite', () => {
       );
 
       expect(sectionsList.id).toBeDefined();
-    });
-
-    it('should not get draft section info as accessor', async () => {
-      await em.update(
-        InnovationSectionEntity,
-        { id: innovation.sections.INNOVATION_DESCRIPTION.id },
-        { status: InnovationSectionStatusEnum.DRAFT }
-      );
-
-      const section = await sut.getInnovationSectionInfo(
-        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
-        innovation.id,
-        'INNOVATION_DESCRIPTION',
-        {},
-        em
-      );
-
-      expect(section.data).toStrictEqual({});
-    });
-
-    it('should not get draft section info as NA', async () => {
-      await em.update(
-        InnovationSectionEntity,
-        { id: innovation.sections.INNOVATION_DESCRIPTION.id },
-        { status: InnovationSectionStatusEnum.DRAFT }
-      );
-
-      const section = await sut.getInnovationSectionInfo(
-        DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
-        innovation.id,
-        'INNOVATION_DESCRIPTION',
-        {},
-        em
-      );
-
-      expect(section.data).toStrictEqual({});
     });
   });
 
