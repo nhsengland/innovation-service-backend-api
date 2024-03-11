@@ -265,7 +265,6 @@ export class InnovationCollaboratorsService extends BaseService {
     innovation: {
       id: string;
       name: string;
-      description: null | string;
       owner?: { id: string; name?: string };
     };
     invitedAt: Date;
@@ -280,7 +279,6 @@ export class InnovationCollaboratorsService extends BaseService {
       .leftJoin('innovation.owner', 'innovationOwner')
       .select([
         'innovation.name',
-        'innovation.description',
         'innovation.id',
         'innovationOwner.identityId',
         'innovationOwner.id',
@@ -328,7 +326,6 @@ export class InnovationCollaboratorsService extends BaseService {
       innovation: {
         id: collaborator.innovation.id,
         name: collaborator.innovation.name,
-        description: collaborator.innovation.description,
         ...(collaborator.innovation.owner && {
           owner: {
             id: collaborator.innovation.owner.id,

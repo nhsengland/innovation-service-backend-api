@@ -1,24 +1,10 @@
 import azureFunction from '.';
 
-import {
-  InnovationGroupedStatusEnum,
-  InnovationStatusEnum,
-  InnovationSupportStatusEnum
-} from '@innovations/shared/enums';
+import { InnovationGroupedStatusEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@innovations/shared/tests';
 import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@innovations/shared/types';
-import {
-  randAbbreviation,
-  randCompanyName,
-  randDepartment,
-  randFullName,
-  randNumber,
-  randPastDate,
-  randProductName,
-  randText,
-  randUuid
-} from '@ngneat/falso';
+import { randProductName, randUuid } from '@ngneat/falso';
 import { InnovationsService } from '../_services/innovations.service';
 import type { ResponseDTO } from './transformation.dtos';
 
@@ -44,65 +30,16 @@ const expected = {
     {
       id: randUuid(),
       name: randProductName(),
-      description: randText(),
-      status: InnovationStatusEnum.CREATED,
-      statusUpdatedAt: randPastDate(),
-      submittedAt: null,
-      updatedAt: randPastDate(),
-      countryName: null,
-      postCode: null,
-      mainCategory: null,
-      otherMainCategoryDescription: null,
       groupedStatus: InnovationGroupedStatusEnum.RECORD_NOT_SHARED
     },
     {
       id: randUuid(),
       name: randProductName(),
-      description: randText(),
-      status: InnovationStatusEnum.IN_PROGRESS,
-      statusUpdatedAt: randPastDate(),
-      submittedAt: null,
-      updatedAt: randPastDate(),
-      countryName: null,
-      postCode: null,
-      mainCategory: null,
-      otherMainCategoryDescription: null,
-      groupedStatus: InnovationGroupedStatusEnum.AWAITING_SUPPORT,
-      assessment: {
-        id: randUuid(),
-        createdAt: randPastDate(),
-        finishedAt: randPastDate(),
-        assignedTo: { name: randFullName() },
-        reassessmentCount: randNumber(),
-        isExempted: false
-      },
-      supports: [
-        {
-          id: randUuid(),
-          status: InnovationSupportStatusEnum.WAITING,
-          updatedAt: randPastDate(),
-          organisation: {
-            id: randUuid(),
-            name: randCompanyName(),
-            acronym: randAbbreviation(),
-            unit: {
-              id: randUuid(),
-              name: randDepartment(),
-              acronym: randAbbreviation(),
-              users: []
-            }
-          }
-        }
-      ],
-      notifications: randNumber(),
-      statistics: {
-        tasks: randNumber(),
-        messages: randNumber()
-      }
+      groupedStatus: InnovationGroupedStatusEnum.AWAITING_SUPPORT
     }
   ]
 };
-const mock = jest.spyOn(InnovationsService.prototype, 'getInnovationsList').mockResolvedValue(expected);
+const mock = jest.spyOn(InnovationsService.prototype, 'getInnovationsList').mockResolvedValue(expected as any);
 
 afterEach(() => {
   jest.clearAllMocks();
@@ -113,6 +50,9 @@ describe('v1-innovations-list Suite', () => {
     it('should return the innovations', async () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.aliceQualifyingAccessor)
+        .setQuery({
+          fields: 'id,name,groupedStatus'
+        })
         .call<ResponseDTO>(azureFunction);
 
       expect(result.body).toStrictEqual(expected);
@@ -140,7 +80,14 @@ describe('v1-innovations-list Suite', () => {
       ['Innovator owner', 200, scenario.users.johnInnovator],
       ['Innovator collaborator', 200, scenario.users.janeInnovator]
     ])('access with user %s should give %i', async (_role: string, status: number, user: TestUserType) => {
-      const result = await new AzureHttpTriggerBuilder().setAuth(user).call<ErrorResponseType>(azureFunction);
+      const call = await new AzureHttpTriggerBuilder().setAuth(user);
+
+      if (user.roles[0]?.role === ServiceRoleEnum.INNOVATOR) {
+        call.setQuery({ fields: 'name', hasAccessThrough: 'owner' });
+      } else {
+        call.setQuery({ fields: 'name' });
+      }
+      const result = await call.call<ErrorResponseType>(azureFunction);
 
       expect(result.status).toBe(status);
     });
@@ -148,7 +95,7 @@ describe('v1-innovations-list Suite', () => {
     it('access with user A should give 200', async () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.ingridAccessor)
-        .setQuery({ status: 'IN_PROGRESS' })
+        .setQuery({ fields: 'name', supportStatuses: 'ENGAGING' })
         .call<ErrorResponseType>(azureFunction);
 
       expect(result.status).toBe(200);

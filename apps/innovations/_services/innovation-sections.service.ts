@@ -1,12 +1,12 @@
 import { inject, injectable } from 'inversify';
 
 import {
+  InnovationDocumentDraftEntity,
   InnovationDocumentEntity,
   InnovationEntity,
   InnovationSectionEntity,
   InnovationTaskEntity,
-  UserEntity,
-  InnovationDocumentDraftEntity
+  UserEntity
 } from '@innovations/shared/entities';
 import {
   ActivityEnum,
@@ -327,24 +327,6 @@ export class InnovationSectionsService extends BaseService {
       section.status = InnovationSectionStatusEnum.DRAFT;
     }
 
-    let updateInnovation = false;
-    if (sectionKey === 'INNOVATION_DESCRIPTION') {
-      (['name', 'description', 'countryName', 'postcode', 'mainCategory', 'otherCategoryDescription'] as const).forEach(
-        key => {
-          if (dataToUpdate[key] !== undefined) {
-            innovation[key] = dataToUpdate[key];
-            updateInnovation = true;
-          }
-          // If postcode exists it is set after countryName
-          if (key === 'countryName') {
-            innovation.postcode = null;
-          }
-        }
-      );
-
-      // TODO: Update the document submitted with name, and handler other fields like description
-    }
-
     const sectionToBeSaved = section;
 
     return connection.transaction(async transaction => {
@@ -375,16 +357,18 @@ export class InnovationSectionsService extends BaseService {
         );
       }
 
-      if (updateInnovation) {
+      // Make sure to keep name up-to-date accross the innovation
+      if (sectionKey === 'INNOVATION_DESCRIPTION' && innovation.name !== dataToUpdate['name']) {
+        // Make sure the latest submitted version contains this change as-well
+        await transaction.query(
+          `UPDATE innovation_document
+           SET document = JSON_MODIFY(document, @0, @1), updated_by=@2, updated_at=@3, is_snapshot=0, description=NULL WHERE id = @4`,
+          [`$.${sectionKey}.name`, dataToUpdate['name'], domainContext.id, updatedAt, innovationId]
+        );
+
         await transaction.save(InnovationEntity, {
           id: innovation.id,
-          // TODO: Make sure that we really want to keep name and description up-to-date
-          name: innovation.name,
-          description: innovation.description,
-          countryName: innovation.countryName,
-          postcode: innovation.postcode,
-          mainCategory: innovation.mainCategory,
-          otherCategoryDescription: innovation.mainCategory === 'OTHER' ? innovation.otherCategoryDescription : null,
+          name: dataToUpdate['name'],
           updatedBy: innovation.updatedBy,
           updatedAt: updatedAt
         });

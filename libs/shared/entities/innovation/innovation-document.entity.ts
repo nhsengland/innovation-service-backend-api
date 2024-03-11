@@ -34,16 +34,22 @@ export class InnovationDocumentEntity extends BaseEntity {
  */
 export const createDocumentFromInnovation = (
   innovation: InnovationEntity,
-  customFields?: { website?: string }
+  fields: {
+    name: string;
+    description?: string;
+    countryName: string;
+    postcode?: string;
+    website?: string;
+  }
 ): InnovationDocumentEntity => {
   const document: CurrentDocumentType = {
     version: CurrentDocumentConfig.version,
     INNOVATION_DESCRIPTION: {
-      name: innovation.name,
-      description: innovation.description ?? undefined,
-      countryName: innovation.countryName,
-      postcode: innovation.postcode ?? undefined,
-      website: customFields?.website
+      name: fields.name,
+      description: fields.description,
+      countryName: fields.countryName,
+      postcode: fields.postcode,
+      website: fields.website
     },
     UNDERSTANDING_OF_NEEDS: {},
     EVIDENCE_OF_EFFECTIVENESS: {},

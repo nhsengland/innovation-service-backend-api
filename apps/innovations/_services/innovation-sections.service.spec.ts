@@ -113,60 +113,52 @@ describe('Innovation Sections Suite', () => {
   });
 
   describe('updateInnovationSectionInfo', () => {
-    it('should update a section', async () => {
-      const section = await sut.updateInnovationSectionInfo(
-        DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
-        innovation.id,
-        'INNOVATION_DESCRIPTION',
-        { summary: randText() },
-        em
-      );
-      expect(section.id).toBeDefined();
-    });
+    it('should update a section and only change the draft document', async () => {
+      const newSummary = randText();
 
-    it.each(['name', 'description', 'countryName', 'postcode', 'mainCategory'] as const)(
-      'should update the innovation entity if %s is specified',
-      async field => {
-        const newValue = randText();
-        await sut.updateInnovationSectionInfo(
-          DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
-          innovation.id,
-          'INNOVATION_DESCRIPTION',
-          { [field]: newValue },
-          em
-        );
-
-        const innovationDb = await em.getRepository(InnovationEntity).findOneByOrFail({ id: innovation.id });
-        expect(innovationDb[field]).toEqual(newValue);
-      }
-    );
-
-    it('should update the innovation entity other category if mainCategory is OTHER', async () => {
-      const newValue = randText();
       await sut.updateInnovationSectionInfo(
         DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
         innovation.id,
         'INNOVATION_DESCRIPTION',
-        { mainCategory: 'OTHER', otherCategoryDescription: newValue },
+        { summary: newSummary },
         em
       );
 
-      const innovationDb = await em.getRepository(InnovationEntity).findOneByOrFail({ id: innovation.id });
-      expect(innovationDb.otherCategoryDescription).toEqual(newValue);
+      const dbInnovation = await em.createQueryBuilder(InnovationEntity, 'innovation')
+        .addSelect("JSON_VALUE(document.document, '$.INNOVATION_DESCRIPTION.summary')", 'documentSummary')
+        .addSelect("JSON_VALUE(documentDraft.document, '$.INNOVATION_DESCRIPTION.summary')", 'documentDraftSummary')
+        .innerJoin('innovation.document', 'document')
+        .innerJoin('innovation_document_draft', 'documentDraft', 'documentDraft.id = innovation.id')
+        .where('innovation.id = :innovationId', { innovationId: innovation.id })
+        .getRawOne()
+
+      expect(dbInnovation.documentSummary).not.toBe(newSummary);
+      expect(dbInnovation.documentDraftSummary).toBe(newSummary);
     });
 
-    it('should not update the innovation entity other category if mainCategory is not OTHER', async () => {
+    it('should sync the innovation name across documents and innovation', async () => {
       const newValue = randText();
+
       await sut.updateInnovationSectionInfo(
         DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
         innovation.id,
         'INNOVATION_DESCRIPTION',
-        { mainCategory: 'AI', otherCategoryDescription: newValue },
+        { name: newValue },
         em
       );
 
-      const innovationDb = await em.getRepository(InnovationEntity).findOneByOrFail({ id: innovation.id });
-      expect(innovationDb.otherCategoryDescription).toBeNull();
+      const dbInnovation = await em.createQueryBuilder(InnovationEntity, 'innovation')
+        .select('innovation.name', 'innovationName')
+        .addSelect("JSON_VALUE(document.document, '$.INNOVATION_DESCRIPTION.name')", 'documentName')
+        .addSelect("JSON_VALUE(documentDraft.document, '$.INNOVATION_DESCRIPTION.name')", 'documentDraftName')
+        .innerJoin('innovation.document', 'document')
+        .innerJoin('innovation_document_draft', 'documentDraft', 'documentDraft.id = innovation.id')
+        .where('innovation.id = :innovationId', { innovationId: innovation.id })
+        .getRawOne()
+
+      expect(dbInnovation.innovationName).toBe(newValue);
+      expect(dbInnovation.documentName).toBe(newValue);
+      expect(dbInnovation.documentDraftName).toBe(newValue);
     });
   });
 
