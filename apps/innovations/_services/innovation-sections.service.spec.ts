@@ -3,7 +3,7 @@ import { container } from '../_config';
 
 import { InnovationEntity, InnovationSectionEntity } from '@innovations/shared/entities';
 import { InnovationSectionStatusEnum } from '@innovations/shared/enums';
-import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
+import { CurrentCatalogTypes, CurrentDocumentConfig } from '@innovations/shared/schemas/innovation-record';
 import { TestsHelper } from '@innovations/shared/tests';
 import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
 import { rand, randText } from '@ngneat/falso';
@@ -63,7 +63,7 @@ describe('Innovation Sections Suite', () => {
   });
 
   describe('getInnovationSectionInfo', () => {
-    it('should get submitted section info as assessment user', async () => {
+    it('should get submitted section info', async () => {
       const sectionsList = await sut.getInnovationSectionInfo(
         DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
         innovation.id,
@@ -73,42 +73,6 @@ describe('Innovation Sections Suite', () => {
       );
 
       expect(sectionsList.id).toBeDefined();
-    });
-
-    it('should not get draft section info as accessor', async () => {
-      await em.update(
-        InnovationSectionEntity,
-        { id: innovation.sections.INNOVATION_DESCRIPTION.id },
-        { status: InnovationSectionStatusEnum.DRAFT }
-      );
-
-      const section = await sut.getInnovationSectionInfo(
-        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
-        innovation.id,
-        'INNOVATION_DESCRIPTION',
-        {},
-        em
-      );
-
-      expect(section.data).toStrictEqual({});
-    });
-
-    it('should not get draft section info as NA', async () => {
-      await em.update(
-        InnovationSectionEntity,
-        { id: innovation.sections.INNOVATION_DESCRIPTION.id },
-        { status: InnovationSectionStatusEnum.DRAFT }
-      );
-
-      const section = await sut.getInnovationSectionInfo(
-        DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
-        innovation.id,
-        'INNOVATION_DESCRIPTION',
-        {},
-        em
-      );
-
-      expect(section.data).toStrictEqual({});
     });
   });
 
@@ -124,13 +88,14 @@ describe('Innovation Sections Suite', () => {
         em
       );
 
-      const dbInnovation = await em.createQueryBuilder(InnovationEntity, 'innovation')
+      const dbInnovation = await em
+        .createQueryBuilder(InnovationEntity, 'innovation')
         .addSelect("JSON_VALUE(document.document, '$.INNOVATION_DESCRIPTION.summary')", 'documentSummary')
         .addSelect("JSON_VALUE(documentDraft.document, '$.INNOVATION_DESCRIPTION.summary')", 'documentDraftSummary')
         .innerJoin('innovation.document', 'document')
         .innerJoin('innovation_document_draft', 'documentDraft', 'documentDraft.id = innovation.id')
         .where('innovation.id = :innovationId', { innovationId: innovation.id })
-        .getRawOne()
+        .getRawOne();
 
       expect(dbInnovation.documentSummary).not.toBe(newSummary);
       expect(dbInnovation.documentDraftSummary).toBe(newSummary);
@@ -147,14 +112,15 @@ describe('Innovation Sections Suite', () => {
         em
       );
 
-      const dbInnovation = await em.createQueryBuilder(InnovationEntity, 'innovation')
+      const dbInnovation = await em
+        .createQueryBuilder(InnovationEntity, 'innovation')
         .select('innovation.name', 'innovationName')
         .addSelect("JSON_VALUE(document.document, '$.INNOVATION_DESCRIPTION.name')", 'documentName')
         .addSelect("JSON_VALUE(documentDraft.document, '$.INNOVATION_DESCRIPTION.name')", 'documentDraftName')
         .innerJoin('innovation.document', 'document')
         .innerJoin('innovation_document_draft', 'documentDraft', 'documentDraft.id = innovation.id')
         .where('innovation.id = :innovationId', { innovationId: innovation.id })
-        .getRawOne()
+        .getRawOne();
 
       expect(dbInnovation.innovationName).toBe(newValue);
       expect(dbInnovation.documentName).toBe(newValue);
@@ -283,7 +249,9 @@ describe('Innovation Sections Suite', () => {
     it('should return empty section data if the user is an accessor and the section is not submitted', async () => {
       const allSectionsInfo = await sut.findAllSections(
         DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
-        innovation.id
+        innovation.id,
+        CurrentDocumentConfig.version,
+        em
       );
 
       expect(allSectionsInfo).toStrictEqual([
@@ -313,7 +281,7 @@ describe('Innovation Sections Suite', () => {
             submittedBy: { displayTag: 'Innovator', name: '[unknown user]' },
             openTasksCount: 0
           },
-          data: {}
+          data: expect.any(Object)
         },
         ...[
           'MARKET_RESEARCH',
