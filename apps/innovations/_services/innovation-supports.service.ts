@@ -55,12 +55,18 @@ type UnitSupportInformationType = {
   unitName: string;
   startSupport: null | Date;
   endSupport: null | Date;
+  orgId: string;
+  orgAcronym: string;
 };
 
 type SuggestedUnitType = {
   id: string;
   name: string;
   support: { id?: string; status: InnovationSupportStatusEnum; start?: Date; end?: Date };
+  organisation: {
+    id: string;
+    acronym: string;
+  };
 };
 
 @injectable()
@@ -809,6 +815,10 @@ export class InnovationSupportsService extends BaseService {
             id: support.id,
             status: support.status,
             start: support.startSupport ?? undefined
+          },
+          organisation: {
+            id: support.orgId,
+            acronym: support.orgAcronym
           }
         });
       } else if (support.startSupport && support.endSupport) {
@@ -821,6 +831,10 @@ export class InnovationSupportsService extends BaseService {
             status: support.status,
             start: support.startSupport,
             end: support.endSupport
+          },
+          organisation: {
+            id: support.orgId,
+            acronym: support.orgAcronym
           }
         });
       } else {
@@ -832,6 +846,10 @@ export class InnovationSupportsService extends BaseService {
             id: support.id,
             status: support.status,
             start: support.updatedAt
+          },
+          organisation: {
+            id: support.orgId,
+            acronym: support.orgAcronym
           }
         });
       }
@@ -846,6 +864,10 @@ export class InnovationSupportsService extends BaseService {
           name: u.name,
           support: {
             status: InnovationSupportStatusEnum.UNASSIGNED
+          },
+          organisation: {
+            id: u.orgId,
+            acronym: u.orgAcronym
           }
         }))
     );
@@ -1321,9 +1343,14 @@ export class InnovationSupportsService extends BaseService {
   private async getSuggestedUnitsInfoMap(
     innovationId: string,
     em: EntityManager
-  ): Promise<Map<string, { id: string; name: string }>> {
-    const suggestedUnitsInfo: { id: string; name: string }[] = [
-      ...(await this.getSuggestedUnitsByNA(innovationId, em)).map(u => ({ id: u.id, name: u.name })),
+  ): Promise<Map<string, { id: string; name: string; orgId: string; orgAcronym: string }>> {
+    const suggestedUnitsInfo: { id: string; name: string; orgId: string; orgAcronym: string }[] = [
+      ...(await this.getSuggestedUnitsByNA(innovationId, em)).map(u => ({
+        id: u.id,
+        name: u.name,
+        orgId: u.orgId,
+        orgAcronym: u.orgAcronym
+      })),
       ...(await this.getSuggestedUnitsByQA(innovationId, em))
     ];
 
@@ -1338,12 +1365,31 @@ export class InnovationSupportsService extends BaseService {
   private async getSuggestedUnitsByNA(
     innovationId: string,
     em: EntityManager
-  ): Promise<{ id: string; name: string; assessmentId: string; updatedAt: Date; assignTo?: string }[]> {
+  ): Promise<
+    {
+      id: string;
+      name: string;
+      assessmentId: string;
+      updatedAt: Date;
+      assignTo?: string;
+      orgId: string;
+      orgAcronym: string;
+    }[]
+  > {
     const suggestedByNA = await em
       .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
-      .select(['assessment.id', 'assessment.updatedAt', 'assignedTo.id', 'units.id', 'units.name'])
+      .select([
+        'assessment.id',
+        'assessment.updatedAt',
+        'assignedTo.id',
+        'units.id',
+        'units.name',
+        'org.id',
+        'org.acronym'
+      ])
       .leftJoin('assessment.organisationUnits', 'units')
       .innerJoin('assessment.assignTo', 'assignedTo')
+      .innerJoin('units.organisation', 'org')
       .where('assessment.innovation_id = :innovationId', { innovationId })
       .getOne();
 
@@ -1356,18 +1402,21 @@ export class InnovationSupportsService extends BaseService {
       name: u.name,
       assessmentId: suggestedByNA.id,
       updatedAt: suggestedByNA.updatedAt,
-      assignTo: suggestedByNA.assignTo?.id
+      assignTo: suggestedByNA.assignTo?.id,
+      orgId: u.organisation.id,
+      orgAcronym: u.organisation.acronym || ''
     }));
   }
 
   private async getSuggestedUnitsByQA(
     innovationId: string,
     em: EntityManager
-  ): Promise<{ id: string; name: string }[]> {
+  ): Promise<{ id: string; name: string; orgId: string; orgAcronym: string }[]> {
     const suggestedByQA = await em
       .createQueryBuilder(InnovationSupportLogEntity, 'log')
-      .select(['log.id', 'suggestedUnits.id', 'suggestedUnits.name'])
+      .select(['log.id', 'suggestedUnits.id', 'suggestedUnits.name', 'suggestedUnits.acronym', 'org.id', 'org.acronym'])
       .leftJoin('log.suggestedOrganisationUnits', 'suggestedUnits')
+      .innerJoin('suggestedUnits.organisation', 'org')
       .where('log.innovation_id = :innovationId', { innovationId })
       .andWhere('log.type = :suggestionStatus', {
         suggestionStatus: InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION
@@ -1375,7 +1424,14 @@ export class InnovationSupportsService extends BaseService {
       .getMany();
 
     return suggestedByQA
-      .map(log => (log.suggestedOrganisationUnits ?? []).map(u => ({ id: u.id, name: u.name })))
+      .map(log =>
+        (log.suggestedOrganisationUnits ?? []).map(u => ({
+          id: u.id,
+          name: u.name,
+          orgId: u.organisation.id,
+          orgAcronym: u.organisation.acronym || ''
+        }))
+      )
       .flat();
   }
 
@@ -1385,9 +1441,10 @@ export class InnovationSupportsService extends BaseService {
   ): Promise<Map<string, UnitSupportInformationType>> {
     const unitsSupportInformation: UnitSupportInformationType[] = await em.query(
       `
-      SELECT s.id, s.status, s.updated_at as updatedAt, ou.id as unitId, ou.name as unitName, t.startSupport, t.endSupport
+      SELECT s.id, s.status, s.updated_at as updatedAt, ou.id as unitId, ou.name as unitName, org.id as orgId, org.acronym as orgAcronym, t.startSupport, t.endSupport
       FROM innovation_support s
       INNER JOIN organisation_unit ou ON ou.id = s.organisation_unit_id
+      INNER JOIN organisation org ON org.id = ou.organisation_id
       LEFT JOIN (
           SELECT id, MIN(valid_from) as startSupport, MAX(valid_to) as endSupport
           FROM innovation_support

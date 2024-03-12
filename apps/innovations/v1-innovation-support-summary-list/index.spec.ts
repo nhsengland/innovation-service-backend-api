@@ -35,6 +35,10 @@ const expected = {
         status: InnovationSupportStatusEnum.ENGAGING,
         start: randPastDate(),
         end: randPastDate()
+      },
+      organisation: {
+        id: randUuid(),
+        acronym: randText()
       }
     }
   ],
