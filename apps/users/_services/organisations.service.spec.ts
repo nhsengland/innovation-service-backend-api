@@ -149,9 +149,9 @@ describe('Users / _services / organisations service suite', () => {
   });
 
   describe('getOrganisationInfo', () => {
-    it('should get the organisation info', async () => {
+    it('should get the full organisation info', async () => {
       const org = scenario.organisations.healthOrg;
-      const organisationInfo = await sut.getOrganisationInfo(org.id, false, em);
+      const organisationInfo = await sut.getOrganisationInfo(org.id, 'full', false, em);
 
       expect(organisationInfo).toMatchObject({
         id: org.id,
@@ -177,9 +177,9 @@ describe('Users / _services / organisations service suite', () => {
       });
     });
 
-    it('should get the organisation info with only active users', async () => {
+    it('should get the full organisation info with only active users', async () => {
       const org = scenario.organisations.healthOrg;
-      const organisationInfo = await sut.getOrganisationInfo(org.id, true, em);
+      const organisationInfo = await sut.getOrganisationInfo(org.id, 'full', true, em);
 
       expect(organisationInfo).toMatchObject({
         id: org.id,
@@ -201,12 +201,24 @@ describe('Users / _services / organisations service suite', () => {
             userCount: 3
           }
         ],
+        isActive: true
+      });
+    });
+
+    it('should get the simple organisation info', async () => {
+      const org = scenario.organisations.healthOrg;
+      const organisationInfo = await sut.getOrganisationInfo(org.id, 'simple', false, em);
+
+      expect(organisationInfo).toStrictEqual({
+        id: org.id,
+        name: org.name,
+        acronym: org.acronym,
         isActive: true
       });
     });
 
     it(`should throw an error if the organisation doesn't exist`, async () => {
-      await expect(() => sut.getOrganisationInfo(randUuid())).rejects.toThrowError(
+      await expect(() => sut.getOrganisationInfo(randUuid(), 'full')).rejects.toThrowError(
         new NotFoundError(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND)
       );
     });
