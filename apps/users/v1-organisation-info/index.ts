@@ -5,7 +5,7 @@ import { JwtDecoder } from '@users/shared/decorators';
 import { JoiHelper, ResponseHelper, SwaggerHelper } from '@users/shared/helpers';
 import type { AuthorizationService } from '@users/shared/services';
 import SHARED_SYMBOLS from '@users/shared/services/symbols';
-import type { CustomContextType } from '@users/shared/types';
+import { isAdminDomainContextType, type CustomContextType } from '@users/shared/types';
 
 import { container } from '../_config';
 
@@ -24,9 +24,16 @@ class V1OrganisationInfo {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
       const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
 
-      await authorizationService.validate(context).checkAdminType().verify();
+      const authorization = await authorizationService.validate(context).verify();
+      // TODO: In the future this might become a query param but this was a quick fix to avoid changing FE while
+      // we had to open this to non-admin users
+      const simpleOrFull = isAdminDomainContextType(authorization.getContext()) ? 'full' : 'simple';
 
-      const result = await organisationsService.getOrganisationInfo(params.organisationId, queryParams.onlyActiveUsers);
+      const result = await organisationsService.getOrganisationInfo(
+        params.organisationId,
+        simpleOrFull,
+        queryParams.onlyActiveUsers
+      );
 
       context.res = ResponseHelper.Ok<ResponseDTO>(result);
       return;

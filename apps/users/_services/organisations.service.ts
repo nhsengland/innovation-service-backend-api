@@ -70,13 +70,14 @@ export class OrganisationsService extends BaseService {
 
   async getOrganisationInfo(
     organisationId: string,
+    type: 'simple' | 'full',
     onlyActiveUsers?: boolean,
     entityManager?: EntityManager
   ): Promise<{
     id: string;
     name: string;
     acronym: string | null;
-    organisationUnits: {
+    organisationUnits?: {
       id: string;
       name: string;
       acronym: string;
@@ -87,52 +88,57 @@ export class OrganisationsService extends BaseService {
   }> {
     const connection = entityManager ?? this.sqlConnection.manager;
 
-    const organisation = await connection
+    const query = connection
       .createQueryBuilder(OrganisationEntity, 'organisation')
-      .leftJoinAndSelect('organisation.organisationUnits', 'unit')
-      .where('organisation.id = :organisationId', { organisationId })
-      .getOne();
+      .where('organisation.id = :organisationId', { organisationId });
+
+    if (type === 'full') {
+      query.leftJoinAndSelect('organisation.organisationUnits', 'unit');
+    }
+
+    const organisation = await query.getOne();
 
     if (!organisation) {
       throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND);
     }
 
-    const organisationUserRoles = await connection
-      .createQueryBuilder(UserRoleEntity, 'userRole')
-      .where('userRole.organisation_id = :organisationId', { organisationId: organisation.id })
-      .getMany();
+    const res: Awaited<ReturnType<OrganisationsService['getOrganisationInfo']>> = {
+      id: organisation.id,
+      name: organisation.name,
+      acronym: organisation.acronym,
+      isActive: !organisation.inactivatedAt
+    };
 
-    const unitUserCounts = onlyActiveUsers
-      ? new Map(
-          (await organisation.organisationUnits).map(u => [
-            u.id,
-            organisationUserRoles.filter(ur => ur.organisationUnitId === u.id && ur.isActive).length
-          ])
-        )
-      : new Map(
-          (await organisation.organisationUnits).map(u => [
-            u.id,
-            organisationUserRoles.filter(ur => ur.organisationUnitId === u.id).length
-          ])
-        );
+    if (type === 'full') {
+      const organisationUserRoles = await connection
+        .createQueryBuilder(UserRoleEntity, 'userRole')
+        .where('userRole.organisation_id = :organisationId', { organisationId: organisation.id })
+        .getMany();
 
-    const organisationUnits = await Promise.all(
-      (await organisation.organisationUnits).map(async unit => ({
+      const unitUserCounts = onlyActiveUsers
+        ? new Map(
+            (await organisation.organisationUnits).map(u => [
+              u.id,
+              organisationUserRoles.filter(ur => ur.organisationUnitId === u.id && ur.isActive).length
+            ])
+          )
+        : new Map(
+            (await organisation.organisationUnits).map(u => [
+              u.id,
+              organisationUserRoles.filter(ur => ur.organisationUnitId === u.id).length
+            ])
+          );
+
+      res.organisationUnits = (await organisation.organisationUnits).map(unit => ({
         id: unit.id,
         name: unit.name,
         acronym: unit.acronym,
         isActive: !unit.inactivatedAt,
-        userCount: unitUserCounts.get(unit.id)!
-      }))
-    );
+        userCount: unitUserCounts.get(unit.id) ?? 0
+      }));
+    }
 
-    return {
-      id: organisation.id,
-      name: organisation.name,
-      acronym: organisation.acronym,
-      organisationUnits,
-      isActive: !organisation.inactivatedAt
-    };
+    return res;
   }
 
   async getOrganisationUnitInfo(
