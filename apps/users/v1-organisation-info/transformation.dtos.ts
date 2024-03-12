@@ -1,4 +1,4 @@
-export type ResponseDTO = {
+type AdminResponseDTO = {
   id: string;
   name: string;
   acronym: string | null;
@@ -11,3 +11,7 @@ export type ResponseDTO = {
   }[];
   isActive: boolean;
 };
+
+type RegularResponseDTO = Pick<AdminResponseDTO, 'id' | 'name' | 'acronym' | 'isActive'>;
+
+export type ResponseDTO = AdminResponseDTO | RegularResponseDTO;
