@@ -12,6 +12,7 @@ import {
 
 import { BaseService } from './base.service';
 import { InnovationDocumentDraftEntity, InnovationDocumentEntity } from '@innovations/shared/entities';
+import type { DomainContextType } from '@innovations/shared/types';
 
 @injectable()
 export class InnovationDocumentService extends BaseService {
@@ -72,6 +73,36 @@ export class InnovationDocumentService extends BaseService {
     }
 
     return document as T;
+  }
+
+  /**
+   * Responsible for syncing the submitted version with the current state of draft.
+   * This function is useful to make sure that the SUBMITTED document is in the same
+   * state as the DRAFT.
+   */
+  async syncDocumentVersions(
+    domainContext: DomainContextType,
+    innovationId: string,
+    transaction: EntityManager,
+    params?: { updatedAt?: Date; description?: string }
+  ): Promise<void> {
+    const draftDocument = await this.getInnovationDocument(
+      innovationId,
+      CurrentDocumentConfig.version,
+      'DRAFT',
+      transaction
+    );
+    await transaction.update(
+      InnovationDocumentEntity,
+      { id: innovationId },
+      {
+        document: draftDocument,
+        updatedAt: params?.updatedAt ?? new Date(),
+        updatedBy: domainContext.id,
+        isSnapshot: true,
+        description: params?.description ?? 'INNOVATION-SUBMITTED'
+      }
+    );
   }
 
   /**

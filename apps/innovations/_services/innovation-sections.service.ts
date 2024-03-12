@@ -423,17 +423,16 @@ export class InnovationSectionsService extends BaseService {
 
       const savedSection = await transaction.save(InnovationSectionEntity, dbSection);
 
-      // Submit document section info
-      await this.submitDocumentSectionInfo(
-        innovationId,
-        sectionKey,
-        { updatedBy: domainContext.id, updatedAt: now },
-        transaction
-      );
+      // Only add to activity log and submit section when is not created/archived
+      if (![InnovationStatusEnum.CREATED, InnovationStatusEnum.ARCHIVED].includes(dbInnovation.status)) {
+        // Submit document section info
+        await this.submitDocumentSectionInfo(
+          innovationId,
+          sectionKey,
+          { updatedBy: domainContext.id, updatedAt: now },
+          transaction
+        );
 
-      // Add activity logs.
-      if (dbInnovation.status != InnovationStatusEnum.CREATED) {
-        // BUSINESS RULE: Don't log section updates before innovation submission, only after.
         await this.domainService.innovations.addActivityLog(
           transaction,
           {

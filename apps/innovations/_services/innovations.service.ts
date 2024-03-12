@@ -63,6 +63,8 @@ import { ActionEnum } from '@innovations/shared/services/integrations/audit.serv
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import { groupBy, isString, mapValues, omit, pick, snakeCase } from 'lodash';
 import { BaseService } from './base.service';
+import SYMBOLS from './symbols';
+import type { InnovationDocumentService } from './innovation-document.service';
 
 // TODO move types
 export const InnovationListSelectType = [
@@ -191,7 +193,8 @@ type UserWithRoleDTO = { id: string; name: string | null }; // role: ServiceRole
 export class InnovationsService extends BaseService {
   constructor(
     @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
-    @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService
+    @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
+    @inject(SYMBOLS.InnovationDocumentService) private innovationDocumentService: InnovationDocumentService
   ) {
     super();
   }
@@ -1687,6 +1690,11 @@ export class InnovationsService extends BaseService {
           archiveReason: null
         }
       );
+
+      // Sync the Submitted document with the Draft document
+      await this.innovationDocumentService.syncDocumentVersions(domainContext, innovationId, transaction, {
+        updatedAt: now
+      });
 
       await this.domainService.innovations.addActivityLog(
         transaction,
