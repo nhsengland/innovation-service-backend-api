@@ -135,7 +135,8 @@ describe('Export File Service Suite', () => {
         );
       });
 
-      it('should filter data if context is ACCESSOR', async () => {
+      // NOTE: will leave the test here in case, in the future we want to differentiate a DRAFT
+      it.skip('should filter data if context is ACCESSOR', async () => {
         const user = cloneDeep(context) as any;
         user.currentRole.role = ServiceRoleEnum.ACCESSOR;
         const csv = await sut.create(
