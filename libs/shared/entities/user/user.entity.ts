@@ -6,6 +6,20 @@ import { UserStatusEnum } from '../../enums/user.enums';
 import { TermsOfUseUserEntity } from '../general/terms-of-use-user.entity';
 import { UserRoleEntity } from './user-role.entity';
 
+export type HowDidYouFindUsAnswersType = {
+  event?: boolean;
+  eventComment?: string;
+  reading?: boolean;
+  readingComment?: string;
+  recommendationColleague?: boolean;
+  recommendationOrg?: boolean;
+  recommendationOrgComment?: string;
+  searchEngine?: boolean;
+  socialMedia?: boolean;
+  other?: boolean;
+  otherComment?: string;
+};
+
 @Entity('user')
 export class UserEntity extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -25,6 +39,9 @@ export class UserEntity extends BaseEntity {
 
   @Column({ name: 'delete_reason', type: 'nvarchar', nullable: true })
   deleteReason: null | string;
+
+  @Column({ name: 'how_did_you_find_us_answers', type: 'simple-json', select: false })
+  howDidYouFindUsAnswers: null | HowDidYouFindUsAnswersType;
 
   @OneToMany(() => UserRoleEntity, record => record.user, { cascade: ['update', 'insert'] })
   serviceRoles: UserRoleEntity[];

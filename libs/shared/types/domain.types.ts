@@ -370,8 +370,11 @@ export type SupportLogProgressUpdate = {
   type: InnovationSupportLogTypeEnum.PROGRESS_UPDATE;
   supportStatus: InnovationSupportStatusEnum;
   unitId: string;
-  params: { title: string };
+  params: SimpleProgressUpdateParams | OneLevelProgressUpdateParams | TwoLevelProgressUpdateParams;
 };
+type SimpleProgressUpdateParams = { title: string };
+type OneLevelProgressUpdateParams = { categories: string[] };
+type TwoLevelProgressUpdateParams = { category: string; subCategories: string[] };
 
 export type SupportLogAssessmentSuggestion = {
   type: InnovationSupportLogTypeEnum.ASSESSMENT_SUGGESTION;

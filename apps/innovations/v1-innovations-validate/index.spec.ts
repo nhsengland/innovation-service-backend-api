@@ -1,14 +1,13 @@
 import azureFunction from '.';
 
-import { randAbbreviation, randCompanyName, randUuid } from '@ngneat/falso';
-import { AzureHttpTriggerBuilder, TestsHelper } from '@users/shared/tests';
-import type { TestUserType } from '@users/shared/tests/builders/user.builder';
-import type { ErrorResponseType } from '@users/shared/types';
-import { OrganisationsService } from '../_services/organisations.service';
-import type { ResponseDTO } from './transformation.dtos';
-import type { ParamsType } from './validation.schemas';
+import { AzureHttpTriggerBuilder, TestsHelper } from '@innovations/shared/tests';
+import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
+import type { ErrorResponseType } from '@innovations/shared/types';
+import { randUuid } from '@ngneat/falso';
+import { ValidationService } from '../_services/validation.service';
+import type { ParamsType, QueryParamsType } from './validation.schemas';
 
-jest.mock('@users/shared/decorators', () => ({
+jest.mock('@innovations/shared/decorators', () => ({
   JwtDecoder: jest.fn().mockImplementation(() => (_: any, __: string, descriptor: PropertyDescriptor) => {
     return descriptor;
   }),
@@ -24,36 +23,25 @@ beforeAll(async () => {
   await testsHelper.init();
 });
 
-const expected = {
-  id: randUuid(),
-  name: randCompanyName(),
-  acronym: randAbbreviation(),
-  organisationUnits: [
-    {
-      id: randUuid(),
-      name: randCompanyName(),
-      acronym: randAbbreviation(),
-      isActive: true,
-      userCount: 1
-    }
-  ],
-  isActive: true
-};
-const mock = jest.spyOn(OrganisationsService.prototype, 'getOrganisationInfo').mockResolvedValue(expected);
+const expected = [{ rule: 'checkIfSupportStatusAtDate' as const, valid: true }];
+const mock = jest.spyOn(ValidationService.prototype, 'validate').mockResolvedValue(expected);
 
 afterEach(() => {
   jest.clearAllMocks();
 });
 
-describe('v1-organisation-info Suite', () => {
+describe('v1-innovation-validate Suite', () => {
   describe('200', () => {
-    it('should return the organisation info', async () => {
+    it('should validate the operation', async () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.allMighty)
-        .setParams<ParamsType>({ organisationId: scenario.organisations.healthOrg.id })
-        .call<ResponseDTO>(azureFunction);
+        .setParams<ParamsType>({ innovationId: randUuid() })
+        .setQuery<QueryParamsType>({
+          operation: 'checkIfSupportStatusAtDate'
+        })
+        .call<never>(azureFunction);
 
-      expect(result.body).toStrictEqual(expected);
+      expect(result.body).toStrictEqual({ validations: expected });
       expect(result.status).toBe(200);
       expect(mock).toHaveBeenCalledTimes(1);
     });
@@ -69,7 +57,10 @@ describe('v1-organisation-info Suite', () => {
     ])('access with user %s should give %i', async (_role: string, status: number, user: TestUserType) => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(user)
-        .setParams<ParamsType>({ organisationId: scenario.organisations.healthOrg.id })
+        .setParams<ParamsType>({ innovationId: randUuid() })
+        .setQuery<QueryParamsType>({
+          operation: 'checkIfSupportStatusAtDate'
+        })
         .call<ErrorResponseType>(azureFunction);
 
       expect(result.status).toBe(status);

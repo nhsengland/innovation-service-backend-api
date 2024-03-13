@@ -13,6 +13,7 @@ import { InnovationTransferService } from '../_services/innovation-transfer.serv
 import { InnovationsService } from '../_services/innovations.service';
 import { StatisticsService } from '../_services/statistics.service';
 import SYMBOLS from '../_services/symbols';
+import { ValidationService } from '../_services/validation.service';
 
 // Specific inversify container configuration.
 container.bind<InnovationTasksService>(SYMBOLS.InnovationTasksService).to(InnovationTasksService).inSingletonScope();
@@ -48,5 +49,6 @@ container
 container.bind<InnovationsService>(SYMBOLS.InnovationsService).to(InnovationsService).inSingletonScope();
 container.bind<ExportFileService>(SYMBOLS.ExportFileService).to(ExportFileService).inSingletonScope();
 container.bind<StatisticsService>(SYMBOLS.StatisticsService).to(StatisticsService).inSingletonScope();
+container.bind<ValidationService>(SYMBOLS.ValidationService).to(ValidationService).inSingletonScope();
 
 export { container };
