@@ -31,7 +31,7 @@ export class createInnovationDocumentDraftTable1709822169052 implements Migratio
     // Change the current innovation_document with the right version
     await queryRunner.query(`
       UPDATE innovation_document
-      SET document = latestSubmitted.document
+      SET document = latestSubmitted.document, is_snapshot = 1, description = 'Migrate to last submitted IR'
       FROM (
           SELECT
               id,
