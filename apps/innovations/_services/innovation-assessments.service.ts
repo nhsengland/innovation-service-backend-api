@@ -40,13 +40,15 @@ import type { EntityManager } from 'typeorm';
 import { BaseService } from './base.service';
 import type { InnovationThreadsService } from './innovation-threads.service';
 import SYMBOLS from './symbols';
+import type { InnovationDocumentService } from './innovation-document.service';
 
 @injectable()
 export class InnovationAssessmentsService extends BaseService {
   constructor(
     @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
     @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
-    @inject(SYMBOLS.InnovationThreadsService) private threadService: InnovationThreadsService
+    @inject(SYMBOLS.InnovationThreadsService) private threadService: InnovationThreadsService,
+    @inject(SYMBOLS.InnovationDocumentService) private documentService: InnovationDocumentService
   ) {
     super();
   }
@@ -450,11 +452,12 @@ export class InnovationAssessmentsService extends BaseService {
     const result = await connection.transaction(async transaction => {
       // 0. Restore old supports if they exist and innovation is ARCHIVED
       // 1. Update the innovation status to WAITING_NEEDS_ASSESSMENT
-      // 2. Soft deletes the previous assessment record
-      // 3. Create a new assessment record copied from the previously soft deleted one and sets deleted_at = NULL
-      // 4. Create a new reassessment record
-      // 5. Create an activity log for the reassessment
-      // 6. Sends notifications
+      // 2. Sync the changes on the documents (update submitted with the draft changes)
+      // 3. Soft deletes the previous assessment record
+      // 4. Create a new assessment record copied from the previously soft deleted one and sets deleted_at = NULL
+      // 5. Create a new reassessment record
+      // 6. Create an activity log for the reassessment
+      // 7. Sends notifications
 
       const now = new Date();
 
@@ -497,6 +500,8 @@ export class InnovationAssessmentsService extends BaseService {
           updatedBy: assessment.createdBy
         }
       );
+
+      await this.documentService.syncDocumentVersions(domainContext, innovationId, transaction, { updatedAt: now });
 
       await transaction.softDelete(InnovationAssessmentEntity, { id: assessment.id });
 

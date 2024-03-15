@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import type { AuthorizationService } from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { CustomContextType } from '@innovations/shared/types';
@@ -23,16 +23,15 @@ class V1InnovationSectionSubmit {
     try {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
-      const authInstance = await authorizationService
+      const auth = await authorizationService
         .validate(context)
         .setInnovation(params.innovationId)
         .checkInnovatorType()
         .checkInnovation()
         .verify();
-      const domainContext = authInstance.getContext();
 
       const result = await innovationSectionsService.submitInnovationSection(
-        domainContext,
+        auth.getContext(),
         params.innovationId,
         params.sectionKey
       );
@@ -54,10 +53,7 @@ export default openApi(
       tags: ['Innovation'],
       summary: 'Submit an innovation section.',
       operationId: 'v1-innovation-section-submit',
-      parameters: [
-        { in: 'path', name: 'innovationId', required: true, schema: { type: 'string' } },
-        { in: 'path', name: 'sectionKey', required: true, schema: { type: 'string' } }
-      ],
+      parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       requestBody: {
         description: 'Innovation section submit request body.',
         content: {

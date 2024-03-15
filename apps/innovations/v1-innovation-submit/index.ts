@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { Audit, JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import type { AuthorizationService } from '@innovations/shared/services';
 import { ActionEnum, TargetEnum } from '@innovations/shared/services/integrations/audit.service';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
@@ -36,13 +36,8 @@ class V1InnovationSubmit {
         .checkInnovation()
         .verify();
 
-      const domainContext = auth.getContext();
-
-      const result = await innovationsService.submitInnovation(domainContext, params.innovationId);
-      context.res = ResponseHelper.Ok<ResponseDTO>({
-        id: result.id,
-        status: result.status
-      });
+      const result = await innovationsService.submitInnovation(auth.getContext(), params.innovationId);
+      context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id, status: result.status });
       return;
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
@@ -57,17 +52,7 @@ export default openApi(V1InnovationSubmit.httpTrigger as AzureFunction, '/v1/{in
     description: 'Submit an innovation for assessment.',
     operationId: 'v1-innovation-submit',
     tags: ['Innovation'],
-    parameters: [
-      {
-        name: 'innovationId',
-        in: 'path',
-        description: 'Innovation ID',
-        required: true,
-        schema: {
-          type: 'string'
-        }
-      }
-    ],
+    parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     responses: {
       200: {
         description: 'Innovation submitted successfully.',

@@ -75,12 +75,7 @@ export class DemoService extends BaseService {
       }
 
       // Filling the example document
-      const document = createSampleDocument({
-        name: innovation.name,
-        ...(innovation.description && { description: innovation.description }),
-        countryName: innovation.countryName,
-        ...(innovation.postcode && { postcode: innovation.postcode })
-      });
+      const document = createSampleDocument({ name: innovation.name });
       await transaction.update(
         InnovationDocumentEntity,
         { id: innovationId },

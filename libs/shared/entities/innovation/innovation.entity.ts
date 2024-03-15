@@ -26,7 +26,6 @@ import { InnovationSupportEntity } from './innovation-support.entity';
 import { InnovationTransferEntity } from './innovation-transfer.entity';
 
 import { InnovationStatusEnum } from '../../enums/innovation.enums';
-import type { CurrentCatalogTypes } from '../../schemas/innovation-record';
 
 @Entity('innovation')
 export class InnovationEntity extends BaseEntity {
@@ -48,26 +47,11 @@ export class InnovationEntity extends BaseEntity {
   @Column({ name: 'expires_at', type: 'datetime2', nullable: true })
   expires_at: null | Date;
 
-  @Column({ name: 'description', type: 'nvarchar', nullable: true })
-  description: null | string;
-
-  @Column({ name: 'country_name', length: 100 })
-  countryName: string;
-
-  @Column({ name: 'postcode', type: 'nvarchar', nullable: true, length: 20 })
-  postcode: null | string;
-
   @Column({ name: 'submitted_at', type: 'datetime2', nullable: true })
   submittedAt: null | Date;
 
   @Column({ name: 'last_assessment_request_at', type: 'datetime2', nullable: true })
   lastAssessmentRequestAt: null | Date;
-
-  @Column({ name: 'other_category_description', type: 'nvarchar', nullable: true })
-  otherCategoryDescription: null | string;
-
-  @Column({ name: 'main_category', type: 'nvarchar', nullable: true })
-  mainCategory: null | CurrentCatalogTypes.catalogCategory;
 
   @Column({ name: 'archive_reason', type: 'nvarchar', nullable: true })
   archiveReason: null | string;

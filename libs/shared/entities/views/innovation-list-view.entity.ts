@@ -10,6 +10,7 @@ import { InnovationAssessmentEntity } from '../innovation/innovation-assessment.
 import { InnovationSupportEntity } from '../innovation/innovation-support.entity';
 import { OrganisationEntity } from '../organisation/organisation.entity';
 
+// NOTE: The document information is from the submitted one
 @ViewEntity('innovation_list_view')
 export class InnovationListView {
   @PrimaryColumn() // Primary column is required for ViewEntity to work properly with pagination

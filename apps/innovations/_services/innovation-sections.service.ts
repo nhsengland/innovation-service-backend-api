@@ -1,7 +1,6 @@
 import { inject, injectable } from 'inversify';
 
 import {
-  InnovationDocumentEntity,
   InnovationEntity,
   InnovationSectionEntity,
   InnovationTaskEntity,
@@ -16,14 +15,13 @@ import {
   ServiceRoleEnum,
   UserStatusEnum
 } from '@innovations/shared/enums';
-import { ConflictError, InnovationErrorsEnum, InternalServerError, NotFoundError } from '@innovations/shared/errors';
+import { InnovationErrorsEnum, InternalServerError, NotFoundError } from '@innovations/shared/errors';
 import type { DomainService, IdentityProviderService } from '@innovations/shared/services';
 
 import { BaseService } from './base.service';
 
-import { NotImplementedError } from '@innovations/shared/errors/errors.config';
 import { TranslationHelper } from '@innovations/shared/helpers';
-import type { DocumentType, DocumentTypeFromVersion } from '@innovations/shared/schemas/innovation-record';
+import type { DocumentType } from '@innovations/shared/schemas/innovation-record';
 import {
   CurrentCatalogTypes,
   CurrentDocumentConfig,
@@ -31,15 +29,12 @@ import {
   CurrentEvidenceType
 } from '@innovations/shared/schemas/innovation-record';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import {
-  isAccessorDomainContextType,
-  isAssessmentDomainContextType,
-  type DomainContextType
-} from '@innovations/shared/types';
+import type { DomainContextType } from '@innovations/shared/types';
 import { randomUUID } from 'crypto';
 import type { EntityManager } from 'typeorm';
 import type { InnovationFileService } from './innovation-file.service';
 import SYMBOLS from './symbols';
+import type { InnovationDocumentService } from './innovation-document.service';
 
 type SectionInfoType = {
   section: CurrentCatalogTypes.InnovationSections;
@@ -54,7 +49,8 @@ export class InnovationSectionsService extends BaseService {
   constructor(
     @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
     @inject(SHARED_SYMBOLS.IdentityProviderService) private identityService: IdentityProviderService,
-    @inject(SYMBOLS.InnovationFileService) private innovationFileService: InnovationFileService
+    @inject(SYMBOLS.InnovationFileService) private innovationFileService: InnovationFileService,
+    @inject(SYMBOLS.InnovationDocumentService) private innovationDocumentService: InnovationDocumentService
   ) {
     super();
   }
@@ -192,7 +188,6 @@ export class InnovationSectionsService extends BaseService {
     const innovation = await connection
       .createQueryBuilder(InnovationEntity, 'innovation')
       .leftJoinAndSelect('innovation.owner', 'owner')
-      .leftJoinAndSelect('innovation.document', 'document')
       .where('innovation.id = :innovationId', { innovationId })
       .getOne();
 
@@ -200,12 +195,12 @@ export class InnovationSectionsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
     }
 
-    const document = innovation.document.document;
-    if (document.version !== CurrentDocumentConfig.version) {
-      // Currently we only support the latest document version.
-      // Supporting multiple versions will require selecting the correct sections and fields depending on the version
-      throw new NotImplementedError(InnovationErrorsEnum.INNOVATION_DOCUMENT_VERSION_NOT_SUPPORTED);
-    }
+    const document = await this.innovationDocumentService.getInnovationDocument(
+      innovationId,
+      CurrentDocumentConfig.version,
+      this.innovationDocumentService.getDocumentTypeAccordingWithRole(domainContext.currentRole.role),
+      connection
+    );
 
     const dbSection = await connection
       .createQueryBuilder(InnovationSectionEntity, 'section')
@@ -244,17 +239,11 @@ export class InnovationSectionsService extends BaseService {
       submittedBy = null;
     }
 
-    // Business Rule A/QA/NAs can only see submitted sections
-    const sectionHidden =
-      (isAccessorDomainContextType(domainContext) || isAssessmentDomainContextType(domainContext)) &&
-      dbSection?.status !== InnovationSectionStatusEnum.SUBMITTED;
-    const sectionData = sectionHidden ? {} : this.getSectionData(document, sectionKey);
-
     return {
-      id: dbSection?.id || null,
+      id: dbSection?.id ?? null,
       section: sectionKey,
-      status: dbSection?.status || InnovationSectionStatusEnum.NOT_STARTED,
-      submittedAt: dbSection?.submittedAt || null,
+      status: dbSection?.status ?? InnovationSectionStatusEnum.NOT_STARTED,
+      submittedAt: dbSection?.submittedAt ?? null,
       submittedBy: dbSection?.submittedBy
         ? {
             name: submittedBy ?? 'unknown user',
@@ -264,7 +253,7 @@ export class InnovationSectionsService extends BaseService {
             })
           }
         : null,
-      data: sectionData,
+      data: this.getSectionData(document, sectionKey),
       ...(filters.fields?.includes('tasks') && tasks ? { tasksIds: tasks?.map(task => task.id) } : {})
     };
   }
@@ -326,22 +315,6 @@ export class InnovationSectionsService extends BaseService {
       section.status = InnovationSectionStatusEnum.DRAFT;
     }
 
-    let updateInnovation = false;
-    if (sectionKey === 'INNOVATION_DESCRIPTION') {
-      (['name', 'description', 'countryName', 'postcode', 'mainCategory', 'otherCategoryDescription'] as const).forEach(
-        key => {
-          if (dataToUpdate[key] !== undefined) {
-            innovation[key] = dataToUpdate[key];
-            updateInnovation = true;
-          }
-          // If postcode exists it is set after countryName
-          if (key === 'countryName') {
-            innovation.postcode = null;
-          }
-        }
-      );
-    }
-
     const sectionToBeSaved = section;
 
     return connection.transaction(async transaction => {
@@ -351,8 +324,8 @@ export class InnovationSectionsService extends BaseService {
         (dataToUpdate as CurrentDocumentType['EVIDENCE_OF_EFFECTIVENESS']).hasEvidence !== 'YES'
       ) {
         await transaction.query(
-          `UPDATE innovation_document
-          SET document = JSON_MODIFY(JSON_MODIFY(document, '$.evidences', NULL), @0, JSON_QUERY(@1)), updated_by=@2, updated_at=@3, is_snapshot=0, description=NULL WHERE id = @4`,
+          `UPDATE innovation_document_draft
+          SET document = JSON_MODIFY(JSON_MODIFY(document, '$.evidences', NULL), @0, JSON_QUERY(@1)), updated_by=@2, updated_at=@3 WHERE id = @4`,
           [`$.${sectionKey}`, JSON.stringify(dataToUpdate), domainContext.id, updatedAt, innovation.id]
         );
 
@@ -364,22 +337,26 @@ export class InnovationSectionsService extends BaseService {
           transaction
         );
       } else {
-        await transaction.query(
-          `UPDATE innovation_document
-          SET document = JSON_MODIFY(document, @0, JSON_QUERY(@1)), updated_by=@2, updated_at=@3, is_snapshot=0, description=NULL WHERE id = @4`,
-          [`$.${sectionKey}`, JSON.stringify(dataToUpdate), domainContext.id, updatedAt, innovation.id]
+        await this.updateDocumentSectionInfo(
+          innovation.id,
+          sectionKey,
+          { dataToUpdate, updatedBy: domainContext.id, updatedAt },
+          transaction
         );
       }
 
-      if (updateInnovation) {
+      // Make sure to keep name up-to-date accross the innovation
+      if (sectionKey === 'INNOVATION_DESCRIPTION' && innovation.name !== dataToUpdate['name']) {
+        // Make sure the latest submitted version contains this change as-well
+        await transaction.query(
+          `UPDATE innovation_document
+           SET document = JSON_MODIFY(document, @0, @1), updated_by=@2, updated_at=@3, is_snapshot=0, description=NULL WHERE id = @4`,
+          [`$.${sectionKey}.name`, dataToUpdate['name'], domainContext.id, updatedAt, innovationId]
+        );
+
         await transaction.save(InnovationEntity, {
           id: innovation.id,
-          name: innovation.name,
-          description: innovation.description,
-          countryName: innovation.countryName,
-          postcode: innovation.postcode,
-          mainCategory: innovation.mainCategory,
-          otherCategoryDescription: innovation.mainCategory === 'OTHER' ? innovation.otherCategoryDescription : null,
+          name: dataToUpdate['name'],
           updatedBy: innovation.updatedBy,
           updatedAt: updatedAt
         });
@@ -446,18 +423,16 @@ export class InnovationSectionsService extends BaseService {
 
       const savedSection = await transaction.save(InnovationSectionEntity, dbSection);
 
-      // Update document snapshot
-      await transaction.save(InnovationDocumentEntity, {
-        id: dbInnovation.id,
-        isSnapshot: true,
-        description: `SECTION_SUBMITTED-${sectionKey}`,
-        updatedAt: now,
-        updatedBy: domainContext.id
-      });
+      // Only add to activity log and submit section when is not created/archived
+      if (![InnovationStatusEnum.CREATED, InnovationStatusEnum.ARCHIVED].includes(dbInnovation.status)) {
+        // Submit document section info
+        await this.submitDocumentSectionInfo(
+          innovationId,
+          sectionKey,
+          { updatedBy: domainContext.id, updatedAt: now },
+          transaction
+        );
 
-      // Add activity logs.
-      if (dbInnovation.status != InnovationStatusEnum.CREATED) {
-        // BUSINESS RULE: Don't log section updates before innovation submission, only after.
         await this.domainService.innovations.addActivityLog(
           transaction,
           {
@@ -481,7 +456,12 @@ export class InnovationSectionsService extends BaseService {
   ): Promise<{ section: SectionInfoType; data: Record<string, any> }[]> {
     const em = entityManager ?? this.sqlConnection.manager;
 
-    const document = await this.getInnovationDocument(innovationId, version ?? CurrentDocumentConfig.version, em);
+    const document = await this.innovationDocumentService.getInnovationDocument(
+      innovationId,
+      version ?? CurrentDocumentConfig.version,
+      this.innovationDocumentService.getDocumentTypeAccordingWithRole(domainContext.currentRole.role),
+      em
+    );
     const innovationSections = this.getDocumentSections(document).map(section => ({
       section: { section: section },
       data: this.getSectionData(document, section)
@@ -492,15 +472,9 @@ export class InnovationSectionsService extends BaseService {
     const output: Awaited<ReturnType<InnovationSectionsService['findAllSections']>> = [];
     for (const curSection of innovationSections) {
       const sectionInfo = sectionsInfoMap.get(curSection.section.section);
-      // A/QA/NA can't see draft sections data
-      const currentSectionData =
-        sectionInfo?.status !== InnovationSectionStatusEnum.SUBMITTED &&
-        (isAccessorDomainContextType(domainContext) || isAssessmentDomainContextType(domainContext))
-          ? {}
-          : curSection.data;
       if (sectionInfo) {
         output.push({
-          data: currentSectionData,
+          data: curSection.data,
           section: {
             section: curSection.section.section,
             status: sectionInfo.status,
@@ -511,7 +485,7 @@ export class InnovationSectionsService extends BaseService {
         });
       } else {
         output.push({
-          data: currentSectionData,
+          data: curSection.data,
           section: {
             section: curSection.section.section,
             status: InnovationSectionStatusEnum.NOT_STARTED,
@@ -533,7 +507,12 @@ export class InnovationSectionsService extends BaseService {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     // Check if innovation exists and is of current version (throws error if it doesn't)
-    await this.getInnovationDocument(innovationId, CurrentDocumentConfig.version, connection);
+    await this.innovationDocumentService.getInnovationDocument(
+      innovationId,
+      CurrentDocumentConfig.version,
+      'DRAFT',
+      connection
+    );
 
     const section = await connection
       .createQueryBuilder(InnovationSectionEntity, 'section')
@@ -559,19 +538,15 @@ export class InnovationSectionsService extends BaseService {
 
       await transaction.query(
         `
-        UPDATE innovation_document
-        SET document = JSON_MODIFY(document, @0, JSON_QUERY(@1)), updated_by=@2, updated_at=@3, is_snapshot=0, description=NULL WHERE id = @4`,
+        UPDATE innovation_document_draft
+        SET document = JSON_MODIFY(document, @0, JSON_QUERY(@1)), updated_by=@2, updated_at=@3 WHERE id = @4`,
         [`append $.evidences`, JSON.stringify(evidence), user.id, updatedAt, innovationId]
       );
 
       await transaction.update(
         InnovationSectionEntity,
         { id: section.id },
-        {
-          status: InnovationSectionStatusEnum.DRAFT,
-          updatedAt: updatedAt,
-          updatedBy: user.id
-        }
+        { status: InnovationSectionStatusEnum.DRAFT, updatedAt: updatedAt, updatedBy: user.id }
       );
 
       return { id: evidence.id };
@@ -584,7 +559,11 @@ export class InnovationSectionsService extends BaseService {
     evidenceId: string,
     evidenceData: Omit<CurrentEvidenceType, 'id'>
   ): Promise<void> {
-    const document = await this.getInnovationDocument(innovationId, CurrentDocumentConfig.version);
+    const document = await this.innovationDocumentService.getInnovationDocument(
+      innovationId,
+      CurrentDocumentConfig.version,
+      'DRAFT'
+    );
 
     const evidenceIndex = document.evidences?.findIndex(e => e.id === evidenceId) ?? -1;
     const evidence = document.evidences?.[evidenceIndex];
@@ -614,11 +593,11 @@ export class InnovationSectionsService extends BaseService {
         summary: evidenceData.summary
       };
 
-      await transaction.query(
-        `
-        UPDATE innovation_document
-        SET document = JSON_MODIFY(document, @0, JSON_QUERY(@1)), updated_by=@2, updated_at=@3, is_snapshot=0, description=NULL WHERE id = @4`,
-        [`$.evidences[${evidenceIndex}]`, JSON.stringify(data), user.id, updatedAt, innovationId]
+      await this.updateDocumentSectionInfo(
+        innovationId,
+        `evidences[${evidenceIndex}]`,
+        { dataToUpdate: data, updatedBy: user.id, updatedAt },
+        transaction
       );
 
       await transaction.update(
@@ -638,7 +617,11 @@ export class InnovationSectionsService extends BaseService {
     innovationId: string,
     evidenceId: string
   ): Promise<void> {
-    const document = await this.getInnovationDocument(innovationId, CurrentDocumentConfig.version);
+    const document = await this.innovationDocumentService.getInnovationDocument(
+      innovationId,
+      CurrentDocumentConfig.version,
+      'DRAFT'
+    );
 
     let evidences = document.evidences;
     const evidence = evidences?.find(e => e.id === evidenceId);
@@ -656,12 +639,14 @@ export class InnovationSectionsService extends BaseService {
       await this.innovationFileService.deleteFiles(domainContext, innovationId, { contextId: evidenceId }, transaction);
 
       // save the new evidences
-      await transaction.query(
-        `
-        UPDATE innovation_document
-        SET document = JSON_MODIFY(document, @0, JSON_QUERY(@1)), updated_by=@2, updated_at=@3, is_snapshot=0, description=NULL WHERE id = @4`,
-        [`$.evidences`, JSON.stringify(evidences), domainContext.id, updatedAt, innovationId]
-      );
+      if (evidences) {
+        await this.updateDocumentSectionInfo(
+          innovationId,
+          'evidences',
+          { dataToUpdate: evidences, updatedBy: domainContext.id, updatedAt },
+          transaction
+        );
+      }
 
       //update section status to draft
       await transaction.update(
@@ -676,8 +661,16 @@ export class InnovationSectionsService extends BaseService {
     });
   }
 
-  async getInnovationEvidenceInfo(innovationId: string, evidenceId: string): Promise<CurrentEvidenceType> {
-    const document = await this.getInnovationDocument(innovationId, CurrentDocumentConfig.version);
+  async getInnovationEvidenceInfo(
+    domainContext: DomainContextType,
+    innovationId: string,
+    evidenceId: string
+  ): Promise<CurrentEvidenceType> {
+    const document = await this.innovationDocumentService.getInnovationDocument(
+      innovationId,
+      CurrentDocumentConfig.version,
+      this.innovationDocumentService.getDocumentTypeAccordingWithRole(domainContext.currentRole.role)
+    );
 
     const evidence = document.evidences?.find(e => e.id === evidenceId);
     if (!evidence) {
@@ -691,55 +684,6 @@ export class InnovationSectionsService extends BaseService {
       description: evidence.description,
       summary: evidence.summary
     };
-  }
-
-  /**
-   * retrieves the latest version of a document from the database and validates the version
-   * @param innovationId the innovation id
-   * @param version version of the document to retrieve
-   * @param entityManager optional entity manager for running inside transaction
-   * @returns the document
-   */
-  private async getInnovationDocument<V extends DocumentType['version'], T extends DocumentTypeFromVersion<V>>(
-    innovationId: string,
-    version: V,
-    entityManager?: EntityManager
-  ): Promise<T> {
-    const connection = entityManager ?? this.sqlConnection.manager;
-    let document: DocumentType | undefined;
-
-    if (version === CurrentDocumentConfig.version) {
-      document = (
-        await connection
-          .createQueryBuilder(InnovationDocumentEntity, 'document')
-          .where('document.id = :innovationId', { innovationId })
-          .andWhere('document.version = :version', { version })
-          .getOne()
-      )?.document;
-    } else {
-      const raw = await connection.query(
-        `
-        SELECT TOP 1 document FROM innovation_document
-        FOR SYSTEM_TIME ALL
-        WHERE id = @0
-        AND version = @1
-        ORDER BY valid_to DESC
-      `,
-        [innovationId, version]
-      );
-
-      document = raw.length ? JSON.parse(raw[0].document) : undefined;
-    }
-
-    if (!document) {
-      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
-    }
-
-    if (document.version !== version) {
-      throw new ConflictError(InnovationErrorsEnum.INNOVATION_DOCUMENT_VERSION_MISMATCH);
-    }
-
-    return document as T;
   }
 
   /**
@@ -778,6 +722,54 @@ export class InnovationSectionsService extends BaseService {
       ...sectionData,
       ...(evidenceData && { evidences: evidenceData })
     };
+  }
+
+  private async updateDocumentSectionInfo(
+    innovationId: string,
+    sectionKey: string,
+    data: { dataToUpdate: { [key: string]: any } | { [key: string]: any }[]; updatedBy: string; updatedAt?: Date },
+    em: EntityManager
+  ): Promise<void> {
+    await em.query(
+      `UPDATE innovation_document_draft
+      SET document = JSON_MODIFY(document, @0, JSON_QUERY(@1)), updated_by=@2, updated_at=@3 WHERE id = @4`,
+      [`$.${sectionKey}`, JSON.stringify(data.dataToUpdate), data.updatedBy, data.updatedAt ?? new Date(), innovationId]
+    );
+  }
+
+  private async submitDocumentSectionInfo(
+    innovationId: string,
+    sectionKey: CurrentCatalogTypes.InnovationSections,
+    data: { updatedBy: string; updatedAt?: Date; description?: string },
+    em: EntityManager
+  ): Promise<void> {
+    const document = await this.innovationDocumentService.getInnovationDocument(
+      innovationId,
+      CurrentDocumentConfig.version,
+      'DRAFT'
+    );
+
+    const { evidences, ...draftSection } = this.getSectionData(document, sectionKey);
+    const entriesToUpdate: { key: string; data: unknown }[] = [{ key: sectionKey, data: draftSection }];
+    if (evidences) {
+      // Get the evidences raw since the ones returned by the getSectionData transforms some fields
+      entriesToUpdate.push({ key: 'evidences', data: document.evidences });
+    }
+
+    for (const toUpdate of entriesToUpdate) {
+      await em.query(
+        `UPDATE innovation_document
+       SET document = JSON_MODIFY(document, @0, JSON_QUERY(@1)), updated_by=@2, updated_at=@3, is_snapshot=1, description=@4 WHERE id = @5`,
+        [
+          `$.${toUpdate.key}`,
+          JSON.stringify(toUpdate.data),
+          data.updatedBy,
+          data.updatedAt ?? new Date(),
+          data.description ?? `SECTION_SUBMITTED-${sectionKey}`,
+          innovationId
+        ]
+      );
+    }
   }
 
   private async getSectionsInfoMap(
