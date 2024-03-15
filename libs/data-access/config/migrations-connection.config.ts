@@ -10,7 +10,7 @@ if (!process.env['DB_HOST'] || !process.env['ADMIN_OID']) {
 
 const SQLDB_MIGRATIONS_CONNECTION = new DataSource({
   ...SQLDB_DEFAULT_CONNECTION,
-  requestTimeout: 300000, // Increase timeout for migrations to 5 min at least for adding the innovation share logs
+  requestTimeout: 900000, // Increase timeout for migrations to 15 min at least for adding the innovation share logs
   name: 'migrations',
   migrations: [`${join(__dirname, '..')}/migrations/*.ts`],
   migrationsTableName: 'Migrations'
