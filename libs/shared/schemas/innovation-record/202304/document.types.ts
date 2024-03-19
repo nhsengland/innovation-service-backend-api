@@ -58,6 +58,7 @@ export type DocumentType202304 = {
     carbonReductionPlan?: catalogCarbonReductionPlan; // New field.
     keyHealthInequalities?: catalogKeyHealthInequalities[]; // New field.
     completedHealthInequalitiesImpactAssessment?: catalogYesNo; // New field.
+    hasProductServiceOrPrototype?: catalogYesNo;
   };
   EVIDENCE_OF_EFFECTIVENESS: {
     hasEvidence?: catalogYesNotYet;
