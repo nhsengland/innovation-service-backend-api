@@ -60,15 +60,15 @@ export class InnovationBuilder extends BaseBuilder {
     UNDERSTANDING_OF_NEEDS: {
       benefitsOrImpact: [randText()],
       carbonReductionPlan: randBoolean() ? 'YES' : 'NO',
-      hasProductServiceOrPrototype: randBoolean() ? 'YES' : 'NO',
       completedHealthInequalitiesImpactAssessment: randBoolean() ? 'YES' : 'NO',
       diseasesConditionsImpact: [randText()],
       estimatedCarbonReductionSavings: randBoolean() ? 'YES' : 'NO',
       estimatedCarbonReductionSavingsDescription: randText(),
       howInnovationWork: randText(),
+      impactDiseaseCondition: randBoolean() ? 'YES' : 'NO',
       keyHealthInequalities: ['NONE'],
       problemsTackled: randBoolean() ? 'YES' : 'NO',
-      impactDiseaseCondition: randBoolean() ? 'YES' : 'NO'
+      hasProductServiceOrPrototype: randBoolean() ? 'YES' : 'NO'
     },
     EVIDENCE_OF_EFFECTIVENESS: {
       hasEvidence: randBoolean() ? 'YES' : 'NOT_YET',
