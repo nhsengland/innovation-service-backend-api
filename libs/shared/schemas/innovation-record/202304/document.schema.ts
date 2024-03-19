@@ -84,7 +84,8 @@ export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Ma
     keyHealthInequalities: Joi.array()
       .items(Joi.string().valid(...catalogKeyHealthInequalities))
       .min(1),
-    completedHealthInequalitiesImpactAssessment: Joi.string().valid(...catalogYesNo)
+    completedHealthInequalitiesImpactAssessment: Joi.string().valid(...catalogYesNo),
+    hasProductServiceOrPrototype: Joi.string().valid(...catalogYesNo)
   })
     .required()
     .min(1),

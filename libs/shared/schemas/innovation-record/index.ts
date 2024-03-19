@@ -20,8 +20,8 @@ export const CurrentEvidenceSchema = EvidenceSchema202304;
 export type DocumentTypeFromVersion<V extends DocumentType['version']> = V extends '202304'
   ? CurrentDocumentType
   : V extends '202209'
-  ? DocumentType202209
-  : never;
+    ? DocumentType202209
+    : never;
 
 // Maybe move this to a separate file
 export const createSampleDocument = (data?: {
@@ -56,7 +56,8 @@ export const createSampleDocument = (data?: {
       howInnovationWork: randText(),
       impactDiseaseCondition: randBoolean() ? 'YES' : 'NO',
       keyHealthInequalities: ['NONE'],
-      problemsTackled: randBoolean() ? 'YES' : 'NO'
+      problemsTackled: randBoolean() ? 'YES' : 'NO',
+      hasProductServiceOrPrototype: randBoolean() ? 'YES' : 'NO'
     },
     EVIDENCE_OF_EFFECTIVENESS: {
       hasEvidence: randBoolean() ? 'YES' : 'NOT_YET',
