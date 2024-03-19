@@ -30,85 +30,96 @@ export class createInnovationDocumentDraftTable1709822169052 implements Migratio
 
     // Change the current innovation_document with the right version
     await queryRunner.query(`
-      UPDATE innovation_document
-      SET document = latestSubmitted.document, is_snapshot = 1, description = 'Migrate to last submitted IR'
-      FROM (
-          SELECT
-              id,
-              JSON_OBJECT(
-          'version': CASE
-            WHEN "SECTION_SUBMITTED-INNOVATION_DESCRIPTION" IS NULL THEN JSON_VALUE("DRAFT", '$.version')
-            ELSE JSON_VALUE("SECTION_SUBMITTED-INNOVATION_DESCRIPTION", '$.version')
-          END,
-          'INNOVATION_DESCRIPTION': CASE
-            WHEN "SECTION_SUBMITTED-INNOVATION_DESCRIPTION" IS NULL THEN JSON_OBJECT(
-              'name': JSON_VALUE("DRAFT", '$.INNOVATION_DESCRIPTION.name'),
-              'description': JSON_VALUE("DRAFT", '$.INNOVATION_DESCRIPTION.description'),
-              'postcode': JSON_VALUE("DRAFT", '$.INNOVATION_DESCRIPTION.postcode'),
-              'countryName': JSON_VALUE("DRAFT", '$.INNOVATION_DESCRIPTION.countryName'),
-              'website': JSON_VALUE("DRAFT", '$.INNOVATION_DESCRIPTION.website')
-            )
-            ELSE JSON_QUERY("SECTION_SUBMITTED-INNOVATION_DESCRIPTION", '$.INNOVATION_DESCRIPTION')
-          END,
-          'COST_OF_INNOVATION': ISNULL(JSON_QUERY("SECTION_SUBMITTED-COST_OF_INNOVATION", '$.COST_OF_INNOVATION'), '{}'),
-          'CURRENT_CARE_PATHWAY': ISNULL(JSON_QUERY("SECTION_SUBMITTED-CURRENT_CARE_PATHWAY", '$.CURRENT_CARE_PATHWAY'), '{}'),
-          'DEPLOYMENT': ISNULL(JSON_QUERY("SECTION_SUBMITTED-DEPLOYMENT", '$.DEPLOYMENT'), '{}'),
-          'EVIDENCE_OF_EFFECTIVENESS': ISNULL(JSON_QUERY("SECTION_SUBMITTED-EVIDENCE_OF_EFFECTIVENESS", '$.EVIDENCE_OF_EFFECTIVENESS'), '{}'),
-          'INTELLECTUAL_PROPERTY': ISNULL(JSON_QUERY("SECTION_SUBMITTED-INTELLECTUAL_PROPERTY", '$.INTELLECTUAL_PROPERTY'), '{}'),
-          'MARKET_RESEARCH': ISNULL(JSON_QUERY("SECTION_SUBMITTED-MARKET_RESEARCH", '$.MARKET_RESEARCH'), '{}'),
-          'REGULATIONS_AND_STANDARDS': ISNULL(JSON_QUERY("SECTION_SUBMITTED-REGULATIONS_AND_STANDARDS", '$.REGULATIONS_AND_STANDARDS'), '{}'),
-          'REVENUE_MODEL': ISNULL(JSON_QUERY("SECTION_SUBMITTED-REVENUE_MODEL", '$.REVENUE_MODEL'), '{}'),
-          'TESTING_WITH_USERS': ISNULL(JSON_QUERY("SECTION_SUBMITTED-TESTING_WITH_USERS", '$.TESTING_WITH_USERS'), '{}'),
-          'UNDERSTANDING_OF_BENEFITS': ISNULL(JSON_QUERY("SECTION_SUBMITTED-UNDERSTANDING_OF_BENEFITS", '$.UNDERSTANDING_OF_BENEFITS'), '{}'),
-          'UNDERSTANDING_OF_NEEDS': ISNULL(JSON_QUERY("SECTION_SUBMITTED-UNDERSTANDING_OF_NEEDS", '$.UNDERSTANDING_OF_NEEDS'), '{}'),
-          'VALUE_PROPOSITION': ISNULL(JSON_QUERY("SECTION_SUBMITTED-VALUE_PROPOSITION", '$.VALUE_PROPOSITION'), '{}'),
-          'evidences': ISNULL(JSON_QUERY("SECTION_SUBMITTED-EVIDENCE_OF_EFFECTIVENESS", '$.evidences'), '[]')
-        ) AS document
-        FROM (
-          SELECT id1.id, id1.type, id2.document
-                FROM (
-              SELECT
-                        id,
-                        description,
-                        is_snapshot,
-                        MAX(valid_from) AS valid_from,
-                        IIF(description like 'SECTION_SUBMITTED%' AND is_snapshot = 1, description, 'DRAFT') AS type
-                    FROM innovation_document
-              FOR SYSTEM_TIME ALL
-                    GROUP BY id, description, is_snapshot, IIF(description like 'SECTION_SUBMITTED%' AND is_snapshot = 1, description, 'DRAFT')
-            ) AS id1
-                    LEFT JOIN (
-            SELECT id, description, is_snapshot, document, valid_from
-                    FROM innovation_document
-            FOR SYSTEM_TIME ALL
-          ) AS id2
-          ON id2.id = id1.id
-              AND id2.valid_from= id1.valid_from
-              AND id2.description = id1.description
-              AND id2.is_snapshot = id1.is_snapshot
-      )
-      AS temp
-      PIVOT (
-        MAX(document)
-        FOR type IN (
-          "DRAFT",
-          "SECTION_SUBMITTED-COST_OF_INNOVATION",
-          "SECTION_SUBMITTED-CURRENT_CARE_PATHWAY",
-          "SECTION_SUBMITTED-DEPLOYMENT",
-          "SECTION_SUBMITTED-EVIDENCE_OF_EFFECTIVENESS",
-          "SECTION_SUBMITTED-INNOVATION_DESCRIPTION",
-          "SECTION_SUBMITTED-INTELLECTUAL_PROPERTY",
-          "SECTION_SUBMITTED-MARKET_RESEARCH",
-          "SECTION_SUBMITTED-REGULATIONS_AND_STANDARDS",
-          "SECTION_SUBMITTED-REVENUE_MODEL",
-          "SECTION_SUBMITTED-TESTING_WITH_USERS",
-          "SECTION_SUBMITTED-UNDERSTANDING_OF_BENEFITS",
-          "SECTION_SUBMITTED-UNDERSTANDING_OF_NEEDS",
-          "SECTION_SUBMITTED-VALUE_PROPOSITION"
-        )
-      )
-      AS data) as latestSubmitted
-      WHERE innovation_document.id = latestSubmitted.id
+    WITH submitted_date AS (
+      SELECT id, MAX(valid_from) AS valid_from, REPLACE(description, 'SECTION_SUBMITTED-', '') as description
+      FROM innovation_document
+      FOR SYSTEM_TIME ALL
+      WHERE description LIKE 'SECTION_SUBMITTED%' AND is_snapshot=1
+      GROUP by id, description
+    ),
+    submitted_date_with_evidences AS (
+      SELECT * FROM submitted_date
+      UNION ALL
+      SELECT id, valid_from, 'evidences'
+      FROM submitted_date
+      WHERE description='EVIDENCE_OF_EFFECTIVENESS'
+    ),
+    submitted AS (
+      SELECT d.id, sd.description, JSON_QUERY(d.document, '$.' + sd.description) as fragment
+      FROM innovation_document
+      FOR SYSTEM_TIME ALL d
+      INNER JOIN submitted_date_with_evidences sd on d.id=sd.id and d.valid_from = sd.valid_from
+      WHERE JSON_QUERY(d.document, '$.' + sd.description) IS NOT NULL
+    ),
+    migration_record AS (
+      SELECT id, document as json
+      FROM innovation_document
+      FOR SYSTEM_TIME FROM '2023-01-01' TO '2023-05-01' -- setting this range to avoid multiple updates that happened after without description
+      WHERE description = 'Updated to version 202304'
+    ),
+    latest AS (
+      SELECT id, JSON_OBJECT(
+        'name': JSON_VALUE(document, '$.INNOVATION_DESCRIPTION.name'),
+        'description': JSON_VALUE(document, '$.INNOVATION_DESCRIPTION.description'),
+        'countryName': JSON_VALUE(document, '$.INNOVATION_DESCRIPTION.countryName'),
+        'website': JSON_VALUE(document, '$.INNOVATION_DESCRIPTION.website'),
+        'postcode': JSON_VALUE(document, '$.INNOVATION_DESCRIPTION.postcode'),
+        'mainCategory': JSON_VALUE(document, '$.INNOVATION_DESCRIPTION.mainCategory'),
+        'otherCategoryDescription': JSON_VALUE(document, '$.INNOVATION_DESCRIPTION.otherCategoryDescription')
+      ) as JSON
+      FROM innovation_document
+    ),
+    submitted_document AS (
+      SELECT id, 
+        CONCAT('{', STRING_AGG(CONCAT('"', description, '":', fragment), ','), '}') as json
+      FROM submitted
+      GROUP BY id
+    ),
+    migration_document AS (
+      SELECT 
+      innovation.id,
+      JSON_OBJECT(
+        'version': '202304',
+        'INNOVATION_DESCRIPTION': 
+        JSON_QUERY(COALESCE(JSON_QUERY(submitted_document.json, '$.INNOVATION_DESCRIPTION'), JSON_QUERY(migration_record.json, '$.INNOVATION_DESCRIPTION'), latest.json)),
+        'COST_OF_INNOVATION': 
+        JSON_QUERY(COALESCE(JSON_QUERY(submitted_document.json, '$.COST_OF_INNOVATION'), JSON_QUERY(migration_record.json, '$.COST_OF_INNOVATION'), '{}')),
+        'CURRENT_CARE_PATHWAY': 
+        JSON_QUERY(COALESCE(JSON_QUERY(submitted_document.json, '$.CURRENT_CARE_PATHWAY'), JSON_QUERY(migration_record.json, '$.CURRENT_CARE_PATHWAY'), '{}')),
+        'DEPLOYMENT': 
+        JSON_QUERY(COALESCE(JSON_QUERY(submitted_document.json, '$.DEPLOYMENT'), JSON_QUERY(migration_record.json, '$.DEPLOYMENT'), '{}')),
+        'EVIDENCE_OF_EFFECTIVENESS': 
+        JSON_QUERY(COALESCE(JSON_QUERY(submitted_document.json, '$.EVIDENCE_OF_EFFECTIVENESS'), JSON_QUERY(migration_record.json, '$.EVIDENCE_OF_EFFECTIVENESS'), '{}')),
+        'INTELLECTUAL_PROPERTY': 
+        JSON_QUERY(COALESCE(JSON_QUERY(submitted_document.json, '$.INTELLECTUAL_PROPERTY'), JSON_QUERY(migration_record.json, '$.INTELLECTUAL_PROPERTY'), '{}')),
+        'MARKET_RESEARCH': 
+        JSON_QUERY(COALESCE(JSON_QUERY(submitted_document.json, '$.MARKET_RESEARCH'), JSON_QUERY(migration_record.json, '$.MARKET_RESEARCH'), '{}')),
+        'REGULATIONS_AND_STANDARDS': 
+        JSON_QUERY(COALESCE(JSON_QUERY(submitted_document.json, '$.REGULATIONS_AND_STANDARDS'), JSON_QUERY(migration_record.json, '$.REGULATIONS_AND_STANDARDS'), '{}')),
+        'REVENUE_MODEL': 
+        JSON_QUERY(COALESCE(JSON_QUERY(submitted_document.json, '$.REVENUE_MODEL'), JSON_QUERY(migration_record.json, '$.REVENUE_MODEL'), '{}')),
+        'TESTING_WITH_USERS': 
+        JSON_QUERY(COALESCE(JSON_QUERY(submitted_document.json, '$.TESTING_WITH_USERS'), JSON_QUERY(migration_record.json, '$.TESTING_WITH_USERS'), '{}')),
+        'UNDERSTANDING_OF_BENEFITS': 
+        JSON_QUERY(COALESCE(JSON_QUERY(submitted_document.json, '$.UNDERSTANDING_OF_BENEFITS'), JSON_QUERY(migration_record.json, '$.UNDERSTANDING_OF_BENEFITS'), '{}')),
+        'UNDERSTANDING_OF_NEEDS': 
+        JSON_QUERY(COALESCE(JSON_QUERY(submitted_document.json, '$.UNDERSTANDING_OF_NEEDS'), JSON_QUERY(migration_record.json, '$.UNDERSTANDING_OF_NEEDS'), '{}')),
+        'VALUE_PROPOSITION': 
+        JSON_QUERY(COALESCE(JSON_QUERY(submitted_document.json, '$.VALUE_PROPOSITION'), JSON_QUERY(migration_record.json, '$.VALUE_PROPOSITION'), '{}')),
+        'evidences': 
+        JSON_QUERY(COALESCE(JSON_QUERY(submitted_document.json, '$.evidences'), JSON_QUERY(migration_record.json, '$.evidences')))  
+        ABSENT ON NULL
+      ) as json
+      FROM innovation innovation
+      -- Only 3 sections weren't submitted when the migration occured for innovation that aren't CREATED/WITHDRAWN/ARCHIVED
+      -- so simplified and fetching only the migration_record for those since all the others will have a submitted section
+      LEFT JOIN migration_record on migration_record.id = innovation.id AND innovation.status NOT IN ('CREATED', 'WITHDRAWN', 'ARCHIVED')
+      LEFT JOIN submitted_document on innovation.id = submitted_document.id
+      LEFT JOIN latest on innovation.id = latest.id
+    ) UPDATE innovation_document
+    SET document=migration_document.json, is_snapshot=1, description='Migrate to last submitted IR'
+    FROM migration_document
+    WHERE innovation_document.id = migration_document.id
     `);
   }
 
