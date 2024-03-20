@@ -107,7 +107,7 @@ export class createInnovationDocumentDraftTable1709822169052 implements Migratio
         'VALUE_PROPOSITION': 
         JSON_QUERY(COALESCE(JSON_QUERY(submitted_document.json, '$.VALUE_PROPOSITION'), JSON_QUERY(migration_record.json, '$.VALUE_PROPOSITION'), '{}')),
         'evidences': 
-        JSON_QUERY(COALESCE(JSON_QUERY(submitted_document.json, '$.evidences'), JSON_QUERY(migration_record.json, '$.evidences')))  
+        IIF(JSON_QUERY(submitted_document.json, '$.EVIDENCE_OF_EFFECTIVENESS') IS NULL, JSON_QUERY(migration_record.json, '$.evidences'), JSON_QUERY(submitted_document.json, '$.evidences'))
         ABSENT ON NULL
       ) as json
       FROM innovation innovation
