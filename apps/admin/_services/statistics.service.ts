@@ -14,7 +14,7 @@ export class StatisticsService extends BaseService {
    *       might or might not be relevant to distinguish them.
    *
    * @param organisationUnitId the organisation unit
-   * @param onlyOpen if true, only returns the number of innovations with open statuses (ENGAGING)
+   * @param onlyOpen if true, only returns the number of innovations with open statuses (ENGAGING, WAITING)
    * @returns dictionary of status and number of innovations
    */
   async getOrganisationUnitInnovationCounters(
@@ -35,7 +35,9 @@ export class StatisticsService extends BaseService {
       });
 
     if (onlyOpen) {
-      query.andWhere('supports.status = :engageStatus', { engageStatus: InnovationSupportStatusEnum.ENGAGING });
+      query.andWhere('supports.status IN (:...status)', {
+        status: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.WAITING]
+      });
     }
 
     query.groupBy('supports.status');
