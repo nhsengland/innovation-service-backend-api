@@ -5,3 +5,4 @@ export * from './helper.types';
 export * from './notification.types';
 export * from './notifier.types';
 export * from './request.types';
+export * from './notify-me.types';

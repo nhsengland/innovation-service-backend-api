@@ -59,6 +59,8 @@ import { NotificationLogEntity } from './user/notification-log.entity';
 import { NotificationPreferenceEntity } from './user/notification-preference.entity';
 import { NotificationUserEntity } from './user/notification-user.entity';
 import { NotificationEntity } from './user/notification.entity';
+import { NotifyMeSubscriptionEntity } from './user/notify-me-subscription.entity';
+import { NotificationScheduleEntity } from './user/notification-schedule.entity';
 import { UserPreferenceEntity } from './user/user-preference.entity';
 import { UserRoleEntity } from './user/user-role.entity';
 import { UserEntity } from './user/user.entity';
@@ -68,6 +70,8 @@ export { NotificationLogEntity } from './user/notification-log.entity';
 export { NotificationPreferenceEntity } from './user/notification-preference.entity';
 export { NotificationUserEntity } from './user/notification-user.entity';
 export { NotificationEntity } from './user/notification.entity';
+export { NotifyMeSubscriptionEntity } from './user/notify-me-subscription.entity';
+export { NotificationScheduleEntity } from './user/notification-schedule.entity';
 export { UserPreferenceEntity } from './user/user-preference.entity';
 export { UserRoleEntity } from './user/user-role.entity';
 export { UserEntity } from './user/user.entity';
@@ -119,6 +123,8 @@ export const USER_ENTITIES = [
   NotificationPreferenceEntity,
   NotificationUserEntity,
   NotificationEntity,
+  NotifyMeSubscriptionEntity,
+  NotificationScheduleEntity,
   UserPreferenceEntity,
   UserRoleEntity,
   UserEntity
