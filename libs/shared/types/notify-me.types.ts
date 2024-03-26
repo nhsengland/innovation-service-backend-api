@@ -1,3 +1,11 @@
+export type NotifyMeSubscriptionType = {
+  id: string;
+  roleId: string;
+  innovationId: string;
+
+  config: SubscriptionConfig;
+};
+
 export type SubscriptionConfig = TriggerConfigFromEventPayloads & SubscriptionTypes;
 
 /*

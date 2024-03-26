@@ -282,4 +282,22 @@ export type InAppTemplatesType = {
     innovationName: string;
   };
   AP08_USER_EMAIL_ADDRESS_UPDATED: Record<string, never>;
+
+  // Notify Me
+  SUPPORT_UPDATED: {
+    innovation: string;
+    supportStatus: string;
+    event: string;
+    organisation: string;
+  };
+  REMINDER: {
+    innovation: string;
+    message: string;
+  };
+  PROGRESS_UPDATE_CREATED: {
+    innovation: string;
+    event: string;
+    description: string;
+    unit: string;
+  };
 };
