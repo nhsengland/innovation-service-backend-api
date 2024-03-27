@@ -1,0 +1,10 @@
+{
+  "bindings": [
+    {
+      "schedule": "* */5 * * * *",
+      "name": "myTimerScheduledNotificationsCron",
+      "type": "timerTrigger",
+      "direction": "in"
+    }
+  ]
+}

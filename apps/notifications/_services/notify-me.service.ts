@@ -108,6 +108,24 @@ export class NotifyMeService extends BaseService {
   }
 
   /**
+   * Fetch all the pending scheduled notifications to be sent by the cron
+   *
+   * It gets all the scheduled notifications to be sent in the time it's fetching the DB,
+   * to make sure that in case of failure there is no notifications lost a grace period of 2H
+   * is applied.
+   */
+  async getScheduledNotifications(): Promise<
+    { subscriptionId: string; params: { inApp: Record<string, unknown>; email: Record<string, unknown> } }[]
+  > {
+    const scheduled = await this.sqlConnection.manager
+      .createQueryBuilder(NotificationScheduleEntity, 'schedule')
+      .where('schedule.sendDate BETWEEN DATEADD(hour, -2, GETDATE()) AND GETDATE()')
+      .getMany();
+
+    return scheduled.map(s => ({ subscriptionId: s.subscriptionId, params: s.params }));
+  }
+
+  /**
    * Helper method to check if a notification is already scheduled for the given subscription
    */
   private async hasScheduledNotification(subscription: NotifyMeSubscriptionType): Promise<boolean> {
