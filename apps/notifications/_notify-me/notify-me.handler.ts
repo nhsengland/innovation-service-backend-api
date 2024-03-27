@@ -5,7 +5,6 @@ import type {
   EventPayloads,
   EventType,
   IdentityUserInfo,
-  NotifyMeSubscriptionType
 } from '@notifications/shared/types';
 import { inject } from 'inversify';
 import { isArray } from 'lodash';
@@ -13,7 +12,7 @@ import type { MessageType as EmailMessageType } from '../v1-emails-listener/vali
 import type { MessageType as InAppMessageType } from '../v1-in-app-listener/validation.schemas';
 import type { EmailTemplatesType } from '../_config';
 import type { InAppTemplatesType } from '../_config/inapp.config';
-import type { NotifyMeService } from '../_services/notify-me.service';
+import type { NotifyMeService, NotifyMeSubscriptionType } from '../_services/notify-me.service';
 import type { RecipientsService } from '../_services/recipients.service';
 import SYMBOLS from '../_services/symbols';
 

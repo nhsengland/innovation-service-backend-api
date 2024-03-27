@@ -1,9 +1,14 @@
-export type NotifyMeSubscriptionType = {
-  id: string;
-  roleId: string;
-  innovationId: string;
+import type { DomainContextType } from "./domain.types";
 
-  config: SubscriptionConfig;
+export type NotifyMeMessageType<T extends EventType> = {
+  data: {
+    requestUser: DomainContextType;
+    innovationId: string;
+
+    type: T;
+
+    params: EventPayloads[T];
+  };
 };
 
 export type SubscriptionConfig = TriggerConfigFromEventPayloads & SubscriptionTypes;
@@ -34,13 +39,13 @@ export type EventType = keyof EventPayloads;
  */
 export type SubscriptionType = SubscriptionTypes['subscriptionType'];
 type SubscriptionTypes = InstantSubscriptionType | ScheduledSubscriptionType | PeriodicSubscriptionType;
-type InstantSubscriptionType = { subscriptionType: 'INSTANTLY' };
-type ScheduledSubscriptionType = {
+export type InstantSubscriptionType = { subscriptionType: 'INSTANTLY' };
+export type ScheduledSubscriptionType = {
   subscriptionType: 'SCHEDULED';
   date: Date;
   customMessages?: { inApp?: string; email?: string };
 };
-type PeriodicSubscriptionType = { subscriptionType: 'PERIODIC'; periodicity: 'HOURLY' | 'DAILY' };
+export type PeriodicSubscriptionType = { subscriptionType: 'PERIODIC'; periodicity: 'HOURLY' | 'DAILY' };
 
 /**
  * Helpers

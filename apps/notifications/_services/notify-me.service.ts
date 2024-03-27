@@ -3,9 +3,17 @@ import { injectable } from 'inversify';
 
 import { BaseService } from './base.service';
 
-import type { NotifyMeSubscriptionType } from '@notifications/shared/types';
+import type { SubscriptionConfig } from '@notifications/shared/types';
 import { In } from 'typeorm';
 import type { EventPayload } from '../_notify-me/notify-me.handler';
+
+export type NotifyMeSubscriptionType = {
+  id: string;
+  roleId: string;
+  innovationId: string;
+
+  config: SubscriptionConfig;
+};
 
 @injectable()
 export class NotifyMeService extends BaseService {
