@@ -2,6 +2,7 @@ import { container } from '@users/shared/config/inversify.config';
 
 import { AnnouncementsService } from '../_services/announcements.service';
 import { NotificationsService } from '../_services/notifications.service';
+import { NotifyMeService } from '../_services/notify-me.service';
 import { OrganisationsService } from '../_services/organisations.service';
 import { StatisticsService } from '../_services/statistics.service';
 import { SYMBOLS } from '../_services/symbols';
@@ -15,5 +16,6 @@ container.bind<UsersService>(SYMBOLS.UsersService).to(UsersService).inSingletonS
 container.bind<NotificationsService>(SYMBOLS.NotificationsService).to(NotificationsService).inSingletonScope();
 container.bind<StatisticsService>(SYMBOLS.StatisticsService).to(StatisticsService).inSingletonScope();
 container.bind<AnnouncementsService>(SYMBOLS.AnnouncementsService).to(AnnouncementsService).inSingletonScope();
+container.bind<NotifyMeService>(SYMBOLS.NotifyMeService).to(NotifyMeService).inSingletonScope();
 
 export { container };

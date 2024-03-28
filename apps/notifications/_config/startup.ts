@@ -4,6 +4,7 @@ import type { LoggerService } from '@notifications/shared/services';
 import SHARED_SYMBOLS from '@notifications/shared/services/symbols';
 import { DispatchService } from '../_services/dispatch.service';
 import { EmailService } from '../_services/email.service';
+import { NotifyMeService } from '../_services/notify-me.service';
 import { RecipientsService } from '../_services/recipients.service';
 import SYMBOLS from '../_services/symbols';
 
@@ -11,6 +12,7 @@ import SYMBOLS from '../_services/symbols';
 container.bind<DispatchService>(SYMBOLS.DispatchService).to(DispatchService).inSingletonScope();
 container.bind<EmailService>(SYMBOLS.EmailService).to(EmailService).inSingletonScope();
 container.bind<RecipientsService>(SYMBOLS.RecipientsService).to(RecipientsService).inSingletonScope();
+container.bind<NotifyMeService>(SYMBOLS.NotifyMeService).to(NotifyMeService).inSingletonScope();
 
 export { container };
 export const startup = async (): Promise<void> => {

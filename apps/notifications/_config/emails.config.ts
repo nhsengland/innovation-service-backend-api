@@ -89,7 +89,12 @@ export const EmailTemplates = {
 
   // ACCOUNT
   CA01_ACCOUNT_CREATION_OF_INNOVATOR: 'd4bd42fa-a3a2-4eb3-ab71-844caba26044',
-  CA02_ACCOUNT_CREATION_OF_COLLABORATOR: '7dbfa868-126c-4eee-828c-be6f8831342c'
+  CA02_ACCOUNT_CREATION_OF_COLLABORATOR: '7dbfa868-126c-4eee-828c-be6f8831342c',
+
+  // NOTIFY ME
+  SUPPORT_UPDATED: 'c24edce0-69cb-463d-bd65-d05304847dec',
+  PROGRESS_UPDATE_CREATED: '27f2a823-b8e4-4861-a208-8a5834c93516',
+  REMINDER: 'e8c593a4-2341-4177-89b5-b92aaaeac595'
 } as const;
 export type EmailTemplates = typeof EmailTemplates;
 
@@ -442,5 +447,27 @@ export type EmailTemplatesType = {
     multiple_innovations: 'yes' | 'no';
     innovations_name: string;
     dashboard_url: string;
+  };
+
+  // Notify Me
+  SUPPORT_UPDATED: {
+    display_name: string;
+    innovation: string;
+    supportStatus: string;
+    event: string;
+    organisation: string;
+  };
+  REMINDER: {
+    display_name: string;
+    innovation: string;
+    event: string;
+    message: string;
+  };
+  PROGRESS_UPDATE_CREATED: {
+    display_name: string;
+    innovation: string;
+    event: string;
+    description: string;
+    unit: string;
   };
 };
