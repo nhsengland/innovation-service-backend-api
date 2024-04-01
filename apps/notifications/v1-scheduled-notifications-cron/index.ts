@@ -1,11 +1,12 @@
 import type { Context } from '@azure/functions';
 
+import { JoiHelper } from '@notifications/shared/helpers';
 import type { StorageQueueService } from '@notifications/shared/services';
 import { QueuesEnum } from '@notifications/shared/services/integrations/storage-queue.service';
 import SHARED_SYMBOLS from '@notifications/shared/services/symbols';
-import { JoiHelper } from '@notifications/shared/helpers';
 
 import { container } from '../_config';
+import type { NotifyMeService } from '../_services/notify-me.service';
 import SYMBOLS from '../_services/symbols';
 import {
   MessageSchema as EmailMessageSchema,
@@ -15,7 +16,6 @@ import {
   MessageSchema as InAppMessageSchema,
   MessageType as InAppMessageType
 } from '../v1-in-app-listener/validation.schemas';
-import type { NotifyMeService } from '../_services/notify-me.service';
 
 // Runs every 5 minutes
 class V1ScheduledNotificationsCron {
@@ -43,6 +43,8 @@ class V1ScheduledNotificationsCron {
 
           handled.push(notification.subscriptionId);
         } catch (err) {
+          // This push shouldn't be here right ? (you already have the 2 hours in the getScheduledNotifications method)
+          // if I understood correctly you are always deleting the notifications even if there's an error sending an individual one
           handled.push(notification.subscriptionId);
           context.log.error(`Error sending notification with subscriptionId: ${notification.subscriptionId}`, err);
         }

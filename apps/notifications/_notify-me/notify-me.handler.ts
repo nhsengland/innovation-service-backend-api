@@ -1,20 +1,15 @@
 import { ServiceRoleEnum } from '@notifications/shared/enums';
 import { TranslationHelper } from '@notifications/shared/helpers';
-import type {
-  DomainContextType,
-  EventPayloads,
-  EventType,
-  IdentityUserInfo,
-} from '@notifications/shared/types';
+import type { DomainContextType, EventPayloads, EventType, IdentityUserInfo } from '@notifications/shared/types';
 import { inject } from 'inversify';
 import { isArray } from 'lodash';
-import type { MessageType as EmailMessageType } from '../v1-emails-listener/validation.schemas';
-import type { MessageType as InAppMessageType } from '../v1-in-app-listener/validation.schemas';
 import type { EmailTemplatesType } from '../_config';
 import type { InAppTemplatesType } from '../_config/inapp.config';
 import type { NotifyMeService, NotifyMeSubscriptionType } from '../_services/notify-me.service';
 import type { RecipientsService } from '../_services/recipients.service';
 import SYMBOLS from '../_services/symbols';
+import type { MessageType as EmailMessageType } from '../v1-emails-listener/validation.schemas';
+import type { MessageType as InAppMessageType } from '../v1-in-app-listener/validation.schemas';
 
 export type EventPayload = {
   requestUser: DomainContextType;
@@ -27,16 +22,16 @@ export type EventPayload = {
 }[EventType];
 
 // NOTE: This can be transformed into an abstract class and the functions getInAppParams and getEmailParams be specific implementations
-// This would help remove some of the cluter from the "BaseHandler"
+// This would help remove some of the clutter from the "BaseHandler"
 export class NotifyMeHandler {
   private event: EventPayload;
 
   #inApps: InAppMessageType[] = [];
-  get inApps() {
+  get inApps(): InAppMessageType[] {
     return this.#inApps;
   }
   #emails: EmailMessageType[] = [];
-  get emails() {
+  get emails(): EmailMessageType[] {
     return this.#emails;
   }
 
@@ -66,7 +61,9 @@ export class NotifyMeHandler {
     const identities = await this.recipientsService.usersIdentityInfo([...recipients.values()].map(r => r.identityId));
 
     for (const subscriber of subscribers) {
-      const recipient = recipients.get(subscriber.roleId)!;
+      const recipient = recipients.get(subscriber.roleId);
+      if (!recipient) continue;
+
       const identity = identities.get(recipient.identityId);
       if (!identity) continue;
 
@@ -87,6 +84,7 @@ export class NotifyMeHandler {
         // NOTE: Currently they are doing the same thing, if this changes just change it to specific.
         case 'PERIODIC':
         case 'SCHEDULED':
+          // This should be inside a transaction to handle errors (???)
           await this.notifyMeService.createScheduledNotification(subscriber, {
             inApp: inAppPayload,
             email: emailPayload
@@ -136,12 +134,13 @@ export class NotifyMeHandler {
           unit: this.getRequestUnitName()
         };
 
-      case 'REMINDER':
+      case 'REMINDER': {
         let message = 'This is a default description for the inApp';
         if (subscription.config.subscriptionType === 'SCHEDULED' && subscription.config.customMessages?.inApp) {
           message = subscription.config.customMessages.inApp;
         }
         return { innovation: innovation.name, message };
+      }
 
       default:
         return {};
@@ -173,7 +172,7 @@ export class NotifyMeHandler {
           description: this.event.params.description
         };
 
-      case 'REMINDER':
+      case 'REMINDER': {
         let message = 'This is a default description for the email';
         if (subscription.config.subscriptionType === 'SCHEDULED' && subscription.config.customMessages?.email) {
           message = subscription.config.customMessages.email;
@@ -184,6 +183,7 @@ export class NotifyMeHandler {
           event: this.event.type,
           message
         };
+      }
 
       default:
         return {};
