@@ -39,6 +39,7 @@ import type {
   InnovationSuggestionsType
 } from '../_types/innovation.types';
 
+import { DatesHelper } from '@innovations/shared/helpers';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { SupportSummaryUnitInfo } from '../_types/support.types';
 import { BaseService } from './base.service';
@@ -1061,7 +1062,10 @@ export class InnovationSupportsService extends BaseService {
     }
 
     // If we have a created date and it's different from today check if the support was engaging otherwise check current
-    if (data.createdAt && data.createdAt.toISOString().split('T')[0] !== new Date().toISOString().split('T')[0]) {
+    if (
+      data.createdAt &&
+      DatesHelper.getDateAsLocalDateString(data.createdAt) !== DatesHelper.getDateAsLocalDateString(new Date())
+    ) {
       const res = await this.validationService.checkIfSupportStatusAtDate(domainContext, innovationId, {
         supportId: support.id,
         date: data.createdAt,
