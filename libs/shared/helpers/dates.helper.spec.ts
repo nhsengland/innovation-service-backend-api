@@ -116,4 +116,18 @@ describe('DatesHelper', () => {
       });
     });
   });
+
+  describe('getDateAsLocalDateString', () => {
+    it('returns date as string in format YYYY-MM-DD', () => {
+      const date = new Date('2023-01-01');
+      const result = DatesHelper.getDateAsLocalDateString(date);
+      expect(result).toEqual('2023-01-01');
+    });
+
+    it('accounts for daylight saving time', () => {
+      const date = new Date(Date.UTC(2023, 5, 1, 23, 30, 0));
+      const result = DatesHelper.getDateAsLocalDateString(date);
+      expect(result).toEqual('2023-06-02');
+    });
+  });
 });

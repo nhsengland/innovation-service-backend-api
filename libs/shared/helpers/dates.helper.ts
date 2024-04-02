@@ -36,7 +36,14 @@ export class DatesHelper {
     return result;
   }
 
+  /**
+   * Converts a date to a string in the format 'YYYY-MM-DD' as of UK timezone.
+   * @param date the date object
+   * @returns the date as a string in the format 'YYYY-MM-DD'
+   */
   static getDateAsLocalDateString(date: Date): string {
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    // sv has the ISO format
+    const format = Intl.DateTimeFormat('sv', { timeZone: 'Europe/London' });
+    return format.format(date);
   }
 }
