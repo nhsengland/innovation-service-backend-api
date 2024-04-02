@@ -56,7 +56,7 @@ export class ValidationService extends BaseService {
     entityManager?: EntityManager
   ): Promise<ValidationResult> {
     const em = entityManager ?? this.sqlConnection.manager;
-    const date = data.date;
+    const date = new Date(data.date); // avoid mutation
     const dateString = DatesHelper.getDateAsLocalDateString(date);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
