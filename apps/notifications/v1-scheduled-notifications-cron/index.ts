@@ -16,6 +16,7 @@ import {
   MessageSchema as InAppMessageSchema,
   MessageType as InAppMessageType
 } from '../v1-in-app-listener/validation.schemas';
+import { BadRequestError, GenericErrorsEnum } from '@notifications/shared/errors';
 
 // Runs every 5 minutes
 class V1ScheduledNotificationsCron {
@@ -43,9 +44,10 @@ class V1ScheduledNotificationsCron {
 
           handled.push(notification.subscriptionId);
         } catch (err) {
-          // This push shouldn't be here right ? (you already have the 2 hours in the getScheduledNotifications method)
-          // if I understood correctly you are always deleting the notifications even if there's an error sending an individual one
-          handled.push(notification.subscriptionId);
+          // If is an error from Joi validation we consider the notification "handled"
+          if (err instanceof BadRequestError && err.name === GenericErrorsEnum.INVALID_PAYLOAD) {
+            handled.push(notification.subscriptionId);
+          }
           context.log.error(`Error sending notification with subscriptionId: ${notification.subscriptionId}`, err);
         }
       }
