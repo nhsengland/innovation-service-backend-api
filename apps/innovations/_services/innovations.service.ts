@@ -63,8 +63,8 @@ import { ActionEnum } from '@innovations/shared/services/integrations/audit.serv
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import { groupBy, isString, mapValues, omit, pick, snakeCase } from 'lodash';
 import { BaseService } from './base.service';
-import SYMBOLS from './symbols';
 import type { InnovationDocumentService } from './innovation-document.service';
+import SYMBOLS from './symbols';
 
 // TODO move types
 export const InnovationListSelectType = [
@@ -75,6 +75,7 @@ export const InnovationListSelectType = [
   'groupedStatus',
   'submittedAt',
   'updatedAt',
+  'lastAssessmentRequestAt',
   // Document fields
   'careSettings',
   'categories',
@@ -143,7 +144,12 @@ export type InnovationListResponseType<S extends InnovationListSelectType, K ext
   [k in K]: InnovationListFullResponseType[k];
 };
 
-export const DateFilterFieldsType = ['submittedAt', 'updatedAt', 'support.updatedAt'] as const;
+export const DateFilterFieldsType = [
+  'lastAssessmentRequestAt',
+  'submittedAt',
+  'updatedAt',
+  'support.updatedAt'
+] as const;
 export type DateFilterFieldsType = (typeof DateFilterFieldsType)[number];
 
 export const HasAccessThroughKeys = ['owner', 'collaborator'] as const;

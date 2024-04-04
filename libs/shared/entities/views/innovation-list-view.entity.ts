@@ -31,6 +31,9 @@ export class InnovationListView {
   @ViewColumn({ name: 'updated_at' })
   updatedAt: Date;
 
+  @ViewColumn({ name: 'last_assessment_request_at' })
+  lastAssessmentRequestAt: Date | null;
+
   @ViewColumn()
   status: InnovationStatusEnum;
 
