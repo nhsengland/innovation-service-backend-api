@@ -9,12 +9,12 @@ import { container } from '../_config';
 
 import { EventParamsSchema, MessageSchema, MessageType } from './validation.schemas';
 
-import type { MessageType as EmailMessageType } from '../v1-emails-listener/validation.schemas';
-import type { MessageType as InAppMessageType } from '../v1-in-app-listener/validation.schemas';
 import { NotifyMeHandler } from '../_notify-me/notify-me.handler';
+import type { NotifyMeService } from '../_services/notify-me.service';
 import type { RecipientsService } from '../_services/recipients.service';
 import SYMBOLS from '../_services/symbols';
-import type { NotifyMeService } from '../_services/notify-me.service';
+import type { MessageType as EmailMessageType } from '../v1-emails-listener/validation.schemas';
+import type { MessageType as InAppMessageType } from '../v1-in-app-listener/validation.schemas';
 
 class V1NotifyMeListener {
   static async queueTrigger(context: Context, requestMessage: MessageType): Promise<void> {
@@ -28,6 +28,7 @@ class V1NotifyMeListener {
       const message = JoiHelper.Validate<MessageType>(MessageSchema, requestMessage);
       JoiHelper.Validate(EventParamsSchema[message.data.type], message.data.params);
 
+      // Start the transaction here since the execute method has side effects (???)
       const handler = new NotifyMeHandler(notifyMeService, recipientsService, message.data as any);
       await handler.execute();
 

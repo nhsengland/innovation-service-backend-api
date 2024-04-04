@@ -1,11 +1,12 @@
 import type { Context } from '@azure/functions';
 
+import { JoiHelper } from '@notifications/shared/helpers';
 import type { StorageQueueService } from '@notifications/shared/services';
 import { QueuesEnum } from '@notifications/shared/services/integrations/storage-queue.service';
 import SHARED_SYMBOLS from '@notifications/shared/services/symbols';
-import { JoiHelper } from '@notifications/shared/helpers';
 
 import { container } from '../_config';
+import type { NotifyMeService } from '../_services/notify-me.service';
 import SYMBOLS from '../_services/symbols';
 import {
   MessageSchema as EmailMessageSchema,
@@ -15,7 +16,7 @@ import {
   MessageSchema as InAppMessageSchema,
   MessageType as InAppMessageType
 } from '../v1-in-app-listener/validation.schemas';
-import type { NotifyMeService } from '../_services/notify-me.service';
+import { BadRequestError, GenericErrorsEnum } from '@notifications/shared/errors';
 
 // Runs every 5 minutes
 class V1ScheduledNotificationsCron {
@@ -43,7 +44,10 @@ class V1ScheduledNotificationsCron {
 
           handled.push(notification.subscriptionId);
         } catch (err) {
-          handled.push(notification.subscriptionId);
+          // If is an error from Joi validation we consider the notification "handled"
+          if (err instanceof BadRequestError && err.name === GenericErrorsEnum.INVALID_PAYLOAD) {
+            handled.push(notification.subscriptionId);
+          }
           context.log.error(`Error sending notification with subscriptionId: ${notification.subscriptionId}`, err);
         }
       }
