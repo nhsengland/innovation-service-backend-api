@@ -1031,6 +1031,7 @@ paths:
                 field:
                   type: string
                   enum:
+                    - lastAssessmentRequestAt
                     - submittedAt
                     - updatedAt
                     - support.updatedAt
@@ -1081,6 +1082,7 @@ paths:
                 - groupedStatus
                 - submittedAt
                 - updatedAt
+                - lastAssessmentRequestAt
                 - careSettings
                 - categories
                 - countryName
