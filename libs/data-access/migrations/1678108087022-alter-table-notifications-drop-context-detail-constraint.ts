@@ -3,6 +3,7 @@ import type { MigrationInterface, QueryRunner } from 'typeorm';
 export class alterTableNotificationsDropContextDetailConstraint1678108087022 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
+      IF EXISTS (SELECT * FROM sys.check_constraints WHERE name='CK_notification_context_detail')
       ALTER TABLE "notification" DROP CONSTRAINT "CK_notification_context_detail"
     `);
   }
@@ -21,7 +22,7 @@ export class alterTableNotificationsDropContextDetailConstraint1678108087022 imp
         'NEEDS_ASSESSMENT_ORGANISATION_SUGGESTION',
         'INNOVATION_SUBMISSION',
         'SUPPORT_STATUS_UPDATE',
-        'INNOVATION_REASSESSMENT_REQUEST'
+        'INNOVATION_REASSESSMENT_REQUEST',
         'INNOVATION_STOP_SHARING'
       ))`);
   }
