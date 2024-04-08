@@ -21,7 +21,7 @@ export const innovationRecordUrl = (role: ServiceRoleEnum, innovationId: string)
 export const howToProceedUrl = (role: ServiceRoleEnum.INNOVATOR, innovationId: string): string => {
   const baseUrl = frontendBaseUrl(role);
   return new UrlModel(ENV.webBaseTransactionalUrl)
-    .addPath(':baseUrl/innovations/:innovationId//how-to-proceed')
+    .addPath(':baseUrl/innovations/:innovationId/how-to-proceed')
     .setPathParams({ baseUrl, innovationId })
     .buildUrl();
 };
@@ -139,6 +139,10 @@ export const dashboardUrl = (role: ServiceRoleEnum): string => {
 export const createAccountUrl = (): string => {
   return new UrlModel(ENV.webBaseTransactionalUrl).addPath('signup').buildUrl();
 };
+
+export const unsubscribeUrl = new UrlModel(ENV.webBaseTransactionalUrl)
+  .addPath('account/email-notifications')
+  .buildUrl();
 
 export const frontendBaseUrl = (role: ServiceRoleEnum): string => {
   switch (role) {
