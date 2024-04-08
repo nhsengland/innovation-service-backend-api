@@ -149,7 +149,11 @@ export abstract class BaseHandler<
           res.push({
             templateId: recipient.templateId,
             to: user.email,
-            params: { ...recipient.params, display_name: user.displayName },
+            params: {
+              ...recipient.params,
+              display_name: user.displayName,
+              unsubscribe_url: unsubscribeUrl
+            },
             log: recipient.log
           });
         }
