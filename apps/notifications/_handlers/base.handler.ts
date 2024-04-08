@@ -11,6 +11,7 @@ import { TranslationHelper } from '@notifications/shared/helpers';
 import type { DomainContextType, NotificationPreferences, NotifierTemplatesType } from '@notifications/shared/types';
 import { EmailTemplates, EmailTemplatesType, container } from '../_config';
 import type { InAppTemplatesType } from '../_config/inapp.config';
+import { unsubscribeUrl } from '../_helpers/url.helper';
 import type { RecipientType, RecipientsService } from '../_services/recipients.service';
 import SYMBOLS from '../_services/symbols';
 
@@ -115,7 +116,11 @@ export abstract class BaseHandler<
         res.push({
           templateId: recipient.templateId,
           to: recipient.to.email,
-          params: { ...recipient.params, ...(recipient.to.displayname && { display_name: recipient.to.displayname }) },
+          params: {
+            ...recipient.params,
+            ...(recipient.to.displayname && { display_name: recipient.to.displayname }),
+            unsubscribe_url: unsubscribeUrl()
+          },
           log: recipient.log
         });
       } else {
