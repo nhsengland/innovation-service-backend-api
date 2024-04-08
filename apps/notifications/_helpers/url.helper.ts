@@ -140,9 +140,9 @@ export const createAccountUrl = (): string => {
   return new UrlModel(ENV.webBaseTransactionalUrl).addPath('signup').buildUrl();
 };
 
-export const unsubscribeUrl = (): string => {
-  return new UrlModel(ENV.webBaseTransactionalUrl).addPath('account/email-notifications').buildUrl();
-};
+export const unsubscribeUrl = new UrlModel(ENV.webBaseTransactionalUrl)
+  .addPath('account/email-notifications')
+  .buildUrl();
 
 export const frontendBaseUrl = (role: ServiceRoleEnum): string => {
   switch (role) {

@@ -119,7 +119,7 @@ export abstract class BaseHandler<
           params: {
             ...recipient.params,
             ...(recipient.to.displayname && { display_name: recipient.to.displayname }),
-            unsubscribe_url: unsubscribeUrl()
+            unsubscribe_url: unsubscribeUrl
           },
           log: recipient.log
         });
