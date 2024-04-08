@@ -67,14 +67,15 @@ export class ExportFileService extends BaseService {
     body: DocumentExportInboundDataType,
     options?: Parameters<ExportFileService['handlers'][T]>[2]
   ): Promise<ReturnType<ExportFileService['handlers'][T]>> {
-    // sanitize draft information for A/QA/NAs
-    if (isAccessorDomainContextType(domainContext) || isAssessmentDomainContextType(domainContext)) {
+    // Add draft note to QA/A/NA on the pdf version
+    if (type === 'pdf' && (isAccessorDomainContextType(domainContext) || isAssessmentDomainContextType(domainContext))) {
       body.sections.forEach(section => {
         section.sections.forEach(subsection => {
           if (subsection.status === 'DRAFT') {
-            subsection.answers = [
-              { label: '', value: 'This section is in draft and will not be visible until it is resubmitted.' }
-            ];
+            subsection.answers.unshift({
+              label: '',
+              value: 'This section is in draft. This is the last version submitted by the innovator.'
+            });
           }
         });
       });

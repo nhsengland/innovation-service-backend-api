@@ -95,7 +95,7 @@ export class ResponseHelper {
           error: error.code,
           message: error.message,
           details: {
-            url: error.config.url,
+            url: error.config?.url,
             // these are related to b2c graph response, maybe handle differently if we have more external services
             ...(error.response?.data.error.code && { code: error.response?.data.error.code }),
             ...(error.response?.data.error.message && { message: error.response?.data.error.message })

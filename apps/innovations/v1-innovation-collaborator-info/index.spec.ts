@@ -4,7 +4,7 @@ import { InnovationCollaboratorStatusEnum } from '@innovations/shared/enums';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@innovations/shared/tests';
 import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@innovations/shared/types';
-import { randEmail, randFullName, randPastDate, randProductName, randRole, randText, randUuid } from '@ngneat/falso';
+import { randEmail, randFullName, randPastDate, randProductName, randRole, randUuid } from '@ngneat/falso';
 import { InnovationCollaboratorsService } from '../_services/innovation-collaborators.service';
 import type { ResponseDTO } from './transformation.dtos';
 import type { ParamsType } from './validation.schemas';
@@ -30,8 +30,7 @@ const expected = {
   status: InnovationCollaboratorStatusEnum.ACTIVE,
   innovation: {
     id: randUuid(),
-    name: randProductName(),
-    description: randText()
+    name: randProductName()
     // owner: { id: randUuid(), name: randFullName() }
   },
   invitedAt: randPastDate()

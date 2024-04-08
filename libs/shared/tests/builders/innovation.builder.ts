@@ -2,6 +2,7 @@ import { randBoolean, randCountry, randProduct, randText } from '@ngneat/falso';
 import type { DeepPartial, EntityManager } from 'typeorm';
 
 import { InnovationDocumentEntity } from '../../entities/innovation/innovation-document.entity';
+import { InnovationDocumentDraftEntity } from '../../entities/innovation/innovation-document-draft.entity';
 import { InnovationEntity } from '../../entities/innovation/innovation.entity';
 import { InnovationSectionStatusEnum, InnovationStatusEnum } from '../../enums/innovation.enums';
 import { NotFoundError } from '../../errors/errors.config';
@@ -32,8 +33,6 @@ export type TestInnovationType = {
 export class InnovationBuilder extends BaseBuilder {
   private innovation: DeepPartial<InnovationEntity> = {
     name: randProduct().title,
-    description: randProduct().description,
-    countryName: randCountry(),
     status: InnovationStatusEnum.CREATED,
     owner: null,
     assessments: [],
@@ -46,9 +45,9 @@ export class InnovationBuilder extends BaseBuilder {
     version: '202304',
     INNOVATION_DESCRIPTION: {
       name: this.innovation.name!,
-      description: this.innovation.description!,
-      countryName: this.innovation.countryName,
-      postcode: this.innovation.postcode ?? undefined,
+      description: randProduct().description,
+      countryName: randCountry(),
+      postcode: undefined,
 
       areas: ['COVID_19'],
       careSettings: ['INDUSTRY'],
@@ -68,7 +67,8 @@ export class InnovationBuilder extends BaseBuilder {
       howInnovationWork: randText(),
       impactDiseaseCondition: randBoolean() ? 'YES' : 'NO',
       keyHealthInequalities: ['NONE'],
-      problemsTackled: randBoolean() ? 'YES' : 'NO'
+      problemsTackled: randBoolean() ? 'YES' : 'NO',
+      hasProductServiceOrPrototype: randBoolean() ? 'YES' : 'NO'
     },
     EVIDENCE_OF_EFFECTIVENESS: {
       hasEvidence: randBoolean() ? 'YES' : 'NOT_YET',
@@ -172,6 +172,13 @@ export class InnovationBuilder extends BaseBuilder {
 
     await this.getEntityManager()
       .getRepository(InnovationDocumentEntity)
+      .save({
+        innovation: { id: savedInnovation.id },
+        version: this.document.version,
+        document: this.document
+      });
+    await this.getEntityManager()
+      .getRepository(InnovationDocumentDraftEntity)
       .save({
         innovation: { id: savedInnovation.id },
         version: this.document.version,

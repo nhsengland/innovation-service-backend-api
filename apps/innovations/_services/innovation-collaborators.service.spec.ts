@@ -248,7 +248,6 @@ describe('Innovation Collaborators Suite', () => {
           innovation: {
             id: innovation.id,
             name: innovation.name,
-            description: expect.any(String),
             owner: { id: scenario.users.johnInnovator.id, name: scenario.users.johnInnovator.name }
           },
           invitedAt: expect.any(Date)
@@ -272,7 +271,6 @@ describe('Innovation Collaborators Suite', () => {
           innovation: {
             id: innovation.id,
             name: innovation.name,
-            description: expect.any(String),
             owner: { id: scenario.users.johnInnovator.id, name: scenario.users.johnInnovator.name }
           },
           invitedAt: expect.any(Date)
@@ -297,7 +295,6 @@ describe('Innovation Collaborators Suite', () => {
           innovation: {
             id: innovation.id,
             name: innovation.name,
-            description: expect.any(String),
             owner: { id: scenario.users.johnInnovator.id, name: scenario.users.johnInnovator.name }
           },
           invitedAt: expect.any(Date)

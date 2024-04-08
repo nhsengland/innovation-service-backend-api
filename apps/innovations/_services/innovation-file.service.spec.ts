@@ -1366,7 +1366,12 @@ describe('Services / Innovation File service suite', () => {
 
       const keys = sut['contextTypeId2Key'];
 
-      const res = await sut['files2ResolvedContexts'](filesParameter, innovation.id, em);
+      const res = await sut['files2ResolvedContexts'](
+        DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
+        filesParameter,
+        innovation.id,
+        em
+      );
       const expected = new Map();
       files.forEach(f => {
         const { type, id } = f.context;

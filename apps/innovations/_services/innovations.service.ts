@@ -4,6 +4,7 @@ import { Brackets, EntityManager, In, SelectQueryBuilder } from 'typeorm';
 import {
   ActivityLogEntity,
   InnovationAssessmentEntity,
+  InnovationDocumentDraftEntity,
   InnovationDocumentEntity,
   InnovationEntity,
   InnovationExportRequestEntity,
@@ -60,8 +61,10 @@ import { createDocumentFromInnovation } from '@innovations/shared/entities/innov
 import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import { ActionEnum } from '@innovations/shared/services/integrations/audit.service';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import { groupBy, isString, mapValues, pick, snakeCase } from 'lodash';
+import { groupBy, isString, mapValues, omit, pick, snakeCase } from 'lodash';
 import { BaseService } from './base.service';
+import type { InnovationDocumentService } from './innovation-document.service';
+import SYMBOLS from './symbols';
 
 // TODO move types
 export const InnovationListSelectType = [
@@ -72,6 +75,7 @@ export const InnovationListSelectType = [
   'groupedStatus',
   'submittedAt',
   'updatedAt',
+  'lastAssessmentRequestAt',
   // Document fields
   'careSettings',
   'categories',
@@ -140,7 +144,12 @@ export type InnovationListResponseType<S extends InnovationListSelectType, K ext
   [k in K]: InnovationListFullResponseType[k];
 };
 
-export const DateFilterFieldsType = ['submittedAt', 'updatedAt', 'support.updatedAt'] as const;
+export const DateFilterFieldsType = [
+  'lastAssessmentRequestAt',
+  'submittedAt',
+  'updatedAt',
+  'support.updatedAt'
+] as const;
 export type DateFilterFieldsType = (typeof DateFilterFieldsType)[number];
 
 export const HasAccessThroughKeys = ['owner', 'collaborator'] as const;
@@ -190,7 +199,8 @@ type UserWithRoleDTO = { id: string; name: string | null }; // role: ServiceRole
 export class InnovationsService extends BaseService {
   constructor(
     @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
-    @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService
+    @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
+    @inject(SYMBOLS.InnovationDocumentService) private innovationDocumentService: InnovationDocumentService
   ) {
     super();
   }
@@ -1128,13 +1138,10 @@ export class InnovationsService extends BaseService {
       .select([
         'innovation.id',
         'innovation.name',
-        'innovation.description',
         'innovation.status',
         'innovation.statusUpdatedAt',
         'innovation.archivedStatus',
         'innovation.lastAssessmentRequestAt',
-        'innovation.countryName',
-        'innovation.postcode',
         'innovation.createdAt',
         'innovationOwner.id',
         'innovationOwner.status',
@@ -1190,13 +1197,21 @@ export class InnovationsService extends BaseService {
     }
 
     // Only fetch the document version and category data (maybe create a helper for this in the future)
-    const documentData = await connection
-      .createQueryBuilder(InnovationDocumentEntity, 'innovationDocument')
+    let documentDataQuery: SelectQueryBuilder<InnovationDocumentEntity | InnovationDocumentDraftEntity> =
+      connection.createQueryBuilder(InnovationDocumentEntity, 'innovationDocument');
+    if ([ServiceRoleEnum.INNOVATOR, ServiceRoleEnum.ADMIN].includes(domainContext.currentRole.role)) {
+      documentDataQuery = connection.createQueryBuilder(InnovationDocumentDraftEntity, 'innovationDocument');
+    }
+
+    const documentData = await documentDataQuery
       .select("JSON_QUERY(document, '$.INNOVATION_DESCRIPTION.categories')", 'categories')
       .addSelect(
         "JSON_VALUE(document, '$.INNOVATION_DESCRIPTION.otherCategoryDescription')",
         'otherCategoryDescription'
       )
+      .addSelect("JSON_VALUE(document, '$.INNOVATION_DESCRIPTION.description')", 'description')
+      .addSelect("JSON_VALUE(document, '$.INNOVATION_DESCRIPTION.countryName')", 'countryName')
+      .addSelect("JSON_VALUE(document, '$.INNOVATION_DESCRIPTION.postcode')", 'postcode')
       .addSelect('version', 'version')
       .where('innovationDocument.id = :innovationId', { innovationId: innovation.id })
       .getRawOne();
@@ -1267,14 +1282,14 @@ export class InnovationsService extends BaseService {
     return {
       id: innovation.id,
       name: innovation.name,
-      description: innovation.description,
+      description: documentData.description,
       version: documentData.version,
       status: innovation.status,
       groupedStatus: innovation.innovationGroupedStatus.groupedStatus,
       statusUpdatedAt: innovation.statusUpdatedAt,
       submittedAt: innovation.lastAssessmentRequestAt,
-      countryName: innovation.countryName,
-      postCode: innovation.postcode,
+      countryName: documentData.countryName,
+      postCode: documentData.postcode,
       categories,
       otherCategoryDescription: documentData.otherCategoryDescription,
       ...(innovation.archivedStatus ? { archivedStatus: innovation.archivedStatus } : {}),
@@ -1377,10 +1392,7 @@ export class InnovationsService extends BaseService {
         InnovationEntity.new({
           name: data.name,
 
-          countryName: data.countryName,
-          description: data.description,
           owner: UserEntity.new({ id: domainContext.id }),
-          postcode: data.postcode,
           status: InnovationStatusEnum.CREATED,
           statusUpdatedAt: new Date(),
 
@@ -1391,10 +1403,9 @@ export class InnovationsService extends BaseService {
         })
       );
 
-      await transaction.save(
-        InnovationDocumentEntity,
-        createDocumentFromInnovation(savedInnovation, { website: data.website })
-      );
+      const document = createDocumentFromInnovation(savedInnovation, data);
+      await transaction.save(InnovationDocumentEntity, document);
+      await transaction.save(InnovationDocumentDraftEntity, omit(document, ['isSnapshot', 'description']));
 
       // Mark some section to status DRAFT.
       const sectionsToBeInDraft: CurrentCatalogTypes.InnovationSections[] = ['INNOVATION_DESCRIPTION'];
@@ -1414,11 +1425,7 @@ export class InnovationsService extends BaseService {
 
       await this.domainService.innovations.addActivityLog(
         transaction,
-        {
-          activity: ActivityEnum.INNOVATION_CREATION,
-          domainContext,
-          innovationId: savedInnovation.id
-        },
+        { activity: ActivityEnum.INNOVATION_CREATION, domainContext, innovationId: savedInnovation.id },
         {}
       );
 
@@ -1689,6 +1696,11 @@ export class InnovationsService extends BaseService {
           archiveReason: null
         }
       );
+
+      // Sync the Submitted document with the Draft document
+      await this.innovationDocumentService.syncDocumentVersions(domainContext, innovationId, transaction, {
+        updatedAt: now
+      });
 
       await this.domainService.innovations.addActivityLog(
         transaction,

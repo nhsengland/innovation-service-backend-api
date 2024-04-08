@@ -818,8 +818,6 @@ paths:
                         format: uuid
                       name:
                         type: string
-                      description:
-                        type: string
                       owner:
                         type: object
                         properties:
@@ -1033,6 +1031,7 @@ paths:
                 field:
                   type: string
                   enum:
+                    - lastAssessmentRequestAt
                     - submittedAt
                     - updatedAt
                     - support.updatedAt
@@ -1083,6 +1082,7 @@ paths:
                 - groupedStatus
                 - submittedAt
                 - updatedAt
+                - lastAssessmentRequestAt
                 - careSettings
                 - categories
                 - countryName
@@ -2312,16 +2312,29 @@ paths:
       summary: Submit an innovation section.
       operationId: v1-innovation-section-submit
       parameters:
-        - in: path
-          name: innovationId
+        - name: innovationId
+          in: path
           required: true
           schema:
             type: string
-        - in: path
-          name: sectionKey
+            format: uuid
+        - name: sectionKey
+          in: path
           required: true
           schema:
             type: string
+            enum:
+              - INNOVATION_DESCRIPTION
+              - UNDERSTANDING_OF_NEEDS
+              - EVIDENCE_OF_EFFECTIVENESS
+              - MARKET_RESEARCH
+              - CURRENT_CARE_PATHWAY
+              - TESTING_WITH_USERS
+              - REGULATIONS_AND_STANDARDS
+              - INTELLECTUAL_PROPERTY
+              - REVENUE_MODEL
+              - COST_OF_INNOVATION
+              - DEPLOYMENT
       requestBody:
         description: Innovation section submit request body.
         content:
@@ -2560,10 +2573,10 @@ paths:
       parameters:
         - name: innovationId
           in: path
-          description: Innovation ID
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         "200":
           description: Innovation submitted successfully.
