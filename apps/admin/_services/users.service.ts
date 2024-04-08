@@ -224,7 +224,7 @@ export class UsersService extends BaseService {
     })[];
   }> {
     const em = entityManager ?? this.sqlConnection.manager;
-    const identifier = this.isUuid(encodeURIComponent(idOrEmail)) ? { userId: idOrEmail } : { email: idOrEmail };
+    const identifier = this.isUuid(idOrEmail) ? { userId: idOrEmail } : { email: idOrEmail };
     const user = await this.domainService.users.getUserInfo(identifier, {}, em);
 
     return {

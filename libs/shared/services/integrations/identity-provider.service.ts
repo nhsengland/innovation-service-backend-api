@@ -162,8 +162,8 @@ export class IdentityProviderService {
     phone: null | string;
   }> {
     await this.verifyAccessToken();
-
-    const odataFilter = `$filter=identities/any(c:c/issuerAssignedId eq '${encodeURIComponent(email)}' and c/issuer eq '${this.tenantName}.onmicrosoft.com')`;
+    const encodedEmail = encodeURIComponent(email);
+    const odataFilter = `$filter=identities/any(c:c/issuerAssignedId eq '${encodedEmail}' and c/issuer eq '${this.tenantName}.onmicrosoft.com')`;
 
     const response = await axios
       .get<b2cGetUserInfoByEmailDTO>(`https://graph.microsoft.com/v1.0/users?${odataFilter}`, {

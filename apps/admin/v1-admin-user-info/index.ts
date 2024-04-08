@@ -26,7 +26,7 @@ class V1AdminUserInfo {
 
       await authorizationService.validate(context).checkAdminType().verify();
 
-      const result = await usersService.getUserInfo(params.userIdOrEmail);
+      const result = await usersService.getUserInfo(encodeURIComponent(params.userIdOrEmail));
 
       context.res = ResponseHelper.Ok<ResponseDTO>(result);
       return;
