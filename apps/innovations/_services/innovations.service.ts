@@ -94,7 +94,9 @@ export const InnovationListSelectType = [
   'assessment.updatedAt',
   'engagingOrganisations',
   'engagingUnits',
-  'suggestedOrganisations',
+  // NOTE: The suggestion is always related to the unit from the QA accessing
+  'suggestion.suggestedBy',
+  'suggestion.suggestedOn',
   'support.id',
   'support.status',
   'support.updatedAt',
@@ -118,6 +120,8 @@ export type InnovationListSelectType =
   | 'owner.id'
   | 'owner.name'
   | 'owner.companyName'
+  | 'suggestion.suggestedBy'
+  | 'suggestion.suggestedOn'
   | 'statistics.notifications'
   | 'statistics.tasks'
   | 'statistics.messages';
@@ -134,6 +138,10 @@ export type InnovationListFullResponseType = Omit<InnovationListViewFields, 'eng
     updatedAt: Date | null;
     updatedBy: string | null;
     closedReason: 'ARCHIVED' | 'STOPPED_SHARED' | 'CLOSED' | null;
+  } | null;
+  suggestion: {
+    suggestedBy: string[];
+    suggestedOn: Date;
   } | null;
   owner: { id: string; name: string | null; companyName: string | null } | null;
   statistics: { notifications: number; tasks: number; messages: number };
@@ -466,6 +474,7 @@ export class InnovationsService extends BaseService {
     assessment: this.withAssessment.bind(this),
     owner: this.withOwner.bind(this),
     support: this.withSupport.bind(this),
+    suggestion: this.withSuggestion.bind(this),
     statistics: () => {}
   };
 
@@ -546,6 +555,29 @@ export class InnovationsService extends BaseService {
           query.addSelect('support.status');
         }
       }
+    }
+  }
+
+  private withSuggestion(
+    domainContext: DomainContextType,
+    query: SelectQueryBuilder<InnovationListView>,
+    fields: InnovationListChildrenType<'suggestion'>[] = ['suggestedBy', 'suggestedOn'],
+    _filters?: Partial<InnovationListFilters>
+  ): void {
+    if (fields.length) {
+      const unitId = isAccessorDomainContextType(domainContext) ? domainContext.organisation.organisationUnit.id : null;
+
+      if (!unitId) {
+        throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD, {
+          message: 'Suggestion is only valid for accessor domain context'
+        });
+      }
+
+      query
+        .addSelect(fields.map(f => `suggestion.${f}`))
+        .leftJoin('innovation.suggestions', 'suggestion', 'suggestion.suggested_unit_id = :requestUnitId', {
+          requestUnitId: unitId
+        });
     }
   }
   //#endregion
@@ -881,12 +913,6 @@ export class InnovationsService extends BaseService {
           `(assessmentOrganisationUnits.id = :suggestedOrganisationUnitId OR supportLogOrgUnit.id =:suggestedOrganisationUnitId)`,
           { suggestedOrganisationUnitId: domainContext.organisation.organisationUnit.id }
         );
-
-      // while ugly the above is better performant when filtering only by suggested units without using documents and other filters, pretty much the same otherwise (maybe a bit slower)
-      // query.andWhere(
-      //   `EXISTS(SELECT 1 FROM OPENJSON(innovation.suggested_units) WHERE JSON_VALUE(value, '$.unitId') = :contextOrganisationUnitId)`,
-      //   { contextOrganisationUnitId: domainContext.organisation.organisationUnit.id }
-      // );
     }
   }
 
@@ -972,6 +998,7 @@ export class InnovationsService extends BaseService {
     assessment: this.displayAssessment.bind(this),
     engagingUnits: this.displayEngagingUnits.bind(this),
     support: this.displaySupport.bind(this),
+    suggestion: this.displaySuggestion.bind(this),
     owner: this.displayOwner.bind(this),
     statistics: this.displayStatistics.bind(this) // Finish the display of statistics
   };
@@ -1053,6 +1080,20 @@ export class InnovationsService extends BaseService {
             : null
       })
     };
+  }
+
+  private displaySuggestion(
+    item: InnovationListView,
+    fields: InnovationListChildrenType<'suggestion'>[],
+    _extra: PickHandlerReturnType<typeof this.postHandlers, 'users'>
+  ): Partial<InnovationListFullResponseType['suggestion']> {
+    const suggestion = item.suggestions?.shift();
+    return suggestion
+      ? {
+          ...(fields.includes('suggestedBy') && { suggestedBy: suggestion.suggestedBy }),
+          ...(fields.includes('suggestedOn') && { suggestedOn: suggestion.suggestedOn })
+        }
+      : null;
   }
 
   private displayOwner(

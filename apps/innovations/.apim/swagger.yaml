@@ -1099,7 +1099,8 @@ paths:
                 - assessment.updatedAt
                 - engagingOrganisations
                 - engagingUnits
-                - suggestedOrganisations
+                - suggestion.suggestedBy
+                - suggestion.suggestedOn
                 - support.id
                 - support.status
                 - support.updatedAt
