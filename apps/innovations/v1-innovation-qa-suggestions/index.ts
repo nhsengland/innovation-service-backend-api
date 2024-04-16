@@ -27,24 +27,12 @@ class V1GetInnovationQASuggestions {
       await authorizationService
         .validate(context)
         .setInnovation(params.innovationId)
-        .checkAssessmentType()
         .checkAccessorType()
-        .checkInnovatorType()
-        .checkAdminType()
         .checkInnovation()
         .verify();
 
       const result = await innovationSupportsService.getInnovationQASuggestions(params.innovationId);
-      // const result = [
-      //   {
-      //     suggestion_id: '1',
-      //     suggestor_unit_id: '2',
-      //     thread: {
-      //       id: '1',
-      //       message: 'blabla'
-      //     }
-      //   }
-      // ];
+
       context.res = ResponseHelper.Ok<ResponseDTO>(result);
       return;
     } catch (error) {
