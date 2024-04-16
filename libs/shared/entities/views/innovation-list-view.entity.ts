@@ -9,6 +9,7 @@ import type {
 import { InnovationAssessmentEntity } from '../innovation/innovation-assessment.entity';
 import { InnovationSupportEntity } from '../innovation/innovation-support.entity';
 import { OrganisationEntity } from '../organisation/organisation.entity';
+import { InnovationSuggestedUnitsView } from './innovation-suggested-units.view.entity';
 
 // NOTE: The document information is from the submitted one
 @ViewEntity('innovation_list_view')
@@ -82,14 +83,14 @@ export class InnovationListView {
   @Column({ name: 'engaging_units', type: 'simple-json' })
   engagingUnits: { unitId: string; name: string; acronym: string; assignedAccessors: string[] | null }[] | null;
 
-  @Column({ name: 'suggested_units', type: 'simple-json' })
-  suggestedUnits: { unitId: string; name: string; acronym: string }[] | null;
-
   @OneToOne(() => InnovationAssessmentEntity, record => record.innovation)
   assessment: InnovationAssessmentEntity | null;
 
   @OneToMany(() => InnovationSupportEntity, record => record.innovation)
   supports: InnovationSupportEntity[] | null;
+
+  @OneToMany(() => InnovationSuggestedUnitsView, record => record.innovation)
+  suggestions: InnovationSuggestedUnitsView[] | null;
 
   @ManyToMany(() => OrganisationEntity, record => record.innovationShares, {
     nullable: true

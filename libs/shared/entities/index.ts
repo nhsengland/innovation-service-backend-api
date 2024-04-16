@@ -80,6 +80,7 @@ import { InnovationTaskDescriptionsViewEntity } from './views/innovation-task-de
 import { SupportKPIViewEntity } from './views/support-kpi.view.entity';
 import { SupportLastActivityUpdateView } from './views/support-last-activity-update.view.entity';
 import { DocumentsStatisticsViewEntity } from './views/documents-statistics.view.entity';
+import { InnovationSuggestedUnitsView } from './views/innovation-suggested-units.view.entity';
 export { InnovationGroupedStatusViewEntity } from './views/innovation-grouped-status.view.entity';
 export { LastSupportStatusViewEntity } from './views/last-support-status.view.entity';
 export { InnovationListView } from './views/innovation-list-view.entity';
@@ -87,6 +88,7 @@ export { InnovationTaskDescriptionsViewEntity } from './views/innovation-task-de
 export { SupportKPIViewEntity } from './views/support-kpi.view.entity';
 export { SupportLastActivityUpdateView } from './views/support-last-activity-update.view.entity';
 export { DocumentsStatisticsViewEntity } from './views/documents-statistics.view.entity';
+export { InnovationSuggestedUnitsView } from './views/innovation-suggested-units.view.entity';
 
 // Entities lists.
 export const GENERAL_ENTITIES = [AuditEntity, TermsOfUseEntity, TermsOfUseUserEntity];
@@ -130,5 +132,6 @@ export const VIEW_ENTITIES = [
   SupportKPIViewEntity,
   SupportLastActivityUpdateView,
   DocumentsStatisticsViewEntity,
+  InnovationSuggestedUnitsView,
   InnovationListView
 ];
