@@ -11,7 +11,7 @@ export class createInnovationSuggestedUnitsView1713262730895 implements Migratio
       FROM (
           SELECT
               isl.innovation_id,
-              COALESCE(suggestedByUnit.id, '00000000-0000-0000-0000-000000000001') as suggested_by_id,
+              COALESCE(suggestedByUnit.id, '00000000-0000-0000-0001-000000000001') as suggested_by_id,
               COALESCE(suggestedByUnit.acronym, 'Needs assessment') as suggested_by_acronym,
               islou.organisation_unit_id as suggested_unit_id,
               CASE WHEN isl.[type] = 'ASSESSMENT_SUGGESTION' THEN max(isl.created_at) ELSE min(isl.created_at) END as suggested_on

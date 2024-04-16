@@ -1093,7 +1093,7 @@ export class InnovationsService extends BaseService {
           ...(fields.includes('suggestedBy') && { suggestedBy: suggestion.suggestedBy }),
           ...(fields.includes('suggestedOn') && { suggestedOn: suggestion.suggestedOn })
         }
-      : {};
+      : null;
   }
 
   private displayOwner(
