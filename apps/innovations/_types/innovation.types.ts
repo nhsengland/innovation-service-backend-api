@@ -115,6 +115,15 @@ export type InnovationAllSectionsType = {
   sections: InnovationExportSectionItemType[];
 }[];
 
+export type InnovationQASuggestionType = {
+  suggestion_id: string;
+  suggestor_unit: string;
+  thread: {
+    id: string;
+    message: string;
+  };
+}[];
+
 export type InnovationSuggestionsType = {
   accessors: InnovationSuggestionAccessor[];
   assessment: {

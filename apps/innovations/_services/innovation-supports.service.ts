@@ -35,6 +35,7 @@ import type { DomainContextType, SupportLogProgressUpdate } from '@innovations/s
 import { InnovationThreadSubjectEnum } from '../_enums/innovation.enums';
 import type {
   InnovationFileType,
+  InnovationQASuggestionType as InnovationQASuggestionsType,
   InnovationSuggestionAccessor,
   InnovationSuggestionsType
 } from '../_types/innovation.types';
@@ -173,6 +174,32 @@ export class InnovationSupportsService extends BaseService {
         ...(engagingAccessors === undefined ? {} : { engagingAccessors })
       };
     });
+  }
+
+  async getInnovationQASuggestions(innovationId: string): Promise<InnovationQASuggestionsType> {
+    const qaSuggestions = await this.sqlConnection.manager
+      .createQueryBuilder(InnovationSupportLogEntity, 'log')
+      .select(['log.id', 'log.createdAt', 'log.description', 'unit.name'])
+      .leftJoin('log.organisationUnit', 'unit')
+      .leftJoin('log.innovation', 'innovation')
+      .where('log.innovation_id = :innovationId', { innovationId })
+      .andWhere('log.type = :type', { type: 'ACCESSOR_SUGGESTION' })
+      .andWhere('log.createdAt > innovation.statusUpdatedAt')
+      .getMany();
+
+    let result: InnovationQASuggestionsType = [];
+    result = [
+      ...qaSuggestions.map(s => ({
+        suggestion_id: s.id,
+        suggestor_unit: s.organisationUnit?.name ?? '',
+        thread: {
+          id: 'PLACEHOLDER_THREAD_ID',
+          message: s.description ?? ''
+        }
+      }))
+    ];
+
+    return result;
   }
 
   /**

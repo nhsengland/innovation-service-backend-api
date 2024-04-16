@@ -2111,6 +2111,25 @@ paths:
           description: Ok.
         "400":
           description: Bad request.
+  /v1/{innovationId}/qa-suggestions-info:
+    get:
+      description: Get suggestions made by other QAs to the innovation
+      operationId: v1-innovation-qa-suggestions
+      tags:
+        - Innovation QAs Suggestions
+      parameters:
+        - in: path
+          name: innovationId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+        "404":
+          description: Not found
   /v1/{innovationId}/reassessments:
     post:
       operationId: v1-innovation-reassessment-request-create
