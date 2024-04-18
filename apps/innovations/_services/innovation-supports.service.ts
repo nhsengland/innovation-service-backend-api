@@ -402,16 +402,16 @@ export class InnovationSupportsService extends BaseService {
     return result;
   }
 
-  async createInnovationSupportLogs(
+  async createInnovationOrganisationsSuggestions(
     domainContext: DomainContextType,
     innovationId: string,
     data: {
-      type: InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION | InnovationSupportLogTypeEnum.STATUS_UPDATE;
+      type: InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION;
       description: string;
       organisationUnits?: string[];
     },
     entityManager?: EntityManager
-  ): Promise<{ id: string }> {
+  ): Promise<void> {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const organisationUnitId = domainContext.organisation?.organisationUnit?.id || '';
@@ -433,23 +433,7 @@ export class InnovationSupportsService extends BaseService {
 
     const innovationSupport = innovation.innovationSupports.find(sup => sup.organisationUnit.id === organisationUnitId);
 
-    const result = await connection.transaction(async transaction => {
-      const savedSupportLog = await this.domainService.innovations.addSupportLog(
-        transaction,
-        { id: domainContext.id, roleId: domainContext.currentRole.id },
-        innovationId,
-        {
-          description: data.description,
-          supportStatus:
-            innovationSupport && innovationSupport.status
-              ? innovationSupport.status
-              : InnovationSupportStatusEnum.UNASSIGNED,
-          type: data.type,
-          unitId: domainContext.organisation?.organisationUnit?.id ?? '',
-          suggestedOrganisationUnits: data.organisationUnits ?? []
-        }
-      );
-
+    await connection.transaction(async transaction => {
       if (
         data.type === InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION &&
         data?.organisationUnits &&
@@ -457,20 +441,37 @@ export class InnovationSupportsService extends BaseService {
       ) {
         const units = await connection
           .createQueryBuilder(OrganisationUnitEntity, 'unit')
+          .select(['unit.id', 'unit.name'])
           .where('unit.id IN (:...organisationUnits)', {
             organisationUnits: data?.organisationUnits
           })
-          .getRawMany();
+          .getMany();
 
         const userUnitName = domainContext.organisation?.organisationUnit?.name ?? '';
 
-        const createThreadsPromises = units.map(async unit => {
+        for (const unit of units) {
+          const savedSupportLog = await this.domainService.innovations.addSupportLog(
+            transaction,
+            { id: domainContext.id, roleId: domainContext.currentRole.id },
+            innovationId,
+            {
+              description: data.description,
+              supportStatus:
+                innovationSupport && innovationSupport.status
+                  ? innovationSupport.status
+                  : InnovationSupportStatusEnum.UNASSIGNED,
+              type: data.type,
+              unitId: domainContext.organisation?.organisationUnit?.id ?? '',
+              suggestedOrganisationUnits: [unit.id]
+            }
+          );
+
           const thread = await this.innovationThreadsService.createThreadOrMessage(
             domainContext,
             innovationId,
             InnovationThreadSubjectEnum.ORGANISATION_SUGGESTION.replace('{{unit}}', userUnitName).replace(
               '{{suggestedUnit}}',
-              unit.unit_name
+              unit.name
             ),
             data.description,
             savedSupportLog.id,
@@ -482,7 +483,7 @@ export class InnovationSupportsService extends BaseService {
           // Add qualifying accessors from unit as thread followers
           const userRoles = await connection
             .createQueryBuilder(UserRoleEntity, 'userRole')
-            .where('userRole.organisation_unit_id = :unitId', { unitId: unit.unit_id })
+            .where('userRole.organisation_unit_id = :unitId', { unitId: unit.id })
             .andWhere('userRole.role = :roleType', { roleType: ServiceRoleEnum.QUALIFYING_ACCESSOR })
             .andWhere('userRole.is_active = 1')
             .getMany();
@@ -496,9 +497,7 @@ export class InnovationSupportsService extends BaseService {
               transaction
             );
           }
-        });
-
-        await Promise.all(createThreadsPromises);
+        }
 
         await this.domainService.innovations.addActivityLog(
           transaction,
@@ -508,12 +507,10 @@ export class InnovationSupportsService extends BaseService {
             domainContext
           },
           {
-            organisations: units.map(unit => unit.unit_name)
+            organisations: units.map(unit => unit.name)
           }
         );
       }
-
-      return savedSupportLog;
     });
 
     if (
@@ -527,8 +524,6 @@ export class InnovationSupportsService extends BaseService {
         comment: data.description
       });
     }
-
-    return result;
   }
 
   async updateInnovationSupport(
