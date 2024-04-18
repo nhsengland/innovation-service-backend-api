@@ -61,7 +61,8 @@ export enum InnovationSupportLogTypeEnum {
 export enum ThreadContextTypeEnum {
   NEEDS_ASSESSMENT = 'NEEDS_ASSESSMENT',
   SUPPORT = 'SUPPORT',
-  TASK = 'TASK'
+  TASK = 'TASK',
+  ORGANISATION_SUGGESTION = 'ORGANISATION_SUGGESTION'
 }
 
 export enum InnovationExportRequestStatusEnum {
