@@ -11,7 +11,7 @@ import type { ResponseDTO } from './transformation.dtos';
 import { container } from '../_config';
 
 import type { InnovationSupportsService } from '../_services/innovation-supports.service';
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import { ParamsSchema, ParamsType } from './validation.schemas';
 import SYMBOLS from '../_services/symbols';
 
@@ -24,14 +24,17 @@ class V1GetInnovationQASuggestions {
     try {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
-      await authorizationService
+      const auth = await authorizationService
         .validate(context)
         .setInnovation(params.innovationId)
         .checkAccessorType()
         .checkInnovation()
         .verify();
 
-      const result = await innovationSupportsService.getInnovationQASuggestions(params.innovationId);
+      const result = await innovationSupportsService.getInnovationUnitsSuggestions(
+        auth.getContext(),
+        params.innovationId
+      );
 
       context.res = ResponseHelper.Ok<ResponseDTO>(result);
       return;
@@ -44,22 +47,13 @@ class V1GetInnovationQASuggestions {
 
 export default openApi(
   V1GetInnovationQASuggestions.httpTrigger as AzureFunction,
-  '/v1/{innovationId}/qa-suggestions-info',
+  '/v1/{innovationId}/units-suggestions',
   {
     get: {
-      description: 'Get suggestions made by other QAs to the innovation',
-      operationId: 'v1-innovation-qa-suggestions',
-      tags: ['Innovation QAs Suggestions'],
-      parameters: [
-        {
-          in: 'path',
-          name: 'innovationId',
-          required: true,
-          schema: {
-            type: 'string'
-          }
-        }
-      ],
+      description: 'Get suggestions made by other units to the innovation',
+      operationId: 'v1-innovation-units-suggestions',
+      tags: ['Innovation Suggestions'],
+      parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       responses: {
         200: {
           description: 'OK'

@@ -115,7 +115,7 @@ export type InnovationAllSectionsType = {
   sections: InnovationExportSectionItemType[];
 }[];
 
-export type InnovationQASuggestionType = {
+export type InnovationUnitSuggestionsType = {
   suggestion_id: string;
   suggestor_unit: string;
   thread: {

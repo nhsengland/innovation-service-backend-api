@@ -7,6 +7,7 @@ import {
   InnovationSupportEntity,
   InnovationSupportLogEntity,
   InnovationTaskEntity,
+  InnovationThreadEntity,
   OrganisationUnitEntity
 } from '@innovations/shared/entities';
 import {
@@ -23,6 +24,7 @@ import {
 } from '@innovations/shared/enums';
 import {
   BadRequestError,
+  ConflictError,
   GenericErrorsEnum,
   InnovationErrorsEnum,
   NotFoundError,
@@ -30,12 +32,16 @@ import {
   UnprocessableEntityError
 } from '@innovations/shared/errors';
 import type { DomainService, NotifierService } from '@innovations/shared/services';
-import type { DomainContextType, SupportLogProgressUpdate } from '@innovations/shared/types';
+import {
+  isAccessorDomainContextType,
+  type DomainContextType,
+  type SupportLogProgressUpdate
+} from '@innovations/shared/types';
 
 import { InnovationThreadSubjectEnum } from '../_enums/innovation.enums';
 import type {
   InnovationFileType,
-  InnovationQASuggestionType as InnovationQASuggestionsType,
+  InnovationUnitSuggestionsType as InnovationQASuggestionsType,
   InnovationSuggestionAccessor,
   InnovationSuggestionsType
 } from '../_types/innovation.types';
@@ -48,6 +54,7 @@ import type { InnovationFileService } from './innovation-file.service';
 import type { InnovationThreadsService } from './innovation-threads.service';
 import SYMBOLS from './symbols';
 import type { ValidationService } from './validation.service';
+import { AuthErrorsEnum } from '@innovations/shared/services/auth/authorization-validation.model';
 
 type UnitSupportInformationType = {
   id: string;
@@ -176,30 +183,56 @@ export class InnovationSupportsService extends BaseService {
     });
   }
 
-  async getInnovationQASuggestions(innovationId: string): Promise<InnovationQASuggestionsType> {
-    const qaSuggestions = await this.sqlConnection.manager
+  async getInnovationUnitsSuggestions(
+    domainContext: DomainContextType,
+    innovationId: string
+  ): Promise<InnovationQASuggestionsType> {
+    const unitId = isAccessorDomainContextType(domainContext) ? domainContext.organisation.organisationUnit.id : null;
+    if (!unitId) {
+      throw new ConflictError(AuthErrorsEnum.AUTH_MISSING_ORGANISATION_UNIT_CONTEXT);
+    }
+
+    const lastSupportStatusUpdate = await this.sqlConnection.manager
+      .createQueryBuilder(InnovationSupportEntity, 'support')
+      .select(['support.updatedAt'])
+      .where('support.innovation_id = :innovationId', { innovationId })
+      .andWhere('support.organisation_unit_id = :unitId', { unitId })
+      .orderBy('updated_at', 'DESC')
+      .getOne();
+
+    const unitsSuggestionsQuery = this.sqlConnection.manager
       .createQueryBuilder(InnovationSupportLogEntity, 'log')
-      .select(['log.id', 'log.createdAt', 'log.description', 'unit.name'])
-      .leftJoin('log.organisationUnit', 'unit')
-      .leftJoin('log.innovation', 'innovation')
+      .select(['log.id', 'log.createdAt', 'log.description', 'unit.name', 'thread.id'])
+      .addSelect('thread.id', 'threadId')
+      .innerJoin('log.organisationUnit', 'unit')
+      .innerJoin('log.suggestedOrganisationUnits', 'units')
+      .innerJoin('innovation_thread', 'thread', 'thread.context_id = log.id')
       .where('log.innovation_id = :innovationId', { innovationId })
       .andWhere('log.type = :type', { type: 'ACCESSOR_SUGGESTION' })
-      .andWhere('log.createdAt > innovation.statusUpdatedAt')
+      .andWhere('units.id = :unitId', { unitId });
+
+    if (lastSupportStatusUpdate) {
+      unitsSuggestionsQuery.andWhere('log.createdAt > :statusUpdatedAt', {
+        statusUpdatedAt: lastSupportStatusUpdate.updatedAt
+      });
+    }
+
+    const unitsSuggestions = await unitsSuggestionsQuery.getMany();
+
+    const threads = await this.sqlConnection.manager
+      .createQueryBuilder(InnovationThreadEntity, 'threads')
+      .select(['threads.id', 'threads.context_id'])
+      .where('threads.context_id IN :log_id', { log_id: unitsSuggestions.flatMap(s => s.id) })
       .getMany();
 
-    let result: InnovationQASuggestionsType = [];
-    result = [
-      ...qaSuggestions.map(s => ({
-        suggestion_id: s.id,
-        suggestor_unit: s.organisationUnit?.name ?? '',
-        thread: {
-          id: 'PLACEHOLDER_THREAD_ID',
-          message: s.description ?? ''
-        }
-      }))
-    ];
-
-    return result;
+    return unitsSuggestions.map(s => ({
+      suggestion_id: s.id,
+      suggestor_unit: s.organisationUnit?.name ?? '',
+      thread: {
+        id: threads.find(thread => thread.id === s.id)?.id ?? '',
+        message: s.description
+      }
+    }));
   }
 
   /**

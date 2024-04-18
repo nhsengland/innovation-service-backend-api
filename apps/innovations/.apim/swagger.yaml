@@ -2111,18 +2111,20 @@ paths:
           description: Ok.
         "400":
           description: Bad request.
-  /v1/{innovationId}/qa-suggestions-info:
+  /v1/{innovationId}/units-suggestions:
     get:
-      description: Get suggestions made by other QAs to the innovation
-      operationId: v1-innovation-qa-suggestions
+      description: Get suggestions made by other units to the innovation
+      operationId: v1-innovation-units-suggestions
       tags:
-        - Innovation QAs Suggestions
+        - Innovation Suggestions
       parameters:
-        - in: path
-          name: innovationId
+        - name: innovationId
+          in: path
           required: true
           schema:
             type: string
+            format: uuid
+            description: The innovation id.
       responses:
         "200":
           description: OK
