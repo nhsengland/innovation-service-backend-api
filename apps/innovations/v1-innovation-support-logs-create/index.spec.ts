@@ -33,7 +33,7 @@ afterEach(() => {
 });
 
 describe('v1-innovation-support-logs-create Suite', () => {
-  describe('204', () => {
+  describe('201', () => {
     it('should create an innovation support log', async () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.aliceQualifyingAccessor)
@@ -47,7 +47,7 @@ describe('v1-innovation-support-logs-create Suite', () => {
         })
         .call<never>(azureFunction);
 
-      expect(result.status).toBe(204);
+      expect(result.status).toBe(201);
       expect(mock).toHaveBeenCalledTimes(1);
     });
   });
@@ -55,7 +55,7 @@ describe('v1-innovation-support-logs-create Suite', () => {
   describe('Access', () => {
     it.each([
       ['Admin', 403, scenario.users.allMighty],
-      ['QA', 204, scenario.users.aliceQualifyingAccessor],
+      ['QA', 201, scenario.users.aliceQualifyingAccessor],
       ['A', 403, scenario.users.ingridAccessor],
       ['NA', 403, scenario.users.paulNeedsAssessor],
       ['Innovator owner', 403, scenario.users.johnInnovator],
