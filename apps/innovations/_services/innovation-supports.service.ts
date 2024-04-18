@@ -7,7 +7,8 @@ import {
   InnovationSupportEntity,
   InnovationSupportLogEntity,
   InnovationTaskEntity,
-  OrganisationUnitEntity
+  OrganisationUnitEntity,
+  UserRoleEntity
 } from '@innovations/shared/entities';
 import {
   ActivityEnum,
@@ -460,6 +461,44 @@ export class InnovationSupportsService extends BaseService {
             organisationUnits: data?.organisationUnits
           })
           .getRawMany();
+
+        const userUnitName = domainContext.organisation?.organisationUnit?.name ?? '';
+
+        const createThreadsPromises = units.map(async unit => {
+          const thread = await this.innovationThreadsService.createThreadOrMessage(
+            domainContext,
+            innovationId,
+            InnovationThreadSubjectEnum.ORGANISATION_SUGGESTION.replace('{{unit}}', userUnitName).replace(
+              '{{suggestedUnit}}',
+              unit.unit_name
+            ),
+            data.description,
+            savedSupportLog.id,
+            ThreadContextTypeEnum.ORGANISATION_SUGGESTION,
+            transaction,
+            false
+          );
+
+          // Add qualifying accessors from unit as thread followers
+          const userRoles = await connection
+            .createQueryBuilder(UserRoleEntity, 'userRole')
+            .where('userRole.organisation_unit_id = :unitId', { unitId: unit.unit_id })
+            .andWhere('userRole.role = :roleType', { roleType: ServiceRoleEnum.QUALIFYING_ACCESSOR })
+            .andWhere('userRole.is_active = 1')
+            .getMany();
+
+          if (userRoles.length) {
+            await this.innovationThreadsService.addFollowersToThread(
+              domainContext,
+              thread.thread.id,
+              userRoles.map(userRole => userRole.id),
+              false,
+              transaction
+            );
+          }
+        });
+
+        await Promise.all(createThreadsPromises);
 
         await this.domainService.innovations.addActivityLog(
           transaction,
