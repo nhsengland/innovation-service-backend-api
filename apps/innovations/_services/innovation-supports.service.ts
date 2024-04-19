@@ -220,17 +220,27 @@ export class InnovationSupportsService extends BaseService {
 
     const unitsSuggestions = await unitsSuggestionsQuery.getMany();
 
-    const threads = await this.sqlConnection.manager
-      .createQueryBuilder(InnovationThreadEntity, 'threads')
-      .select(['threads.id', 'threads.context_id'])
-      .where('threads.context_id IN :log_id', { log_id: unitsSuggestions.flatMap(s => s.id) })
-      .getMany();
+    if (unitsSuggestions.length === 0) {
+      return [];
+    }
+
+    const threads = new Map(
+      (
+        await this.sqlConnection.manager
+          .createQueryBuilder(InnovationThreadEntity, 'threads')
+          .select(['threads.id', 'threads.contextId'])
+          .where('threads.context_id IN (:...logId)', {
+            logId: unitsSuggestions.map(s => s.id)
+          })
+          .getMany()
+      ).map(t => [t.id, t.contextId])
+    );
 
     return unitsSuggestions.map(s => ({
-      suggestion_id: s.id,
-      suggestor_unit: s.organisationUnit?.name ?? '',
+      suggestionId: s.id,
+      suggestorUnit: s.organisationUnit?.name ?? '',
       thread: {
-        id: threads.find(thread => thread.id === s.id)?.id ?? '',
+        id: threads.get(s.id) ?? '',
         message: s.description
       }
     }));

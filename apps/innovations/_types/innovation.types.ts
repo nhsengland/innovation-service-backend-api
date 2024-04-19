@@ -116,8 +116,8 @@ export type InnovationAllSectionsType = {
 }[];
 
 export type InnovationUnitSuggestionsType = {
-  suggestion_id: string;
-  suggestor_unit: string;
+  suggestionId: string;
+  suggestorUnit: string;
   thread: {
     id: string;
     message: string;
