@@ -49,8 +49,7 @@ class V1NotificationsListener {
           data: {
             type: item.templateId,
             to: item.to,
-            params: item.params,
-            log: item.log
+            params: item.params
           }
         });
       }

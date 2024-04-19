@@ -6,11 +6,7 @@ import {
   NotificationUserEntity,
   UserRoleEntity
 } from '@notifications/shared/entities';
-import type {
-  NotificationCategoryType,
-  NotificationDetailType,
-  NotificationLogTypeEnum
-} from '@notifications/shared/enums';
+import type { NotificationCategoryType, NotificationDetailType } from '@notifications/shared/enums';
 
 import type { EmailTemplates, EmailTemplatesType } from '../_config';
 
@@ -30,13 +26,9 @@ export class DispatchService extends BaseService {
   async sendEmail<T extends keyof EmailTemplatesType>(
     type: keyof EmailTemplates,
     to: string,
-    params: EmailTemplatesType[T],
-    log?: {
-      type: NotificationLogTypeEnum;
-      params: Record<string, string | number>;
-    }
+    params: EmailTemplatesType[T]
   ): Promise<boolean> {
-    return this.emailService.sendEmail(type, to, params, log);
+    return this.emailService.sendEmail(type, to, params);
   }
 
   async saveInAppNotification(

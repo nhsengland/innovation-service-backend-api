@@ -90,7 +90,3 @@ export enum NotificationPreferenceEnum {
   YES = 'YES',
   NO = 'NO'
 }
-
-export enum NotificationLogTypeEnum {
-  QA_A_IDLE_SUPPORT = 'QA_A_IDLE_SUPPORT'
-}

@@ -2,7 +2,6 @@ import type { Context } from '@azure/functions';
 import {
   NotificationCategoryType,
   NotificationDetailType,
-  NotificationLogTypeEnum,
   NotificationPreferenceEnum,
   NotifierTypeEnum,
   ServiceRoleEnum
@@ -24,10 +23,6 @@ type HandlerEmailType<T> = Array<{
   to: EmailRecipientType | Omit<IdentityRecipientType, 'userId' | 'role'>; // maybe review this later and it will probably only require roleId
   //params: T extends keyof EmailTemplatesType ? EmailTemplatesType[T] : Record<string, never>;
   params: T extends keyof EmailTemplatesType ? EmailTemplatesType[T] : any; // legacy for now
-  log?: {
-    type: NotificationLogTypeEnum;
-    params: Record<string, string | number>;
-  };
   options?: {
     includeLocked?: boolean; // send email even if the user is locked
     ignorePreferences?: boolean; // ignore user email preferences when sending the email
@@ -40,10 +35,6 @@ type HandlerEmailOutboundType<T> = {
   to: string;
   // params: T extends keyof EmailTemplatesType ? EmailTemplatesType[T] : Record<string, never>;
   params: T extends keyof EmailTemplatesType ? EmailTemplatesType[T] : any; // legacy for now
-  log?: {
-    type: NotificationLogTypeEnum;
-    params: Record<string, string | number>;
-  };
 };
 
 type HandlerInAppType<T> = Array<{
@@ -120,8 +111,7 @@ export abstract class BaseHandler<
             ...recipient.params,
             ...(recipient.to.displayname && { display_name: recipient.to.displayname }),
             unsubscribe_url: unsubscribeUrl
-          },
-          log: recipient.log
+          }
         });
       } else {
         // skip if user is not active unless includeLocked is true
@@ -153,8 +143,7 @@ export abstract class BaseHandler<
               ...recipient.params,
               display_name: user.displayName,
               unsubscribe_url: unsubscribeUrl
-            },
-            log: recipient.log
+            }
           });
         }
       }
@@ -183,8 +172,7 @@ export abstract class BaseHandler<
         templateId: template,
         to: recipient,
         params: data.params,
-        ...(data.options && { options: data.options }),
-        ...(data.log && { log: data.log })
+        ...(data.options && { options: data.options })
       });
     });
   }
