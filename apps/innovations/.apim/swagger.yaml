@@ -4333,6 +4333,27 @@ paths:
           description: The innovation transfer does not exist
         "500":
           description: An error occurred while updating the innovation transfer status
+  /v1/{innovationId}/units-suggestions:
+    get:
+      description: Get suggestions made by other units to the innovation
+      operationId: v1-innovation-units-suggestions
+      tags:
+        - Innovation Suggestions
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            description: The innovation id.
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+        "404":
+          description: Not found
   /v1/{innovationId}/export-requests:
     post:
       operationId: v1-innovations-export-requests-create

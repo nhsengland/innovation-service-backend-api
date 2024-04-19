@@ -7,6 +7,7 @@ import {
   InnovationSupportEntity,
   InnovationSupportLogEntity,
   InnovationTaskEntity,
+  InnovationThreadEntity,
   OrganisationUnitEntity,
   UserRoleEntity
 } from '@innovations/shared/entities';
@@ -24,6 +25,7 @@ import {
 } from '@innovations/shared/enums';
 import {
   BadRequestError,
+  ConflictError,
   GenericErrorsEnum,
   InnovationErrorsEnum,
   NotFoundError,
@@ -31,11 +33,16 @@ import {
   UnprocessableEntityError
 } from '@innovations/shared/errors';
 import type { DomainService, NotifierService } from '@innovations/shared/services';
-import type { DomainContextType, SupportLogProgressUpdate } from '@innovations/shared/types';
+import {
+  isAccessorDomainContextType,
+  type DomainContextType,
+  type SupportLogProgressUpdate
+} from '@innovations/shared/types';
 
 import { InnovationThreadSubjectEnum } from '../_enums/innovation.enums';
 import type {
   InnovationFileType,
+  InnovationUnitSuggestionsType,
   InnovationSuggestionAccessor,
   InnovationSuggestionsType
 } from '../_types/innovation.types';
@@ -48,6 +55,7 @@ import type { InnovationFileService } from './innovation-file.service';
 import type { InnovationThreadsService } from './innovation-threads.service';
 import SYMBOLS from './symbols';
 import type { ValidationService } from './validation.service';
+import { AuthErrorsEnum } from '@innovations/shared/services/auth/authorization-validation.model';
 
 type UnitSupportInformationType = {
   id: string;
@@ -174,6 +182,66 @@ export class InnovationSupportsService extends BaseService {
         ...(engagingAccessors === undefined ? {} : { engagingAccessors })
       };
     });
+  }
+
+  async getInnovationUnitsSuggestions(
+    domainContext: DomainContextType,
+    innovationId: string
+  ): Promise<InnovationUnitSuggestionsType> {
+    const unitId = isAccessorDomainContextType(domainContext) ? domainContext.organisation.organisationUnit.id : null;
+    if (!unitId) {
+      throw new ConflictError(AuthErrorsEnum.AUTH_MISSING_ORGANISATION_UNIT_CONTEXT);
+    }
+
+    const lastSupportStatusUpdate = await this.sqlConnection.manager
+      .createQueryBuilder(InnovationSupportEntity, 'support')
+      .select(['support.updatedAt'])
+      .where('support.innovation_id = :innovationId', { innovationId })
+      .andWhere('support.organisation_unit_id = :unitId', { unitId })
+      .getOne();
+
+    const unitsSuggestionsQuery = this.sqlConnection.manager
+      .createQueryBuilder(InnovationSupportLogEntity, 'log')
+      .select(['log.id', 'log.createdAt', 'log.description', 'unit.name'])
+      .innerJoin('log.organisationUnit', 'unit')
+      .innerJoin('log.suggestedOrganisationUnits', 'units')
+      .innerJoin('innovation_thread', 'thread', 'thread.context_id = log.id')
+      .where('log.innovation_id = :innovationId', { innovationId })
+      .andWhere('log.type = :type', { type: 'ACCESSOR_SUGGESTION' })
+      .andWhere('units.id = :unitId', { unitId });
+
+    if (lastSupportStatusUpdate) {
+      unitsSuggestionsQuery.andWhere('log.createdAt > :statusUpdatedAt', {
+        statusUpdatedAt: lastSupportStatusUpdate.updatedAt
+      });
+    }
+
+    const unitsSuggestions = await unitsSuggestionsQuery.getMany();
+
+    if (unitsSuggestions.length === 0) {
+      return [];
+    }
+
+    const threads = new Map(
+      (
+        await this.sqlConnection.manager
+          .createQueryBuilder(InnovationThreadEntity, 'threads')
+          .select(['threads.id', 'threads.contextId'])
+          .where('threads.context_id IN (:...logId)', {
+            logId: unitsSuggestions.map(s => s.id)
+          })
+          .getMany()
+      ).map(t => [t.contextId, t.id])
+    );
+
+    return unitsSuggestions.map(s => ({
+      suggestionId: s.id,
+      suggestorUnit: s.organisationUnit?.name ?? '',
+      thread: {
+        id: threads.get(s.id) ?? '',
+        message: s.description
+      }
+    }));
   }
 
   /**
