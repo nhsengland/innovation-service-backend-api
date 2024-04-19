@@ -42,7 +42,7 @@ import {
 import { InnovationThreadSubjectEnum } from '../_enums/innovation.enums';
 import type {
   InnovationFileType,
-  InnovationUnitSuggestionsType as InnovationQASuggestionsType,
+  InnovationUnitSuggestionsType,
   InnovationSuggestionAccessor,
   InnovationSuggestionsType
 } from '../_types/innovation.types';
@@ -187,7 +187,7 @@ export class InnovationSupportsService extends BaseService {
   async getInnovationUnitsSuggestions(
     domainContext: DomainContextType,
     innovationId: string
-  ): Promise<InnovationQASuggestionsType> {
+  ): Promise<InnovationUnitSuggestionsType> {
     const unitId = isAccessorDomainContextType(domainContext) ? domainContext.organisation.organisationUnit.id : null;
     if (!unitId) {
       throw new ConflictError(AuthErrorsEnum.AUTH_MISSING_ORGANISATION_UNIT_CONTEXT);
