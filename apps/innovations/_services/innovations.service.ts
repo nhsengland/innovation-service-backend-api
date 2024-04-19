@@ -808,7 +808,7 @@ export class InnovationsService extends BaseService {
           }
           if (hasAccessThrough.includes('collaborator')) {
             qb.orWhere(
-              'innovation.id IN (SELECT innovation_id FROM innovation_collaborator WHERE user_id = :userId AND status = :collaboratorActiveStatus)',
+              'innovation.id IN (SELECT innovation_id FROM innovation_collaborator WHERE user_id = :userId AND status = :collaboratorActiveStatus AND deleted_at IS NULL)',
               {
                 userId: domainContext.id,
                 collaboratorActiveStatus: InnovationCollaboratorStatusEnum.ACTIVE
