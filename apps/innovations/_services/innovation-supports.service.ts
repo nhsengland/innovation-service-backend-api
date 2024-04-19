@@ -198,7 +198,6 @@ export class InnovationSupportsService extends BaseService {
       .select(['support.updatedAt'])
       .where('support.innovation_id = :innovationId', { innovationId })
       .andWhere('support.organisation_unit_id = :unitId', { unitId })
-      .orderBy('updated_at', 'DESC')
       .getOne();
 
     const unitsSuggestionsQuery = this.sqlConnection.manager
