@@ -14,6 +14,7 @@ import type { InnovationSupportsService } from '../_services/innovation-supports
 import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import { ParamsSchema, ParamsType } from './validation.schemas';
 import SYMBOLS from '../_services/symbols';
+import { ServiceRoleEnum } from '@innovations/shared/enums/user.enums';
 
 class V1GetInnovationQASuggestions {
   @JwtDecoder()
@@ -27,7 +28,7 @@ class V1GetInnovationQASuggestions {
       const auth = await authorizationService
         .validate(context)
         .setInnovation(params.innovationId)
-        .checkAccessorType()
+        .checkAccessorType({ organisationRole: [ServiceRoleEnum.QUALIFYING_ACCESSOR] })
         .checkInnovation()
         .verify();
 

@@ -203,8 +203,7 @@ export class InnovationSupportsService extends BaseService {
 
     const unitsSuggestionsQuery = this.sqlConnection.manager
       .createQueryBuilder(InnovationSupportLogEntity, 'log')
-      .select(['log.id', 'log.createdAt', 'log.description', 'unit.name', 'thread.id'])
-      .addSelect('thread.id', 'threadId')
+      .select(['log.id', 'log.createdAt', 'log.description', 'unit.name'])
       .innerJoin('log.organisationUnit', 'unit')
       .innerJoin('log.suggestedOrganisationUnits', 'units')
       .innerJoin('innovation_thread', 'thread', 'thread.context_id = log.id')
