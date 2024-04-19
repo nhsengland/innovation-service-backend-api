@@ -231,7 +231,7 @@ export class InnovationSupportsService extends BaseService {
             logId: unitsSuggestions.map(s => s.id)
           })
           .getMany()
-      ).map(t => [t.id, t.contextId])
+      ).map(t => [t.contextId, t.id])
     );
 
     return unitsSuggestions.map(s => ({
