@@ -27,7 +27,7 @@ class V1GetInnovationQASuggestions {
       const auth = await authorizationService
         .validate(context)
         .setInnovation(params.innovationId)
-        .checkAccessorType()
+        .checkAccessorType({ organisationRole: [ServiceRoleEnum.QUALIFYING_ACCESSOR] })
         .checkInnovation()
         .verify();
 
