@@ -2,22 +2,21 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
-import { ServiceRoleEnum } from '@innovations/shared/enums';
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
 import type { AuthorizationService } from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { CustomContextType } from '@innovations/shared/types';
 
+import type { ResponseDTO } from './transformation.dtos';
+
 import { container } from '../_config';
 
 import type { InnovationSupportsService } from '../_services/innovation-supports.service';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
+import { ParamsSchema, ParamsType } from './validation.schemas';
 import SYMBOLS from '../_services/symbols';
-import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
+import { ServiceRoleEnum } from '@innovations/shared/enums/user.enums';
 
-// TO DO: RENAME ENDPOINT
-// IMPROVE VALIDATOR
-// OPTIMIZE CREATE INNOVATION ORGANISATIONS SUGGESTIONS
-class V1InnovationsSupportLogCreate {
+class V1GetInnovationQASuggestions {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
     const authorizationService = container.get<AuthorizationService>(SHARED_SYMBOLS.AuthorizationService);
@@ -25,24 +24,20 @@ class V1InnovationsSupportLogCreate {
 
     try {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
-      const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
       const auth = await authorizationService
         .validate(context)
         .setInnovation(params.innovationId)
         .checkAccessorType({ organisationRole: [ServiceRoleEnum.QUALIFYING_ACCESSOR] })
         .checkInnovation()
-        .checkNotArchived()
         .verify();
-      const domainContext = auth.getContext();
 
-      await innovationSupportsService.createInnovationOrganisationsSuggestions(
-        domainContext,
-        params.innovationId,
-        body
+      const result = await innovationSupportsService.getInnovationUnitsSuggestions(
+        auth.getContext(),
+        params.innovationId
       );
 
-      context.res = ResponseHelper.Created();
+      context.res = ResponseHelper.Ok<ResponseDTO>(result);
       return;
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
@@ -51,32 +46,26 @@ class V1InnovationsSupportLogCreate {
   }
 }
 
-export default openApi(V1InnovationsSupportLogCreate.httpTrigger as AzureFunction, '/v1/{innovationId}/support-logs', {
-  post: {
-    description: 'Create support logs for an Innovation',
-    operationId: 'v1-innovation-support-logs-create',
-    tags: ['Create Innovation Support Logs'],
-    parameters: [
-      {
-        in: 'path',
-        name: 'innovationId',
-        required: true,
-        schema: {
-          type: 'string'
+export default openApi(
+  V1GetInnovationQASuggestions.httpTrigger as AzureFunction,
+  '/v1/{innovationId}/units-suggestions',
+  {
+    get: {
+      description: 'Get suggestions made by other units to the innovation',
+      operationId: 'v1-innovation-units-suggestions',
+      tags: ['Innovation Suggestions'],
+      parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
+      responses: {
+        200: {
+          description: 'OK'
+        },
+        400: {
+          description: 'Bad Request'
+        },
+        404: {
+          description: 'Not found'
         }
-      }
-    ],
-    responses: {
-      201: {
-        description:
-          'Creates a new innovation support logs for the innovation identified by the supplied Innovation ID.'
-      },
-      401: {
-        description: 'Unauthorised'
-      },
-      404: {
-        description: 'Not Found'
       }
     }
   }
-});
+);

@@ -17,7 +17,8 @@ export enum InnovationFileUploadContextEnum {
 export enum InnovationThreadSubjectEnum {
   NEEDS_ASSESSMENT_START = 'Needs assessment process started',
   NEEDS_ASSESSMENT_COMPLETE = 'Needs assessment process completed',
-  INNOVATION_SUPPORT_UPDATE = '{{Unit}} is supporting this innovation'
+  INNOVATION_SUPPORT_UPDATE = '{{Unit}} is supporting this innovation',
+  ORGANISATION_SUGGESTION = '{{unit}} has suggested {{suggestedUnit}} to support this innovation'
 }
 
 export enum InnovationStatisticsEnum {

@@ -1,12 +1,12 @@
 import azureFunction from '.';
 
-import { InnovationSupportLogTypeEnum } from '@innovations/shared/enums';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@innovations/shared/tests';
 import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@innovations/shared/types';
-import { randText } from '@ngneat/falso';
 import { InnovationSupportsService } from '../_services/innovation-supports.service';
-import type { BodyType, ParamsType } from './validation.schemas';
+import type { InnovationUnitSuggestionsType } from '../_types/innovation.types';
+import type { ResponseDTO } from './transformation.dtos';
+import type { ParamsType } from './validation.schemas';
 
 jest.mock('@innovations/shared/decorators', () => ({
   JwtDecoder: jest.fn().mockImplementation(() => (_: any, __: string, descriptor: PropertyDescriptor) => {
@@ -24,30 +24,27 @@ beforeAll(async () => {
   await testsHelper.init();
 });
 
+const expected: InnovationUnitSuggestionsType = [];
 const mock = jest
-  .spyOn(InnovationSupportsService.prototype, 'createInnovationOrganisationsSuggestions')
-  .mockResolvedValue();
+  .spyOn(InnovationSupportsService.prototype, 'getInnovationUnitsSuggestions')
+  .mockResolvedValue(expected);
 
 afterEach(() => {
   jest.clearAllMocks();
 });
 
-describe('v1-innovation-support-logs-create Suite', () => {
-  describe('201', () => {
-    it('should create an innovation support log', async () => {
+describe('v1-innovation-units-suggestions Suite', () => {
+  describe('200', () => {
+    it('should return a list of suggestions made by other units', async () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.aliceQualifyingAccessor)
         .setParams<ParamsType>({
           innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id
         })
-        .setBody<BodyType>({
-          description: randText(),
-          organisationUnits: [],
-          type: InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION
-        })
-        .call<never>(azureFunction);
+        .call<ResponseDTO>(azureFunction);
 
-      expect(result.status).toBe(201);
+      expect(result.body).toStrictEqual(expected);
+      expect(result.status).toBe(200);
       expect(mock).toHaveBeenCalledTimes(1);
     });
   });
@@ -55,7 +52,7 @@ describe('v1-innovation-support-logs-create Suite', () => {
   describe('Access', () => {
     it.each([
       ['Admin', 403, scenario.users.allMighty],
-      ['QA', 201, scenario.users.aliceQualifyingAccessor],
+      ['QA', 200, scenario.users.aliceQualifyingAccessor],
       ['A', 403, scenario.users.ingridAccessor],
       ['NA', 403, scenario.users.paulNeedsAssessor],
       ['Innovator owner', 403, scenario.users.johnInnovator],
@@ -67,33 +64,9 @@ describe('v1-innovation-support-logs-create Suite', () => {
         .setParams<ParamsType>({
           innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id
         })
-        .setBody<BodyType>({
-          description: randText(),
-          organisationUnits: [],
-          type: InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION
-        })
         .call<ErrorResponseType>(azureFunction);
 
       expect(result.status).toBe(status);
     });
   });
-
-  it.each([['QA', scenario.users.aliceQualifyingAccessor, undefined]])(
-    'access with user %s should give conflict in the archive',
-    async (_role: string, user: TestUserType, roleKey?: string) => {
-      const result = await new AzureHttpTriggerBuilder()
-        .setAuth(user, roleKey)
-        .setParams<ParamsType>({
-          innovationId: scenario.users.johnInnovator.innovations.johnInnovationArchived.id
-        })
-        .setBody<BodyType>({
-          description: randText(),
-          organisationUnits: [],
-          type: InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION
-        })
-        .call<ErrorResponseType>(azureFunction);
-
-      expect(result.status).toBe(409);
-    }
-  );
 });

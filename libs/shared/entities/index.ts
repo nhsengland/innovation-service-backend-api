@@ -55,7 +55,6 @@ export { OrganisationEntity } from './organisation/organisation.entity';
 // User.
 import { AnnouncementEntity } from './user/announcement.entity';
 import { AnnouncementUserEntity } from './user/announcement-user.entity';
-import { NotificationLogEntity } from './user/notification-log.entity';
 import { NotificationPreferenceEntity } from './user/notification-preference.entity';
 import { NotificationUserEntity } from './user/notification-user.entity';
 import { NotificationEntity } from './user/notification.entity';
@@ -64,7 +63,6 @@ import { UserRoleEntity } from './user/user-role.entity';
 import { UserEntity } from './user/user.entity';
 export { AnnouncementEntity } from './user/announcement.entity';
 export { AnnouncementUserEntity } from './user/announcement-user.entity';
-export { NotificationLogEntity } from './user/notification-log.entity';
 export { NotificationPreferenceEntity } from './user/notification-preference.entity';
 export { NotificationUserEntity } from './user/notification-user.entity';
 export { NotificationEntity } from './user/notification.entity';
@@ -80,6 +78,7 @@ import { InnovationTaskDescriptionsViewEntity } from './views/innovation-task-de
 import { SupportKPIViewEntity } from './views/support-kpi.view.entity';
 import { SupportLastActivityUpdateView } from './views/support-last-activity-update.view.entity';
 import { DocumentsStatisticsViewEntity } from './views/documents-statistics.view.entity';
+import { InnovationSuggestedUnitsView } from './views/innovation-suggested-units.view.entity';
 export { InnovationGroupedStatusViewEntity } from './views/innovation-grouped-status.view.entity';
 export { LastSupportStatusViewEntity } from './views/last-support-status.view.entity';
 export { InnovationListView } from './views/innovation-list-view.entity';
@@ -87,6 +86,7 @@ export { InnovationTaskDescriptionsViewEntity } from './views/innovation-task-de
 export { SupportKPIViewEntity } from './views/support-kpi.view.entity';
 export { SupportLastActivityUpdateView } from './views/support-last-activity-update.view.entity';
 export { DocumentsStatisticsViewEntity } from './views/documents-statistics.view.entity';
+export { InnovationSuggestedUnitsView } from './views/innovation-suggested-units.view.entity';
 
 // Entities lists.
 export const GENERAL_ENTITIES = [AuditEntity, TermsOfUseEntity, TermsOfUseUserEntity];
@@ -115,7 +115,6 @@ export const ORGANISATION_ENTITIES = [OrganisationUnitEntity, OrganisationEntity
 export const USER_ENTITIES = [
   AnnouncementEntity,
   AnnouncementUserEntity,
-  NotificationLogEntity,
   NotificationPreferenceEntity,
   NotificationUserEntity,
   NotificationEntity,
@@ -130,5 +129,6 @@ export const VIEW_ENTITIES = [
   SupportKPIViewEntity,
   SupportLastActivityUpdateView,
   DocumentsStatisticsViewEntity,
+  InnovationSuggestedUnitsView,
   InnovationListView
 ];

@@ -797,26 +797,6 @@ export class DomainInnovationsService {
     return data;
   }
 
-  /**
-   * This function is used to cleanup old versions (not snapshots) of innovation documents.
-   * Only the non snapshots more recent than the last snapshot will be kept.
-   *
-   * This function disabled the system versioning, deletes the old versions and re-enables the system versioning.
-   * This is done in a transaction to avoid concurrency issues.
-   */
-  async cleanupInnovationDocuments(entityManager?: EntityManager): Promise<void> {
-    const em = entityManager ?? this.sqlConnection.manager;
-
-    await em.query(`
-    BEGIN TRANSACTION
-    EXEC('ALTER TABLE innovation_document SET ( SYSTEM_VERSIONING = OFF)');
-    EXEC('DELETE h FROM innovation_document_history h
-          INNER JOIN (SELECT id,MAX(valid_from) as max FROM innovation_document_history WHERE is_snapshot=1 GROUP BY id) h2 ON h.id = h2.id AND h.valid_from<h2.max AND h.is_snapshot=0');
-    EXEC('ALTER TABLE innovation_document SET ( SYSTEM_VERSIONING = ON (HISTORY_TABLE = dbo.innovation_document_history, History_retention_period = 7 YEAR))');
-    COMMIT TRANSACTION;
-    `);
-  }
-
   /*****
    * MOVE THESE TO A STATISTIC SERVICE SHARED PROBABLY
    */

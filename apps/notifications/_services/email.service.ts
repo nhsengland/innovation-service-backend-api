@@ -10,11 +10,8 @@ import {
   UnprocessableEntityError
 } from '@notifications/shared/errors';
 
-import type { NotificationLogTypeEnum } from '@notifications/shared/enums/notification.enums';
-
 import type { EmailTemplatesType } from '../_config';
 
-import { NotificationLogEntity } from '@notifications/shared/entities/user/notification-log.entity';
 import { EmailTemplates } from '../_config/emails.config';
 import { BaseService } from './base.service';
 
@@ -80,11 +77,7 @@ export class EmailService extends BaseService {
   async sendEmail<T extends keyof EmailTemplatesType>(
     template: T,
     toEmail: string,
-    properties: EmailTemplatesType[T],
-    log?: {
-      type: NotificationLogTypeEnum;
-      params: Record<string, string | number>;
-    }
+    properties: EmailTemplatesType[T]
   ): Promise<boolean> {
     // Validate if the template exists.
     // const templateId = NotificationTemplates[templateCode].id;
@@ -106,47 +99,11 @@ export class EmailService extends BaseService {
 
     try {
       await this.sendEmailNotifyNHS<T>(apiProperties, toEmail);
-      await this.createRecurrentNotificationLog(log);
     } catch (error) {
-      // API KEY TEAM ONLY ERROR. User no longer exists on AZURE B2C
-      if (error instanceof Error && error['name'] === 'EM.0003') {
-        await this.createRecurrentNotificationLog(log);
-      }
+      this.logger.error(`Error sending email to ${toEmail}`, { error });
     }
 
     return true;
-  }
-
-  private async createRecurrentNotificationLog(
-    log: { type: NotificationLogTypeEnum; params: Record<string, string | number> } | undefined
-  ): Promise<void> {
-    if (log) {
-      const logDbQuery = this.sqlConnection
-        .createQueryBuilder(NotificationLogEntity, 'notificationLog')
-        .where(
-          `notificationLog.notification_type = '${log.type}' and notificationLog.params = '${JSON.stringify(
-            log.params
-          )}' and DATEDIFF(day, notificationLog.created_at, GETDATE()) <= 30`
-        );
-
-      const logDb = await logDbQuery.getOne();
-
-      if (!logDb) {
-        const notificationLogEntity = NotificationLogEntity.new({
-          notificationType: log.type,
-          notificationParams: log.params
-        });
-
-        try {
-          await this.sqlConnection.manager.insert(NotificationLogEntity, notificationLogEntity);
-        } catch (error) {
-          this.logger.error(`Failed to create Notification Log for type ${log.type}`, {
-            error,
-            params: log.params
-          });
-        }
-      }
-    }
   }
 
   private async sendEmailNotifyNHS<T extends keyof EmailTemplatesType>(

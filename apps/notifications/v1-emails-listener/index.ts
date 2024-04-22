@@ -1,6 +1,5 @@
 import type { Context } from '@azure/functions';
 
-import type { NotificationLogTypeEnum } from '@notifications/shared/enums';
 import { JoiHelper } from '@notifications/shared/helpers';
 
 import { container, EmailTemplates } from '../_config';
@@ -17,10 +16,6 @@ class V1SendEmailListener {
         type: keyof EmailTemplates;
         to: string;
         params: { [key: string]: string | number };
-        log: {
-          type: NotificationLogTypeEnum;
-          params: Record<string, string | number>;
-        };
       };
     }
   ): Promise<void> {
@@ -31,7 +26,7 @@ class V1SendEmailListener {
     try {
       const message = JoiHelper.Validate<MessageType>(MessageSchema, requestMessage);
 
-      await dispatchService.sendEmail(message.data.type, message.data.to, message.data.params, message.data.log);
+      await dispatchService.sendEmail(message.data.type, message.data.to, message.data.params);
 
       context.res = { done: true };
       return;
