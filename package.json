@@ -30,6 +30,7 @@
     "@aaronpowell/azure-functions-nodejs-openapi": "^0.4.0",
     "@azure/storage-blob": "^12.17.0",
     "@azure/storage-queue": "^12.16.0",
+    "@elastic/elasticsearch": "^8.13.1",
     "applicationinsights": "^2.9.5",
     "axios": "^1.6.8",
     "dotenv": "^16.4.5",
