@@ -35,6 +35,10 @@ class V1InnovationTaskInfo {
 
       const domainContext = auth.getContext();
 
+      await innovationTasksService.createIndex('ir-documents-node');
+
+      await innovationTasksService.ingestDocuments('ir-documents-node');
+
       const result = await innovationTasksService.getTaskInfo(domainContext, params.taskId);
       context.res = ResponseHelper.Ok<ResponseDTO>({
         id: result.id,

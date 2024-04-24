@@ -29,15 +29,25 @@ import {
   UserErrorsEnum
 } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
-import type { DomainService, IdentityProviderService, NotifierService } from '@innovations/shared/services';
+import type {
+  DomainService,
+  ElasticSearchService,
+  IdentityProviderService,
+  NotifierService
+} from '@innovations/shared/services';
 import { DomainContextType, isAccessorDomainContextType } from '@innovations/shared/types';
 
-import { CurrentCatalogTypes, CurrentDocumentConfig } from '@innovations/shared/schemas/innovation-record';
+import {
+  CurrentCatalogTypes,
+  CurrentDocumentConfig,
+  ElasticSearchSchema
+} from '@innovations/shared/schemas/innovation-record';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import { Brackets, EntityManager } from 'typeorm';
 import { BaseService } from './base.service';
 import type { InnovationThreadsService } from './innovation-threads.service';
 import SYMBOLS from './symbols';
+import _ from 'lodash';
 
 @injectable()
 export class InnovationTasksService extends BaseService {
@@ -46,6 +56,7 @@ export class InnovationTasksService extends BaseService {
     @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
     @inject(SHARED_SYMBOLS.IdentityProviderService)
     private identityProviderService: IdentityProviderService,
+    @inject(SHARED_SYMBOLS.ElasticSearchService) private elasticSearchService: ElasticSearchService,
     @inject(SYMBOLS.InnovationThreadsService)
     private innovationThreadsService: InnovationThreadsService
   ) {
@@ -853,5 +864,55 @@ export class InnovationTasksService extends BaseService {
         throw new NotImplementedError(UserErrorsEnum.USER_ROLE_NOT_FOUND, { details: r });
       }
     }
+  }
+
+  async createIndex(indexName: string): Promise<void> {
+    await this.elasticSearchService.createIndex(indexName, ElasticSearchSchema);
+  }
+
+  async ingestDocuments(indexName: string): Promise<void> {
+    const innovations = await this.sqlConnection.manager
+      .createQueryBuilder(InnovationEntity, 'innovation')
+      .select([
+        'innovation.id',
+        'innovation.status',
+        'owner.id',
+        'owner.identityId',
+        'ownerRole.id',
+        'ownerOrganisation.name',
+        'document.document',
+        'shares.id'
+      ])
+      .innerJoin('innovation.document', 'document')
+      .leftJoin('innovation.organisationShares', 'shares')
+      .leftJoin('innovation.owner', 'owner')
+      .leftJoin('owner.serviceRoles', 'ownerRole', 'ownerRole.role = :innovatorRole AND ownerRole.isActive = 1', {
+        innovatorRole: ServiceRoleEnum.INNOVATOR
+      })
+      .leftJoin('ownerRole.organisation', 'ownerOrganisation')
+      .getMany();
+
+    const operations = innovations.flatMap(inno => [
+      { index: { _index: indexName, _id: inno.id } },
+      {
+        status: inno.status,
+        document: inno.document.document, // TODO: This document needs to have the keys translated
+        owner: {
+          id: inno.owner?.id,
+          identityId: inno.owner?.identityId,
+          companyName: inno.owner?.serviceRoles[0]?.organisation?.name
+        },
+        shared: inno.organisationShares.map(s => s.id)
+      }
+    ]);
+
+    const response = await this.elasticSearchService.client.bulk({ refresh: true, operations });
+
+    // TODO: We can check the documents that gave error and retry them.
+    if (response.errors) {
+      this.logger.log('Error while bulk ingesting documents.');
+    }
+
+    console.log(response);
   }
 }
