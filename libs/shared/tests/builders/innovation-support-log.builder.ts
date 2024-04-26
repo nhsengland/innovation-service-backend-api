@@ -35,6 +35,11 @@ export class InnovationSupportLogBuilder extends BaseBuilder {
     return this;
   }
 
+  setDescription(description: string): this {
+    this.supportLog.description = description;
+    return this;
+  }
+
   setSupportStatus(status: InnovationSupportStatusEnum): this {
     this.supportLog.innovationSupportStatus = status;
     return this;

@@ -606,6 +606,28 @@ export class CompleteScenarioBuilder {
         .setSuggestedUnits([innovTechHeavyOrgUnit.id])
         .save();
 
+      // Alice suggested medTechOrgUnit
+      const aliceSuggestsMedTechOrgUnit = await new InnovationSupportLogBuilder(entityManager)
+        .setInnovation(johnInnovation.id)
+        .setSupportStatus(InnovationSupportStatusEnum.ENGAGING)
+        .setCreatedBy(aliceQualifyingAccessor, aliceQualifyingAccessor.roles['qaRole']!)
+        .setLogType(InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION)
+        .setSuggestedUnits([medTechOrgUnit.id])
+        .setDescription('It is a good fit')
+        .save();
+
+      const supportSuggestionThreadToMedTechOrgUnitByAlice = await new InnovationThreadBuilder(entityManager)
+        .setAuthor(aliceQualifyingAccessor.id, aliceQualifyingAccessor.roles['qaRole']!.id)
+        .setInnovation(johnInnovation.id)
+        .setContextType(ThreadContextTypeEnum.ORGANISATION_SUGGESTION)
+        .setContextId(aliceSuggestsMedTechOrgUnit.id)
+        .addMessage(
+          { id: aliceQualifyingAccessor.id, roleId: aliceQualifyingAccessor.roles['qaRole']!.id },
+          'suggestionMessage',
+          aliceSuggestsMedTechOrgUnit.description
+        )
+        .save();
+
       // Adam Innovator specs:
       // 1 innovation in status 'CREATED' with transfer in status 'PENDING' to external user. The innovation is shared with
       // healthOrg
@@ -752,6 +774,12 @@ export class CompleteScenarioBuilder {
                   taskByAliceOpen: johnInnovationTaskByAliceOpen,
                   taskByBart: johnInnovationTaskByBart,
                   taskByPaul: johnInnovationTaskByPaul
+                },
+                suggestions: {
+                  aliceSuggestsMedTechOrgUnit: {
+                    suggestion: aliceSuggestsMedTechOrgUnit,
+                    thread: supportSuggestionThreadToMedTechOrgUnitByAlice
+                  }
                 },
                 threads: {
                   threadByAliceQA: {

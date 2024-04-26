@@ -16,6 +16,7 @@ import {
   InnovationTaskStatusEnum,
   NotifierTypeEnum
 } from '@innovations/shared/enums';
+
 import {
   BadRequestError,
   GenericErrorsEnum,
@@ -37,6 +38,8 @@ import type { InnovationSupportsService } from './innovation-supports.service';
 import { InnovationThreadsService } from './innovation-threads.service';
 import SYMBOLS from './symbols';
 import { ValidationService } from './validation.service';
+// import { InnovationThreadBuilder } from '@innovations/shared/tests/builders/innovation-thread.builder';
+// import { ThreadContextTypeEnum } from '@innovations/shared/enums/innovation.enums';
 
 describe('Innovations / _services / innovation-supports suite', () => {
   let sut: InnovationSupportsService;
@@ -477,6 +480,33 @@ describe('Innovations / _services / innovation-supports suite', () => {
       expect(supportSummaryList.ENGAGING).toHaveLength(0);
       expect(supportSummaryList.BEEN_ENGAGED).toHaveLength(0);
       expect(supportSummaryList.SUGGESTED).toHaveLength(0);
+    });
+  });
+
+  describe('getInnovationUnitsSuggestions', () => {
+    const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+
+    it("should return a list of support suggestions in which the user's unit was suggested by other unit's QA", async () => {
+      const scott = scenario.users.scottQualifyingAccessor;
+      const suggestor_qa_user = scenario.users.aliceQualifyingAccessor;
+      const qaSuggestion = innovation.suggestions.aliceSuggestsMedTechOrgUnit.suggestion;
+      const suggestionThread = innovation.suggestions.aliceSuggestsMedTechOrgUnit.thread;
+
+      const suggestions = await sut.getInnovationUnitsSuggestions(
+        DTOsHelper.getUserRequestContext(scott),
+        innovation.id
+      );
+
+      expect(suggestions).toMatchObject([
+        {
+          suggestionId: qaSuggestion.id,
+          suggestorUnit: suggestor_qa_user.roles.qaRole.organisationUnit?.name,
+          thread: {
+            id: suggestionThread.id,
+            message: qaSuggestion.description
+          }
+        }
+      ]);
     });
   });
 
