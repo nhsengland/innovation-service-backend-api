@@ -606,7 +606,7 @@ export class CompleteScenarioBuilder {
         .setSuggestedUnits([innovTechHeavyOrgUnit.id])
         .save();
 
-      // Alice suggested medTechOrgUnit
+      // Alice suggested medTechOrgUnit and its message thread
       const aliceSuggestsMedTechOrgUnit = await new InnovationSupportLogBuilder(entityManager)
         .setInnovation(johnInnovation.id)
         .setSupportStatus(InnovationSupportStatusEnum.ENGAGING)
