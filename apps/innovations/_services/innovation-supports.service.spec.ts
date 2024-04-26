@@ -38,8 +38,6 @@ import type { InnovationSupportsService } from './innovation-supports.service';
 import { InnovationThreadsService } from './innovation-threads.service';
 import SYMBOLS from './symbols';
 import { ValidationService } from './validation.service';
-// import { InnovationThreadBuilder } from '@innovations/shared/tests/builders/innovation-thread.builder';
-// import { ThreadContextTypeEnum } from '@innovations/shared/enums/innovation.enums';
 
 describe('Innovations / _services / innovation-supports suite', () => {
   let sut: InnovationSupportsService;
