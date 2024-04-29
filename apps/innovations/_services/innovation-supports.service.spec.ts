@@ -484,24 +484,55 @@ describe('Innovations / _services / innovation-supports suite', () => {
   describe('getInnovationUnitsSuggestions', () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
 
-    it("should return a list of support suggestions in which the user's unit was suggested by other unit's QA", async () => {
-      const scott = scenario.users.scottQualifyingAccessor;
-      const suggestor_qa_user = scenario.users.aliceQualifyingAccessor;
-      const qaSuggestion = innovation.suggestions.aliceSuggestsMedTechOrgUnit.suggestion;
-      const suggestionThread = innovation.suggestions.aliceSuggestsMedTechOrgUnit.thread;
+    it("should return a list with 1 support suggestion in which the user's unit was suggested by QA Alice", async () => {
+      const user_qa_lisa = scenario.users.lisaQualifyingAccessor;
+      const suggestor_qa_alice = scenario.users.aliceQualifyingAccessor;
+      const qaSuggestion1 = innovation.suggestions.aliceSuggestsHealthOrgAiUnit;
 
       const suggestions = await sut.getInnovationUnitsSuggestions(
-        DTOsHelper.getUserRequestContext(scott),
+        DTOsHelper.getUserRequestContext(user_qa_lisa),
         innovation.id
       );
 
       expect(suggestions).toMatchObject([
         {
-          suggestionId: qaSuggestion.id,
-          suggestorUnit: suggestor_qa_user.roles.qaRole.organisationUnit?.name,
+          suggestionId: qaSuggestion1.suggestion.id,
+          suggestorUnit: suggestor_qa_alice.roles.qaRole.organisationUnit?.name,
           thread: {
-            id: suggestionThread.id,
-            message: qaSuggestion.description
+            id: qaSuggestion1.thread.id,
+            message: qaSuggestion1.suggestion.description
+          }
+        }
+      ]);
+    });
+
+    it("should return a list with 2 support suggestions in which the user's unit was suggested by QA Alice and Bart", async () => {
+      const user_qa_scott = scenario.users.scottQualifyingAccessor;
+      const suggestor_qa_alice = scenario.users.aliceQualifyingAccessor;
+      const suggestor_qa_bart = scenario.users.bartQualifyingAccessor;
+      const qaSuggestion1 = innovation.suggestions.aliceSuggestsMedTechOrgUnit;
+      const qaSuggestion2 = innovation.suggestions.bartSuggestsMedTechOrgUnit;
+
+      const suggestions = await sut.getInnovationUnitsSuggestions(
+        DTOsHelper.getUserRequestContext(user_qa_scott),
+        innovation.id
+      );
+
+      expect(suggestions).toMatchObject([
+        {
+          suggestionId: qaSuggestion1.suggestion.id,
+          suggestorUnit: suggestor_qa_alice.roles.qaRole.organisationUnit?.name,
+          thread: {
+            id: qaSuggestion1.thread.id,
+            message: qaSuggestion1.suggestion.description
+          }
+        },
+        {
+          suggestionId: qaSuggestion2.suggestion.id,
+          suggestorUnit: suggestor_qa_bart.roles.qaRole.organisationUnit?.name,
+          thread: {
+            id: qaSuggestion2.thread.id,
+            message: qaSuggestion2.suggestion.description
           }
         }
       ]);
