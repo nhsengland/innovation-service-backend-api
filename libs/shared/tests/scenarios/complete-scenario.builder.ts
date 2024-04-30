@@ -159,6 +159,13 @@ export class CompleteScenarioBuilder {
         .addRole(ServiceRoleEnum.QUALIFYING_ACCESSOR, 'qaRole', healthOrg.id, healthOrgAiUnit.id)
         .save();
 
+      // Lisa Qualifying Accessor specs:
+      // Belongs to an active organisation.
+      const lisaQualifyingAccessor = await new UserBuilder(entityManager)
+        .setName('Lisa Qualifying Accessor')
+        .addRole(ServiceRoleEnum.QUALIFYING_ACCESSOR, 'qaRole', innovTechOrg.id, innovTechOrgUnit.id)
+        .save();
+
       // Innovators
 
       // Deleted innovator
@@ -606,6 +613,72 @@ export class CompleteScenarioBuilder {
         .setSuggestedUnits([innovTechHeavyOrgUnit.id])
         .save();
 
+      // Alice suggested medTechOrgUnit for 'johnInnovation', and its message thread
+      const aliceSuggestsMedTechOrgUnitForJohnInnovation = await new InnovationSupportLogBuilder(entityManager)
+        .setInnovation(johnInnovation.id)
+        .setSupportStatus(InnovationSupportStatusEnum.ENGAGING)
+        .setCreatedBy(aliceQualifyingAccessor, aliceQualifyingAccessor.roles['qaRole']!)
+        .setLogType(InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION)
+        .setSuggestedUnits([medTechOrgUnit.id])
+        .setDescription('It is a good fit')
+        .save();
+
+      const aliceSuggestsMedTechOrgUnitForJohnInnovationThread = await new InnovationThreadBuilder(entityManager)
+        .setAuthor(aliceQualifyingAccessor.id, aliceQualifyingAccessor.roles['qaRole']!.id)
+        .setInnovation(johnInnovation.id)
+        .setContextType(ThreadContextTypeEnum.ORGANISATION_SUGGESTION)
+        .setContextId(aliceSuggestsMedTechOrgUnitForJohnInnovation.id)
+        .addMessage(
+          { id: aliceQualifyingAccessor.id, roleId: aliceQualifyingAccessor.roles['qaRole']!.id },
+          'suggestionMessage',
+          aliceSuggestsMedTechOrgUnitForJohnInnovation.description
+        )
+        .save();
+
+      // Bart suggested medTechOrgUnit for 'johnInnovation', and its message thread
+      const bartSuggestsMedTechOrgUnitForJohnInnovation = await new InnovationSupportLogBuilder(entityManager)
+        .setInnovation(johnInnovation.id)
+        .setSupportStatus(InnovationSupportStatusEnum.ENGAGING)
+        .setCreatedBy(bartQualifyingAccessor, bartQualifyingAccessor.roles['qaRole']!)
+        .setLogType(InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION)
+        .setSuggestedUnits([medTechOrgUnit.id])
+        .setDescription('It is a good fit')
+        .save();
+
+      const bartSuggestsMedTechOrgUnitForJohnInnovationThread = await new InnovationThreadBuilder(entityManager)
+        .setAuthor(bartQualifyingAccessor.id, bartQualifyingAccessor.roles['qaRole']!.id)
+        .setInnovation(johnInnovation.id)
+        .setContextType(ThreadContextTypeEnum.ORGANISATION_SUGGESTION)
+        .setContextId(bartSuggestsMedTechOrgUnitForJohnInnovation.id)
+        .addMessage(
+          { id: bartQualifyingAccessor.id, roleId: bartQualifyingAccessor.roles['qaRole']!.id },
+          'suggestionMessage',
+          bartSuggestsMedTechOrgUnitForJohnInnovation.description
+        )
+        .save();
+
+      // Alice suggested healthOrgAiUnit for 'johnInnovation', and its message thread
+      const aliceSuggestsHealthOrgAiUnitForJohnInnovation = await new InnovationSupportLogBuilder(entityManager)
+        .setInnovation(johnInnovation.id)
+        .setSupportStatus(InnovationSupportStatusEnum.ENGAGING)
+        .setCreatedBy(aliceQualifyingAccessor, aliceQualifyingAccessor.roles['qaRole']!)
+        .setLogType(InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION)
+        .setSuggestedUnits([innovTechOrgUnit.id])
+        .setDescription('It could be a great fit')
+        .save();
+
+      const aliceSuggestsHealthOrgAiUnitForJohnInnovationThread = await new InnovationThreadBuilder(entityManager)
+        .setAuthor(aliceQualifyingAccessor.id, aliceQualifyingAccessor.roles['qaRole']!.id)
+        .setInnovation(johnInnovation.id)
+        .setContextType(ThreadContextTypeEnum.ORGANISATION_SUGGESTION)
+        .setContextId(aliceSuggestsHealthOrgAiUnitForJohnInnovation.id)
+        .addMessage(
+          { id: aliceQualifyingAccessor.id, roleId: aliceQualifyingAccessor.roles['qaRole']!.id },
+          'suggestionMessage',
+          aliceSuggestsHealthOrgAiUnitForJohnInnovation.description
+        )
+        .save();
+
       // Adam Innovator specs:
       // 1 innovation in status 'CREATED' with transfer in status 'PENDING' to external user. The innovation is shared with
       // healthOrg
@@ -717,6 +790,30 @@ export class CompleteScenarioBuilder {
         .addSection('INNOVATION_DESCRIPTION')
         .save();
 
+      // Alice suggested medTechOrgUnit for 'chestHarnessInnovation', and its message thread
+      const aliceSuggestsMedTechOrgUnitForChestHarnessInnovation = await new InnovationSupportLogBuilder(entityManager)
+        .setInnovation(chestHarnessInnovation.id)
+        .setSupportStatus(InnovationSupportStatusEnum.ENGAGING)
+        .setCreatedBy(aliceQualifyingAccessor, aliceQualifyingAccessor.roles['qaRole']!)
+        .setLogType(InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION)
+        .setSuggestedUnits([medTechOrgUnit.id])
+        .setDescription('Might be in your line of work.')
+        .save();
+
+      const aliceSuggestsMedTechOrgUnitForChestHarnessInnovationThread = await new InnovationThreadBuilder(
+        entityManager
+      )
+        .setAuthor(aliceQualifyingAccessor.id, aliceQualifyingAccessor.roles['qaRole']!.id)
+        .setInnovation(chestHarnessInnovation.id)
+        .setContextType(ThreadContextTypeEnum.ORGANISATION_SUGGESTION)
+        .setContextId(aliceSuggestsMedTechOrgUnitForChestHarnessInnovation.id)
+        .addMessage(
+          { id: aliceQualifyingAccessor.id, roleId: aliceQualifyingAccessor.roles['qaRole']!.id },
+          'suggestionMessage',
+          aliceSuggestsMedTechOrgUnitForChestHarnessInnovation.description
+        )
+        .save();
+
       return {
         users: {
           // Innovators
@@ -752,6 +849,20 @@ export class CompleteScenarioBuilder {
                   taskByAliceOpen: johnInnovationTaskByAliceOpen,
                   taskByBart: johnInnovationTaskByBart,
                   taskByPaul: johnInnovationTaskByPaul
+                },
+                suggestions: {
+                  aliceSuggestsMedTechOrgUnit: {
+                    suggestion: aliceSuggestsMedTechOrgUnitForJohnInnovation,
+                    thread: aliceSuggestsMedTechOrgUnitForJohnInnovationThread
+                  },
+                  bartSuggestsMedTechOrgUnit: {
+                    suggestion: bartSuggestsMedTechOrgUnitForJohnInnovation,
+                    thread: bartSuggestsMedTechOrgUnitForJohnInnovationThread
+                  },
+                  aliceSuggestsHealthOrgAiUnit: {
+                    suggestion: aliceSuggestsHealthOrgAiUnitForJohnInnovation,
+                    thread: aliceSuggestsHealthOrgAiUnitForJohnInnovationThread
+                  }
                 },
                 threads: {
                   threadByAliceQA: {
@@ -871,7 +982,13 @@ export class CompleteScenarioBuilder {
             innovations: {
               chestHarnessInnovation: {
                 ...chestHarnessInnovation,
-                supports: { chestHarnessInnovationSupport: chestHarnessInnovationSupport }
+                supports: { chestHarnessInnovationSupport: chestHarnessInnovationSupport },
+                suggestions: {
+                  aliceSuggestsMedTechOrgUnit: {
+                    suggestion: aliceSuggestsMedTechOrgUnitForChestHarnessInnovation,
+                    thread: aliceSuggestsMedTechOrgUnitForChestHarnessInnovationThread
+                  }
+                }
               },
               tentaclesInnovation: {
                 ...tentaclesInnovation,
@@ -986,6 +1103,9 @@ export class CompleteScenarioBuilder {
                 }
               }
             }
+          },
+          lisaQualifyingAccessor: {
+            ...lisaQualifyingAccessor
           },
           // Needs assessors
           paulNeedsAssessor: {
