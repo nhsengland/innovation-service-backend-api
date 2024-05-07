@@ -1,0 +1,235 @@
+import type { CreateIndexParams } from '../../../services/integrations/elastic-search.service';
+import type { InnovationStatusEnum, InnovationGroupedStatusEnum } from '../../../enums';
+import type { DocumentType } from '../index';
+
+export type ElasticSearchDocumentType202304 = {
+  id: string;
+  name: string;
+  status: InnovationStatusEnum;
+  archivedStatus: InnovationStatusEnum | null;
+  statusUpdatedAt: Date;
+  groupedStatus: InnovationGroupedStatusEnum;
+  submittedAt: Date | null;
+  updatedAt: Date;
+  lastAssessmentRequestAt: Date | null;
+  document: DocumentType;
+  owner: { id?: string; identityId?: string; companyName?: string };
+  engagingOrganisations: { organisationId: string; name: string; acronym: null | string }[];
+  engagingUnits: {
+    unitId: string;
+    name: string;
+    acronym: string;
+    assignedAccessors: { id: string; identityId: string }[];
+  }[];
+  shares: string[];
+};
+
+export const ElasticSearchSchema202304: CreateIndexParams = {
+  settings: {
+    analysis: {
+      analyzer: {
+        default: {
+          type: 'custom',
+          tokenizer: 'whitespace',
+          filter: ['lowercase', 'porter_stem']
+        }
+      }
+    }
+  },
+  mappings: {
+    properties: {
+      owner: {
+        properties: {
+          id: { type: 'keyword' },
+          identityId: { type: 'keyword' },
+          companyName: { type: 'text' }
+        }
+      },
+
+      name: { type: 'text' },
+      status: { type: 'keyword' },
+      archivedStatus: { type: 'keyword' },
+      statusUpdatedAt: { type: 'date' },
+      groupedStatus: { type: 'keyword' },
+      submittedAt: { type: 'date' },
+      updatedAt: { type: 'date' },
+      lastAssessmentRequestAt: { type: 'date' },
+
+      supports: {
+        type: 'nested',
+        properties: {
+          id: { type: 'keyword' },
+          status: { type: 'keyword' },
+          updatedAt: { type: 'date' },
+          updatedBy: { type: 'keyword' }
+          // closedReason: { type: 'keyword' }
+        }
+      },
+
+      engagingOrganisations: {
+        type: 'nested',
+        properties: {
+          organisationId: { type: 'keyword' },
+          name: { type: 'text' },
+          acronym: { type: 'keyword' }
+        }
+      },
+      engagingUnits: {
+        type: 'nested',
+        properties: {
+          unitId: { type: 'keyword' },
+          name: { type: 'text' },
+          acronym: { type: 'keyword' },
+          assignedAccessors: {
+            type: 'nested',
+            properties: {
+              id: { type: 'keyword' },
+              identityId: { type: 'keyword' }
+            }
+          }
+        }
+      },
+      shares: { type: 'keyword' },
+
+      document: {
+        properties: {
+          version: { type: 'constant_keyword' },
+          INNOVATION_DESCRIPTION: {
+            properties: {
+              name: { type: 'text' },
+              description: { type: 'text' },
+              postcode: { type: 'text' },
+              countryName: { type: 'text' },
+              website: { type: 'text' },
+              categories: { type: 'keyword' },
+              otherCategoryDescription: { type: 'text' },
+              mainCategory: { type: 'keyword' },
+              areas: { type: 'keyword' },
+              careSettings: { type: 'keyword' },
+              otherCareSetting: { type: 'text' },
+              mainPurpose: { type: 'keyword' },
+              supportDescription: { type: 'text' },
+              currentlyReceivingSupport: { type: 'text' },
+              involvedAACProgrammes: { type: 'keyword' }
+            }
+          },
+          UNDERSTANDING_OF_NEEDS: {
+            properties: {
+              problemsTackled: { type: 'text' },
+              howInnovationWork: { type: 'text' },
+              benefitsOrImpact: { type: 'keyword' },
+              impactDiseaseCondition: { type: 'keyword' },
+              diseasesConditionsImpact: { type: 'keyword' },
+              estimatedCarbonReductionSavings: { type: 'keyword' },
+              estimatedCarbonReductionSavingsDescription: { type: 'text' },
+              carbonReductionPlan: { type: 'keyword' },
+              keyHealthInequalities: { type: 'keyword' },
+              completedHealthInequalitiesImpactAssessment: { type: 'keyword' },
+              hasProductServiceOrPrototype: { type: 'keyword' }
+            }
+          },
+          EVIDENCE_OF_EFFECTIVENESS: {
+            properties: {
+              hasEvidence: { type: 'keyword' },
+              currentlyCollectingEvidence: { type: 'keyword' },
+              summaryOngoingEvidenceGathering: { type: 'text' },
+              needsSupportAnyArea: { type: 'keyword' }
+            }
+          },
+          MARKET_RESEARCH: {
+            properties: {
+              hasMarketResearch: { type: 'keyword' },
+              marketResearch: { type: 'text' },
+              optionBestDescribesInnovation: { type: 'keyword' },
+              whatCompetitorsAlternativesExist: { type: 'text' }
+            }
+          },
+          CURRENT_CARE_PATHWAY: {
+            properties: {
+              innovationPathwayKnowledge: { type: 'keyword' },
+              potentialPathway: { type: 'text' }
+            }
+          },
+          TESTING_WITH_USERS: {
+            properties: {
+              involvedUsersDesignProcess: { type: 'keyword' },
+              testedWithIntendedUsers: { type: 'keyword' },
+              intendedUserGroupsEngaged: { type: 'keyword' },
+              otherIntendedUserGroupsEngaged: { type: 'text' },
+              userTests: {
+                type: 'nested',
+                properties: {
+                  kind: { type: 'text' },
+                  feedback: { type: 'text' }
+                }
+              }
+            }
+          },
+          REGULATIONS_AND_STANDARDS: {
+            properties: {
+              hasRegulationKnowledge: { type: 'keyword' },
+              standards: {
+                type: 'nested',
+                properties: {
+                  type: { type: 'keyword' },
+                  hasMet: { type: 'keyword' }
+                }
+              },
+              otherRegulationDescription: { type: 'text' }
+            }
+          },
+          INTELLECTUAL_PROPERTY: {
+            properties: {
+              hasPatents: { type: 'keyword' },
+              patentNumbers: { type: 'text' },
+              hasOtherIntellectual: { type: 'keyword' },
+              otherIntellectual: { type: 'text' }
+            }
+          },
+          REVENUE_MODEL: {
+            properties: {
+              hasRevenueModel: { type: 'keyword' },
+              revenues: { type: 'keyword' },
+              otherRevenueDescription: { type: 'text' },
+              payingOrganisations: { type: 'text' },
+              benefittingOrganisations: { type: 'text' },
+              hasFunding: { type: 'keyword' },
+              fundingDescription: { type: 'text' }
+            }
+          },
+          COST_OF_INNOVATION: {
+            properties: {
+              hasCostKnowledge: { type: 'keyword' },
+              costDescription: { type: 'text' },
+              patientsRange: { type: 'keyword' },
+              eligibilityCriteria: { type: 'text' },
+              sellExpectations: { type: 'text' },
+              usageExpectations: { type: 'text' },
+              costComparison: { type: 'keyword' }
+            }
+          },
+          DEPLOYMENT: {
+            properties: {
+              hasDeployPlan: { type: 'keyword' },
+              isDeployed: { type: 'keyword' },
+              deploymentPlans: { type: 'text' },
+              commercialBasis: { type: 'text' },
+              organisationDeploymentAffect: { type: 'text' },
+              hasResourcesToScale: { type: 'keyword' }
+            }
+          },
+          evidences: {
+            type: 'nested',
+            properties: {
+              id: { type: 'keyword' },
+              evidenceSubmitType: { type: 'keyword' },
+              evidenceType: { type: 'keyword' },
+              description: { type: 'text' },
+              summary: { type: 'text' }
+            }
+          }
+        }
+      }
+    }
+  }
+};

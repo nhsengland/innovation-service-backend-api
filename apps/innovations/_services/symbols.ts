@@ -12,7 +12,8 @@ export const SYMBOLS = {
   InnovationDocumentService: Symbol.for('InnovationDocumentService'),
   ExportFileService: Symbol.for('ExportFileService'),
   StatisticsService: Symbol.for('StatisticsService'),
-  ValidationService: Symbol.for('ValidationService')
+  ValidationService: Symbol.for('ValidationService'),
+  SearchService: Symbol.for('SearchService')
 };
 
 export default SYMBOLS;
