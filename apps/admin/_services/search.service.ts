@@ -1,8 +1,8 @@
+import { ES_ENV } from '@admin/shared/config';
 import { CurrentElasticSearchDocumentType, ElasticSearchSchema } from '@admin/shared/schemas/innovation-record';
 import type { DomainService, ElasticSearchService } from '@admin/shared/services';
 import SHARED_SYMBOLS from '@admin/shared/services/symbols';
 import { inject, injectable } from 'inversify';
-import { ENV } from '../_config';
 import { BaseService } from './base.service';
 
 @injectable()
@@ -14,7 +14,7 @@ export class SearchService extends BaseService {
     @inject(SHARED_SYMBOLS.ElasticSearchService) private readonly esService: ElasticSearchService
   ) {
     super();
-    this.index = ENV.esInnovationIndexName;
+    this.index = ES_ENV.esInnovationIndexName;
   }
 
   /**

@@ -8,3 +8,7 @@ export const ES_CONNECTION_CONFIG = Object.freeze<ClientOptions>({
   node: process.env['ES_API_URL'] ?? 'http://127.0.0.1:9200',
   auth: process.env['ES_API_KEY'] ? { apiKey: process.env['ES_API_KEY'] } : undefined
 });
+
+export const ES_ENV = Object.freeze({
+  esInnovationIndexName: process.env['ES_INNOVATION_INDEX_NAME'] ?? 'ir-documents'
+});

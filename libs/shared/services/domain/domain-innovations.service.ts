@@ -889,6 +889,8 @@ export class DomainInnovationsService {
    * Fetches all the information needed for the document type.
    * If innovationIds are passed it will only return the information for those ids,
    * if not returns all the documents information.
+   *
+   * TODO: performance could be improved by maybe removing the doc from the query
    */
   async getESDocumentsInformation(innovationIds?: string[]): Promise<CurrentElasticSearchDocumentType[]> {
     const query = this.sqlConnection.manager

@@ -8,6 +8,5 @@ if (!process.env['CLIENT_WEB_BASE_URL']) {
 
 export const ENV = Object.freeze({
   webBaseUrl: process.env['CLIENT_WEB_BASE_URL'] || '',
-  webBaseTransactionalUrl: new URL('transactional', process.env['CLIENT_WEB_BASE_URL'] || '').toString(),
-  esInnovationIndexName: process.env['ES_INNOVATION_INDEX_NAME'] ?? 'ir-documents'
+  webBaseTransactionalUrl: new URL('transactional', process.env['CLIENT_WEB_BASE_URL'] || '').toString()
 });
