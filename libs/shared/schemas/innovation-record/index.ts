@@ -1,4 +1,5 @@
 import { randBoolean, randCountry, randProduct, randText } from '@ngneat/falso';
+import { ElasticSearchDocumentType202304, ElasticSearchSchema202304 } from './202304/elastic-search.schema';
 import type { DocumentType202209 } from './202209/document.types';
 import { DocumentValidationSchema202304Map, EvidenceSchema202304 } from './202304/document.schema';
 import type { DocumentType202304 } from './202304/document.types';
@@ -11,6 +12,8 @@ export type DocumentVersions = (typeof DocumentVersions)[number];
 // Current version links
 export * as CurrentCatalogTypes from './202304/catalog.types';
 export * as CurrentDocumentConfig from './202304/document.config';
+export const ElasticSearchSchema = ElasticSearchSchema202304;
+export type CurrentElasticSearchDocumentType = ElasticSearchDocumentType202304;
 export const CurrentDocumentSchemaMap = DocumentValidationSchema202304Map;
 export type CurrentDocumentType = DocumentType202304;
 export type CurrentEvidenceType = NonNullable<CurrentDocumentType['evidences']>[number];

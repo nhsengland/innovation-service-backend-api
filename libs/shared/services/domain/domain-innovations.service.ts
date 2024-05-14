@@ -46,6 +46,7 @@ import type { ActivitiesParamsType, DomainContextType, IdentityUserInfo, Support
 import type { IdentityProviderService } from '../integrations/identity-provider.service';
 import type { NotifierService } from '../integrations/notifier.service';
 import type { DomainUsersService } from './domain-users.service';
+import type { CurrentElasticSearchDocumentType } from '../../schemas/innovation-record/index';
 
 export class DomainInnovationsService {
   innovationRepository: Repository<InnovationEntity>;
@@ -882,6 +883,109 @@ export class DomainInnovationsService {
     });
 
     return res;
+  }
+
+  /**
+   * Fetches all the information needed for the document type.
+   * If innovationIds are passed it will only return the information for those ids,
+   * if not returns all the documents information.
+   *
+   * TODO: performance could be improved by maybe removing the doc from the query
+   */
+  async getESDocumentsInformation(innovationIds?: string[]): Promise<CurrentElasticSearchDocumentType[]> {
+    const query = this.sqlConnection.manager
+      .createQueryBuilder(InnovationEntity, 'innovation')
+      .select([
+        'innovation.id',
+        'innovation.name',
+        'innovation.status',
+        'innovation.archivedStatus',
+        'innovation.statusUpdatedAt',
+        'innovation.submittedAt',
+        'innovation.updatedAt',
+        'innovation.lastAssessmentRequestAt',
+        'groupedStatus.groupedStatus',
+        'owner.id',
+        'owner.identityId',
+        'ownerRole.id',
+        'ownerOrganisation.id',
+        'ownerOrganisation.name',
+        'document.document',
+        'shares.id',
+        'supports.id',
+        'supports.status',
+        'supports.updatedAt',
+        'supports.updatedBy',
+        'supportUnit.id',
+        'supportUnit.name',
+        'supportUnit.acronym',
+        'supportOrg.id',
+        'supportOrg.name',
+        'supportOrg.acronym',
+        'assignedUserRole.id',
+        'assignedUser.id',
+        'assignedUser.identityId'
+      ])
+      .innerJoin('innovation.document', 'document')
+      .innerJoin('innovation.innovationGroupedStatus', 'groupedStatus')
+      .innerJoin('innovation.innovationSupports', 'supports')
+      .leftJoin('supports.userRoles', 'assignedUserRole')
+      .leftJoin('assignedUserRole.user', 'assignedUser', "assignedUser.status <> 'DELETED'")
+      .innerJoin('supports.organisationUnit', 'supportUnit')
+      .innerJoin('supportUnit.organisation', 'supportOrg')
+      .leftJoin('innovation.organisationShares', 'shares')
+      .leftJoin('innovation.owner', 'owner')
+      .leftJoin('owner.serviceRoles', 'ownerRole', 'ownerRole.role = :innovatorRole AND ownerRole.isActive = 1', {
+        innovatorRole: ServiceRoleEnum.INNOVATOR
+      })
+      .leftJoin('ownerRole.organisation', 'ownerOrganisation');
+
+    if (innovationIds?.length) {
+      query.andWhere('innovation.id IN (:...innovationIds)', { innovationIds });
+    }
+
+    const innovations = await query.getMany();
+    return innovations.map(inno => {
+      const orgs = new Map<string, CurrentElasticSearchDocumentType['engagingOrganisations'][number]>();
+      const units = new Map<string, CurrentElasticSearchDocumentType['engagingUnits'][number]>();
+
+      for (const support of inno.innovationSupports) {
+        const unit = support.organisationUnit;
+        const org = unit.organisation;
+        orgs.set(org.id, { organisationId: org.id, name: org.name, acronym: org.acronym });
+        units.set(unit.id, {
+          unitId: unit.id,
+          name: unit.name,
+          acronym: unit.acronym,
+          assignedAccessors: support.userRoles.map(({ user }) => ({ id: user.id, identityId: user.identityId }))
+        });
+      }
+
+      return {
+        id: inno.id,
+        name: inno.name,
+        status: inno.status,
+        archivedStatus: inno.archivedStatus,
+        statusUpdatedAt: inno.statusUpdatedAt,
+        groupedStatus: inno.innovationGroupedStatus.groupedStatus,
+        submittedAt: inno.submittedAt,
+        updatedAt: inno.updatedAt,
+        lastAssessmentRequestAt: inno.lastAssessmentRequestAt,
+
+        document: inno.document.document,
+
+        owner: {
+          id: inno.owner?.id,
+          identityId: inno.owner?.identityId,
+          companyName: inno.owner?.serviceRoles[0]?.organisation?.name
+        },
+
+        engagingOrganisations: [...orgs.values()],
+        engagingUnits: [...units.values()],
+
+        shares: inno.organisationShares.map(s => s.id)
+      };
+    });
   }
 
   private getActivityLogType(activity: ActivityEnum): ActivityTypeEnum {

@@ -17,6 +17,7 @@ import { FileStorageService } from '../services/storage/file-storage.service';
 import { SqlProvider, sqlProvider } from '../services/storage/sql-connection.provider';
 import { SQLConnectionService } from '../services/storage/sql-connection.service';
 import SHARED_SYMBOLS from '../services/symbols';
+import { ElasticSearchService } from '../services/integrations/elastic-search.service';
 
 export const container: Container = new Container();
 
@@ -36,6 +37,7 @@ container.bind<SQLConnectionService>(SHARED_SYMBOLS.SQLConnectionService).to(SQL
 container.bind<StorageQueueService>(SHARED_SYMBOLS.StorageQueueService).to(StorageQueueService).inSingletonScope();
 container.bind<AuditService>(SHARED_SYMBOLS.AuditService).to(AuditService).inSingletonScope();
 container.bind<CacheService>(SHARED_SYMBOLS.CacheService).to(CacheService).inSingletonScope();
+container.bind<ElasticSearchService>(SHARED_SYMBOLS.ElasticSearchService).to(ElasticSearchService).inSingletonScope();
 
 const logger = container.get<LoggerService>(SHARED_SYMBOLS.LoggerService);
 

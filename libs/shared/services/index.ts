@@ -10,6 +10,7 @@ export { IdentityProviderService } from './integrations/identity-provider.servic
 export { LoggerService } from './integrations/logger.service';
 export { NotifierService } from './integrations/notifier.service';
 export { StorageQueueService } from './integrations/storage-queue.service';
+export { ElasticSearchService } from './integrations/elastic-search.service';
 
 export { CacheService, CacheConfigType } from './storage/cache.service';
 export { FileStorageService } from './storage/file-storage.service';

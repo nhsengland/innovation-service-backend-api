@@ -1,4 +1,4 @@
-version: '3.7'
+version: "3.7"
 
 services:
   mssql:
@@ -10,7 +10,7 @@ services:
     ports:
       - "1433:1433"
     restart: unless-stopped
-      
+
   queue:
     container_name: queue
     image: mcr.microsoft.com/azure-storage/azurite
@@ -24,7 +24,7 @@ services:
     # 1. Open the local.settings.json file and locate the "AZURE_STORAGE_CONNECTIONSTRING" setting.
     # 2. Replace the value of the setting with the connection string below.
     # "AZURE_STORAGE_CONNECTIONSTRING": "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;",
-    
+
   redis:
     container_name: redis
     image: redis:latest
@@ -36,3 +36,23 @@ services:
     # 1. Open the local.settings.json file and locate the "REDIS_CACHE_CONNECTIONSTRING" setting.
     # 2. Replace the value of the setting with the connection string below.
     # "REDIS_CACHE_CONNECTIONSTRING": "localhost:6379,password=,ssl=False,abortConnect=False",
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.3
+    container_name: elasticsearch
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+      - ./server/elastic/scripts:/server/elastic/scripts
+    environment:
+      - node.name=es01
+      - cluster.name=es-docker-cluster
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - xpack.security.enabled=false
+      - discovery.type=single-node
+    ports:
+      - 9300:9300
+      - 9200:9200
+
+volumes:
+  esdata:

@@ -130,6 +130,25 @@ paths:
           description: The organisation unit does not exist.
         "500":
           description: An error occurred while updating the organisation unit.
+  /v1/search/reindex:
+    post:
+      description: Create Index and Ingest all the documents
+      operationId: v1-admin-search-reindex
+      tags:
+        - "[v1] Elastic Search"
+      responses:
+        "204":
+          description: Index reindexed
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
   /v1/tou/{touId}:
     get:
       description: Get terms of use.
