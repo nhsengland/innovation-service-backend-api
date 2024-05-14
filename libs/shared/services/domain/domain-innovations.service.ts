@@ -13,6 +13,7 @@ import { InnovationTaskEntity } from '../../entities/innovation/innovation-task.
 import { InnovationThreadEntity } from '../../entities/innovation/innovation-thread.entity';
 import { InnovationTransferEntity } from '../../entities/innovation/innovation-transfer.entity';
 import { InnovationEntity } from '../../entities/innovation/innovation.entity';
+import { InnovationDocumentEntity } from '../../entities/innovation/innovation-document.entity';
 import { OrganisationUnitEntity } from '../../entities/organisation/organisation-unit.entity';
 import { NotificationUserEntity } from '../../entities/user/notification-user.entity';
 import { NotificationEntity } from '../../entities/user/notification.entity';
@@ -910,10 +911,10 @@ export class DomainInnovationsService {
         'ownerRole.id',
         'ownerOrganisation.id',
         'ownerOrganisation.name',
-        'document.document',
         'shares.id',
         'supports.id',
         'supports.status',
+        'supports.organisation_unit_id',
         'supports.updatedAt',
         'supports.updatedBy',
         'supportUnit.id',
@@ -924,32 +925,50 @@ export class DomainInnovationsService {
         'supportOrg.acronym',
         'assignedUserRole.id',
         'assignedUser.id',
-        'assignedUser.identityId'
+        'assignedUser.identityId',
+        'assessment.id',
+        'assessment.updatedAt',
+        'assessment.exemptedAt',
+        'assessor.id',
+        'assessor.identityId'
       ])
-      .innerJoin('innovation.document', 'document')
       .innerJoin('innovation.innovationGroupedStatus', 'groupedStatus')
-      .innerJoin('innovation.innovationSupports', 'supports')
+      .leftJoin('innovation.innovationSupports', 'supports')
+      .leftJoin('innovation.assessments', 'assessment')
+      .leftJoin('assessment.assignTo', 'assessor')
       .leftJoin('supports.userRoles', 'assignedUserRole')
       .leftJoin('assignedUserRole.user', 'assignedUser', "assignedUser.status <> 'DELETED'")
-      .innerJoin('supports.organisationUnit', 'supportUnit')
-      .innerJoin('supportUnit.organisation', 'supportOrg')
+      .leftJoin('supports.organisationUnit', 'supportUnit')
+      .leftJoin('supportUnit.organisation', 'supportOrg')
       .leftJoin('innovation.organisationShares', 'shares')
       .leftJoin('innovation.owner', 'owner')
       .leftJoin('owner.serviceRoles', 'ownerRole', 'ownerRole.role = :innovatorRole AND ownerRole.isActive = 1', {
         innovatorRole: ServiceRoleEnum.INNOVATOR
       })
-      .leftJoin('ownerRole.organisation', 'ownerOrganisation');
+      .leftJoin('ownerRole.organisation', 'ownerOrganisation')
+      .withDeleted();
 
     if (innovationIds?.length) {
       query.andWhere('innovation.id IN (:...innovationIds)', { innovationIds });
     }
 
     const innovations = await query.getMany();
+
+    const documents = new Map(
+      (
+        await this.sqlConnection.manager
+          .createQueryBuilder(InnovationDocumentEntity, 'doc')
+          .withDeleted()
+          .select(['doc.id', 'doc.document'])
+          .getMany()
+      ).map(d => [d.id, d.document])
+    );
+
     return innovations.map(inno => {
       const orgs = new Map<string, CurrentElasticSearchDocumentType['engagingOrganisations'][number]>();
       const units = new Map<string, CurrentElasticSearchDocumentType['engagingUnits'][number]>();
 
-      for (const support of inno.innovationSupports) {
+      for (const support of inno.innovationSupports.filter(s => s.status === InnovationSupportStatusEnum.ENGAGING)) {
         const unit = support.organisationUnit;
         const org = unit.organisation;
         orgs.set(org.id, { organisationId: org.id, name: org.name, acronym: org.acronym });
@@ -957,7 +976,11 @@ export class DomainInnovationsService {
           unitId: unit.id,
           name: unit.name,
           acronym: unit.acronym,
-          assignedAccessors: support.userRoles.map(({ user }) => ({ id: user.id, identityId: user.identityId }))
+          assignedAccessors: support.userRoles.map(r => ({
+            roleId: r.id,
+            id: r.user.id,
+            identityId: r.user.identityId
+          }))
         });
       }
 
@@ -966,13 +989,14 @@ export class DomainInnovationsService {
         name: inno.name,
         status: inno.status,
         archivedStatus: inno.archivedStatus,
+        rawStatus: inno.status === InnovationStatusEnum.ARCHIVED ? inno.archivedStatus : inno.status,
         statusUpdatedAt: inno.statusUpdatedAt,
         groupedStatus: inno.innovationGroupedStatus.groupedStatus,
         submittedAt: inno.submittedAt,
         updatedAt: inno.updatedAt,
         lastAssessmentRequestAt: inno.lastAssessmentRequestAt,
 
-        document: inno.document.document,
+        document: documents.get(inno.id)!,
 
         owner: {
           id: inno.owner?.id,
@@ -983,7 +1007,27 @@ export class DomainInnovationsService {
         engagingOrganisations: [...orgs.values()],
         engagingUnits: [...units.values()],
 
-        shares: inno.organisationShares.map(s => s.id)
+        shares: inno.organisationShares.map(s => s.id),
+
+        supports: inno.innovationSupports.map(s => ({
+          id: s.id,
+          unitId: s.organisationUnit.id,
+          status: s.status,
+          updatedAt: s.updatedAt,
+          updatedBy: s.updatedBy,
+          assignedAccessorsRoleIds: s.userRoles.map(r => r.id)
+        })),
+
+        assessment: inno.assessments[0]
+          ? {
+              id: inno.assessments[0].id,
+              updatedAt: inno.assessments[0].updatedAt,
+              isExempt: !!inno.assessments[0].exemptedAt,
+              assignedToId: inno.assessments[0].assignTo?.id ?? null,
+              assignedToIdentityId: inno.assessments[0].assignTo?.identityId ?? null
+            }
+          : undefined
+        // suggestions: (inno?.suggestions ?? []).map(s => ({ suggestedUnitId: s.suggestedUnitId, suggestedBy: s.suggestedBy }))
       };
     });
   }

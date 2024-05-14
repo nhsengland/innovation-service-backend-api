@@ -1,6 +1,7 @@
 import type { CreateIndexParams } from '../../../services/integrations/elastic-search.service';
-import type { InnovationStatusEnum, InnovationGroupedStatusEnum } from '../../../enums';
+import type { InnovationStatusEnum, InnovationGroupedStatusEnum, InnovationSupportStatusEnum } from '../../../enums';
 import type { DocumentType } from '../index';
+import type { MappingProperty } from '@elastic/elasticsearch/lib/api/types';
 
 export type ElasticSearchDocumentType202304 = {
   id: string;
@@ -22,6 +23,29 @@ export type ElasticSearchDocumentType202304 = {
     assignedAccessors: { id: string; identityId: string }[];
   }[];
   shares: string[];
+  supports: {
+    id: string;
+    unitId: string;
+    status: InnovationSupportStatusEnum;
+    updatedAt: Date;
+    updatedBy: string;
+  }[];
+  assessment?: {
+    id: string;
+    assignedToId: string | null;
+    assignedToIdentityId: string | null;
+    updatedAt: Date;
+    isExempt: boolean;
+  };
+  // NOTE: This is not being populated yet
+  suggestions?: {
+    suggestedUnitId: string;
+    suggestedBy: string[];
+  }[];
+};
+const TextWithNestedKeywordType: MappingProperty = {
+  type: 'text',
+  fields: { keyword: { type: 'keyword', normalizer: 'lowercase' } }
 };
 
 export const ElasticSearchSchema202304: CreateIndexParams = {
@@ -46,9 +70,10 @@ export const ElasticSearchSchema202304: CreateIndexParams = {
         }
       },
 
-      name: { type: 'text' },
+      name: TextWithNestedKeywordType,
       status: { type: 'keyword' },
       archivedStatus: { type: 'keyword' },
+      rawStatus: { type: 'keyword' },
       statusUpdatedAt: { type: 'date' },
       groupedStatus: { type: 'keyword' },
       submittedAt: { type: 'date' },
@@ -59,10 +84,11 @@ export const ElasticSearchSchema202304: CreateIndexParams = {
         type: 'nested',
         properties: {
           id: { type: 'keyword' },
+          unitId: { type: 'keyword' },
           status: { type: 'keyword' },
           updatedAt: { type: 'date' },
-          updatedBy: { type: 'keyword' }
-          // closedReason: { type: 'keyword' }
+          updatedBy: { type: 'keyword' },
+          assignedAccessorsRoleIds: { type: 'keyword' }
         }
       },
 
@@ -83,6 +109,7 @@ export const ElasticSearchSchema202304: CreateIndexParams = {
           assignedAccessors: {
             type: 'nested',
             properties: {
+              roleId: { type: 'keyword' },
               id: { type: 'keyword' },
               identityId: { type: 'keyword' }
             }
@@ -90,6 +117,25 @@ export const ElasticSearchSchema202304: CreateIndexParams = {
         }
       },
       shares: { type: 'keyword' },
+
+      // NOTE: This is not being populated yet
+      suggestions: {
+        type: 'nested',
+        properties: {
+          suggestedUnitId: { type: 'keyword' },
+          suggestedBy: { type: 'keyword' }
+        }
+      },
+
+      assessment: {
+        properties: {
+          id: { type: 'keyword' },
+          assignedToId: { type: 'keyword' },
+          assignedToIdentityId: { type: 'keyword' },
+          updatedAt: { type: 'date' },
+          isExempt: { type: 'boolean' }
+        }
+      },
 
       document: {
         properties: {
@@ -99,7 +145,7 @@ export const ElasticSearchSchema202304: CreateIndexParams = {
               name: { type: 'text' },
               description: { type: 'text' },
               postcode: { type: 'text' },
-              countryName: { type: 'text' },
+              countryName: TextWithNestedKeywordType,
               website: { type: 'text' },
               categories: { type: 'keyword' },
               otherCategoryDescription: { type: 'text' },
