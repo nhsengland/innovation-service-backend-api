@@ -14,7 +14,7 @@ export type ElasticSearchDocumentType202304 = {
   updatedAt: Date;
   lastAssessmentRequestAt: Date | null;
   document: DocumentType;
-  owner: { id?: string; identityId?: string; companyName?: string };
+  owner: { id?: string; identityId?: string; companyName: string | null };
   engagingOrganisations: { organisationId: string; name: string; acronym: null | string }[];
   engagingUnits: {
     unitId: string;

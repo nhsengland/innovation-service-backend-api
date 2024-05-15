@@ -2,7 +2,6 @@ import type {
   QueryDslQueryContainer,
   QueryDslRangeQuery,
   SearchHit,
-  SearchRequest,
   SearchTotalHits,
   Sort
 } from '@elastic/elasticsearch/lib/api/types';
@@ -22,6 +21,12 @@ import {
 import { inject, injectable } from 'inversify';
 import { isArray, isString, mapValues, groupBy, pick } from 'lodash';
 import { InnovationLocationEnum } from '../_enums/innovation.enums';
+import {
+  createBoolQuery,
+  createNestedQuery,
+  createOrQuery,
+  ElasticSearchQueryBuilder
+} from '../_helpers/es-query-builder.helper';
 import { BaseService } from './base.service';
 import type {
   DateFilterFieldsType,
@@ -61,8 +66,24 @@ const translations = new Map([
   ['diseasesAndConditions', ['document', 'UNDERSTANDING_OF_NEEDS', 'diseasesConditionsImpact']],
   ['mainCategory', ['document', 'INNOVATION_DESCRIPTION', 'mainCategory']],
   ['otherCategoryDescription', ['document', 'INNOVATION_DESCRIPTION', 'otherCategoryDescription']],
-  ['postcode', ['document', 'INNOVATION_DESCRIPTION', 'postcode']]
+  ['postcode', ['document', 'INNOVATION_DESCRIPTION', 'postcode']],
+  ['involvedAACProgrammes', ['document', 'INNOVATION_DESCRIPTION', 'involvedAACProgrammes']],
+  ['keyHealthInequalities', ['document', 'UNDERSTANDING_OF_NEEDS', 'keyHealthInequalities']]
 ]);
+
+const priorities = [
+  ['document.INNOVATION_DESCRIPTION.name', 'owner.companyName'],
+  ['document.INNOVATION_DESCRIPTION.description'],
+  ['document.UNDERSTANDING_OF_NEEDS.problemsTackled'],
+  ['document.UNDERSTANDING_OF_NEEDS.impactDiseaseCondition'],
+  ['document.INNOVATION_DESCRIPTION.mainPurpose'],
+  ['document.UNDERSTANDING_OF_NEEDS.benefitsOrImpact'],
+  ['document.INNOVATION_DESCRIPTION.careSettings', 'document.INNOVATION_DESCRIPTION.otherCareSetting'],
+  ['document.TESTING_WITH_USERS.involvedUsersDesignProcess'],
+  ['document.REGULATIONS_AND_STANDARDS.standardsType', 'document.REGULATIONS_AND_STANDARDS.otherRegulationDescription'],
+  ['document.INNOVATION_DESCRIPTION.countryName'],
+  ['document.INNOVATION_DESCRIPTION.postcode']
+];
 
 type PickHandlerReturnType<T extends { [k: string]: any }, K extends keyof T> = {
   [k in K]: Awaited<ReturnType<T[k]>>;
@@ -79,11 +100,6 @@ type InnovationListChildrenType<T extends InnovationListJoinTypes> = SearchInnov
     ? D
     : never
   : never;
-
-type SearchQueryBody = SearchRequest & { query: SearchBoolQuery };
-type SearchBoolQuery = {
-  bool: { must: QueryDslQueryContainer[]; must_not: QueryDslQueryContainer[]; filter: QueryDslQueryContainer[] };
-};
 
 @injectable()
 export class SearchService extends BaseService {
@@ -128,11 +144,7 @@ export class SearchService extends BaseService {
       return { count: 0, data: [] };
     }
 
-    const searchQuery: SearchQueryBody = {
-      index: this.index,
-      sort: [],
-      query: { bool: { must: [], must_not: [], filter: [] } }
-    };
+    const searchQuery = new ElasticSearchQueryBuilder(this.index);
 
     // Add Permission Guards according with role
     this.addPermissionGuards(domainContext, searchQuery);
@@ -202,11 +214,9 @@ export class SearchService extends BaseService {
         }
       }
     });
-    searchQuery.from = params.pagination.skip;
-    searchQuery.size = params.pagination.take;
-    searchQuery.sort = sort;
+    searchQuery.addPagination({ from: params.pagination.skip, size: params.pagination.take, sort });
 
-    const response = await this.esService.client.search<CurrentElasticSearchDocumentType>(searchQuery);
+    const response = await this.esService.client.search<CurrentElasticSearchDocumentType>(searchQuery.build());
 
     // console.log(response);
     // for (const i in response.hits.hits) {
@@ -376,7 +386,7 @@ export class SearchService extends BaseService {
   private readonly filtersHandlers: {
     [k in keyof Partial<InnovationListFilters>]: (
       domainContext: DomainContextType,
-      query: SearchQueryBody,
+      builder: ElasticSearchQueryBuilder,
       value: Required<InnovationListFilters>[k]
     ) => void | Promise<void>;
   } = {
@@ -397,23 +407,7 @@ export class SearchService extends BaseService {
   };
 
   // NOTE: Do we keep the search by email on admin?
-  private addSearchFilter(_domainContext: DomainContextType, query: SearchQueryBody, search: string): void {
-    const priorities = [
-      ['document.INNOVATION_DESCRIPTION.name', 'owner.companyName'],
-      ['document.INNOVATION_DESCRIPTION.description'],
-      ['document.UNDERSTANDING_OF_NEEDS.problemsTackled'],
-      ['document.UNDERSTANDING_OF_NEEDS.impactDiseaseCondition'],
-      ['document.INNOVATION_DESCRIPTION.mainPurpose'],
-      ['document.UNDERSTANDING_OF_NEEDS.benefitsOrImpact'],
-      ['document.INNOVATION_DESCRIPTION.careSettings', 'document.INNOVATION_DESCRIPTION.otherCareSetting'], // NOTE: not sure if other should enter here.
-      ['document.TESTING_WITH_USERS.*'],
-      [
-        'document.REGULATIONS_AND_STANDARDS.standardsType',
-        'document.REGULATIONS_AND_STANDARDS.otherRegulationDescription'
-      ],
-      ['document.INNOVATION_DESCRIPTION.countryName'],
-      ['document.INNOVATION_DESCRIPTION.postcode']
-    ];
+  private addSearchFilter(_domainContext: DomainContextType, builder: ElasticSearchQueryBuilder, search: string): void {
     const fields = priorities.reverse().flatMap((priority, i) => priority.map(p => `${p}^${i + 1}`));
 
     if (search) {
@@ -424,25 +418,24 @@ export class SearchService extends BaseService {
           fuzziness: 'AUTO'
         }
       };
-      query.query.bool.must.push(searchQuery);
-      query.highlight = { fields: { '*': { order: 'score', highlight_query: searchQuery } } };
+      builder.addMust(searchQuery);
+      builder.addHighlight({ fields: { '*': { order: 'score', highlight_query: searchQuery } } });
     }
   }
 
-  private addAssignedToMeFilter(domainContext: DomainContextType, query: SearchQueryBody, value: boolean): void {
+  private addAssignedToMeFilter(
+    domainContext: DomainContextType,
+    builder: ElasticSearchQueryBuilder,
+    value: boolean
+  ): void {
     if (value) {
       if (isAccessorDomainContextType(domainContext)) {
-        query.query.bool.must.push({
-          nested: {
-            path: 'supports',
-            query: {
-              term: { 'supports.assignedAccessorsRoleIds': domainContext.currentRole.id }
-            }
-          }
-        });
+        builder.addMust(
+          createNestedQuery('supports', { term: { 'supports.assignedAccessorsRoleIds': domainContext.currentRole.id } })
+        );
       }
       if (isAssessmentDomainContextType(domainContext)) {
-        query.query.bool.must.push({ term: { 'assessment.assignedToId': domainContext.id } });
+        builder.addMust({ term: { 'assessment.assignedToId': domainContext.id } });
       }
     }
   }
@@ -450,26 +443,21 @@ export class SearchService extends BaseService {
   private addJsonFilter(
     filterKey: string,
     options?: { fieldSelector: string } // fieldSelector == nested
-  ): (_domainContext: DomainContextType, query: SearchQueryBody, value: string | string[]) => void {
-    return (_domainContext: DomainContextType, query: SearchQueryBody, value: string | string[]) => {
+  ): (_domainContext: DomainContextType, builder: ElasticSearchQueryBuilder, value: string | string[]) => void {
+    return (_domainContext: DomainContextType, builder: ElasticSearchQueryBuilder, value: string | string[]) => {
       const type = isArray(value) ? 'terms' : 'term';
 
       if (options?.fieldSelector) {
-        query.query.bool.must.push({
-          nested: {
-            path: filterKey,
-            query: { [type]: { [`${filterKey}.${options.fieldSelector}`]: value } }
-          }
-        });
+        builder.addMust(createNestedQuery(filterKey, { [type]: { [`${filterKey}.${options.fieldSelector}`]: value } }));
       } else {
-        query.query.bool.must.push({ [type]: { [filterKey]: value } });
+        builder.addMust({ [type]: { [filterKey]: value } });
       }
     };
   }
 
   private addLocationFilter(
     _domainContext: DomainContextType,
-    query: SearchQueryBody,
+    builder: ElasticSearchQueryBuilder,
     locations: InnovationLocationEnum[]
   ): void {
     const should: QueryDslQueryContainer[] = [];
@@ -483,12 +471,13 @@ export class SearchService extends BaseService {
           InnovationLocationEnum.Wales
         ];
 
-        should.push({
-          bool: {
-            must_not: [{ terms: { 'document.INNOVATION_DESCRIPTION.countryName.keyword': predefinedLocations } }]
-          }
-        });
+        should.push(
+          createBoolQuery({
+            mustNot: { terms: { 'document.INNOVATION_DESCRIPTION.countryName.keyword': predefinedLocations } }
+          })
+        );
       }
+
       should.push({
         terms: {
           'document.INNOVATION_DESCRIPTION.countryName.keyword': locations.filter(
@@ -497,50 +486,33 @@ export class SearchService extends BaseService {
         }
       });
     }
-
-    query.query.bool.must.push({ bool: { should, minimum_should_match: 1 } });
+    builder.addMust(createOrQuery(should));
   }
 
   private addSupportFilter(
     domainContext: DomainContextType,
-    query: SearchQueryBody,
+    builder: ElasticSearchQueryBuilder,
     supportStatuses: InnovationSupportStatusEnum[]
   ): void {
     if (supportStatuses.length && isAccessorDomainContextType(domainContext)) {
-      query.query.bool.must.push({
-        bool: {
-          should: [
-            {
-              nested: {
-                path: 'supports',
-                query: {
-                  bool: {
-                    must: [
-                      { term: { 'supports.unitId': domainContext.organisation.organisationUnit.id } },
-                      { terms: { 'supports.status': supportStatuses } }
-                    ]
-                  }
-                }
-              }
-            },
-            {
-              bool: {
-                must_not: [
-                  {
-                    nested: {
-                      path: 'supports',
-                      query: {
-                        term: { 'supports.unitId': domainContext.organisation.organisationUnit.id }
-                      }
-                    }
-                  }
-                ]
-              }
-            }
-          ],
-          minimum_should_match: 1
-        }
-      });
+      builder.addMust(
+        createOrQuery([
+          createNestedQuery(
+            'supports',
+            createBoolQuery({
+              must: [
+                { term: { 'supports.unitId': domainContext.organisation.organisationUnit.id } },
+                { terms: { 'supports.status': supportStatuses } }
+              ]
+            })
+          ),
+          createBoolQuery({
+            mustNot: createNestedQuery('supports', {
+              term: { 'supports.unitId': domainContext.organisation.organisationUnit.id }
+            })
+          })
+        ])
+      );
     }
   }
 
@@ -570,7 +542,7 @@ export class SearchService extends BaseService {
 
   private addDateFilters(
     _domainContext: DomainContextType,
-    query: SearchQueryBody,
+    builder: ElasticSearchQueryBuilder,
     dateFilters: { field: DateFilterFieldsType; startDate?: Date; endDate?: Date }[]
   ): void {
     if (dateFilters && dateFilters.length > 0) {
@@ -594,74 +566,51 @@ export class SearchService extends BaseService {
           range.lt = beforeDateWithTimestamp.toISOString();
         }
 
-        query.query.bool.must.push({ range: { [filterKey]: range } });
+        builder.addMust({ range: { [filterKey]: range } });
       }
     }
   }
 
-  private addPermissionGuards(domainContext: DomainContextType, query: SearchQueryBody): void {
+  private addPermissionGuards(domainContext: DomainContextType, builder: ElasticSearchQueryBuilder): void {
     if (domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT) {
-      query.query.bool.filter.push({ bool: { must_not: { term: { rawStatus: InnovationStatusEnum.CREATED } } } });
+      builder.addFilter(createBoolQuery({ mustNot: { term: { rawStatus: InnovationStatusEnum.CREATED } } }));
     }
 
     if (isAccessorDomainContextType(domainContext)) {
-      query.query.bool.filter.push({ term: { rawStatus: InnovationStatusEnum.IN_PROGRESS } });
-      query.query.bool.filter.push({
-        bool: {
-          should: [
-            { term: { shares: domainContext.organisation.id } },
-            {
-              nested: {
-                path: 'supports',
-                query: {
-                  term: { 'supports.unitId': domainContext.organisation.organisationUnit.id }
-                }
-              }
-            }
-          ],
-          minimum_should_match: 1
-        }
+      const isShared = { term: { shares: domainContext.organisation.id } };
+      const hasSupport = createNestedQuery('supports', {
+        term: { 'supports.unitId': domainContext.organisation.organisationUnit.id }
       });
-      query.query.bool.filter.push({
-        bool: {
-          should: [
-            { bool: { must_not: { term: { status: InnovationStatusEnum.ARCHIVED } } } },
-            {
-              nested: {
-                path: 'supports',
-                query: {
-                  term: { 'supports.unitId': domainContext.organisation.organisationUnit.id }
-                }
-              }
-            }
-          ],
-          minimum_should_match: 1
-        }
-      });
+      const isArchived = createBoolQuery({ mustNot: { term: { status: InnovationStatusEnum.ARCHIVED } } });
+
+      // Was in rawStatus Progress (archived or current)
+      builder.addFilter({ term: { rawStatus: InnovationStatusEnum.IN_PROGRESS } });
+      // Was shared OR supported
+      builder.addFilter(createOrQuery([isShared, hasSupport]));
+      // Is currently archived OR supported
+      builder.addFilter(createOrQuery([isArchived, hasSupport]));
 
       if (domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR) {
-        query.query.bool.filter.push({
-          nested: {
-            path: 'supports',
-            query: {
-              bool: {
-                must: [
-                  { term: { 'supports.unitId': domainContext.organisation.organisationUnit.id } },
-                  {
-                    terms: {
-                      'supports.status': [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.CLOSED]
-                    }
+        builder.addFilter(
+          createNestedQuery(
+            'supports',
+            createBoolQuery({
+              must: [
+                { term: { 'supports.unitId': domainContext.organisation.organisationUnit.id } },
+                {
+                  terms: {
+                    'supports.status': [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.CLOSED]
                   }
-                ]
-              }
-            }
-          }
-        });
+                }
+              ]
+            })
+          )
+        );
       }
     }
 
     if (domainContext.currentRole.role !== ServiceRoleEnum.ADMIN) {
-      query.query.bool.filter.push({ bool: { must_not: { term: { rawStatus: InnovationStatusEnum.WITHDRAWN } } } });
+      builder.addFilter(createBoolQuery({ mustNot: { term: { rawStatus: InnovationStatusEnum.WITHDRAWN } } }));
     }
   }
 

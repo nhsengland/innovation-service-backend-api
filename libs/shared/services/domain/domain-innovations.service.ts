@@ -945,7 +945,7 @@ export class DomainInnovationsService {
       .leftJoin('owner.serviceRoles', 'ownerRole', 'ownerRole.role = :innovatorRole AND ownerRole.isActive = 1', {
         innovatorRole: ServiceRoleEnum.INNOVATOR
       })
-      .leftJoin('ownerRole.organisation', 'ownerOrganisation')
+      .leftJoin('ownerRole.organisation', 'ownerOrganisation', 'ownerOrganisation.is_shadow = 0')
       .withDeleted();
 
     if (innovationIds?.length) {
@@ -1001,7 +1001,7 @@ export class DomainInnovationsService {
         owner: {
           id: inno.owner?.id,
           identityId: inno.owner?.identityId,
-          companyName: inno.owner?.serviceRoles[0]?.organisation?.name
+          companyName: inno.owner?.serviceRoles[0]?.organisation?.name ?? null
         },
 
         engagingOrganisations: [...orgs.values()],
