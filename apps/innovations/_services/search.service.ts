@@ -59,6 +59,7 @@ type SearchInnovationListSelectType =
   | 'owner.companyName';
 
 const translations = new Map([
+  ['name', ['document', 'INNOVATION_DESCRIPTION', 'name']],
   ['careSettings', ['document', 'INNOVATION_DESCRIPTION', 'careSettings']],
   ['otherCareSetting', ['document', 'INNOVATION_DESCRIPTION', 'otherCareSetting']],
   ['categories', ['document', 'INNOVATION_DESCRIPTION', 'categories']],
@@ -175,17 +176,11 @@ export class SearchService extends BaseService {
               message: 'Sort by name is not allowed'
             });
 
-          case 'support.closedReason':
-            throw new NotImplementedError(GenericErrorsEnum.NOT_IMPLEMENTED_ERROR, {
-              message: 'Filter not needed yet'
-            });
-
+          // add here the ones that have nested keyword (since sort only allows sort by keyword)
           case 'countryName':
-            sort.push({ [`document.INNOVATION_DESCRIPTION.${key}.keyword`]: { order } });
-            break;
-
           case 'name':
-            sort.push({ [`${key}.keyword`]: { order } });
+            const translation = translations.get(key);
+            sort.push({ [`${translation ?? key}.keyword`]: { order } });
             break;
 
           case 'support.updatedAt':
@@ -205,24 +200,19 @@ export class SearchService extends BaseService {
             break;
 
           case 'relevance':
-            // Default is by "relevance"
             break;
 
           default:
-            // TODO: Verify if is nested!
-            sort.push({ [key]: { order } });
+            // Assessment is not nested, can be handled this way as-well.
+            if (!key.includes('.') || (key.includes('.') && key.includes('assessment'))) {
+              sort.push({ [key]: { order } });
+            }
         }
       }
     });
     searchQuery.addPagination({ from: params.pagination.skip, size: params.pagination.take, sort });
 
     const response = await this.esService.client.search<CurrentElasticSearchDocumentType>(searchQuery.build());
-
-    // console.log(response);
-    // for (const i in response.hits.hits) {
-    //   const hit: any = response.hits.hits[i];
-    //   console.log(`${i}: ${hit?._source.name}`);
-    // }
 
     const handlerMaps: {
       [k in keyof typeof this.postHandlers]: Awaited<ReturnType<(typeof this.postHandlers)[k]>>;
@@ -241,25 +231,38 @@ export class SearchService extends BaseService {
         const doc = hit._source!;
 
         const res = { highlights: hit.highlight } as any;
-        Object.entries(fieldGroups).forEach(([key, value]) => {
+        for (const [key, value] of Object.entries(fieldGroups)) {
           if (key in this.displayHandlers) {
             const handler = this.displayHandlers[key as keyof typeof this.displayHandlers];
             if (handler) {
               res[key] = handler(domainContext, doc, value as any[], handlerMaps); // this any should be safe since it comes from the groupBy
             }
+            continue;
+          }
+          // Handle plain object directly from the view
+          if (translations.has(key)) {
+            res[key] = translations.get(key)!.reduce((o, k) => (o ? o[k] : null), doc as any);
           } else {
-            // Handle plain object directly from the view
-            if (translations.has(key)) {
-              res[key] = translations.get(key)!.reduce((o, k) => (o ? o[k] : null), doc as any);
+            if (key === 'id') {
+              res[key] = hit._id;
             } else {
-              if (key === 'id') {
-                res[key] = hit._id;
-              } else {
-                res[key] = doc[key as keyof CurrentElasticSearchDocumentType];
-              }
+              res[key] = doc[key as keyof CurrentElasticSearchDocumentType];
             }
           }
-        });
+        }
+
+        for (const [key, value] of Object.entries(fieldGroups)) {
+          if (key in this.displayHandlers) {
+            const handler = this.displayHandlers[key as keyof typeof this.displayHandlers];
+            if (handler) {
+              res[key] = handler(domainContext, doc, value as any[], handlerMaps); // this any should be safe since it comes from the groupBy
+            }
+          } else if (translations.has(key)) {
+            res[key] = translations.get(key)!.reduce((o, k) => (o ? o[k] : null), doc as any);
+          } else {
+            res[key] = key === 'id' ? hit._id : doc[key as keyof CurrentElasticSearchDocumentType];
+          }
+        }
 
         // Extra postProcessing the items if required (this might become handlers in the future, keeping a function for now)
         return isAccessorDomainContextType(domainContext) && !doc.shares.includes(domainContext.organisation.id)
@@ -547,12 +550,6 @@ export class SearchService extends BaseService {
   ): void {
     if (dateFilters && dateFilters.length > 0) {
       for (const filter of dateFilters) {
-        let filterKey = !filter.field.includes('.') ? filter.field : filter.field;
-
-        // TODO: handle this date filter differently because of nested
-        if (filterKey.includes('support')) {
-        }
-
         const range: QueryDslRangeQuery = {};
         if (filter.startDate) {
           range.gte = filter.startDate.toISOString();
@@ -566,7 +563,11 @@ export class SearchService extends BaseService {
           range.lt = beforeDateWithTimestamp.toISOString();
         }
 
-        builder.addMust({ range: { [filterKey]: range } });
+        if (filter.field === 'support.updatedAt') {
+          builder.addMust(createNestedQuery('supports', { range: { 'supports.updatedAt': range } }));
+        } else {
+          builder.addMust({ range: { [filter.field]: range } });
+        }
       }
     }
   }

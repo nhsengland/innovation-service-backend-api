@@ -898,7 +898,6 @@ export class DomainInnovationsService {
       .createQueryBuilder(InnovationEntity, 'innovation')
       .select([
         'innovation.id',
-        'innovation.name',
         'innovation.status',
         'innovation.archivedStatus',
         'innovation.statusUpdatedAt',
@@ -986,7 +985,6 @@ export class DomainInnovationsService {
 
       return {
         id: inno.id,
-        name: inno.name,
         status: inno.status,
         archivedStatus: inno.archivedStatus,
         rawStatus: inno.status === InnovationStatusEnum.ARCHIVED ? inno.archivedStatus : inno.status,

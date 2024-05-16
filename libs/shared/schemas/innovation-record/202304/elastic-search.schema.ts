@@ -5,7 +5,6 @@ import type { MappingProperty } from '@elastic/elasticsearch/lib/api/types';
 
 export type ElasticSearchDocumentType202304 = {
   id: string;
-  name: string;
   status: InnovationStatusEnum;
   archivedStatus: InnovationStatusEnum | null;
   statusUpdatedAt: Date;
@@ -70,7 +69,6 @@ export const ElasticSearchSchema202304: CreateIndexParams = {
         }
       },
 
-      name: TextWithNestedKeywordType,
       status: { type: 'keyword' },
       archivedStatus: { type: 'keyword' },
       rawStatus: { type: 'keyword' },
@@ -142,7 +140,7 @@ export const ElasticSearchSchema202304: CreateIndexParams = {
           version: { type: 'constant_keyword' },
           INNOVATION_DESCRIPTION: {
             properties: {
-              name: { type: 'text' },
+              name: TextWithNestedKeywordType,
               description: { type: 'text' },
               postcode: { type: 'text' },
               countryName: TextWithNestedKeywordType,

@@ -55,6 +55,7 @@ export type ResponseDTO = {
       tasks: number;
       messages: number;
     };
+    highlights?: Record<string, string[]>;
   }[];
 };
 
