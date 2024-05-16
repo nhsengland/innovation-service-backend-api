@@ -179,7 +179,7 @@ export class SearchService extends BaseService {
           // add here the ones that have nested keyword (since sort only allows sort by keyword)
           case 'countryName':
           case 'name':
-            const translation = translations.get(key);
+            const translation = translations.get(key)?.join('.');
             sort.push({ [`${translation ?? key}.keyword`]: { order } });
             break;
 
@@ -241,7 +241,7 @@ export class SearchService extends BaseService {
           }
           // Handle plain object directly from the view
           if (translations.has(key)) {
-            res[key] = translations.get(key)!.reduce((o, k) => (o ? o[k] : null), doc as any);
+            res[key] = this.translate(doc, key);
           } else {
             if (key === 'id') {
               res[key] = hit._id;
@@ -258,7 +258,7 @@ export class SearchService extends BaseService {
               res[key] = handler(domainContext, doc, value as any[], handlerMaps); // this any should be safe since it comes from the groupBy
             }
           } else if (translations.has(key)) {
-            res[key] = translations.get(key)!.reduce((o, k) => (o ? o[k] : null), doc as any);
+            res[key] = this.translate(doc, key);
           } else {
             res[key] = key === 'id' ? hit._id : doc[key as keyof CurrentElasticSearchDocumentType];
           }
@@ -433,12 +433,12 @@ export class SearchService extends BaseService {
   ): void {
     if (value) {
       if (isAccessorDomainContextType(domainContext)) {
-        builder.addMust(
+        builder.addFilter(
           createNestedQuery('supports', { term: { 'supports.assignedAccessorsRoleIds': domainContext.currentRole.id } })
         );
       }
       if (isAssessmentDomainContextType(domainContext)) {
-        builder.addMust({ term: { 'assessment.assignedToId': domainContext.id } });
+        builder.addFilter({ term: { 'assessment.assignedToId': domainContext.id } });
       }
     }
   }
@@ -451,9 +451,11 @@ export class SearchService extends BaseService {
       const type = isArray(value) ? 'terms' : 'term';
 
       if (options?.fieldSelector) {
-        builder.addMust(createNestedQuery(filterKey, { [type]: { [`${filterKey}.${options.fieldSelector}`]: value } }));
+        builder.addFilter(
+          createNestedQuery(filterKey, { [type]: { [`${filterKey}.${options.fieldSelector}`]: value } })
+        );
       } else {
-        builder.addMust({ [type]: { [filterKey]: value } });
+        builder.addFilter({ [type]: { [filterKey]: value } });
       }
     };
   }
@@ -489,7 +491,7 @@ export class SearchService extends BaseService {
         }
       });
     }
-    builder.addMust(createOrQuery(should));
+    builder.addFilter(createOrQuery(should));
   }
 
   private addSupportFilter(
@@ -498,7 +500,7 @@ export class SearchService extends BaseService {
     supportStatuses: InnovationSupportStatusEnum[]
   ): void {
     if (supportStatuses.length && isAccessorDomainContextType(domainContext)) {
-      builder.addMust(
+      builder.addFilter(
         createOrQuery([
           createNestedQuery(
             'supports',
@@ -564,9 +566,9 @@ export class SearchService extends BaseService {
         }
 
         if (filter.field === 'support.updatedAt') {
-          builder.addMust(createNestedQuery('supports', { range: { 'supports.updatedAt': range } }));
+          builder.addFilter(createNestedQuery('supports', { range: { 'supports.updatedAt': range } }));
         } else {
-          builder.addMust({ range: { [filter.field]: range } });
+          builder.addFilter({ range: { [filter.field]: range } });
         }
       }
     }
@@ -634,5 +636,10 @@ export class SearchService extends BaseService {
       'postCode',
       'support'
     ]);
+  }
+
+  private translate(doc: CurrentElasticSearchDocumentType, key: string): string | null {
+    if(!translations.has(key)) return null;
+    return translations.get(key)!.reduce((o, k) => (o ? o[k] : null), doc as any);
   }
 }

@@ -13,14 +13,13 @@ import {
   InnovationListSelectType
 } from '../_services/innovations.service';
 
-export type QueryParamsType = PaginationQueryParamsType<InnovationListSelectType> &
+export type QueryParamsType = PaginationQueryParamsType<InnovationListSelectType & 'relevance'> &
   InnovationListFilters & {
     fields: InnovationListSelectType[];
   };
 
 export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
   orderKeys: Object.values(InnovationListSelectType),
-  defaultOrder: {} // The new innovation list doesn't have a default order and enforces the user to order by a selected field
 })
   .append<QueryParamsType>({
     careSettings: JoiHelper.AppCustomJoi()

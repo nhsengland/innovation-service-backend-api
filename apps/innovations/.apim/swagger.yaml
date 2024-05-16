@@ -4660,7 +4660,8 @@ paths:
               enum:
                 - ASC
                 - DESC
-            default: {}
+            default:
+              default: DESC
         - name: careSettings
           in: query
           required: false
