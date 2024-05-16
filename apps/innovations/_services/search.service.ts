@@ -530,30 +530,6 @@ export class SearchService extends BaseService {
     }
   }
 
-  private readonly postHandlers = {
-    users: this.withUsers.bind(this)
-  };
-
-  private async withUsers(
-    results: SearchHit<CurrentElasticSearchDocumentType>[]
-  ): ReturnType<DomainUsersService['getUsersMap']> {
-    const usersSet = new Set<string>();
-    for (const hit of results) {
-      const doc = hit._source;
-      if (doc) {
-        [
-          doc.owner.id,
-          doc.supports[0]?.updatedBy,
-          doc.assessment?.assignedToId,
-          ...(doc.engagingUnits?.flatMap(u => u.assignedAccessors.map(a => a.id)) || [])
-        ]
-          .filter(isString)
-          .forEach(u => usersSet.add(u));
-      }
-    }
-    return this.domainService.users.getUsersMap({ userIds: [...usersSet] });
-  }
-
   private addDateFilters(
     _domainContext: DomainContextType,
     builder: ElasticSearchQueryBuilder,
@@ -581,6 +557,30 @@ export class SearchService extends BaseService {
         }
       }
     }
+  }
+
+  private readonly postHandlers = {
+    users: this.withUsers.bind(this)
+  };
+
+  private async withUsers(
+    results: SearchHit<CurrentElasticSearchDocumentType>[]
+  ): ReturnType<DomainUsersService['getUsersMap']> {
+    const usersSet = new Set<string>();
+    for (const hit of results) {
+      const doc = hit._source;
+      if (doc) {
+        [
+          doc.owner.id,
+          doc.supports[0]?.updatedBy,
+          doc.assessment?.assignedToId,
+          ...(doc.engagingUnits?.flatMap(u => u.assignedAccessors.map(a => a.id)) ?? [])
+        ]
+          .filter(isString)
+          .forEach(u => usersSet.add(u));
+      }
+    }
+    return this.domainService.users.getUsersMap({ userIds: [...usersSet] });
   }
 
   private addPermissionGuards(domainContext: DomainContextType, builder: ElasticSearchQueryBuilder): void {
