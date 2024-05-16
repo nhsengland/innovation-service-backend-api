@@ -58,6 +58,7 @@ type SearchInnovationListSelectType =
   | 'owner.name'
   | 'owner.companyName';
 
+// NOTE: when the new flat document (IR versioning) is implemented this will not be needed
 const translations = new Map([
   ['name', ['document', 'INNOVATION_DESCRIPTION', 'name']],
   ['careSettings', ['document', 'INNOVATION_DESCRIPTION', 'careSettings']],
@@ -133,6 +134,17 @@ export class SearchService extends BaseService {
     }
   }
 
+  /**
+   * Responsible for getting the innovation list with elastic search.
+   * Currently accepts the exact same fields, filters, and pagination params as the innovation list
+   * from sql, but is way more limited in functionality and there are some that are not working.
+   *
+   * TODO:
+   * Make sure that it implements the exact same functionality as the innovationList (currently just
+   * implements what is needed for the advanced search).
+   * Create an abstraction that both lists implements (e.g., strategy pattern), this way we make sure
+   * they implement the same behaviour with the specifics of ES and SQL abstracted away.
+   */
   async getDocuments<S extends SearchInnovationListSelectType>(
     domainContext: DomainContextType,
     params: {
@@ -239,7 +251,7 @@ export class SearchService extends BaseService {
             }
             continue;
           }
-          // Handle plain object directly from the view
+          // Handle plain object directly from the document
           if (translations.has(key)) {
             res[key] = this.translate(doc, key);
           } else {
@@ -297,9 +309,6 @@ export class SearchService extends BaseService {
       switch (field) {
         case 'assignedTo':
           res[field] = extra.users.get(item.assessment?.assignedToId ?? '')?.displayName ?? null;
-          break;
-        case 'isExempt':
-          res[field] = item.assessment?.isExempt;
           break;
         default:
           res[field] = item.assessment?.[field] ?? null;
@@ -417,7 +426,7 @@ export class SearchService extends BaseService {
       const searchQuery = {
         query_string: {
           query: search,
-          fields: [...fields, '*'], // NOTE: should the highlights return the name and document.name?
+          fields: [...fields, '*'],
           fuzziness: 'AUTO'
         }
       };
@@ -639,7 +648,7 @@ export class SearchService extends BaseService {
   }
 
   private translate(doc: CurrentElasticSearchDocumentType, key: string): string | null {
-    if(!translations.has(key)) return null;
+    if (!translations.has(key)) return null;
     return translations.get(key)!.reduce((o, k) => (o ? o[k] : null), doc as any);
   }
 }

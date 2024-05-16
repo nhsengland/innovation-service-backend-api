@@ -8,7 +8,6 @@ import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-reco
 import { InnovationLocationEnum } from '../_enums/innovation.enums';
 import {
   DateFilterFieldsType,
-  HasAccessThroughKeys,
   InnovationListFilters,
   InnovationListSelectType
 } from '../_services/innovations.service';
@@ -19,7 +18,7 @@ export type QueryParamsType = PaginationQueryParamsType<InnovationListSelectType
   };
 
 export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
-  orderKeys: Object.values(InnovationListSelectType),
+  orderKeys: ['relevance', ...Object.values(InnovationListSelectType)]
 })
   .append<QueryParamsType>({
     careSettings: JoiHelper.AppCustomJoi()
@@ -74,28 +73,28 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
   })
   .when('$userType', {
     switch: [
-      {
-        is: ServiceRoleEnum.INNOVATOR,
-        then: Joi.object({
-          hasAccessThrough: JoiHelper.AppCustomJoi()
-            .stringArray()
-            .items(Joi.string().valid(...HasAccessThroughKeys))
-            .default(['owner', 'collaborator'])
-            .min(1)
-        })
-      },
+      // {
+      //   is: ServiceRoleEnum.INNOVATOR,
+      //   then: Joi.object({
+      //     hasAccessThrough: JoiHelper.AppCustomJoi()
+      //       .stringArray()
+      //       .items(Joi.string().valid(...HasAccessThroughKeys))
+      //       .default(['owner', 'collaborator'])
+      //       .min(1)
+      //   })
+      // },
       {
         is: ServiceRoleEnum.ASSESSMENT,
         then: Joi.object({
           assignedToMe: Joi.boolean().optional(),
-          latestWorkedByMe: Joi.boolean().optional()
+          latestWorkedByMe: Joi.boolean().optional().forbidden()
         })
       },
       {
         is: ServiceRoleEnum.ACCESSOR,
         then: Joi.object({
           assignedToMe: Joi.boolean().optional(),
-          closedByMyOrganisation: Joi.boolean().optional(),
+          closedByMyOrganisation: Joi.boolean().optional().forbidden(),
           suggestedOnly: Joi.boolean().optional(),
           supportStatuses: JoiHelper.AppCustomJoi()
             .stringArray()
@@ -107,7 +106,7 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
         is: ServiceRoleEnum.QUALIFYING_ACCESSOR,
         then: Joi.object({
           assignedToMe: Joi.boolean().optional(),
-          closedByMyOrganisation: Joi.boolean().optional(),
+          closedByMyOrganisation: Joi.boolean().optional().forbidden(),
           suggestedOnly: Joi.boolean().optional(),
           supportStatuses: JoiHelper.AppCustomJoi()
             .stringArray()
