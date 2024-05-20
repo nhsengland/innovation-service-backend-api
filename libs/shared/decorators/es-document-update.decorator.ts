@@ -5,12 +5,7 @@ import { QueuesEnum } from '../services/integrations/storage-queue.service';
 import SHARED_SYMBOLS from '../services/symbols';
 import type { CustomContextType } from '../types';
 
-export const ElasticSearchEventUpdateTypes = [
-  'INNOVATION_UPDATE',
-  'ASSESSMENT_UPDATE',
-  'SUPPORT_UPDATE',
-  'SUGGESTION_UPDATE'
-] as const;
+export const ElasticSearchEventUpdateTypes = ['INNOVATION_UPDATE', 'ASSESSMENT_UPDATE', 'SUPPORT_UPDATE'] as const;
 export type ElasticSearchEventUpdateTypes = (typeof ElasticSearchEventUpdateTypes)[number];
 
 export type ElasticSearchEventUpdateMessageType = {
