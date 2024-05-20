@@ -19,13 +19,13 @@ import {
   isAssessmentDomainContextType
 } from '@innovations/shared/types';
 import { inject, injectable } from 'inversify';
-import { isArray, isString, mapValues, groupBy, pick } from 'lodash';
+import { groupBy, isArray, isString, mapValues, pick } from 'lodash';
 import { InnovationLocationEnum } from '../_enums/innovation.enums';
 import {
+  ElasticSearchQueryBuilder,
   createBoolQuery,
   createNestedQuery,
-  createOrQuery,
-  ElasticSearchQueryBuilder
+  createOrQuery
 } from '../_helpers/es-query-builder.helper';
 import { BaseService } from './base.service';
 import type {
@@ -128,7 +128,7 @@ export class SearchService extends BaseService {
    * Can be used when an innovation changes and an update on the properties is needed.
    */
   async upsertDocument(innovationId: string): Promise<void> {
-    const [data] = await this.domainService.innovations.getESDocumentsInformation([innovationId]);
+    const data = await this.domainService.innovations.getESDocumentsInformation(innovationId);
     if (data) {
       await this.esService.upsertDocument(this.index, data);
     }
