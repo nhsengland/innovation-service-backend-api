@@ -15,8 +15,9 @@ class V1AdminSearchReindexCron {
       logger.log('Running cron job: V1AdminSearchReindexCron');
       await searchService.createAndPopulateIndex();
       logger.log('Finished cron job: V1AdminSearchReindexCron');
-    } catch (err) {
-      logger.error('Error while running cron job: V1AdminSearchReindexCron', err);
+    } catch (error) {
+      logger.error('Error while running cron job: V1AdminSearchReindexCron', error);
+      throw error;
     }
   }
 }
