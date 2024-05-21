@@ -1,11 +1,15 @@
-import type { CreateIndexParams } from '../../../services/integrations/elastic-search.service';
-import type { InnovationStatusEnum, InnovationGroupedStatusEnum, InnovationSupportStatusEnum } from '../../../enums';
-import type { DocumentType } from '../index';
 import type { MappingProperty } from '@elastic/elasticsearch/lib/api/types';
+import type {
+  InnovationGroupedStatusEnum,
+  InnovationStatusEnum,
+  InnovationSupportStatusEnum,
+  UserStatusEnum
+} from '../../../enums';
+import type { CreateIndexParams } from '../../../services/integrations/elastic-search.service';
+import type { DocumentType } from '../index';
 
 export type ElasticSearchDocumentType202304 = {
   id: string;
-  name: string;
   status: InnovationStatusEnum;
   archivedStatus: InnovationStatusEnum | null;
   statusUpdatedAt: Date;
@@ -14,21 +18,22 @@ export type ElasticSearchDocumentType202304 = {
   updatedAt: Date;
   lastAssessmentRequestAt: Date | null;
   document: DocumentType;
-  owner: { id?: string; identityId?: string; companyName?: string };
-  engagingOrganisations: { organisationId: string; name: string; acronym: null | string }[];
-  engagingUnits: {
+  owner?: { id: string; identityId: string; companyName: string | null; status: UserStatusEnum };
+  engagingOrganisations?: { organisationId: string; name: string; acronym: string }[];
+  engagingUnits?: {
     unitId: string;
     name: string;
     acronym: string;
-    assignedAccessors: { id: string; identityId: string }[];
+    assignedAccessors?: { roleId: string; id: string; identityId: string }[];
   }[];
-  shares: string[];
-  supports: {
+  shares?: string[];
+  supports?: {
     id: string;
     unitId: string;
     status: InnovationSupportStatusEnum;
     updatedAt: Date;
     updatedBy: string;
+    assignedAccessorsRoleIds?: string[];
   }[];
   assessment?: {
     id: string;
@@ -37,7 +42,6 @@ export type ElasticSearchDocumentType202304 = {
     updatedAt: Date;
     isExempt: boolean;
   };
-  // NOTE: This is not being populated yet
   suggestions?: {
     suggestedUnitId: string;
     suggestedBy: string[];
@@ -66,11 +70,11 @@ export const ElasticSearchSchema202304: CreateIndexParams = {
         properties: {
           id: { type: 'keyword' },
           identityId: { type: 'keyword' },
-          companyName: { type: 'text' }
+          companyName: { type: 'text' },
+          status: { type: 'keyword' }
         }
       },
 
-      name: TextWithNestedKeywordType,
       status: { type: 'keyword' },
       archivedStatus: { type: 'keyword' },
       rawStatus: { type: 'keyword' },
@@ -118,7 +122,6 @@ export const ElasticSearchSchema202304: CreateIndexParams = {
       },
       shares: { type: 'keyword' },
 
-      // NOTE: This is not being populated yet
       suggestions: {
         type: 'nested',
         properties: {
@@ -142,7 +145,7 @@ export const ElasticSearchSchema202304: CreateIndexParams = {
           version: { type: 'constant_keyword' },
           INNOVATION_DESCRIPTION: {
             properties: {
-              name: { type: 'text' },
+              name: TextWithNestedKeywordType,
               description: { type: 'text' },
               postcode: { type: 'text' },
               countryName: TextWithNestedKeywordType,
