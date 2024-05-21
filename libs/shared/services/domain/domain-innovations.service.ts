@@ -254,7 +254,7 @@ export class DomainInnovationsService {
 
           if (assessment) {
             // Complete the current assessment
-            transaction.update(
+            await transaction.update(
               InnovationAssessmentEntity,
               { id: assessment.id },
               { finishedAt: archivedAt, updatedBy: domainContext.id }
@@ -936,8 +936,8 @@ export class DomainInnovationsService {
       i.last_assessment_request_at AS lastAssessmentRequestAt,
       d.document AS document,
       IIF(
-        i.owner_id IS NULL, 
-        NULL, 
+        i.owner_id IS NULL,
+        NULL,
         JSON_OBJECT('id': i.owner_id, 'identityId': i.owner_external_id, 'status': i.owner_status, 'companyName': i.owner_company ABSENT ON NULL)
       ) AS owner,
       (
