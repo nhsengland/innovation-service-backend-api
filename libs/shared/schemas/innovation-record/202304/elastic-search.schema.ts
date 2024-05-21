@@ -11,6 +11,7 @@ import type { DocumentType } from '../index';
 export type ElasticSearchDocumentType202304 = {
   id: string;
   status: InnovationStatusEnum;
+  rawStatus: InnovationStatusEnum;
   archivedStatus: InnovationStatusEnum | null;
   statusUpdatedAt: Date;
   groupedStatus: InnovationGroupedStatusEnum;
@@ -24,7 +25,7 @@ export type ElasticSearchDocumentType202304 = {
     unitId: string;
     name: string;
     acronym: string;
-    assignedAccessors?: { roleId: string; id: string; identityId: string }[];
+    assignedAccessors?: { roleId: string; userId: string; identityId: string }[];
   }[];
   shares?: string[];
   supports?: {
@@ -114,7 +115,7 @@ export const ElasticSearchSchema202304: CreateIndexParams = {
             type: 'nested',
             properties: {
               roleId: { type: 'keyword' },
-              id: { type: 'keyword' },
+              userId: { type: 'keyword' },
               identityId: { type: 'keyword' }
             }
           }
