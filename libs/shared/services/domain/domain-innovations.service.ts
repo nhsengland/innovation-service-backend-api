@@ -42,11 +42,11 @@ import {
   UnprocessableEntityError
 } from '../../errors';
 import { TranslationHelper } from '../../helpers';
+import type { CurrentElasticSearchDocumentType } from '../../schemas/innovation-record/index';
 import type { ActivitiesParamsType, DomainContextType, IdentityUserInfo, SupportLogParams } from '../../types';
 import type { IdentityProviderService } from '../integrations/identity-provider.service';
 import type { NotifierService } from '../integrations/notifier.service';
 import type { DomainUsersService } from './domain-users.service';
-import type { CurrentElasticSearchDocumentType } from '../../schemas/innovation-record/index';
 
 export class DomainInnovationsService {
   innovationRepository: Repository<InnovationEntity>;
@@ -890,102 +890,127 @@ export class DomainInnovationsService {
    * If innovationIds are passed it will only return the information for those ids,
    * if not returns all the documents information.
    *
-   * TODO: performance could be improved by maybe removing the doc from the query
    */
-  async getESDocumentsInformation(innovationIds?: string[]): Promise<CurrentElasticSearchDocumentType[]> {
-    const query = this.sqlConnection.manager
-      .createQueryBuilder(InnovationEntity, 'innovation')
-      .select([
-        'innovation.id',
-        'innovation.name',
-        'innovation.status',
-        'innovation.archivedStatus',
-        'innovation.statusUpdatedAt',
-        'innovation.submittedAt',
-        'innovation.updatedAt',
-        'innovation.lastAssessmentRequestAt',
-        'groupedStatus.groupedStatus',
-        'owner.id',
-        'owner.identityId',
-        'ownerRole.id',
-        'ownerOrganisation.id',
-        'ownerOrganisation.name',
-        'document.document',
-        'shares.id',
-        'supports.id',
-        'supports.status',
-        'supports.updatedAt',
-        'supports.updatedBy',
-        'supportUnit.id',
-        'supportUnit.name',
-        'supportUnit.acronym',
-        'supportOrg.id',
-        'supportOrg.name',
-        'supportOrg.acronym',
-        'assignedUserRole.id',
-        'assignedUser.id',
-        'assignedUser.identityId'
-      ])
-      .innerJoin('innovation.document', 'document')
-      .innerJoin('innovation.innovationGroupedStatus', 'groupedStatus')
-      .innerJoin('innovation.innovationSupports', 'supports')
-      .leftJoin('supports.userRoles', 'assignedUserRole')
-      .leftJoin('assignedUserRole.user', 'assignedUser', "assignedUser.status <> 'DELETED'")
-      .innerJoin('supports.organisationUnit', 'supportUnit')
-      .innerJoin('supportUnit.organisation', 'supportOrg')
-      .leftJoin('innovation.organisationShares', 'shares')
-      .leftJoin('innovation.owner', 'owner')
-      .leftJoin('owner.serviceRoles', 'ownerRole', 'ownerRole.role = :innovatorRole AND ownerRole.isActive = 1', {
-        innovatorRole: ServiceRoleEnum.INNOVATOR
-      })
-      .leftJoin('ownerRole.organisation', 'ownerOrganisation');
+  async getESDocumentsInformation(): Promise<CurrentElasticSearchDocumentType[]>;
+  async getESDocumentsInformation(innovationId: string): Promise<CurrentElasticSearchDocumentType | undefined>;
+  async getESDocumentsInformation(
+    innovationId?: string
+  ): Promise<CurrentElasticSearchDocumentType | undefined | CurrentElasticSearchDocumentType[]> {
+    let sql = `WITH
+      innovations AS (
+        SELECT i.id, i.status, archived_status, status_updated_at, submitted_at, i.updated_at, last_assessment_request_at, grouped_status,
+          u.id AS owner_id, u.external_id AS owner_external_id, u.status AS owner_status, o.name AS owner_company
+        FROM innovation i
+          INNER JOIN innovation_grouped_status_view_entity g ON i.id = g.id
+          LEFT JOIN [user] u on i.owner_id = u.id AND u.status !='DELETED'
+          LEFT JOIN user_role ur on u.id = ur.user_id AND ur.role='INNOVATOR'
+          LEFT JOIN organisation o ON ur.organisation_id = o.id AND o.is_shadow = 0
+      ),
+      support AS (
+        SELECT s.id, innovation_id, s.status, s.updated_at, s.updated_by,
+          ou.id AS unit_id, ou.name AS unit_name, ou.acronym AS unit_acronym,
+          o.id AS org_id, o.name AS org_name, o.acronym AS org_acronym,
+          (
+            SELECT r.id AS roleId, u.id AS userId, u.external_id AS identityId
+          FROM innovation_support_user su
+            LEFT JOIN user_role r ON su.user_role_id = r.id AND r.deleted_at IS NULL AND r.is_active = 1
+            LEFT JOIN [user] u ON u.id = r.user_id AND u.status != 'DELETED'
+          WHERE s.id = su.innovation_support_id
+          FOR
+            JSON PATH
+          ) AS assigned_accessors
+        FROM innovation_support s
+          INNER JOIN organisation_unit ou ON s.organisation_unit_id = ou.id AND ou.deleted_at IS NULL
+          INNER JOIN organisation o ON ou.organisation_id = o.id
+        WHERE s.deleted_at IS NULL
+      )
+    SELECT
+      i.id,
+      i.status,
+      i.archived_status AS archivedStatus,
+      IIF(i.status = 'ARCHIVED', i.archived_status, i.status) AS rawStatus,
+      i.status_updated_at AS statusUpdatedAt,
+      i.grouped_status AS groupedStatus,
+      i.submitted_at AS submittedAt,
+      i.updated_at AS updatedAt,
+      i.last_assessment_request_at AS lastAssessmentRequestAt,
+      d.document AS document,
+      IIF(
+        i.owner_id IS NULL, 
+        NULL, 
+        JSON_OBJECT('id': i.owner_id, 'identityId': i.owner_external_id, 'status': i.owner_status, 'companyName': i.owner_company ABSENT ON NULL)
+      ) AS owner,
+      (
+        SELECT s.org_id AS organisationId, s.org_name AS name, s.org_acronym AS acronym
+        FROM support s
+        WHERE s.innovation_id = i.id AND s.status='ENGAGING'
+        GROUP BY org_id, org_name, org_acronym
+        FOR JSON PATH
+      ) AS engagingOrganisations,
+      (
+        SELECT s.unit_id AS unitId, s.unit_name AS name, s.unit_acronym AS acronym, s.assigned_accessors AS assignedAccessors
+        FROM support s
+        WHERE s.innovation_id = i.id AND s.status='ENGAGING'
+        FOR JSON PATH
+      ) AS engagingUnits,
+      (
+        SELECT JSON_QUERY('[' + STRING_AGG(CONVERT(VARCHAR(38), QUOTENAME(s.organisation_id, '"')), ',') + ']') AS ids
+        FROM innovation_share s
+        WHERE s.innovation_id=i.id
+      ) AS shares,
+      (
+        SELECT id, s.unit_id AS unitId, s.status, s.updated_at AS updatedAt, s.updated_by AS updatedBy,
+        (
+          SELECT JSON_QUERY('[' + STRING_AGG(CONVERT(VARCHAR(38), QUOTENAME(roleId, '"')), ',') + ']')
+          FROM OPENJSON(s.assigned_accessors, '$')
+          WITH (roleId NVARCHAR(36) '$.roleId')
+        ) AS assignedAccessorsRoleIds
+        FROM support s
+        WHERE s.innovation_id = i.id
+        FOR JSON PATH
+      ) AS supports,
+      IIF(
+        a.id IS NULL,
+        NULL,
+        JSON_OBJECT('id': a.id, 'updatedAt': a.updated_at, 'isExempt': CONVERT(BIT, IIF(a.exempted_at IS NULL, 0, 1)), 'assignedToId': a.assign_to_id ABSENT ON NULL)
+      ) AS assessment,
+      (
+        SELECT suggested_unit_id as suggestedUnitId, suggested_by_units_acronyms AS suggestedBy
+      FROM innovation_suggested_units_view
+      WHERE innovation_id = i.id
+      FOR JSON PATH
+      ) AS suggestions
+    FROM innovations i
+      INNER JOIN innovation_document d ON i.id = d.id
+      LEFT JOIN innovation_assessment a ON i.id = a.innovation_id AND a.deleted_at IS NULL`;
 
-    if (innovationIds?.length) {
-      query.andWhere('innovation.id IN (:...innovationIds)', { innovationIds });
+    if (innovationId) {
+      sql += ` WHERE i.id = @0`;
     }
 
-    const innovations = await query.getMany();
-    return innovations.map(inno => {
-      const orgs = new Map<string, CurrentElasticSearchDocumentType['engagingOrganisations'][number]>();
-      const units = new Map<string, CurrentElasticSearchDocumentType['engagingUnits'][number]>();
+    const innovations = await this.sqlConnection.query(sql, innovationId ? [innovationId] : []);
 
-      for (const support of inno.innovationSupports) {
-        const unit = support.organisationUnit;
-        const org = unit.organisation;
-        orgs.set(org.id, { organisationId: org.id, name: org.name, acronym: org.acronym });
-        units.set(unit.id, {
-          unitId: unit.id,
-          name: unit.name,
-          acronym: unit.acronym,
-          assignedAccessors: support.userRoles.map(({ user }) => ({ id: user.id, identityId: user.identityId }))
-        });
-      }
+    const parsed: CurrentElasticSearchDocumentType[] = innovations.map((innovation: any) => ({
+      id: innovation.id,
+      status: innovation.status,
+      archivedStatus: innovation.archivedStatus,
+      rawStatus: innovation.rawStatus,
+      statusUpdatedAt: innovation.statusUpdatedAt,
+      groupedStatus: innovation.groupedStatus,
+      submittedAt: innovation.submittedAt,
+      updatedAt: innovation.updatedAt,
+      lastAssessmentRequestAt: innovation.lastAssessmentRequestAt,
+      document: JSON.parse(innovation.document ?? {}),
+      ...(innovation.owner && { owner: JSON.parse(innovation.owner) }),
+      ...(innovation.engagingOrganisations && { engagingOrganisations: JSON.parse(innovation.engagingOrganisations) }),
+      ...(innovation.engagingUnits && { engagingUnits: JSON.parse(innovation.engagingUnits) }),
+      ...(innovation.shares && { shares: JSON.parse(innovation.shares) }),
+      ...(innovation.supports && { supports: JSON.parse(innovation.supports) }),
+      ...(innovation.assessment && { assessment: JSON.parse(innovation.assessment) }),
+      ...(innovation.suggestions && { suggestions: JSON.parse(innovation.suggestions) })
+    }));
 
-      return {
-        id: inno.id,
-        name: inno.name,
-        status: inno.status,
-        archivedStatus: inno.archivedStatus,
-        statusUpdatedAt: inno.statusUpdatedAt,
-        groupedStatus: inno.innovationGroupedStatus.groupedStatus,
-        submittedAt: inno.submittedAt,
-        updatedAt: inno.updatedAt,
-        lastAssessmentRequestAt: inno.lastAssessmentRequestAt,
-
-        document: inno.document.document,
-
-        owner: {
-          id: inno.owner?.id,
-          identityId: inno.owner?.identityId,
-          companyName: inno.owner?.serviceRoles[0]?.organisation?.name
-        },
-
-        engagingOrganisations: [...orgs.values()],
-        engagingUnits: [...units.values()],
-
-        shares: inno.organisationShares.map(s => s.id)
-      };
-    });
+    return innovationId ? parsed[0] : parsed;
   }
 
   private getActivityLogType(activity: ActivityEnum): ActivityTypeEnum {
