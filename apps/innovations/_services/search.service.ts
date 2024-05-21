@@ -403,7 +403,7 @@ export class SearchService extends BaseService {
     if (search) {
       const searchQuery = {
         query_string: {
-          query: search,
+          query: this.escapeElasticSpecialChars(search),
           fields: [...fields, '*'],
           fuzziness: 'AUTO'
         }
@@ -633,5 +633,18 @@ export class SearchService extends BaseService {
   private translate(doc: CurrentElasticSearchDocumentType, key: string): string | null {
     if (!translations.has(key)) return null;
     return translations.get(key)!.reduce((o, k) => (o ? o[k] : null), doc as any);
+  }
+
+  /**
+   * Escapes ES special chars.
+   *
+   * @see {@link https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-query-string-query.html#_reserved_characters Documentation}
+   */
+  private escapeElasticSpecialChars(input: string): string {
+    // Remove < and > characters
+    input = input.replace(/[<>]/g, '');
+    // Escape other special characters
+    const specialChars = /[+\-=&|!(){}\[\]^"~*?:\\/]/g;
+    return input.replace(specialChars, '\\$&');
   }
 }
