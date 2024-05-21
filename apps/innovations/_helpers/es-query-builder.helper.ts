@@ -53,15 +53,40 @@ export class ElasticSearchQueryBuilder {
 }
 
 // Helpers to reduce query boilerplate
-export function createNestedQuery(path: string, query: QueryDslQueryContainer): { nested: QueryDslNestedQuery } {
+
+/**
+ * Creates a nested query for ElasticSearch.
+ *
+ * This function helps to construct a nested query, which allows you to search within an array of objects
+ * in your ElasticSearch documents (e.g., supports).
+ *
+ * @see {@link https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-nested-query.html Documentation}
+ */
+export function nestedQuery(path: string, query: QueryDslQueryContainer): { nested: QueryDslNestedQuery } {
   return { nested: { path, query } };
 }
 
-export function createOrQuery(queries: QueryDslQueryContainer[]): { bool: QueryDslBoolQuery } {
+/**
+ * Creates an OR query using ElasticSearch.
+ *
+ * This is done by using a bool should query with minimum_should_match of 1 to replicate
+ * the OR condition. This is useful for when we want to create a OR clause:
+ *
+ * @example
+ * isShared || hasSupport === orQuery([isShared, hasSupport])
+ */
+export function orQuery(queries: QueryDslQueryContainer[]): { bool: QueryDslBoolQuery } {
   return { bool: { should: queries, minimum_should_match: 1 } };
 }
 
-export function createBoolQuery(params: {
+/**
+ * Creates a bool query using ElasticSearch.
+ *
+ * This function helps to construct a bool query, which combines multiple query clauses using the `must`, `must_not`, `should`, and `filter` parameters.
+ *
+ * @see {@link https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-bool-query.html Documentation}
+ */
+export function boolQuery(params: {
   must?: QueryDslQueryContainer | QueryDslQueryContainer[];
   mustNot?: QueryDslQueryContainer | QueryDslQueryContainer[];
   should?: QueryDslQueryContainer | QueryDslQueryContainer[];

@@ -21,12 +21,7 @@ import {
 import { inject, injectable } from 'inversify';
 import { groupBy, isArray, isString, mapValues, pick } from 'lodash';
 import { InnovationLocationEnum } from '../_enums/innovation.enums';
-import {
-  ElasticSearchQueryBuilder,
-  createBoolQuery,
-  createNestedQuery,
-  createOrQuery
-} from '../_helpers/es-query-builder.helper';
+import { ElasticSearchQueryBuilder, boolQuery, nestedQuery, orQuery } from '../_helpers/es-query-builder.helper';
 import { BaseService } from './base.service';
 import type {
   DateFilterFieldsType,
@@ -190,10 +185,11 @@ export class SearchService extends BaseService {
 
           // add here the ones that have nested keyword (since sort only allows sort by keyword)
           case 'countryName':
-          case 'name':
+          case 'name': {
             const translation = translations.get(key)?.join('.');
             sort.push({ [`${translation ?? key}.keyword`]: { order } });
             break;
+          }
 
           case 'support.updatedAt':
             if (isAccessorDomainContextType(domainContext)) {
@@ -243,26 +239,6 @@ export class SearchService extends BaseService {
         const doc = hit._source!;
 
         const res = { highlights: hit.highlight } as any;
-        for (const [key, value] of Object.entries(fieldGroups)) {
-          if (key in this.displayHandlers) {
-            const handler = this.displayHandlers[key as keyof typeof this.displayHandlers];
-            if (handler) {
-              res[key] = handler(domainContext, doc, value as any[], handlerMaps); // this any should be safe since it comes from the groupBy
-            }
-            continue;
-          }
-          // Handle plain object directly from the document
-          if (translations.has(key)) {
-            res[key] = this.translate(doc, key);
-          } else {
-            if (key === 'id') {
-              res[key] = hit._id;
-            } else {
-              res[key] = doc[key as keyof CurrentElasticSearchDocumentType];
-            }
-          }
-        }
-
         for (const [key, value] of Object.entries(fieldGroups)) {
           if (key in this.displayHandlers) {
             const handler = this.displayHandlers[key as keyof typeof this.displayHandlers];
@@ -403,15 +379,17 @@ export class SearchService extends BaseService {
     ) => void | Promise<void>;
   } = {
     assignedToMe: this.addAssignedToMeFilter.bind(this),
-    careSettings: this.addJsonFilter('document.INNOVATION_DESCRIPTION.careSettings').bind(this),
-    categories: this.addJsonFilter('document.INNOVATION_DESCRIPTION.categories').bind(this),
+    careSettings: this.addGenericFilter('document.INNOVATION_DESCRIPTION.careSettings').bind(this),
+    categories: this.addGenericFilter('document.INNOVATION_DESCRIPTION.categories').bind(this),
     dateFilters: this.addDateFilters.bind(this),
-    diseasesAndConditions: this.addJsonFilter('document.UNDERSTANDING_OF_NEEDS.diseasesConditionsImpact').bind(this),
-    engagingOrganisations: this.addJsonFilter('engagingOrganisations', { fieldSelector: 'organisationId' }).bind(this),
-    engagingUnits: this.addJsonFilter('engagingUnits', { fieldSelector: 'unitId' }).bind(this),
-    groupedStatuses: this.addJsonFilter('groupedStatus').bind(this),
-    involvedAACProgrammes: this.addJsonFilter('document.INNOVATION_DESCRIPTION.involvedAACProgrammes').bind(this),
-    keyHealthInequalities: this.addJsonFilter('document.UNDERSTANDING_OF_NEEDS.keyHealthInequalities').bind(this),
+    diseasesAndConditions: this.addGenericFilter('document.UNDERSTANDING_OF_NEEDS.diseasesConditionsImpact').bind(this),
+    engagingOrganisations: this.addGenericFilter('engagingOrganisations', { fieldSelector: 'organisationId' }).bind(
+      this
+    ),
+    engagingUnits: this.addGenericFilter('engagingUnits', { fieldSelector: 'unitId' }).bind(this),
+    groupedStatuses: this.addGenericFilter('groupedStatus').bind(this),
+    involvedAACProgrammes: this.addGenericFilter('document.INNOVATION_DESCRIPTION.involvedAACProgrammes').bind(this),
+    keyHealthInequalities: this.addGenericFilter('document.UNDERSTANDING_OF_NEEDS.keyHealthInequalities').bind(this),
     locations: this.addLocationFilter.bind(this),
     search: this.addSearchFilter.bind(this),
     // suggestedOnly: this.addSuggestedOnlyFilter.bind(this),
@@ -443,7 +421,7 @@ export class SearchService extends BaseService {
     if (value) {
       if (isAccessorDomainContextType(domainContext)) {
         builder.addFilter(
-          createNestedQuery('supports', { term: { 'supports.assignedAccessorsRoleIds': domainContext.currentRole.id } })
+          nestedQuery('supports', { term: { 'supports.assignedAccessorsRoleIds': domainContext.currentRole.id } })
         );
       }
       if (isAssessmentDomainContextType(domainContext)) {
@@ -452,7 +430,7 @@ export class SearchService extends BaseService {
     }
   }
 
-  private addJsonFilter(
+  private addGenericFilter(
     filterKey: string,
     options?: { fieldSelector: string } // fieldSelector == nested
   ): (_domainContext: DomainContextType, builder: ElasticSearchQueryBuilder, value: string | string[]) => void {
@@ -460,9 +438,7 @@ export class SearchService extends BaseService {
       const type = isArray(value) ? 'terms' : 'term';
 
       if (options?.fieldSelector) {
-        builder.addFilter(
-          createNestedQuery(filterKey, { [type]: { [`${filterKey}.${options.fieldSelector}`]: value } })
-        );
+        builder.addFilter(nestedQuery(filterKey, { [type]: { [`${filterKey}.${options.fieldSelector}`]: value } }));
       } else {
         builder.addFilter({ [type]: { [filterKey]: value } });
       }
@@ -486,7 +462,7 @@ export class SearchService extends BaseService {
         ];
 
         should.push(
-          createBoolQuery({
+          boolQuery({
             mustNot: { terms: { 'document.INNOVATION_DESCRIPTION.countryName.keyword': predefinedLocations } }
           })
         );
@@ -500,7 +476,7 @@ export class SearchService extends BaseService {
         }
       });
     }
-    builder.addFilter(createOrQuery(should));
+    builder.addFilter(orQuery(should));
   }
 
   private addSupportFilter(
@@ -512,9 +488,9 @@ export class SearchService extends BaseService {
       const should: QueryDslQueryContainer[] = [];
 
       should.push(
-        createNestedQuery(
+        nestedQuery(
           'supports',
-          createBoolQuery({
+          boolQuery({
             must: [
               { term: { 'supports.unitId': domainContext.organisation.organisationUnit.id } },
               { terms: { 'supports.status': supportStatuses } }
@@ -525,15 +501,15 @@ export class SearchService extends BaseService {
 
       if (supportStatuses.includes(InnovationSupportStatusEnum.UNASSIGNED)) {
         should.push(
-          createBoolQuery({
-            mustNot: createNestedQuery('supports', {
+          boolQuery({
+            mustNot: nestedQuery('supports', {
               term: { 'supports.unitId': domainContext.organisation.organisationUnit.id }
             })
           })
         );
       }
 
-      builder.addFilter(createOrQuery(should));
+      builder.addFilter(orQuery(should));
     }
   }
 
@@ -558,7 +534,7 @@ export class SearchService extends BaseService {
         }
 
         if (filter.field === 'support.updatedAt') {
-          builder.addFilter(createNestedQuery('supports', { range: { 'supports.updatedAt': range } }));
+          builder.addFilter(nestedQuery('supports', { range: { 'supports.updatedAt': range } }));
         } else {
           builder.addFilter({ range: { [filter.field]: range } });
         }
@@ -592,28 +568,28 @@ export class SearchService extends BaseService {
 
   private addPermissionGuards(domainContext: DomainContextType, builder: ElasticSearchQueryBuilder): void {
     if (domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT) {
-      builder.addFilter(createBoolQuery({ mustNot: { term: { rawStatus: InnovationStatusEnum.CREATED } } }));
+      builder.addFilter(boolQuery({ mustNot: { term: { rawStatus: InnovationStatusEnum.CREATED } } }));
     }
 
     if (isAccessorDomainContextType(domainContext)) {
       const isShared = { term: { shares: domainContext.organisation.id } };
-      const hasSupport = createNestedQuery('supports', {
+      const hasSupport = nestedQuery('supports', {
         term: { 'supports.unitId': domainContext.organisation.organisationUnit.id }
       });
-      const isArchived = createBoolQuery({ mustNot: { term: { status: InnovationStatusEnum.ARCHIVED } } });
+      const isArchived = boolQuery({ mustNot: { term: { status: InnovationStatusEnum.ARCHIVED } } });
 
       // Was in rawStatus Progress (archived or current)
       builder.addFilter({ term: { rawStatus: InnovationStatusEnum.IN_PROGRESS } });
       // Was shared OR supported
-      builder.addFilter(createOrQuery([isShared, hasSupport]));
+      builder.addFilter(orQuery([isShared, hasSupport]));
       // Is currently archived OR supported
-      builder.addFilter(createOrQuery([isArchived, hasSupport]));
+      builder.addFilter(orQuery([isArchived, hasSupport]));
 
       if (domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR) {
         builder.addFilter(
-          createNestedQuery(
+          nestedQuery(
             'supports',
-            createBoolQuery({
+            boolQuery({
               must: [
                 { term: { 'supports.unitId': domainContext.organisation.organisationUnit.id } },
                 {
@@ -629,7 +605,7 @@ export class SearchService extends BaseService {
     }
 
     if (domainContext.currentRole.role !== ServiceRoleEnum.ADMIN) {
-      builder.addFilter(createBoolQuery({ mustNot: { term: { rawStatus: InnovationStatusEnum.WITHDRAWN } } }));
+      builder.addFilter(boolQuery({ mustNot: { term: { rawStatus: InnovationStatusEnum.WITHDRAWN } } }));
     }
   }
 

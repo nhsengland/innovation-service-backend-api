@@ -11,7 +11,7 @@ import { container } from '../_config';
 
 import type { SearchService } from '../_services/search.service';
 import SYMBOLS from '../_services/symbols';
-import type { NewResponseDTO } from './transformation.dtos';
+import type { ResponseDTO } from './transformation.dtos';
 import { QueryParamsSchema, QueryParamsType } from './validation.schemas';
 
 class V1InnovationsSearch {
@@ -35,9 +35,13 @@ class V1InnovationsSearch {
       const { skip, take, order, fields, ...filters } = queryParams;
 
       // TODO: fix this as any
-      const response = await searchService.getDocuments(domainContext, { fields: fields as any, filters, pagination: { skip, take, order } });
+      const response = await searchService.getDocuments(domainContext, {
+        fields: fields as any,
+        filters,
+        pagination: { skip, take, order }
+      });
 
-      context.res = ResponseHelper.Ok<NewResponseDTO>(response as any); // todo fix this any
+      context.res = ResponseHelper.Ok<ResponseDTO>(response as any); // todo fix this any
 
       return;
     } catch (error) {
