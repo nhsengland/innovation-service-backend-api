@@ -277,7 +277,7 @@ export class SearchService extends BaseService {
         }
 
         // Extra postProcessing the items if required (this might become handlers in the future, keeping a function for now)
-        return isAccessorDomainContextType(domainContext) && !doc.shares.includes(domainContext.organisation.id)
+        return isAccessorDomainContextType(domainContext) && !doc.shares?.includes(domainContext.organisation.id)
           ? this.cleanupAccessorsNotSharedInnovation(res)
           : res;
       })
@@ -345,7 +345,7 @@ export class SearchService extends BaseService {
     extra: PickHandlerReturnType<typeof this.postHandlers, 'users'>
   ): Partial<InnovationListFullResponseType['support']> {
     if (isAccessorDomainContextType(domainContext)) {
-      const support = item.supports.filter(s => s.unitId === domainContext.organisation.organisationUnit.id)[0];
+      const support = item.supports?.filter(s => s.unitId === domainContext.organisation.organisationUnit.id)[0];
       const updatedBy = extra.users?.get(support?.updatedBy ?? '') ?? null;
       const displayName =
         // Ensuring that updatedBy is always innovator if the innovation is archived or not shared
@@ -366,7 +366,7 @@ export class SearchService extends BaseService {
         ...(fields.includes('closedReason') && {
           closedReason:
             support?.status === InnovationSupportStatusEnum.CLOSED
-              ? !item.shares.some(s => s === domainContext.organisation.id)
+              ? !item.shares?.some(s => s === domainContext.organisation.id)
                 ? 'STOPPED_SHARED'
                 : item.status === 'ARCHIVED'
                   ? 'ARCHIVED'
@@ -509,24 +509,31 @@ export class SearchService extends BaseService {
     supportStatuses: InnovationSupportStatusEnum[]
   ): void {
     if (supportStatuses.length && isAccessorDomainContextType(domainContext)) {
-      builder.addFilter(
-        createOrQuery([
-          createNestedQuery(
-            'supports',
-            createBoolQuery({
-              must: [
-                { term: { 'supports.unitId': domainContext.organisation.organisationUnit.id } },
-                { terms: { 'supports.status': supportStatuses } }
-              ]
-            })
-          ),
+      const should: QueryDslQueryContainer[] = [];
+
+      should.push(
+        createNestedQuery(
+          'supports',
+          createBoolQuery({
+            must: [
+              { term: { 'supports.unitId': domainContext.organisation.organisationUnit.id } },
+              { terms: { 'supports.status': supportStatuses } }
+            ]
+          })
+        )
+      );
+
+      if (supportStatuses.includes(InnovationSupportStatusEnum.UNASSIGNED)) {
+        should.push(
           createBoolQuery({
             mustNot: createNestedQuery('supports', {
               term: { 'supports.unitId': domainContext.organisation.organisationUnit.id }
             })
           })
-        ])
-      );
+        );
+      }
+
+      builder.addFilter(createOrQuery(should));
     }
   }
 
@@ -571,10 +578,10 @@ export class SearchService extends BaseService {
       const doc = hit._source;
       if (doc) {
         [
-          doc.owner.id,
-          doc.supports[0]?.updatedBy,
+          doc.owner?.id,
+          doc.supports?.[0]?.updatedBy,
           doc.assessment?.assignedToId,
-          ...(doc.engagingUnits?.flatMap(u => u.assignedAccessors.map(a => a.id)) ?? [])
+          ...(doc.engagingUnits?.flatMap(u => (u.assignedAccessors ?? []).map(a => a.id)) ?? [])
         ]
           .filter(isString)
           .forEach(u => usersSet.add(u));

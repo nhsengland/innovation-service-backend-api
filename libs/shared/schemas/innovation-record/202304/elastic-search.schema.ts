@@ -122,7 +122,6 @@ export const ElasticSearchSchema202304: CreateIndexParams = {
       },
       shares: { type: 'keyword' },
 
-      // NOTE: This is not being populated yet
       suggestions: {
         type: 'nested',
         properties: {
