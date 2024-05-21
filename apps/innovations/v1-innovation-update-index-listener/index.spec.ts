@@ -34,13 +34,12 @@ describe('v1-innovation-updated-index-listener suite', () => {
     expect(result.done).toBe(true);
   });
 
-
   it('Should run function and fail when payload is invalid', async () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
 
     try {
       await new AzureQueueTriggerBuilder()
-        .setRequestData({ innovationId: innovation.id, type: 'BATATA' })
+        .setRequestData({ innovationId: innovation.id, type: 'BAD_TYPE' })
         .call<{ done: boolean }>(azureFunction);
 
       fail();
