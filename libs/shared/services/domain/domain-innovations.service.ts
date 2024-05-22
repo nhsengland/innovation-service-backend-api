@@ -1000,7 +1000,7 @@ export class DomainInnovationsService {
       submittedAt: innovation.submittedAt,
       updatedAt: innovation.updatedAt,
       lastAssessmentRequestAt: innovation.lastAssessmentRequestAt,
-      document: JSON.parse(innovation.document ?? {}),
+      document: this.translate(JSON.parse(innovation.document ?? {})),
       ...(innovation.owner && { owner: JSON.parse(innovation.owner) }),
       ...(innovation.engagingOrganisations && { engagingOrganisations: JSON.parse(innovation.engagingOrganisations) }),
       ...(innovation.engagingUnits && { engagingUnits: JSON.parse(innovation.engagingUnits) }),
@@ -1011,6 +1011,291 @@ export class DomainInnovationsService {
     }));
 
     return innovationId ? parsed[0] : parsed;
+  }
+
+  readonly #categoriesTranslation = {
+    MEDICAL_DEVICE: 'Medical device',
+    IN_VITRO_DIAGNOSTIC: '',
+    PHARMACEUTICAL: '',
+    DIGITAL: '',
+    AI: 'Artificial Intelligence',
+    EDUCATION: '',
+    PPE: '',
+    MODELS_CARE: '',
+    ESTATES_FACILITIES: '',
+    TRAVEL_TRANSPORT: '',
+    FOOD_NUTRITION: '',
+    DATA_MONITORING: '',
+    OTHER: ''
+  };
+
+  readonly #translation = {
+    INNOVATION_DESCRIPTION: {
+      categories: this.#categoriesTranslation,
+      mainCategory: this.#categoriesTranslation,
+      areas: {
+        COVID_19: '',
+        DATA_ANALYTICS_AND_RESEARCH: '',
+        DIGITALISING_SYSTEM: '',
+        IMPROVING_SYSTEM_FLOW: '',
+        INDEPENDENCE_AND_PREVENTION: '',
+        OPERATIONAL_EXCELLENCE: '',
+        PATIENT_ACTIVATION_AND_SELF_CARE: '',
+        PATIENT_SAFETY: '',
+        WORKFORCE_RESOURCE_OPTIMISATION: '',
+        NET_ZERO_GREENER_INNOVATION: ''
+      },
+      careSettings: {
+        ACADEMIA: '',
+        ACUTE_TRUSTS_INPATIENT: '',
+        ACUTE_TRUSTS_OUTPATIENT: '',
+        AMBULANCE: '',
+        CARE_HOMES_CARE_SETTING: '',
+        END_LIFE_CARE: '',
+        ICS: '',
+        INDUSTRY: '',
+        LOCAL_AUTHORITY_EDUCATION: '',
+        MENTAL_HEALTH: '',
+        PHARMACY: '',
+        PRIMARY_CARE: '',
+        SOCIAL_CARE: '',
+        THIRD_SECTOR_ORGANISATIONS: '',
+        URGENT_AND_EMERGENCY: '',
+        OTHER: ''
+      },
+      mainPurpose: {
+        PREVENT_CONDITION: '',
+        PREDICT_CONDITION: '',
+        DIAGNOSE_CONDITION: '',
+        MONITOR_CONDITION: '',
+        PROVIDE_TREATMENT: '',
+        MANAGE_CONDITION: '',
+        ENABLING_CARE: '',
+        RISKS_CLIMATE_CHANGE: ''
+      }
+      // already a string involvedAACProgrammes: {}
+    },
+    UNDERSTANDING_OF_NEEDS: {
+      impactDiseaseCondition: {
+        YES: '',
+        NO: ''
+      },
+      estimatedCarbonReductionSavings: {
+        YES: '',
+        NOT_YET: '',
+        NO: ''
+      },
+      carbonReductionPlan: {
+        YES: '',
+        WORKING_ON: '',
+        NO: ''
+      },
+      keyHealthInequalities: {
+        MATERNITY: '',
+        SEVER_MENTAL_ILLNESS: '',
+        CHRONIC_RESPIRATORY_DISEASE: '',
+        EARLY_CANCER_DIAGNOSIS: '',
+        HYPERTENSION_CASE_FINDING: '',
+        NONE: ''
+      },
+      completedHealthInequalitiesImpactAssessment: {
+        YES: '',
+        NO: ''
+      },
+      hasProductServiceOrPrototype: {
+        YES: '',
+        NO: ''
+      }
+    },
+    EVIDENCE_OF_EFFECTIVENESS: {
+      hasEvidence: { YES: '', NOT_YET: '' },
+      currentlyCollectingEvidence: { YES: '', NO: '' },
+      needsSupportAnyArea: {
+        RESEARCH_GOVERNANCE: '',
+        DATA_SHARING: '',
+        CONFIDENTIAL_PATIENT_DATA: '',
+        APPROVAL_DATA_STUDIES: '',
+        UNDERSTANDING_LAWS: '',
+        DO_NOT_NEED_SUPPORT: ''
+      }
+    },
+    MARKET_RESEARCH: {
+      hasMarketResearch: {
+        YES: '',
+        IN_PROGRESS: '',
+        NOT_YET: ''
+      },
+      optionBestDescribesInnovation: {
+        ONE_OFF_INNOVATION: '',
+        BETTER_ALTERNATIVE: '',
+        EQUIVALENT_ALTERNATIVE: '',
+        COST_EFFECT_ALTERNATIVE: '',
+        NOT_SURE: ''
+      }
+    },
+    CURRENT_CARE_PATHWAY: {
+      innovationPathwayKnowledge: {
+        PATHWAY_EXISTS_AND_CHANGED: '',
+        PATHWAY_EXISTS_AND_FITS: '',
+        NO_PATHWAY: '',
+        DONT_KNOW: '',
+        NOT_PART_PATHWAY: ''
+      }
+    },
+    TESTING_WITH_USERS: {
+      involvedUsersDesignProcess: {
+        YES: '',
+        IN_PROGRESS: '',
+        NOT_YET: ''
+      },
+      intendedUserGroupsEngaged: {
+        CLINICAL_SOCIAL_CARE_WORKING_INSIDE_UK: '',
+        CLINICAL_SOCIAL_CARE_WORKING_OUTSIDE_UK: '',
+        NON_CLINICAL_HEALTHCARE: '',
+        PATIENTS: '',
+        SERVICE_USERS: '',
+        CARERS: '',
+        OTHER: ''
+      }
+    },
+    REGULATIONS_AND_STANDARDS: {
+      hasRegulationKnowledge: {
+        YES_ALL: '',
+        YES_SOME: '',
+        NO: '',
+        NOT_RELEVANT: ''
+      },
+      standards: {
+        type: {
+          CE_UKCA_NON_MEDICAL: '',
+          CE_UKCA_CLASS_I: '',
+          CE_UKCA_CLASS_II_A: '',
+          CE_UKCA_CLASS_II_B: '',
+          CE_UKCA_CLASS_III: '',
+          IVD_GENERAL: '',
+          IVD_SELF_TEST: '',
+          IVD_ANNEX_LIST_A: '',
+          IVD_ANNEX_LIST_B: '',
+          MARKETING: '',
+          CQC: '',
+          DTAC: '',
+          OTHER: ''
+        },
+        hasMet: {
+          YES: '',
+          IN_PROGRESS: '',
+          NOT_YET: ''
+        }
+      }
+    },
+    INTELLECTUAL_PROPERTY: {
+      hasPatents: {
+        HAS_AT_LEAST_ONE: '',
+        APPLIED_AT_LEAST_ONE: '',
+        HAS_NONE: ''
+      },
+      hasOtherIntellectual: {
+        YES: '',
+        NO: ''
+      }
+    },
+    REVENUE_MODEL: {
+      hasRevenueModel: {
+        YES: '',
+        NO: '',
+        DONT_KNOW: ''
+      },
+      revenues: {
+        ADVERTISING: '',
+        DIRECT_PRODUCT_SALES: '',
+        FEE_FOR_SERVICE: '',
+        LEASE: '',
+        SALES_OF_CONSUMABLES_OR_ACCESSORIES: '',
+        SUBSCRIPTION: '',
+        OTHER: ''
+      },
+      hasFunding: {
+        YES: '',
+        NO: '',
+        NOT_RELEVANT: ''
+      }
+    },
+    COST_OF_INNOVATION: {
+      hasCostKnowledge: {
+        DETAILED_ESTIMATE: '',
+        ROUGH_IDEA: '',
+        NO: ''
+      },
+      patientsRange: {
+        UP_10000: '',
+        BETWEEN_10000_500000: '',
+        MORE_THAN_500000: '',
+        NOT_SURE: '',
+        NOT_RELEVANT: ''
+      },
+      costComparison: {
+        CHEAPER: '',
+        COSTS_MORE_WITH_SAVINGS: '',
+        COSTS_MORE: '',
+        NOT_SURE: ''
+      }
+    },
+    DEPLOYMENT: {
+      hasDeployPlan: {
+        YES: '',
+        NO: ''
+      },
+      isDeployed: {
+        YES: '',
+        NO: ''
+      },
+      hasResourcesToScale: {
+        YES: '',
+        NO: '',
+        NOT_SURE: ''
+      }
+    },
+    evidences: {
+      evidenceSubmitType: {
+        CLINICAL_OR_CARE: '',
+        COST_IMPACT_OR_ECONOMIC: '',
+        OTHER_EFFECTIVENESS: '',
+        PRE_CLINICAL: '',
+        REAL_WORLD: ''
+      },
+      evidenceType: {
+        DATA_PUBLISHED: '',
+        NON_RANDOMISED_COMPARATIVE_DATA: '',
+        NON_RANDOMISED_NON_COMPARATIVE_DATA: '',
+        CONFERENCE: '',
+        RANDOMISED_CONTROLLED_TRIAL: '',
+        UNPUBLISHED_DATA: '',
+        OTHER: ''
+      }
+    }
+  };
+  private translate(source: any, dict: any = this.#translation): any {
+    // if the source is an array apply translate to all entries
+    if (Array.isArray(source)) {
+      return source.map((v: any) => this.translate(v, dict));
+    } else if (typeof source === 'object') {
+      // if the source is an object apply translate to all entries
+      const res: any = {};
+      for (const [key, value] of Object.entries(source)) {
+        if (key in dict) {
+          res[key] = this.translate(value, dict[key]);
+        } else {
+          res[key] = value;
+        }
+      }
+      return res;
+    } else if (typeof source === 'string') {
+      // if the source is a string use the dictionary value if it exists
+      return dict[source] ?? source;
+    } else {
+      // fallback to the original value
+      return source;
+    }
   }
 
   private getActivityLogType(activity: ActivityEnum): ActivityTypeEnum {

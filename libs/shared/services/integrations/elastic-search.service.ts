@@ -1,7 +1,7 @@
 import { Client } from '@elastic/elasticsearch';
 import type { IndicesCreateRequest } from '@elastic/elasticsearch/lib/api/types';
 import { inject, injectable } from 'inversify';
-import { ES_CONNECTION_CONFIG } from 'libs/shared/config/elastic-search.config';
+import { ES_CONNECTION_CONFIG } from '../../config/elastic-search.config';
 import SHARED_SYMBOLS from '../symbols';
 import type { LoggerService } from './logger.service';
 
