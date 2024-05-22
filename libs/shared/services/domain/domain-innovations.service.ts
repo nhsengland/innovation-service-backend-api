@@ -1280,8 +1280,8 @@ export class DomainInnovationsService {
     // if the source is an array apply translate to all entries
     if (Array.isArray(source)) {
       return source.map((v: any) => this.translate(v, dict));
-    } else if (typeof source === 'object') {
-      // if the source is an object apply translate to all entries
+    } else if (source && typeof source === 'object') {
+      // if the source is an object apply translate to all entries (null is type object)
       const res: any = {};
       for (const [key, value] of Object.entries(source)) {
         if (key in dict) {
