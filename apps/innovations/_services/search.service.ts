@@ -11,7 +11,7 @@ import { InnovationStatusEnum, InnovationSupportStatusEnum, ServiceRoleEnum } fr
 import { GenericErrorsEnum, NotImplementedError } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import type { CurrentElasticSearchDocumentType } from '@innovations/shared/schemas/innovation-record';
-import { translateValue } from '@innovations/shared/schemas/innovation-record/202304/translation.heper';
+import { translateValue } from '@innovations/shared/schemas/innovation-record/202304/translation.helper';
 import type { DomainService, DomainUsersService, ElasticSearchService } from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import {

@@ -42,7 +42,7 @@ import {
   UnprocessableEntityError
 } from '../../errors';
 import { TranslationHelper } from '../../helpers';
-import { translate } from '../../schemas/innovation-record/202304/translation.heper';
+import { translate } from '../../schemas/innovation-record/202304/translation.helper';
 import type { CurrentElasticSearchDocumentType } from '../../schemas/innovation-record/index';
 import type { ActivitiesParamsType, DomainContextType, IdentityUserInfo, SupportLogParams } from '../../types';
 import type { IdentityProviderService } from '../integrations/identity-provider.service';
