@@ -1300,6 +1300,19 @@ export class DomainInnovationsService {
     }
   }
 
+  public translateValue(fields: string[], value: string): string {
+    let dict: Record<string, any> = this.#translation;
+    for (const field of fields) {
+      if (dict && typeof dict === 'object' && field in dict) {
+        dict = dict[field as keyof typeof dict];
+      } else {
+        return value;
+      }
+    }
+    const translated = dict && typeof dict === 'object' ? dict[value] : value;
+    return typeof translated === 'string' ? translated : value;
+  }
+
   private getActivityLogType(activity: ActivityEnum): ActivityTypeEnum {
     switch (activity) {
       case ActivityEnum.INNOVATION_CREATION:
