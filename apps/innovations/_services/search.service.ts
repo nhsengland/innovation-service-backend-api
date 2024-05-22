@@ -304,7 +304,7 @@ export class SearchService extends BaseService {
       item.engagingUnits?.map(unit => ({
         acronym: unit.acronym,
         assignedAccessors:
-          unit.assignedAccessors?.map(({ id }) => ({
+          unit.assignedAccessors?.map(({ userId: id }) => ({
             id,
             name: extra.users.get(id)?.displayName ?? null
           })) ?? null,
@@ -392,15 +392,28 @@ export class SearchService extends BaseService {
     keyHealthInequalities: this.addGenericFilter('document.UNDERSTANDING_OF_NEEDS.keyHealthInequalities').bind(this),
     locations: this.addLocationFilter.bind(this),
     search: this.addSearchFilter.bind(this),
-    // suggestedOnly: this.addSuggestedOnlyFilter.bind(this),
+    suggestedOnly: this.addSuggestedOnlyFilter.bind(this),
     supportStatuses: this.addSupportFilter.bind(this)
   };
 
-  // NOTE: Do we keep the search by email on admin?
-  private addSearchFilter(_domainContext: DomainContextType, builder: ElasticSearchQueryBuilder, search: string): void {
-    const fields = priorities.reverse().flatMap((priority, i) => priority.map(p => `${p}^${i + 1}`));
-
+  private async addSearchFilter(
+    domainContext: DomainContextType,
+    builder: ElasticSearchQueryBuilder,
+    search: string
+  ): Promise<void> {
     if (search) {
+      // Admins can search by email (full match search)
+      const targetUser =
+        domainContext.currentRole.role === ServiceRoleEnum.ADMIN && search.match(/^\S+@\S+$/)
+          ? await this.domainService.users.getUserByEmail(search)
+          : null;
+      if (targetUser?.length && targetUser[0]) {
+        builder.addMust({ term: { 'owner.id': targetUser[0].id } });
+        return;
+      }
+
+      // If is not an email we do the normal search
+      const fields = priorities.reverse().flatMap((priority, i) => priority.map(p => `${p}^${i + 1}`));
       const searchQuery = {
         query_string: {
           query: this.escapeElasticSpecialChars(search),
@@ -477,6 +490,20 @@ export class SearchService extends BaseService {
       });
     }
     builder.addFilter(orQuery(should));
+  }
+
+  private addSuggestedOnlyFilter(
+    domainContext: DomainContextType,
+    builder: ElasticSearchQueryBuilder,
+    value: boolean
+  ): void {
+    if (value && isAccessorDomainContextType(domainContext)) {
+      builder.addFilter(
+        nestedQuery('suggestions', {
+          term: { 'suggestions.suggestedUnitId': domainContext.organisation.organisationUnit.id }
+        })
+      );
+    }
   }
 
   private addSupportFilter(
@@ -557,7 +584,7 @@ export class SearchService extends BaseService {
           doc.owner?.id,
           doc.supports?.[0]?.updatedBy,
           doc.assessment?.assignedToId,
-          ...(doc.engagingUnits?.flatMap(u => (u.assignedAccessors ?? []).map(a => a.id)) ?? [])
+          ...(doc.engagingUnits?.flatMap(u => (u.assignedAccessors ?? []).map(a => a.userId)) ?? [])
         ]
           .filter(isString)
           .forEach(u => usersSet.add(u));
