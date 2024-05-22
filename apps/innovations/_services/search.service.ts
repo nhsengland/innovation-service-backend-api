@@ -392,7 +392,7 @@ export class SearchService extends BaseService {
     keyHealthInequalities: this.addGenericFilter('document.UNDERSTANDING_OF_NEEDS.keyHealthInequalities').bind(this),
     locations: this.addLocationFilter.bind(this),
     search: this.addSearchFilter.bind(this),
-    // suggestedOnly: this.addSuggestedOnlyFilter.bind(this),
+    suggestedOnly: this.addSuggestedOnlyFilter.bind(this),
     supportStatuses: this.addSupportFilter.bind(this)
   };
 
@@ -490,6 +490,20 @@ export class SearchService extends BaseService {
       });
     }
     builder.addFilter(orQuery(should));
+  }
+
+  private addSuggestedOnlyFilter(
+    domainContext: DomainContextType,
+    builder: ElasticSearchQueryBuilder,
+    value: boolean
+  ): void {
+    if (value && isAccessorDomainContextType(domainContext)) {
+      builder.addFilter(
+        nestedQuery('suggestions', {
+          term: { 'suggestions.suggestedUnitId': domainContext.organisation.organisationUnit.id }
+        })
+      );
+    }
   }
 
   private addSupportFilter(
