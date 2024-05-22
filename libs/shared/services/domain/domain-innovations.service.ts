@@ -1,7 +1,7 @@
 import { DataSource, EntityManager, In, Repository } from 'typeorm';
 
-import type { UserEntity } from 'libs/shared/entities';
 import { EXPIRATION_DATES } from '../../constants';
+import type { UserEntity } from '../../entities';
 import { ActivityLogEntity } from '../../entities/innovation/activity-log.entity';
 import { InnovationAssessmentEntity } from '../../entities/innovation/innovation-assessment.entity';
 import { InnovationCollaboratorEntity } from '../../entities/innovation/innovation-collaborator.entity';
@@ -42,6 +42,7 @@ import {
   UnprocessableEntityError
 } from '../../errors';
 import { TranslationHelper } from '../../helpers';
+import { translate } from '../../schemas/innovation-record/202304/translation.helper';
 import type { CurrentElasticSearchDocumentType } from '../../schemas/innovation-record/index';
 import type { ActivitiesParamsType, DomainContextType, IdentityUserInfo, SupportLogParams } from '../../types';
 import type { IdentityProviderService } from '../integrations/identity-provider.service';
@@ -1000,7 +1001,7 @@ export class DomainInnovationsService {
       submittedAt: innovation.submittedAt,
       updatedAt: innovation.updatedAt,
       lastAssessmentRequestAt: innovation.lastAssessmentRequestAt,
-      document: JSON.parse(innovation.document ?? {}),
+      document: translate(JSON.parse(innovation.document ?? {})),
       ...(innovation.owner && { owner: JSON.parse(innovation.owner) }),
       ...(innovation.engagingOrganisations && { engagingOrganisations: JSON.parse(innovation.engagingOrganisations) }),
       ...(innovation.engagingUnits && { engagingUnits: JSON.parse(innovation.engagingUnits) }),

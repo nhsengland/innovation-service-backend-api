@@ -151,60 +151,60 @@ export const ElasticSearchSchema202304: CreateIndexParams = {
               postcode: { type: 'text' },
               countryName: TextWithNestedKeywordType,
               website: { type: 'text' },
-              categories: { type: 'keyword' },
+              categories: TextWithNestedKeywordType,
               otherCategoryDescription: { type: 'text' },
-              mainCategory: { type: 'keyword' },
-              areas: { type: 'keyword' },
-              careSettings: { type: 'keyword' },
+              mainCategory: TextWithNestedKeywordType,
+              areas: TextWithNestedKeywordType,
+              careSettings: TextWithNestedKeywordType,
               otherCareSetting: { type: 'text' },
-              mainPurpose: { type: 'keyword' },
+              mainPurpose: TextWithNestedKeywordType,
               supportDescription: { type: 'text' },
               currentlyReceivingSupport: { type: 'text' },
-              involvedAACProgrammes: { type: 'keyword' }
+              involvedAACProgrammes: TextWithNestedKeywordType
             }
           },
           UNDERSTANDING_OF_NEEDS: {
             properties: {
               problemsTackled: { type: 'text' },
               howInnovationWork: { type: 'text' },
-              benefitsOrImpact: { type: 'keyword' },
-              impactDiseaseCondition: { type: 'keyword' },
-              diseasesConditionsImpact: { type: 'keyword' },
-              estimatedCarbonReductionSavings: { type: 'keyword' },
+              benefitsOrImpact: TextWithNestedKeywordType,
+              impactDiseaseCondition: TextWithNestedKeywordType,
+              diseasesConditionsImpact: TextWithNestedKeywordType,
+              estimatedCarbonReductionSavings: TextWithNestedKeywordType,
               estimatedCarbonReductionSavingsDescription: { type: 'text' },
-              carbonReductionPlan: { type: 'keyword' },
-              keyHealthInequalities: { type: 'keyword' },
-              completedHealthInequalitiesImpactAssessment: { type: 'keyword' },
-              hasProductServiceOrPrototype: { type: 'keyword' }
+              carbonReductionPlan: TextWithNestedKeywordType,
+              keyHealthInequalities: TextWithNestedKeywordType,
+              completedHealthInequalitiesImpactAssessment: TextWithNestedKeywordType,
+              hasProductServiceOrPrototype: TextWithNestedKeywordType
             }
           },
           EVIDENCE_OF_EFFECTIVENESS: {
             properties: {
-              hasEvidence: { type: 'keyword' },
-              currentlyCollectingEvidence: { type: 'keyword' },
+              hasEvidence: TextWithNestedKeywordType,
+              currentlyCollectingEvidence: TextWithNestedKeywordType,
               summaryOngoingEvidenceGathering: { type: 'text' },
-              needsSupportAnyArea: { type: 'keyword' }
+              needsSupportAnyArea: TextWithNestedKeywordType
             }
           },
           MARKET_RESEARCH: {
             properties: {
-              hasMarketResearch: { type: 'keyword' },
+              hasMarketResearch: TextWithNestedKeywordType,
               marketResearch: { type: 'text' },
-              optionBestDescribesInnovation: { type: 'keyword' },
+              optionBestDescribesInnovation: TextWithNestedKeywordType,
               whatCompetitorsAlternativesExist: { type: 'text' }
             }
           },
           CURRENT_CARE_PATHWAY: {
             properties: {
-              innovationPathwayKnowledge: { type: 'keyword' },
+              innovationPathwayKnowledge: TextWithNestedKeywordType,
               potentialPathway: { type: 'text' }
             }
           },
           TESTING_WITH_USERS: {
             properties: {
-              involvedUsersDesignProcess: { type: 'keyword' },
-              testedWithIntendedUsers: { type: 'keyword' },
-              intendedUserGroupsEngaged: { type: 'keyword' },
+              involvedUsersDesignProcess: TextWithNestedKeywordType,
+              testedWithIntendedUsers: TextWithNestedKeywordType,
+              intendedUserGroupsEngaged: TextWithNestedKeywordType,
               otherIntendedUserGroupsEngaged: { type: 'text' },
               userTests: {
                 type: 'nested',
@@ -217,12 +217,12 @@ export const ElasticSearchSchema202304: CreateIndexParams = {
           },
           REGULATIONS_AND_STANDARDS: {
             properties: {
-              hasRegulationKnowledge: { type: 'keyword' },
+              hasRegulationKnowledge: TextWithNestedKeywordType,
               standards: {
                 type: 'nested',
                 properties: {
-                  type: { type: 'keyword' },
-                  hasMet: { type: 'keyword' }
+                  type: TextWithNestedKeywordType,
+                  hasMet: TextWithNestedKeywordType
                 }
               },
               otherRegulationDescription: { type: 'text' }
@@ -230,50 +230,50 @@ export const ElasticSearchSchema202304: CreateIndexParams = {
           },
           INTELLECTUAL_PROPERTY: {
             properties: {
-              hasPatents: { type: 'keyword' },
+              hasPatents: TextWithNestedKeywordType,
               patentNumbers: { type: 'text' },
-              hasOtherIntellectual: { type: 'keyword' },
+              hasOtherIntellectual: TextWithNestedKeywordType,
               otherIntellectual: { type: 'text' }
             }
           },
           REVENUE_MODEL: {
             properties: {
-              hasRevenueModel: { type: 'keyword' },
-              revenues: { type: 'keyword' },
+              hasRevenueModel: TextWithNestedKeywordType,
+              revenues: TextWithNestedKeywordType,
               otherRevenueDescription: { type: 'text' },
               payingOrganisations: { type: 'text' },
               benefittingOrganisations: { type: 'text' },
-              hasFunding: { type: 'keyword' },
+              hasFunding: TextWithNestedKeywordType,
               fundingDescription: { type: 'text' }
             }
           },
           COST_OF_INNOVATION: {
             properties: {
-              hasCostKnowledge: { type: 'keyword' },
+              hasCostKnowledge: TextWithNestedKeywordType,
               costDescription: { type: 'text' },
-              patientsRange: { type: 'keyword' },
+              patientsRange: TextWithNestedKeywordType,
               eligibilityCriteria: { type: 'text' },
               sellExpectations: { type: 'text' },
               usageExpectations: { type: 'text' },
-              costComparison: { type: 'keyword' }
+              costComparison: TextWithNestedKeywordType
             }
           },
           DEPLOYMENT: {
             properties: {
-              hasDeployPlan: { type: 'keyword' },
-              isDeployed: { type: 'keyword' },
+              hasDeployPlan: TextWithNestedKeywordType,
+              isDeployed: TextWithNestedKeywordType,
               deploymentPlans: { type: 'text' },
               commercialBasis: { type: 'text' },
               organisationDeploymentAffect: { type: 'text' },
-              hasResourcesToScale: { type: 'keyword' }
+              hasResourcesToScale: TextWithNestedKeywordType
             }
           },
           evidences: {
             type: 'nested',
             properties: {
               id: { type: 'keyword' },
-              evidenceSubmitType: { type: 'keyword' },
-              evidenceType: { type: 'keyword' },
+              evidenceSubmitType: TextWithNestedKeywordType,
+              evidenceType: TextWithNestedKeywordType,
               description: { type: 'text' },
               summary: { type: 'text' }
             }

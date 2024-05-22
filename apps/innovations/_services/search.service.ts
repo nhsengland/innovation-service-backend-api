@@ -11,6 +11,7 @@ import { InnovationStatusEnum, InnovationSupportStatusEnum, ServiceRoleEnum } fr
 import { GenericErrorsEnum, NotImplementedError } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import type { CurrentElasticSearchDocumentType } from '@innovations/shared/schemas/innovation-record';
+import { translateValue } from '@innovations/shared/schemas/innovation-record/202304/translation.helper';
 import type { DomainService, DomainUsersService, ElasticSearchService } from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import {
@@ -443,17 +444,26 @@ export class SearchService extends BaseService {
     }
   }
 
+  // Generic filter assumes that the field is a keyword in elasticsearch as filters won't work otherwise
   private addGenericFilter(
     filterKey: string,
     options?: { fieldSelector: string } // fieldSelector == nested
   ): (_domainContext: DomainContextType, builder: ElasticSearchQueryBuilder, value: string | string[]) => void {
     return (_domainContext: DomainContextType, builder: ElasticSearchQueryBuilder, value: string | string[]) => {
       const type = isArray(value) ? 'terms' : 'term';
+      let translatedValues = typeof value === 'string' ? [value] : value;
+
+      const [head, ...tail] = (options?.fieldSelector ? `${filterKey}.${options.fieldSelector}` : filterKey).split('.');
+      if (head === 'document' && tail) {
+        translatedValues = translatedValues.map(v => translateValue(tail, v));
+      }
 
       if (options?.fieldSelector) {
-        builder.addFilter(nestedQuery(filterKey, { [type]: { [`${filterKey}.${options.fieldSelector}`]: value } }));
+        builder.addFilter(
+          nestedQuery(filterKey, { [type]: { [`${filterKey}.${options.fieldSelector}.keyword`]: translatedValues } })
+        );
       } else {
-        builder.addFilter({ [type]: { [filterKey]: value } });
+        builder.addFilter({ [type]: { [`${filterKey}.keyword`]: translatedValues } });
       }
     };
   }
