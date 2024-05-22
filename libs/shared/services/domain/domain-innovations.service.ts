@@ -1015,18 +1015,34 @@ export class DomainInnovationsService {
 
   readonly #categoriesTranslation = {
     MEDICAL_DEVICE: 'Medical device',
-    IN_VITRO_DIAGNOSTIC: '',
-    PHARMACEUTICAL: '',
-    DIGITAL: '',
-    AI: 'Artificial Intelligence',
-    EDUCATION: '',
-    PPE: '',
-    MODELS_CARE: '',
-    ESTATES_FACILITIES: '',
-    TRAVEL_TRANSPORT: '',
-    FOOD_NUTRITION: '',
-    DATA_MONITORING: '',
-    OTHER: ''
+    IN_VITRO_DIAGNOSTIC: 'In vitro diagnostic',
+    PHARMACEUTICAL: 'Pharmaceutical',
+    DIGITAL: 'Digital (including apps, platforms, software)',
+    AI: 'Artificial intelligence (AI)',
+    EDUCATION: 'Education or training of workforce',
+    PPE: 'Personal protective equipment (PPE)',
+    MODELS_CARE: 'Models of care and clinical pathways',
+    ESTATES_FACILITIES: 'Estates and facilities',
+    TRAVEL_TRANSPORT: 'Travel and transport',
+    FOOD_NUTRITION: 'Food and nutrition',
+    DATA_MONITORING: 'Data and monitoring',
+    OTHER: 'Other'
+  };
+
+  readonly #yesNoTranslation = {
+    YES: 'Yes',
+    NO: 'No'
+  };
+
+  readonly #yesNotYetNoTranslation = {
+    YES: 'Yes',
+    NOT_YET: 'Not yet',
+    NO: 'No'
+  };
+
+  readonly #yesNotYetTranslation = {
+    YES: 'Yes',
+    NOT_YET: 'Not yet'
   };
 
   readonly #translation = {
@@ -1034,243 +1050,229 @@ export class DomainInnovationsService {
       categories: this.#categoriesTranslation,
       mainCategory: this.#categoriesTranslation,
       areas: {
-        COVID_19: '',
-        DATA_ANALYTICS_AND_RESEARCH: '',
-        DIGITALISING_SYSTEM: '',
-        IMPROVING_SYSTEM_FLOW: '',
-        INDEPENDENCE_AND_PREVENTION: '',
-        OPERATIONAL_EXCELLENCE: '',
-        PATIENT_ACTIVATION_AND_SELF_CARE: '',
-        PATIENT_SAFETY: '',
-        WORKFORCE_RESOURCE_OPTIMISATION: '',
-        NET_ZERO_GREENER_INNOVATION: ''
+        COVID_19: 'COVID-19',
+        DATA_ANALYTICS_AND_RESEARCH: 'Data, analytics and research',
+        DIGITALISING_SYSTEM: 'Digitalising the system',
+        IMPROVING_SYSTEM_FLOW: 'Improving system flow',
+        INDEPENDENCE_AND_PREVENTION: 'Independence and prevention',
+        OPERATIONAL_EXCELLENCE: 'Operational excellence',
+        PATIENT_ACTIVATION_AND_SELF_CARE: 'Patient activation and self-care',
+        PATIENT_SAFETY: 'Patient safety and quality improvement',
+        WORKFORCE_RESOURCE_OPTIMISATION: 'Workforce resource optimisation',
+        NET_ZERO_GREENER_INNOVATION: 'Net zero NHS or greener innovation'
       },
       careSettings: {
-        ACADEMIA: '',
-        ACUTE_TRUSTS_INPATIENT: '',
-        ACUTE_TRUSTS_OUTPATIENT: '',
-        AMBULANCE: '',
-        CARE_HOMES_CARE_SETTING: '',
-        END_LIFE_CARE: '',
-        ICS: '',
-        INDUSTRY: '',
-        LOCAL_AUTHORITY_EDUCATION: '',
-        MENTAL_HEALTH: '',
-        PHARMACY: '',
-        PRIMARY_CARE: '',
-        SOCIAL_CARE: '',
-        THIRD_SECTOR_ORGANISATIONS: '',
-        URGENT_AND_EMERGENCY: '',
+        ACADEMIA: 'Academia',
+        ACUTE_TRUSTS_INPATIENT: 'Acute trust - inpatient',
+        ACUTE_TRUSTS_OUTPATIENT: 'Acute trust - outpatient',
+        AMBULANCE: 'Ambulance',
+        CARE_HOMES_CARE_SETTING: 'Care homes or care setting',
+        END_LIFE_CARE: 'End of life care (EOLC)',
+        ICS: 'ICS',
+        INDUSTRY: 'Industry',
+        LOCAL_AUTHORITY_EDUCATION: 'Local authority - education',
+        MENTAL_HEALTH: 'Mental health',
+        PHARMACY: 'Pharmacies',
+        PRIMARY_CARE: 'Primary care',
+        SOCIAL_CARE: 'Social care',
+        THIRD_SECTOR_ORGANISATIONS: 'Third sector organisations',
+        URGENT_AND_EMERGENCY: 'Urgent and emergency',
         OTHER: ''
       },
       mainPurpose: {
-        PREVENT_CONDITION: '',
-        PREDICT_CONDITION: '',
-        DIAGNOSE_CONDITION: '',
-        MONITOR_CONDITION: '',
-        PROVIDE_TREATMENT: '',
-        MANAGE_CONDITION: '',
-        ENABLING_CARE: '',
-        RISKS_CLIMATE_CHANGE: ''
+        PREVENT_CONDITION: 'Preventing a condition or symptom from happening or worsening',
+        PREDICT_CONDITION: 'Predicting the occurence of a condition or symptom',
+        DIAGNOSE_CONDITION: 'Diagnosing a condition',
+        MONITOR_CONDITION: 'Monitoring a condition, treatment or therapy',
+        PROVIDE_TREATMENT: 'Providing treatment or therapy',
+        MANAGE_CONDITION: 'Managing a condition',
+        ENABLING_CARE: 'Enabling care, services or communication',
+        RISKS_CLIMATE_CHANGE:
+          'Supporting the NHS to mitigate the risks or effects of climate change and severe weather conditions'
       }
       // already a string involvedAACProgrammes: {}
     },
     UNDERSTANDING_OF_NEEDS: {
-      impactDiseaseCondition: {
-        YES: '',
-        NO: ''
-      },
-      estimatedCarbonReductionSavings: {
-        YES: '',
-        NOT_YET: '',
-        NO: ''
-      },
+      impactDiseaseCondition: this.#yesNoTranslation,
+      estimatedCarbonReductionSavings: this.#yesNotYetNoTranslation,
       carbonReductionPlan: {
-        YES: '',
-        WORKING_ON: '',
-        NO: ''
+        YES: 'Yes, I have one',
+        WORKING_ON: 'I am working on one',
+        NO: 'No, I do not have one'
       },
       keyHealthInequalities: {
-        MATERNITY: '',
-        SEVER_MENTAL_ILLNESS: '',
-        CHRONIC_RESPIRATORY_DISEASE: '',
-        EARLY_CANCER_DIAGNOSIS: '',
-        HYPERTENSION_CASE_FINDING: '',
-        NONE: ''
+        MATERNITY: 'Maternity',
+        SEVER_MENTAL_ILLNESS: 'Severe mental illness',
+        CHRONIC_RESPIRATORY_DISEASE: 'Chronic respiratory disease',
+        EARLY_CANCER_DIAGNOSIS: 'Early cancer diagnosis',
+        HYPERTENSION_CASE_FINDING: 'Hypertension case finding and optimal management and lipid optimal management',
+        NONE: 'None of those listed'
       },
-      completedHealthInequalitiesImpactAssessment: {
-        YES: '',
-        NO: ''
-      },
-      hasProductServiceOrPrototype: {
-        YES: '',
-        NO: ''
-      }
+      completedHealthInequalitiesImpactAssessment: this.#yesNoTranslation,
+      hasProductServiceOrPrototype: this.#yesNoTranslation
     },
     EVIDENCE_OF_EFFECTIVENESS: {
-      hasEvidence: { YES: '', NOT_YET: '' },
-      currentlyCollectingEvidence: { YES: '', NO: '' },
+      hasEvidence: this.#yesNotYetTranslation,
+      currentlyCollectingEvidence: this.#yesNoTranslation,
       needsSupportAnyArea: {
-        RESEARCH_GOVERNANCE: '',
-        DATA_SHARING: '',
-        CONFIDENTIAL_PATIENT_DATA: '',
-        APPROVAL_DATA_STUDIES: '',
-        UNDERSTANDING_LAWS: '',
-        DO_NOT_NEED_SUPPORT: ''
+        RESEARCH_GOVERNANCE: 'Research governance, including research ethics approvals',
+        DATA_SHARING: 'Accessing and sharing health and care data',
+        CONFIDENTIAL_PATIENT_DATA: 'Use of confidential patient data',
+        APPROVAL_DATA_STUDIES: 'Approval of data studies',
+        UNDERSTANDING_LAWS: 'Understanding the laws that regulate the use of health and care data',
+        SEPARATOR: 'SEPARATOR',
+        DO_NOT_NEED_SUPPORT: 'No, I do not need support'
       }
     },
     MARKET_RESEARCH: {
       hasMarketResearch: {
-        YES: '',
-        IN_PROGRESS: '',
-        NOT_YET: ''
+        YES: 'Yes',
+        IN_PROGRESS: "I'm currently doing market research",
+        NOT_YET: 'Not yet'
       },
       optionBestDescribesInnovation: {
-        ONE_OFF_INNOVATION: '',
-        BETTER_ALTERNATIVE: '',
-        EQUIVALENT_ALTERNATIVE: '',
-        COST_EFFECT_ALTERNATIVE: '',
-        NOT_SURE: ''
+        ONE_OFF_INNOVATION: 'A one-off innovation, or the first of its kind',
+        BETTER_ALTERNATIVE: 'A better alternative to those that already exist',
+        EQUIVALENT_ALTERNATIVE: 'An equivalent alternative to those that already exist',
+        COST_EFFECT_ALTERNATIVE: 'A more cost-effect alternative to those that already exist',
+        NOT_SURE: 'I am not sure'
       }
     },
     CURRENT_CARE_PATHWAY: {
       innovationPathwayKnowledge: {
-        PATHWAY_EXISTS_AND_CHANGED: '',
-        PATHWAY_EXISTS_AND_FITS: '',
-        NO_PATHWAY: '',
-        DONT_KNOW: '',
-        NOT_PART_PATHWAY: ''
+        PATHWAY_EXISTS_AND_CHANGED: 'There is a pathway, and my innovation changes it',
+        PATHWAY_EXISTS_AND_FITS: 'There is a pathway, and my innovation fits in to it',
+        NO_PATHWAY: 'There is no current care pathway',
+        DONT_KNOW: 'I do not know',
+        NOT_PART_PATHWAY: 'Does not form part of a care pathway'
       }
     },
     TESTING_WITH_USERS: {
       involvedUsersDesignProcess: {
-        YES: '',
-        IN_PROGRESS: '',
-        NOT_YET: ''
+        YES: 'Yes',
+        IN_PROGRESS: 'I am in the process of involving users in the design',
+        NOT_YET: 'Not yet'
       },
       intendedUserGroupsEngaged: {
-        CLINICAL_SOCIAL_CARE_WORKING_INSIDE_UK: '',
-        CLINICAL_SOCIAL_CARE_WORKING_OUTSIDE_UK: '',
-        NON_CLINICAL_HEALTHCARE: '',
-        PATIENTS: '',
-        SERVICE_USERS: '',
-        CARERS: '',
+        CLINICAL_SOCIAL_CARE_WORKING_INSIDE_UK:
+          'Clinical or social care professionals working in the UK health and social care system',
+        CLINICAL_SOCIAL_CARE_WORKING_OUTSIDE_UK: 'Clinical or social care professionals working outside the UK',
+        NON_CLINICAL_HEALTHCARE: 'Non-clinical healthcare staff',
+        PATIENTS: 'Patients',
+        SERVICE_USERS: 'Service users',
+        CARERS: 'Carers',
         OTHER: ''
       }
     },
     REGULATIONS_AND_STANDARDS: {
       hasRegulationKnowledge: {
-        YES_ALL: '',
-        YES_SOME: '',
-        NO: '',
-        NOT_RELEVANT: ''
+        CLINICAL_SOCIAL_CARE_WORKING_INSIDE_UK:
+          'Clinical or social care professionals working in the UK health and social care system',
+        CLINICAL_SOCIAL_CARE_WORKING_OUTSIDE_UK: 'Clinical or social care professionals working outside the UK',
+        NON_CLINICAL_HEALTHCARE: 'Non-clinical healthcare staff',
+        PATIENTS: 'Patients',
+        SERVICE_USERS: 'Service users',
+        CARERS: 'Carers'
       },
       standards: {
         type: {
-          CE_UKCA_NON_MEDICAL: '',
-          CE_UKCA_CLASS_I: '',
-          CE_UKCA_CLASS_II_A: '',
-          CE_UKCA_CLASS_II_B: '',
-          CE_UKCA_CLASS_III: '',
-          IVD_GENERAL: '',
-          IVD_SELF_TEST: '',
-          IVD_ANNEX_LIST_A: '',
-          IVD_ANNEX_LIST_B: '',
-          MARKETING: '',
-          CQC: '',
-          DTAC: '',
-          OTHER: ''
+          CE_UKCA_NON_MEDICAL: 'Non-medical device',
+          CE_UKCA_CLASS_I: 'Class I medical device',
+          CE_UKCA_CLASS_II_A: 'Class IIa medical device',
+          CE_UKCA_CLASS_II_B: 'Class IIb medical device',
+          CE_UKCA_CLASS_III: 'Class III medical device',
+          IVD_GENERAL: 'IVD general',
+          IVD_SELF_TEST: 'IVD self-test',
+          IVD_ANNEX_LIST_A: 'IVD Annex II List A',
+          IVD_ANNEX_LIST_B: 'IVD Annex II List B',
+          MARKETING: 'Marketing authorisation for medicines',
+          CQC: 'Care Quality Commission (CQC) registration, as I am providing a regulated activity',
+          DTAC: 'Digital Technology Assessment Criteria (DTAC)',
+          OTHER: 'Other'
         },
         hasMet: {
-          YES: '',
-          IN_PROGRESS: '',
-          NOT_YET: ''
+          YES: 'Yes',
+          IN_PROGRESS: 'I am actively working towards it',
+          NOT_YET: 'Not yet'
         }
       }
     },
     INTELLECTUAL_PROPERTY: {
       hasPatents: {
-        HAS_AT_LEAST_ONE: '',
-        APPLIED_AT_LEAST_ONE: '',
-        HAS_NONE: ''
+        HAS_AT_LEAST_ONE: 'I have one or more patents',
+        APPLIED_AT_LEAST_ONE: 'I have applied for one or more patents',
+        HAS_NONE: 'I do not have any patents, but believe I have freedom to operate'
       },
-      hasOtherIntellectual: {
-        YES: '',
-        NO: ''
-      }
+      hasOtherIntellectual: this.#yesNoTranslation
     },
     REVENUE_MODEL: {
       hasRevenueModel: {
-        YES: '',
-        NO: '',
-        DONT_KNOW: ''
+        YES: 'Yes',
+        NO: 'No',
+        DONT_KNOW: 'I do not know'
       },
       revenues: {
-        ADVERTISING: '',
-        DIRECT_PRODUCT_SALES: '',
-        FEE_FOR_SERVICE: '',
-        LEASE: '',
-        SALES_OF_CONSUMABLES_OR_ACCESSORIES: '',
-        SUBSCRIPTION: '',
-        OTHER: ''
+        ADVERTISING: 'Advertising',
+        DIRECT_PRODUCT_SALES: 'Direct product sales',
+        FEE_FOR_SERVICE: 'Fee for service',
+        LEASE: 'Lease',
+        SALES_OF_CONSUMABLES_OR_ACCESSORIES: 'Sales of consumables or accessories',
+        SUBSCRIPTION: 'Subscription',
+        OTHER: 'Other'
       },
       hasFunding: {
-        YES: '',
-        NO: '',
-        NOT_RELEVANT: ''
+        YES: 'Yes',
+        NO: 'No',
+        NOT_RELEVANT: 'Not relevant'
       }
     },
     COST_OF_INNOVATION: {
       hasCostKnowledge: {
-        DETAILED_ESTIMATE: '',
-        ROUGH_IDEA: '',
-        NO: ''
+        DETAILED_ESTIMATE: 'Yes, I have a detailed estimate',
+        ROUGH_IDEA: 'Yes, I have a rough idea',
+        NO: 'No'
       },
       patientsRange: {
-        UP_10000: '',
-        BETWEEN_10000_500000: '',
-        MORE_THAN_500000: '',
-        NOT_SURE: '',
-        NOT_RELEVANT: ''
+        UP_10000: 'Up to 10,000 per year',
+        BETWEEN_10000_500000: '10,000 to half a million per year',
+        MORE_THAN_500000: 'More than half a million per year',
+        NOT_SURE: 'I am not sure',
+        NOT_RELEVANT: 'Not relevant to my innovation'
       },
       costComparison: {
-        CHEAPER: '',
-        COSTS_MORE_WITH_SAVINGS: '',
-        COSTS_MORE: '',
-        NOT_SURE: ''
+        CHEAPER: 'My innovation is cheaper to purchase',
+        COSTS_MORE_WITH_SAVINGS:
+          'My innovation costs more to purchase, but has greater benefits that will lead to overall cost savings',
+        COSTS_MORE:
+          'My innovation costs more to purchase and has greater benefits, but will lead to higher costs overall',
+        NOT_SURE: 'I am not sure'
       }
     },
     DEPLOYMENT: {
-      hasDeployPlan: {
-        YES: '',
-        NO: ''
-      },
-      isDeployed: {
-        YES: '',
-        NO: ''
-      },
+      hasDeployPlan: this.#yesNoTranslation,
+      isDeployed: this.#yesNoTranslation,
       hasResourcesToScale: {
-        YES: '',
-        NO: '',
-        NOT_SURE: ''
+        YES: 'Yes',
+        NO: 'No',
+        NOT_SURE: 'I am not sure'
       }
     },
     evidences: {
       evidenceSubmitType: {
-        CLINICAL_OR_CARE: '',
-        COST_IMPACT_OR_ECONOMIC: '',
-        OTHER_EFFECTIVENESS: '',
-        PRE_CLINICAL: '',
-        REAL_WORLD: ''
+        CLINICAL_OR_CARE: 'Evidence of clinical or care outcomes',
+        COST_IMPACT_OR_ECONOMIC: 'Evidence of cost impact, efficiency gains and/or economic modelling',
+        OTHER_EFFECTIVENESS: 'Other evidence of effectiveness (for example environmental or social)',
+        PRE_CLINICAL: 'Pre-clinical evidence',
+        REAL_WORLD: 'Real world evidence'
       },
       evidenceType: {
-        DATA_PUBLISHED: '',
-        NON_RANDOMISED_COMPARATIVE_DATA: '',
-        NON_RANDOMISED_NON_COMPARATIVE_DATA: '',
-        CONFERENCE: '',
-        RANDOMISED_CONTROLLED_TRIAL: '',
-        UNPUBLISHED_DATA: '',
-        OTHER: ''
+        DATA_PUBLISHED: 'Data published, but not in a peer reviewed journal',
+        NON_RANDOMISED_COMPARATIVE_DATA: 'Non-randomised comparative data published in a peer reviewed journal',
+        NON_RANDOMISED_NON_COMPARATIVE_DATA: 'Non-randomised non-comparative data published in a peer reviewed journal',
+        CONFERENCE: 'Poster or abstract presented at a conference',
+        RANDOMISED_CONTROLLED_TRIAL: 'Randomised controlled trial published in a peer reviewed journal',
+        UNPUBLISHED_DATA: 'Unpublished data',
+        OTHER: 'Other'
       }
     }
   };
