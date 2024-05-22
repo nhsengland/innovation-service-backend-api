@@ -254,7 +254,7 @@ export class DomainInnovationsService {
 
           if (assessment) {
             // Complete the current assessment
-            transaction.update(
+            await transaction.update(
               InnovationAssessmentEntity,
               { id: assessment.id },
               { finishedAt: archivedAt, updatedBy: domainContext.id }

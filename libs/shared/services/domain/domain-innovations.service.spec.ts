@@ -13,8 +13,8 @@ describe('Domain Innovations Service Suite', () => {
     sut = container.get<DomainService>(SHARED_SYMBOLS.DomainService).innovations;
   });
 
-  describe('x', () => {
-    it('should return the correct value', () => {
+  describe('translate', () => {
+    it('should return the translated value', () => {
       const x = sut['translate']({
         INNOVATION_DESCRIPTION: {
           name: 'Test',
