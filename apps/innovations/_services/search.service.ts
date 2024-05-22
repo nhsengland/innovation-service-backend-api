@@ -11,6 +11,7 @@ import { InnovationStatusEnum, InnovationSupportStatusEnum, ServiceRoleEnum } fr
 import { GenericErrorsEnum, NotImplementedError } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import type { CurrentElasticSearchDocumentType } from '@innovations/shared/schemas/innovation-record';
+import { translateValue } from '@innovations/shared/schemas/innovation-record/202304/translation.heper';
 import type { DomainService, DomainUsersService, ElasticSearchService } from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import {
@@ -441,7 +442,7 @@ export class SearchService extends BaseService {
 
       const [head, ...tail] = (options?.fieldSelector ? `${filterKey}.${options.fieldSelector}` : filterKey).split('.');
       if (head === 'document' && tail) {
-        translatedValues = translatedValues.map(v => this.domainService.innovations.translateValue(tail, v));
+        translatedValues = translatedValues.map(v => translateValue(tail, v));
       }
 
       if (options?.fieldSelector) {
