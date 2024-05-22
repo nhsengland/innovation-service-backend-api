@@ -1,7 +1,8 @@
 import { Client } from '@elastic/elasticsearch';
 import type { IndicesCreateRequest } from '@elastic/elasticsearch/lib/api/types';
+import { ElasticSearchErrorsEnum, InternalServerError, ServiceUnavailableError } from '../../errors';
 import { inject, injectable } from 'inversify';
-import { ES_CONNECTION_CONFIG} from '../../config/elastic-search.config';
+import { ES_CONNECTION_CONFIG } from '../../config/elastic-search.config';
 import SHARED_SYMBOLS from '../symbols';
 import type { LoggerService } from './logger.service';
 
@@ -18,6 +19,7 @@ export class ElasticSearchService {
       this.#instance = new Client(ES_CONNECTION_CONFIG);
     } catch (error: any) {
       this.logger.error('ElasticSearch::error', error);
+      throw new ServiceUnavailableError(ElasticSearchErrorsEnum.ES_SERVICE_UNAVAILABLE);
     }
 
     this.logger.log('ElasticSearch::ready');
@@ -40,6 +42,7 @@ export class ElasticSearchService {
       await this.client.indices.create({ index, ...params });
     } catch (error) {
       this.logger.error('ElasticSearch::error::createIndex', error);
+      throw new InternalServerError(ElasticSearchErrorsEnum.ES_CREATE_INDEX_ERROR);
     }
   }
 
@@ -56,7 +59,8 @@ export class ElasticSearchService {
 
     // TODO: We can check the documents that gave error and retry them.
     if (response.errors) {
-      this.logger.log('ElasticSearch::error: while bulk ingesting documents.');
+      this.logger.error('ElasticSearch::error: while bulk ingesting documents.');
+      throw new InternalServerError(ElasticSearchErrorsEnum.ES_BULK_INSERT_ERROR);
     }
 
     this.logger.log(`ElasticSearch: ${response.items.length} documents inserted in ${response.took}.`);
