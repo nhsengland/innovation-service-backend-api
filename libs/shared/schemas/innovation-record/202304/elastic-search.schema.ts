@@ -33,13 +33,11 @@ export type ElasticSearchDocumentType202304 = {
     unitId: string;
     status: InnovationSupportStatusEnum;
     updatedAt: Date;
-    updatedBy: string;
     assignedAccessorsRoleIds?: string[];
   }[];
   assessment?: {
     id: string;
     assignedToId: string | null;
-    assignedToIdentityId: string | null;
     updatedAt: Date;
     isExempt: boolean;
   };
