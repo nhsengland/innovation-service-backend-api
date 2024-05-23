@@ -1,6 +1,7 @@
 import type {
   AdminErrorsEnum,
   AnnouncementErrorsEnum,
+  ElasticSearchErrorsEnum,
   EmailErrorsEnum,
   GenericErrorsEnum,
   InnovationErrorsEnum,
@@ -33,5 +34,6 @@ export type ErrorNamesType =
   | OrganisationErrorsEnum
   | InnovationErrorsEnum
   | EmailErrorsEnum
-  | AnnouncementErrorsEnum;
+  | AnnouncementErrorsEnum
+  | ElasticSearchErrorsEnum;
 export type ErrorDetailsType = { [key: string]: any } | { [key: string]: any }[];
