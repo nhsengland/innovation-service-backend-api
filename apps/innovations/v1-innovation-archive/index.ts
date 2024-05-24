@@ -18,7 +18,7 @@ import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.sch
 class V1InnovationPause {
   @JwtDecoder()
   @Audit({ action: ActionEnum.UPDATE, target: TargetEnum.INNOVATION, identifierParam: 'innovationId' })
-  @ElasticSearchDocumentUpdate({ type: 'INNOVATION_UPDATE' })
+  @ElasticSearchDocumentUpdate()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
     const authorizationService = container.get<AuthorizationService>(SHARED_SYMBOLS.AuthorizationService);
     const innovationsService = container.get<InnovationsService>(SYMBOLS.InnovationsService);

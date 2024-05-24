@@ -1,7 +1,7 @@
+import type { RedisService } from '@notifications/shared/services';
 import { inject, injectable } from 'inversify';
-import { createClient } from 'redis';
+import type { createClient } from 'redis';
 
-import { REDIS_DEFAULT_CONNECTION } from '../../config/redis.config';
 import type { IdentityUserInfo } from '../../types/domain.types';
 import type { LoggerService } from '../integrations/logger.service';
 import SHARED_SYMBOLS from '../symbols';
@@ -27,18 +27,15 @@ export class CacheService {
   private cacheConfigMap: CacheConfigType;
   private redis: ReturnType<typeof createClient>;
 
-  constructor(@inject(SHARED_SYMBOLS.LoggerService) private logger: LoggerService) {
-    this.redis = createClient(REDIS_DEFAULT_CONNECTION);
+  constructor(
+    @inject(SHARED_SYMBOLS.RedisService) private redisService: RedisService,
+    @inject(SHARED_SYMBOLS.LoggerService) private logger: LoggerService
+  ) {
+    this.redis = this.redisService.client;
     // Setting the cacheConfigMap here before connecting so that it's already available at injection time
     this.cacheConfigMap = {
       IdentityUserInfo: new RedisCache<IdentityUserInfo>(this.redis, this.logger, 'IdentityUserInfo')
     };
-
-    // Initialize Redis
-    this.logger.log('Initializing cache service');
-    this.redis.on('error', err => this.logger.error(err));
-    this.redis.on('ready', () => this.logger.log('Redis is ready'));
-    void this.redis.connect();
   }
 
   /**
@@ -48,9 +45,5 @@ export class CacheService {
    */
   get<T extends keyof CacheConfigType>(cacheId: T): CacheConfigType[T] {
     return this.cacheConfigMap[cacheId];
-  }
-
-  async destroy(): Promise<void> {
-    await this.redis.quit();
   }
 }

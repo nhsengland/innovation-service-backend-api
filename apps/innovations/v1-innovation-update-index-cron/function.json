@@ -1,0 +1,10 @@
+{
+  "bindings": [
+    {
+      "schedule": "*/59 * * * * *",
+      "name": "myTimerUpdateIndex",
+      "type": "timerTrigger",
+      "direction": "in"
+    }
+  ]
+}

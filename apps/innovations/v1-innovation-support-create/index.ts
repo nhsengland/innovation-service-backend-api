@@ -17,7 +17,7 @@ import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.sch
 
 class V1InnovationSupportCreate {
   @JwtDecoder()
-  @ElasticSearchDocumentUpdate({ type: 'SUPPORT_UPDATE' })
+  @ElasticSearchDocumentUpdate()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
     const authorizationService = container.get<AuthorizationService>(SHARED_SYMBOLS.AuthorizationService);
     const innovationSupportsService = container.get<InnovationSupportsService>(SYMBOLS.InnovationSupportsService);
