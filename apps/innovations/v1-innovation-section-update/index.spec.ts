@@ -14,8 +14,7 @@ jest.mock('@innovations/shared/decorators', () => ({
   }),
   Audit: jest.fn().mockImplementation(() => (_: any, __: string, descriptor: PropertyDescriptor) => {
     return descriptor;
-  }),
-  ElasticSearchDocumentUpdate: jest.fn(() => (_: any, __: string, descriptor: PropertyDescriptor) => descriptor)
+  })
 }));
 
 const testsHelper = new TestsHelper();
