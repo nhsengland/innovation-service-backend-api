@@ -7,7 +7,7 @@ import {
   InnovationSupportStatusEnum,
   ServiceRoleEnum
 } from '../../enums';
-import { ForbiddenError, UnprocessableEntityError, ConflictError } from '../../errors';
+import { ConflictError, ForbiddenError, UnprocessableEntityError } from '../../errors';
 import type { DomainContextType, DomainUserInfoType } from '../../types';
 import type { DomainService } from '../domain/domain.service';
 
@@ -441,14 +441,16 @@ export class AuthorizationValidationModel {
     }
 
     if (context.currentRole.role === ServiceRoleEnum.ASSESSMENT) {
-      query.andWhere('innovation.status IN (:...assessmentInnovationStatus)', {
-        assessmentInnovationStatus: [
-          InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
-          InnovationStatusEnum.NEEDS_ASSESSMENT,
-          InnovationStatusEnum.IN_PROGRESS,
-          InnovationStatusEnum.ARCHIVED
-        ]
-      });
+      query.andWhere(
+        '(innovation.status IN (:...assessmentInnovationStatus) OR innovation.archivedStatus IN (:...assessmentInnovationStatus))',
+        {
+          assessmentInnovationStatus: [
+            InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
+            InnovationStatusEnum.NEEDS_ASSESSMENT,
+            InnovationStatusEnum.IN_PROGRESS
+          ]
+        }
+      );
     }
 
     if (
