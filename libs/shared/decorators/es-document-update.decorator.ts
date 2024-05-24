@@ -15,7 +15,9 @@ export type ElasticSearchEventUpdateMessageType = {
   };
 };
 
-export function ElasticSearchDocumentUpdate(type: ElasticSearchEventUpdateTypes) {
+type DocumentUpdateParams = { type: ElasticSearchEventUpdateTypes, identifierResponseField?: string };
+
+export function ElasticSearchDocumentUpdate(options: DocumentUpdateParams) {
   return function (_target: any, _propertyKey: string, descriptor: PropertyDescriptor) {
     const original = descriptor.value;
 
@@ -28,11 +30,15 @@ export function ElasticSearchDocumentUpdate(type: ElasticSearchEventUpdateTypes)
         return;
       }
 
-      const innovationId =
+      let innovationId =
         request.params['innovationId'] ?? request.query['innovationId'] ?? request.body['innovationId'];
 
+      if ('identifierResponseField' in options && options.identifierResponseField) {
+        innovationId = context.res?.['body'][options.identifierResponseField];
+      }
+
       await storageService.sendMessage<ElasticSearchEventUpdateMessageType>(QueuesEnum.ELASTIC_SEARCH, {
-        data: { innovationId, type }
+        data: { innovationId, type: options.type }
       });
     };
   };
