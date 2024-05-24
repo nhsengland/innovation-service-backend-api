@@ -351,6 +351,19 @@ export class InnovationsService extends BaseService {
       }
     }
 
+    if (isAssessmentDomainContextType(domainContext)) {
+      query.andWhere(
+        '(innovation.status IN (:...assessmentInnovationStatus) OR innovation.archivedStatus IN (:...assessmentInnovationStatus))',
+        {
+          assessmentInnovationStatus: [
+            InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
+            InnovationStatusEnum.NEEDS_ASSESSMENT,
+            InnovationStatusEnum.IN_PROGRESS
+          ]
+        }
+      );
+    }
+
     // Exclude withdrawn innovations from non admin users (at least for now). This state is still present for old innovations
     // but no longer used
     if (!isAdminDomainContextType(domainContext)) {
