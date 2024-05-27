@@ -18,6 +18,7 @@ import { SqlProvider, sqlProvider } from '../services/storage/sql-connection.pro
 import { SQLConnectionService } from '../services/storage/sql-connection.service';
 import SHARED_SYMBOLS from '../services/symbols';
 import { ElasticSearchService } from '../services/integrations/elastic-search.service';
+import { RedisService } from '../services/storage/redis.service';
 
 export const container: Container = new Container();
 
@@ -38,6 +39,7 @@ container.bind<StorageQueueService>(SHARED_SYMBOLS.StorageQueueService).to(Stora
 container.bind<AuditService>(SHARED_SYMBOLS.AuditService).to(AuditService).inSingletonScope();
 container.bind<CacheService>(SHARED_SYMBOLS.CacheService).to(CacheService).inSingletonScope();
 container.bind<ElasticSearchService>(SHARED_SYMBOLS.ElasticSearchService).to(ElasticSearchService).inSingletonScope();
+container.bind<RedisService>(SHARED_SYMBOLS.RedisService).to(RedisService).inSingletonScope();
 
 const logger = container.get<LoggerService>(SHARED_SYMBOLS.LoggerService);
 

@@ -22,7 +22,7 @@ class V1InnovationCreate {
     identifierResponseField: 'id',
     target: TargetEnum.INNOVATION
   })
-  @ElasticSearchDocumentUpdate({ type: 'INNOVATION_UPDATE', identifierResponseField: 'id' })
+  @ElasticSearchDocumentUpdate({ identifierResponseField: 'id' })
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
     const authorizationService = container.get<AuthorizationService>(SHARED_SYMBOLS.AuthorizationService);
     const innovationService = container.get<InnovationsService>(SYMBOLS.InnovationsService);
