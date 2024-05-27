@@ -14,13 +14,16 @@ class V1InnovationUpdateIndexCron {
 
     logger.log('Running cron job: V1InnovationUpdateIndexCron');
 
+    let innovationId: string | null = null;
     try {
-      let innovationId: string | null;
       while ((innovationId = await redisService.popFromSet('elasticsearch')) !== null) {
         await searchService.upsertDocument(innovationId);
         logger.log(`${innovationId} was reindexed.`);
       }
     } catch (err) {
+      if(innovationId !== null) {
+        await redisService.addToSet('elasticsearch', innovationId);
+      }
       logger.error('Error running cron job: V1InnovationUpdateIndexCron', err);
       throw err;
     }
