@@ -1,7 +1,7 @@
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
-import { ElasticSearchDocumentUpdate, JwtDecoder } from '@innovations/shared/decorators';
+import { JwtDecoder } from '@innovations/shared/decorators';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
 import { CurrentDocumentSchemaMap } from '@innovations/shared/schemas/innovation-record';
 import type { AuthorizationService } from '@innovations/shared/services';
@@ -17,7 +17,6 @@ import { ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1InnovationSectionUpdate {
   @JwtDecoder()
-  @ElasticSearchDocumentUpdate('INNOVATION_UPDATE')
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
     const authorizationService = container.get<AuthorizationService>(SHARED_SYMBOLS.AuthorizationService);
     const innovationSectionsService = container.get<InnovationSectionsService>(SYMBOLS.InnovationSectionsService);

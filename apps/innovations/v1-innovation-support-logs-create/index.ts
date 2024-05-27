@@ -19,7 +19,7 @@ import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.sch
 // OPTIMIZE CREATE INNOVATION ORGANISATIONS SUGGESTIONS
 class V1InnovationsSupportLogCreate {
   @JwtDecoder()
-  @ElasticSearchDocumentUpdate('SUPPORT_UPDATE')
+  @ElasticSearchDocumentUpdate({ type: 'SUPPORT_UPDATE' })
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
     const authorizationService = container.get<AuthorizationService>(SHARED_SYMBOLS.AuthorizationService);
     const innovationSupportsService = container.get<InnovationSupportsService>(SYMBOLS.InnovationSupportsService);
