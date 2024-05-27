@@ -435,7 +435,19 @@ export class SearchService extends BaseService {
     if (value) {
       if (isAccessorDomainContextType(domainContext)) {
         builder.addFilter(
-          nestedQuery('supports', { term: { 'supports.assignedAccessorsRoleIds': domainContext.currentRole.id } })
+          nestedQuery(
+            'supports',
+            boolQuery({
+              must: [
+                { term: { 'supports.assignedAccessorsRoleIds': domainContext.currentRole.id } },
+                {
+                  terms: {
+                    'supports.status': [InnovationSupportStatusEnum.WAITING, InnovationSupportStatusEnum.ENGAGING]
+                  }
+                }
+              ]
+            })
+          )
         );
       }
       if (isAssessmentDomainContextType(domainContext)) {
