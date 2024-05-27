@@ -417,7 +417,7 @@ export class SearchService extends BaseService {
       const fields = priorities.reverse().flatMap((priority, i) => priority.map(p => `${p}^${i + 1}`));
       const searchQuery = {
         query_string: {
-          query: this.escapeElasticSpecialChars(search),
+          query: this.escapeElasticSpecialCharsAndFuzziness(search),
           fields: [...fields, '*'],
           fuzziness: 'AUTO'
         }
@@ -435,7 +435,19 @@ export class SearchService extends BaseService {
     if (value) {
       if (isAccessorDomainContextType(domainContext)) {
         builder.addFilter(
-          nestedQuery('supports', { term: { 'supports.assignedAccessorsRoleIds': domainContext.currentRole.id } })
+          nestedQuery(
+            'supports',
+            boolQuery({
+              must: [
+                { term: { 'supports.assignedAccessorsRoleIds': domainContext.currentRole.id } },
+                {
+                  terms: {
+                    'supports.status': [InnovationSupportStatusEnum.WAITING, InnovationSupportStatusEnum.ENGAGING]
+                  }
+                }
+              ]
+            })
+          )
         );
       }
       if (isAssessmentDomainContextType(domainContext)) {
@@ -444,7 +456,7 @@ export class SearchService extends BaseService {
     }
   }
 
-  // Generic filter assumes that the field is a keyword in elasticsearch as filters won't work otherwise
+  // Generic filter assumes that the field (from document) is a keyword in elasticsearch as filters won't work otherwise
   private addGenericFilter(
     filterKey: string,
     options?: { fieldSelector: string } // fieldSelector == nested
@@ -458,12 +470,13 @@ export class SearchService extends BaseService {
         translatedValues = translatedValues.map(v => translateValue(tail, v));
       }
 
+      const suffix = head === 'document' ? '.keyword' : '';
       if (options?.fieldSelector) {
         builder.addFilter(
-          nestedQuery(filterKey, { [type]: { [`${filterKey}.${options.fieldSelector}.keyword`]: translatedValues } })
+          nestedQuery(filterKey, { [type]: { [`${filterKey}.${options.fieldSelector}${suffix}`]: translatedValues } })
         );
       } else {
-        builder.addFilter({ [type]: { [`${filterKey}.keyword`]: translatedValues } });
+        builder.addFilter({ [type]: { [`${filterKey}${suffix}`]: translatedValues } });
       }
     };
   }
@@ -673,15 +686,20 @@ export class SearchService extends BaseService {
   }
 
   /**
-   * Escapes ES special chars.
+   * Escapes ES special chars and adds fuziness to input
    *
    * @see {@link https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-query-string-query.html#_reserved_characters Documentation}
    */
-  private escapeElasticSpecialChars(input: string): string {
+  private escapeElasticSpecialCharsAndFuzziness(input: string): string {
     // Remove < and > characters
     input = input.replace(/[<>]/g, '');
     // Escape other special characters
     const specialChars = /[+\-=&|!(){}\[\]^"~*?:\\/]/g;
-    return input.replace(specialChars, '\\$&');
+    const escaped = input.replace(specialChars, '\\$&');
+
+    return escaped
+      .split(' ')
+      .map(f => f + '~')
+      .join(' ');
   }
 }
