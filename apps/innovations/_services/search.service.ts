@@ -239,7 +239,11 @@ export class SearchService extends BaseService {
       data: response.hits.hits.map(hit => {
         const doc = hit._source!;
 
-        const res = { highlights: hit.highlight } as any;
+        const res = {
+          highlights: Object.fromEntries(
+            Object.entries(hit.highlight || {}).filter(([key]) => !key.endsWith('.keyword'))
+          )
+        } as any;
         for (const [key, value] of Object.entries(fieldGroups)) {
           if (key in this.displayHandlers) {
             const handler = this.displayHandlers[key as keyof typeof this.displayHandlers];
@@ -423,7 +427,7 @@ export class SearchService extends BaseService {
         }
       };
       builder.addMust(searchQuery);
-      builder.addHighlight({ fields: { '*': { order: 'score', highlight_query: searchQuery } } });
+      builder.addHighlight({ fields: { '*': { order: 'score' } } });
     }
   }
 

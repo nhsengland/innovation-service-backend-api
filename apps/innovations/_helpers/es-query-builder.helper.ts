@@ -15,6 +15,9 @@ type SearchBoolQuery = {
 
 export class ElasticSearchQueryBuilder {
   private search: SearchQueryBody = {
+    _source: {
+      excludes: ['shares', 'suggestions', 'supports'] // These fields are only used in filters
+    },
     sort: [],
     query: { bool: { must: [], must_not: [], filter: [] } }
   };
