@@ -444,7 +444,7 @@ export class SearchService extends BaseService {
     }
   }
 
-  // Generic filter assumes that the field is a keyword in elasticsearch as filters won't work otherwise
+  // Generic filter assumes that the field (from document) is a keyword in elasticsearch as filters won't work otherwise
   private addGenericFilter(
     filterKey: string,
     options?: { fieldSelector: string } // fieldSelector == nested
@@ -458,12 +458,13 @@ export class SearchService extends BaseService {
         translatedValues = translatedValues.map(v => translateValue(tail, v));
       }
 
+      const suffix = head === 'document' ? '.keyword' : '';
       if (options?.fieldSelector) {
         builder.addFilter(
-          nestedQuery(filterKey, { [type]: { [`${filterKey}.${options.fieldSelector}.keyword`]: translatedValues } })
+          nestedQuery(filterKey, { [type]: { [`${filterKey}.${options.fieldSelector}${suffix}`]: translatedValues } })
         );
       } else {
-        builder.addFilter({ [type]: { [`${filterKey}.keyword`]: translatedValues } });
+        builder.addFilter({ [type]: { [`${filterKey}${suffix}`]: translatedValues } });
       }
     };
   }
