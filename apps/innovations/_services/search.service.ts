@@ -152,7 +152,7 @@ export class SearchService extends BaseService {
     if (!params.fields.length) {
       return { count: 0, data: [] };
     }
-    const searchQuery = new ElasticSearchQueryBuilder(this.index, ['shares', 'suggestions', 'supports']);
+    const searchQuery = new ElasticSearchQueryBuilder(this.index, ['shares', 'suggestions']);
 
     // Add Permission Guards according with role
     this.addPermissionGuards(domainContext, searchQuery);
@@ -421,7 +421,7 @@ export class SearchService extends BaseService {
       const searchQuery: QueryDslQueryContainer = {
         query_string: {
           query: this.escapeElasticSpecialCharsAndFuzziness(search),
-          fields: [...fields, '*'],
+          fields: [...fields, 'document.*'],
           fuzziness: 'AUTO',
           fuzzy_prefix_length: 3
         }
