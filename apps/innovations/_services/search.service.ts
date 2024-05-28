@@ -699,7 +699,7 @@ export class SearchService extends BaseService {
    */
   private escapeElasticSpecialCharsAndFuzziness(input: string): string {
     // Remove < and > characters
-    input = input.replace(/[<>]/g, '');
+    input = input.trim().replace(/[<>]/g, '');
     // Escape other special characters
     const specialChars = /[+\-=&|!(){}\[\]^"~*?:\\/]/g;
     const escaped = input.replace(specialChars, '\\$&');
