@@ -76,7 +76,7 @@ export class DomainInnovationsService {
     const dbInnovations = await em
       .createQueryBuilder(InnovationEntity, 'innovations')
       .select(['innovations.id', 'transfers.id', 'transfers.createdBy'])
-      .innerJoin('innovations.transfers', 'transfers', 'status = :status', {
+      .innerJoin('innovations.transfers', 'transfers', 'transfers.status = :status', {
         status: InnovationTransferStatusEnum.PENDING
       })
       .where('innovations.expires_at < :now', { now: new Date().toISOString() })
