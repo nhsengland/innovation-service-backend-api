@@ -423,7 +423,7 @@ export class SearchService extends BaseService {
       const searchQuery: QueryDslQueryContainer = {
         query_string: {
           query: this.escapeElasticSpecialCharsAndFuzziness(search),
-          fields: [...fields, '*'],
+          fields: [...fields, 'document.*'],
           fuzziness: 'AUTO',
           fuzzy_prefix_length: 3
         }
