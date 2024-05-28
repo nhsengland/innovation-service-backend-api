@@ -418,11 +418,12 @@ export class SearchService extends BaseService {
 
       // If is not an email we do the normal search
       const fields = priorities.reverse().flatMap((priority, i) => priority.map(p => `${p}^${i + 1}`));
-      const searchQuery = {
+      const searchQuery: QueryDslQueryContainer = {
         query_string: {
           query: this.escapeElasticSpecialCharsAndFuzziness(search),
           fields: [...fields, '*'],
-          fuzziness: 'AUTO'
+          fuzziness: 'AUTO',
+          fuzzy_prefix_length: 3
         }
       };
       builder.addMust(searchQuery);
@@ -689,9 +690,10 @@ export class SearchService extends BaseService {
   }
 
   /**
-   * Escapes ES special chars and adds fuziness to input
+   * Escapes ES special chars and adds fuziness to input (1 permutation).
    *
    * @see {@link https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-query-string-query.html#_reserved_characters Documentation}
+   * @see {@link https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-query-string-query.html#query-string-fuzziness Documentation}
    */
   private escapeElasticSpecialCharsAndFuzziness(input: string): string {
     // Remove < and > characters
@@ -702,7 +704,7 @@ export class SearchService extends BaseService {
 
     return escaped
       .split(' ')
-      .map(f => f + '~')
+      .map(f => f + '~1')
       .join(' ');
   }
 }
