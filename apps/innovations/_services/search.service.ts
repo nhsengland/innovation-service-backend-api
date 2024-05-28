@@ -424,8 +424,7 @@ export class SearchService extends BaseService {
         query_string: {
           query: this.escapeElasticSpecialCharsAndFuzziness(search),
           fields: [...fields, 'document.*'],
-          fuzziness: 'AUTO',
-          fuzzy_prefix_length: 3
+          fuzzy_prefix_length: 2
         }
       };
       builder.addMust(searchQuery);
