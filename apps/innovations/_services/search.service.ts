@@ -152,8 +152,7 @@ export class SearchService extends BaseService {
     if (!params.fields.length) {
       return { count: 0, data: [] };
     }
-
-    const searchQuery = new ElasticSearchQueryBuilder(this.index);
+    const searchQuery = new ElasticSearchQueryBuilder(this.index, ['shares', 'suggestions', 'supports']);
 
     // Add Permission Guards according with role
     this.addPermissionGuards(domainContext, searchQuery);

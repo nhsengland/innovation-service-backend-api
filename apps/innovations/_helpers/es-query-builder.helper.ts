@@ -15,15 +15,15 @@ type SearchBoolQuery = {
 
 export class ElasticSearchQueryBuilder {
   private search: SearchQueryBody = {
-    _source: {
-      excludes: ['shares', 'suggestions', 'supports'] // These fields are only used in filters
-    },
     sort: [],
     query: { bool: { must: [], must_not: [], filter: [] } }
   };
 
-  constructor(index: string) {
+  constructor(index: string, exclusionFields?: string[]) {
     this.search.index = index;
+    if (exclusionFields?.length) {
+      this.search._source_excludes = exclusionFields;
+    }
   }
 
   addMust(must: QueryDslQueryContainer | QueryDslQueryContainer[]): this {
