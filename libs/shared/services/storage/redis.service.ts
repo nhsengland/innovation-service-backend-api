@@ -1,8 +1,8 @@
-import { inject, injectable } from "inversify";
-import { createClient } from "redis";
-import type { LoggerService } from "../integrations/logger.service";
+import { inject, injectable } from 'inversify';
+import { createClient } from 'redis';
+import type { LoggerService } from '../integrations/logger.service';
 import { REDIS_DEFAULT_CONNECTION } from '../../config/redis.config';
-import SHARED_SYMBOLS from "../symbols";
+import SHARED_SYMBOLS from '../symbols';
 
 type Sets = 'elasticsearch';
 
@@ -22,11 +22,11 @@ export class RedisService {
     void this.redis.connect();
   }
 
-  async addToSet(key: Sets, member: string): Promise<void> {
+  async addToSet(key: Sets, members: string | string[]): Promise<void> {
     try {
-      await this.redis.sAdd(key, member);
-    } catch(err) {
-      this.logger.error(`Error adding keys ${member} in set ${key}`, err);
+      await this.redis.sAdd(key, members);
+    } catch (err) {
+      this.logger.error(`Error adding keys ${members} in set ${key}`, err);
     }
   }
 
@@ -34,7 +34,7 @@ export class RedisService {
     try {
       const member = await this.redis.sPop(key, 1);
       return member?.length > 0 ? member[0]! : null;
-    } catch(err) {
+    } catch (err) {
       this.logger.error(`Error popping in set ${key}`, err);
       return null;
     }

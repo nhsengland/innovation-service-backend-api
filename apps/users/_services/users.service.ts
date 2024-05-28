@@ -29,7 +29,8 @@ import type {
   CacheService,
   DomainService,
   IdentityProviderService,
-  NotifierService
+  NotifierService,
+  RedisService
 } from '@users/shared/services';
 import SHARED_SYMBOLS from '@users/shared/services/symbols';
 
@@ -46,7 +47,8 @@ export class UsersService extends BaseService {
     @inject(SHARED_SYMBOLS.IdentityProviderService)
     private identityProviderService: IdentityProviderService,
     @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
-    @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService
+    @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
+    @inject(SHARED_SYMBOLS.RedisService) private redisService: RedisService
   ) {
     super();
     this.cache = cacheService.get('IdentityUserInfo');
@@ -237,6 +239,14 @@ export class UsersService extends BaseService {
               organisationData.description = data.organisation.description;
             }
             organisationData.registrationNumber = data.organisation.registrationNumber;
+
+            // Update ES index for all the innovations that the user is owner.
+            const innovations = await transaction
+              .createQueryBuilder(InnovationEntity, 'innovation')
+              .select(['innovation.id'])
+              .where('innovation.owner_id = :ownerId', { ownerId: user.id })
+              .getMany();
+            await this.redisService.addToSet('elasticsearch', innovations.map(i => i.id));
           }
 
           await transaction.getRepository(OrganisationEntity).update(data.organisation.id, organisationData);
