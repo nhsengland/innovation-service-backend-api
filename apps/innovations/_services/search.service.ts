@@ -423,9 +423,8 @@ export class SearchService extends BaseService {
       const searchQuery: QueryDslQueryContainer = {
         query_string: {
           query: this.escapeElasticSpecialCharsAndFuzziness(search),
-          fields: [...fields, '*'],
-          fuzziness: 'AUTO',
-          fuzzy_prefix_length: 3
+          fields: [...fields, 'document.*'],
+          fuzzy_prefix_length: 2
         }
       };
       builder.addMust(searchQuery);
