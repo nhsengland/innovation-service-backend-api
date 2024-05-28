@@ -3,6 +3,7 @@ import { createClient } from 'redis';
 import type { LoggerService } from '../integrations/logger.service';
 import { REDIS_DEFAULT_CONNECTION } from '../../config/redis.config';
 import SHARED_SYMBOLS from '../symbols';
+import { isArray } from 'lodash';
 
 type Sets = 'elasticsearch';
 
@@ -23,10 +24,13 @@ export class RedisService {
   }
 
   async addToSet(key: Sets, members: string | string[]): Promise<void> {
-    try {
-      await this.redis.sAdd(key, members);
-    } catch (err) {
-      this.logger.error(`Error adding keys ${members} in set ${key}`, err);
+    const values = isArray(members) ? members : [members];
+    for (const value of values) {
+      try {
+        await this.redis.sAdd(key, value);
+      } catch (err) {
+        this.logger.error(`Error adding keys ${value} in set ${key}`, err);
+      }
     }
   }
 

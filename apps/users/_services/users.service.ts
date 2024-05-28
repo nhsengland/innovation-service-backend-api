@@ -212,6 +212,7 @@ export class UsersService extends BaseService {
           });
         }
 
+        let updateIndex = false;
         if (data.organisation) {
           const organisationData: {
             isShadow: boolean;
@@ -240,13 +241,7 @@ export class UsersService extends BaseService {
             }
             organisationData.registrationNumber = data.organisation.registrationNumber;
 
-            // Update ES index for all the innovations that the user is owner.
-            const innovations = await transaction
-              .createQueryBuilder(InnovationEntity, 'innovation')
-              .select(['innovation.id'])
-              .where('innovation.owner_id = :ownerId', { ownerId: user.id })
-              .getMany();
-            await this.redisService.addToSet('elasticsearch', innovations.map(i => i.id));
+            updateIndex = true;
           }
 
           await transaction.getRepository(OrganisationEntity).update(data.organisation.id, organisationData);
@@ -265,6 +260,19 @@ export class UsersService extends BaseService {
         };
 
         await this.upsertUserPreferences(user.id, preferences, transaction);
+
+        if (updateIndex) {
+          // Update ES index for all the innovations that the user is owner.
+          const innovations = await transaction
+            .createQueryBuilder(InnovationEntity, 'innovation')
+            .select(['innovation.id'])
+            .where('innovation.owner_id = :ownerId', { ownerId: user.id })
+            .getMany();
+          await this.redisService.addToSet(
+            'elasticsearch',
+            innovations.map(i => i.id)
+          );
+        }
       });
     }
 
