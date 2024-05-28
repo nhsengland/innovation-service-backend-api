@@ -242,7 +242,7 @@ export class SearchService extends BaseService {
         const filteredEntries = Object.entries(hit.highlight || {}).filter(([key]) => !key.endsWith('.keyword'));
 
         // If filteredEntries is empty, assign null to highlights; otherwise, create an object from filteredEntries
-        const highlights = filteredEntries.length > 0 ? Object.fromEntries(filteredEntries) : null;
+        const highlights = filteredEntries.length > 0 ? Object.fromEntries(filteredEntries) : undefined;
 
         const res = { highlights } as any;
         for (const [key, value] of Object.entries(fieldGroups)) {
