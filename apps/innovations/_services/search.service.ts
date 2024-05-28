@@ -152,7 +152,7 @@ export class SearchService extends BaseService {
     if (!params.fields.length) {
       return { count: 0, data: [] };
     }
-    const searchQuery = new ElasticSearchQueryBuilder(this.index, ['shares', 'suggestions', 'supports']);
+    const searchQuery = new ElasticSearchQueryBuilder(this.index);
 
     // Add Permission Guards according with role
     this.addPermissionGuards(domainContext, searchQuery);
@@ -238,11 +238,13 @@ export class SearchService extends BaseService {
       data: response.hits.hits.map(hit => {
         const doc = hit._source!;
 
-        const res = {
-          highlights: Object.fromEntries(
-            Object.entries(hit.highlight || {}).filter(([key]) => !key.endsWith('.keyword'))
-          )
-        } as any;
+        // Filter out keys that end with .keyword from hit.highlight
+        const filteredEntries = Object.entries(hit.highlight || {}).filter(([key]) => !key.endsWith('.keyword'));
+
+        // If filteredEntries is empty, assign null to highlights; otherwise, create an object from filteredEntries
+        const highlights = filteredEntries.length > 0 ? Object.fromEntries(filteredEntries) : undefined;
+
+        const res = { highlights } as any;
         for (const [key, value] of Object.entries(fieldGroups)) {
           if (key in this.displayHandlers) {
             const handler = this.displayHandlers[key as keyof typeof this.displayHandlers];
@@ -427,7 +429,7 @@ export class SearchService extends BaseService {
         }
       };
       builder.addMust(searchQuery);
-      builder.addHighlight({ fields: { '*': { order: 'score' } } });
+      builder.addHighlight({ fields: { '*': { order: 'score', highlight_query: searchQuery } } });
     }
   }
 

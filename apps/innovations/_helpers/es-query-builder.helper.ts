@@ -19,11 +19,8 @@ export class ElasticSearchQueryBuilder {
     query: { bool: { must: [], must_not: [], filter: [] } }
   };
 
-  constructor(index: string, exclusionFields?: string[]) {
+  constructor(index: string) {
     this.search.index = index;
-    if (exclusionFields?.length) {
-      this.search._source_excludes = exclusionFields;
-    }
   }
 
   addMust(must: QueryDslQueryContainer | QueryDslQueryContainer[]): this {
