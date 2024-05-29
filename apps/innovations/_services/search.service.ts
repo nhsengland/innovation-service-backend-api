@@ -425,7 +425,7 @@ export class SearchService extends BaseService {
           type: 'best_fields',
           query: search,
           fields: [...fields, 'document.*'],
-          fuzziness: 1, // Fuzziness AUTO with highlight is causing major slowdowns, fuzziness and highlight is causing slow
+          fuzziness: 0, // Fuzziness AUTO with highlight is causing major slowdowns, fuzziness and highlight is causing slow
           prefix_length: 2,
           tie_breaker: 0.3
           // minimum_should_match: '2<-25% 9<-3'
