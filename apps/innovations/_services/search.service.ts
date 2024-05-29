@@ -421,14 +421,27 @@ export class SearchService extends BaseService {
       // If is not an email we do the normal search
       const fields = priorities.reverse().flatMap((priority, i) => priority.map(p => `${p}^${i + 1}`));
       const searchQuery: QueryDslQueryContainer = {
-        query_string: {
-          query: this.escapeElasticSpecialCharsAndFuzziness(search),
+        multi_match: {
+          type: 'best_fields',
+          query: search,
           fields: [...fields, 'document.*'],
-          fuzzy_prefix_length: 2
+          fuzziness: 1, // Fuzziness AUTO with highlight is causing major slowdowns, fuzziness and highlight is causing slow
+          prefix_length: 2,
+          tie_breaker: 0.3
+          // minimum_should_match: '2<-25% 9<-3'
         }
       };
       builder.addMust(searchQuery);
-      builder.addHighlight({ fields: { '*': { order: 'score', highlight_query: searchQuery } } });
+      builder.addHighlight({
+        order: 'score',
+        highlight_query: searchQuery, // the search query is required to avoid highlighting things from the filters
+        fields: {
+          'owner.companyName': {},
+          'document.*': {
+            number_of_fragments: 1000 // we require the fragments to show the counts so the default 5 isn't enough
+          }
+        }
+      });
     }
   }
 
@@ -688,24 +701,5 @@ export class SearchService extends BaseService {
   private translate(doc: CurrentElasticSearchDocumentType, key: string): string | null {
     if (!translations.has(key)) return null;
     return translations.get(key)!.reduce((o, k) => (o ? o[k] : null), doc as any);
-  }
-
-  /**
-   * Escapes ES special chars and adds fuziness to input (1 permutation).
-   *
-   * @see {@link https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-query-string-query.html#_reserved_characters Documentation}
-   * @see {@link https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-query-string-query.html#query-string-fuzziness Documentation}
-   */
-  private escapeElasticSpecialCharsAndFuzziness(input: string): string {
-    // Remove < and > characters
-    input = input.trim().replace(/[<>]/g, '');
-    // Escape other special characters
-    const specialChars = /[+\-=&|!(){}\[\]^"~*?:\\/]/g;
-    const escaped = input.replace(specialChars, '\\$&');
-
-    return escaped
-      .split(' ')
-      .map(f => f + '~1')
-      .join(' ');
   }
 }

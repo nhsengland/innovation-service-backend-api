@@ -58,7 +58,7 @@ export const ElasticSearchSchema202304: CreateIndexParams = {
       analyzer: {
         default: {
           type: 'custom',
-          tokenizer: 'whitespace',
+          tokenizer: 'standard',
           filter: ['lowercase', 'porter_stem']
         }
       }
