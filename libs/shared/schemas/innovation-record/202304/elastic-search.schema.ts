@@ -59,7 +59,7 @@ export const ElasticSearchSchema202304: CreateIndexParams = {
         default: {
           type: 'custom',
           tokenizer: 'standard',
-          filter: ['lowercase', 'porter_stem']
+          filter: ['lowercase', 'stop', 'porter_stem']
         }
       }
     }
