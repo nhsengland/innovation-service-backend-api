@@ -68,6 +68,10 @@ const translations = new Map([
   ['keyHealthInequalities', ['document', 'UNDERSTANDING_OF_NEEDS', 'keyHealthInequalities']]
 ]);
 
+/**
+ * Fields priorities for Elastic, already adds the ^ notation.
+ * The first step is reverse since the name needs more boost than postcode.
+ */
 const priorities = [
   ['document.INNOVATION_DESCRIPTION.name', 'owner.companyName'],
   ['document.INNOVATION_DESCRIPTION.description'],
@@ -80,7 +84,9 @@ const priorities = [
   ['document.REGULATIONS_AND_STANDARDS.standardsType', 'document.REGULATIONS_AND_STANDARDS.otherRegulationDescription'],
   ['document.INNOVATION_DESCRIPTION.countryName'],
   ['document.INNOVATION_DESCRIPTION.postcode']
-];
+]
+  .reverse()
+  .flatMap((priority, i) => priority.map(p => `${p}^${i + 1}`));
 
 type PickHandlerReturnType<T extends { [k: string]: any }, K extends keyof T> = {
   [k in K]: Awaited<ReturnType<T[k]>>;
@@ -218,7 +224,6 @@ export class SearchService extends BaseService {
     });
     searchQuery.addPagination({ from: params.pagination.skip, size: params.pagination.take, sort });
 
-    console.log(JSON.stringify(searchQuery.build()));
     const response = await this.esService.client.search<CurrentElasticSearchDocumentType>(searchQuery.build());
 
     const handlerMaps: {
@@ -412,12 +417,11 @@ export class SearchService extends BaseService {
       }
 
       // If is not an email we do the normal search
-      const fields = priorities.reverse().flatMap((priority, i) => priority.map(p => `${p}^${i + 1}`));
       const searchQuery: QueryDslQueryContainer = {
         multi_match: {
           type: 'best_fields',
           query: search,
-          fields: [...fields, 'document.*'],
+          fields: [...priorities, 'document.*'],
           fuzziness: 0, // Fuzziness AUTO with highlight is causing major slowdowns, fuzziness and highlight is causing slow
           prefix_length: 2,
           tie_breaker: 0.3
