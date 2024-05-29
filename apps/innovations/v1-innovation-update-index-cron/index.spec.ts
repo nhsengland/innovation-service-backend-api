@@ -14,7 +14,8 @@ const popFromSetSpy = jest.spyOn(RedisService.prototype, 'popFromSet').mockResol
 const upsertDocumentSpy = jest.spyOn(SearchService.prototype, 'upsertDocument').mockResolvedValue();
 
 afterEach(() => {
-  jest.clearAllMocks();
+  popFromSetSpy.mockClear();
+  upsertDocumentSpy.mockClear();
 });
 
 describe('v1-innovation-update-index-cron', () => {
