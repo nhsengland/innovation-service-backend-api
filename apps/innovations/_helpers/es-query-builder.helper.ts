@@ -96,3 +96,24 @@ export function boolQuery(params: {
     bool: { must: params.must, must_not: params.mustNot, should: params.should, filter: params.filter }
   };
 }
+
+/**
+ * Escapes ES special chars and adds fuziness to input (1 permutation).
+ *
+ * Currently not in use, this was required for query_string queries.
+ *
+ * @see {@link https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-query-string-query.html#_reserved_characters Documentation}
+ * @see {@link https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-query-string-query.html#query-string-fuzziness Documentation}
+ */
+export function escapeElasticSpecialCharsAndFuzziness(input: string): string {
+  // Remove < and > characters
+  input = input.trim().replace(/[<>]/g, '');
+  // Escape other special characters
+  const specialChars = /[+\-=&|!(){}\[\]^"~*?:\\/]/g;
+  const escaped = input.replace(specialChars, '\\$&');
+
+  return escaped
+    .split(' ')
+    .map(f => f + '~1')
+    .join(' ');
+}
