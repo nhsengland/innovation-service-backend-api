@@ -10,11 +10,15 @@ beforeAll(async () => {
   await testsHelper.init();
 });
 
-const popFromSetSpy = jest.spyOn(RedisService.prototype, 'popFromSet').mockResolvedValueOnce('1111');
+const popFromSetSpy = jest
+  .spyOn(RedisService.prototype, 'popFromSet')
+  .mockResolvedValueOnce('1111')
+  .mockResolvedValueOnce(null);
 const upsertDocumentSpy = jest.spyOn(SearchService.prototype, 'upsertDocument').mockResolvedValue();
 
 afterEach(() => {
-  jest.clearAllMocks();
+  popFromSetSpy.mockClear();
+  upsertDocumentSpy.mockClear();
 });
 
 describe('v1-innovation-update-index-cron', () => {
