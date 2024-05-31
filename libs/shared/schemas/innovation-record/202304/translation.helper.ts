@@ -85,6 +85,7 @@ const translation = {
   UNDERSTANDING_OF_NEEDS: {
     impactDiseaseCondition: yesNoTranslation,
     diseasesConditionsImpact: {
+      NONE: 'None', // this is a special case and not part of the diseases list
       BLOOD_AND_IMMUNE_SYSTEM_CONDITIONS: `Blood and immune system conditions`,
       BLOOD_AND_IMMUNE_SYSTEM_CONDITIONS_ALLERGIES: `Blood and immune system conditions - Allergies`,
       BLOOD_AND_IMMUNE_SYSTEM_CONDITIONS_ANAPHYLAXIS: `Blood and immune system conditions - Anaphylaxis`,
