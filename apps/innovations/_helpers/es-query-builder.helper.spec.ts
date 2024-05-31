@@ -1,6 +1,12 @@
 import type { QueryDslQueryContainer, SearchHighlight } from '@elastic/elasticsearch/lib/api/types';
 import { randText } from '@ngneat/falso';
-import { boolQuery, ElasticSearchQueryBuilder, nestedQuery, orQuery } from './es-query-builder.helper';
+import {
+  boolQuery,
+  ElasticSearchQueryBuilder,
+  escapeElasticSpecialCharsAndFuzziness,
+  nestedQuery,
+  orQuery
+} from './es-query-builder.helper';
 
 describe('innovations / _helpers / es-query-builder suite', () => {
   const query: QueryDslQueryContainer = { term: { test: randText() } };
@@ -72,6 +78,11 @@ describe('innovations / _helpers / es-query-builder suite', () => {
     it('should create a boolQuery', () => {
       const boolQueryResult = boolQuery({ must: [query], filter: query });
       expect(boolQueryResult).toEqual({ bool: { must: [query], filter: query } });
+    });
+
+    it('should prepare the input for a search with fuzziness', () => {
+      const result = escapeElasticSpecialCharsAndFuzziness(' asd~ ~[Test] <asd!> ');
+      expect(result).toBe('asd\\~~1 \\~\\[Test\\]~1 asd\\!~1');
     });
   });
 });
