@@ -15,10 +15,12 @@ const popFromSetSpy = jest
   .mockResolvedValueOnce('1111')
   .mockResolvedValueOnce(null);
 const upsertDocumentSpy = jest.spyOn(SearchService.prototype, 'upsertDocument').mockResolvedValue();
+const addToSetSpy = jest.spyOn(RedisService.prototype, 'addToSet').mockResolvedValue();
 
 afterEach(() => {
   popFromSetSpy.mockClear();
   upsertDocumentSpy.mockClear();
+  addToSetSpy.mockClear();
 });
 
 describe('v1-innovation-update-index-cron', () => {
@@ -26,5 +28,15 @@ describe('v1-innovation-update-index-cron', () => {
     await azureFunction();
     expect(popFromSetSpy).toHaveBeenCalledTimes(2);
     expect(upsertDocumentSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('should add to redis set again in case of error', async () => {
+    upsertDocumentSpy.mockRejectedValue(new Error());
+    try {
+      await azureFunction();
+    } catch {
+      expect(popFromSetSpy).toHaveBeenCalledTimes(1);
+      expect(addToSetSpy).toHaveBeenCalledTimes(1);
+    }
   });
 });
