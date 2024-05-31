@@ -991,25 +991,39 @@ export class DomainInnovationsService {
 
     const innovations = await this.sqlConnection.query(sql, innovationId ? [innovationId] : []);
 
-    const parsed: CurrentElasticSearchDocumentType[] = innovations.map((innovation: any) => ({
-      id: innovation.id,
-      status: innovation.status,
-      archivedStatus: innovation.archivedStatus,
-      rawStatus: innovation.rawStatus,
-      statusUpdatedAt: innovation.statusUpdatedAt,
-      groupedStatus: innovation.groupedStatus,
-      submittedAt: innovation.submittedAt,
-      updatedAt: innovation.updatedAt,
-      lastAssessmentRequestAt: innovation.lastAssessmentRequestAt,
-      document: translate(cleanup(JSON.parse(innovation.document ?? {}))),
-      ...(innovation.owner && { owner: JSON.parse(innovation.owner) }),
-      ...(innovation.engagingOrganisations && { engagingOrganisations: JSON.parse(innovation.engagingOrganisations) }),
-      ...(innovation.engagingUnits && { engagingUnits: JSON.parse(innovation.engagingUnits) }),
-      ...(innovation.shares && { shares: JSON.parse(innovation.shares) }),
-      ...(innovation.supports && { supports: JSON.parse(innovation.supports) }),
-      ...(innovation.assessment && { assessment: JSON.parse(innovation.assessment) }),
-      ...(innovation.suggestions && { suggestions: JSON.parse(innovation.suggestions) })
-    }));
+    const parsed: CurrentElasticSearchDocumentType[] = innovations.map((innovation: any) => {
+      const document = cleanup(JSON.parse(innovation.document ?? {}));
+      return {
+        id: innovation.id,
+        status: innovation.status,
+        archivedStatus: innovation.archivedStatus,
+        rawStatus: innovation.rawStatus,
+        statusUpdatedAt: innovation.statusUpdatedAt,
+        groupedStatus: innovation.groupedStatus,
+        submittedAt: innovation.submittedAt,
+        updatedAt: innovation.updatedAt,
+        lastAssessmentRequestAt: innovation.lastAssessmentRequestAt,
+        document: translate(document),
+        ...(innovation.owner && { owner: JSON.parse(innovation.owner) }),
+        ...(innovation.engagingOrganisations && {
+          engagingOrganisations: JSON.parse(innovation.engagingOrganisations)
+        }),
+        ...(innovation.engagingUnits && { engagingUnits: JSON.parse(innovation.engagingUnits) }),
+        ...(innovation.shares && { shares: JSON.parse(innovation.shares) }),
+        ...(innovation.supports && { supports: JSON.parse(innovation.supports) }),
+        ...(innovation.assessment && { assessment: JSON.parse(innovation.assessment) }),
+        ...(innovation.suggestions && { suggestions: JSON.parse(innovation.suggestions) }),
+        filters: {
+          name: document.INNOVATION_DESCRIPTION.name,
+          countryName: document.INNOVATION_DESCRIPTION.countryName,
+          categories: document.INNOVATION_DESCRIPTION.categories,
+          careSettings: document.INNOVATION_DESCRIPTION.careSettings,
+          involvedAACProgrammes: document.INNOVATION_DESCRIPTION.involvedAACProgrammes,
+          diseasesAndConditions: document.UNDERSTANDING_OF_NEEDS.diseasesConditionsImpact,
+          keyHealthInequalities: document.UNDERSTANDING_OF_NEEDS.keyHealthInequalities
+        }
+      };
+    });
 
     return innovationId ? parsed[0] : parsed;
   }

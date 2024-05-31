@@ -11,7 +11,6 @@ import { InnovationStatusEnum, InnovationSupportStatusEnum, ServiceRoleEnum } fr
 import { GenericErrorsEnum, NotImplementedError } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import type { CurrentElasticSearchDocumentType } from '@innovations/shared/schemas/innovation-record';
-import { translateValue } from '@innovations/shared/schemas/innovation-record/202304/translation.helper';
 import type { DomainService, DomainUsersService, ElasticSearchService } from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import {
@@ -69,6 +68,10 @@ const translations = new Map([
   ['keyHealthInequalities', ['document', 'UNDERSTANDING_OF_NEEDS', 'keyHealthInequalities']]
 ]);
 
+/**
+ * Fields priorities for Elastic, already adds the ^ notation.
+ * The first step is reverse since the name needs more boost than postcode.
+ */
 const priorities = [
   ['document.INNOVATION_DESCRIPTION.name', 'owner.companyName'],
   ['document.INNOVATION_DESCRIPTION.description'],
@@ -81,7 +84,9 @@ const priorities = [
   ['document.REGULATIONS_AND_STANDARDS.standardsType', 'document.REGULATIONS_AND_STANDARDS.otherRegulationDescription'],
   ['document.INNOVATION_DESCRIPTION.countryName'],
   ['document.INNOVATION_DESCRIPTION.postcode']
-];
+]
+  .reverse()
+  .flatMap((priority, i) => priority.map(p => `${p}^${i + 1}`));
 
 type PickHandlerReturnType<T extends { [k: string]: any }, K extends keyof T> = {
   [k in K]: Awaited<ReturnType<T[k]>>;
@@ -183,11 +188,10 @@ export class SearchService extends BaseService {
               message: 'Sort by name is not allowed'
             });
 
-          // add here the ones that have nested keyword (since sort only allows sort by keyword)
+          // add here the ones that are from the document and are in the "filters" object
           case 'countryName':
           case 'name': {
-            const translation = translations.get(key)?.join('.');
-            sort.push({ [`${translation ?? key}.keyword`]: { order } });
+            sort.push({ [`filters.${key}`]: { order } });
             break;
           }
 
@@ -238,13 +242,7 @@ export class SearchService extends BaseService {
       data: response.hits.hits.map(hit => {
         const doc = hit._source!;
 
-        // Filter out keys that end with .keyword from hit.highlight
-        const filteredEntries = Object.entries(hit.highlight || {}).filter(([key]) => !key.endsWith('.keyword'));
-
-        // If filteredEntries is empty, assign null to highlights; otherwise, create an object from filteredEntries
-        const highlights = filteredEntries.length > 0 ? Object.fromEntries(filteredEntries) : undefined;
-
-        const res = { highlights } as any;
+        const res = { highlights: hit.highlight } as any;
         for (const [key, value] of Object.entries(fieldGroups)) {
           if (key in this.displayHandlers) {
             const handler = this.displayHandlers[key as keyof typeof this.displayHandlers];
@@ -385,17 +383,17 @@ export class SearchService extends BaseService {
     ) => void | Promise<void>;
   } = {
     assignedToMe: this.addAssignedToMeFilter.bind(this),
-    careSettings: this.addGenericFilter('document.INNOVATION_DESCRIPTION.careSettings').bind(this),
-    categories: this.addGenericFilter('document.INNOVATION_DESCRIPTION.categories').bind(this),
+    careSettings: this.addGenericFilter('filters.careSettings').bind(this),
+    categories: this.addGenericFilter('filters.categories').bind(this),
     dateFilters: this.addDateFilters.bind(this),
-    diseasesAndConditions: this.addGenericFilter('document.UNDERSTANDING_OF_NEEDS.diseasesConditionsImpact').bind(this),
+    diseasesAndConditions: this.addGenericFilter('filters.diseasesAndConditions').bind(this),
     engagingOrganisations: this.addGenericFilter('engagingOrganisations', { fieldSelector: 'organisationId' }).bind(
       this
     ),
     engagingUnits: this.addGenericFilter('engagingUnits', { fieldSelector: 'unitId' }).bind(this),
     groupedStatuses: this.addGenericFilter('groupedStatus').bind(this),
-    involvedAACProgrammes: this.addGenericFilter('document.INNOVATION_DESCRIPTION.involvedAACProgrammes').bind(this),
-    keyHealthInequalities: this.addGenericFilter('document.UNDERSTANDING_OF_NEEDS.keyHealthInequalities').bind(this),
+    involvedAACProgrammes: this.addGenericFilter('filters.involvedAACProgrammes').bind(this),
+    keyHealthInequalities: this.addGenericFilter('filters.keyHealthInequalities').bind(this),
     locations: this.addLocationFilter.bind(this),
     search: this.addSearchFilter.bind(this),
     suggestedOnly: this.addSuggestedOnlyFilter.bind(this),
@@ -419,12 +417,11 @@ export class SearchService extends BaseService {
       }
 
       // If is not an email we do the normal search
-      const fields = priorities.reverse().flatMap((priority, i) => priority.map(p => `${p}^${i + 1}`));
       const searchQuery: QueryDslQueryContainer = {
         multi_match: {
           type: 'best_fields',
           query: search,
-          fields: [...fields, 'document.*'],
+          fields: [...priorities, 'document.*'],
           fuzziness: 0, // Fuzziness AUTO with highlight is causing major slowdowns, fuzziness and highlight is causing slow
           prefix_length: 2,
           tie_breaker: 0.3
@@ -474,27 +471,18 @@ export class SearchService extends BaseService {
     }
   }
 
-  // Generic filter assumes that the field (from document) is a keyword in elasticsearch as filters won't work otherwise
+  // All filters need to be of type keyword.
   private addGenericFilter(
     filterKey: string,
     options?: { fieldSelector: string } // fieldSelector == nested
   ): (_domainContext: DomainContextType, builder: ElasticSearchQueryBuilder, value: string | string[]) => void {
     return (_domainContext: DomainContextType, builder: ElasticSearchQueryBuilder, value: string | string[]) => {
       const type = isArray(value) ? 'terms' : 'term';
-      let translatedValues = typeof value === 'string' ? [value] : value;
 
-      const [head, ...tail] = (options?.fieldSelector ? `${filterKey}.${options.fieldSelector}` : filterKey).split('.');
-      if (head === 'document' && tail) {
-        translatedValues = translatedValues.map(v => translateValue(tail, v));
-      }
-
-      const suffix = head === 'document' ? '.keyword' : '';
       if (options?.fieldSelector) {
-        builder.addFilter(
-          nestedQuery(filterKey, { [type]: { [`${filterKey}.${options.fieldSelector}${suffix}`]: translatedValues } })
-        );
+        builder.addFilter(nestedQuery(filterKey, { [type]: { [`${filterKey}.${options.fieldSelector}`]: value } }));
       } else {
-        builder.addFilter({ [type]: { [`${filterKey}${suffix}`]: translatedValues } });
+        builder.addFilter({ [type]: { [`${filterKey}`]: value } });
       }
     };
   }
@@ -517,16 +505,14 @@ export class SearchService extends BaseService {
 
         should.push(
           boolQuery({
-            mustNot: { terms: { 'document.INNOVATION_DESCRIPTION.countryName.keyword': predefinedLocations } }
+            mustNot: { terms: { 'filters.countryName': predefinedLocations } }
           })
         );
       }
 
       should.push({
         terms: {
-          'document.INNOVATION_DESCRIPTION.countryName.keyword': locations.filter(
-            l => l !== InnovationLocationEnum['Based outside UK']
-          )
+          'filters.countryName': locations.filter(l => l !== InnovationLocationEnum['Based outside UK'])
         }
       });
     }

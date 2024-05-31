@@ -25,12 +25,10 @@ export class RedisService {
 
   async addToSet(key: Sets, members: string | string[]): Promise<void> {
     const values = isArray(members) ? members : [members];
-    for (const value of values) {
-      try {
-        await this.redis.sAdd(key, value);
-      } catch (err) {
-        this.logger.error(`Error adding keys ${value} in set ${key}`, err);
-      }
+    try {
+      await this.redis.sAdd(key, values);
+    } catch (err) {
+      this.logger.error(`Error adding keys ${values} in set ${key}`, err);
     }
   }
 
