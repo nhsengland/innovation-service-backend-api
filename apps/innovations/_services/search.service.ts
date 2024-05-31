@@ -668,20 +668,24 @@ export class SearchService extends BaseService {
    * @param input the input to be cleaned
    * @returns cleanup the response to remove fields that are not shared
    */
-  private cleanupAccessorsNotSharedInnovation<T extends object>(input: T): Partial<T> {
-    return pick(input, [
-      'id',
-      'name',
-      'statusUpdatedAt',
-      'submittedAt',
-      'groupedStatus',
-      'updatedAt',
-      'mainCategory',
-      'otherCategoryDescription',
-      'countryName',
-      'postCode',
-      'support'
-    ]);
+  private cleanupAccessorsNotSharedInnovation<T extends object & { highlights?: Object }>(input: T): Partial<T> {
+    const highlights = input.highlights && pick(input.highlights, 'document.INNOVATION_DESCRIPTION.name');
+    return {
+      ...pick(input, [
+        'id',
+        'name',
+        'statusUpdatedAt',
+        'submittedAt',
+        'groupedStatus',
+        'updatedAt',
+        'mainCategory',
+        'otherCategoryDescription',
+        'countryName',
+        'postCode',
+        'support'
+      ]),
+      ...(highlights && { highlights })
+    };
   }
 
   private translate(doc: CurrentElasticSearchDocumentType, key: string): string | null {
