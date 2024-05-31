@@ -4,7 +4,8 @@ export {
   InnovationErrorsEnum,
   OrganisationErrorsEnum,
   EmailErrorsEnum,
-  AnnouncementErrorsEnum
+  AnnouncementErrorsEnum,
+  ElasticSearchErrorsEnum
 } from './errors.enums';
 
 export {

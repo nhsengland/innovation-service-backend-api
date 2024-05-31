@@ -1,7 +1,7 @@
 import { DataSource, EntityManager, In, Repository } from 'typeorm';
 
-import type { UserEntity } from 'libs/shared/entities';
 import { EXPIRATION_DATES } from '../../constants';
+import type { UserEntity } from '../../entities';
 import { ActivityLogEntity } from '../../entities/innovation/activity-log.entity';
 import { InnovationAssessmentEntity } from '../../entities/innovation/innovation-assessment.entity';
 import { InnovationCollaboratorEntity } from '../../entities/innovation/innovation-collaborator.entity';
@@ -42,6 +42,7 @@ import {
   UnprocessableEntityError
 } from '../../errors';
 import { TranslationHelper } from '../../helpers';
+import { cleanup, translate } from '../../schemas/innovation-record/202304/translation.helper';
 import type { CurrentElasticSearchDocumentType } from '../../schemas/innovation-record/index';
 import type { ActivitiesParamsType, DomainContextType, IdentityUserInfo, SupportLogParams } from '../../types';
 import type { IdentityProviderService } from '../integrations/identity-provider.service';
@@ -75,7 +76,7 @@ export class DomainInnovationsService {
     const dbInnovations = await em
       .createQueryBuilder(InnovationEntity, 'innovations')
       .select(['innovations.id', 'transfers.id', 'transfers.createdBy'])
-      .innerJoin('innovations.transfers', 'transfers', 'status = :status', {
+      .innerJoin('innovations.transfers', 'transfers', 'transfers.status = :status', {
         status: InnovationTransferStatusEnum.PENDING
       })
       .where('innovations.expires_at < :now', { now: new Date().toISOString() })
@@ -990,25 +991,39 @@ export class DomainInnovationsService {
 
     const innovations = await this.sqlConnection.query(sql, innovationId ? [innovationId] : []);
 
-    const parsed: CurrentElasticSearchDocumentType[] = innovations.map((innovation: any) => ({
-      id: innovation.id,
-      status: innovation.status,
-      archivedStatus: innovation.archivedStatus,
-      rawStatus: innovation.rawStatus,
-      statusUpdatedAt: innovation.statusUpdatedAt,
-      groupedStatus: innovation.groupedStatus,
-      submittedAt: innovation.submittedAt,
-      updatedAt: innovation.updatedAt,
-      lastAssessmentRequestAt: innovation.lastAssessmentRequestAt,
-      document: JSON.parse(innovation.document ?? {}),
-      ...(innovation.owner && { owner: JSON.parse(innovation.owner) }),
-      ...(innovation.engagingOrganisations && { engagingOrganisations: JSON.parse(innovation.engagingOrganisations) }),
-      ...(innovation.engagingUnits && { engagingUnits: JSON.parse(innovation.engagingUnits) }),
-      ...(innovation.shares && { shares: JSON.parse(innovation.shares) }),
-      ...(innovation.supports && { supports: JSON.parse(innovation.supports) }),
-      ...(innovation.assessment && { assessment: JSON.parse(innovation.assessment) }),
-      ...(innovation.suggestions && { suggestions: JSON.parse(innovation.suggestions) })
-    }));
+    const parsed: CurrentElasticSearchDocumentType[] = innovations.map((innovation: any) => {
+      const document = cleanup(JSON.parse(innovation.document ?? {}));
+      return {
+        id: innovation.id,
+        status: innovation.status,
+        archivedStatus: innovation.archivedStatus,
+        rawStatus: innovation.rawStatus,
+        statusUpdatedAt: innovation.statusUpdatedAt,
+        groupedStatus: innovation.groupedStatus,
+        submittedAt: innovation.submittedAt,
+        updatedAt: innovation.updatedAt,
+        lastAssessmentRequestAt: innovation.lastAssessmentRequestAt,
+        document: translate(document),
+        ...(innovation.owner && { owner: JSON.parse(innovation.owner) }),
+        ...(innovation.engagingOrganisations && {
+          engagingOrganisations: JSON.parse(innovation.engagingOrganisations)
+        }),
+        ...(innovation.engagingUnits && { engagingUnits: JSON.parse(innovation.engagingUnits) }),
+        ...(innovation.shares && { shares: JSON.parse(innovation.shares) }),
+        ...(innovation.supports && { supports: JSON.parse(innovation.supports) }),
+        ...(innovation.assessment && { assessment: JSON.parse(innovation.assessment) }),
+        ...(innovation.suggestions && { suggestions: JSON.parse(innovation.suggestions) }),
+        filters: {
+          name: document.INNOVATION_DESCRIPTION.name,
+          countryName: document.INNOVATION_DESCRIPTION.countryName,
+          categories: document.INNOVATION_DESCRIPTION.categories,
+          careSettings: document.INNOVATION_DESCRIPTION.careSettings,
+          involvedAACProgrammes: document.INNOVATION_DESCRIPTION.involvedAACProgrammes,
+          diseasesAndConditions: document.UNDERSTANDING_OF_NEEDS.diseasesConditionsImpact,
+          keyHealthInequalities: document.UNDERSTANDING_OF_NEEDS.keyHealthInequalities
+        }
+      };
+    });
 
     return innovationId ? parsed[0] : parsed;
   }

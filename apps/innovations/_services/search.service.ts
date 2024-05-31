@@ -68,6 +68,10 @@ const translations = new Map([
   ['keyHealthInequalities', ['document', 'UNDERSTANDING_OF_NEEDS', 'keyHealthInequalities']]
 ]);
 
+/**
+ * Fields priorities for Elastic, already adds the ^ notation.
+ * The first step is reverse since the name needs more boost than postcode.
+ */
 const priorities = [
   ['document.INNOVATION_DESCRIPTION.name', 'owner.companyName'],
   ['document.INNOVATION_DESCRIPTION.description'],
@@ -80,7 +84,9 @@ const priorities = [
   ['document.REGULATIONS_AND_STANDARDS.standardsType', 'document.REGULATIONS_AND_STANDARDS.otherRegulationDescription'],
   ['document.INNOVATION_DESCRIPTION.countryName'],
   ['document.INNOVATION_DESCRIPTION.postcode']
-];
+]
+  .reverse()
+  .flatMap((priority, i) => priority.map(p => `${p}^${i + 1}`));
 
 type PickHandlerReturnType<T extends { [k: string]: any }, K extends keyof T> = {
   [k in K]: Awaited<ReturnType<T[k]>>;
@@ -151,7 +157,6 @@ export class SearchService extends BaseService {
     if (!params.fields.length) {
       return { count: 0, data: [] };
     }
-
     const searchQuery = new ElasticSearchQueryBuilder(this.index);
 
     // Add Permission Guards according with role
@@ -183,11 +188,10 @@ export class SearchService extends BaseService {
               message: 'Sort by name is not allowed'
             });
 
-          // add here the ones that have nested keyword (since sort only allows sort by keyword)
+          // add here the ones that are from the document and are in the "filters" object
           case 'countryName':
           case 'name': {
-            const translation = translations.get(key)?.join('.');
-            sort.push({ [`${translation ?? key}.keyword`]: { order } });
+            sort.push({ [`filters.${key}`]: { order } });
             break;
           }
 
@@ -379,17 +383,17 @@ export class SearchService extends BaseService {
     ) => void | Promise<void>;
   } = {
     assignedToMe: this.addAssignedToMeFilter.bind(this),
-    careSettings: this.addGenericFilter('document.INNOVATION_DESCRIPTION.careSettings').bind(this),
-    categories: this.addGenericFilter('document.INNOVATION_DESCRIPTION.categories').bind(this),
+    careSettings: this.addGenericFilter('filters.careSettings').bind(this),
+    categories: this.addGenericFilter('filters.categories').bind(this),
     dateFilters: this.addDateFilters.bind(this),
-    diseasesAndConditions: this.addGenericFilter('document.UNDERSTANDING_OF_NEEDS.diseasesConditionsImpact').bind(this),
+    diseasesAndConditions: this.addGenericFilter('filters.diseasesAndConditions').bind(this),
     engagingOrganisations: this.addGenericFilter('engagingOrganisations', { fieldSelector: 'organisationId' }).bind(
       this
     ),
     engagingUnits: this.addGenericFilter('engagingUnits', { fieldSelector: 'unitId' }).bind(this),
     groupedStatuses: this.addGenericFilter('groupedStatus').bind(this),
-    involvedAACProgrammes: this.addGenericFilter('document.INNOVATION_DESCRIPTION.involvedAACProgrammes').bind(this),
-    keyHealthInequalities: this.addGenericFilter('document.UNDERSTANDING_OF_NEEDS.keyHealthInequalities').bind(this),
+    involvedAACProgrammes: this.addGenericFilter('filters.involvedAACProgrammes').bind(this),
+    keyHealthInequalities: this.addGenericFilter('filters.keyHealthInequalities').bind(this),
     locations: this.addLocationFilter.bind(this),
     search: this.addSearchFilter.bind(this),
     suggestedOnly: this.addSuggestedOnlyFilter.bind(this),
@@ -413,16 +417,28 @@ export class SearchService extends BaseService {
       }
 
       // If is not an email we do the normal search
-      const fields = priorities.reverse().flatMap((priority, i) => priority.map(p => `${p}^${i + 1}`));
-      const searchQuery = {
-        query_string: {
-          query: this.escapeElasticSpecialChars(search),
-          fields: [...fields, '*'],
-          fuzziness: 'AUTO'
+      const searchQuery: QueryDslQueryContainer = {
+        multi_match: {
+          type: 'best_fields',
+          query: search,
+          fields: [...priorities, 'document.*'],
+          fuzziness: 0, // Fuzziness AUTO with highlight is causing major slowdowns, fuzziness and highlight is causing slow
+          prefix_length: 2,
+          tie_breaker: 0.3
+          // minimum_should_match: '2<-25% 9<-3'
         }
       };
       builder.addMust(searchQuery);
-      builder.addHighlight({ fields: { '*': { order: 'score', highlight_query: searchQuery } } });
+      builder.addHighlight({
+        order: 'score',
+        highlight_query: searchQuery, // the search query is required to avoid highlighting things from the filters
+        fields: {
+          'owner.companyName': {},
+          'document.*': {
+            number_of_fragments: 1000 // we require the fragments to show the counts so the default 5 isn't enough
+          }
+        }
+      });
     }
   }
 
@@ -434,7 +450,19 @@ export class SearchService extends BaseService {
     if (value) {
       if (isAccessorDomainContextType(domainContext)) {
         builder.addFilter(
-          nestedQuery('supports', { term: { 'supports.assignedAccessorsRoleIds': domainContext.currentRole.id } })
+          nestedQuery(
+            'supports',
+            boolQuery({
+              must: [
+                { term: { 'supports.assignedAccessorsRoleIds': domainContext.currentRole.id } },
+                {
+                  terms: {
+                    'supports.status': [InnovationSupportStatusEnum.WAITING, InnovationSupportStatusEnum.ENGAGING]
+                  }
+                }
+              ]
+            })
+          )
         );
       }
       if (isAssessmentDomainContextType(domainContext)) {
@@ -443,6 +471,7 @@ export class SearchService extends BaseService {
     }
   }
 
+  // All filters need to be of type keyword.
   private addGenericFilter(
     filterKey: string,
     options?: { fieldSelector: string } // fieldSelector == nested
@@ -453,7 +482,7 @@ export class SearchService extends BaseService {
       if (options?.fieldSelector) {
         builder.addFilter(nestedQuery(filterKey, { [type]: { [`${filterKey}.${options.fieldSelector}`]: value } }));
       } else {
-        builder.addFilter({ [type]: { [filterKey]: value } });
+        builder.addFilter({ [type]: { [`${filterKey}`]: value } });
       }
     };
   }
@@ -476,16 +505,14 @@ export class SearchService extends BaseService {
 
         should.push(
           boolQuery({
-            mustNot: { terms: { 'document.INNOVATION_DESCRIPTION.countryName.keyword': predefinedLocations } }
+            mustNot: { terms: { 'filters.countryName': predefinedLocations } }
           })
         );
       }
 
       should.push({
         terms: {
-          'document.INNOVATION_DESCRIPTION.countryName.keyword': locations.filter(
-            l => l !== InnovationLocationEnum['Based outside UK']
-          )
+          'filters.countryName': locations.filter(l => l !== InnovationLocationEnum['Based outside UK'])
         }
       });
     }
@@ -660,18 +687,5 @@ export class SearchService extends BaseService {
   private translate(doc: CurrentElasticSearchDocumentType, key: string): string | null {
     if (!translations.has(key)) return null;
     return translations.get(key)!.reduce((o, k) => (o ? o[k] : null), doc as any);
-  }
-
-  /**
-   * Escapes ES special chars.
-   *
-   * @see {@link https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-query-string-query.html#_reserved_characters Documentation}
-   */
-  private escapeElasticSpecialChars(input: string): string {
-    // Remove < and > characters
-    input = input.replace(/[<>]/g, '');
-    // Escape other special characters
-    const specialChars = /[+\-=&|!(){}\[\]^"~*?:\\/]/g;
-    return input.replace(specialChars, '\\$&');
   }
 }

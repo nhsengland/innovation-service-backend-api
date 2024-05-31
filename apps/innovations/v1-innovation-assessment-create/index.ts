@@ -23,7 +23,7 @@ class CreateInnovationAssessment {
     target: TargetEnum.ASSESSMENT,
     identifierResponseField: 'id'
   })
-  @ElasticSearchDocumentUpdate('ASSESSMENT_UPDATE')
+  @ElasticSearchDocumentUpdate()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
     const authorizationService = container.get<AuthorizationService>(SHARED_SYMBOLS.AuthorizationService);
     const innovationAssessmentsService = container.get<InnovationAssessmentsService>(

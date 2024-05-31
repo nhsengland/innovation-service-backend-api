@@ -22,7 +22,7 @@ class V1InnovationSubmit {
     target: TargetEnum.INNOVATION,
     identifierParam: 'innovationId'
   })
-  @ElasticSearchDocumentUpdate('INNOVATION_UPDATE')
+  @ElasticSearchDocumentUpdate()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
     const authorizationService = container.get<AuthorizationService>(SHARED_SYMBOLS.AuthorizationService);
     const innovationsService = container.get<InnovationsService>(SYMBOLS.InnovationsService);
