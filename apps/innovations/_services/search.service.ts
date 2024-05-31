@@ -680,7 +680,8 @@ export class SearchService extends BaseService {
       'otherCategoryDescription',
       'countryName',
       'postCode',
-      'support'
+      'support',
+      'highlights'
     ]);
   }
 
