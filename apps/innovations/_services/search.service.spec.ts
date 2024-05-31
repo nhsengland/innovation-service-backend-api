@@ -10,7 +10,7 @@ describe('Innovations / _services / search suite', () => {
   // let em: EntityManager;
 
   const testsHelper = new TestsHelper();
-  const scenario = testsHelper.getCompleteScenario();
+  // const scenario = testsHelper.getCompleteScenario();
 
   const activityLogSpy = jest.spyOn(DomainInnovationsService.prototype, 'addActivityLog');
   const supportLogSpy = jest.spyOn(DomainInnovationsService.prototype, 'addSupportLog');
@@ -19,12 +19,8 @@ describe('Innovations / _services / search suite', () => {
   beforeAll(async () => {
     sut = container.get<SearchService>(SYMBOLS.SearchService);
     await testsHelper.init();
-    console.log(scenario);
   });
 
-  // beforeEach(async () => {
-  //   em = await testsHelper.getQueryRunnerEntityManager();
-  // });
 
   afterEach(async () => {
     activityLogSpy.mockClear();
@@ -34,7 +30,7 @@ describe('Innovations / _services / search suite', () => {
 
   describe('ingestAllDocuments', () => {
     const getEsDocumentsSpy = jest.spyOn(DomainInnovationsService.prototype, 'getESDocumentsInformation');
-    const bulkInsertSpy = jest.spyOn(ElasticSearchService.prototype, 'bulkInsert');
+    const bulkInsertSpy = jest.spyOn(ElasticSearchService.prototype, 'bulkInsert').mockResolvedValue();
 
     afterEach(()=> {
       getEsDocumentsSpy.mockClear();
