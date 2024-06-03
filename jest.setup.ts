@@ -1,6 +1,7 @@
+import type { RedisService } from '@notifications/shared/services';
 import { env } from 'process';
 import { container } from './libs/shared/config/inversify.config';
-import type { CacheService, SQLConnectionService } from './libs/shared/services';
+import type { SQLConnectionService } from './libs/shared/services';
 import SHARED_SYMBOLS from './libs/shared/services/symbols';
 
 // Disable console.log in tests
@@ -15,6 +16,6 @@ import SHARED_SYMBOLS from './libs/shared/services/symbols';
 afterAll(async () => {
   if (global.gc) global.gc();
   (global as any).completeScenarioData = undefined;
-  await container.get<CacheService>(SHARED_SYMBOLS.CacheService)?.destroy();
+  await container.get<RedisService>(SHARED_SYMBOLS.RedisService)?.destroy();
   await container.get<SQLConnectionService>(SHARED_SYMBOLS.SQLConnectionService)?.destroy();
 });

@@ -13,7 +13,8 @@ export enum QueuesEnum {
   EMAIL = 'email-send-queue',
   IDENTITY = 'identity-ops-queue',
   IN_APP = 'in-app-send-queue',
-  NOTIFICATION = 'notification-queue'
+  NOTIFICATION = 'notification-queue',
+  ELASTIC_SEARCH = 'elasticsearch-queue'
 }
 
 @injectable()

@@ -16,7 +16,7 @@ import {
   UserStatusEnum
 } from '@innovations/shared/enums';
 import { InnovationErrorsEnum, InternalServerError, NotFoundError } from '@innovations/shared/errors';
-import type { DomainService, IdentityProviderService } from '@innovations/shared/services';
+import type { DomainService, IdentityProviderService, RedisService } from '@innovations/shared/services';
 
 import { BaseService } from './base.service';
 
@@ -49,6 +49,7 @@ export class InnovationSectionsService extends BaseService {
   constructor(
     @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
     @inject(SHARED_SYMBOLS.IdentityProviderService) private identityService: IdentityProviderService,
+    @inject(SHARED_SYMBOLS.RedisService) private redisService: RedisService,
     @inject(SYMBOLS.InnovationFileService) private innovationFileService: InnovationFileService,
     @inject(SYMBOLS.InnovationDocumentService) private innovationDocumentService: InnovationDocumentService
   ) {
@@ -360,6 +361,7 @@ export class InnovationSectionsService extends BaseService {
           updatedBy: innovation.updatedBy,
           updatedAt: updatedAt
         });
+        await this.redisService.addToSet('elasticsearch', innovation.id);
       }
 
       sectionToBeSaved.updatedAt = updatedAt;

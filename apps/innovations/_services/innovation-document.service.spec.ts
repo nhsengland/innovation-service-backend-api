@@ -1,14 +1,13 @@
 import { container } from '../_config';
 
+import { InnovationDocumentEntity } from '@innovations/shared/entities';
+import { ServiceRoleEnum } from '@innovations/shared/enums';
 import { CurrentDocumentConfig } from '@innovations/shared/schemas/innovation-record';
 import { TestsHelper } from '@innovations/shared/tests';
-import { randProductDescription } from '@ngneat/falso';
-import type { EntityManager } from 'typeorm';
-import SYMBOLS from './symbols';
-import type { InnovationDocumentService } from './innovation-document.service';
-import { ServiceRoleEnum } from '@innovations/shared/enums';
 import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
-import { InnovationDocumentEntity } from '@innovations/shared/entities';
+import type { EntityManager } from 'typeorm';
+import type { InnovationDocumentService } from './innovation-document.service';
+import SYMBOLS from './symbols';
 
 describe('Innovation Document suite', () => {
   let sut: InnovationDocumentService;
@@ -18,7 +17,7 @@ describe('Innovation Document suite', () => {
 
   const johnInnovator = scenario.users.johnInnovator;
   const innovation = johnInnovator.innovations.johnInnovation;
-  const draftDescription = randProductDescription();
+  const draftDescription = 'draft';
 
   let em: EntityManager;
 
