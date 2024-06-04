@@ -74,7 +74,7 @@ export class JoiHelper {
       {
         type: 'decodeURIString',
         base: Joi.string().meta({ baseType: 'string' }),
-        coerce(value) {
+        prepare(value) {
           return typeof value !== 'string' ? { value } : { value: decodeURIComponent(value) };
         }
       },

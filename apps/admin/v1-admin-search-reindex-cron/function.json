@@ -2,7 +2,7 @@
   "bindings": [
     {
       "schedule": "0 0 3 * * *",
-      "name": "myTimerCleanupDocument",
+      "name": "myTimerReindexElastic",
       "type": "timerTrigger",
       "direction": "in"
     }

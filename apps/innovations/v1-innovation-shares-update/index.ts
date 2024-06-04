@@ -1,7 +1,7 @@
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
-import { JwtDecoder } from '@innovations/shared/decorators';
+import { ElasticSearchDocumentUpdate, JwtDecoder } from '@innovations/shared/decorators';
 import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import type { AuthorizationService } from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
@@ -16,6 +16,7 @@ import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.sch
 
 class V1InnovationSharesUpdate {
   @JwtDecoder()
+  @ElasticSearchDocumentUpdate()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
     const authorizationService = container.get<AuthorizationService>(SHARED_SYMBOLS.AuthorizationService);
     const innovationsService = container.get<InnovationsService>(SYMBOLS.InnovationsService);

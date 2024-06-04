@@ -1,7 +1,7 @@
 import { DataSource, EntityManager, In, Repository } from 'typeorm';
 
-import type { UserEntity } from 'libs/shared/entities';
 import { EXPIRATION_DATES } from '../../constants';
+import type { UserEntity } from '../../entities';
 import { ActivityLogEntity } from '../../entities/innovation/activity-log.entity';
 import { InnovationAssessmentEntity } from '../../entities/innovation/innovation-assessment.entity';
 import { InnovationCollaboratorEntity } from '../../entities/innovation/innovation-collaborator.entity';
@@ -42,6 +42,8 @@ import {
   UnprocessableEntityError
 } from '../../errors';
 import { TranslationHelper } from '../../helpers';
+import { cleanup, translate } from '../../schemas/innovation-record/202304/translation.helper';
+import type { CurrentElasticSearchDocumentType } from '../../schemas/innovation-record/index';
 import type { ActivitiesParamsType, DomainContextType, IdentityUserInfo, SupportLogParams } from '../../types';
 import type { IdentityProviderService } from '../integrations/identity-provider.service';
 import type { NotifierService } from '../integrations/notifier.service';
@@ -74,7 +76,7 @@ export class DomainInnovationsService {
     const dbInnovations = await em
       .createQueryBuilder(InnovationEntity, 'innovations')
       .select(['innovations.id', 'transfers.id', 'transfers.createdBy'])
-      .innerJoin('innovations.transfers', 'transfers', 'status = :status', {
+      .innerJoin('innovations.transfers', 'transfers', 'transfers.status = :status', {
         status: InnovationTransferStatusEnum.PENDING
       })
       .where('innovations.expires_at < :now', { now: new Date().toISOString() })
@@ -253,7 +255,7 @@ export class DomainInnovationsService {
 
           if (assessment) {
             // Complete the current assessment
-            transaction.update(
+            await transaction.update(
               InnovationAssessmentEntity,
               { id: assessment.id },
               { finishedAt: archivedAt, updatedBy: domainContext.id }
@@ -797,26 +799,6 @@ export class DomainInnovationsService {
     return data;
   }
 
-  /**
-   * This function is used to cleanup old versions (not snapshots) of innovation documents.
-   * Only the non snapshots more recent than the last snapshot will be kept.
-   *
-   * This function disabled the system versioning, deletes the old versions and re-enables the system versioning.
-   * This is done in a transaction to avoid concurrency issues.
-   */
-  async cleanupInnovationDocuments(entityManager?: EntityManager): Promise<void> {
-    const em = entityManager ?? this.sqlConnection.manager;
-
-    await em.query(`
-    BEGIN TRANSACTION
-    EXEC('ALTER TABLE innovation_document SET ( SYSTEM_VERSIONING = OFF)');
-    EXEC('DELETE h FROM innovation_document_history h
-          INNER JOIN (SELECT id,MAX(valid_from) as max FROM innovation_document_history WHERE is_snapshot=1 GROUP BY id) h2 ON h.id = h2.id AND h.valid_from<h2.max AND h.is_snapshot=0');
-    EXEC('ALTER TABLE innovation_document SET ( SYSTEM_VERSIONING = ON (HISTORY_TABLE = dbo.innovation_document_history, History_retention_period = 7 YEAR))');
-    COMMIT TRANSACTION;
-    `);
-  }
-
   /*****
    * MOVE THESE TO A STATISTIC SERVICE SHARED PROBABLY
    */
@@ -902,6 +884,148 @@ export class DomainInnovationsService {
     });
 
     return res;
+  }
+
+  /**
+   * Fetches all the information needed for the document type.
+   * If innovationIds are passed it will only return the information for those ids,
+   * if not returns all the documents information.
+   *
+   */
+  async getESDocumentsInformation(): Promise<CurrentElasticSearchDocumentType[]>;
+  async getESDocumentsInformation(innovationId: string): Promise<CurrentElasticSearchDocumentType | undefined>;
+  async getESDocumentsInformation(
+    innovationId?: string
+  ): Promise<CurrentElasticSearchDocumentType | undefined | CurrentElasticSearchDocumentType[]> {
+    let sql = `WITH
+      innovations AS (
+        SELECT i.id, i.status, archived_status, status_updated_at, submitted_at, i.updated_at, last_assessment_request_at, grouped_status,
+          u.id AS owner_id, u.external_id AS owner_external_id, u.status AS owner_status, o.name AS owner_company
+        FROM innovation i
+          INNER JOIN innovation_grouped_status_view_entity g ON i.id = g.id
+          LEFT JOIN [user] u on i.owner_id = u.id AND u.status !='DELETED'
+          LEFT JOIN user_role ur on u.id = ur.user_id AND ur.role='INNOVATOR'
+          LEFT JOIN organisation o ON ur.organisation_id = o.id AND o.is_shadow = 0
+      ),
+      support AS (
+        SELECT s.id, innovation_id, s.status, s.updated_at, s.updated_by,
+          ou.id AS unit_id, ou.name AS unit_name, ou.acronym AS unit_acronym,
+          o.id AS org_id, o.name AS org_name, o.acronym AS org_acronym,
+          (
+            SELECT r.id AS roleId, u.id AS userId, u.external_id AS identityId
+          FROM innovation_support_user su
+            LEFT JOIN user_role r ON su.user_role_id = r.id AND r.deleted_at IS NULL AND r.is_active = 1
+            LEFT JOIN [user] u ON u.id = r.user_id AND u.status != 'DELETED'
+          WHERE s.id = su.innovation_support_id
+          FOR
+            JSON PATH
+          ) AS assigned_accessors
+        FROM innovation_support s
+          INNER JOIN organisation_unit ou ON s.organisation_unit_id = ou.id AND ou.deleted_at IS NULL
+          INNER JOIN organisation o ON ou.organisation_id = o.id
+        WHERE s.deleted_at IS NULL
+      )
+    SELECT
+      i.id,
+      i.status,
+      i.archived_status AS archivedStatus,
+      IIF(i.status = 'ARCHIVED', i.archived_status, i.status) AS rawStatus,
+      i.status_updated_at AS statusUpdatedAt,
+      i.grouped_status AS groupedStatus,
+      i.submitted_at AS submittedAt,
+      i.updated_at AS updatedAt,
+      i.last_assessment_request_at AS lastAssessmentRequestAt,
+      d.document AS document,
+      IIF(
+        i.owner_id IS NULL,
+        NULL,
+        JSON_OBJECT('id': i.owner_id, 'identityId': i.owner_external_id, 'status': i.owner_status, 'companyName': i.owner_company ABSENT ON NULL)
+      ) AS owner,
+      (
+        SELECT s.org_id AS organisationId, s.org_name AS name, s.org_acronym AS acronym
+        FROM support s
+        WHERE s.innovation_id = i.id AND s.status='ENGAGING'
+        GROUP BY org_id, org_name, org_acronym
+        FOR JSON PATH
+      ) AS engagingOrganisations,
+      (
+        SELECT s.unit_id AS unitId, s.unit_name AS name, s.unit_acronym AS acronym, s.assigned_accessors AS assignedAccessors
+        FROM support s
+        WHERE s.innovation_id = i.id AND s.status='ENGAGING'
+        FOR JSON PATH
+      ) AS engagingUnits,
+      (
+        SELECT JSON_QUERY('[' + STRING_AGG(CONVERT(VARCHAR(38), QUOTENAME(s.organisation_id, '"')), ',') + ']') AS ids
+        FROM innovation_share s
+        WHERE s.innovation_id=i.id
+      ) AS shares,
+      (
+        SELECT id, s.unit_id AS unitId, s.status, s.updated_at AS updatedAt, s.updated_by AS updatedBy,
+        (
+          SELECT JSON_QUERY('[' + STRING_AGG(CONVERT(VARCHAR(38), QUOTENAME(roleId, '"')), ',') + ']')
+          FROM OPENJSON(s.assigned_accessors, '$')
+          WITH (roleId NVARCHAR(36) '$.roleId')
+        ) AS assignedAccessorsRoleIds
+        FROM support s
+        WHERE s.innovation_id = i.id
+        FOR JSON PATH
+      ) AS supports,
+      IIF(
+        a.id IS NULL,
+        NULL,
+        JSON_OBJECT('id': a.id, 'updatedAt': a.updated_at, 'isExempt': CONVERT(BIT, IIF(a.exempted_at IS NULL, 0, 1)), 'assignedToId': a.assign_to_id ABSENT ON NULL)
+      ) AS assessment,
+      (
+        SELECT suggested_unit_id as suggestedUnitId, suggested_by_units_acronyms AS suggestedBy
+      FROM innovation_suggested_units_view
+      WHERE innovation_id = i.id
+      FOR JSON PATH
+      ) AS suggestions
+    FROM innovations i
+      INNER JOIN innovation_document d ON i.id = d.id
+      LEFT JOIN innovation_assessment a ON i.id = a.innovation_id AND a.deleted_at IS NULL`;
+
+    if (innovationId) {
+      sql += ` WHERE i.id = @0`;
+    }
+
+    const innovations = await this.sqlConnection.query(sql, innovationId ? [innovationId] : []);
+
+    const parsed: CurrentElasticSearchDocumentType[] = innovations.map((innovation: any) => {
+      const document = cleanup(JSON.parse(innovation.document ?? {}));
+      return {
+        id: innovation.id,
+        status: innovation.status,
+        archivedStatus: innovation.archivedStatus,
+        rawStatus: innovation.rawStatus,
+        statusUpdatedAt: innovation.statusUpdatedAt,
+        groupedStatus: innovation.groupedStatus,
+        submittedAt: innovation.submittedAt,
+        updatedAt: innovation.updatedAt,
+        lastAssessmentRequestAt: innovation.lastAssessmentRequestAt,
+        document: translate(document),
+        ...(innovation.owner && { owner: JSON.parse(innovation.owner) }),
+        ...(innovation.engagingOrganisations && {
+          engagingOrganisations: JSON.parse(innovation.engagingOrganisations)
+        }),
+        ...(innovation.engagingUnits && { engagingUnits: JSON.parse(innovation.engagingUnits) }),
+        ...(innovation.shares && { shares: JSON.parse(innovation.shares) }),
+        ...(innovation.supports && { supports: JSON.parse(innovation.supports) }),
+        ...(innovation.assessment && { assessment: JSON.parse(innovation.assessment) }),
+        ...(innovation.suggestions && { suggestions: JSON.parse(innovation.suggestions) }),
+        filters: {
+          name: document.INNOVATION_DESCRIPTION.name,
+          countryName: document.INNOVATION_DESCRIPTION.countryName,
+          categories: document.INNOVATION_DESCRIPTION.categories,
+          careSettings: document.INNOVATION_DESCRIPTION.careSettings,
+          involvedAACProgrammes: document.INNOVATION_DESCRIPTION.involvedAACProgrammes,
+          diseasesAndConditions: document.UNDERSTANDING_OF_NEEDS.diseasesConditionsImpact,
+          keyHealthInequalities: document.UNDERSTANDING_OF_NEEDS.keyHealthInequalities
+        }
+      };
+    });
+
+    return innovationId ? parsed[0] : parsed;
   }
 
   private getActivityLogType(activity: ActivityEnum): ActivityTypeEnum {

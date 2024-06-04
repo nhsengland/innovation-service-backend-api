@@ -2,7 +2,6 @@ import type { Context } from '@azure/functions';
 import {
   NotificationCategoryType,
   NotificationDetailType,
-  NotificationLogTypeEnum,
   NotificationPreferenceEnum,
   NotifierTypeEnum,
   ServiceRoleEnum
@@ -11,6 +10,7 @@ import { TranslationHelper } from '@notifications/shared/helpers';
 import type { DomainContextType, NotificationPreferences, NotifierTemplatesType } from '@notifications/shared/types';
 import { EmailTemplates, EmailTemplatesType, container } from '../_config';
 import type { InAppTemplatesType } from '../_config/inapp.config';
+import { unsubscribeUrl } from '../_helpers/url.helper';
 import type { RecipientType, RecipientsService } from '../_services/recipients.service';
 import SYMBOLS from '../_services/symbols';
 
@@ -23,10 +23,6 @@ type HandlerEmailType<T> = Array<{
   to: EmailRecipientType | Omit<IdentityRecipientType, 'userId' | 'role'>; // maybe review this later and it will probably only require roleId
   //params: T extends keyof EmailTemplatesType ? EmailTemplatesType[T] : Record<string, never>;
   params: T extends keyof EmailTemplatesType ? EmailTemplatesType[T] : any; // legacy for now
-  log?: {
-    type: NotificationLogTypeEnum;
-    params: Record<string, string | number>;
-  };
   options?: {
     includeLocked?: boolean; // send email even if the user is locked
     ignorePreferences?: boolean; // ignore user email preferences when sending the email
@@ -39,10 +35,6 @@ type HandlerEmailOutboundType<T> = {
   to: string;
   // params: T extends keyof EmailTemplatesType ? EmailTemplatesType[T] : Record<string, never>;
   params: T extends keyof EmailTemplatesType ? EmailTemplatesType[T] : any; // legacy for now
-  log?: {
-    type: NotificationLogTypeEnum;
-    params: Record<string, string | number>;
-  };
 };
 
 type HandlerInAppType<T> = Array<{
@@ -115,8 +107,11 @@ export abstract class BaseHandler<
         res.push({
           templateId: recipient.templateId,
           to: recipient.to.email,
-          params: { ...recipient.params, ...(recipient.to.displayname && { display_name: recipient.to.displayname }) },
-          log: recipient.log
+          params: {
+            ...recipient.params,
+            ...(recipient.to.displayname && { display_name: recipient.to.displayname }),
+            unsubscribe_url: unsubscribeUrl
+          }
         });
       } else {
         // skip if user is not active unless includeLocked is true
@@ -144,8 +139,11 @@ export abstract class BaseHandler<
           res.push({
             templateId: recipient.templateId,
             to: user.email,
-            params: { ...recipient.params, display_name: user.displayName },
-            log: recipient.log
+            params: {
+              ...recipient.params,
+              display_name: user.displayName,
+              unsubscribe_url: unsubscribeUrl
+            }
           });
         }
       }
@@ -174,8 +172,7 @@ export abstract class BaseHandler<
         templateId: template,
         to: recipient,
         params: data.params,
-        ...(data.options && { options: data.options }),
-        ...(data.log && { log: data.log })
+        ...(data.options && { options: data.options })
       });
     });
   }

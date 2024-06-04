@@ -35,4 +35,15 @@ export class DatesHelper {
 
     return result;
   }
+
+  /**
+   * Converts a date to a string in the format 'YYYY-MM-DD' as of UK timezone.
+   * @param date the date object
+   * @returns the date as a string in the format 'YYYY-MM-DD'
+   */
+  static getDateAsLocalDateString(date: Date): string {
+    // sv has the ISO format
+    const format = Intl.DateTimeFormat('sv', { timeZone: 'Europe/London' });
+    return format.format(date);
+  }
 }

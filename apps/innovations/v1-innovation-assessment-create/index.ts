@@ -1,7 +1,7 @@
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
-import { Audit, JwtDecoder } from '@innovations/shared/decorators';
+import { Audit, ElasticSearchDocumentUpdate, JwtDecoder } from '@innovations/shared/decorators';
 import { InnovationStatusEnum } from '@innovations/shared/enums';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
 import type { AuthorizationService } from '@innovations/shared/services';
@@ -23,6 +23,7 @@ class CreateInnovationAssessment {
     target: TargetEnum.ASSESSMENT,
     identifierResponseField: 'id'
   })
+  @ElasticSearchDocumentUpdate()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
     const authorizationService = container.get<AuthorizationService>(SHARED_SYMBOLS.AuthorizationService);
     const innovationAssessmentsService = container.get<InnovationAssessmentsService>(

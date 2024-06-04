@@ -7,7 +7,9 @@ import {
   InnovationSupportEntity,
   InnovationSupportLogEntity,
   InnovationTaskEntity,
-  OrganisationUnitEntity
+  InnovationThreadEntity,
+  OrganisationUnitEntity,
+  UserRoleEntity
 } from '@innovations/shared/entities';
 import {
   ActivityEnum,
@@ -23,6 +25,7 @@ import {
 } from '@innovations/shared/enums';
 import {
   BadRequestError,
+  ConflictError,
   GenericErrorsEnum,
   InnovationErrorsEnum,
   NotFoundError,
@@ -30,15 +33,21 @@ import {
   UnprocessableEntityError
 } from '@innovations/shared/errors';
 import type { DomainService, NotifierService } from '@innovations/shared/services';
-import type { DomainContextType, SupportLogProgressUpdate } from '@innovations/shared/types';
+import {
+  isAccessorDomainContextType,
+  type DomainContextType,
+  type SupportLogProgressUpdate
+} from '@innovations/shared/types';
 
 import { InnovationThreadSubjectEnum } from '../_enums/innovation.enums';
 import type {
   InnovationFileType,
+  InnovationUnitSuggestionsType,
   InnovationSuggestionAccessor,
   InnovationSuggestionsType
 } from '../_types/innovation.types';
 
+import { DatesHelper } from '@innovations/shared/helpers';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { SupportSummaryUnitInfo } from '../_types/support.types';
 import { BaseService } from './base.service';
@@ -46,6 +55,7 @@ import type { InnovationFileService } from './innovation-file.service';
 import type { InnovationThreadsService } from './innovation-threads.service';
 import SYMBOLS from './symbols';
 import type { ValidationService } from './validation.service';
+import { AuthErrorsEnum } from '@innovations/shared/services/auth/authorization-validation.model';
 
 type UnitSupportInformationType = {
   id: string;
@@ -172,6 +182,66 @@ export class InnovationSupportsService extends BaseService {
         ...(engagingAccessors === undefined ? {} : { engagingAccessors })
       };
     });
+  }
+
+  async getInnovationUnitsSuggestions(
+    domainContext: DomainContextType,
+    innovationId: string
+  ): Promise<InnovationUnitSuggestionsType> {
+    const unitId = isAccessorDomainContextType(domainContext) ? domainContext.organisation.organisationUnit.id : null;
+    if (!unitId) {
+      throw new ConflictError(AuthErrorsEnum.AUTH_MISSING_ORGANISATION_UNIT_CONTEXT);
+    }
+
+    const lastSupportStatusUpdate = await this.sqlConnection.manager
+      .createQueryBuilder(InnovationSupportEntity, 'support')
+      .select(['support.updatedAt'])
+      .where('support.innovation_id = :innovationId', { innovationId })
+      .andWhere('support.organisation_unit_id = :unitId', { unitId })
+      .getOne();
+
+    const unitsSuggestionsQuery = this.sqlConnection.manager
+      .createQueryBuilder(InnovationSupportLogEntity, 'log')
+      .select(['log.id', 'log.createdAt', 'log.description', 'unit.name'])
+      .innerJoin('log.organisationUnit', 'unit')
+      .innerJoin('log.suggestedOrganisationUnits', 'units')
+      .innerJoin('innovation_thread', 'thread', 'thread.context_id = log.id')
+      .where('log.innovation_id = :innovationId', { innovationId })
+      .andWhere('log.type = :type', { type: 'ACCESSOR_SUGGESTION' })
+      .andWhere('units.id = :unitId', { unitId });
+
+    if (lastSupportStatusUpdate) {
+      unitsSuggestionsQuery.andWhere('log.createdAt > :statusUpdatedAt', {
+        statusUpdatedAt: lastSupportStatusUpdate.updatedAt
+      });
+    }
+
+    const unitsSuggestions = await unitsSuggestionsQuery.getMany();
+
+    if (unitsSuggestions.length === 0) {
+      return [];
+    }
+
+    const threads = new Map(
+      (
+        await this.sqlConnection.manager
+          .createQueryBuilder(InnovationThreadEntity, 'threads')
+          .select(['threads.id', 'threads.contextId'])
+          .where('threads.context_id IN (:...logId)', {
+            logId: unitsSuggestions.map(s => s.id)
+          })
+          .getMany()
+      ).map(t => [t.contextId, t.id])
+    );
+
+    return unitsSuggestions.map(s => ({
+      suggestionId: s.id,
+      suggestorUnit: s.organisationUnit?.name ?? '',
+      thread: {
+        id: threads.get(s.id) ?? '',
+        message: s.description
+      }
+    }));
   }
 
   /**
@@ -400,16 +470,16 @@ export class InnovationSupportsService extends BaseService {
     return result;
   }
 
-  async createInnovationSupportLogs(
+  async createInnovationOrganisationsSuggestions(
     domainContext: DomainContextType,
     innovationId: string,
     data: {
-      type: InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION | InnovationSupportLogTypeEnum.STATUS_UPDATE;
+      type: InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION;
       description: string;
       organisationUnits?: string[];
     },
     entityManager?: EntityManager
-  ): Promise<{ id: string }> {
+  ): Promise<void> {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const organisationUnitId = domainContext.organisation?.organisationUnit?.id || '';
@@ -431,23 +501,7 @@ export class InnovationSupportsService extends BaseService {
 
     const innovationSupport = innovation.innovationSupports.find(sup => sup.organisationUnit.id === organisationUnitId);
 
-    const result = await connection.transaction(async transaction => {
-      const savedSupportLog = await this.domainService.innovations.addSupportLog(
-        transaction,
-        { id: domainContext.id, roleId: domainContext.currentRole.id },
-        innovationId,
-        {
-          description: data.description,
-          supportStatus:
-            innovationSupport && innovationSupport.status
-              ? innovationSupport.status
-              : InnovationSupportStatusEnum.UNASSIGNED,
-          type: data.type,
-          unitId: domainContext.organisation?.organisationUnit?.id ?? '',
-          suggestedOrganisationUnits: data.organisationUnits ?? []
-        }
-      );
-
+    await connection.transaction(async transaction => {
       if (
         data.type === InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION &&
         data?.organisationUnits &&
@@ -455,10 +509,63 @@ export class InnovationSupportsService extends BaseService {
       ) {
         const units = await connection
           .createQueryBuilder(OrganisationUnitEntity, 'unit')
+          .select(['unit.id', 'unit.name'])
           .where('unit.id IN (:...organisationUnits)', {
             organisationUnits: data?.organisationUnits
           })
-          .getRawMany();
+          .getMany();
+
+        const userUnitName = domainContext.organisation?.organisationUnit?.name ?? '';
+
+        for (const unit of units) {
+          const savedSupportLog = await this.domainService.innovations.addSupportLog(
+            transaction,
+            { id: domainContext.id, roleId: domainContext.currentRole.id },
+            innovationId,
+            {
+              description: data.description,
+              supportStatus:
+                innovationSupport && innovationSupport.status
+                  ? innovationSupport.status
+                  : InnovationSupportStatusEnum.UNASSIGNED,
+              type: data.type,
+              unitId: domainContext.organisation?.organisationUnit?.id ?? '',
+              suggestedOrganisationUnits: [unit.id]
+            }
+          );
+
+          const thread = await this.innovationThreadsService.createThreadOrMessage(
+            domainContext,
+            innovationId,
+            InnovationThreadSubjectEnum.ORGANISATION_SUGGESTION.replace('{{unit}}', userUnitName).replace(
+              '{{suggestedUnit}}',
+              unit.name
+            ),
+            data.description,
+            savedSupportLog.id,
+            ThreadContextTypeEnum.ORGANISATION_SUGGESTION,
+            transaction,
+            false
+          );
+
+          // Add qualifying accessors from unit as thread followers
+          const userRoles = await connection
+            .createQueryBuilder(UserRoleEntity, 'userRole')
+            .where('userRole.organisation_unit_id = :unitId', { unitId: unit.id })
+            .andWhere('userRole.role = :roleType', { roleType: ServiceRoleEnum.QUALIFYING_ACCESSOR })
+            .andWhere('userRole.is_active = 1')
+            .getMany();
+
+          if (userRoles.length) {
+            await this.innovationThreadsService.addFollowersToThread(
+              domainContext,
+              thread.thread.id,
+              userRoles.map(userRole => userRole.id),
+              false,
+              transaction
+            );
+          }
+        }
 
         await this.domainService.innovations.addActivityLog(
           transaction,
@@ -468,12 +575,10 @@ export class InnovationSupportsService extends BaseService {
             domainContext
           },
           {
-            organisations: units.map(unit => unit.unit_name)
+            organisations: units.map(unit => unit.name)
           }
         );
       }
-
-      return savedSupportLog;
     });
 
     if (
@@ -487,8 +592,6 @@ export class InnovationSupportsService extends BaseService {
         comment: data.description
       });
     }
-
-    return result;
   }
 
   async updateInnovationSupport(
@@ -1061,7 +1164,10 @@ export class InnovationSupportsService extends BaseService {
     }
 
     // If we have a created date and it's different from today check if the support was engaging otherwise check current
-    if (data.createdAt && data.createdAt.toISOString().split('T')[0] !== new Date().toISOString().split('T')[0]) {
+    if (
+      data.createdAt &&
+      DatesHelper.getDateAsLocalDateString(data.createdAt) !== DatesHelper.getDateAsLocalDateString(new Date())
+    ) {
       const res = await this.validationService.checkIfSupportStatusAtDate(domainContext, innovationId, {
         supportId: support.id,
         date: data.createdAt,

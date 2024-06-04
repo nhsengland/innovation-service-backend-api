@@ -4,9 +4,8 @@ import { InnovationSupportLogTypeEnum } from '@innovations/shared/enums';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@innovations/shared/tests';
 import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@innovations/shared/types';
-import { randText, randUuid } from '@ngneat/falso';
+import { randText } from '@ngneat/falso';
 import { InnovationSupportsService } from '../_services/innovation-supports.service';
-import type { ResponseDTO } from './transformation.dtos';
 import type { BodyType, ParamsType } from './validation.schemas';
 
 jest.mock('@innovations/shared/decorators', () => ({
@@ -15,7 +14,8 @@ jest.mock('@innovations/shared/decorators', () => ({
   }),
   Audit: jest.fn().mockImplementation(() => (_: any, __: string, descriptor: PropertyDescriptor) => {
     return descriptor;
-  })
+  }),
+  ElasticSearchDocumentUpdate: jest.fn(() => (_: any, __: string, descriptor: PropertyDescriptor) => descriptor)
 }));
 
 const testsHelper = new TestsHelper();
@@ -25,15 +25,16 @@ beforeAll(async () => {
   await testsHelper.init();
 });
 
-const expected = { id: randUuid() };
-const mock = jest.spyOn(InnovationSupportsService.prototype, 'createInnovationSupportLogs').mockResolvedValue(expected);
+const mock = jest
+  .spyOn(InnovationSupportsService.prototype, 'createInnovationOrganisationsSuggestions')
+  .mockResolvedValue();
 
 afterEach(() => {
   jest.clearAllMocks();
 });
 
 describe('v1-innovation-support-logs-create Suite', () => {
-  describe('200', () => {
+  describe('201', () => {
     it('should create an innovation support log', async () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.aliceQualifyingAccessor)
@@ -45,10 +46,9 @@ describe('v1-innovation-support-logs-create Suite', () => {
           organisationUnits: [],
           type: InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION
         })
-        .call<ResponseDTO>(azureFunction);
+        .call<never>(azureFunction);
 
-      expect(result.body).toStrictEqual(expected);
-      expect(result.status).toBe(200);
+      expect(result.status).toBe(201);
       expect(mock).toHaveBeenCalledTimes(1);
     });
   });
@@ -56,7 +56,7 @@ describe('v1-innovation-support-logs-create Suite', () => {
   describe('Access', () => {
     it.each([
       ['Admin', 403, scenario.users.allMighty],
-      ['QA', 200, scenario.users.aliceQualifyingAccessor],
+      ['QA', 201, scenario.users.aliceQualifyingAccessor],
       ['A', 403, scenario.users.ingridAccessor],
       ['NA', 403, scenario.users.paulNeedsAssessor],
       ['Innovator owner', 403, scenario.users.johnInnovator],

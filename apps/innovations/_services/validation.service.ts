@@ -4,7 +4,7 @@ import type { EntityManager } from 'typeorm';
 
 import { InnovationSupportStatusEnum } from '@innovations/shared/enums';
 import { BadRequestError, GenericErrorsEnum } from '@innovations/shared/errors';
-import { JoiHelper } from '@innovations/shared/helpers';
+import { DatesHelper, JoiHelper } from '@innovations/shared/helpers';
 import type { DomainContextType } from '@innovations/shared/types';
 
 import { BaseService } from './base.service';
@@ -56,8 +56,8 @@ export class ValidationService extends BaseService {
     entityManager?: EntityManager
   ): Promise<ValidationResult> {
     const em = entityManager ?? this.sqlConnection.manager;
-    const date = data.date;
-    const dateString = date.toISOString().split('T')[0];
+    const date = new Date(data.date); // avoid mutation
+    const dateString = DatesHelper.getDateAsLocalDateString(date);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     date.setHours(0, 0, 0, 0);

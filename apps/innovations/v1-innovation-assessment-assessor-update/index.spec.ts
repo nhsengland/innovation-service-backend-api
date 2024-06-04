@@ -8,7 +8,8 @@ import type { BodyType, ParamsType } from './validation.schemas';
 jest.mock('@innovations/shared/decorators', () => ({
   JwtDecoder: jest.fn().mockImplementation(() => (_: any, __: string, descriptor: PropertyDescriptor) => {
     return descriptor;
-  })
+  }),
+  ElasticSearchDocumentUpdate: jest.fn(() => (_: any, __: string, descriptor: PropertyDescriptor) => descriptor)
 }));
 
 const testsHelper = new TestsHelper();

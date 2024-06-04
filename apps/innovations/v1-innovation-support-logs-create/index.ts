@@ -1,7 +1,7 @@
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
-import { JwtDecoder } from '@innovations/shared/decorators';
+import { ElasticSearchDocumentUpdate, JwtDecoder } from '@innovations/shared/decorators';
 import { ServiceRoleEnum } from '@innovations/shared/enums';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
 import type { AuthorizationService } from '@innovations/shared/services';
@@ -12,11 +12,14 @@ import { container } from '../_config';
 
 import type { InnovationSupportsService } from '../_services/innovation-supports.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 
+// TO DO: RENAME ENDPOINT
+// IMPROVE VALIDATOR
+// OPTIMIZE CREATE INNOVATION ORGANISATIONS SUGGESTIONS
 class V1InnovationsSupportLogCreate {
   @JwtDecoder()
+  @ElasticSearchDocumentUpdate()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
     const authorizationService = container.get<AuthorizationService>(SHARED_SYMBOLS.AuthorizationService);
     const innovationSupportsService = container.get<InnovationSupportsService>(SYMBOLS.InnovationSupportsService);
@@ -34,13 +37,13 @@ class V1InnovationsSupportLogCreate {
         .verify();
       const domainContext = auth.getContext();
 
-      const result = await innovationSupportsService.createInnovationSupportLogs(
+      await innovationSupportsService.createInnovationOrganisationsSuggestions(
         domainContext,
         params.innovationId,
         body
       );
 
-      context.res = ResponseHelper.Ok<ResponseDTO>(result);
+      context.res = ResponseHelper.Created();
       return;
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);

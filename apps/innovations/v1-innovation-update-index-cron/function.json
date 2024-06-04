@@ -1,0 +1,10 @@
+{
+  "bindings": [
+    {
+      "schedule": "*/30 * * * * *",
+      "name": "myTimerUpdateIndex",
+      "type": "timerTrigger",
+      "direction": "in"
+    }
+  ]
+}

@@ -1,0 +1,303 @@
+import type { MappingProperty } from '@elastic/elasticsearch/lib/api/types';
+import type {
+  InnovationGroupedStatusEnum,
+  InnovationStatusEnum,
+  InnovationSupportStatusEnum,
+  UserStatusEnum
+} from '../../../enums';
+import type { CreateIndexParams } from '../../../services/integrations/elastic-search.service';
+import type { CurrentDocumentType, DocumentType } from '../index';
+
+export type ElasticSearchDocumentType202304 = {
+  id: string;
+  status: InnovationStatusEnum;
+  rawStatus: InnovationStatusEnum;
+  archivedStatus: InnovationStatusEnum | null;
+  statusUpdatedAt: Date;
+  groupedStatus: InnovationGroupedStatusEnum;
+  submittedAt: Date | null;
+  updatedAt: Date;
+  lastAssessmentRequestAt: Date | null;
+  document: DocumentType;
+  owner?: { id: string; identityId: string; companyName: string | null; status: UserStatusEnum };
+  engagingOrganisations?: { organisationId: string; name: string; acronym: string }[];
+  engagingUnits?: {
+    unitId: string;
+    name: string;
+    acronym: string;
+    assignedAccessors?: { roleId: string; userId: string; identityId: string }[];
+  }[];
+  shares?: string[];
+  supports?: {
+    id: string;
+    unitId: string;
+    status: InnovationSupportStatusEnum;
+    updatedAt: Date;
+    updatedBy: string;
+    assignedAccessorsRoleIds?: string[];
+  }[];
+  assessment?: {
+    id: string;
+    assignedToId: string | null;
+    updatedAt: Date;
+    isExempt: boolean;
+  };
+  suggestions?: {
+    suggestedUnitId: string;
+    suggestedBy: string[];
+  }[];
+  filters: {
+    name: CurrentDocumentType['INNOVATION_DESCRIPTION']['name'];
+    countryName: CurrentDocumentType['INNOVATION_DESCRIPTION']['countryName'];
+    categories: CurrentDocumentType['INNOVATION_DESCRIPTION']['categories'];
+    careSettings: CurrentDocumentType['INNOVATION_DESCRIPTION']['careSettings'];
+    involvedAACProgrammes: CurrentDocumentType['INNOVATION_DESCRIPTION']['careSettings'];
+    diseasesAndConditions: CurrentDocumentType['UNDERSTANDING_OF_NEEDS']['diseasesConditionsImpact'];
+    keyHealthInequalities: CurrentDocumentType['UNDERSTANDING_OF_NEEDS']['keyHealthInequalities'];
+  };
+};
+
+const KeywordType: MappingProperty = { type: 'keyword', normalizer: 'lowercase' };
+
+export const ElasticSearchSchema202304: CreateIndexParams = {
+  settings: {
+    analysis: {
+      analyzer: {
+        default: {
+          type: 'custom',
+          tokenizer: 'standard',
+          filter: ['lowercase', 'stop', 'porter_stem']
+        }
+      }
+    }
+  },
+  mappings: {
+    properties: {
+      owner: {
+        properties: {
+          id: { type: 'keyword' },
+          identityId: { type: 'keyword' },
+          companyName: { type: 'text' },
+          status: { type: 'keyword' }
+        }
+      },
+
+      status: { type: 'keyword' },
+      archivedStatus: { type: 'keyword' },
+      rawStatus: { type: 'keyword' },
+      statusUpdatedAt: { type: 'date' },
+      groupedStatus: { type: 'keyword' },
+      submittedAt: { type: 'date' },
+      updatedAt: { type: 'date' },
+      lastAssessmentRequestAt: { type: 'date' },
+
+      supports: {
+        type: 'nested',
+        properties: {
+          id: { type: 'keyword' },
+          unitId: { type: 'keyword' },
+          status: { type: 'keyword' },
+          updatedAt: { type: 'date' },
+          updatedBy: { type: 'keyword' },
+          assignedAccessorsRoleIds: { type: 'keyword' }
+        }
+      },
+
+      engagingOrganisations: {
+        type: 'nested',
+        properties: {
+          organisationId: { type: 'keyword' },
+          name: { type: 'text' },
+          acronym: { type: 'keyword' }
+        }
+      },
+      engagingUnits: {
+        type: 'nested',
+        properties: {
+          unitId: { type: 'keyword' },
+          name: { type: 'text' },
+          acronym: { type: 'keyword' },
+          assignedAccessors: {
+            type: 'nested',
+            properties: {
+              roleId: { type: 'keyword' },
+              userId: { type: 'keyword' },
+              identityId: { type: 'keyword' }
+            }
+          }
+        }
+      },
+      shares: { type: 'keyword' },
+
+      suggestions: {
+        type: 'nested',
+        properties: {
+          suggestedUnitId: { type: 'keyword' },
+          suggestedBy: { type: 'keyword' }
+        }
+      },
+
+      assessment: {
+        properties: {
+          id: { type: 'keyword' },
+          assignedToId: { type: 'keyword' },
+          assignedToIdentityId: { type: 'keyword' },
+          updatedAt: { type: 'date' },
+          isExempt: { type: 'boolean' }
+        }
+      },
+
+      filters: {
+        properties: {
+          name: KeywordType,
+          countryName: KeywordType,
+          categories: KeywordType,
+          careSettings: KeywordType,
+          involvedAACProgrammes: KeywordType,
+          diseasesAndConditions: KeywordType,
+          keyHealthInequalities: KeywordType
+        }
+      },
+
+      document: {
+        properties: {
+          version: { type: 'constant_keyword' },
+          INNOVATION_DESCRIPTION: {
+            properties: {
+              name: { type: 'text' },
+              description: { type: 'text' },
+              postcode: { type: 'text' },
+              countryName: { type: 'text' },
+              website: { type: 'text' },
+              categories: { type: 'text' },
+              otherCategoryDescription: { type: 'text' },
+              mainCategory: { type: 'text' },
+              areas: { type: 'text' },
+              careSettings: { type: 'text' },
+              otherCareSetting: { type: 'text' },
+              mainPurpose: { type: 'text' },
+              supportDescription: { type: 'text' },
+              currentlyReceivingSupport: { type: 'text' },
+              involvedAACProgrammes: { type: 'text' }
+            }
+          },
+          UNDERSTANDING_OF_NEEDS: {
+            properties: {
+              problemsTackled: { type: 'text' },
+              howInnovationWork: { type: 'text' },
+              benefitsOrImpact: { type: 'text' },
+              impactDiseaseCondition: { type: 'text' },
+              diseasesConditionsImpact: { type: 'text' },
+              estimatedCarbonReductionSavings: { type: 'text' },
+              estimatedCarbonReductionSavingsDescription: { type: 'text' },
+              carbonReductionPlan: { type: 'text' },
+              keyHealthInequalities: { type: 'text' },
+              completedHealthInequalitiesImpactAssessment: { type: 'text' },
+              hasProductServiceOrPrototype: { type: 'text' }
+            }
+          },
+          EVIDENCE_OF_EFFECTIVENESS: {
+            properties: {
+              hasEvidence: { type: 'text' },
+              currentlyCollectingEvidence: { type: 'text' },
+              summaryOngoingEvidenceGathering: { type: 'text' },
+              needsSupportAnyArea: { type: 'text' }
+            }
+          },
+          MARKET_RESEARCH: {
+            properties: {
+              hasMarketResearch: { type: 'text' },
+              marketResearch: { type: 'text' },
+              optionBestDescribesInnovation: { type: 'text' },
+              whatCompetitorsAlternativesExist: { type: 'text' }
+            }
+          },
+          CURRENT_CARE_PATHWAY: {
+            properties: {
+              innovationPathwayKnowledge: { type: 'text' },
+              potentialPathway: { type: 'text' }
+            }
+          },
+          TESTING_WITH_USERS: {
+            properties: {
+              involvedUsersDesignProcess: { type: 'text' },
+              testedWithIntendedUsers: { type: 'text' },
+              intendedUserGroupsEngaged: { type: 'text' },
+              otherIntendedUserGroupsEngaged: { type: 'text' },
+              userTests: {
+                type: 'nested',
+                properties: {
+                  kind: { type: 'text' },
+                  feedback: { type: 'text' }
+                }
+              }
+            }
+          },
+          REGULATIONS_AND_STANDARDS: {
+            properties: {
+              hasRegulationKnowledge: { type: 'text' },
+              standards: {
+                type: 'nested',
+                properties: {
+                  type: { type: 'text' },
+                  hasMet: { type: 'text' }
+                }
+              },
+              otherRegulationDescription: { type: 'text' }
+            }
+          },
+          INTELLECTUAL_PROPERTY: {
+            properties: {
+              hasPatents: { type: 'text' },
+              patentNumbers: { type: 'text' },
+              hasOtherIntellectual: { type: 'text' },
+              otherIntellectual: { type: 'text' }
+            }
+          },
+          REVENUE_MODEL: {
+            properties: {
+              hasRevenueModel: { type: 'text' },
+              revenues: { type: 'text' },
+              otherRevenueDescription: { type: 'text' },
+              payingOrganisations: { type: 'text' },
+              benefittingOrganisations: { type: 'text' },
+              hasFunding: { type: 'text' },
+              fundingDescription: { type: 'text' }
+            }
+          },
+          COST_OF_INNOVATION: {
+            properties: {
+              hasCostKnowledge: { type: 'text' },
+              costDescription: { type: 'text' },
+              patientsRange: { type: 'text' },
+              eligibilityCriteria: { type: 'text' },
+              sellExpectations: { type: 'text' },
+              usageExpectations: { type: 'text' },
+              costComparison: { type: 'text' }
+            }
+          },
+          DEPLOYMENT: {
+            properties: {
+              hasDeployPlan: { type: 'text' },
+              isDeployed: { type: 'text' },
+              deploymentPlans: { type: 'text' },
+              commercialBasis: { type: 'text' },
+              organisationDeploymentAffect: { type: 'text' },
+              hasResourcesToScale: { type: 'text' }
+            }
+          },
+          evidences: {
+            type: 'nested',
+            properties: {
+              id: { type: 'keyword' },
+              evidenceSubmitType: { type: 'text' },
+              evidenceType: { type: 'text' },
+              description: { type: 'text' },
+              summary: { type: 'text' }
+            }
+          }
+        }
+      }
+    }
+  }
+};

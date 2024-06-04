@@ -14,7 +14,8 @@ export enum QueuesEnum {
   IDENTITY = 'identity-ops-queue',
   IN_APP = 'in-app-send-queue',
   NOTIFICATION = 'notification-queue',
-  NOTIFY_ME = 'notify-me-queue'
+  NOTIFY_ME = 'notify-me-queue',
+  ELASTIC_SEARCH = 'elasticsearch-queue'
 }
 
 @injectable()
