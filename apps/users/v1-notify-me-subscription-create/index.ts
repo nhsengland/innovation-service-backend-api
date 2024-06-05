@@ -9,9 +9,9 @@ import type { CustomContextType } from '@users/shared/types';
 
 import { container } from '../_config';
 
-import { BodySchema, BodyType } from './validation.schemas';
-import SYMBOLS from '../_services/symbols';
 import type { NotifyMeService } from '../_services/notify-me.service';
+import SYMBOLS from '../_services/symbols';
+import { BodySchema, BodyType } from './validation.schemas';
 
 class V1NotifyMeSubscriptionCreate {
   @JwtDecoder()
@@ -21,18 +21,16 @@ class V1NotifyMeSubscriptionCreate {
 
     try {
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
-      // TODO: - we should validate the body.config.preConditions that same way we do on notify-me-listener.
 
       const auth = await authorizationService
         .validate(context)
         .setInnovation(body.innovationId)
         .checkAssessmentType()
         .checkAccessorType()
-        .checkInnovatorType()
         .checkInnovation()
         .verify();
 
-      await notifyMeService.createSubscription(auth.getContext(), body.innovationId, body.config);
+      await notifyMeService.createSubscription(auth.getContext(), body.innovationId, body.config as any);
 
       context.res = ResponseHelper.NoContent();
       return;

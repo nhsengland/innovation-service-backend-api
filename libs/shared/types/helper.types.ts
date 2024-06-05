@@ -5,3 +5,5 @@ export type TypeFromArray<T> = T extends ReadonlyArray<infer K> ? K : never;
  *  ie: type A = UnionToIntersection<{a: string} | {b: number}> // {a: string, b: number}
  */
 export type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (k: infer I) => void ? I : never;
+
+export type ExcludeEnum<T, E extends T> = T extends E ? never : T;

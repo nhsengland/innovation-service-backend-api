@@ -969,54 +969,46 @@ paths:
                   type: string
                   format: uuid
                 config:
-                  type: object
-                  properties:
-                    eventType:
-                      type: string
-                    preConditions:
-                      type: object
-                      properties: {}
-                      additionalProperties: false
-                    subscriptionType:
-                      type: string
-                      enum:
-                        - INSTANTLY
-                        - SCHEDULED
-                        - PERIODIC
-                  required:
-                    - eventType
-                    - preConditions
-                    - subscriptionType
-                  additionalProperties: false
                   anyOf:
                     - type: object
                       properties:
-                        date:
-                          type: string
-                          format: date-time
-                        customMessages:
-                          type: object
-                          properties:
-                            inApp:
-                              type: string
-                              maxLength: 50
-                            email:
-                              type: string
-                              maxLength: 2000
-                          additionalProperties: false
-                      required:
-                        - date
-                      additionalProperties: false
-                    - type: object
-                      properties:
-                        periodicity:
+                        eventType:
                           type: string
                           enum:
-                            - HOURLY
-                            - DAILY
+                            - SUPPORT_UPDATED
+                        subscriptionType:
+                          type: string
+                          enum:
+                            - INSTANTLY
+                          default: INSTANTLY
+                        preConditions:
+                          type: object
+                          properties:
+                            units:
+                              type: array
+                              items:
+                                type: string
+                                format: uuid
+                              minItems: 1
+                            status:
+                              type: array
+                              items:
+                                type: string
+                                enum:
+                                  - ENGAGING
+                                  - WAITING
+                                  - UNSUITABLE
+                                  - CLOSED
+                              minItems: 1
+                          required:
+                            - units
+                            - status
+                          additionalProperties: false
                       required:
-                        - periodicity
+                        - eventType
+                        - preConditions
                       additionalProperties: false
+                      x-required: true
               required:
                 - innovationId
                 - config

@@ -1,4 +1,4 @@
-import { inject, injectable } from 'inversify';
+import { injectable } from 'inversify';
 import type { EntityManager } from 'typeorm';
 
 import {
@@ -7,24 +7,21 @@ import {
   NotifyMeSubscriptionEntity,
   UserRoleEntity
 } from '@users/shared/entities';
-import type { DomainContextType, SubscriptionConfig, NotifyMeMessageType } from '@users/shared/types';
+import type { DomainContextType, SubscriptionConfig } from '@users/shared/types';
 
+import type { NotifyMeConfig } from '../_types/notify-me.types';
 import { BaseService } from './base.service';
-import { SHARED_SYMBOLS } from '@users/shared/services/symbols';
-import type { StorageQueueService } from '@users/shared/services';
-import { QueuesEnum } from '@users/shared/services/integrations/storage-queue.service';
-
 
 @injectable()
 export class NotifyMeService extends BaseService {
-  constructor(@inject(SHARED_SYMBOLS.StorageQueueService) private storageQueueService: StorageQueueService) {
+  constructor() { // @inject(SHARED_SYMBOLS.StorageQueueService) private storageQueueService: StorageQueueService
     super();
   }
 
   async createSubscription(
     domainContext: DomainContextType,
     innovationId: string,
-    config: SubscriptionConfig,
+    config: NotifyMeConfig,
     entityManager?: EntityManager
   ): Promise<void> {
     const em = entityManager ?? this.sqlConnection.manager;
@@ -39,6 +36,7 @@ export class NotifyMeService extends BaseService {
       })
     );
 
+    /* TODO
     if (config.subscriptionType === 'SCHEDULED') {
       await this.storageQueueService.sendMessage<NotifyMeMessageType<'REMINDER'>>(QueuesEnum.NOTIFY_ME, {
         data: {
@@ -51,6 +49,7 @@ export class NotifyMeService extends BaseService {
         }
       });
     }
+    */
   }
 
   async getSubscriptions(

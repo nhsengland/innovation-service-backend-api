@@ -1,4 +1,4 @@
-import type { DomainContextType } from "./domain.types";
+import type { DomainContextType } from './domain.types';
 
 export type NotifyMeMessageType<T extends EventType> = {
   data: {
@@ -22,7 +22,6 @@ export type EventPayloads = {
   SUPPORT_UPDATED: {
     supportId: string;
     status: string;
-    updatedByOrg: string;
     updatedByUnit: string;
   };
   PROGRESS_UPDATE_CREATED: {
@@ -31,14 +30,15 @@ export type EventPayloads = {
   };
   REMINDER: Record<string, never>;
 };
-export type EventType = keyof EventPayloads;
+export const EventType = ['SUPPORT_UPDATED', 'PROGRESS_UPDATE_CREATED', 'REMINDER'] as const;
+export type EventType = (typeof EventType)[number];
 
 /**
  * Subscription Types
  * Contains the subscription types and specific payloads configurations that each contain.
  */
 export type SubscriptionType = SubscriptionTypes['subscriptionType'];
-type SubscriptionTypes = InstantSubscriptionType | ScheduledSubscriptionType | PeriodicSubscriptionType;
+export type SubscriptionTypes = InstantSubscriptionType | ScheduledSubscriptionType | PeriodicSubscriptionType;
 export type InstantSubscriptionType = { subscriptionType: 'INSTANTLY' };
 export type ScheduledSubscriptionType = {
   subscriptionType: 'SCHEDULED';
