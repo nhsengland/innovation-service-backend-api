@@ -30,9 +30,9 @@ class V1NotifyMeSubscriptionCreate {
         .checkInnovation()
         .verify();
 
-      await notifyMeService.createSubscription(auth.getContext(), body.innovationId, body.config as any);
+      await notifyMeService.createSubscription(auth.getContext(), body.innovationId, body.config);
 
-      context.res = ResponseHelper.NoContent();
+      context.res = ResponseHelper.Created();
       return;
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
