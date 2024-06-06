@@ -1207,6 +1207,19 @@ paths:
           description: Invalid innovation payload
         "422":
           description: Unprocessable entity
+  /v1/ir-schema:
+    post:
+      description: Create IR schema
+      operationId: v1-ir-schema-create
+      responses:
+        "204":
+          description: IR schema created
+        "400":
+          description: Bad request
+        "401":
+          description: Not authorized
+        "500":
+          description: An error occurred
   /v1/organisation-unit/{unit}/statistics:
     get:
       description: Get an organisation unit statistics
