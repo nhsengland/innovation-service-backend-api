@@ -24,6 +24,11 @@ class V1NotifyMeListener {
 
     context.log.info('NOTIFYME LISTENER: ', JSON.stringify(requestMessage));
 
+    // Temporary just to do nothing notification related while in development
+    if (1 < Number(5)) {
+      return;
+    }
+
     try {
       const message = JoiHelper.Validate<MessageType>(MessageSchema, requestMessage);
       JoiHelper.Validate(EventParamsSchema[message.data.type], message.data.params);

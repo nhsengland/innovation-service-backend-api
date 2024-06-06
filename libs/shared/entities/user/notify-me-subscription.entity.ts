@@ -2,8 +2,8 @@ import { Column, Entity, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn
 
 import { BaseEntity } from '../base.entity';
 import { InnovationEntity } from '../innovation/innovation.entity';
-import { UserRoleEntity } from './user-role.entity';
 import { NotificationScheduleEntity } from './notification-schedule.entity';
+import { UserRoleEntity } from './user-role.entity';
 
 import type { SubscriptionConfig } from '../../types';
 

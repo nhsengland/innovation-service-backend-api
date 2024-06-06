@@ -1,8 +1,8 @@
 import Joi, { ObjectSchema } from 'joi';
 
-import { DomainContextSchema, DomainContextType, EventPayloads, EventType } from '@notifications/shared/types';
-import { InnovationSupportStatusEnum } from '@notifications/shared/enums';
 import { TEXTAREA_LENGTH_LIMIT } from '@notifications/shared/constants';
+import { InnovationSupportStatusEnum } from '@notifications/shared/enums';
+import { DomainContextSchema, DomainContextType, EventPayloads, EventType } from '@notifications/shared/types';
 
 export type MessageType = {
   data: {
@@ -20,8 +20,9 @@ export const MessageSchema = Joi.object<MessageType>({
     requestUser: DomainContextSchema.required(),
     innovationId: Joi.string().required(),
 
-    // TODO: This should be validated against an Array or Enum
-    type: Joi.string().required(),
+    type: Joi.string()
+      .valid(...Object.values(EventType))
+      .required(),
 
     params: Joi.object().required()
   }).required()
@@ -29,17 +30,16 @@ export const MessageSchema = Joi.object<MessageType>({
 
 const RequiredIdSchema = Joi.string().guid().required();
 export const EventParamsSchema: { [key in EventType]: ObjectSchema<EventPayloads[key]> } = {
-  SUPPORT_UPDATED: Joi.object({
+  SUPPORT_UPDATED: Joi.object<EventPayloads['SUPPORT_UPDATED']>({
     status: Joi.string()
       .valid(...Object.values(InnovationSupportStatusEnum))
       .required(),
     supportId: RequiredIdSchema,
-    updatedByOrg: RequiredIdSchema,
     updatedByUnit: RequiredIdSchema
   }).required(),
-  PROGRESS_UPDATE_CREATED: Joi.object({
+  PROGRESS_UPDATE_CREATED: Joi.object<EventPayloads['PROGRESS_UPDATE_CREATED']>({
     unitId: RequiredIdSchema,
     description: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).required()
   }).required(),
-  REMINDER: Joi.object({})
+  REMINDER: Joi.object<EventPayloads['REMINDER']>({})
 };
