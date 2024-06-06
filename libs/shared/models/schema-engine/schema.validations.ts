@@ -29,9 +29,10 @@ const postcodeFormat = Joi.alternatives(Joi.boolean().valid(true), StringSchema)
 const urlFormat = Joi.alternatives(Joi.boolean().valid(true), StringSchema);
 const max = Joi.object({ length: Joi.number().integer().min(1), errorMessage: StringSchema });
 const maxLength = Joi.number().integer().min(1);
+const condition = Joi.object({ id: StringSchema.required(), options: Joi.array().items(StringSchema).required() });
 
 const textLimit = Joi.string().valid('xs');
-const textAreaLimit = Joi.string().valid( 'xs', 's', 'm', 'l', 'xl', 'xxl')
+const textAreaLimit = Joi.string().valid('xs', 's', 'm', 'l', 'xl', 'xxl');
 
 const text = Joi.object({
   id,
@@ -40,7 +41,7 @@ const text = Joi.object({
   description: Joi.string().min(1).optional(),
   validations: { isRequired, maxLength, postcodeFormat, urlFormat },
   lengthLimit: textLimit,
-  condition: Joi.string().min(1).optional()
+  condition
 });
 
 const textArea = Joi.object({
@@ -52,8 +53,8 @@ const textArea = Joi.object({
     isRequired: isRequired.optional(),
     maxLength: maxLength.optional()
   },
-  textAreaLimit,
-  condition: Joi.string().min(1).optional()
+  lengthLimit: textAreaLimit,
+  condition
 });
 
 const radioGroup = Joi.object({
@@ -76,7 +77,7 @@ const radioGroup = Joi.object({
       })
     )
     .required(),
-  condition: Joi.string().min(1).optional()
+  condition
 });
 
 const autocompleteArray = Joi.object({
@@ -96,7 +97,7 @@ const autocompleteArray = Joi.object({
       })
     )
     .required(),
-  condition: Joi.string().min(1).optional()
+  condition
 });
 
 const checkboxArray = Joi.object({
@@ -123,8 +124,8 @@ const checkboxArray = Joi.object({
       })
     )
     .required(),
-  condition: Joi.string().min(1).optional(),
-  addQuestion: Joi.alternatives(text, textArea, radioGroup)
+  addQuestion: Joi.alternatives(text, textArea, radioGroup),
+  condition
 });
 
 const fieldsGroup = Joi.object({
@@ -139,7 +140,7 @@ const fieldsGroup = Joi.object({
   addNewLabel: Joi.string().min(1),
   field: text.required(),
   addQuestion: Joi.alternatives(text, textArea).optional(),
-  condition: Joi.string().min(1).optional()
+  condition
 });
 
 const subSection = Joi.object({

@@ -19,7 +19,7 @@ type Base = {
   label: string;
   description?: string;
   validations?: Validations;
-  condition?: string;
+  condition?: { id: string, options: string[] };
 };
 
 export type Text = Base & {

@@ -1839,23 +1839,10 @@ paths:
         "500":
           description: Internal server error
     get:
-      operationId: v1-innovation-file-info
-      description: Get innovation file info
+      operationId: v1-ir-schema-info
+      description: Get current ir schema
       tags:
-        - "[v1] Innovation Files"
-      parameters:
-        - name: innovationId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: fileId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+        - "[v1] IR Schema"
       responses:
         "200":
           description: Success
@@ -1863,67 +1850,15 @@ paths:
             application/json:
               schema:
                 type: object
-                properties:
-                  id:
-                    type: string
-                  context:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                      type:
-                        type: string
-                        enum:
-                          - INNOVATION
-                          - INNOVATION_EVIDENCE
-                          - INNOVATION_MESSAGE
-                          - INNOVATION_PROGRESS_UPDATE
-                          - INNOVATION_SECTION
-                  name:
-                    type: string
-                  description:
-                    type: string
-                  createdAt:
-                    type: string
-                  createdBy:
-                    type: object
-                    properties:
-                      name:
-                        type: string
-                      role:
-                        type: string
-                        enum:
-                          - ADMIN
-                          - INNOVATOR
-                          - ACCESSOR
-                          - ASSESSMENT
-                          - QUALIFYING_ACCESSOR
-                      isOwner:
-                        type: boolean
-                      orgUnitName:
-                        type: string
-                  file:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                        description: Storage Id
-                      name:
-                        type: string
-                      size:
-                        type: number
-                      extension:
-                        type: string
-                      url:
-                        type: string
+                properties: {}
         "400":
-          description: The request is invalid.
+          description: Bad request
         "401":
-          description: The user is not authenticated.
+          description: Not authorized
         "403":
-          description: The user is not authorized to access this resource.
+          description: Forbidden
         "500":
-          description: An error occurred while processing the request.
+          description: An error occurred
   /v1/{innovationId}/files/upload-url:
     post:
       operationId: v1-innovation-file-upload-url
@@ -2031,6 +1966,7 @@ paths:
                         - ADMIN
                         - ACCOUNT
                         - AUTOMATIC
+                        - NOTIFY_ME
       responses:
         "204":
           description: Success

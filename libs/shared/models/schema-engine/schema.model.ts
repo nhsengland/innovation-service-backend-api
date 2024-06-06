@@ -40,47 +40,37 @@ export class SchemaModel {
     }
   }
 
-  private validateCondition(question: any, path: string, idList: { [key: string]: any }) {
-    question.condition.split(/\s*and\s*|\s*or\s*/g).forEach((condition: string) => {
-      const re = /^\s*data.(?<id>\w+)(\s*==\s*|\s*!=\s*)'(\w+)'\s*$/g;
-      const matches = re.exec(condition);
+  private validateCondition(question: Question, path: string, idList: { [key: string]: any}) {
+    const condition = question.condition;
+    if(condition) {
+        if (idList[condition.id]) {
+          if (['radio-group', 'checkbox-array', 'autocomplete-array'].includes(idList[condition.id].dataType)) {
+            const list = typeof idList[condition.id].items === 'string' ? idList[idList[condition.id].items].items : idList[condition.id].items;
+            const options: string[] = list.map((l: { [key: string]: any }) => l['id']);
 
-      if (matches) {
-        const [, id, , name] = matches;
-
-        if (id && idList[id]) {
-          if (['radio-group', 'checkbox-array', 'autocomplete-array'].includes(idList[id].dataType)) {
-            const list = typeof idList[id].items === 'string' ? idList[idList[id].items].items : idList[id].items;
-
-            if (!list.find((l: { [key: string]: any }) => l['id'] === name)) {
+            const wrongOptions = condition.options.filter(o => !options.includes(o));
+            if(wrongOptions.length > 0) {
               // the referenced list does not have the option
               this.errorList.push({
-                message: `${path}.condition references a wrong option (${name})`,
+                message: `${path}.condition references a wrong option (${wrongOptions})`,
                 context: question
               });
-            }
+          }
           } else {
             // id must be radio-group, checkbox-array or autocomplete-array
             this.errorList.push({
-              message: `${path}.condition references non-tipified dataType (${id})`,
+              message: `${path}.condition references non-tipified dataType (${condition.id})`,
               context: question
             });
           }
         } else {
           // id must reference an previous question
           this.errorList.push({
-            message: `${path}.condition must reference a previous question (${id})`,
+            message: `${path}.condition must reference a previous question (${condition.id})`,
             context: question
           });
         }
-      } else {
-        // sub-condition must use the format <id> =|<> '<name>'
-        this.errorList.push({
-          message: `${path}.condition in wrong format`,
-          context: question
-        });
-      }
-    });
+    }
   }
 
   private validateQuestion(question: any, path: string, idList: { [key: string]: any }) {

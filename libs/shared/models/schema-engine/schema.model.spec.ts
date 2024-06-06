@@ -358,7 +358,7 @@ describe('models / schema-engine / schema.model.ts', () => {
                     id: 'q2',
                     dataType: 'text',
                     label: 'Label 2',
-                    condition: "data.q1 != 'basedOutsideUk'"
+                    condition: { id: 'q1', options: ['basedOutsideUk', 'basedOutsideUs'] }
                   }
                 ]
               }
@@ -372,12 +372,13 @@ describe('models / schema-engine / schema.model.ts', () => {
 
       expect(errors).toStrictEqual([
         {
-          message: 'sections[0].subSections[0].questions[1].condition references a wrong option (basedOutsideUk)',
+          message:
+            'sections[0].subSections[0].questions[1].condition references a wrong option (basedOutsideUk,basedOutsideUs)',
           context: {
             id: 'q2',
             dataType: 'text',
             label: 'Label 2',
-            condition: "data.q1 != 'basedOutsideUk'"
+            condition: { id: 'q1', options: ['basedOutsideUk', 'basedOutsideUs'] }
           }
         }
       ]);
@@ -403,7 +404,10 @@ describe('models / schema-engine / schema.model.ts', () => {
                     id: 'q2',
                     dataType: 'text',
                     label: 'Label 2',
-                    condition: "data.q1 != 'basedOutsideUk'"
+                    condition: {
+                      id: 'q1',
+                      options: ['basedOutsideUk']
+                    }
                   }
                 ]
               }
@@ -422,7 +426,7 @@ describe('models / schema-engine / schema.model.ts', () => {
             id: 'q2',
             dataType: 'text',
             label: 'Label 2',
-            condition: "data.q1 != 'basedOutsideUk'"
+            condition: { id: 'q1', options: ['basedOutsideUk'] }
           }
         }
       ]);
@@ -443,7 +447,7 @@ describe('models / schema-engine / schema.model.ts', () => {
                     id: 'q2',
                     dataType: 'text',
                     label: 'Label 2',
-                    condition: "data.q1 != 'basedOutsideUk'"
+                    condition: { id: 'q1', options: ['basedOutsideUk'] }
                   },
                   {
                     id: 'q1',
@@ -468,47 +472,7 @@ describe('models / schema-engine / schema.model.ts', () => {
             id: 'q2',
             dataType: 'text',
             label: 'Label 2',
-            condition: "data.q1 != 'basedOutsideUk'"
-          }
-        }
-      ]);
-    });
-
-    it('should give error when the condition is in the wrong format', () => {
-      const body: IRSchemaType = {
-        sections: [
-          {
-            id: 'id1',
-            title: 'Section 1',
-            subSections: [
-              {
-                id: 'subId1',
-                title: 'Subsection 1.1',
-                questions: [
-                  {
-                    id: 'q2',
-                    dataType: 'text',
-                    label: 'Label 2',
-                    condition: "data.q1 === 'basedOutsideUk'"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      };
-      const schema = new SchemaModel(body);
-
-      const { errors } = schema.validate();
-
-      expect(errors).toStrictEqual([
-        {
-          message: 'sections[0].subSections[0].questions[0].condition in wrong format',
-          context: {
-            id: 'q2',
-            dataType: 'text',
-            label: 'Label 2',
-            condition: "data.q1 === 'basedOutsideUk'"
+            condition: { id: 'q1', options: ['basedOutsideUk'] }
           }
         }
       ]);
