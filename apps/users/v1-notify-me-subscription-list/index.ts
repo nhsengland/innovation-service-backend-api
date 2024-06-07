@@ -36,7 +36,7 @@ class V1NotifyMeSubscriptionList {
         queryParams.innovationId!
       );
 
-      context.res = ResponseHelper.Ok<ResponseDTO>(subscriptions);
+      context.res = ResponseHelper.Ok<ResponseDTO>(subscriptions as any); // TODO
       return;
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);

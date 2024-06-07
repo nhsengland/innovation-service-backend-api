@@ -1,16 +1,20 @@
 import { injectable } from 'inversify';
+import { groupBy } from 'lodash';
 import type { EntityManager } from 'typeorm';
 
 import {
   InnovationEntity,
   NotificationScheduleEntity,
   NotifyMeSubscriptionEntity,
+  OrganisationUnitEntity,
   UserRoleEntity
 } from '@users/shared/entities';
-import type { DomainContextType, SubscriptionConfig } from '@users/shared/types';
-
-import { groupBy } from 'lodash';
-import type { DefaultResponseDTO, NotifyMeConfig, SupportUpdateResponseTypes } from '../_types/notify-me.types';
+import type { DomainContextType, SubscriptionConfig, SupportUpdateCreated } from '@users/shared/types';
+import type {
+  DefaultResponseDTO,
+  SubscriptionResponseDTO,
+  SupportUpdateResponseTypes
+} from '../_types/notify-me.types';
 import { BaseService } from './base.service';
 
 @injectable()
@@ -23,7 +27,7 @@ export class NotifyMeService extends BaseService {
   async createSubscription(
     domainContext: DomainContextType,
     innovationId: string,
-    config: NotifyMeConfig,
+    config: SubscriptionConfig,
     entityManager?: EntityManager
   ): Promise<void> {
     const em = entityManager ?? this.sqlConnection.manager;
@@ -58,55 +62,54 @@ export class NotifyMeService extends BaseService {
     domainContext: DomainContextType,
     innovationId: string,
     entityManager?: EntityManager
-  ): Promise<
-    {
-      id: string;
-      innovation: { id: string; name: string };
-      config: SubscriptionConfig;
-      scheduledNotification?: {
-        sendDate: Date;
-        params: { inApp: Record<string, unknown>; email: Record<string, unknown> };
-      };
-    }[]
-  > {
+  ): Promise<SubscriptionResponseDTO[]> {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const query = em
       .createQueryBuilder(NotifyMeSubscriptionEntity, 'subscription')
       .select([
         'subscription.id',
-        'subscription.config'
+        'subscription.eventType',
+        'subscription.config',
+        'subscription.updatedAt'
         // 'scheduled.sendDate',
         // 'scheduled.params'
       ])
       // .leftJoin('subscription.scheduledNotification', 'scheduled')
       .where('subscription.user_role_id = :roleId', { roleId: domainContext.currentRole.id })
-      .andWhere('subscription.innovation_id = :innovationId', { innovationId: innovationId });
-
-    // TODO orderBy
+      .andWhere('subscription.innovation_id = :innovationId', { innovationId: innovationId })
+      .orderBy('subscription.updatedAt', 'DESC');
 
     const subscriptions = await query.getMany();
+    const groupedSubscriptions = groupBy(subscriptions, 'eventType');
 
-    // Retrieve required data
-    const groupedSubscriptions = groupBy(subscriptions, 'config.eventType');
-    const responseSubscriptions = Object.entries(groupedSubscriptions).map(([eventType, subscriptions]) =>
-      eventType in this.#subscriptionResponseDTO
-        ? this.#subscriptionResponseDTO[eventType as any](subscriptions)
-        : this.defaultSubscriptionResponseDTO(subscriptions)
-    );
+    // Map of subscription ids to their DTOs
+    const responseSubscriptions = new Map<string, SubscriptionResponseDTO>();
+    for (const [eventType, subscriptions] of Object.entries(groupedSubscriptions)) {
+      const responses =
+        eventType in this.subscriptionResponseDTO
+          ? await this.subscriptionResponseDTO[eventType as keyof typeof this.subscriptionResponseDTO](
+              subscriptions as any,
+              em
+            ) // safe because of groupBy
+          : this.defaultSubscriptionResponseDTO(subscriptions);
 
-    throw new Error('Not implemented');
+      responses.forEach(s => responseSubscriptions.set(s.id, s));
+    }
+
+    return subscriptions.map(s => responseSubscriptions.get(s.id)!);
   }
 
-  readonly #subscriptionResponseDTO = {
-    SUPPORT_UPDATED: this.x
+  private readonly subscriptionResponseDTO = {
+    SUPPORT_UPDATED: this.supportUpdateResponseDTO.bind(this)
   };
 
   private defaultSubscriptionResponseDTO(subscriptions: NotifyMeSubscriptionEntity[]): DefaultResponseDTO[] {
     return subscriptions.map(s => ({
       id: s.id,
+      updatedAt: s.updatedAt,
       eventType: s.eventType,
-      subscriptionType: s.subscriptionType
+      subscriptionType: s.config.subscriptionType
       // config: s.config,
       // scheduledNotification: s.scheduledNotification
       //   ? {
@@ -117,8 +120,66 @@ export class NotifyMeService extends BaseService {
     }));
   }
 
-  private x(subscriptions: NotifyMeSubscriptionEntity[]): SupportUpdateResponseTypes['SUPPORT_UPDATED'] {
-    return this.defaultSubscriptionResponseDTO(subscriptions) as any;
+  private async supportUpdateResponseDTO(
+    subscriptions: (NotifyMeSubscriptionEntity & { config: SupportUpdateCreated })[],
+    em: EntityManager
+  ): Promise<SupportUpdateResponseTypes['SUPPORT_UPDATED'][]> {
+    const units = subscriptions.flatMap(s => s.config.preConditions.units);
+    const retrievedUnits = new Map(
+      (
+        await em
+          .createQueryBuilder(OrganisationUnitEntity, 'unit')
+          .select(['unit.id', 'unit.name', 'unit.acronym', 'org.id', 'org.name', 'org.acronym'])
+          .innerJoin('unit.organisation', 'org')
+          .where('unit.id IN (:...unitIds)', { unitIds: units })
+          .andWhere('unit.inactivatedAt IS NULL')
+          .getMany()
+      ).map(u => [u.id, u])
+    );
+
+    return subscriptions.map(s => ({
+      id: s.id,
+      updatedAt: s.updatedAt,
+      eventType: s.config.eventType,
+      subscriptionType: s.config.subscriptionType,
+      organisations: this.groupUnitsByOrganisation(s.config.preConditions.units, retrievedUnits),
+      status: s.config.preConditions.status
+    }));
+  }
+
+  // receives a list of units and a map of unit ids to units with their organisations and returns the units grouped by organisation
+  private groupUnitsByOrganisation(
+    units: string[],
+    retrievedUnits: Map<string, OrganisationUnitEntity>
+  ): {
+    id: string;
+    name: string;
+    acronym: string;
+    units: {
+      id: string;
+      name: string;
+      acronym: string;
+    }[];
+  }[] {
+    const organisations = {} as any;
+    units.forEach(u => {
+      const unit = retrievedUnits.get(u);
+      if (!unit) return;
+      if (!(unit.organisation.id in organisations)) {
+        organisations[unit.organisation.id] = {
+          id: unit.organisation.id,
+          name: unit.organisation.name,
+          acronym: unit.organisation.acronym,
+          units: []
+        };
+      }
+      organisations[unit.organisation.id].units.push({
+        id: unit.id,
+        name: unit.name,
+        acronym: unit.acronym
+      });
+    });
+    return organisations;
   }
 
   async deleteSubscription(

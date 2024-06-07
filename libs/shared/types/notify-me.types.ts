@@ -1,4 +1,6 @@
+import type { InnovationSupportStatusEnum } from '../enums';
 import type { DomainContextType } from './domain.types';
+import type { ExcludeEnum } from './helper.types';
 
 export type NotifyMeMessageType<T extends EventType> = {
   data: {
@@ -11,7 +13,30 @@ export type NotifyMeMessageType<T extends EventType> = {
   };
 };
 
-export type SubscriptionConfig = TriggerConfigFromEventPayloads & SubscriptionTypes;
+// export type SubscriptionConfig = TriggerConfigFromEventPayloads & SubscriptionTypes;
+
+// TODO: Untying SubscriptionConfig from the EventPayloads, validate with Diogo, Progress update created also had unitId and some other stuff
+// that seems to be extra information, the validator for the event listener is the payload.
+// The listener will be generic as it currently is
+export type SupportUpdateCreated = {
+  eventType: 'SUPPORT_UPDATED';
+  subscriptionType: 'INSTANTLY';
+  preConditions: {
+    units: string[];
+    status: ExcludeEnum<InnovationSupportStatusEnum, InnovationSupportStatusEnum.UNASSIGNED>[];
+  };
+};
+
+export type SubscriptionConfig =
+  | SupportUpdateCreated
+  | {
+      eventType: Exclude<EventType, 'SUPPORT_UPDATED'>;
+      subscriptionType: SubscriptionType;
+      preConditions: any;
+      periodicity?: any;
+      date: Date;
+      customMessages?: any;
+    }; // TODO
 
 /*
  * Event Types
@@ -21,9 +46,8 @@ export type SubscriptionConfig = TriggerConfigFromEventPayloads & SubscriptionTy
 // Preconditions
 export type EventPayloads = {
   SUPPORT_UPDATED: {
-    supportId: string;
-    status: string;
-    updatedByUnit: string;
+    status: InnovationSupportStatusEnum;
+    units: string;
   };
   PROGRESS_UPDATE_CREATED: {
     unitId: string;
@@ -52,9 +76,9 @@ export type PeriodicSubscriptionType = { subscriptionType: 'PERIODIC'; periodici
  * Helpers
  */
 // Helper to infer the trigger config and pre-conditions from the Event Payloads
-type TriggerConfigFromEventPayloads = {
+export type TriggerConfigFromEventPayloads<T extends keyof EventPayloads = keyof EventPayloads> = {
   [K in EventType]: {
     eventType: K;
     preConditions: Partial<{ [X in keyof EventPayloads[K]]: EventPayloads[K][X] | EventPayloads[K][X][] }>;
   };
-}[keyof EventPayloads];
+}[T];

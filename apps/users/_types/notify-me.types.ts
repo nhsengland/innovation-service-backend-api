@@ -1,17 +1,9 @@
 import { InnovationSupportStatusEnum } from '@users/shared/enums';
-import type { EventType, ExcludeEnum, SubscriptionType } from '@users/shared/types';
+import type { EventType, ExcludeEnum, SubscriptionType, SupportUpdateCreated } from '@users/shared/types';
 import Joi from 'joi';
 
 //#region CreateDTO
-export type SupportUpdateCreatedDTO = {
-  eventType: 'SUPPORT_UPDATED';
-  subscriptionType: 'INSTANTLY';
-  preConditions: {
-    units: string[];
-    status: ExcludeEnum<InnovationSupportStatusEnum, InnovationSupportStatusEnum.UNASSIGNED>[];
-  };
-};
-const SupportUpdateCreatedSchema = Joi.object<SupportUpdateCreatedDTO>({
+const SupportUpdateCreatedSchema = Joi.object<SupportUpdateCreated>({
   eventType: Joi.string().valid('SUPPORT_UPDATED').required(),
   subscriptionType: Joi.string().valid('INSTANTLY').default('INSTANTLY'),
   preConditions: Joi.object({
@@ -27,18 +19,19 @@ const SupportUpdateCreatedSchema = Joi.object<SupportUpdateCreatedDTO>({
   }).required()
 }).required();
 
-export type NotifyMeConfig = SupportUpdateCreatedDTO;
 export const NotifyMeConfigSchema = Joi.alternatives(SupportUpdateCreatedSchema);
 //#endregion
 
 //#region ResponseDTO
 export type DefaultResponseDTO = {
   id: string;
+  updatedAt: Date;
   eventType: EventType;
   subscriptionType: SubscriptionType;
 };
 export type SupportUpdateResponseDTO = {
   id: string;
+  updatedAt: Date;
   eventType: 'SUPPORT_UPDATED';
   subscriptionType: 'INSTANTLY';
   organisations: {
@@ -51,7 +44,7 @@ export type SupportUpdateResponseDTO = {
       acronym: string;
     }[];
   }[];
-  statuses: ExcludeEnum<InnovationSupportStatusEnum, InnovationSupportStatusEnum.UNASSIGNED>[];
+  status: ExcludeEnum<InnovationSupportStatusEnum, InnovationSupportStatusEnum.UNASSIGNED>[];
 };
 
 export type SupportUpdateResponseTypes = {
@@ -59,4 +52,6 @@ export type SupportUpdateResponseTypes = {
   PROGRESS_UPDATE_CREATED: DefaultResponseDTO;
   REMINDER: DefaultResponseDTO;
 };
+
+export type SubscriptionResponseDTO = SupportUpdateResponseTypes[keyof SupportUpdateResponseTypes];
 //#endregion

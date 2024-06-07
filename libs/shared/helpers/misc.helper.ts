@@ -64,3 +64,18 @@ export const groupBy = <T, K extends keyof T>(array: T[], key: K): Map<T[K], T[]
     return acc;
   }, new Map<T[K], T[]>());
 };
+
+/**
+ * Converts a value to an array.
+ * @param value The value to convert.
+ * @returns An array containing the value or values.
+ */
+export const toArray = <T>(value: T | T[] | undefined): T[] => {
+  if (value === undefined) {
+    return [];
+  } else if (Array.isArray(value)) {
+    return value;
+  } else {
+    return [value];
+  }
+};
