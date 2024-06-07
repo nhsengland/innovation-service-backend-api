@@ -23,7 +23,7 @@ class V1IrSchemaCreate {
       const auth = await authorizationService.validate(context).checkAdminType().verify();
 
       const schemaModel = new SchemaModel(request.body);
-      const { schema, errors } = schemaModel.validate();
+      const { schema, errors } = schemaModel.runRules();
 
       if (errors.length > 0 || !schema) {
         throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD, { details: errors });

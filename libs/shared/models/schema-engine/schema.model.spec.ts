@@ -6,7 +6,7 @@ describe('models / schema-engine / schema.model.ts', () => {
 
     const schema = new SchemaModel(body);
 
-    const { errors } = schema.validate();
+    const { errors } = schema.runRules();
 
     expect(errors).toStrictEqual([
       {
@@ -27,7 +27,7 @@ describe('models / schema-engine / schema.model.ts', () => {
     };
     const schema = new SchemaModel(body);
 
-    const { errors } = schema.validate();
+    const { errors } = schema.runRules();
 
     expect(errors).toStrictEqual([
       {
@@ -57,7 +57,7 @@ describe('models / schema-engine / schema.model.ts', () => {
     };
     const schema = new SchemaModel(body);
 
-    const { errors } = schema.validate();
+    const { errors } = schema.runRules();
 
     expect(errors).toStrictEqual([
       {
@@ -89,7 +89,7 @@ describe('models / schema-engine / schema.model.ts', () => {
     };
     const schema = new SchemaModel(body);
 
-    const { errors } = schema.validate();
+    const { errors } = schema.runRules();
 
     expect(errors).toStrictEqual([
       {
@@ -124,7 +124,7 @@ describe('models / schema-engine / schema.model.ts', () => {
     };
     const schema = new SchemaModel(body);
 
-    const { errors } = schema.validate();
+    const { errors } = schema.runRules();
 
     expect(errors).toStrictEqual([
       {
@@ -168,7 +168,7 @@ describe('models / schema-engine / schema.model.ts', () => {
     };
     const schema = new SchemaModel(body);
 
-    const { errors } = schema.validate();
+    const { errors } = schema.runRules();
 
     expect(errors).toStrictEqual([
       {
@@ -214,7 +214,7 @@ describe('models / schema-engine / schema.model.ts', () => {
     };
     const schema = new SchemaModel(body);
 
-    const { errors } = schema.validate();
+    const { errors } = schema.runRules();
     expect(errors).toHaveLength(1);
   });
 
@@ -243,7 +243,7 @@ describe('models / schema-engine / schema.model.ts', () => {
     };
     const schema = new SchemaModel(body);
 
-    const { errors } = schema.validate();
+    const { errors } = schema.runRules();
 
     expect(errors).toStrictEqual([
       {
@@ -289,7 +289,7 @@ describe('models / schema-engine / schema.model.ts', () => {
     };
     const schema = new SchemaModel(body);
 
-    const { errors } = schema.validate();
+    const { errors } = schema.runRules();
     expect(errors).toHaveLength(1);
   });
 
@@ -329,11 +329,11 @@ describe('models / schema-engine / schema.model.ts', () => {
     };
     const schema = new SchemaModel(body);
 
-    const { errors } = schema.validate();
+    const { errors } = schema.runRules();
     expect(errors).toHaveLength(1);
   });
 
-  describe('validate condition', () => {
+  describe('runRules condition', () => {
     it('should give error when the referenced variable dont have the option', () => {
       const body: IRSchemaType = {
         sections: [
@@ -368,7 +368,7 @@ describe('models / schema-engine / schema.model.ts', () => {
       };
       const schema = new SchemaModel(body);
 
-      const { errors } = schema.validate();
+      const { errors } = schema.runRules();
 
       expect(errors).toStrictEqual([
         {
@@ -417,7 +417,7 @@ describe('models / schema-engine / schema.model.ts', () => {
       };
       const schema = new SchemaModel(body);
 
-      const { errors } = schema.validate();
+      const { errors } = schema.runRules();
 
       expect(errors).toStrictEqual([
         {
@@ -463,7 +463,7 @@ describe('models / schema-engine / schema.model.ts', () => {
       };
       const schema = new SchemaModel(body);
 
-      const { errors } = schema.validate();
+      const { errors } = schema.runRules();
 
       expect(errors).toStrictEqual([
         {

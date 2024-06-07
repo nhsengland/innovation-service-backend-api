@@ -1,24 +1,6 @@
 import Joi from 'joi';
 import type { IRSchemaType } from './schema.model';
 
-// const isRequired = Joi.alternatives([Joi.boolean().default(true), Joi.array().ordered(Joi.boolean(), StringSchema)]);
-// const pattern = Joi.alternatives([StringSchema, Joi.array().ordered(StringSchema, StringSchema)]);
-// const min = Joi.alternatives([Joi.number(), Joi.array().ordered(Joi.number(), StringSchema)]);
-// const max = Joi.alternatives([Joi.number(), Joi.array().ordered(Joi.number(), StringSchema)]);
-// const minLength = Joi.number();
-// const maxLength = Joi.number();
-// const equalToLength = Joi.alternatives([Joi.number(), Joi.array().ordered(Joi.number(), StringSchema)]);
-// const existsIn = Joi.alternatives([JoiHelper.AppCustomJoi()
-//       .stringArray()
-//       .items(Joi.string()), Joi.array().ordered(JoiHelper.AppCustomJoi()
-//       .stringArray()
-//       .items(Joi.string()), StringSchema)
-// ]);
-// const validEmail = Joi.alternatives(Joi.boolean(), Joi.array().ordered(Joi.boolean(), StringSchema));
-// const postcodeFormat = Joi.alternatives(Joi.boolean(), Joi.array().ordered(Joi.boolean(), StringSchema));
-// const urlFormat = Joi.alternatives(Joi.boolean(), Joi.array().ordered(Joi.boolean(), StringSchema));
-// const equalTo = Joi.alternatives(StringSchema, Joi.array().ordered(StringSchema, StringSchema))
-
 /**
  * TODO: See if I can simplify this
  */
@@ -28,6 +10,7 @@ const isRequired = Joi.alternatives(Joi.boolean().valid(true), StringSchema);
 const postcodeFormat = Joi.alternatives(Joi.boolean().valid(true), StringSchema);
 const urlFormat = Joi.alternatives(Joi.boolean().valid(true), StringSchema);
 const max = Joi.object({ length: Joi.number().integer().min(1), errorMessage: StringSchema });
+const min = Joi.object({ length: Joi.number().integer().min(1), errorMessage: StringSchema });
 const maxLength = Joi.number().integer().min(1);
 const condition = Joi.object({ id: StringSchema.required(), options: Joi.array().items(StringSchema).required() });
 
@@ -39,7 +22,7 @@ const text = Joi.object({
   dataType: Joi.string().valid('text').required(),
   label: Joi.string().min(1).required(),
   description: Joi.string().min(1).optional(),
-  validations: { isRequired, maxLength, postcodeFormat, urlFormat },
+  validations: Joi.object({ isRequired, maxLength, postcodeFormat, urlFormat }),
   lengthLimit: textLimit,
   condition
 });
@@ -49,10 +32,7 @@ const textArea = Joi.object({
   id,
   label: Joi.string().min(1).required(),
   description: Joi.string().min(1).optional(),
-  validations: {
-    isRequired: isRequired.optional(),
-    maxLength: maxLength.optional()
-  },
+  validations: Joi.object({ isRequired, maxLength }),
   lengthLimit: textAreaLimit,
   condition
 });
@@ -62,12 +42,9 @@ const radioGroup = Joi.object({
   id,
   label: Joi.string().min(1).required(),
   description: Joi.string().min(1).optional(),
-  validations: {
-    isRequired: isRequired.optional()
-  },
+  validations: Joi.object({ isRequired }),
   items: Joi.array()
     .items(
-      Joi.string(),
       Joi.object({ type: 'separator' }),
       Joi.object({ itemsFromAnswer: StringSchema.required() }),
       Joi.object({
@@ -85,10 +62,7 @@ const autocompleteArray = Joi.object({
   id,
   label: Joi.string().min(1).required(),
   description: Joi.string().min(1).optional(),
-  validations: {
-    isRequired: isRequired.optional(),
-    max: max.optional()
-  },
+  validations: Joi.object({ isRequired, max, min }),
   items: Joi.array()
     .items(
       Joi.object({
@@ -105,16 +79,10 @@ const checkboxArray = Joi.object({
   id,
   label: Joi.string().min(1).required(),
   description: Joi.string().min(1).optional(),
-  validations: {
-    isRequired: isRequired.optional(),
-    max: max.optional()
-  },
+  validations: Joi.object({ isRequired, max, min }),
   items: Joi.array()
     .items(
-      Joi.string(),
-      Joi.object({
-        type: 'separator'
-      }),
+      Joi.object({ type: 'separator' }),
       Joi.object({
         id,
         label: Joi.string().min(1),
@@ -133,10 +101,7 @@ const fieldsGroup = Joi.object({
   id,
   label: Joi.string().min(1).required(),
   description: Joi.string().min(1).optional(),
-  validations: {
-    isRequired: isRequired.optional(),
-    max: max.optional()
-  },
+  validations: Joi.object({ isRequired, max }),
   addNewLabel: Joi.string().min(1),
   field: text.required(),
   addQuestion: Joi.alternatives(text, textArea).optional(),

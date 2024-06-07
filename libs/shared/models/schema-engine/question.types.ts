@@ -1,17 +1,11 @@
 type Validations = {
-  isRequired?: boolean | [boolean, string];
-  pattern?: string | [string, string];
-  min?: number | [number, string];
-  max?: number | [number, string];
+  isRequired?: boolean | string;
+  min?: { length: number; errorMessage?: string };
+  max?: { length: number; errorMessage?: string };
   minLength?: number;
   maxLength?: number;
-  equalToLength?: number | [number, string];
-  async?: any; // Probably Remove
-  existsIn?: string[] | [string[], string];
-  validEmail?: boolean | [boolean, string];
-  postcodeFormat?: boolean | [boolean, string];
-  urlFormat?: boolean | [boolean, string];
-  equalTo?: string | [string, string];
+  postcodeFormat?: boolean | string;
+  urlFormat?: boolean | string;
 };
 
 type Base = {
@@ -19,7 +13,7 @@ type Base = {
   label: string;
   description?: string;
   validations?: Validations;
-  condition?: { id: string, options: string[] };
+  condition?: { id: string; options: string[] };
 };
 
 export type Text = Base & {
@@ -28,7 +22,7 @@ export type Text = Base & {
   lengthLimit?: InputLengthLimitType;
 };
 
-type Textarea = Base & {
+export type Textarea = Base & {
   dataType: 'textarea';
   placeholder?: string;
   lengthLimit?: TextareaLengthLimitType;
@@ -48,22 +42,21 @@ export type RadioGroup = Base & {
   size?: 'small' | 'normal'; // Just for display purposes
 };
 
-type CheckboxArray = Base & {
+export type CheckboxArray = Base & {
   dataType: 'checkbox-array';
   items: (
-    | string
     | { type: 'separator' }
     | { id: string; label: string; group?: string; conditional?: string; exclusive?: boolean }
   )[];
   size?: 'small' | 'normal';
 };
 
-type AutocompleteArray = Base & {
+export type AutocompleteArray = Base & {
   dataType: 'autocomplete-array';
   items: { id: string; label: string }[];
 };
 
-type FieldsGroup = Base & {
+export type FieldsGroup = Base & {
   dataType: 'fields-group';
   field: Question;
   addQuestion?: Question;
