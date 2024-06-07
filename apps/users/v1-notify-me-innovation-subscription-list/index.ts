@@ -12,29 +12,26 @@ import { container } from '../_config';
 import type { NotifyMeService } from '../_services/notify-me.service';
 import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
-import { QueryParamsSchema, QueryParamsType } from './validation.schemas';
+import { ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1NotifyMeSubscriptionList {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    if (1 < Number(5)) throw new Error('Not implemented');
     const authorizationService = container.get<AuthorizationService>(SHARED_SYMBOLS.AuthorizationService);
     const notifyMeService = container.get<NotifyMeService>(SYMBOLS.NotifyMeService);
 
     try {
-      const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
+      const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
       const auth = await authorizationService
         .validate(context)
+        .setInnovation(params.innovationId)
         .checkAssessmentType()
         .checkAccessorType()
-        .checkInnovatorType()
+        .checkInnovation()
         .verify();
 
-      const subscriptions = await notifyMeService.getInnovationSubscriptions(
-        auth.getContext(),
-        queryParams.innovationId!
-      );
+      const subscriptions = await notifyMeService.getInnovationSubscriptions(auth.getContext(), params.innovationId);
 
       context.res = ResponseHelper.Ok<ResponseDTO>(subscriptions);
       return;
@@ -45,19 +42,23 @@ class V1NotifyMeSubscriptionList {
   }
 }
 
-export default openApi(V1NotifyMeSubscriptionList.httpTrigger as AzureFunction, '/v1/me/notify-me', {
-  get: {
-    description: 'Notify me subscriptions list',
-    operationId: 'v1-notify-me-subscription-list',
-    tags: ['[v1] Notify Me'],
-    parameters: SwaggerHelper.paramJ2S({ query: QueryParamsSchema }),
-    responses: {
-      200: { description: 'List of user triggers' },
-      400: { description: 'Bad Request' },
-      401: { description: 'Unauthorized' },
-      403: { description: 'Forbidden' },
-      404: { description: 'Not found' },
-      500: { description: 'Internal server error' }
+export default openApi(
+  V1NotifyMeSubscriptionList.httpTrigger as AzureFunction,
+  '/v1/me/notify-me/innovation/{innovationId}',
+  {
+    get: {
+      description: 'Notify me innovation subscriptions list',
+      operationId: 'v1-notify-me-innovation-subscription-list',
+      tags: ['[v1] Notify Me'],
+      parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
+      responses: {
+        200: { description: 'List of user triggers' },
+        400: { description: 'Bad Request' },
+        401: { description: 'Unauthorized' },
+        403: { description: 'Forbidden' },
+        404: { description: 'Not found' },
+        500: { description: 'Internal server error' }
+      }
     }
   }
-});
+);

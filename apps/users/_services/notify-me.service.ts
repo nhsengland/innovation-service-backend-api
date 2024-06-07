@@ -9,12 +9,14 @@ import {
 } from '@users/shared/entities';
 import type { DomainContextType, SubscriptionConfig } from '@users/shared/types';
 
-import type { NotifyMeConfig } from '../_types/notify-me.types';
+import { groupBy } from 'lodash';
+import type { DefaultResponseDTO, NotifyMeConfig, SupportUpdateResponseTypes } from '../_types/notify-me.types';
 import { BaseService } from './base.service';
 
 @injectable()
 export class NotifyMeService extends BaseService {
-  constructor() { // @inject(SHARED_SYMBOLS.StorageQueueService) private storageQueueService: StorageQueueService
+  constructor() {
+    // @inject(SHARED_SYMBOLS.StorageQueueService) private storageQueueService: StorageQueueService
     super();
   }
 
@@ -52,9 +54,9 @@ export class NotifyMeService extends BaseService {
     */
   }
 
-  async getSubscriptions(
+  async getInnovationSubscriptions(
     domainContext: DomainContextType,
-    queryParams: { innovationId?: string },
+    innovationId: string,
     entityManager?: EntityManager
   ): Promise<
     {
@@ -73,33 +75,50 @@ export class NotifyMeService extends BaseService {
       .createQueryBuilder(NotifyMeSubscriptionEntity, 'subscription')
       .select([
         'subscription.id',
-        'subscription.config',
-        'innovation.id',
-        'innovation.name',
-        'scheduled.sendDate',
-        'scheduled.params'
+        'subscription.config'
+        // 'scheduled.sendDate',
+        // 'scheduled.params'
       ])
-      .innerJoin('subscription.innovation', 'innovation')
-      .leftJoin('subscription.scheduledNotification', 'scheduled')
-      .where('subscription.user_role_id = :roleId', { roleId: domainContext.currentRole.id });
+      // .leftJoin('subscription.scheduledNotification', 'scheduled')
+      .where('subscription.user_role_id = :roleId', { roleId: domainContext.currentRole.id })
+      .andWhere('subscription.innovation_id = :innovationId', { innovationId: innovationId });
 
-    if (queryParams?.innovationId) {
-      query.andWhere('subscription.innovation_id = :innovationId', { innovationId: queryParams.innovationId });
-    }
+    // TODO orderBy
 
     const subscriptions = await query.getMany();
 
+    // Retrieve required data
+    const groupedSubscriptions = groupBy(subscriptions, 'config.eventType');
+    const responseSubscriptions = Object.entries(groupedSubscriptions).map(([eventType, subscriptions]) =>
+      eventType in this.#subscriptionResponseDTO
+        ? this.#subscriptionResponseDTO[eventType as any](subscriptions)
+        : this.defaultSubscriptionResponseDTO(subscriptions)
+    );
+
+    throw new Error('Not implemented');
+  }
+
+  readonly #subscriptionResponseDTO = {
+    SUPPORT_UPDATED: this.x
+  };
+
+  private defaultSubscriptionResponseDTO(subscriptions: NotifyMeSubscriptionEntity[]): DefaultResponseDTO[] {
     return subscriptions.map(s => ({
       id: s.id,
-      config: s.config,
-      innovation: { id: s.innovation.id, name: s.innovation.name },
-      scheduledNotification: s.scheduledNotification
-        ? {
-            sendDate: s.scheduledNotification.sendDate,
-            params: s.scheduledNotification.params
-          }
-        : undefined
+      eventType: s.eventType,
+      subscriptionType: s.subscriptionType
+      // config: s.config,
+      // scheduledNotification: s.scheduledNotification
+      //   ? {
+      //       sendDate: s.scheduledNotification.sendDate,
+      //       params: s.scheduledNotification.params
+      //     }
+      //   : undefined
     }));
+  }
+
+  private x(subscriptions: NotifyMeSubscriptionEntity[]): SupportUpdateResponseTypes['SUPPORT_UPDATED'] {
+    return this.defaultSubscriptionResponseDTO(subscriptions) as any;
   }
 
   async deleteSubscription(

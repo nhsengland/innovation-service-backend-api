@@ -59,4 +59,10 @@ describe('Users / _services / notify me service suite', () => {
       fail('Not implemented');
     });
   });
+
+  describe('getInnovationSubscriptions', () => {
+    it('fails', () => {
+      throw Error('Not implemented');
+    });
+  });
 });

@@ -1,7 +1,8 @@
 import { InnovationSupportStatusEnum } from '@users/shared/enums';
-import type { ExcludeEnum } from '@users/shared/types';
+import type { EventType, ExcludeEnum, SubscriptionType } from '@users/shared/types';
 import Joi from 'joi';
 
+//#region CreateDTO
 export type SupportUpdateCreatedDTO = {
   eventType: 'SUPPORT_UPDATED';
   subscriptionType: 'INSTANTLY';
@@ -28,3 +29,34 @@ const SupportUpdateCreatedSchema = Joi.object<SupportUpdateCreatedDTO>({
 
 export type NotifyMeConfig = SupportUpdateCreatedDTO;
 export const NotifyMeConfigSchema = Joi.alternatives(SupportUpdateCreatedSchema);
+//#endregion
+
+//#region ResponseDTO
+export type DefaultResponseDTO = {
+  id: string;
+  eventType: EventType;
+  subscriptionType: SubscriptionType;
+};
+export type SupportUpdateResponseDTO = {
+  id: string;
+  eventType: 'SUPPORT_UPDATED';
+  subscriptionType: 'INSTANTLY';
+  organisations: {
+    id: string;
+    name: string;
+    acronym: string;
+    units: {
+      id: string;
+      name: string;
+      acronym: string;
+    }[];
+  }[];
+  statuses: ExcludeEnum<InnovationSupportStatusEnum, InnovationSupportStatusEnum.UNASSIGNED>[];
+};
+
+export type SupportUpdateResponseTypes = {
+  SUPPORT_UPDATED: SupportUpdateResponseDTO;
+  PROGRESS_UPDATE_CREATED: DefaultResponseDTO;
+  REMINDER: DefaultResponseDTO;
+};
+//#endregion

@@ -18,6 +18,7 @@ export type SubscriptionConfig = TriggerConfigFromEventPayloads & SubscriptionTy
  * Contains the information related with the event payloads and the existing event
  * types. This is the structure to change everytime new events are registered in notify me.
  */
+// Preconditions
 export type EventPayloads = {
   SUPPORT_UPDATED: {
     supportId: string;
