@@ -1839,10 +1839,23 @@ paths:
         "500":
           description: Internal server error
     get:
-      operationId: v1-ir-schema-info
-      description: Get current ir schema
+      operationId: v1-innovation-file-info
+      description: Get innovation file info
       tags:
-        - "[v1] IR Schema"
+        - "[v1] Innovation Files"
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: fileId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         "200":
           description: Success
@@ -1850,15 +1863,67 @@ paths:
             application/json:
               schema:
                 type: object
-                properties: {}
+                properties:
+                  id:
+                    type: string
+                  context:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      type:
+                        type: string
+                        enum:
+                          - INNOVATION
+                          - INNOVATION_EVIDENCE
+                          - INNOVATION_MESSAGE
+                          - INNOVATION_PROGRESS_UPDATE
+                          - INNOVATION_SECTION
+                  name:
+                    type: string
+                  description:
+                    type: string
+                  createdAt:
+                    type: string
+                  createdBy:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      role:
+                        type: string
+                        enum:
+                          - ADMIN
+                          - INNOVATOR
+                          - ACCESSOR
+                          - ASSESSMENT
+                          - QUALIFYING_ACCESSOR
+                      isOwner:
+                        type: boolean
+                      orgUnitName:
+                        type: string
+                  file:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        description: Storage Id
+                      name:
+                        type: string
+                      size:
+                        type: number
+                      extension:
+                        type: string
+                      url:
+                        type: string
         "400":
-          description: Bad request
+          description: The request is invalid.
         "401":
-          description: Not authorized
+          description: The user is not authenticated.
         "403":
-          description: Forbidden
+          description: The user is not authorized to access this resource.
         "500":
-          description: An error occurred
+          description: An error occurred while processing the request.
   /v1/{innovationId}/files/upload-url:
     post:
       operationId: v1-innovation-file-upload-url
@@ -4849,3 +4914,25 @@ paths:
           description: The user is not authorized to access validation data.
         "500":
           description: An error occurred while fetching the validation data.
+  /v1/ir-schema:
+    get:
+      operationId: v1-ir-schema-info
+      description: Get current ir schema
+      tags:
+        - "[v1] IR Schema"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+        "400":
+          description: Bad request
+        "401":
+          description: Not authorized
+        "403":
+          description: Forbidden
+        "500":
+          description: An error occurred

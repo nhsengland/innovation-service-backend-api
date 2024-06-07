@@ -39,7 +39,7 @@ class V1IrSchemaInfo {
   }
 }
 
-export default openApi(V1IrSchemaInfo.httpTrigger as AzureFunction, '/v1/{innovationId}/files/{fileId}', {
+export default openApi(V1IrSchemaInfo.httpTrigger as AzureFunction, '/v1/ir-schema', {
   get: {
     operationId: 'v1-ir-schema-info',
     description: 'Get current ir schema',
