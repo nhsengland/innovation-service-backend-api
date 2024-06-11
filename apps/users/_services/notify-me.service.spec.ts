@@ -97,7 +97,7 @@ describe('Users / _services / notify me service suite', () => {
     });
   });
 
-  describe('groupUnitsByOrganisation', () => {
+  describe('#groupUnitsByOrganisation', () => {
     it('groups multiple units of the same organisation', () => {
       const res = sut['groupUnitsByOrganisation'](
         ['u1', 'u2'],
@@ -209,6 +209,29 @@ describe('Users / _services / notify me service suite', () => {
               acronym: 'U2'
             }
           ]
+        }
+      ]);
+    });
+  });
+
+  describe('getNotifyMeSubscriptions', () => {
+    it('gets my notify me list', async () => {
+      const subscriptions = await sut.getNotifyMeSubscriptions(
+        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+        em
+      );
+
+      expect(subscriptions.length).toBe(2);
+      expect(subscriptions).toMatchObject([
+        {
+          innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
+          name: scenario.users.johnInnovator.innovations.johnInnovation.name,
+          count: 1
+        },
+        {
+          innovationId: scenario.users.adamInnovator.innovations.adamInnovation.id,
+          name: scenario.users.adamInnovator.innovations.adamInnovation.name,
+          count: 1
         }
       ]);
     });

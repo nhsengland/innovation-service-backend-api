@@ -197,6 +197,28 @@ export class NotifyMeService extends BaseService {
     return Object.values(organisations);
   }
 
+  async getNotifyMeSubscriptions(
+    domainContext: DomainContextType,
+    entityManager?: EntityManager
+  ): Promise<{ innovationId: string; name: string; count: number }[]> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const subscriptions = await em
+      .createQueryBuilder(NotifyMeSubscriptionEntity, 'subscription')
+      .select(['innovation.id as id', 'innovation.name as name', 'COUNT(subscription.id) as count'])
+      .innerJoin('subscription.innovation', 'innovation')
+      .where('subscription.user_role_id = :roleId', { roleId: domainContext.currentRole.id })
+      .groupBy('innovation.id')
+      .addGroupBy('innovation.name')
+      .getRawMany();
+
+    return subscriptions.map(s => ({
+      innovationId: s.id,
+      name: s.name,
+      count: parseInt(s.count)
+    }));
+  }
+
   async deleteSubscription(
     domainContext: DomainContextType,
     subscriptionId: string,

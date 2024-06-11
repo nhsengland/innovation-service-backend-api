@@ -1057,16 +1057,9 @@ paths:
       operationId: v1-notify-me-subscription-list
       tags:
         - "[v1] Notify Me"
-      parameters:
-        - name: innovationId
-          in: query
-          required: false
-          schema:
-            type: string
-            format: uuid
       responses:
         "200":
-          description: List of user triggers
+          description: List of user custom notifications
         "400":
           description: Bad Request
         "401":
