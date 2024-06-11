@@ -33,7 +33,7 @@ class V1NotifyMeSubscriptionList {
 
       const subscriptions = await notifyMeService.getInnovationSubscriptions(auth.getContext(), params.innovationId);
 
-      context.res = ResponseHelper.Ok<ResponseDTO>(subscriptions as any); // TODO
+      context.res = ResponseHelper.Ok<ResponseDTO>(subscriptions);
       return;
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
@@ -52,7 +52,7 @@ export default openApi(
       tags: ['[v1] Notify Me'],
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       responses: {
-        200: { description: 'List of user triggers' },
+        200: { description: 'List of user innovation custom notifications' },
         400: { description: 'Bad Request' },
         401: { description: 'Unauthorized' },
         403: { description: 'Forbidden' },

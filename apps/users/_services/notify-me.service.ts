@@ -150,7 +150,10 @@ export class NotifyMeService extends BaseService {
   // receives a list of units and a map of unit ids to units with their organisations and returns the units grouped by organisation
   private groupUnitsByOrganisation(
     units: string[],
-    retrievedUnits: Map<string, OrganisationUnitEntity>
+    retrievedUnits: Map<
+      string,
+      { id: string; name: string; acronym: string; organisation: { id: string; name: string; acronym: string | null } }
+    >
   ): {
     id: string;
     name: string;
@@ -161,7 +164,19 @@ export class NotifyMeService extends BaseService {
       acronym: string;
     }[];
   }[] {
-    const organisations = {} as any;
+    const organisations = {} as Record<
+      string,
+      {
+        id: string;
+        name: string;
+        acronym: string;
+        units: {
+          id: string;
+          name: string;
+          acronym: string;
+        }[];
+      }
+    >;
     units.forEach(u => {
       const unit = retrievedUnits.get(u);
       if (!unit) return;
@@ -169,17 +184,17 @@ export class NotifyMeService extends BaseService {
         organisations[unit.organisation.id] = {
           id: unit.organisation.id,
           name: unit.organisation.name,
-          acronym: unit.organisation.acronym,
+          acronym: unit.organisation.acronym ?? '',
           units: []
         };
       }
-      organisations[unit.organisation.id].units.push({
+      organisations[unit.organisation.id]?.units.push({
         id: unit.id,
         name: unit.name,
         acronym: unit.acronym
       });
     });
-    return organisations;
+    return Object.values(organisations);
   }
 
   async deleteSubscription(
