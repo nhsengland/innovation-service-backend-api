@@ -210,6 +210,7 @@ export class NotifyMeService extends BaseService {
       .where('subscription.user_role_id = :roleId', { roleId: domainContext.currentRole.id })
       .groupBy('innovation.id')
       .addGroupBy('innovation.name')
+      .addOrderBy('innovation.name')
       .getRawMany();
 
     return subscriptions.map(s => ({

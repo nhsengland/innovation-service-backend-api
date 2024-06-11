@@ -215,25 +215,27 @@ describe('Users / _services / notify me service suite', () => {
   });
 
   describe('getNotifyMeSubscriptions', () => {
-    it('gets my notify me list', async () => {
+    it('gets my notify me list sorted by innovation name', async () => {
       const subscriptions = await sut.getNotifyMeSubscriptions(
         DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
         em
       );
 
       expect(subscriptions.length).toBe(2);
-      expect(subscriptions).toMatchObject([
-        {
-          innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
-          name: scenario.users.johnInnovator.innovations.johnInnovation.name,
-          count: 1
-        },
-        {
-          innovationId: scenario.users.adamInnovator.innovations.adamInnovation.id,
-          name: scenario.users.adamInnovator.innovations.adamInnovation.name,
-          count: 1
-        }
-      ]);
+      expect(subscriptions).toMatchObject(
+        [
+          {
+            innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
+            name: scenario.users.johnInnovator.innovations.johnInnovation.name,
+            count: 1
+          },
+          {
+            innovationId: scenario.users.adamInnovator.innovations.adamInnovation.id,
+            name: scenario.users.adamInnovator.innovations.adamInnovation.name,
+            count: 1
+          }
+        ].sort((a, b) => a.name.localeCompare(b.name))
+      );
     });
   });
 });
