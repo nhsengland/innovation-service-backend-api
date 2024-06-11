@@ -237,5 +237,18 @@ describe('Users / _services / notify me service suite', () => {
         ].sort((a, b) => a.name.localeCompare(b.name))
       );
     });
+
+    it('filters organisations not shared from the notify me list', async () => {
+      await em.query('DELETE FROM innovation_share WHERE innovation_id = @0 and organisation_id = @1', [
+        scenario.users.johnInnovator.innovations.johnInnovation.id,
+        scenario.organisations.healthOrg.id
+      ]);
+      const subscriptions = await sut.getNotifyMeSubscriptions(
+        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+        em
+      );
+
+      expect(subscriptions.length).toBe(1);
+    });
   });
 });

@@ -9,7 +9,12 @@ import {
   OrganisationUnitEntity,
   UserRoleEntity
 } from '@users/shared/entities';
-import type { DomainContextType, SubscriptionConfig, SupportUpdateCreated } from '@users/shared/types';
+import {
+  isAccessorDomainContextType,
+  type DomainContextType,
+  type SubscriptionConfig,
+  type SupportUpdateCreated
+} from '@users/shared/types';
 import type {
   DefaultResponseDTO,
   SubscriptionResponseDTO,
@@ -203,15 +208,22 @@ export class NotifyMeService extends BaseService {
   ): Promise<{ innovationId: string; name: string; count: number }[]> {
     const em = entityManager ?? this.sqlConnection.manager;
 
-    const subscriptions = await em
+    const query = em
       .createQueryBuilder(NotifyMeSubscriptionEntity, 'subscription')
       .select(['innovation.id as id', 'innovation.name as name', 'COUNT(subscription.id) as count'])
       .innerJoin('subscription.innovation', 'innovation')
       .where('subscription.user_role_id = :roleId', { roleId: domainContext.currentRole.id })
       .groupBy('innovation.id')
       .addGroupBy('innovation.name')
-      .addOrderBy('innovation.name')
-      .getRawMany();
+      .addOrderBy('innovation.name');
+
+    if (isAccessorDomainContextType(domainContext)) {
+      query
+        .innerJoin('innovation.organisationShares', 'shares')
+        .andWhere('shares.id = :orgId', { orgId: domainContext.organisation.id });
+    }
+
+    const subscriptions = await query.getRawMany();
 
     return subscriptions.map(s => ({
       innovationId: s.id,
