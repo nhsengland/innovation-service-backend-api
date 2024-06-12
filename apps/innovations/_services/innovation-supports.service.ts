@@ -42,12 +42,13 @@ import {
 import { InnovationThreadSubjectEnum } from '../_enums/innovation.enums';
 import type {
   InnovationFileType,
-  InnovationUnitSuggestionsType,
   InnovationSuggestionAccessor,
-  InnovationSuggestionsType
+  InnovationSuggestionsType,
+  InnovationUnitSuggestionsType
 } from '../_types/innovation.types';
 
 import { DatesHelper } from '@innovations/shared/helpers';
+import { AuthErrorsEnum } from '@innovations/shared/services/auth/authorization-validation.model';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { SupportSummaryUnitInfo } from '../_types/support.types';
 import { BaseService } from './base.service';
@@ -55,7 +56,6 @@ import type { InnovationFileService } from './innovation-file.service';
 import type { InnovationThreadsService } from './innovation-threads.service';
 import SYMBOLS from './symbols';
 import type { ValidationService } from './validation.service';
-import { AuthErrorsEnum } from '@innovations/shared/services/auth/authorization-validation.model';
 
 type UnitSupportInformationType = {
   id: string;
@@ -716,6 +716,11 @@ export class InnovationSupportsService extends BaseService {
                 .map(item => item.id)
             : []
       }
+    });
+
+    await this.notifierService.sendNotifyMe(domainContext, innovationId, 'SUPPORT_UPDATED', {
+      status: data.status,
+      units: dbSupport.organisationUnit.id
     });
 
     return result;
