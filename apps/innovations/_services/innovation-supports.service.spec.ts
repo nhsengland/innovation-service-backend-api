@@ -51,6 +51,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
   const activityLogSpy = jest.spyOn(DomainInnovationsService.prototype, 'addActivityLog');
   const supportLogSpy = jest.spyOn(DomainInnovationsService.prototype, 'addSupportLog');
   const notifierSendSpy = jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
+  const notifierSendNotifyMeSpy = jest.spyOn(NotifierService.prototype, 'sendNotifyMe').mockResolvedValue(true);
   const threadMessageMock = jest.spyOn(InnovationThreadsService.prototype, 'createThreadMessage').mockResolvedValue({
     threadMessage: InnovationThreadMessageEntity.new({ id: randUuid() })
   });
@@ -856,6 +857,22 @@ describe('Innovations / _services / innovation-supports suite', () => {
         expect(dbSupport?.userRoles).toHaveLength(0);
       }
     );
+
+    it('should send a notifyMe when status is changed', async () => {
+      const context = DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor);
+      await sut.updateInnovationSupport(
+        context,
+        innovation.id,
+        innovation.supports.supportByHealthOrgUnit.id,
+        { status: InnovationSupportStatusEnum.CLOSED, message: randText({ charCount: 10 }) },
+        em
+      );
+
+      expect(notifierSendNotifyMeSpy).toHaveBeenCalledWith(context, innovation.id, 'SUPPORT_UPDATED', {
+        status: InnovationSupportStatusEnum.CLOSED,
+        units: context.organisation?.organisationUnit?.id
+      });
+    });
 
     it(`should throw a not found error if the support doesn't exist`, async () => {
       await expect(() =>

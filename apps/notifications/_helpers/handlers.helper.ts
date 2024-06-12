@@ -38,9 +38,10 @@ export class HandlersHelper {
         return TranslationHelper.translate(`TEAMS.${role}`);
       case ServiceRoleEnum.INNOVATOR:
         return data.isOwner === undefined ? 'Innovator' : data.isOwner ? 'Owner' : 'Collaborator';
-      default:
+      default: {
         const r: never = role;
         throw new NotImplementedError(GenericErrorsEnum.NOT_IMPLEMENTED_ERROR, { details: r });
+      }
     }
   }
 

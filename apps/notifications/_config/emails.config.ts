@@ -451,20 +451,17 @@ export type EmailTemplatesType = {
 
   // Notify Me
   SUPPORT_UPDATED: {
-    display_name: string;
     innovation: string;
     supportStatus: string;
-    event: string;
     organisation: string;
+    supportSummaryUrl: string;
   };
   REMINDER: {
-    display_name: string;
     innovation: string;
     event: string;
     message: string;
   };
   PROGRESS_UPDATE_CREATED: {
-    display_name: string;
     innovation: string;
     event: string;
     description: string;

@@ -63,14 +63,14 @@ export type EventType = (typeof EventType)[number];
  * Contains the subscription types and specific payloads configurations that each contain.
  */
 export type SubscriptionType = SubscriptionTypes['subscriptionType'];
-export type SubscriptionTypes = InstantSubscriptionType | ScheduledSubscriptionType | PeriodicSubscriptionType;
+export type SubscriptionTypes = InstantSubscriptionType | ScheduledSubscriptionType; // | PeriodicSubscriptionType;
 export type InstantSubscriptionType = { subscriptionType: 'INSTANTLY' };
 export type ScheduledSubscriptionType = {
   subscriptionType: 'SCHEDULED';
   date: Date;
   customMessages?: { inApp?: string; email?: string };
 };
-export type PeriodicSubscriptionType = { subscriptionType: 'PERIODIC'; periodicity: 'HOURLY' | 'DAILY' };
+// export type PeriodicSubscriptionType = { subscriptionType: 'PERIODIC'; periodicity: 'HOURLY' | 'DAILY' };
 
 /**
  * Helpers
