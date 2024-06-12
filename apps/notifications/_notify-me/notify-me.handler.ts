@@ -1,14 +1,13 @@
 import { ServiceRoleEnum } from '@notifications/shared/enums';
 import { TranslationHelper } from '@notifications/shared/helpers';
-import type { DomainContextType, EventPayloads, EventType, IdentityUserInfo } from '@notifications/shared/types';
-import { inject } from 'inversify';
+import type { DomainContextType, EventPayloads, EventType } from '@notifications/shared/types';
 import { isArray } from 'lodash';
 import type { EntityManager } from 'typeorm';
 import type { EmailTemplatesType } from '../_config';
 import type { InAppTemplatesType } from '../_config/inapp.config';
+import { supportSummaryUrl, unsubscribeUrl } from '../_helpers/url.helper';
 import type { NotifyMeService, NotifyMeSubscriptionType } from '../_services/notify-me.service';
-import type { RecipientsService } from '../_services/recipients.service';
-import SYMBOLS from '../_services/symbols';
+import type { RecipientType, RecipientsService } from '../_services/recipients.service';
 import type { MessageType as EmailMessageType } from '../v1-emails-listener/validation.schemas';
 import type { MessageType as InAppMessageType } from '../v1-in-app-listener/validation.schemas';
 
@@ -37,8 +36,8 @@ export class NotifyMeHandler {
   }
 
   constructor(
-    @inject(SYMBOLS.NotifyMeService) private notifyMeService: NotifyMeService,
-    @inject(SYMBOLS.RecipientsService) private recipientsService: RecipientsService,
+    private notifyMeService: NotifyMeService,
+    private recipientsService: RecipientsService,
     event: EventPayload
   ) {
     this.event = event;
@@ -75,7 +74,11 @@ export class NotifyMeHandler {
 
       const params = {
         inApp: this.getInAppParams(subscription, innovation),
-        email: this.getEmailParams(identity, subscription, innovation)
+        email: {
+          ...this.getEmailParams(recipient, subscription, innovation),
+          displayName: identity.displayName,
+          unsubscribeUrl: unsubscribeUrl
+        }
       };
 
       const inAppPayload = this.buildInApp(subscription, params.inApp);
@@ -156,23 +159,25 @@ export class NotifyMeHandler {
 
   // NOTE: This could be abstract and implemented by each of the trigger types
   protected getEmailParams(
-    identity: IdentityUserInfo,
+    recipient: RecipientType,
     subscription: NotifyMeSubscriptionType,
     innovation: { id: string; name: string }
-  ): EmailTemplatesType[keyof EmailTemplatesType] {
+  ): EmailTemplatesType[EventType] {
     switch (this.event.type) {
       case 'SUPPORT_UPDATED':
         return {
-          display_name: identity.displayName,
           innovation: innovation.name,
-          event: this.event.type,
           organisation: this.getRequestUnitName(),
-          supportStatus: this.event.params.status
+          supportStatus: TranslationHelper.translate(`SUPPORT_STATUS.${this.event.params.status}`).toLowerCase(),
+          supportSummaryUrl: supportSummaryUrl(
+            recipient.role,
+            this.event.innovationId,
+            this.event.requestUser.organisation?.organisationUnit?.id
+          )
         };
 
       case 'PROGRESS_UPDATE_CREATED':
         return {
-          display_name: identity.displayName,
           innovation: innovation.name,
           event: this.event.type,
           unit: this.getRequestUnitName(),
@@ -185,15 +190,16 @@ export class NotifyMeHandler {
           message = subscription.config.customMessages.email;
         }
         return {
-          display_name: identity.displayName,
           innovation: innovation.name,
           event: this.event.type,
           message
         };
       }
 
-      default:
-        return {};
+      default: {
+        const never: never = this.event;
+        throw new Error(`Not implemented: ${never}`);
+      }
     }
   }
 
@@ -215,7 +221,7 @@ export class NotifyMeHandler {
   private buildEmail(
     email: string,
     subscription: NotifyMeSubscriptionType,
-    params: EmailTemplatesType[keyof EmailTemplatesType]
+    params: EmailTemplatesType[EventType] & { displayName: string; unsubscribeUrl: string }
   ): EmailMessageType {
     return {
       data: { type: subscription.config.eventType, to: email, params }

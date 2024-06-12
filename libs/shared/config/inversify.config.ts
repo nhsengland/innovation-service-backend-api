@@ -7,6 +7,7 @@ import type { DataSource } from 'typeorm';
 import { AuthorizationService } from '../services/auth/authorization.service';
 import { DomainService } from '../services/domain/domain.service';
 import { AuditService } from '../services/integrations/audit.service';
+import { ElasticSearchService } from '../services/integrations/elastic-search.service';
 import { HttpService } from '../services/integrations/http.service';
 import { IdentityProviderService } from '../services/integrations/identity-provider.service';
 import { LoggerService } from '../services/integrations/logger.service';
@@ -14,11 +15,10 @@ import { NotifierService } from '../services/integrations/notifier.service';
 import { StorageQueueService } from '../services/integrations/storage-queue.service';
 import { CacheService } from '../services/storage/cache.service';
 import { FileStorageService } from '../services/storage/file-storage.service';
+import { RedisService } from '../services/storage/redis.service';
 import { SqlProvider, sqlProvider } from '../services/storage/sql-connection.provider';
 import { SQLConnectionService } from '../services/storage/sql-connection.service';
 import SHARED_SYMBOLS from '../services/symbols';
-import { ElasticSearchService } from '../services/integrations/elastic-search.service';
-import { RedisService } from '../services/storage/redis.service';
 
 export const container: Container = new Container();
 
