@@ -3,6 +3,7 @@ import { TranslationHelper } from '@notifications/shared/helpers';
 import type { DomainContextType, EventPayloads, EventType, IdentityUserInfo } from '@notifications/shared/types';
 import { inject } from 'inversify';
 import { isArray } from 'lodash';
+import type { EntityManager } from 'typeorm';
 import type { EmailTemplatesType } from '../_config';
 import type { InAppTemplatesType } from '../_config/inapp.config';
 import type { NotifyMeService, NotifyMeSubscriptionType } from '../_services/notify-me.service';
@@ -43,44 +44,50 @@ export class NotifyMeHandler {
     this.event = event;
   }
 
-  public async execute(): Promise<void> {
-    const eventSubscribers = await this.getTriggerSubscribers();
+  public async execute(transaction: EntityManager): Promise<void> {
+    const eventSubscriptions = await this.notifyMeService.getInnovationEventSubscriptions(
+      this.event.innovationId,
+      this.event.type,
+      transaction
+    );
 
-    const subscribers = [];
-    for (const subscriber of eventSubscribers) {
+    const subscriptions = [];
+    for (const subscriber of eventSubscriptions) {
       if (this.validatePreconditions(subscriber)) {
-        subscribers.push(subscriber);
+        subscriptions.push(subscriber);
       }
     }
-    if (!subscribers.length) return;
+    if (!subscriptions.length) return;
 
-    const innovation = await this.recipientsService.innovationInfo(this.event.innovationId);
+    const innovation = await this.recipientsService.innovationInfo(this.event.innovationId, false, transaction);
+    const subscribers = Array.from(new Set(subscriptions.map(t => t.roleId)));
     const recipients = new Map(
-      (await this.recipientsService.getRecipientsByRoleId(subscribers.map(t => t.roleId))).map(r => [r.roleId, r])
+      (await this.recipientsService.getRecipientsByRoleId(subscribers)).map(r => [r.roleId, r], transaction)
     );
     const identities = await this.recipientsService.usersIdentityInfo([...recipients.values()].map(r => r.identityId));
 
-    for (const subscriber of subscribers) {
-      const recipient = recipients.get(subscriber.roleId);
+    for (const subscription of subscriptions) {
+      const recipient = recipients.get(subscription.roleId);
       if (!recipient) continue;
 
       const identity = identities.get(recipient.identityId);
       if (!identity) continue;
 
       const params = {
-        inApp: this.getInAppParams(subscriber, innovation),
-        email: this.getEmailParams(identity, subscriber, innovation)
+        inApp: this.getInAppParams(subscription, innovation),
+        email: this.getEmailParams(identity, subscription, innovation)
       };
 
-      const inAppPayload = this.buildInApp(subscriber, params.inApp);
-      const emailPayload = this.buildEmail(identity.email, subscriber, params.email);
+      const inAppPayload = this.buildInApp(subscription, params.inApp);
+      const emailPayload = this.buildEmail(identity.email, subscription, params.email);
 
-      switch (subscriber.config.subscriptionType) {
+      switch (subscription.config.subscriptionType) {
         case 'INSTANTLY':
           this.#emails.push(emailPayload);
           this.#inApps.push(inAppPayload);
           break;
 
+        /* currently not implemented 
         // NOTE: Currently they are doing the same thing, if this changes just change it to specific.
         case 'PERIODIC':
         case 'SCHEDULED':
@@ -90,14 +97,14 @@ export class NotifyMeHandler {
             email: emailPayload
           });
           break;
+        */
       }
     }
   }
 
-  protected async getTriggerSubscribers(): Promise<NotifyMeSubscriptionType[]> {
-    return await this.notifyMeService.getEventSubscribers(this.event);
-  }
-
+  // This function checks the subscription config and for each setting in the config it ensures that if the event has
+  // that setting it will be in the list of the settings.
+  // Additionally if the event is does not have the field but it is in the preconditions it will return true!
   protected validatePreconditions(subscription: NotifyMeSubscriptionType): boolean {
     if (this.event.type !== subscription.config.eventType) return false;
 

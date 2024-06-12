@@ -1,18 +1,17 @@
-import { UserRoleEntity, NotifyMeSubscriptionEntity, NotificationScheduleEntity } from '@notifications/shared/entities';
+import { NotificationScheduleEntity, NotifyMeSubscriptionEntity, UserRoleEntity } from '@notifications/shared/entities';
 import { injectable } from 'inversify';
 
 import { BaseService } from './base.service';
 
-import type { SubscriptionConfig } from '@notifications/shared/types';
-import { In } from 'typeorm';
-import type { EventPayload } from '../_notify-me/notify-me.handler';
+import type { EventType, SubscriptionConfig } from '@notifications/shared/types';
+import { EntityManager, In } from 'typeorm';
 
-export type NotifyMeSubscriptionType = {
+export type NotifyMeSubscriptionType<T extends EventType = EventType> = {
   id: string;
   roleId: string;
   innovationId: string;
 
-  config: SubscriptionConfig;
+  config: SubscriptionConfig & { eventType: T };
 };
 
 @injectable()
@@ -27,20 +26,26 @@ export class NotifyMeService extends BaseService {
    * It fetches all the subscriptions for the event type and the innovation where the event occured.
    * Subsequent validations (e.g., pre-conditions validation) is done outside this method.
    */
-  async getEventSubscribers(event: EventPayload): Promise<NotifyMeSubscriptionType[]> {
-    const subscriptions = await this.sqlConnection
+  async getInnovationEventSubscriptions<T extends EventType>(
+    innovationId: string,
+    eventType: T,
+    entityManager?: EntityManager
+  ): Promise<NotifyMeSubscriptionType<T>[]> {
+    const em = entityManager || this.sqlConnection.manager;
+
+    const subscriptions = await em
       .createQueryBuilder(NotifyMeSubscriptionEntity, 'subscription')
       .select(['subscription.id', 'subscription.config', 'role.id'])
       .innerJoin('subscription.userRole', 'role')
-      .where('subscription.innovation_id = :innovationId', { innovationId: event.innovationId })
-      .andWhere('subscription.eventType = :eventType', { eventType: event.type })
+      .where('subscription.innovation_id = :innovationId', { innovationId: innovationId })
+      .andWhere('subscription.eventType = :eventType', { eventType: eventType })
       .getMany();
 
     return subscriptions.map(subscription => ({
       id: subscription.id,
       roleId: subscription.userRole.id,
-      innovationId: event.innovationId,
-      config: subscription.config
+      innovationId: innovationId,
+      config: subscription.config as any // not validating as they were filtered
     }));
   }
 
@@ -54,24 +59,26 @@ export class NotifyMeService extends BaseService {
     subscription: NotifyMeSubscriptionType,
     params: { inApp: Record<string, unknown>; email: Record<string, unknown> }
   ): Promise<void> {
+    /* Currently not implemented
     // If its a periodic we have to make sure that it doesn't exist one notification scheduled already.
     if (subscription.config.subscriptionType === 'PERIODIC') {
       const hasScheduledNotification = await this.hasScheduledNotification(subscription);
       if (hasScheduledNotification) return;
     }
+    */
 
     let now = new Date();
     switch (subscription.config.subscriptionType) {
-      case 'PERIODIC':
-        switch (subscription.config.periodicity) {
-          case 'DAILY':
-            now.setDate(now.getDate() + 1);
-            break;
-          case 'HOURLY':
-            now.setHours(now.getHours() + 1);
-            break;
-        }
-        break;
+      // case 'PERIODIC':
+      //   switch (subscription.config.periodicity) {
+      //     case 'DAILY':
+      //       now.setDate(now.getDate() + 1);
+      //       break;
+      //     case 'HOURLY':
+      //       now.setHours(now.getHours() + 1);
+      //       break;
+      //   }
+      //   break;
 
       case 'SCHEDULED':
         now = subscription.config.date;
@@ -128,6 +135,7 @@ export class NotifyMeService extends BaseService {
   /**
    * Helper method to check if a notification is already scheduled for the given subscription
    */
+  /*
   private async hasScheduledNotification(subscription: NotifyMeSubscriptionType): Promise<boolean> {
     const hasScheduledNotification = await this.sqlConnection
       .createQueryBuilder(NotificationScheduleEntity, 'scheduled')
@@ -136,4 +144,5 @@ export class NotifyMeService extends BaseService {
 
     return !!hasScheduledNotification;
   }
+  */
 }
