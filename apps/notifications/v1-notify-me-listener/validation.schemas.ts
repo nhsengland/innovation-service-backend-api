@@ -34,8 +34,7 @@ export const EventParamsSchema: { [key in EventType]: ObjectSchema<EventPayloads
     status: Joi.string()
       .valid(...Object.values(InnovationSupportStatusEnum))
       .required(),
-    supportId: RequiredIdSchema,
-    updatedByUnit: RequiredIdSchema
+    units: RequiredIdSchema
   }).required(),
   PROGRESS_UPDATE_CREATED: Joi.object<EventPayloads['PROGRESS_UPDATE_CREATED']>({
     unitId: RequiredIdSchema,

@@ -2031,6 +2031,7 @@ paths:
                         - ADMIN
                         - ACCOUNT
                         - AUTOMATIC
+                        - NOTIFY_ME
       responses:
         "204":
           description: Success

@@ -26,6 +26,7 @@ import { InnovationThreadBuilder } from '../builders/innovation-thread.builder';
 import { InnovationTransferBuilder } from '../builders/innovation-transfer.builder';
 import { InnovationBuilder } from '../builders/innovation.builder';
 import { NotificationBuilder } from '../builders/notification.builder';
+import { NotifyMeSubscriptionBuilder } from '../builders/notify-me-subscription.builder';
 import { OrganisationUnitBuilder } from '../builders/organisation-unit.builder';
 import { OrganisationBuilder } from '../builders/organisation.builder';
 import { TestUserType, UserBuilder } from '../builders/user.builder';
@@ -679,6 +680,33 @@ export class CompleteScenarioBuilder {
         )
         .save();
 
+      // Notify me subscriptions
+      const aliceNotifyMeOnMedTechOrgForJohnInnovation = await new NotifyMeSubscriptionBuilder(entityManager)
+        .setInnovation(johnInnovation.id)
+        .setUserRole(aliceQualifyingAccessor.roles['qaRole']!.id)
+        .setConfig({
+          eventType: 'SUPPORT_UPDATED',
+          subscriptionType: 'INSTANTLY',
+          preConditions: {
+            status: [InnovationSupportStatusEnum.ENGAGING],
+            units: [medTechOrgUnit.id]
+          }
+        })
+        .save();
+
+      const battNotifyMeOnMedTechOrgForJohnInnovation = await new NotifyMeSubscriptionBuilder(entityManager)
+        .setInnovation(johnInnovation.id)
+        .setUserRole(bartQualifyingAccessor.roles['qaRole']!.id)
+        .setConfig({
+          eventType: 'SUPPORT_UPDATED',
+          subscriptionType: 'INSTANTLY',
+          preConditions: {
+            status: [InnovationSupportStatusEnum.ENGAGING],
+            units: [medTechOrgUnit.id]
+          }
+        })
+        .save();
+
       // Adam Innovator specs:
       // 1 innovation in status 'CREATED' with transfer in status 'PENDING' to external user. The innovation is shared with
       // healthOrg
@@ -740,6 +768,19 @@ export class CompleteScenarioBuilder {
         .setInnovationSection(adamInnovation.sections.get('COST_OF_INNOVATION')!.id)
         .setSupport(adamInnovationSupportByHealthOrgUnit.id)
         .setStatus(InnovationTaskStatusEnum.DONE)
+        .save();
+
+      const aliceNotifyMeOnMedTechOrgForAdamInnovation = await new NotifyMeSubscriptionBuilder(entityManager)
+        .setInnovation(adamInnovation.id)
+        .setUserRole(aliceQualifyingAccessor.roles['qaRole']!.id)
+        .setConfig({
+          eventType: 'SUPPORT_UPDATED',
+          subscriptionType: 'INSTANTLY',
+          preConditions: {
+            status: [InnovationSupportStatusEnum.ENGAGING],
+            units: [medTechOrgUnit.id]
+          }
+        })
         .save();
 
       // Otto Innovator specs:
@@ -1013,6 +1054,10 @@ export class CompleteScenarioBuilder {
                     aliceQualifyingAccessor.organisations['Health Organisation']!.organisationUnits['Health Org Unit']!
                 }
               }
+            },
+            notifyMeSubscriptions: {
+              johnInnovation: aliceNotifyMeOnMedTechOrgForJohnInnovation,
+              adamInnovation: aliceNotifyMeOnMedTechOrgForAdamInnovation
             }
           },
           ingridAccessor: {
@@ -1102,6 +1147,9 @@ export class CompleteScenarioBuilder {
                     ]!
                 }
               }
+            },
+            notifyMeSubscriptions: {
+              johnInnovation: battNotifyMeOnMedTechOrgForJohnInnovation
             }
           },
           lisaQualifyingAccessor: {
