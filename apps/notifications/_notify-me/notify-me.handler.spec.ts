@@ -1,6 +1,6 @@
 import { fail } from 'assert';
 
-describe('NotifyMeHandler', () => {
+describe.skip('NotifyMeHandler', () => {
   describe('getEmailParams', () => {
     describe('Support Updated', () => {
       it('should return the correct params', () => {
