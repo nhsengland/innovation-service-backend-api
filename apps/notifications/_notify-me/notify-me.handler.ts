@@ -1,4 +1,5 @@
 import { ServiceRoleEnum } from '@notifications/shared/enums';
+import { GenericErrorsEnum, NotImplementedError } from '@notifications/shared/errors';
 import { TranslationHelper } from '@notifications/shared/helpers';
 import type { DomainContextType, EventPayloads, EventType } from '@notifications/shared/types';
 import { isArray } from 'lodash';
@@ -197,8 +198,8 @@ export class NotifyMeHandler {
       }
 
       default: {
-        const never: never = this.event;
-        throw new Error(`Not implemented: ${never}`);
+        const r: never = this.event;
+        throw new NotImplementedError(GenericErrorsEnum.NOT_IMPLEMENTED_ERROR, { details: r });
       }
     }
   }
