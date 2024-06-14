@@ -48,4 +48,10 @@ export class HandlersHelper {
   static transformIntoBullet(arr: string[], prefix: '-' | '*' = '*'): string {
     return arr.map(str => `${prefix} ${str} \n`).join('');
   }
+
+  static getRequestUnitName(requestUser: DomainContextType): string {
+    return requestUser.currentRole.role === ServiceRoleEnum.ASSESSMENT
+      ? TranslationHelper.translate(`TEAMS.${requestUser.currentRole.role}`)
+      : requestUser.organisation?.organisationUnit?.name ?? '';
+  }
 }

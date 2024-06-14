@@ -1,4 +1,3 @@
-import { ServiceRoleEnum } from '@notifications/shared/enums';
 import { GenericErrorsEnum, NotImplementedError } from '@notifications/shared/errors';
 import { TranslationHelper } from '@notifications/shared/helpers';
 import type { DomainContextType, EventPayloads, EventType } from '@notifications/shared/types';
@@ -6,6 +5,7 @@ import { isArray } from 'lodash';
 import type { EntityManager } from 'typeorm';
 import type { EmailTemplatesType } from '../_config';
 import type { InAppTemplatesType } from '../_config/inapp.config';
+import { HandlersHelper } from '../_helpers/handlers.helper';
 import { supportSummaryUrl, unsubscribeUrl } from '../_helpers/url.helper';
 import type { NotifyMeService, NotifyMeSubscriptionType } from '../_services/notify-me.service';
 import type { RecipientType, RecipientsService } from '../_services/recipients.service';
@@ -133,7 +133,7 @@ export class NotifyMeHandler {
         return {
           innovation: innovation.name,
           event: this.event.type,
-          organisation: this.getRequestUnitName(),
+          organisation: HandlersHelper.getRequestUnitName(this.event.requestUser),
           supportStatus: this.event.params.status
         };
 
@@ -142,7 +142,7 @@ export class NotifyMeHandler {
           innovation: innovation.name,
           event: this.event.type,
           description: this.event.params.description,
-          unit: this.getRequestUnitName()
+          unit: HandlersHelper.getRequestUnitName(this.event.requestUser)
         };
 
       case 'REMINDER': {
@@ -168,7 +168,7 @@ export class NotifyMeHandler {
       case 'SUPPORT_UPDATED':
         return {
           innovation: innovation.name,
-          organisation: this.getRequestUnitName(),
+          organisation: HandlersHelper.getRequestUnitName(this.event.requestUser),
           supportStatus: TranslationHelper.translate(`SUPPORT_STATUS.${this.event.params.status}`).toLowerCase(),
           supportSummaryUrl: supportSummaryUrl(
             recipient.role,
@@ -181,7 +181,7 @@ export class NotifyMeHandler {
         return {
           innovation: innovation.name,
           event: this.event.type,
-          unit: this.getRequestUnitName(),
+          unit: HandlersHelper.getRequestUnitName(this.event.requestUser),
           description: this.event.params.description
         };
 
@@ -227,11 +227,5 @@ export class NotifyMeHandler {
     return {
       data: { type: subscription.config.eventType, to: email, params }
     };
-  }
-
-  private getRequestUnitName(): string {
-    return this.event.requestUser.currentRole.role === ServiceRoleEnum.ASSESSMENT
-      ? TranslationHelper.translate(`TEAMS.${this.event.requestUser.currentRole.role}`)
-      : this.event.requestUser.organisation?.organisationUnit?.name ?? '';
   }
 }
