@@ -134,7 +134,7 @@ export class NotifyMeHandler {
           innovation: innovation.name,
           event: this.event.type,
           organisation: this.getRequestUnitName(),
-          supportStatus: this.event.params.status
+          supportStatus: TranslationHelper.translate(`SUPPORT_STATUS.${this.event.params.status}`).toLowerCase()
         };
 
       case 'PROGRESS_UPDATE_CREATED':
