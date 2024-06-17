@@ -62,7 +62,7 @@ export class NotifyMeHandler {
     const innovation = await this.recipientsService.innovationInfo(this.event.innovationId, false, transaction);
     const subscribers = Array.from(new Set(subscriptions.map(t => t.roleId)));
     const recipients = new Map(
-      (await this.recipientsService.getRecipientsByRoleId(subscribers)).map(r => [r.roleId, r], transaction)
+      (await this.recipientsService.getRecipientsByRoleId(subscribers, transaction)).map(r => [r.roleId, r])
     );
     const identities = await this.recipientsService.usersIdentityInfo([...recipients.values()].map(r => r.identityId));
 
