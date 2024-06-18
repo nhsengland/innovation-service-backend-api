@@ -3,10 +3,9 @@ import { container } from '../_config';
 import type { EntityManager } from 'typeorm';
 
 import { randUuid } from '@ngneat/falso';
-import { BadRequestError } from '@notifications/shared/errors';
 import { NotifyMeSubscriptionEntity } from '@users/shared/entities';
 import { InnovationSupportStatusEnum } from '@users/shared/enums';
-import { ForbiddenError } from '@users/shared/errors';
+import { BadRequestError, ForbiddenError } from '@users/shared/errors';
 import { NotificationErrorsEnum } from '@users/shared/errors/errors.enums';
 import { AuthErrorsEnum } from '@users/shared/services/auth/authorization-validation.model';
 import { TestsHelper } from '@users/shared/tests';
