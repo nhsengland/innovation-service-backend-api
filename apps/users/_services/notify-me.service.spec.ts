@@ -1,9 +1,7 @@
 import { container } from '../_config';
 
-import type { EntityManager } from 'typeorm';
-
 import { randUuid } from '@ngneat/falso';
-import { NotifyMeSubscriptionEntity } from '@users/shared/entities';
+import { NotificationScheduleEntity, NotifyMeSubscriptionEntity } from '@users/shared/entities';
 import { InnovationSupportStatusEnum } from '@users/shared/enums';
 import { BadRequestError, ForbiddenError } from '@users/shared/errors';
 import { NotificationErrorsEnum } from '@users/shared/errors/errors.enums';
@@ -11,6 +9,7 @@ import { AuthErrorsEnum } from '@users/shared/services/auth/authorization-valida
 import { TestsHelper } from '@users/shared/tests';
 import { DTOsHelper } from '@users/shared/tests/helpers/dtos.helper';
 import { fail } from 'assert';
+import type { EntityManager } from 'typeorm';
 import type { NotifyMeService } from './notify-me.service';
 import SYMBOLS from './symbols';
 
@@ -351,6 +350,66 @@ describe('Users / _services / notify me service suite', () => {
 
       const dbResult = await em.getRepository(NotifyMeSubscriptionEntity).findOne({ where: { id: subscription.id } });
       expect(dbResult).toBeDefined();
+    });
+  });
+
+  describe('deleteSubscriptions', () => {
+    it('deletes all my subscriptions', async () => {
+      await sut.deleteSubscriptions(
+        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+        undefined,
+        em
+      );
+
+      const res = await em
+        .getRepository(NotifyMeSubscriptionEntity)
+        .find({ where: { userRole: { id: scenario.users.aliceQualifyingAccessor.roles.qaRole.id } } });
+      expect(res.length).toBe(0);
+    });
+
+    it('deletes all my subscriptions by id (1)', async () => {
+      const subscriptions = [scenario.users.aliceQualifyingAccessor.notifyMeSubscriptions.johnInnovation.id];
+      await sut.deleteSubscriptions(
+        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+        subscriptions,
+        em
+      );
+
+      const res = await em
+        .getRepository(NotifyMeSubscriptionEntity)
+        .find({ where: { userRole: { id: scenario.users.aliceQualifyingAccessor.roles.qaRole.id } } });
+      expect(res.length).toBe(1);
+    });
+
+    it('deletes all my subscriptions by id (2)', async () => {
+      const subscriptions = [
+        scenario.users.aliceQualifyingAccessor.notifyMeSubscriptions.johnInnovation.id,
+        scenario.users.aliceQualifyingAccessor.notifyMeSubscriptions.adamInnovation.id
+      ];
+      await sut.deleteSubscriptions(
+        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+        subscriptions,
+        em
+      );
+
+      const res = await em
+        .getRepository(NotifyMeSubscriptionEntity)
+        .find({ where: { userRole: { id: scenario.users.aliceQualifyingAccessor.roles.qaRole.id } } });
+      expect(res.length).toBe(0);
+    });
+
+    // TODO when we have schedules
+    it.skip('deletes the subscriptions schedules', async () => {
+      await sut.deleteSubscriptions(
+        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+        undefined,
+        em
+      );
+
+      const res = await em
+        .getRepository(NotificationScheduleEntity)
+        .find({ where: { userRole: { id: scenario.users.aliceQualifyingAccessor.roles.qaRole.id } } });
+      expect(res.length).toBe(0);
     });
   });
 });

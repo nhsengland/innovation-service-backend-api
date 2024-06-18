@@ -1,6 +1,6 @@
 import { injectable } from 'inversify';
 import { groupBy } from 'lodash';
-import type { EntityManager } from 'typeorm';
+import { In, type EntityManager } from 'typeorm';
 
 import {
   InnovationEntity,
@@ -279,6 +279,30 @@ export class NotifyMeService extends BaseService {
 
     if (result?.affected) {
       await entityManager.delete(NotificationScheduleEntity, { subscriptionId });
+    }
+  }
+
+  async deleteSubscriptions(
+    domainContext: DomainContextType,
+    ids?: string[],
+    entityManager?: EntityManager
+  ): Promise<void> {
+    if (!entityManager) {
+      return this.sqlConnection.manager.transaction(t => {
+        return this.deleteSubscriptions(domainContext, ids, t);
+      });
+    }
+
+    const result = await entityManager.softDelete(NotifyMeSubscriptionEntity, {
+      userRole: { id: domainContext.currentRole.id },
+      ...(ids?.length && { id: In(ids) })
+    });
+
+    if (result?.affected) {
+      await entityManager.delete(NotificationScheduleEntity, {
+        userRole: { id: domainContext.currentRole.id },
+        ...(ids?.length && { subscription: { id: In(ids) } })
+      });
     }
   }
 }

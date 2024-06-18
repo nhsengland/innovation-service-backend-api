@@ -43,8 +43,12 @@ export class DTOsHelper {
         organisation: {
           id: role.organisation.id,
           name: role.organisation.name,
-          acronym: null,
-          organisationUnit: { id: role.organisationUnit.id, name: role.organisationUnit.name, acronym: '' }
+          acronym: role.organisation.acronym,
+          organisationUnit: {
+            id: role.organisationUnit.id,
+            name: role.organisationUnit.name,
+            acronym: role.organisationUnit.acronym
+          }
         }
       };
     }
