@@ -307,4 +307,50 @@ describe('Users / _services / notify me service suite', () => {
       ).rejects.toThrow(new ForbiddenError(AuthErrorsEnum.AUTH_USER_ROLE_NOT_ALLOWED));
     });
   });
+
+  describe('deleteSubscription', () => {
+    it('deletes a subscription', async () => {
+      const subscription = scenario.users.aliceQualifyingAccessor.notifyMeSubscriptions.johnInnovation;
+      await sut.deleteSubscription(
+        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+        subscription.id,
+        em
+      );
+
+      const dbResult = await em.getRepository(NotifyMeSubscriptionEntity).findOne({ where: { id: subscription.id } });
+      expect(dbResult).toBeNull();
+    });
+
+    it.skip('deletes the subscription schedules', async () => {
+      const subscription = scenario.users.aliceQualifyingAccessor.notifyMeSubscriptions.johnInnovation; // TODO when we have a subscription with schedules
+      await sut.deleteSubscription(
+        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+        subscription.id,
+        em
+      );
+
+      const dbResult = await em.getRepository(NotifyMeSubscriptionEntity).findOne({ where: { id: subscription.id } });
+      expect(dbResult).toBeNull();
+    });
+
+    it('ignores if the subscription does not exist', async () => {
+      await sut.deleteSubscription(
+        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+        randUuid(),
+        em
+      );
+    });
+
+    it('ignores if the subscription is from another user', async () => {
+      const subscription = scenario.users.aliceQualifyingAccessor.notifyMeSubscriptions.johnInnovation;
+      await sut.deleteSubscription(
+        DTOsHelper.getUserRequestContext(scenario.users.bartQualifyingAccessor),
+        subscription.id,
+        em
+      );
+
+      const dbResult = await em.getRepository(NotifyMeSubscriptionEntity).findOne({ where: { id: subscription.id } });
+      expect(dbResult).toBeDefined();
+    });
+  });
 });
