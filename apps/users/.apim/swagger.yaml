@@ -1096,6 +1096,76 @@ paths:
           description: Not found
         "500":
           description: Internal server error
+    post:
+      description: Notify me subscription update
+      operationId: v1-notify-me-subscription-update
+      tags:
+        - "[v1] Notify Me"
+      parameters:
+        - name: subscriptionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              anyOf:
+                - type: object
+                  properties:
+                    eventType:
+                      type: string
+                      enum:
+                        - SUPPORT_UPDATED
+                    subscriptionType:
+                      type: string
+                      enum:
+                        - INSTANTLY
+                      default: INSTANTLY
+                    preConditions:
+                      type: object
+                      properties:
+                        units:
+                          type: array
+                          items:
+                            type: string
+                            format: uuid
+                          minItems: 1
+                        status:
+                          type: array
+                          items:
+                            type: string
+                            enum:
+                              - ENGAGING
+                              - WAITING
+                              - UNSUITABLE
+                              - CLOSED
+                          minItems: 1
+                      required:
+                        - units
+                        - status
+                      additionalProperties: false
+                  required:
+                    - eventType
+                    - preConditions
+                  additionalProperties: false
+                  x-required: true
+      responses:
+        "204":
+          description: Subscription created
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+        "500":
+          description: Internal server error
   /v1/organisations/{organisationId}:
     get:
       description: Get organisation info.

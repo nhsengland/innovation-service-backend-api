@@ -9,6 +9,9 @@ import {
   OrganisationUnitEntity,
   UserRoleEntity
 } from '@users/shared/entities';
+import { BadRequestError, ForbiddenError } from '@users/shared/errors';
+import { NotificationErrorsEnum } from '@users/shared/errors/errors.enums';
+import { AuthErrorsEnum } from '@users/shared/services/auth/authorization-validation.model';
 import {
   isAccessorDomainContextType,
   type DomainContextType,
@@ -230,6 +233,32 @@ export class NotifyMeService extends BaseService {
       name: s.name,
       count: parseInt(s.count)
     }));
+  }
+
+  async updateSubscription(
+    domainContext: DomainContextType,
+    subscriptionId: string,
+    config: SubscriptionConfig,
+    entityManager?: EntityManager
+  ): Promise<void> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const subscription = await em
+      .createQueryBuilder(NotifyMeSubscriptionEntity, 'subscription')
+      .select(['subscription.id', 'subscription.eventType'])
+      .where('subscription.id = :subscriptionId', { subscriptionId })
+      .andWhere('subscription.user_role_id = :roleId', { roleId: domainContext.currentRole.id })
+      .getOne();
+
+    if (!subscription) {
+      throw new ForbiddenError(AuthErrorsEnum.AUTH_USER_ROLE_NOT_ALLOWED);
+    }
+
+    if (subscription.eventType !== config.eventType) {
+      throw new BadRequestError(NotificationErrorsEnum.NOTIFY_ME_CANNOT_CHANGE_EVENT_TYPE);
+    }
+
+    await em.update(NotifyMeSubscriptionEntity, { id: subscriptionId }, { config });
   }
 
   async deleteSubscription(

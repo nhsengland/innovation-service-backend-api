@@ -3,8 +3,12 @@ import { container } from '../_config';
 import type { EntityManager } from 'typeorm';
 
 import { randUuid } from '@ngneat/falso';
+import { BadRequestError } from '@notifications/shared/errors';
 import { NotifyMeSubscriptionEntity } from '@users/shared/entities';
 import { InnovationSupportStatusEnum } from '@users/shared/enums';
+import { ForbiddenError } from '@users/shared/errors';
+import { NotificationErrorsEnum } from '@users/shared/errors/errors.enums';
+import { AuthErrorsEnum } from '@users/shared/services/auth/authorization-validation.model';
 import { TestsHelper } from '@users/shared/tests';
 import { DTOsHelper } from '@users/shared/tests/helpers/dtos.helper';
 import { fail } from 'assert';
@@ -249,6 +253,59 @@ describe('Users / _services / notify me service suite', () => {
       );
 
       expect(subscriptions.length).toBe(1);
+    });
+  });
+
+  describe('updateSubscription', () => {
+    it('should update a subscription', async () => {
+      const subscription = scenario.users.aliceQualifyingAccessor.notifyMeSubscriptions.johnInnovation;
+      await sut.updateSubscription(
+        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+        subscription.id,
+        {
+          eventType: 'SUPPORT_UPDATED',
+          preConditions: {
+            status: [InnovationSupportStatusEnum.UNSUITABLE],
+            units: [randUuid()]
+          },
+          subscriptionType: 'INSTANTLY'
+        },
+        em
+      );
+
+      const dbResult = await em.getRepository(NotifyMeSubscriptionEntity).findOne({ where: { id: subscription.id } });
+      expect(dbResult?.config.preConditions.status).toStrictEqual([InnovationSupportStatusEnum.UNSUITABLE]);
+    });
+
+    it('should fail if changing the subscription eventType', async () => {
+      await expect(
+        sut.updateSubscription(
+          DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+          scenario.users.aliceQualifyingAccessor.notifyMeSubscriptions.johnInnovation.id,
+          {
+            eventType: 'PROGRESS_UPDATE_CREATED'
+          } as any, // We don't have more than one type yet but this should be enough for the test
+          em
+        )
+      ).rejects.toThrow(new BadRequestError(NotificationErrorsEnum.NOTIFY_ME_CANNOT_CHANGE_EVENT_TYPE));
+    });
+
+    it('should fail if the subscription is from a different user', async () => {
+      await expect(
+        sut.updateSubscription(
+          DTOsHelper.getUserRequestContext(scenario.users.bartQualifyingAccessor),
+          scenario.users.aliceQualifyingAccessor.notifyMeSubscriptions.johnInnovation.id,
+          {
+            eventType: 'SUPPORT_UPDATED',
+            preConditions: {
+              status: [InnovationSupportStatusEnum.UNSUITABLE],
+              units: [randUuid()]
+            },
+            subscriptionType: 'INSTANTLY'
+          },
+          em
+        )
+      ).rejects.toThrow(new ForbiddenError(AuthErrorsEnum.AUTH_USER_ROLE_NOT_ALLOWED));
     });
   });
 });
