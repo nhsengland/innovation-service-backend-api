@@ -162,3 +162,7 @@ export enum ElasticSearchErrorsEnum {
   ES_CREATE_INDEX_ERROR = 'ES.0002',
   ES_BULK_INSERT_ERROR = 'ES.0003'
 }
+
+export enum NotificationErrorsEnum {
+  NOTIFY_ME_CANNOT_CHANGE_EVENT_TYPE = 'NM.0001'
+}
