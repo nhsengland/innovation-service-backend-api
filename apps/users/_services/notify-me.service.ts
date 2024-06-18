@@ -1,6 +1,6 @@
 import { injectable } from 'inversify';
 import { groupBy } from 'lodash';
-import type { EntityManager } from 'typeorm';
+import { In, type EntityManager } from 'typeorm';
 
 import {
   InnovationEntity,
@@ -266,18 +266,43 @@ export class NotifyMeService extends BaseService {
     subscriptionId: string,
     entityManager?: EntityManager
   ): Promise<void> {
-    const em = entityManager ?? this.sqlConnection.manager;
-
-    await em.transaction(async transaction => {
-      const result = await transaction.softDelete(NotifyMeSubscriptionEntity, {
-        id: subscriptionId,
-        userRole: { id: domainContext.currentRole.id }
+    if (!entityManager) {
+      return this.sqlConnection.manager.transaction(t => {
+        return this.deleteSubscription(domainContext, subscriptionId, t);
       });
+    }
 
-      // NOTE: We have to confirm that if a subscription is removed we want to remove the schedule associated with it
-      if (result?.affected) {
-        await transaction.delete(NotificationScheduleEntity, { subscriptionId });
-      }
+    const result = await entityManager.softDelete(NotifyMeSubscriptionEntity, {
+      id: subscriptionId,
+      userRole: { id: domainContext.currentRole.id }
     });
+
+    if (result?.affected) {
+      await entityManager.delete(NotificationScheduleEntity, { subscriptionId });
+    }
+  }
+
+  async deleteSubscriptions(
+    domainContext: DomainContextType,
+    ids?: string[],
+    entityManager?: EntityManager
+  ): Promise<void> {
+    if (!entityManager) {
+      return this.sqlConnection.manager.transaction(t => {
+        return this.deleteSubscriptions(domainContext, ids, t);
+      });
+    }
+
+    const result = await entityManager.softDelete(NotifyMeSubscriptionEntity, {
+      userRole: { id: domainContext.currentRole.id },
+      ...(ids?.length && { id: In(ids) })
+    });
+
+    if (result?.affected) {
+      await entityManager.delete(NotificationScheduleEntity, {
+        userRole: { id: domainContext.currentRole.id },
+        ...(ids?.length && { subscription: { id: In(ids) } })
+      });
+    }
   }
 }

@@ -11,7 +11,7 @@ import { container } from '../_config';
 import type { NotifyMeService } from '../_services/notify-me.service';
 
 import SYMBOLS from '../_services/symbols';
-import { ParamsSchema, ParamsType } from './validation.schemas';
+import { QuerySchema, QueryType } from './validation.schemas';
 
 class V1NotifyMeSubscriptionDelete {
   @JwtDecoder()
@@ -20,11 +20,11 @@ class V1NotifyMeSubscriptionDelete {
     const notifyMeService = container.get<NotifyMeService>(SYMBOLS.NotifyMeService);
 
     try {
-      const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
+      const queryParams = JoiHelper.Validate<QueryType>(QuerySchema, request.query);
 
       const auth = await authorizationService.validate(context).checkAssessmentType().checkAccessorType().verify();
 
-      await notifyMeService.deleteSubscription(auth.getContext(), params.subscriptionId);
+      await notifyMeService.deleteSubscriptions(auth.getContext(), queryParams.ids);
 
       context.res = ResponseHelper.NoContent();
       return;
@@ -35,14 +35,14 @@ class V1NotifyMeSubscriptionDelete {
   }
 }
 
-export default openApi(V1NotifyMeSubscriptionDelete.httpTrigger as AzureFunction, '/v1/me/notify-me/{subscriptionId}', {
+export default openApi(V1NotifyMeSubscriptionDelete.httpTrigger as AzureFunction, '/v1/me/notify-me', {
   delete: {
     description: 'Notify me subscription delete',
-    operationId: 'v1-notify-me-subscription-delete',
+    operationId: 'v1-notify-me-delete',
     tags: ['[v1] Notify Me'],
-    parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
+    parameters: SwaggerHelper.paramJ2S({ query: QuerySchema }),
     responses: {
-      204: { description: 'Subscription deleted' },
+      204: { description: 'Subscriptions deleted' },
       400: { description: 'Bad Request' },
       401: { description: 'Unauthorized' },
       403: { description: 'Forbidden' },
