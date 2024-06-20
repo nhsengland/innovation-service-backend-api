@@ -6,7 +6,7 @@
       "direction": "in",
       "name": "req",
       "methods": ["delete"],
-      "route": "v1/me/notify-me/{subscriptionId}"
+      "route": "v1/notify-me/{subscriptionId}"
     },
     {
       "type": "http",
