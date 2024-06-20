@@ -951,7 +951,7 @@ paths:
                         params:
                           type: object
                           description: The notification params
-  /v1/me/notify-me:
+  /v1/notify-me:
     delete:
       description: Notify me subscription delete
       operationId: v1-notify-me-delete
@@ -1072,7 +1072,7 @@ paths:
           description: Not found
         "500":
           description: Internal server error
-  /v1/me/notify-me/innovation/{innovationId}:
+  /v1/notify-me/innovation/{innovationId}:
     get:
       description: Notify me innovation subscriptions list
       operationId: v1-notify-me-innovation-subscription-list
@@ -1098,7 +1098,7 @@ paths:
           description: Not found
         "500":
           description: Internal server error
-  /v1/me/notify-me/{subscriptionId}:
+  /v1/notify-me/{subscriptionId}:
     delete:
       description: Notify me subscription delete
       operationId: v1-notify-me-subscription-delete
@@ -1124,7 +1124,7 @@ paths:
           description: Not found
         "500":
           description: Internal server error
-    post:
+    put:
       description: Notify me subscription update
       operationId: v1-notify-me-subscription-update
       tags:

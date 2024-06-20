@@ -36,8 +36,8 @@ class V1NotifyMeSubscriptionUpdate {
   }
 }
 
-export default openApi(V1NotifyMeSubscriptionUpdate.httpTrigger as AzureFunction, '/v1/me/notify-me/{subscriptionId}', {
-  post: {
+export default openApi(V1NotifyMeSubscriptionUpdate.httpTrigger as AzureFunction, '/v1/notify-me/{subscriptionId}', {
+  put: {
     description: 'Notify me subscription update',
     operationId: 'v1-notify-me-subscription-update',
     tags: ['[v1] Notify Me'],
