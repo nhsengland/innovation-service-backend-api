@@ -164,5 +164,6 @@ export enum ElasticSearchErrorsEnum {
 }
 
 export enum NotificationErrorsEnum {
-  NOTIFY_ME_CANNOT_CHANGE_EVENT_TYPE = 'NM.0001'
+  NOTIFY_ME_CANNOT_CHANGE_EVENT_TYPE = 'NM.0001',
+  NOTIFY_ME_SUBSCRIPTION_NOT_FOUND = 'NM.0002'
 }
