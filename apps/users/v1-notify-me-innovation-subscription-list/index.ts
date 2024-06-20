@@ -26,7 +26,6 @@ class V1NotifyMeSubscriptionList {
       const auth = await authorizationService
         .validate(context)
         .setInnovation(params.innovationId)
-        .checkAssessmentType()
         .checkAccessorType()
         .checkInnovation()
         .verify();

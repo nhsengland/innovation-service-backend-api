@@ -20,7 +20,7 @@ class V1NotifyMeSubscriptionList {
     const notifyMeService = container.get<NotifyMeService>(SYMBOLS.NotifyMeService);
 
     try {
-      const auth = await authorizationService.validate(context).checkAssessmentType().checkAccessorType().verify();
+      const auth = await authorizationService.validate(context).checkAccessorType().verify();
 
       const subscriptions = await notifyMeService.getNotifyMeSubscriptions(auth.getContext());
 

@@ -66,7 +66,7 @@ describe('v1-notify-me-delete Suite', () => {
       ['Admin', 403, scenario.users.allMighty],
       ['QA', 204, scenario.users.aliceQualifyingAccessor],
       ['A', 204, scenario.users.ingridAccessor],
-      ['NA', 204, scenario.users.paulNeedsAssessor],
+      ['NA', 403, scenario.users.paulNeedsAssessor],
       ['Innovator', 403, scenario.users.johnInnovator]
     ])('access with user %s should give %i', async (_role: string, status: number, user: TestUserType) => {
       const result = await new AzureHttpTriggerBuilder().setAuth(user).call<never>(azureFunction);

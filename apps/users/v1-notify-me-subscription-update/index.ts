@@ -23,7 +23,7 @@ class V1NotifyMeSubscriptionUpdate {
       const param = JoiHelper.Validate<ParamType>(ParamSchema, request.params);
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
-      const auth = await authorizationService.validate(context).checkAssessmentType().checkAccessorType().verify();
+      const auth = await authorizationService.validate(context).checkAccessorType().verify();
 
       await notifyMeService.updateSubscription(auth.getContext(), param.subscriptionId, body);
 
