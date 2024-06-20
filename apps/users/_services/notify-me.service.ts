@@ -9,7 +9,7 @@ import {
   OrganisationUnitEntity,
   UserRoleEntity
 } from '@users/shared/entities';
-import { BadRequestError, ForbiddenError } from '@users/shared/errors';
+import { BadRequestError, ForbiddenError, NotFoundError } from '@users/shared/errors';
 import { NotificationErrorsEnum } from '@users/shared/errors/errors.enums';
 import { AuthErrorsEnum } from '@users/shared/services/auth/authorization-validation.model';
 import {
@@ -96,7 +96,7 @@ export class NotifyMeService extends BaseService {
     for (const [eventType, subscriptions] of Object.entries(groupedSubscriptions)) {
       const responses =
         eventType in this.subscriptionResponseDTO
-          ? await this.subscriptionResponseDTO[eventType as keyof typeof this.subscriptionResponseDTO](
+          ? await this.subscriptionResponseDTO[eventType as keyof NotifyMeService['subscriptionResponseDTO']](
               subscriptions as any,
               em
             ) // safe because of groupBy
@@ -203,6 +203,50 @@ export class NotifyMeService extends BaseService {
       });
     });
     return Object.values(organisations);
+  }
+
+  async getSubscription(
+    domainContext: DomainContextType,
+    subscriptionId: string,
+    entityManager?: EntityManager
+  ): Promise<SubscriptionResponseDTO> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const subscription = await em
+      .createQueryBuilder(NotifyMeSubscriptionEntity, 'subscription')
+      .select([
+        'subscription.id',
+        'subscription.eventType',
+        'subscription.config',
+        'subscription.updatedAt'
+        // 'scheduled.sendDate',
+        // 'scheduled.params'
+      ])
+      // .leftJoin('subscription.scheduledNotification', 'scheduled')
+      .where('subscription.id = :subscriptionId', { subscriptionId })
+      .andWhere('subscription.user_role_id = :roleId', { roleId: domainContext.currentRole.id })
+      .getOne();
+
+    if (!subscription) {
+      throw new NotFoundError(NotificationErrorsEnum.NOTIFY_ME_SUBSCRIPTION_NOT_FOUND);
+    }
+
+    // await this.subscriptionResponseDTO[subscription.eventType as keyof typeof this.subscriptionResponseDTO](
+    //   [subscription as any],
+    //   em
+    // )
+    const response =
+      subscription.eventType in this.subscriptionResponseDTO
+        ? await this.subscriptionResponseDTO[
+            subscription.eventType as keyof NotifyMeService['subscriptionResponseDTO']
+          ]([subscription as any], em)
+        : this.defaultSubscriptionResponseDTO([subscription]);
+
+    // never happens but failsafe
+    if (!response[0]) {
+      throw new NotFoundError(NotificationErrorsEnum.NOTIFY_ME_SUBSCRIPTION_NOT_FOUND);
+    }
+    return response[0];
   }
 
   async getNotifyMeSubscriptions(

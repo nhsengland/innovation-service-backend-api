@@ -1124,6 +1124,31 @@ paths:
           description: Not found
         "500":
           description: Internal server error
+    get:
+      description: Notify me subscription get
+      operationId: v1-notify-me-subscription-get
+      tags:
+        - "[v1] Notify Me"
+      parameters:
+        - name: subscriptionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The subscription
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+        "500":
+          description: Internal server error
     put:
       description: Notify me subscription update
       operationId: v1-notify-me-subscription-update

@@ -3,7 +3,7 @@ import { container } from '../_config';
 import { randUuid } from '@ngneat/falso';
 import { NotificationScheduleEntity, NotifyMeSubscriptionEntity } from '@users/shared/entities';
 import { InnovationSupportStatusEnum } from '@users/shared/enums';
-import { BadRequestError, ForbiddenError } from '@users/shared/errors';
+import { BadRequestError, ForbiddenError, NotFoundError } from '@users/shared/errors';
 import { NotificationErrorsEnum } from '@users/shared/errors/errors.enums';
 import { AuthErrorsEnum } from '@users/shared/services/auth/authorization-validation.model';
 import { TestsHelper } from '@users/shared/tests';
@@ -213,6 +213,45 @@ describe('Users / _services / notify me service suite', () => {
           ]
         }
       ]);
+    });
+  });
+
+  describe('getSubscription', () => {
+    it('returns the subscription', async () => {
+      const subscription = scenario.users.aliceQualifyingAccessor.notifyMeSubscriptions.johnInnovation;
+      const res = await sut.getSubscription(
+        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+        subscription.id,
+        em
+      );
+
+      expect(res).toMatchObject({
+        eventType: subscription.eventType,
+        id: subscription.id,
+        organisations: [
+          {
+            id: scenario.organisations.medTechOrg.id,
+            name: scenario.organisations.medTechOrg.name,
+            acronym: scenario.organisations.medTechOrg.acronym,
+            units: [
+              {
+                id: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id,
+                name: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.name,
+                acronym: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.acronym
+              }
+            ]
+          }
+        ],
+        status: subscription.config.preConditions.status,
+        subscriptionType: subscription.subscriptionType,
+        updatedAt: expect.any(Date)
+      });
+    });
+
+    it("throws error if subscription doesn't exist", async () => {
+      await expect(() =>
+        sut.getSubscription(DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor), randUuid(), em)
+      ).rejects.toThrow(new NotFoundError(NotificationErrorsEnum.NOTIFY_ME_SUBSCRIPTION_NOT_FOUND));
     });
   });
 
