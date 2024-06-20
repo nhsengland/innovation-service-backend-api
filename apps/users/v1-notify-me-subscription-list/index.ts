@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@users/shared/decorators';
-import { ResponseHelper } from '@users/shared/helpers';
+import { JoiHelper, ResponseHelper } from '@users/shared/helpers';
 import type { AuthorizationService } from '@users/shared/services';
 import SHARED_SYMBOLS from '@users/shared/services/symbols';
 import type { CustomContextType } from '@users/shared/types';
@@ -12,17 +12,19 @@ import { container } from '../_config';
 import type { NotifyMeService } from '../_services/notify-me.service';
 import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
+import { QuerySchema, type QueryType } from './validation.schemas';
 
 class V1NotifyMeSubscriptionList {
   @JwtDecoder()
-  static async httpTrigger(context: CustomContextType, _request: HttpRequest): Promise<void> {
+  static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
     const authorizationService = container.get<AuthorizationService>(SHARED_SYMBOLS.AuthorizationService);
     const notifyMeService = container.get<NotifyMeService>(SYMBOLS.NotifyMeService);
 
     try {
+      const queryParams = JoiHelper.Validate<QueryType>(QuerySchema, request.query);
       const auth = await authorizationService.validate(context).checkAccessorType().verify();
 
-      const subscriptions = await notifyMeService.getNotifyMeSubscriptions(auth.getContext());
+      const subscriptions = await notifyMeService.getNotifyMeSubscriptions(auth.getContext(), queryParams.withDetails);
 
       context.res = ResponseHelper.Ok<ResponseDTO>(subscriptions);
       return;

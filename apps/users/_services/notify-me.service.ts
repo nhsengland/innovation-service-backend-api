@@ -132,7 +132,7 @@ export class NotifyMeService extends BaseService {
     subscriptions: (NotifyMeSubscriptionEntity & { config: SupportUpdateCreated })[],
     em: EntityManager
   ): Promise<SupportUpdateResponseTypes['SUPPORT_UPDATED'][]> {
-    const units = subscriptions.flatMap(s => s.config.preConditions.units);
+    const units = Array.from(new Set(subscriptions.flatMap(s => s.config.preConditions.units)));
     const retrievedUnits = new Map(
       (
         await em
@@ -247,6 +247,7 @@ export class NotifyMeService extends BaseService {
 
   async getNotifyMeSubscriptions(
     domainContext: DomainContextType,
+    withDetails = false,
     entityManager?: EntityManager
   ): Promise<{ innovationId: string; name: string; count: number }[]> {
     const em = entityManager ?? this.sqlConnection.manager;
@@ -260,6 +261,16 @@ export class NotifyMeService extends BaseService {
       .addGroupBy('innovation.name')
       .addOrderBy('innovation.name');
 
+    if (withDetails) {
+      query.addSelect(`JSON_QUERY((
+        SELECT id, event_type as eventType, subscription_type as subscriptionType, JSON_QUERY(config) as config, updated_at as updatedAt 
+        FROM notify_me_subscription
+        WHERE innovation_id=innovation.id
+        AND user_role_id=:roleId
+        ORDER BY updated_at DESC
+        FOR JSON AUTO)) as subscriptions`);
+    }
+
     if (isAccessorDomainContextType(domainContext)) {
       query
         .innerJoin('innovation.organisationShares', 'shares')
@@ -268,10 +279,35 @@ export class NotifyMeService extends BaseService {
 
     const subscriptions = await query.getRawMany();
 
+    const responseSubscriptions = new Map<string, SubscriptionResponseDTO>();
+    if (withDetails) {
+      // Convert subscriptions text from SQL into object
+      subscriptions.forEach(s => {
+        s.subscriptions = JSON.parse(s.subscriptions).map((s: any) => ({ ...s, updatedAt: new Date(s.updatedAt) }));
+      });
+
+      const allSubscriptions = subscriptions.flatMap(s => s.subscriptions);
+      const groupedSubscriptions = groupBy(allSubscriptions, 'eventType');
+
+      // Map of subscription ids to their DTOs
+      for (const [eventType, subscriptions] of Object.entries(groupedSubscriptions)) {
+        const responses =
+          eventType in this.subscriptionResponseDTO
+            ? await this.subscriptionResponseDTO[eventType as keyof NotifyMeService['subscriptionResponseDTO']](
+                subscriptions as any,
+                em
+              ) // safe because of groupBy
+            : this.defaultSubscriptionResponseDTO(subscriptions);
+
+        responses.forEach(s => responseSubscriptions.set(s.id, s));
+      }
+    }
+
     return subscriptions.map(s => ({
       innovationId: s.id,
       name: s.name,
-      count: parseInt(s.count)
+      count: parseInt(s.count),
+      ...(withDetails && { subscriptions: s.subscriptions.map((s: any) => responseSubscriptions.get(s.id)) })
     }));
   }
 

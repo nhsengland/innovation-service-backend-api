@@ -2,6 +2,7 @@ import azureFunction from '.';
 
 import { AzureHttpTriggerBuilder, TestsHelper } from '@users/shared/tests';
 import type { TestUserType } from '@users/shared/tests/builders/user.builder';
+import { DTOsHelper } from '@users/shared/tests/helpers/dtos.helper';
 import { NotifyMeService } from '../_services/notify-me.service';
 
 jest.mock('@users/shared/decorators', () => ({
@@ -32,7 +33,7 @@ afterEach(() => {
 
 describe('v1-notify-me-subscription-list Suite', () => {
   describe('200', () => {
-    it('should list my custom notification subscriptions as %s', async () => {
+    it('should list my custom notification subscriptions', async () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.aliceQualifyingAccessor)
         .call<never>(azureFunction);
@@ -40,6 +41,18 @@ describe('v1-notify-me-subscription-list Suite', () => {
       expect(result.body).toStrictEqual(expected);
       expect(result.status).toBe(200);
       expect(mock).toHaveBeenCalledTimes(1);
+    });
+
+    it('should list my custom notification subscriptions with details', async () => {
+      const result = await new AzureHttpTriggerBuilder()
+        .setAuth(scenario.users.aliceQualifyingAccessor)
+        .setQuery({ withDetails: true })
+        .call<never>(azureFunction);
+
+      expect(result.body).toStrictEqual(expected);
+      expect(result.status).toBe(200);
+      expect(mock).toHaveBeenCalledTimes(1);
+      expect(mock).toHaveBeenCalledWith(DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor), true);
     });
   });
 
