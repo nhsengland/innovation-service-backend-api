@@ -231,10 +231,6 @@ export class NotifyMeService extends BaseService {
       throw new NotFoundError(NotificationErrorsEnum.NOTIFY_ME_SUBSCRIPTION_NOT_FOUND);
     }
 
-    // await this.subscriptionResponseDTO[subscription.eventType as keyof typeof this.subscriptionResponseDTO](
-    //   [subscription as any],
-    //   em
-    // )
     const response =
       subscription.eventType in this.subscriptionResponseDTO
         ? await this.subscriptionResponseDTO[
