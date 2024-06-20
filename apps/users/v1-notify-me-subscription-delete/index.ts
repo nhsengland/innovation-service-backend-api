@@ -35,7 +35,7 @@ class V1NotifyMeSubscriptionDelete {
   }
 }
 
-export default openApi(V1NotifyMeSubscriptionDelete.httpTrigger as AzureFunction, '/v1/me/notify-me/{subscriptionId}', {
+export default openApi(V1NotifyMeSubscriptionDelete.httpTrigger as AzureFunction, '/v1/notify-me/{subscriptionId}', {
   delete: {
     description: 'Notify me subscription delete',
     operationId: 'v1-notify-me-subscription-delete',

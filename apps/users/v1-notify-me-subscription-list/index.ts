@@ -33,7 +33,7 @@ class V1NotifyMeSubscriptionList {
   }
 }
 
-export default openApi(V1NotifyMeSubscriptionList.httpTrigger as AzureFunction, '/v1/me/notify-me', {
+export default openApi(V1NotifyMeSubscriptionList.httpTrigger as AzureFunction, '/v1/notify-me', {
   get: {
     description: 'Notify me subscriptions list',
     operationId: 'v1-notify-me-subscription-list',

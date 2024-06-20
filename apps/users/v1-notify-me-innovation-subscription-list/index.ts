@@ -44,7 +44,7 @@ class V1NotifyMeSubscriptionList {
 
 export default openApi(
   V1NotifyMeSubscriptionList.httpTrigger as AzureFunction,
-  '/v1/me/notify-me/innovation/{innovationId}',
+  '/v1/notify-me/innovation/{innovationId}',
   {
     get: {
       description: 'Notify me innovation subscriptions list',
