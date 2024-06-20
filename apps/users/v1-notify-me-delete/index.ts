@@ -22,7 +22,7 @@ class V1NotifyMeSubscriptionDelete {
     try {
       const queryParams = JoiHelper.Validate<QueryType>(QuerySchema, request.query);
 
-      const auth = await authorizationService.validate(context).checkAssessmentType().checkAccessorType().verify();
+      const auth = await authorizationService.validate(context).checkAccessorType().verify();
 
       await notifyMeService.deleteSubscriptions(auth.getContext(), queryParams.ids);
 
