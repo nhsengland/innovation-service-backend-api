@@ -259,6 +259,7 @@ describe('Users / _services / notify me service suite', () => {
     it('gets my notify me list sorted by innovation name', async () => {
       const subscriptions = await sut.getNotifyMeSubscriptions(
         DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+        undefined,
         em
       );
 
@@ -286,10 +287,87 @@ describe('Users / _services / notify me service suite', () => {
       ]);
       const subscriptions = await sut.getNotifyMeSubscriptions(
         DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+        undefined,
         em
       );
 
       expect(subscriptions.length).toBe(1);
+    });
+
+    it('should return list with details', async () => {
+      const subscriptions = await sut.getNotifyMeSubscriptions(
+        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+        true,
+        em
+      );
+
+      expect(subscriptions.length).toBe(2);
+      expect(subscriptions).toMatchObject(
+        [
+          {
+            innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
+            name: scenario.users.johnInnovator.innovations.johnInnovation.name,
+            count: 1,
+            subscriptions: [
+              {
+                eventType: scenario.users.aliceQualifyingAccessor.notifyMeSubscriptions.johnInnovation.eventType,
+                id: scenario.users.aliceQualifyingAccessor.notifyMeSubscriptions.johnInnovation.id,
+                organisations: [
+                  {
+                    id: scenario.organisations.medTechOrg.id,
+                    name: scenario.organisations.medTechOrg.name,
+                    acronym: scenario.organisations.medTechOrg.acronym,
+                    units: [
+                      {
+                        id: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id,
+                        name: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.name,
+                        acronym: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.acronym
+                      }
+                    ]
+                  }
+                ],
+                status:
+                  scenario.users.aliceQualifyingAccessor.notifyMeSubscriptions.johnInnovation.config.preConditions
+                    .status,
+                subscriptionType:
+                  scenario.users.aliceQualifyingAccessor.notifyMeSubscriptions.johnInnovation.subscriptionType,
+                updatedAt: expect.any(Date)
+              }
+            ]
+          },
+          {
+            innovationId: scenario.users.adamInnovator.innovations.adamInnovation.id,
+            name: scenario.users.adamInnovator.innovations.adamInnovation.name,
+            count: 1,
+            subscriptions: [
+              {
+                eventType: scenario.users.aliceQualifyingAccessor.notifyMeSubscriptions.adamInnovation.eventType,
+                id: scenario.users.aliceQualifyingAccessor.notifyMeSubscriptions.adamInnovation.id,
+                organisations: [
+                  {
+                    id: scenario.organisations.medTechOrg.id,
+                    name: scenario.organisations.medTechOrg.name,
+                    acronym: scenario.organisations.medTechOrg.acronym,
+                    units: [
+                      {
+                        id: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id,
+                        name: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.name,
+                        acronym: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.acronym
+                      }
+                    ]
+                  }
+                ],
+                status:
+                  scenario.users.aliceQualifyingAccessor.notifyMeSubscriptions.adamInnovation.config.preConditions
+                    .status,
+                subscriptionType:
+                  scenario.users.aliceQualifyingAccessor.notifyMeSubscriptions.adamInnovation.subscriptionType,
+                updatedAt: expect.any(Date)
+              }
+            ]
+          }
+        ].sort((a, b) => a.name.localeCompare(b.name))
+      );
     });
   });
 
