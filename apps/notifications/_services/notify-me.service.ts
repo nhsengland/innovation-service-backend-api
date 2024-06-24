@@ -3,8 +3,9 @@ import { injectable } from 'inversify';
 
 import { BaseService } from './base.service';
 
+import { ServiceRoleEnum } from '@notifications/shared/enums';
 import type { EventType, SubscriptionConfig } from '@notifications/shared/types';
-import { EntityManager, In } from 'typeorm';
+import { Brackets, EntityManager, In } from 'typeorm';
 
 export type NotifyMeSubscriptionType<T extends EventType = EventType> = {
   id: string;
@@ -39,6 +40,17 @@ export class NotifyMeService extends BaseService {
       .innerJoin('subscription.userRole', 'role')
       .where('subscription.innovation_id = :innovationId', { innovationId: innovationId })
       .andWhere('subscription.eventType = :eventType', { eventType: eventType })
+      .andWhere(
+        new Brackets(qb => {
+          qb.where('role.role NOT IN (:...roles)', {
+            roles: [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR]
+          }).orWhere(
+            `EXISTS(SELECT 1 FROM innovation_share
+                 WHERE organisation_id = role.organisation_id
+                 AND innovation_id = subscription.innovation_id)`
+          );
+        })
+      )
       .getMany();
 
     return subscriptions.map(subscription => ({

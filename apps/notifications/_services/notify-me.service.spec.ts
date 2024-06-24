@@ -72,5 +72,11 @@ describe('NotifyMe Service Suite', () => {
       );
       expect(subscriptions.length).toBe(0);
     });
+
+    it("shouldn't return the subscriptions if the innovation is not shared", async () => {
+      await em.query(`DELETE FROM innovation_share WHERE organisation_id = @0`, [scenario.organisations.healthOrg.id]);
+      const subscriptions = await sut.getInnovationEventSubscriptions(innovation.id, 'SUPPORT_UPDATED', em);
+      expect(subscriptions.length).toBe(0);
+    });
   });
 });
