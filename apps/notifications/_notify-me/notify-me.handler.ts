@@ -65,6 +65,7 @@ export class NotifyMeHandler {
       (await this.recipientsService.getRecipientsByRoleId(subscribers, transaction)).map(r => [r.roleId, r])
     );
     const identities = await this.recipientsService.usersIdentityInfo([...recipients.values()].map(r => r.identityId));
+    const preferences = await this.recipientsService.getEmailPreferences(subscribers, transaction);
 
     for (const subscription of subscriptions) {
       const recipient = recipients.get(subscription.roleId);
@@ -72,6 +73,8 @@ export class NotifyMeHandler {
 
       const identity = identities.get(recipient.identityId);
       if (!identity) continue;
+
+      const shouldSendEmail = HandlersHelper.shouldSendEmail('NOTIFY_ME', preferences.get(subscription.roleId));
 
       const params = {
         inApp: this.getInAppParams(subscription, innovation),
@@ -83,11 +86,13 @@ export class NotifyMeHandler {
       };
 
       const inAppPayload = this.buildInApp(subscription, params.inApp);
-      const emailPayload = this.buildEmail(identity.email, subscription, params.email);
+      const emailPayload = shouldSendEmail && this.buildEmail(identity.email, subscription, params.email);
 
       switch (subscription.config.subscriptionType) {
         case 'INSTANTLY':
-          this.#emails.push(emailPayload);
+          if (emailPayload) {
+            this.#emails.push(emailPayload);
+          }
           this.#inApps.push(inAppPayload);
           break;
 

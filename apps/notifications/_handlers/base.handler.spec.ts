@@ -34,24 +34,6 @@ describe('Notifications / _handlers / base handler suite', () => {
     jest.restoreAllMocks();
   });
 
-  describe('isEmailPreferenceInstantly', () => {
-    it('should return true when the email preference is yes', () => {
-      expect(baseHandler['shouldSendEmail']('TASK', { TASK: NotificationPreferenceEnum.YES } as any)).toBe(true);
-    });
-
-    it('should return false when the email preference is no', () => {
-      expect(baseHandler['shouldSendEmail']('TASK', { TASK: NotificationPreferenceEnum.NO } as any)).toBe(false);
-    });
-
-    it('should return true when the email preference for DOCUMENTS is not defined', () => {
-      expect(baseHandler['shouldSendEmail']('DOCUMENTS', { TASK: NotificationPreferenceEnum.NO } as any)).toBe(true);
-    });
-
-    it('should return true when the email preference is not defined', () => {
-      expect(baseHandler['shouldSendEmail']('INNOVATION_MANAGEMENT')).toBe(true);
-    });
-  });
-
   describe('getEmails', () => {
     let defaultReply: any[];
 
