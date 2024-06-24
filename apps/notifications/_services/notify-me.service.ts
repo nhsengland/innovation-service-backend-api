@@ -40,6 +40,7 @@ export class NotifyMeService extends BaseService {
       .innerJoin('subscription.userRole', 'role')
       .where('subscription.innovation_id = :innovationId', { innovationId: innovationId })
       .andWhere('subscription.eventType = :eventType', { eventType: eventType })
+      // Currently this or could be simplified because only A/QA have subscription but future proofing
       .andWhere(
         new Brackets(qb => {
           qb.where('role.role NOT IN (:...roles)', {
