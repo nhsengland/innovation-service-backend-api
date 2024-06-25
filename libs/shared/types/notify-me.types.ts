@@ -64,8 +64,7 @@ export type EventPayloads = {
     units: string;
   };
   PROGRESS_UPDATE_CREATED: {
-    unitId: string;
-    description: string;
+    units: string;
   };
   REMINDER: Record<string, never>;
 };
