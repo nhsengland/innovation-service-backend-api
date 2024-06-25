@@ -89,12 +89,18 @@ paths:
                           enum:
                             - YES
                             - NO
+                        NOTIFY_ME:
+                          type: string
+                          enum:
+                            - YES
+                            - NO
                       required:
                         - SUPPORT
                         - TASK
                         - MESSAGES
                         - INNOVATION_MANAGEMENT
                         - AUTOMATIC
+                        - NOTIFY_ME
                       additionalProperties: false
                       x-required: true
                     - type: object
@@ -129,6 +135,11 @@ paths:
                           enum:
                             - YES
                             - NO
+                        NOTIFY_ME:
+                          type: string
+                          enum:
+                            - YES
+                            - NO
                       required:
                         - ORGANISATION_SUGGESTIONS
                         - SUPPORT
@@ -136,6 +147,7 @@ paths:
                         - MESSAGES
                         - INNOVATION_MANAGEMENT
                         - AUTOMATIC
+                        - NOTIFY_ME
                       additionalProperties: false
                       x-required: true
                     - type: object

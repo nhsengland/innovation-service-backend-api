@@ -2,11 +2,10 @@ import type { Context } from '@azure/functions';
 import {
   NotificationCategoryType,
   NotificationDetailType,
-  NotificationPreferenceEnum,
   NotifierTypeEnum,
   ServiceRoleEnum
 } from '@notifications/shared/enums';
-import type { DomainContextType, NotificationPreferences, NotifierTemplatesType } from '@notifications/shared/types';
+import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { EmailTemplates, EmailTemplatesType, container } from '../_config';
 import type { InAppTemplatesType } from '../_config/inapp.config';
 import { HandlersHelper } from '../_helpers/handlers.helper';
@@ -72,15 +71,6 @@ export abstract class BaseHandler<
     this.logger = azureContext.log;
   }
 
-  /**
-   * Helper method to verify users email notification preferences.
-   * Ex: this.shouldSendEmail(TASK, userData);
-   */
-  protected shouldSendEmail(type: NotificationCategoryType, data?: NotificationPreferences): boolean {
-    const preference = data as any; // TS can't infer the correct NotificationPreferences
-    return !preference || !preference[type] || preference[type] === NotificationPreferenceEnum.YES;
-  }
-
   abstract run(): Promise<this>;
 
   async getEmails(): Promise<HandlerEmailOutboundType<Notifications>[]> {
@@ -124,7 +114,10 @@ export abstract class BaseHandler<
           recipient.notificationPreferenceType && // if preference is set
           !recipient.options?.ignorePreferences && // and ignore is not set
           // and don't have preference for this type
-          !this.shouldSendEmail(recipient.notificationPreferenceType, emailPreferences.get(recipient.to.roleId))
+          !HandlersHelper.shouldSendEmail(
+            recipient.notificationPreferenceType,
+            emailPreferences.get(recipient.to.roleId)
+          )
         ) {
           continue;
         }

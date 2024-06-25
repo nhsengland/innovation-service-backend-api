@@ -1,7 +1,7 @@
 import { NotifyMeHandler } from './notify-me.handler';
 
 import { randUuid } from '@ngneat/falso';
-import { InnovationSupportStatusEnum } from '@notifications/shared/enums';
+import { InnovationSupportStatusEnum, NotificationPreferenceEnum } from '@notifications/shared/enums';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import type { EntityManager } from 'typeorm';
 import { supportSummaryUrl } from '../_helpers/url.helper';
@@ -29,7 +29,8 @@ describe('NotifyMe Handler Suite', () => {
         new Map([
           [recipient.identityId, { identityId: recipient.identityId, email: user.email, displayName: user.name }]
         ])
-      )
+      ),
+    getEmailPreferences: jest.fn().mockResolvedValue(new Map())
   };
 
   const notifyMeServiceMock = {
@@ -106,6 +107,57 @@ describe('NotifyMe Handler Suite', () => {
       // Gets identities
       expect(recipientMock.usersIdentityInfo).toHaveBeenCalledWith([recipient.identityId]);
 
+      expect(handler.inApps).toHaveLength(1);
+      expect(handler.emails).toHaveLength(1);
+    });
+
+    it('should return inApp but not email if preference is set to NO', async () => {
+      recipientMock.getEmailPreferences.mockResolvedValue(
+        new Map([[userContext.currentRole.id, { NOTIFY_ME: NotificationPreferenceEnum.NO }]])
+      );
+      const handler = new NotifyMeHandler(notifyMeServiceMock as any, recipientMock as any, {
+        innovationId: innovation.id,
+        requestUser: userContext,
+        params: {
+          status: InnovationSupportStatusEnum.ENGAGING,
+          units: unit
+        } as any,
+        type: 'SUPPORT_UPDATED' as const
+      });
+      await handler.execute(em);
+      expect(handler.inApps).toHaveLength(1);
+      expect(handler.emails).toHaveLength(0);
+    });
+
+    it('should return inApp and email if preference is set to YES', async () => {
+      recipientMock.getEmailPreferences.mockResolvedValue(
+        new Map([[userContext.currentRole.id, { NOTIFY_ME: NotificationPreferenceEnum.YES }]])
+      );
+      const handler = new NotifyMeHandler(notifyMeServiceMock as any, recipientMock as any, {
+        innovationId: innovation.id,
+        requestUser: userContext,
+        params: {
+          status: InnovationSupportStatusEnum.ENGAGING,
+          units: unit
+        } as any,
+        type: 'SUPPORT_UPDATED' as const
+      });
+      await handler.execute(em);
+      expect(handler.inApps).toHaveLength(1);
+      expect(handler.emails).toHaveLength(1);
+    });
+
+    it('should return inApp and email if preference is not set', async () => {
+      const handler = new NotifyMeHandler(notifyMeServiceMock as any, recipientMock as any, {
+        innovationId: innovation.id,
+        requestUser: userContext,
+        params: {
+          status: InnovationSupportStatusEnum.ENGAGING,
+          units: unit
+        } as any,
+        type: 'SUPPORT_UPDATED' as const
+      });
+      await handler.execute(em);
       expect(handler.inApps).toHaveLength(1);
       expect(handler.emails).toHaveLength(1);
     });
