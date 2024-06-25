@@ -1,7 +1,6 @@
 import { container } from '../_config';
 
 import { randUuid } from '@ngneat/falso';
-import { isSupportUpdateCreated } from '@notifications/shared/types';
 import { NotificationScheduleEntity, NotifyMeSubscriptionEntity } from '@users/shared/entities';
 import { InnovationSupportStatusEnum } from '@users/shared/enums';
 import { BadRequestError, ForbiddenError, NotFoundError } from '@users/shared/errors';
@@ -9,6 +8,7 @@ import { NotificationErrorsEnum } from '@users/shared/errors/errors.enums';
 import { AuthErrorsEnum } from '@users/shared/services/auth/authorization-validation.model';
 import { TestsHelper } from '@users/shared/tests';
 import { DTOsHelper } from '@users/shared/tests/helpers/dtos.helper';
+import { isSupportUpdateCreated } from '@users/shared/types';
 import { fail } from 'assert';
 import type { EntityManager } from 'typeorm';
 import type { NotifyMeService } from './notify-me.service';
