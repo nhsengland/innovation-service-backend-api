@@ -1140,6 +1140,16 @@ describe('Innovations / _services / innovation-supports suite', () => {
       expect(fileExists).toBe(1);
     });
 
+    it('should send a notifyMe when progress update is created', async () => {
+      const context = DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor);
+      const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+      await sut.createProgressUpdate(context, innovation.id, { description: randText(), title: randText() }, em);
+
+      expect(notifierSendNotifyMeSpy).toHaveBeenCalledWith(context, innovation.id, 'PROGRESS_UPDATE_CREATED', {
+        units: context.organisation?.organisationUnit?.id
+      });
+    });
+
     it('should throw an NotFoundError when the unitId is not present in context', async () => {
       await expect(() =>
         sut.createProgressUpdate(

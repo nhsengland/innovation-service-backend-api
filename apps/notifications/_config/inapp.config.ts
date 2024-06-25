@@ -285,19 +285,18 @@ export type InAppTemplatesType = {
 
   // Notify Me
   SUPPORT_UPDATED: {
+    event: string;
     innovation: string;
     supportStatus: string;
+    organisation: string;
+  };
+  PROGRESS_UPDATE_CREATED: {
     event: string;
+    innovation: string;
     organisation: string;
   };
   REMINDER: {
     innovation: string;
     message: string;
-  };
-  PROGRESS_UPDATE_CREATED: {
-    innovation: string;
-    event: string;
-    description: string;
-    unit: string;
   };
 };

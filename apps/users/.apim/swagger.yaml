@@ -1049,6 +1049,34 @@ paths:
                         - preConditions
                       additionalProperties: false
                       x-required: true
+                    - type: object
+                      properties:
+                        eventType:
+                          type: string
+                          enum:
+                            - PROGRESS_UPDATE_CREATED
+                        subscriptionType:
+                          type: string
+                          enum:
+                            - INSTANTLY
+                          default: INSTANTLY
+                        preConditions:
+                          type: object
+                          properties:
+                            units:
+                              type: array
+                              items:
+                                type: string
+                                format: uuid
+                              minItems: 1
+                          required:
+                            - units
+                          additionalProperties: false
+                      required:
+                        - eventType
+                        - preConditions
+                      additionalProperties: false
+                      x-required: true
               required:
                 - innovationId
                 - config
@@ -1212,6 +1240,34 @@ paths:
                       required:
                         - units
                         - status
+                      additionalProperties: false
+                  required:
+                    - eventType
+                    - preConditions
+                  additionalProperties: false
+                  x-required: true
+                - type: object
+                  properties:
+                    eventType:
+                      type: string
+                      enum:
+                        - PROGRESS_UPDATE_CREATED
+                    subscriptionType:
+                      type: string
+                      enum:
+                        - INSTANTLY
+                      default: INSTANTLY
+                    preConditions:
+                      type: object
+                      properties:
+                        units:
+                          type: array
+                          items:
+                            type: string
+                            format: uuid
+                          minItems: 1
+                      required:
+                        - units
                       additionalProperties: false
                   required:
                     - eventType

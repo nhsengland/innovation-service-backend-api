@@ -456,15 +456,14 @@ export type EmailTemplatesType = {
     organisation: string;
     supportSummaryUrl: string;
   };
+  PROGRESS_UPDATE_CREATED: {
+    innovation: string;
+    organisation: string;
+    supportSummaryUrl: string;
+  };
   REMINDER: {
     innovation: string;
     event: string;
     message: string;
-  };
-  PROGRESS_UPDATE_CREATED: {
-    innovation: string;
-    event: string;
-    description: string;
-    unit: string;
   };
 };

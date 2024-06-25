@@ -1233,6 +1233,10 @@ export class InnovationSupportsService extends BaseService {
       innovationId,
       supportId: support.id
     });
+
+    await this.notifierService.sendNotifyMe(domainContext, innovationId, 'PROGRESS_UPDATE_CREATED', {
+      units: unitId
+    });
   }
 
   async deleteProgressUpdate(
