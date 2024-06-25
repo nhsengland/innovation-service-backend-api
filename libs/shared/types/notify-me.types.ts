@@ -1,4 +1,5 @@
 import type { InnovationSupportStatusEnum } from '../enums';
+import type { InnovationSectionGroups } from '../schemas/innovation-record/202304/catalog.types';
 import type { DomainContextType } from './domain.types';
 import type { ExcludeEnum } from './helper.types';
 
@@ -18,7 +19,7 @@ export type NotifyMeMessageType<T extends EventType> = {
 // TODO: Untying SubscriptionConfig from the EventPayloads, validate with Diogo, Progress update created also had unitId and some other stuff
 // that seems to be extra information, the validator for the event listener is the payload.
 // The listener will be generic as it currently is
-export type SupportUpdateCreated = {
+export type SupportUpdated = {
   eventType: 'SUPPORT_UPDATED';
   subscriptionType: 'INSTANTLY';
   preConditions: {
@@ -35,9 +36,18 @@ export type ProgressUpdateCreated = {
   };
 };
 
+export type InnovationRecordUpdated = {
+  eventType: 'INNOVATION_RECORD_UPDATED';
+  subscriptionType: 'INSTANTLY';
+  preConditions: {
+    sections?: InnovationSectionGroups[];
+  };
+};
+
 export type SubscriptionConfig =
-  | SupportUpdateCreated
+  | SupportUpdated
   | ProgressUpdateCreated
+  | InnovationRecordUpdated
   | {
       eventType: 'REMINDER';
       subscriptionType: SubscriptionType;
@@ -45,7 +55,7 @@ export type SubscriptionConfig =
       customMessages?: any;
     }; // TODO
 
-export const isSupportUpdateCreated = (config: SubscriptionConfig): config is SupportUpdateCreated => {
+export const isSupportUpdated = (config: SubscriptionConfig): config is SupportUpdated => {
   return config.eventType === 'SUPPORT_UPDATED';
 };
 export const isProgressUpdateCreated = (config: SubscriptionConfig): config is ProgressUpdateCreated => {

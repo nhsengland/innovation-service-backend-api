@@ -15,7 +15,7 @@ import {
   ThreadContextTypeEnum
 } from '../../enums/innovation.enums';
 import { ServiceRoleEnum, UserStatusEnum } from '../../enums/user.enums';
-import type { SupportUpdateCreated } from '../../types';
+import type { SupportUpdated } from '../../types';
 import { InnovationAssessmentBuilder } from '../builders/innovation-assessment.builder';
 import { InnovationCollaboratorBuilder } from '../builders/innovation-collaborator.builder';
 import { InnovationExportRequestBuilder } from '../builders/innovation-export-request.builder';
@@ -682,7 +682,7 @@ export class CompleteScenarioBuilder {
         .save();
 
       // Notify me subscriptions
-      const aliceNotifyMeOnMedTechOrgForJohnInnovation = await new NotifyMeSubscriptionBuilder<SupportUpdateCreated>(
+      const aliceNotifyMeOnMedTechOrgForJohnInnovation = await new NotifyMeSubscriptionBuilder<SupportUpdated>(
         entityManager
       )
         .setInnovation(johnInnovation.id)
@@ -697,7 +697,7 @@ export class CompleteScenarioBuilder {
         })
         .save();
 
-      const battNotifyMeOnMedTechOrgForJohnInnovation = await new NotifyMeSubscriptionBuilder<SupportUpdateCreated>(
+      const battNotifyMeOnMedTechOrgForJohnInnovation = await new NotifyMeSubscriptionBuilder<SupportUpdated>(
         entityManager
       )
         .setInnovation(johnInnovation.id)
@@ -775,7 +775,7 @@ export class CompleteScenarioBuilder {
         .setStatus(InnovationTaskStatusEnum.DONE)
         .save();
 
-      const aliceNotifyMeOnMedTechOrgForAdamInnovation = await new NotifyMeSubscriptionBuilder<SupportUpdateCreated>(
+      const aliceNotifyMeOnMedTechOrgForAdamInnovation = await new NotifyMeSubscriptionBuilder<SupportUpdated>(
         entityManager
       )
         .setInnovation(adamInnovation.id)

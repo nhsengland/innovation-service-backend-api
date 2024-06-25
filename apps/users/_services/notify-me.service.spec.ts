@@ -8,7 +8,7 @@ import { NotificationErrorsEnum } from '@users/shared/errors/errors.enums';
 import { AuthErrorsEnum } from '@users/shared/services/auth/authorization-validation.model';
 import { TestsHelper } from '@users/shared/tests';
 import { DTOsHelper } from '@users/shared/tests/helpers/dtos.helper';
-import { isSupportUpdateCreated } from '@users/shared/types';
+import { isSupportUpdated } from '@users/shared/types';
 import { fail } from 'assert';
 import type { EntityManager } from 'typeorm';
 import type { NotifyMeService } from './notify-me.service';
@@ -54,6 +54,16 @@ describe('Users / _services / notify me service suite', () => {
           eventType: 'PROGRESS_UPDATE_CREATED' as const,
           preConditions: {
             units: [randUuid()]
+          },
+          subscriptionType: 'INSTANTLY' as const
+        }
+      ],
+      [
+        'INNOVATION_RECORD_UPDATED',
+        {
+          eventType: 'INNOVATION_RECORD_UPDATED' as const,
+          preConditions: {
+            status: ['ABOUT_INNOVATION']
           },
           subscriptionType: 'INSTANTLY' as const
         }
@@ -403,9 +413,9 @@ describe('Users / _services / notify me service suite', () => {
       );
 
       const dbResult = await em.getRepository(NotifyMeSubscriptionEntity).findOne({ where: { id: subscription.id } });
-      expect(dbResult && isSupportUpdateCreated(dbResult.config) && dbResult.config.preConditions.status).toStrictEqual(
-        [InnovationSupportStatusEnum.UNSUITABLE]
-      );
+      expect(dbResult && isSupportUpdated(dbResult.config) && dbResult.config.preConditions.status).toStrictEqual([
+        InnovationSupportStatusEnum.UNSUITABLE
+      ]);
     });
 
     it('should fail if changing the subscription eventType', async () => {

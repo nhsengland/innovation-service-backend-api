@@ -16,12 +16,12 @@ import {
   isAccessorDomainContextType,
   type DomainContextType,
   type SubscriptionConfig,
-  type SupportUpdateCreated
+  type SupportUpdated
 } from '@users/shared/types';
 import type {
   DefaultResponseDTO,
   SubscriptionResponseDTO,
-  SupportUpdateResponseTypes
+  SupportUpdatedResponseTypes
 } from '../_types/notify-me.types';
 import { BaseService } from './base.service';
 
@@ -129,9 +129,9 @@ export class NotifyMeService extends BaseService {
   }
 
   private async supportUpdateResponseDTO(
-    subscriptions: (NotifyMeSubscriptionEntity & { config: SupportUpdateCreated })[],
+    subscriptions: (NotifyMeSubscriptionEntity & { config: SupportUpdated })[],
     em: EntityManager
-  ): Promise<SupportUpdateResponseTypes['SUPPORT_UPDATED'][]> {
+  ): Promise<SupportUpdatedResponseTypes['SUPPORT_UPDATED'][]> {
     const units = Array.from(new Set(subscriptions.flatMap(s => s.config.preConditions.units)));
     const retrievedUnits = new Map(
       (

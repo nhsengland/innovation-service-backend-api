@@ -1,15 +1,17 @@
 import { InnovationSupportStatusEnum } from '@users/shared/enums';
+import { InnovationSectionGroups } from '@users/shared/schemas/innovation-record/202304/catalog.types';
 import type {
   EventType,
   ExcludeEnum,
+  InnovationRecordUpdated,
   ProgressUpdateCreated,
   SubscriptionType,
-  SupportUpdateCreated
+  SupportUpdated
 } from '@users/shared/types';
 import Joi from 'joi';
 
 //#region CreateDTO
-const SupportUpdateCreatedSchema = Joi.object<SupportUpdateCreated>({
+const SupportUpdatedSchema = Joi.object<SupportUpdated>({
   eventType: Joi.string().valid('SUPPORT_UPDATED').required(),
   subscriptionType: Joi.string().valid('INSTANTLY').default('INSTANTLY'),
   preConditions: Joi.object({
@@ -33,9 +35,21 @@ const ProgressUpdateCreatedSchema = Joi.object<ProgressUpdateCreated>({
   }).required()
 }).required();
 
+const InnovationRecordUpdatedSchema = Joi.object<InnovationRecordUpdated>({
+  eventType: Joi.string().valid('INNOVATION_RECORD_UPDATED').required(),
+  subscriptionType: Joi.string().valid('INSTANTLY').default('INSTANTLY'),
+  preConditions: Joi.object({
+    units: Joi.array()
+      .items(Joi.string().valid(...InnovationSectionGroups))
+      .min(1)
+      .optional()
+  }).required()
+}).required();
+
 export const NotifyMeConfigSchema = Joi.alternatives(
-  SupportUpdateCreatedSchema,
-  ProgressUpdateCreatedSchema
+  SupportUpdatedSchema,
+  ProgressUpdateCreatedSchema,
+  InnovationRecordUpdatedSchema
 ).required();
 //#endregion
 
@@ -57,7 +71,7 @@ export type DefaultResponseDTO = {
   eventType: EventType;
   subscriptionType: SubscriptionType;
 };
-export type SupportUpdateResponseDTO = {
+export type SupportUpdatedResponseDTO = {
   id: string;
   updatedAt: Date;
   eventType: 'SUPPORT_UPDATED';
@@ -74,11 +88,21 @@ export type ProgressUpdateCreatedResponseDTO = {
   organisations: OrganisationWithUnits[];
 };
 
-export type SupportUpdateResponseTypes = {
-  SUPPORT_UPDATED: SupportUpdateResponseDTO;
+export type InnovationRecordUpdatedResponseDTO = {
+  id: string;
+  updatedAt: Date;
+  eventType: 'INNOVATION_RECORD_UPDATED';
+  subscriptionType: 'INSTANTLY';
+  sections?: InnovationSectionGroups[];
+};
+
+// TODO change
+export type SupportUpdatedResponseTypes = {
+  SUPPORT_UPDATED: SupportUpdatedResponseDTO;
   PROGRESS_UPDATE_CREATED: ProgressUpdateCreatedResponseDTO;
+  INNOVATION_RECORD_UPDATED: InnovationRecordUpdatedResponseDTO;
   REMINDER: DefaultResponseDTO;
 };
 
-export type SubscriptionResponseDTO = SupportUpdateResponseTypes[keyof SupportUpdateResponseTypes];
+export type SubscriptionResponseDTO = SupportUpdatedResponseTypes[keyof SupportUpdatedResponseTypes];
 //#endregion
