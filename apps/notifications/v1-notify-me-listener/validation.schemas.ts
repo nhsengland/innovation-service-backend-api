@@ -1,6 +1,5 @@
 import Joi, { ObjectSchema } from 'joi';
 
-import { TEXTAREA_LENGTH_LIMIT } from '@notifications/shared/constants';
 import { InnovationSupportStatusEnum } from '@notifications/shared/enums';
 import { DomainContextSchema, DomainContextType, EventPayloads, EventType } from '@notifications/shared/types';
 
@@ -37,8 +36,7 @@ export const EventParamsSchema: { [key in EventType]: ObjectSchema<EventPayloads
     units: RequiredIdSchema
   }).required(),
   PROGRESS_UPDATE_CREATED: Joi.object<EventPayloads['PROGRESS_UPDATE_CREATED']>({
-    unitId: RequiredIdSchema,
-    description: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).required()
+    units: RequiredIdSchema
   }).required(),
   REMINDER: Joi.object<EventPayloads['REMINDER']>({})
 };

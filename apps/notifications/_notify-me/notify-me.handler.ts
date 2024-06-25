@@ -116,6 +116,7 @@ export class NotifyMeHandler {
   // Additionally if the event is does not have the field but it is in the preconditions it will return true!
   protected validatePreconditions(subscription: NotifyMeSubscriptionType): boolean {
     if (this.event.type !== subscription.config.eventType) return false;
+    if (!('preConditions' in subscription.config)) return true;
 
     for (const [field, match] of Object.entries(subscription.config.preConditions)) {
       const matcher = isArray(match) ? match : [match];
@@ -145,9 +146,8 @@ export class NotifyMeHandler {
       case 'PROGRESS_UPDATE_CREATED':
         return {
           innovation: innovation.name,
-          event: this.event.type,
-          description: this.event.params.description,
-          unit: HandlersHelper.getRequestUnitName(this.event.requestUser)
+          organisation: HandlersHelper.getRequestUnitName(this.event.requestUser),
+          event: this.event.type
         };
 
       case 'REMINDER': {
@@ -186,8 +186,12 @@ export class NotifyMeHandler {
         return {
           innovation: innovation.name,
           event: this.event.type,
-          unit: HandlersHelper.getRequestUnitName(this.event.requestUser),
-          description: this.event.params.description
+          organisation: HandlersHelper.getRequestUnitName(this.event.requestUser),
+          supportSummaryUrl: supportSummaryUrl(
+            recipient.role,
+            this.event.innovationId,
+            this.event.requestUser.organisation?.organisationUnit?.id
+          )
         };
 
       case 'REMINDER': {

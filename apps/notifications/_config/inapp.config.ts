@@ -293,7 +293,7 @@ export type InAppTemplatesType = {
   PROGRESS_UPDATE_CREATED: {
     event: string;
     innovation: string;
-    unit: string;
+    organisation: string;
   };
   REMINDER: {
     innovation: string;
