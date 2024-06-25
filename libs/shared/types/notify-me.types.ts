@@ -27,16 +27,30 @@ export type SupportUpdateCreated = {
   };
 };
 
+export type ProgressUpdateCreated = {
+  eventType: 'PROGRESS_UPDATE_CREATED';
+  subscriptionType: 'INSTANTLY';
+  preConditions: {
+    units: string[];
+  };
+};
+
 export type SubscriptionConfig =
   | SupportUpdateCreated
+  | ProgressUpdateCreated
   | {
-      eventType: Exclude<EventType, 'SUPPORT_UPDATED'>;
+      eventType: 'REMINDER';
       subscriptionType: SubscriptionType;
-      preConditions: any;
-      periodicity?: any;
       date: Date;
       customMessages?: any;
     }; // TODO
+
+export const isSupportUpdateCreated = (config: SubscriptionConfig): config is SupportUpdateCreated => {
+  return config.eventType === 'SUPPORT_UPDATED';
+};
+export const isProgressUpdateCreated = (config: SubscriptionConfig): config is ProgressUpdateCreated => {
+  return config.eventType === 'PROGRESS_UPDATE_CREATED';
+};
 
 /*
  * Event Types

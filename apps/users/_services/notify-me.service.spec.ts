@@ -1,6 +1,7 @@
 import { container } from '../_config';
 
 import { randUuid } from '@ngneat/falso';
+import { isSupportUpdateCreated } from '@notifications/shared/types';
 import { NotificationScheduleEntity, NotifyMeSubscriptionEntity } from '@users/shared/entities';
 import { InnovationSupportStatusEnum } from '@users/shared/enums';
 import { BadRequestError, ForbiddenError, NotFoundError } from '@users/shared/errors';
@@ -35,16 +36,29 @@ describe('Users / _services / notify me service suite', () => {
   });
 
   describe('createSubscription', () => {
-    const data = {
-      eventType: 'SUPPORT_UPDATED' as const,
-      preConditions: {
-        status: [InnovationSupportStatusEnum.ENGAGING as const],
-        units: [randUuid()]
-      },
-      subscriptionType: 'INSTANTLY' as const
-    };
-
-    it('should create a subscription', async () => {
+    it.each([
+      [
+        'SUPPORT_UPDATED',
+        {
+          eventType: 'SUPPORT_UPDATED' as const,
+          preConditions: {
+            status: [InnovationSupportStatusEnum.ENGAGING as const],
+            units: [randUuid()]
+          },
+          subscriptionType: 'INSTANTLY' as const
+        }
+      ],
+      [
+        'PROGRESS_UPDATE_CREATED',
+        {
+          eventType: 'PROGRESS_UPDATE_CREATED' as const,
+          preConditions: {
+            units: [randUuid()]
+          },
+          subscriptionType: 'INSTANTLY' as const
+        }
+      ]
+    ])('should create a %s subscription', async (_type, data) => {
       await sut.createSubscription(
         DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
         scenario.users.johnInnovator.innovations.johnInnovationArchived.id,
@@ -389,7 +403,9 @@ describe('Users / _services / notify me service suite', () => {
       );
 
       const dbResult = await em.getRepository(NotifyMeSubscriptionEntity).findOne({ where: { id: subscription.id } });
-      expect(dbResult?.config.preConditions.status).toStrictEqual([InnovationSupportStatusEnum.UNSUITABLE]);
+      expect(dbResult && isSupportUpdateCreated(dbResult.config) && dbResult.config.preConditions.status).toStrictEqual(
+        [InnovationSupportStatusEnum.UNSUITABLE]
+      );
     });
 
     it('should fail if changing the subscription eventType', async () => {
