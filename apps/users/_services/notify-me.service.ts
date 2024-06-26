@@ -2,7 +2,6 @@ import { injectable } from 'inversify';
 import { groupBy, pick } from 'lodash';
 import { In, type EntityManager } from 'typeorm';
 
-import type { EventType } from '@notifications/shared/types';
 import {
   InnovationEntity,
   NotificationScheduleEntity,
@@ -13,6 +12,7 @@ import {
 import { BadRequestError, ForbiddenError, NotFoundError, NotImplementedError } from '@users/shared/errors';
 import { NotificationErrorsEnum } from '@users/shared/errors/errors.enums';
 import { AuthErrorsEnum } from '@users/shared/services/auth/authorization-validation.model';
+import type { EventType } from '@users/shared/types';
 import {
   ProgressUpdateCreated,
   isAccessorDomainContextType,
