@@ -739,6 +739,7 @@ paths:
                       - AU10_ACCESSOR_IDLE_ENGAGING_SUPPORT_FOR_SIX_WEEKS
                       - SUPPORT_UPDATED
                       - PROGRESS_UPDATE_CREATED
+                      - INNOVATION_RECORD_UPDATED
                       - REMINDER
                   default: []
                 dismissAll:
@@ -947,6 +948,7 @@ paths:
                             - AU10_ACCESSOR_IDLE_ENGAGING_SUPPORT_FOR_SIX_WEEKS
                             - SUPPORT_UPDATED
                             - PROGRESS_UPDATE_CREATED
+                            - INNOVATION_RECORD_UPDATED
                             - REMINDER
                           description: The notification context detail
                         contextId:
@@ -1096,13 +1098,16 @@ paths:
                               items:
                                 type: string
                                 enum:
-                                  - ABOUT_INNOVATION
-                                  - VALUE_PROPOSITION
-                                  - MARKET_RESEARCH_AND_CURRENT_CARE_PATHWAY
+                                  - INNOVATION_DESCRIPTION
+                                  - UNDERSTANDING_OF_NEEDS
+                                  - EVIDENCE_OF_EFFECTIVENESS
+                                  - MARKET_RESEARCH
+                                  - CURRENT_CARE_PATHWAY
                                   - TESTING_WITH_USERS
-                                  - REGULATIONS_STANDARDS_CERTIFICATIONS_AND_INTELLECTUAL_PROPERTY
+                                  - REGULATIONS_AND_STANDARDS
+                                  - INTELLECTUAL_PROPERTY
                                   - REVENUE_MODEL
-                                  - COST_AND_SAVINGS
+                                  - COST_OF_INNOVATION
                                   - DEPLOYMENT
                               minItems: 1
                           additionalProperties: false
@@ -1327,13 +1332,16 @@ paths:
                           items:
                             type: string
                             enum:
-                              - ABOUT_INNOVATION
-                              - VALUE_PROPOSITION
-                              - MARKET_RESEARCH_AND_CURRENT_CARE_PATHWAY
+                              - INNOVATION_DESCRIPTION
+                              - UNDERSTANDING_OF_NEEDS
+                              - EVIDENCE_OF_EFFECTIVENESS
+                              - MARKET_RESEARCH
+                              - CURRENT_CARE_PATHWAY
                               - TESTING_WITH_USERS
-                              - REGULATIONS_STANDARDS_CERTIFICATIONS_AND_INTELLECTUAL_PROPERTY
+                              - REGULATIONS_AND_STANDARDS
+                              - INTELLECTUAL_PROPERTY
                               - REVENUE_MODEL
-                              - COST_AND_SAVINGS
+                              - COST_OF_INNOVATION
                               - DEPLOYMENT
                           minItems: 1
                       additionalProperties: false

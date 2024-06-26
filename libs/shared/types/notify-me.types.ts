@@ -1,6 +1,5 @@
 import type { InnovationSupportStatusEnum } from '../enums';
 import type { CurrentCatalogTypes } from '../schemas/innovation-record';
-import type { InnovationSectionGroups } from '../schemas/innovation-record/202304/catalog.types';
 import type { DomainContextType } from './domain.types';
 import type { ExcludeEnum } from './helper.types';
 
@@ -41,7 +40,7 @@ export type InnovationRecordUpdated = {
   eventType: 'INNOVATION_RECORD_UPDATED';
   subscriptionType: 'INSTANTLY';
   preConditions: {
-    sections?: InnovationSectionGroups[];
+    sections?: CurrentCatalogTypes.InnovationSections[];
   };
 };
 

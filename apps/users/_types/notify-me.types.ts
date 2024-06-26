@@ -1,5 +1,6 @@
 import type { NotifyMeSubscriptionEntity } from '@users/shared/entities';
 import { InnovationSupportStatusEnum } from '@users/shared/enums';
+import { CurrentCatalogTypes } from '@users/shared/schemas/innovation-record';
 import { InnovationSectionGroups } from '@users/shared/schemas/innovation-record/202304/catalog.types';
 import type {
   EventType,
@@ -42,7 +43,7 @@ const InnovationRecordUpdatedSchema = Joi.object<InnovationRecordUpdated>({
   subscriptionType: Joi.string().valid('INSTANTLY').default('INSTANTLY'),
   preConditions: Joi.object({
     sections: Joi.array()
-      .items(Joi.string().valid(...InnovationSectionGroups))
+      .items(Joi.string().valid(...CurrentCatalogTypes.InnovationSections))
       .min(1)
       .optional()
   }).required()
