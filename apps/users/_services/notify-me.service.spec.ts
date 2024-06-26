@@ -63,7 +63,7 @@ describe('Users / _services / notify me service suite', () => {
         {
           eventType: 'INNOVATION_RECORD_UPDATED' as const,
           preConditions: {
-            sections: ['ABOUT_INNOVATION' as const]
+            sections: ['INNOVATION_DESCRIPTION' as const]
           },
           subscriptionType: 'INSTANTLY' as const
         }
