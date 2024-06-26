@@ -13,7 +13,6 @@ type Base = {
   label: string;
   description?: string;
   validations?: Validations;
-  condition?: { id: string; options: string[] };
 };
 
 export type Text = Base & {

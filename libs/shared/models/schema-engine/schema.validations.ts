@@ -23,8 +23,7 @@ const text = Joi.object({
   label: Joi.string().min(1).required(),
   description: Joi.string().min(1).optional(),
   validations: Joi.object({ isRequired, maxLength, postcodeFormat, urlFormat }),
-  lengthLimit: textLimit,
-  condition
+  lengthLimit: textLimit
 });
 
 const textArea = Joi.object({
@@ -33,8 +32,7 @@ const textArea = Joi.object({
   label: Joi.string().min(1).required(),
   description: Joi.string().min(1).optional(),
   validations: Joi.object({ isRequired, maxLength }),
-  lengthLimit: textAreaLimit,
-  condition
+  lengthLimit: textAreaLimit
 });
 
 const radioGroup = Joi.object({
@@ -53,8 +51,7 @@ const radioGroup = Joi.object({
         conditional: Joi.alternatives(text, textArea).optional()
       })
     )
-    .required(),
-  condition
+    .required()
 });
 
 const autocompleteArray = Joi.object({
@@ -70,8 +67,7 @@ const autocompleteArray = Joi.object({
         label: Joi.string().min(1)
       })
     )
-    .required(),
-  condition
+    .required()
 });
 
 const checkboxArray = Joi.object({
@@ -92,8 +88,7 @@ const checkboxArray = Joi.object({
       })
     )
     .required(),
-  addQuestion: Joi.alternatives(text, textArea, radioGroup),
-  condition
+  addQuestion: Joi.alternatives(text, textArea, radioGroup)
 });
 
 const fieldsGroup = Joi.object({
@@ -104,14 +99,15 @@ const fieldsGroup = Joi.object({
   validations: Joi.object({ isRequired, max }),
   addNewLabel: Joi.string().min(1),
   field: text.required(),
-  addQuestion: Joi.alternatives(text, textArea).optional(),
-  condition
+  addQuestion: Joi.alternatives(text, textArea).optional()
 });
+
+const questions = Joi.array().items(text, textArea, radioGroup, autocompleteArray, checkboxArray, fieldsGroup);
 
 const subSection = Joi.object({
   id,
   title: Joi.string().min(1).required(),
-  questions: Joi.array().items(text, textArea, radioGroup, autocompleteArray, checkboxArray, fieldsGroup)
+  steps: Joi.array().items(Joi.object({ questions: questions, condition: condition.optional() }))
 });
 
 const section = Joi.object({

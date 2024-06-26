@@ -14,7 +14,12 @@ export type IRSchemaType = {
 export type InnovationRecordSubSectionType = {
   id: string;
   title: string;
+  steps: InnovationRecordStepType[];
+};
+
+export type InnovationRecordStepType = {
   questions: Question[];
+  condition?: { id: string; options: string[] };
 };
 
 export type SchemaValidationError = {
@@ -40,10 +45,12 @@ export class SchemaModel {
   createStructure(): void {
     this.schema.sections.forEach(s => {
       s.subSections.forEach(sub => {
-        sub.questions.forEach(q => {
-          this.addToSubSections(sub.id, q.id);
-          this.questions.set(q.id, q);
-        });
+        sub.steps.forEach(st =>
+          st.questions.forEach(q => {
+            this.addToSubSections(sub.id, q.id);
+            this.questions.set(q.id, q);
+          })
+        );
       });
     });
   }
@@ -99,8 +106,8 @@ export class SchemaModel {
     }
   }
 
-  private validateCondition(question: Question, path: string, idList: { [key: string]: any }) {
-    const condition = question.condition;
+  private validateCondition(step: InnovationRecordStepType, path: string, idList: { [key: string]: any }) {
+    const condition = step.condition;
     if (condition) {
       if (idList[condition.id]) {
         if (['radio-group', 'checkbox-array', 'autocomplete-array'].includes(idList[condition.id].dataType)) {
@@ -115,23 +122,35 @@ export class SchemaModel {
             // the referenced list does not have the option
             this.errorList.push({
               message: `${path}.condition references a wrong option (${wrongOptions})`,
-              context: question
+              context: step
             });
           }
         } else {
           // id must be radio-group, checkbox-array or autocomplete-array
           this.errorList.push({
             message: `${path}.condition references non-tipified dataType (${condition.id})`,
-            context: question
+            context: step
           });
         }
       } else {
         // id must reference an previous question
         this.errorList.push({
           message: `${path}.condition must reference a previous question (${condition.id})`,
-          context: question
+          context: step
         });
       }
+    }
+  }
+
+  private validateStep(step: InnovationRecordStepType, path: string, idList: { [key: string]: any }) {
+    step.questions?.forEach((question: any, i: number) => {
+      this.validateQuestion(question, `${path}.questions[${i}]`, idList);
+      // this.validateQuestion(question, `sections[${i}].subSections[${j}].questions[${k}]`, questionList);
+    });
+
+    if ('condition' in step) {
+      // conditions can only reference ids that appear before on the schema
+      this.validateCondition(step, path, idList);
     }
   }
 
@@ -162,10 +181,10 @@ export class SchemaModel {
       });
     }
 
-    if ('condition' in question) {
-      // conditions can only reference ids that appear before on the schema
-      this.validateCondition(question, path, idList);
-    }
+    // if ('condition' in question) {
+    //   // conditions can only reference ids that appear before on the schema
+    //   this.validateCondition(question, path, idList);
+    // }
 
     // question id cannot be repeated
     this.validateIdNotRepeated(question, path, idList);
@@ -213,9 +232,13 @@ export class SchemaModel {
         // subSection id cannot be repeated
         this.validateIdNotRepeated(subSection, `sections[${i}].subSections[${j}]`, subSectionIdList);
 
-        subSection.questions?.forEach((question: any, k: number) => {
-          this.validateQuestion(question, `sections[${i}].subSections[${j}].questions[${k}]`, questionList);
+        subSection.steps?.forEach((step: any, k: number) => {
+          this.validateStep(step, `sections[${i}].subSections[${j}].questions[${k}]`, questionList);
         });
+
+        // subSection.questions?.forEach((question: any, k: number) => {
+        //   this.validateQuestion(question, `sections[${i}].subSections[${j}].questions[${k}]`, questionList);
+        // });
       });
     });
 

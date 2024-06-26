@@ -48,11 +48,15 @@ describe('models / schema-engine / schema.model.ts', () => {
           id: 'id1',
           title: 'Section 1',
           subSections: [
-            { id: 'subId1', title: 'Subsection 1.1', questions: [] },
-            { id: 'subId2', title: 'Subsection 1.2', questions: [] }
+            { id: 'subId1', title: 'Subsection 1.1', steps: [{ questions: [] }] },
+            { id: 'subId2', title: 'Subsection 1.2', steps: [{ questions: [] }] }
           ]
         },
-        { id: 'id2', title: 'Section 2', subSections: [{ id: 'subId1', title: 'Subsection 2.1', questions: [] }] }
+        {
+          id: 'id2',
+          title: 'Section 2',
+          subSections: [{ id: 'subId1', title: 'Subsection 2.1', steps: [{ questions: [] }] }]
+        }
       ]
     };
     const schema = new SchemaModel(body);
@@ -62,7 +66,7 @@ describe('models / schema-engine / schema.model.ts', () => {
     expect(errors).toStrictEqual([
       {
         message: 'sections[1].subSections[0].id is repeated',
-        context: { id: 'subId1', title: 'Subsection 2.1', questions: [] }
+        context: { id: 'subId1', title: 'Subsection 2.1', steps: [{ questions: [] }] }
       }
     ]);
   });
@@ -77,10 +81,16 @@ describe('models / schema-engine / schema.model.ts', () => {
             {
               id: 'subId1',
               title: 'Subsection 1.1',
-              questions: [
-                { id: 'q1', dataType: 'text', label: 'Question 1' },
-                { id: 'q2', dataType: 'text', label: 'Question 2' },
-                { id: 'q1', dataType: 'text', label: 'Question 3' }
+              steps: [
+                {
+                  questions: [{ id: 'q1', dataType: 'text', label: 'Question 1' }]
+                },
+                {
+                  questions: [{ id: 'q2', dataType: 'text', label: 'Question 2' }]
+                },
+                {
+                  questions: [{ id: 'q1', dataType: 'text', label: 'Question 3' }]
+                }
               ]
             }
           ]
@@ -109,12 +119,16 @@ describe('models / schema-engine / schema.model.ts', () => {
             {
               id: 'subId1',
               title: 'Subsection 1.1',
-              questions: [
+              steps: [
                 {
-                  id: 'q1',
-                  dataType: 'radio-group',
-                  label: 'Label 1',
-                  items: [{ itemsFromAnswer: 'q2' }]
+                  questions: [
+                    {
+                      id: 'q1',
+                      dataType: 'radio-group',
+                      label: 'Label 1',
+                      items: [{ itemsFromAnswer: 'q2' }]
+                    }
+                  ]
                 }
               ]
             }
@@ -149,15 +163,19 @@ describe('models / schema-engine / schema.model.ts', () => {
             {
               id: 'subId1',
               title: 'Subsection 1.1',
-              questions: [
+              steps: [
                 {
-                  id: 'q1',
-                  dataType: 'radio-group',
-                  label: 'Label 1',
-                  items: [
-                    { id: 'item1', label: 'item1' },
-                    { id: 'item2', label: 'item2' },
-                    { id: 'item1', label: 'item3' }
+                  questions: [
+                    {
+                      id: 'q1',
+                      dataType: 'radio-group',
+                      label: 'Label 1',
+                      items: [
+                        { id: 'item1', label: 'item1' },
+                        { id: 'item2', label: 'item2' },
+                        { id: 'item1', label: 'item3' }
+                      ]
+                    }
                   ]
                 }
               ]
@@ -188,21 +206,25 @@ describe('models / schema-engine / schema.model.ts', () => {
             {
               id: 'subId1',
               title: 'Subsection 1.1',
-              questions: [
+              steps: [
                 {
-                  id: 'q1',
-                  dataType: 'radio-group',
-                  label: 'Label 1',
-                  items: [
+                  questions: [
                     {
-                      id: 'item1',
-                      label: 'item1',
-                      conditional: {
-                        id: 'c1',
-                        dataType: 'text',
-                        label: 'Conditional',
-                        validations: {}
-                      }
+                      id: 'q1',
+                      dataType: 'radio-group',
+                      label: 'Label 1',
+                      items: [
+                        {
+                          id: 'item1',
+                          label: 'item1',
+                          conditional: {
+                            id: 'c1',
+                            dataType: 'text',
+                            label: 'Conditional',
+                            validations: {}
+                          }
+                        }
+                      ]
                     }
                   ]
                 }
@@ -228,12 +250,16 @@ describe('models / schema-engine / schema.model.ts', () => {
             {
               id: 'subId1',
               title: 'Subsection 1.1',
-              questions: [
+              steps: [
                 {
-                  id: 'q1',
-                  dataType: 'text',
-                  label: 'Label 1',
-                  validations: {}
+                  questions: [
+                    {
+                      id: 'q1',
+                      dataType: 'text',
+                      label: 'Label 1',
+                      validations: {}
+                    }
+                  ]
                 }
               ]
             }
@@ -268,18 +294,22 @@ describe('models / schema-engine / schema.model.ts', () => {
             {
               id: 'subId1',
               title: 'Subsection 1.1',
-              questions: [
+              steps: [
                 {
-                  id: 'q1',
-                  dataType: 'fields-group',
-                  label: 'Question 1',
-                  description: 'description 1',
-                  field: {
-                    id: 'q1',
-                    dataType: 'text',
-                    label: 'Question 2'
-                  },
-                  addNewLabel: 'New label'
+                  questions: [
+                    {
+                      id: 'q1',
+                      dataType: 'fields-group',
+                      label: 'Question 1',
+                      description: 'description 1',
+                      field: {
+                        id: 'q1',
+                        dataType: 'text',
+                        label: 'Question 2'
+                      },
+                      addNewLabel: 'New label'
+                    }
+                  ]
                 }
               ]
             }
@@ -303,23 +333,27 @@ describe('models / schema-engine / schema.model.ts', () => {
             {
               id: 'subId1',
               title: 'Subsection 1.1',
-              questions: [
+              steps: [
                 {
-                  id: 'q1',
-                  dataType: 'fields-group',
-                  label: 'Question 1',
-                  description: 'description 1',
-                  field: {
-                    id: 'q2',
-                    dataType: 'text',
-                    label: 'Question 2'
-                  },
-                  addQuestion: {
-                    id: 'q1',
-                    dataType: 'text',
-                    label: 'Question 2'
-                  },
-                  addNewLabel: 'New label'
+                  questions: [
+                    {
+                      id: 'q1',
+                      dataType: 'fields-group',
+                      label: 'Question 1',
+                      description: 'description 1',
+                      field: {
+                        id: 'q2',
+                        dataType: 'text',
+                        label: 'Question 2'
+                      },
+                      addQuestion: {
+                        id: 'q1',
+                        dataType: 'text',
+                        label: 'Question 2'
+                      },
+                      addNewLabel: 'New label'
+                    }
+                  ]
                 }
               ]
             }
@@ -344,20 +378,28 @@ describe('models / schema-engine / schema.model.ts', () => {
               {
                 id: 'subId1',
                 title: 'Subsection 1.1',
-                questions: [
+                steps: [
                   {
-                    id: 'q1',
-                    dataType: 'radio-group',
-                    label: 'Question 1',
-                    items: [
-                      { id: 'basedOutsidePT', label: 'Based outside' },
-                      { id: 'other', label: 'other' }
+                    questions: [
+                      {
+                        id: 'q1',
+                        dataType: 'radio-group',
+                        label: 'Question 1',
+                        items: [
+                          { id: 'basedOutsidePT', label: 'Based outside' },
+                          { id: 'other', label: 'other' }
+                        ]
+                      }
                     ]
                   },
                   {
-                    id: 'q2',
-                    dataType: 'text',
-                    label: 'Label 2',
+                    questions: [
+                      {
+                        id: 'q2',
+                        dataType: 'text',
+                        label: 'Label 2'
+                      }
+                    ],
                     condition: { id: 'q1', options: ['basedOutsideUk', 'basedOutsideUs'] }
                   }
                 ]
@@ -394,16 +436,24 @@ describe('models / schema-engine / schema.model.ts', () => {
               {
                 id: 'subId1',
                 title: 'Subsection 1.1',
-                questions: [
+                steps: [
                   {
-                    id: 'q1',
-                    dataType: 'text',
-                    label: 'Question 1'
+                    questions: [
+                      {
+                        id: 'q1',
+                        dataType: 'text',
+                        label: 'Question 1'
+                      }
+                    ]
                   },
                   {
-                    id: 'q2',
-                    dataType: 'text',
-                    label: 'Label 2',
+                    questions: [
+                      {
+                        id: 'q2',
+                        dataType: 'text',
+                        label: 'Label 2'
+                      }
+                    ],
                     condition: {
                       id: 'q1',
                       options: ['basedOutsideUk']
@@ -442,18 +492,26 @@ describe('models / schema-engine / schema.model.ts', () => {
               {
                 id: 'subId1',
                 title: 'Subsection 1.1',
-                questions: [
+                steps: [
                   {
-                    id: 'q2',
-                    dataType: 'text',
-                    label: 'Label 2',
+                    questions: [
+                      {
+                        id: 'q2',
+                        dataType: 'text',
+                        label: 'Label 2'
+                      }
+                    ],
                     condition: { id: 'q1', options: ['basedOutsideUk'] }
                   },
                   {
-                    id: 'q1',
-                    dataType: 'radio-group',
-                    label: 'Question 1',
-                    items: [{ id: 'basedOutsideUk', label: 'Based outside' }]
+                    questions: [
+                      {
+                        id: 'q1',
+                        dataType: 'radio-group',
+                        label: 'Question 1',
+                        items: [{ id: 'basedOutsideUk', label: 'Based outside' }]
+                      }
+                    ]
                   }
                 ]
               }
