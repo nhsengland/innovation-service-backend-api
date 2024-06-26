@@ -76,9 +76,15 @@ export type EventPayloads = {
   PROGRESS_UPDATE_CREATED: {
     units: string;
   };
+  INNOVATION_RECORD_UPDATED: Record<string, never>;
   REMINDER: Record<string, never>;
 };
-export const EventType = ['SUPPORT_UPDATED', 'PROGRESS_UPDATE_CREATED', 'REMINDER'] as const;
+export const EventType = [
+  'SUPPORT_UPDATED',
+  'PROGRESS_UPDATE_CREATED',
+  'INNOVATION_RECORD_UPDATED',
+  'REMINDER'
+] as const;
 export type EventType = (typeof EventType)[number];
 
 /**

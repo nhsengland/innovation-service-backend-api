@@ -1077,6 +1077,40 @@ paths:
                         - preConditions
                       additionalProperties: false
                       x-required: true
+                    - type: object
+                      properties:
+                        eventType:
+                          type: string
+                          enum:
+                            - INNOVATION_RECORD_UPDATED
+                        subscriptionType:
+                          type: string
+                          enum:
+                            - INSTANTLY
+                          default: INSTANTLY
+                        preConditions:
+                          type: object
+                          properties:
+                            sections:
+                              type: array
+                              items:
+                                type: string
+                                enum:
+                                  - ABOUT_INNOVATION
+                                  - VALUE_PROPOSITION
+                                  - MARKET_RESEARCH_AND_CURRENT_CARE_PATHWAY
+                                  - TESTING_WITH_USERS
+                                  - REGULATIONS_STANDARDS_CERTIFICATIONS_AND_INTELLECTUAL_PROPERTY
+                                  - REVENUE_MODEL
+                                  - COST_AND_SAVINGS
+                                  - DEPLOYMENT
+                              minItems: 1
+                          additionalProperties: false
+                      required:
+                        - eventType
+                        - preConditions
+                      additionalProperties: false
+                      x-required: true
               required:
                 - innovationId
                 - config
@@ -1268,6 +1302,40 @@ paths:
                           minItems: 1
                       required:
                         - units
+                      additionalProperties: false
+                  required:
+                    - eventType
+                    - preConditions
+                  additionalProperties: false
+                  x-required: true
+                - type: object
+                  properties:
+                    eventType:
+                      type: string
+                      enum:
+                        - INNOVATION_RECORD_UPDATED
+                    subscriptionType:
+                      type: string
+                      enum:
+                        - INSTANTLY
+                      default: INSTANTLY
+                    preConditions:
+                      type: object
+                      properties:
+                        sections:
+                          type: array
+                          items:
+                            type: string
+                            enum:
+                              - ABOUT_INNOVATION
+                              - VALUE_PROPOSITION
+                              - MARKET_RESEARCH_AND_CURRENT_CARE_PATHWAY
+                              - TESTING_WITH_USERS
+                              - REGULATIONS_STANDARDS_CERTIFICATIONS_AND_INTELLECTUAL_PROPERTY
+                              - REVENUE_MODEL
+                              - COST_AND_SAVINGS
+                              - DEPLOYMENT
+                          minItems: 1
                       additionalProperties: false
                   required:
                     - eventType

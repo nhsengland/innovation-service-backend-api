@@ -1,7 +1,8 @@
 import { injectable } from 'inversify';
-import { groupBy } from 'lodash';
+import { groupBy, pick } from 'lodash';
 import { In, type EntityManager } from 'typeorm';
 
+import type { EventType } from '@notifications/shared/types';
 import {
   InnovationEntity,
   NotificationScheduleEntity,
@@ -9,10 +10,11 @@ import {
   OrganisationUnitEntity,
   UserRoleEntity
 } from '@users/shared/entities';
-import { BadRequestError, ForbiddenError, NotFoundError } from '@users/shared/errors';
+import { BadRequestError, ForbiddenError, NotFoundError, NotImplementedError } from '@users/shared/errors';
 import { NotificationErrorsEnum } from '@users/shared/errors/errors.enums';
 import { AuthErrorsEnum } from '@users/shared/services/auth/authorization-validation.model';
 import {
+  ProgressUpdateCreated,
   isAccessorDomainContextType,
   type DomainContextType,
   type SubscriptionConfig,
@@ -20,8 +22,10 @@ import {
 } from '@users/shared/types';
 import type {
   DefaultResponseDTO,
-  SubscriptionResponseDTO,
-  SupportUpdatedResponseTypes
+  EntitySubscriptionConfigType,
+  NotifyMeResponseTypes,
+  PreconditionsOptions,
+  SubscriptionResponseDTO
 } from '../_types/notify-me.types';
 import { BaseService } from './base.service';
 
@@ -94,14 +98,17 @@ export class NotifyMeService extends BaseService {
     // Map of subscription ids to their DTOs
     const responseSubscriptions = new Map<string, SubscriptionResponseDTO>();
     for (const [eventType, subscriptions] of Object.entries(groupedSubscriptions)) {
-      const responses =
-        eventType in this.subscriptionResponseDTO
-          ? await this.subscriptionResponseDTO[eventType as keyof NotifyMeService['subscriptionResponseDTO']](
-              subscriptions as any,
-              em
-            ) // safe because of groupBy
-          : this.defaultSubscriptionResponseDTO(subscriptions);
-
+      if (!(eventType in this.subscriptionResponseDTO)) {
+        throw new NotImplementedError(NotificationErrorsEnum.NOTIFY_ME_SUBSCRIPTION_TYPE_NOT_FOUND, {
+          details: { eventType }
+        });
+      }
+      const responses = await this.subscriptionResponseDTO[
+        eventType as keyof NotifyMeService['subscriptionResponseDTO']
+      ](
+        subscriptions as any, // safe because of groupBy
+        em
+      );
       responses.forEach(s => responseSubscriptions.set(s.id, s));
     }
 
@@ -109,40 +116,36 @@ export class NotifyMeService extends BaseService {
   }
 
   private readonly subscriptionResponseDTO = {
-    SUPPORT_UPDATED: this.supportUpdateResponseDTO.bind(this)
+    SUPPORT_UPDATED: this.supportUpdateResponseDTO.bind(this),
+    PROGRESS_UPDATE_CREATED: this.progressUpdateCreatedResponseDTO.bind(this),
+    INNOVATION_RECORD_UPDATED: this.defaultSubscriptionResponseDTO('INNOVATION_RECORD_UPDATED', ['sections']).bind(
+      this
+    ),
+    REMINDER: this.defaultSubscriptionResponseDTO('REMINDER', []).bind(this)
   };
 
-  private defaultSubscriptionResponseDTO(subscriptions: NotifyMeSubscriptionEntity[]): DefaultResponseDTO[] {
-    return subscriptions.map(s => ({
-      id: s.id,
-      updatedAt: s.updatedAt,
-      eventType: s.eventType,
-      subscriptionType: s.config.subscriptionType
-      // config: s.config,
-      // scheduledNotification: s.scheduledNotification
-      //   ? {
-      //       sendDate: s.scheduledNotification.sendDate,
-      //       params: s.scheduledNotification.params
-      //     }
-      //   : undefined
-    }));
+  private defaultSubscriptionResponseDTO<T extends EventType, K extends PreconditionsOptions<T>>(
+    type: T | undefined,
+    keys: K[]
+  ): (subscriptions: EntitySubscriptionConfigType<T>[]) => DefaultResponseDTO<T, K>[] {
+    return (subscriptions: EntitySubscriptionConfigType<T>[]) => {
+      return subscriptions.map(s => ({
+        id: s.id,
+        updatedAt: s.updatedAt,
+        eventType: type,
+        subscriptionType: s.config.subscriptionType,
+        ...(keys.length && pick('preConditions' in s.config && s.config.preConditions, keys))
+      })) as DefaultResponseDTO<T, K>[];
+    };
   }
 
   private async supportUpdateResponseDTO(
     subscriptions: (NotifyMeSubscriptionEntity & { config: SupportUpdated })[],
     em: EntityManager
-  ): Promise<SupportUpdatedResponseTypes['SUPPORT_UPDATED'][]> {
-    const units = Array.from(new Set(subscriptions.flatMap(s => s.config.preConditions.units)));
-    const retrievedUnits = new Map(
-      (
-        await em
-          .createQueryBuilder(OrganisationUnitEntity, 'unit')
-          .select(['unit.id', 'unit.name', 'unit.acronym', 'org.id', 'org.name', 'org.acronym'])
-          .innerJoin('unit.organisation', 'org')
-          .where('unit.id IN (:...unitIds)', { unitIds: units })
-          .andWhere('unit.inactivatedAt IS NULL')
-          .getMany()
-      ).map(u => [u.id, u])
+  ): Promise<NotifyMeResponseTypes['SUPPORT_UPDATED'][]> {
+    const retrievedUnits = await this.getUnitsMap(
+      subscriptions.flatMap(s => s.config.preConditions.units),
+      em
     );
 
     return subscriptions.map(s => ({
@@ -152,6 +155,24 @@ export class NotifyMeService extends BaseService {
       subscriptionType: s.config.subscriptionType,
       organisations: this.groupUnitsByOrganisation(s.config.preConditions.units, retrievedUnits),
       status: s.config.preConditions.status
+    }));
+  }
+
+  private async progressUpdateCreatedResponseDTO(
+    subscriptions: (NotifyMeSubscriptionEntity & { config: ProgressUpdateCreated })[],
+    em: EntityManager
+  ): Promise<NotifyMeResponseTypes['PROGRESS_UPDATE_CREATED'][]> {
+    const retrievedUnits = await this.getUnitsMap(
+      subscriptions.flatMap(s => s.config.preConditions.units),
+      em
+    );
+
+    return subscriptions.map(s => ({
+      id: s.id,
+      updatedAt: s.updatedAt,
+      eventType: s.config.eventType,
+      subscriptionType: s.config.subscriptionType,
+      organisations: this.groupUnitsByOrganisation(s.config.preConditions.units, retrievedUnits)
     }));
   }
 
@@ -205,6 +226,20 @@ export class NotifyMeService extends BaseService {
     return Object.values(organisations);
   }
 
+  private async getUnitsMap(units: string[], em: EntityManager): Promise<Map<string, OrganisationUnitEntity>> {
+    return new Map(
+      (
+        await em
+          .createQueryBuilder(OrganisationUnitEntity, 'unit')
+          .select(['unit.id', 'unit.name', 'unit.acronym', 'org.id', 'org.name', 'org.acronym'])
+          .innerJoin('unit.organisation', 'org')
+          .where('unit.id IN (:...unitIds)', { unitIds: units })
+          .andWhere('unit.inactivatedAt IS NULL')
+          .getMany()
+      ).map(u => [u.id, u])
+    );
+  }
+
   async getSubscription(
     domainContext: DomainContextType,
     subscriptionId: string,
@@ -231,12 +266,15 @@ export class NotifyMeService extends BaseService {
       throw new NotFoundError(NotificationErrorsEnum.NOTIFY_ME_SUBSCRIPTION_NOT_FOUND);
     }
 
-    const response =
-      subscription.eventType in this.subscriptionResponseDTO
-        ? await this.subscriptionResponseDTO[
-            subscription.eventType as keyof NotifyMeService['subscriptionResponseDTO']
-          ]([subscription as any], em)
-        : this.defaultSubscriptionResponseDTO([subscription]);
+    if (!(subscription.eventType in this.subscriptionResponseDTO)) {
+      throw new NotImplementedError(NotificationErrorsEnum.NOTIFY_ME_SUBSCRIPTION_TYPE_NOT_FOUND, {
+        details: { eventType: subscription.eventType }
+      });
+    }
+
+    const response = await this.subscriptionResponseDTO[
+      subscription.eventType as keyof NotifyMeService['subscriptionResponseDTO']
+    ]([subscription as any], em);
 
     // never happens but failsafe
     if (!response[0]) {
@@ -291,13 +329,14 @@ export class NotifyMeService extends BaseService {
 
       // Map of subscription ids to their DTOs
       for (const [eventType, subscriptions] of Object.entries(groupedSubscriptions)) {
-        const responses =
-          eventType in this.subscriptionResponseDTO
-            ? await this.subscriptionResponseDTO[eventType as keyof NotifyMeService['subscriptionResponseDTO']](
-                subscriptions as any,
-                em
-              ) // safe because of groupBy
-            : this.defaultSubscriptionResponseDTO(subscriptions);
+        if (!(eventType in this.subscriptionResponseDTO)) {
+          throw new NotImplementedError(NotificationErrorsEnum.NOTIFY_ME_SUBSCRIPTION_TYPE_NOT_FOUND, {
+            details: { eventType }
+          });
+        }
+        const responses = await this.subscriptionResponseDTO[
+          eventType as keyof NotifyMeService['subscriptionResponseDTO']
+        ](subscriptions as any, em); // safe because of groupBy
 
         responses.forEach(s => responseSubscriptions.set(s.id, s));
       }
