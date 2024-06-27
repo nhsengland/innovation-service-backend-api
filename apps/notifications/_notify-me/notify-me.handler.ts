@@ -6,7 +6,7 @@ import type { EntityManager } from 'typeorm';
 import type { EmailTemplatesType } from '../_config';
 import type { InAppTemplatesType } from '../_config/inapp.config';
 import { HandlersHelper } from '../_helpers/handlers.helper';
-import { supportSummaryUrl, unsubscribeUrl } from '../_helpers/url.helper';
+import { innovationRecordSectionUrl, supportSummaryUrl, unsubscribeUrl } from '../_helpers/url.helper';
 import type { NotifyMeService, NotifyMeSubscriptionType } from '../_services/notify-me.service';
 import type { RecipientType, RecipientsService } from '../_services/recipients.service';
 import type { MessageType as EmailMessageType } from '../v1-emails-listener/validation.schemas';
@@ -150,6 +150,14 @@ export class NotifyMeHandler {
           event: this.event.type
         };
 
+      case 'INNOVATION_RECORD_UPDATED':
+        return {
+          innovation: innovation.name,
+          section: this.event.params.sections,
+          sectionLabel: TranslationHelper.translate(`SECTION.${this.event.params.sections}`).toLowerCase(),
+          event: this.event.type
+        };
+
       case 'REMINDER': {
         let message = 'This is a default description for the inApp';
         if (subscription.config.subscriptionType === 'SCHEDULED' && subscription.config.customMessages?.inApp) {
@@ -193,7 +201,12 @@ export class NotifyMeHandler {
             this.event.requestUser.organisation?.organisationUnit?.id
           )
         };
-
+      case 'INNOVATION_RECORD_UPDATED':
+        return {
+          innovation: innovation.name,
+          section: TranslationHelper.translate(`SECTION.${this.event.params.sections}`).toLowerCase(),
+          sectionUrl: innovationRecordSectionUrl(recipient.role, this.event.innovationId, this.event.params.sections)
+        };
       case 'REMINDER': {
         let message = 'This is a default description for the email';
         if (subscription.config.subscriptionType === 'SCHEDULED' && subscription.config.customMessages?.email) {

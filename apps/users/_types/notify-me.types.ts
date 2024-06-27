@@ -1,15 +1,19 @@
+import type { NotifyMeSubscriptionEntity } from '@users/shared/entities';
 import { InnovationSupportStatusEnum } from '@users/shared/enums';
+import { CurrentCatalogTypes } from '@users/shared/schemas/innovation-record';
 import type {
   EventType,
   ExcludeEnum,
+  InnovationRecordUpdated,
   ProgressUpdateCreated,
+  SubscriptionConfig,
   SubscriptionType,
-  SupportUpdateCreated
+  SupportUpdated
 } from '@users/shared/types';
 import Joi from 'joi';
 
 //#region CreateDTO
-const SupportUpdateCreatedSchema = Joi.object<SupportUpdateCreated>({
+const SupportUpdatedSchema = Joi.object<SupportUpdated>({
   eventType: Joi.string().valid('SUPPORT_UPDATED').required(),
   subscriptionType: Joi.string().valid('INSTANTLY').default('INSTANTLY'),
   preConditions: Joi.object({
@@ -33,9 +37,21 @@ const ProgressUpdateCreatedSchema = Joi.object<ProgressUpdateCreated>({
   }).required()
 }).required();
 
+const InnovationRecordUpdatedSchema = Joi.object<InnovationRecordUpdated>({
+  eventType: Joi.string().valid('INNOVATION_RECORD_UPDATED').required(),
+  subscriptionType: Joi.string().valid('INSTANTLY').default('INSTANTLY'),
+  preConditions: Joi.object({
+    sections: Joi.array()
+      .items(Joi.string().valid(...CurrentCatalogTypes.InnovationSections))
+      .min(1)
+      .optional()
+  }).required()
+}).required();
+
 export const NotifyMeConfigSchema = Joi.alternatives(
-  SupportUpdateCreatedSchema,
-  ProgressUpdateCreatedSchema
+  SupportUpdatedSchema,
+  ProgressUpdateCreatedSchema,
+  InnovationRecordUpdatedSchema
 ).required();
 //#endregion
 
@@ -51,13 +67,31 @@ type OrganisationWithUnits = {
   }[];
 };
 
-export type DefaultResponseDTO = {
+export type SubscriptionConfigType<T extends EventType> = SubscriptionConfig & { eventType: T };
+export type EntitySubscriptionConfigType<T extends EventType> = NotifyMeSubscriptionEntity & {
+  eventType: T;
+  config: SubscriptionConfigType<T>;
+};
+export type PreconditionsOptions<T extends EventType> = 'preConditions' extends keyof (SubscriptionConfig & {
+  eventType: T;
+})
+  ? keyof SubscriptionConfigType<T>['preConditions']
+  : never;
+
+export type DefaultResponseDTO<T extends EventType, K extends PreconditionsOptions<T>> = {
   id: string;
   updatedAt: Date;
-  eventType: EventType;
+  eventType: T;
   subscriptionType: SubscriptionType;
+} & {
+  [k in K]: 'preConditions' extends keyof (SubscriptionConfig & { eventType: T })
+    ? k extends keyof SubscriptionConfigType<T>['preConditions']
+      ? SubscriptionConfigType<T>['preConditions'][k]
+      : never
+    : never;
 };
-export type SupportUpdateResponseDTO = {
+
+export type SupportUpdatedResponseDTO = {
   id: string;
   updatedAt: Date;
   eventType: 'SUPPORT_UPDATED';
@@ -74,11 +108,20 @@ export type ProgressUpdateCreatedResponseDTO = {
   organisations: OrganisationWithUnits[];
 };
 
-export type SupportUpdateResponseTypes = {
-  SUPPORT_UPDATED: SupportUpdateResponseDTO;
-  PROGRESS_UPDATE_CREATED: ProgressUpdateCreatedResponseDTO;
-  REMINDER: DefaultResponseDTO;
+export type InnovationRecordUpdatedResponseDTO = {
+  id: string;
+  updatedAt: Date;
+  eventType: 'INNOVATION_RECORD_UPDATED';
+  subscriptionType: 'INSTANTLY';
+  sections?: CurrentCatalogTypes.InnovationSections[];
 };
 
-export type SubscriptionResponseDTO = SupportUpdateResponseTypes[keyof SupportUpdateResponseTypes];
+export type NotifyMeResponseTypes = {
+  SUPPORT_UPDATED: SupportUpdatedResponseDTO;
+  PROGRESS_UPDATE_CREATED: ProgressUpdateCreatedResponseDTO;
+  INNOVATION_RECORD_UPDATED: DefaultResponseDTO<'INNOVATION_RECORD_UPDATED', 'sections'>;
+  REMINDER: DefaultResponseDTO<'REMINDER', never>;
+};
+
+export type SubscriptionResponseDTO = NotifyMeResponseTypes[keyof NotifyMeResponseTypes];
 //#endregion

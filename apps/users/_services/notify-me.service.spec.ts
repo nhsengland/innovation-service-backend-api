@@ -8,7 +8,7 @@ import { NotificationErrorsEnum } from '@users/shared/errors/errors.enums';
 import { AuthErrorsEnum } from '@users/shared/services/auth/authorization-validation.model';
 import { TestsHelper } from '@users/shared/tests';
 import { DTOsHelper } from '@users/shared/tests/helpers/dtos.helper';
-import { isSupportUpdateCreated } from '@users/shared/types';
+import { isSupportUpdated } from '@users/shared/types';
 import { fail } from 'assert';
 import type { EntityManager } from 'typeorm';
 import type { NotifyMeService } from './notify-me.service';
@@ -54,6 +54,16 @@ describe('Users / _services / notify me service suite', () => {
           eventType: 'PROGRESS_UPDATE_CREATED' as const,
           preConditions: {
             units: [randUuid()]
+          },
+          subscriptionType: 'INSTANTLY' as const
+        }
+      ],
+      [
+        'INNOVATION_RECORD_UPDATED',
+        {
+          eventType: 'INNOVATION_RECORD_UPDATED' as const,
+          preConditions: {
+            sections: ['INNOVATION_DESCRIPTION' as const]
           },
           subscriptionType: 'INSTANTLY' as const
         }
@@ -230,6 +240,134 @@ describe('Users / _services / notify me service suite', () => {
     });
   });
 
+  describe('subscriptionResponseDTOs', () => {
+    describe('defaultSubscriptionResponseDTO', () => {
+      it('returns the notification entity default fields', () => {
+        const test = {
+          id: randUuid(),
+          updatedAt: new Date(),
+          eventType: 'REMINDER',
+          config: {
+            subscriptionType: 'INSTANTLY',
+            preConditions: {
+              test: 'test'
+            }
+          }
+        } as any;
+        const func = sut['defaultSubscriptionResponseDTO']('REMINDER', []);
+        const res = func([test]);
+
+        expect(res).toMatchObject([
+          {
+            id: test.id,
+            updatedAt: test.updatedAt,
+            eventType: test.eventType,
+            subscriptionType: test.config.subscriptionType
+          }
+        ]);
+      });
+
+      it('returns the notification entity default fields plus selected preConditions', () => {
+        const test = {
+          id: randUuid(),
+          updatedAt: new Date(),
+          eventType: 'INNOVATION_RECORD_UPDATED',
+          config: {
+            subscriptionType: 'INSTANTLY',
+            preConditions: {
+              test: 'test',
+              sections: ['u1']
+            }
+          }
+        } as any;
+        const func = sut['defaultSubscriptionResponseDTO']('INNOVATION_RECORD_UPDATED', ['sections']);
+        const res = func([test]);
+
+        expect(res).toMatchObject([
+          {
+            id: test.id,
+            updatedAt: test.updatedAt,
+            eventType: test.eventType,
+            subscriptionType: test.config.subscriptionType,
+            sections: test.config.preConditions.sections
+          }
+        ]);
+      });
+    });
+
+    describe('supportUpdateResponseDTO', () => {
+      it('returns the notification with the organisation and status', async () => {
+        const supportUpdated = (await em
+          .getRepository(NotifyMeSubscriptionEntity)
+          .findOneBy({ id: scenario.users.aliceQualifyingAccessor.notifyMeSubscriptions.johnInnovation.id })) as any;
+
+        const res = await sut['supportUpdateResponseDTO']([supportUpdated], em);
+        expect(res[0]).toMatchObject({
+          id: supportUpdated.id,
+          updatedAt: supportUpdated.updatedAt,
+          eventType: supportUpdated.eventType,
+          subscriptionType: supportUpdated.subscriptionType,
+          organisations: [
+            {
+              id: scenario.organisations.medTechOrg.id,
+              name: scenario.organisations.medTechOrg.name,
+              acronym: scenario.organisations.medTechOrg.acronym,
+              units: [
+                {
+                  id: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id,
+                  name: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.name,
+                  acronym: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.acronym
+                }
+              ]
+            }
+          ],
+          status: supportUpdated.config.preConditions.status
+        });
+      });
+    });
+
+    describe('progressUpdateCreatedResponseDTO', () => {
+      it('returns the notification with the organisation', async () => {
+        // fake change to progress update
+        await em.update(
+          NotifyMeSubscriptionEntity,
+          scenario.users.aliceQualifyingAccessor.notifyMeSubscriptions.johnInnovation.id,
+          {
+            config: {
+              ...scenario.users.aliceQualifyingAccessor.notifyMeSubscriptions.johnInnovation.config,
+              eventType: 'PROGRESS_UPDATE_CREATED'
+            }
+          }
+        );
+        const supportUpdated = (await em
+          .getRepository(NotifyMeSubscriptionEntity)
+          .findOneBy({ id: scenario.users.aliceQualifyingAccessor.notifyMeSubscriptions.johnInnovation.id })) as any;
+
+        const res = await sut['progressUpdateCreatedResponseDTO']([supportUpdated], em);
+        expect(res[0]).toMatchObject({
+          id: supportUpdated.id,
+          updatedAt: supportUpdated.updatedAt,
+          eventType: supportUpdated.eventType,
+          subscriptionType: supportUpdated.subscriptionType,
+          organisations: [
+            {
+              id: scenario.organisations.medTechOrg.id,
+              name: scenario.organisations.medTechOrg.name,
+              acronym: scenario.organisations.medTechOrg.acronym,
+              units: [
+                {
+                  id: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id,
+                  name: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.name,
+                  acronym: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.acronym
+                }
+              ]
+            }
+          ]
+        });
+      });
+    });
+  });
+
   describe('getSubscription', () => {
     it('returns the subscription', async () => {
       const subscription = scenario.users.aliceQualifyingAccessor.notifyMeSubscriptions.johnInnovation;
@@ -403,9 +541,9 @@ describe('Users / _services / notify me service suite', () => {
       );
 
       const dbResult = await em.getRepository(NotifyMeSubscriptionEntity).findOne({ where: { id: subscription.id } });
-      expect(dbResult && isSupportUpdateCreated(dbResult.config) && dbResult.config.preConditions.status).toStrictEqual(
-        [InnovationSupportStatusEnum.UNSUITABLE]
-      );
+      expect(dbResult && isSupportUpdated(dbResult.config) && dbResult.config.preConditions.status).toStrictEqual([
+        InnovationSupportStatusEnum.UNSUITABLE
+      ]);
     });
 
     it('should fail if changing the subscription eventType', async () => {

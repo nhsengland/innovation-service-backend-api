@@ -70,6 +70,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
     activityLogSpy.mockClear();
     supportLogSpy.mockClear();
     notifierSendSpy.mockClear();
+    notifierSendNotifyMeSpy.mockClear();
     threadMessageMock.mockClear();
   });
 
