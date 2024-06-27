@@ -202,9 +202,9 @@ export class UsersService extends BaseService {
         })
       );
 
-      for (const role of this.createRolesType2Db(data)) {
-        await this.addDbRole(domainContext, user.id, role, transaction);
-      }
+      await Promise.all(this.createRolesType2Db(data).map((role) => {
+        return this.addDbRole(domainContext, user.id, role, transaction);
+      }));
 
       return { id: user.id };
     });
