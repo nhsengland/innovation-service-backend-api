@@ -111,7 +111,8 @@ describe('Users / _services / notify me service suite', () => {
               {
                 id: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id,
                 name: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.name,
-                acronym: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.acronym
+                acronym: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.acronym,
+                isShadow: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.isShadow
               }
             ]
           }
@@ -316,7 +317,8 @@ describe('Users / _services / notify me service suite', () => {
                 {
                   id: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id,
                   name: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.name,
-                  acronym: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.acronym
+                  acronym: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.acronym,
+                  isShadow: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.isShadow
                 }
               ]
             }
@@ -358,7 +360,8 @@ describe('Users / _services / notify me service suite', () => {
                 {
                   id: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id,
                   name: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.name,
-                  acronym: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.acronym
+                  acronym: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.acronym,
+                  isShadow: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.isShadow
                 }
               ]
             }

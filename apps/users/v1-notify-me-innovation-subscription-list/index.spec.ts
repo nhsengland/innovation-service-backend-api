@@ -35,7 +35,8 @@ const expected = [
           {
             id: randUuid(),
             name: 'Unit 1',
-            acronym: 'U1'
+            acronym: 'U1',
+            isShadow: true
           }
         ]
       }

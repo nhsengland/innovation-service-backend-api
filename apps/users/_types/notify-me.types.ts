@@ -56,7 +56,7 @@ export const NotifyMeConfigSchema = Joi.alternatives(
 //#endregion
 
 //#region ResponseDTO
-type OrganisationWithUnits = {
+export type OrganisationWithUnits = {
   id: string;
   name: string;
   acronym: string;
@@ -64,6 +64,7 @@ type OrganisationWithUnits = {
     id: string;
     name: string;
     acronym: string;
+    isShadow: boolean;
   }[];
 };
 
