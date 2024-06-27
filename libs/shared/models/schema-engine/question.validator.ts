@@ -45,7 +45,6 @@ export class TextareaValidator implements QuestionTypeValidator {
 export class RadioGroupValidator implements QuestionTypeValidator {
   validateQuestionValue(question: RadioGroup): Joi.Schema {
     let validation = Joi.string();
-    // TODO: We need to handle the itemsFromAnswer before, otherwise this is not right for those cases.
     const validItems = [];
     for (const item of question.items) {
       if ('id' in item) {

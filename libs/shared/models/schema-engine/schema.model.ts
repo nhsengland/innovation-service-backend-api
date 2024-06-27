@@ -42,24 +42,14 @@ export class SchemaModel {
   /**
    * Structure
    */
-  createStructure(): void {
-    this.schema.sections.forEach(s => {
-      s.subSections.forEach(sub => {
-        sub.steps.forEach(st =>
-          st.questions.forEach(q => {
-            this.addToSubSections(sub.id, q.id);
-            this.questions.set(q.id, q);
-          })
-        );
-      });
-    });
-  }
-
   addToSubSections(subSectionId: string, questionId: string): void {
     if (!this.subSections.has(subSectionId)) {
       this.subSections.set(subSectionId, []);
     }
-    this.subSections.get(subSectionId)?.push(questionId);
+    const questions = this.subSections.get(subSectionId) ?? [];
+    if (!questions.includes(questionId)) {
+      this.subSections.get(subSectionId)?.push(questionId);
+    }
   }
 
   /**
@@ -86,8 +76,7 @@ export class SchemaModel {
 
     const validation: Joi.PartialSchemaMap = {};
     for (const key of Object.keys(payload)) {
-      // TODO: We should make sure that conditional are inside the subsections as-well. Little hack for now.
-      const question = questions.find(q => q.id === key) ?? this.questions.get(key);
+      const question = questions.find(q => q.id === key);
       if (!question) continue;
       validation[key] = QuestionValidatorFactory.create(question).validateQuestionValue(question as any);
     }
@@ -142,10 +131,14 @@ export class SchemaModel {
     }
   }
 
-  private validateStep(step: InnovationRecordStepType, path: string, idList: { [key: string]: any }) {
-    step.questions?.forEach((question: any, i: number) => {
-      this.validateQuestion(question, `${path}.questions[${i}]`, idList);
-      // this.validateQuestion(question, `sections[${i}].subSections[${j}].questions[${k}]`, questionList);
+  private validateStep(
+    subSectionId: string,
+    step: InnovationRecordStepType,
+    path: string,
+    idList: { [key: string]: any }
+  ) {
+    step.questions?.forEach((question: Question, i: number) => {
+      this.validateQuestion(subSectionId, question, `${path}.questions[${i}]`, idList);
     });
 
     if ('condition' in step) {
@@ -154,8 +147,9 @@ export class SchemaModel {
     }
   }
 
-  private validateQuestion(question: Question, path: string, idList: { [key: string]: any }) {
-    // TODO: This shouldn't be here letting it here for fast development. Mainly because the conditional and fields that are not being considered questions
+  private validateQuestion(subSectionId: string, question: Question, path: string, idList: { [key: string]: any }) {
+    // Done here to make sure since we questions inside questions (e.g., conditional)
+    this.addToSubSections(subSectionId, question.id);
     this.questions.set(question.id, question);
 
     if ('items' in question) {
@@ -169,22 +163,19 @@ export class SchemaModel {
               message: `${path}.items must reference a previous question`,
               context: question
             });
+          } else {
+            question.items = idList[item['itemsFromAnswer']]?.items ?? [];
           }
         } else {
           // item.id cannot be repeated
           this.validateIdNotRepeated(item, `${path}.items[${i}]`, itemIdList);
 
           if (typeof item !== 'string' && 'conditional' in item) {
-            this.validateQuestion(item['conditional'], `${path}.items[${i}].conditional`, idList);
+            this.validateQuestion(subSectionId, item['conditional'], `${path}.items[${i}].conditional`, idList);
           }
         }
       });
     }
-
-    // if ('condition' in question) {
-    //   // conditions can only reference ids that appear before on the schema
-    //   this.validateCondition(question, path, idList);
-    // }
 
     // question id cannot be repeated
     this.validateIdNotRepeated(question, path, idList);
@@ -198,11 +189,11 @@ export class SchemaModel {
     }
 
     if ('field' in question) {
-      this.validateQuestion(question.field, `${path}.field`, idList);
+      this.validateQuestion(subSectionId, question.field, `${path}.field`, idList);
     }
 
     if ('addQuestion' in question && question.addQuestion) {
-      this.validateQuestion(question.addQuestion, `${path}.addQuestion`, idList);
+      this.validateQuestion(subSectionId, question.addQuestion, `${path}.addQuestion`, idList);
     }
   }
 
@@ -224,27 +215,24 @@ export class SchemaModel {
     const subSectionIdList: { [key: string]: any } = {};
     const questionList: { [key: string]: any } = {};
 
-    this.schema.sections?.forEach((section: any, i: number) => {
+    this.schema.sections?.forEach((section, i: number) => {
       // section id cannot be repeated
       this.validateIdNotRepeated(section, `sections[${i}]`, sectionIdList);
 
-      section.subSections?.forEach((subSection: any, j: number) => {
+      section.subSections?.forEach((subSection, j: number) => {
         // subSection id cannot be repeated
         this.validateIdNotRepeated(subSection, `sections[${i}].subSections[${j}]`, subSectionIdList);
 
-        subSection.steps?.forEach((step: any, k: number) => {
-          this.validateStep(step, `sections[${i}].subSections[${j}].questions[${k}]`, questionList);
+        subSection.steps?.forEach((step, k: number) => {
+          this.validateStep(subSection.id, step, `sections[${i}].subSections[${j}].steps[${k}]`, questionList);
         });
-
-        // subSection.questions?.forEach((question: any, k: number) => {
-        //   this.validateQuestion(question, `sections[${i}].subSections[${j}].questions[${k}]`, questionList);
-        // });
       });
     });
 
-    // just create the structure when it doesn't have errors to be memory efficient,
-    if (!this.errorList.length) {
-      this.createStructure();
+    // clear the structures when errors occur.
+    if (this.errorList.length) {
+      this.subSections.clear();
+      this.questions.clear();
     }
 
     return { schema, errors: this.errorList };

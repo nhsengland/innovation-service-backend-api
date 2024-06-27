@@ -8,12 +8,7 @@ describe('models / schema-engine / schema.model.ts', () => {
 
     const { errors } = schema.runRules();
 
-    expect(errors).toStrictEqual([
-      {
-        context: undefined,
-        message: '"sections[0].title" is required'
-      }
-    ]);
+    expect(errors).toStrictEqual([ { context: undefined, message: '"sections[0].title" is required' } ]);
   });
 
   it('should give an error when two sections have the same id', () => {
@@ -82,15 +77,9 @@ describe('models / schema-engine / schema.model.ts', () => {
               id: 'subId1',
               title: 'Subsection 1.1',
               steps: [
-                {
-                  questions: [{ id: 'q1', dataType: 'text', label: 'Question 1' }]
-                },
-                {
-                  questions: [{ id: 'q2', dataType: 'text', label: 'Question 2' }]
-                },
-                {
-                  questions: [{ id: 'q1', dataType: 'text', label: 'Question 3' }]
-                }
+                { questions: [{ id: 'q1', dataType: 'text', label: 'Question 1' }] },
+                { questions: [{ id: 'q2', dataType: 'text', label: 'Question 2' }] },
+                { questions: [{ id: 'q1', dataType: 'text', label: 'Question 3' }] }
               ]
             }
           ]
@@ -103,7 +92,7 @@ describe('models / schema-engine / schema.model.ts', () => {
 
     expect(errors).toStrictEqual([
       {
-        message: 'sections[0].subSections[0].questions[2].id is repeated',
+        message: 'sections[0].subSections[0].steps[2].questions[0].id is repeated',
         context: { id: 'q1', dataType: 'text', label: 'Question 3' }
       }
     ]);
@@ -142,7 +131,7 @@ describe('models / schema-engine / schema.model.ts', () => {
 
     expect(errors).toStrictEqual([
       {
-        message: 'sections[0].subSections[0].questions[0].items must reference a previous question',
+        message: 'sections[0].subSections[0].steps[0].questions[0].items must reference a previous question',
         context: {
           id: 'q1',
           dataType: 'radio-group',
@@ -190,7 +179,7 @@ describe('models / schema-engine / schema.model.ts', () => {
 
     expect(errors).toStrictEqual([
       {
-        message: 'sections[0].subSections[0].questions[0].items[2].id is repeated',
+        message: 'sections[0].subSections[0].steps[0].questions[0].items[2].id is repeated',
         context: { id: 'item1', label: 'item3' }
       }
     ]);
@@ -251,16 +240,7 @@ describe('models / schema-engine / schema.model.ts', () => {
               id: 'subId1',
               title: 'Subsection 1.1',
               steps: [
-                {
-                  questions: [
-                    {
-                      id: 'q1',
-                      dataType: 'text',
-                      label: 'Label 1',
-                      validations: {}
-                    }
-                  ]
-                }
+                { questions: [ { id: 'q1', dataType: 'text', label: 'Label 1', validations: {} } ] }
               ]
             }
           ]
@@ -273,7 +253,7 @@ describe('models / schema-engine / schema.model.ts', () => {
 
     expect(errors).toStrictEqual([
       {
-        message: 'sections[0].subSections[0].questions[0].validations if used must have at least 1 validation',
+        message: 'sections[0].subSections[0].steps[0].questions[0].validations if used must have at least 1 validation',
         context: {
           id: 'q1',
           dataType: 'text',
@@ -302,11 +282,7 @@ describe('models / schema-engine / schema.model.ts', () => {
                       dataType: 'fields-group',
                       label: 'Question 1',
                       description: 'description 1',
-                      field: {
-                        id: 'q1',
-                        dataType: 'text',
-                        label: 'Question 2'
-                      },
+                      field: { id: 'q1', dataType: 'text', label: 'Question 2' },
                       addNewLabel: 'New label'
                     }
                   ]
@@ -341,16 +317,8 @@ describe('models / schema-engine / schema.model.ts', () => {
                       dataType: 'fields-group',
                       label: 'Question 1',
                       description: 'description 1',
-                      field: {
-                        id: 'q2',
-                        dataType: 'text',
-                        label: 'Question 2'
-                      },
-                      addQuestion: {
-                        id: 'q1',
-                        dataType: 'text',
-                        label: 'Question 2'
-                      },
+                      field: { id: 'q2', dataType: 'text', label: 'Question 2' },
+                      addQuestion: { id: 'q1', dataType: 'text', label: 'Question 2' },
                       addNewLabel: 'New label'
                     }
                   ]
@@ -393,13 +361,7 @@ describe('models / schema-engine / schema.model.ts', () => {
                     ]
                   },
                   {
-                    questions: [
-                      {
-                        id: 'q2',
-                        dataType: 'text',
-                        label: 'Label 2'
-                      }
-                    ],
+                    questions: [ { id: 'q2', dataType: 'text', label: 'Label 2' } ],
                     condition: { id: 'q1', options: ['basedOutsideUk', 'basedOutsideUs'] }
                   }
                 ]
@@ -414,12 +376,9 @@ describe('models / schema-engine / schema.model.ts', () => {
 
       expect(errors).toStrictEqual([
         {
-          message:
-            'sections[0].subSections[0].questions[1].condition references a wrong option (basedOutsideUk,basedOutsideUs)',
+          message: 'sections[0].subSections[0].steps[1].condition references a wrong option (basedOutsideUk,basedOutsideUs)',
           context: {
-            id: 'q2',
-            dataType: 'text',
-            label: 'Label 2',
+            questions: [ { id: 'q2', dataType: 'text', label: 'Label 2' } ],
             condition: { id: 'q1', options: ['basedOutsideUk', 'basedOutsideUs'] }
           }
         }
@@ -437,27 +396,10 @@ describe('models / schema-engine / schema.model.ts', () => {
                 id: 'subId1',
                 title: 'Subsection 1.1',
                 steps: [
+                  { questions: [ { id: 'q1', dataType: 'text', label: 'Question 1' } ] },
                   {
-                    questions: [
-                      {
-                        id: 'q1',
-                        dataType: 'text',
-                        label: 'Question 1'
-                      }
-                    ]
-                  },
-                  {
-                    questions: [
-                      {
-                        id: 'q2',
-                        dataType: 'text',
-                        label: 'Label 2'
-                      }
-                    ],
-                    condition: {
-                      id: 'q1',
-                      options: ['basedOutsideUk']
-                    }
+                    questions: [ { id: 'q2', dataType: 'text', label: 'Label 2' } ],
+                    condition: { id: 'q1', options: ['basedOutsideUk'] }
                   }
                 ]
               }
@@ -471,11 +413,9 @@ describe('models / schema-engine / schema.model.ts', () => {
 
       expect(errors).toStrictEqual([
         {
-          message: 'sections[0].subSections[0].questions[1].condition references non-tipified dataType (q1)',
+          message: 'sections[0].subSections[0].steps[1].condition references non-tipified dataType (q1)',
           context: {
-            id: 'q2',
-            dataType: 'text',
-            label: 'Label 2',
+            questions: [ { id: 'q2', dataType: 'text', label: 'Label 2' } ],
             condition: { id: 'q1', options: ['basedOutsideUk'] }
           }
         }
@@ -494,13 +434,7 @@ describe('models / schema-engine / schema.model.ts', () => {
                 title: 'Subsection 1.1',
                 steps: [
                   {
-                    questions: [
-                      {
-                        id: 'q2',
-                        dataType: 'text',
-                        label: 'Label 2'
-                      }
-                    ],
+                    questions: [ { id: 'q2', dataType: 'text', label: 'Label 2' } ],
                     condition: { id: 'q1', options: ['basedOutsideUk'] }
                   },
                   {
@@ -525,11 +459,9 @@ describe('models / schema-engine / schema.model.ts', () => {
 
       expect(errors).toStrictEqual([
         {
-          message: 'sections[0].subSections[0].questions[0].condition must reference a previous question (q1)',
+          message: 'sections[0].subSections[0].steps[0].condition must reference a previous question (q1)',
           context: {
-            id: 'q2',
-            dataType: 'text',
-            label: 'Label 2',
+            questions: [ { id: 'q2', dataType: 'text', label: 'Label 2' } ],
             condition: { id: 'q1', options: ['basedOutsideUk'] }
           }
         }
