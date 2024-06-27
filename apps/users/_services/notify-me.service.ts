@@ -305,6 +305,7 @@ export class NotifyMeService extends BaseService {
         FROM notify_me_subscription
         WHERE innovation_id=innovation.id
         AND user_role_id=:roleId
+        AND deleted_at IS NULL
         ORDER BY updated_at DESC
         FOR JSON AUTO)) as subscriptions`);
     }
