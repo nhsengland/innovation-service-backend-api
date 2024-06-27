@@ -24,6 +24,7 @@ import type {
   DefaultResponseDTO,
   EntitySubscriptionConfigType,
   NotifyMeResponseTypes,
+  OrganisationWithUnits,
   PreconditionsOptions,
   SubscriptionResponseDTO
 } from '../_types/notify-me.types';
@@ -181,31 +182,16 @@ export class NotifyMeService extends BaseService {
     units: string[],
     retrievedUnits: Map<
       string,
-      { id: string; name: string; acronym: string; organisation: { id: string; name: string; acronym: string | null } }
-    >
-  ): {
-    id: string;
-    name: string;
-    acronym: string;
-    units: {
-      id: string;
-      name: string;
-      acronym: string;
-    }[];
-  }[] {
-    const organisations = {} as Record<
-      string,
       {
         id: string;
         name: string;
         acronym: string;
-        units: {
-          id: string;
-          name: string;
-          acronym: string;
-        }[];
+        isShadow: boolean;
+        organisation: { id: string; name: string; acronym: string | null };
       }
-    >;
+    >
+  ): OrganisationWithUnits[] {
+    const organisations = {} as Record<string, OrganisationWithUnits>;
     units.forEach(u => {
       const unit = retrievedUnits.get(u);
       if (!unit) return;
@@ -220,7 +206,8 @@ export class NotifyMeService extends BaseService {
       organisations[unit.organisation.id]?.units.push({
         id: unit.id,
         name: unit.name,
-        acronym: unit.acronym
+        acronym: unit.acronym,
+        isShadow: unit.isShadow
       });
     });
     return Object.values(organisations);
@@ -231,7 +218,7 @@ export class NotifyMeService extends BaseService {
       (
         await em
           .createQueryBuilder(OrganisationUnitEntity, 'unit')
-          .select(['unit.id', 'unit.name', 'unit.acronym', 'org.id', 'org.name', 'org.acronym'])
+          .select(['unit.id', 'unit.name', 'unit.acronym', 'unit.isShadow', 'org.id', 'org.name', 'org.acronym'])
           .innerJoin('unit.organisation', 'org')
           .where('unit.id IN (:...unitIds)', { unitIds: units })
           .andWhere('unit.inactivatedAt IS NULL')
