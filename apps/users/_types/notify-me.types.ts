@@ -1,7 +1,6 @@
 import type { NotifyMeSubscriptionEntity } from '@users/shared/entities';
 import { InnovationSupportStatusEnum } from '@users/shared/enums';
 import { CurrentCatalogTypes } from '@users/shared/schemas/innovation-record';
-import { InnovationSectionGroups } from '@users/shared/schemas/innovation-record/202304/catalog.types';
 import type {
   EventType,
   ExcludeEnum,
@@ -114,7 +113,7 @@ export type InnovationRecordUpdatedResponseDTO = {
   updatedAt: Date;
   eventType: 'INNOVATION_RECORD_UPDATED';
   subscriptionType: 'INSTANTLY';
-  sections?: InnovationSectionGroups[];
+  sections?: CurrentCatalogTypes.InnovationSections[];
 };
 
 export type NotifyMeResponseTypes = {
