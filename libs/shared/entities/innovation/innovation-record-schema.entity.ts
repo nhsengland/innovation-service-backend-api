@@ -5,7 +5,7 @@ import type { IRSchemaType } from '../../models/schema-engine/schema.model';
 
 @Entity('innovation_record_schema')
 export class InnovationRecordSchemaEntity extends BaseEntity {
-  @PrimaryGeneratedColumn({ type: 'int' })
+  @PrimaryGeneratedColumn()
   version: number;
 
   @Column({ type: 'simple-json' })
