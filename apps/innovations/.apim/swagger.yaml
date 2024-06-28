@@ -2031,6 +2031,7 @@ paths:
                         - ADMIN
                         - ACCOUNT
                         - AUTOMATIC
+                        - NOTIFY_ME
       responses:
         "204":
           description: Success
@@ -4913,3 +4914,25 @@ paths:
           description: The user is not authorized to access validation data.
         "500":
           description: An error occurred while fetching the validation data.
+  /v1/ir-schema:
+    get:
+      operationId: v1-ir-schema-info
+      description: Get current ir schema
+      tags:
+        - "[v1] IR Schema"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+        "400":
+          description: Bad request
+        "401":
+          description: Not authorized
+        "403":
+          description: Forbidden
+        "500":
+          description: An error occurred
