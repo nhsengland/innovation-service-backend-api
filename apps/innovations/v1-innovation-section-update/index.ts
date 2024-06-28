@@ -50,9 +50,11 @@ class V1InnovationSectionUpdate {
       const validation = schemaModel.getSubSectionPayloadValidation(params.sectionKey, request.body['data']);
       const body = JoiHelper.Validate<{ [key: string]: any }>(validation, request.body['data']);
 
-      if(5 < Number(11)) {
+      if (5 < Number(11)) {
         context.res = ResponseHelper.Ok<ResponseDTO>({ id: randUuid() });
+        return;
       }
+
       const result = await innovationSectionsService.updateInnovationSectionInfo(
         auth.getContext(),
         params.innovationId,

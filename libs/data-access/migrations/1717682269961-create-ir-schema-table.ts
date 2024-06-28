@@ -5,7 +5,6 @@ export class createIrSchemaTable1717682269961 implements MigrationInterface {
     await queryRunner.query(`
         CREATE TABLE innovation_record_schema
         (
-            "id" uniqueidentifier NOT NULL CONSTRAINT "df_innovation_record_schema_id" DEFAULT NEWSEQUENTIALID(),
             "version" int IDENTITY(1,1) NOT NULL,
             "schema" nvarchar(max) NOT NULL CONSTRAINT "df_innovation_record_schema_document" DEFAULT '{}',
             "created_at" datetime2 NOT NULL CONSTRAINT "df_innovation_record_schema_created_at" DEFAULT getdate(),
@@ -13,7 +12,7 @@ export class createIrSchemaTable1717682269961 implements MigrationInterface {
             "updated_at" datetime2 NOT NULL CONSTRAINT "df_innovation_record_schema_updated_at" DEFAULT getdate(),
             "updated_by" uniqueidentifier,
             "deleted_at" datetime2,
-            CONSTRAINT "pk_innovation_record_schema_id" PRIMARY KEY ("id"),
+            CONSTRAINT "pk_innovation_record_schema_id" PRIMARY KEY ("version"),
             CONSTRAINT "CK_innovation_record_schema_schema_is_json" CHECK (ISJSON("schema")=1)
         )
       `);

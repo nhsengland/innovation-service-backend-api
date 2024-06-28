@@ -11,13 +11,13 @@ import type {
   Text
 } from './question.types';
 
-interface QuestionTypeValidator {
-  validateQuestionValue: (question: any) => Joi.Schema;
+interface QuestionTypeValidator<T extends Question> {
+  validate: (question: T) => Joi.Schema;
 }
 
-export class TextValidator implements QuestionTypeValidator {
+export class TextValidator implements QuestionTypeValidator<Text> {
   // Not validating postcode or url.
-  validateQuestionValue(question: Text): Joi.Schema {
+  validate(question: Text): Joi.Schema {
     let validation = Joi.string();
     if (question.validations?.maxLength) {
       validation = validation.max(question.validations.maxLength);
@@ -29,8 +29,8 @@ export class TextValidator implements QuestionTypeValidator {
   }
 }
 
-export class TextareaValidator implements QuestionTypeValidator {
-  validateQuestionValue(question: Textarea): Joi.Schema {
+export class TextareaValidator implements QuestionTypeValidator<Textarea> {
+  validate(question: Textarea): Joi.Schema {
     let validation = Joi.string();
     if (question.lengthLimit) {
       validation = validation.max(TEXTAREA_LENGTH_LIMIT[question.lengthLimit]);
@@ -42,8 +42,8 @@ export class TextareaValidator implements QuestionTypeValidator {
   }
 }
 
-export class RadioGroupValidator implements QuestionTypeValidator {
-  validateQuestionValue(question: RadioGroup): Joi.Schema {
+export class RadioGroupValidator implements QuestionTypeValidator<RadioGroup> {
+  validate(question: RadioGroup): Joi.Schema {
     let validation = Joi.string();
     const validItems = [];
     for (const item of question.items) {
@@ -61,8 +61,8 @@ export class RadioGroupValidator implements QuestionTypeValidator {
   }
 }
 
-export class AutocompleteArrayValidator implements QuestionTypeValidator {
-  validateQuestionValue(question: AutocompleteArray): Joi.Schema {
+export class AutocompleteArrayValidator implements QuestionTypeValidator<AutocompleteArray> {
+  validate(question: AutocompleteArray): Joi.Schema {
     let validation = JoiHelper.AppCustomJoi().stringArray();
     const validItems = question.items.map(i => i.id);
     if (validItems.length) {
@@ -81,8 +81,8 @@ export class AutocompleteArrayValidator implements QuestionTypeValidator {
   }
 }
 
-export class CheckboxArrayValidator implements QuestionTypeValidator {
-  validateQuestionValue(question: CheckboxArray): Joi.Schema {
+export class CheckboxArrayValidator implements QuestionTypeValidator<CheckboxArray> {
+  validate(question: CheckboxArray): Joi.Schema {
     let validation = JoiHelper.AppCustomJoi().stringArray();
     const validItems = [];
     for (const item of question.items) {
@@ -106,19 +106,15 @@ export class CheckboxArrayValidator implements QuestionTypeValidator {
   }
 }
 
-export class FieldGroupValidator implements QuestionTypeValidator {
-  validateQuestionValue(question: FieldsGroup): Joi.Schema {
+export class FieldGroupValidator implements QuestionTypeValidator<FieldsGroup> {
+  validate(question: FieldsGroup): Joi.Schema {
     let validation = Joi.array();
     const obj: { [key: string]: any } = {};
     if (question.field) {
-      obj[question.field.id] = QuestionValidatorFactory.create(question.field).validateQuestionValue(
-        question.field as any
-      );
+      obj[question.field.id] = QuestionValidatorFactory.validate(question.field);
     }
     if (question.addQuestion) {
-      obj[question.addQuestion.id] = QuestionValidatorFactory.create(question.addQuestion).validateQuestionValue(
-        question.addQuestion as any
-      );
+      obj[question.addQuestion.id] = QuestionValidatorFactory.validate(question.addQuestion);
     }
     if (Object.keys(obj).length) {
       validation = validation.items(Joi.object(obj));
@@ -132,20 +128,20 @@ export class FieldGroupValidator implements QuestionTypeValidator {
 }
 
 export class QuestionValidatorFactory {
-  static create(question: Question) {
+  static validate(question: Question) {
     switch (question.dataType) {
       case 'text':
-        return new TextValidator();
+        return new TextValidator().validate(question);
       case 'textarea':
-        return new TextareaValidator();
+        return new TextareaValidator().validate(question);
       case 'radio-group':
-        return new RadioGroupValidator();
+        return new RadioGroupValidator().validate(question);
       case 'checkbox-array':
-        return new CheckboxArrayValidator();
+        return new CheckboxArrayValidator().validate(question);
       case 'autocomplete-array':
-        return new AutocompleteArrayValidator();
+        return new AutocompleteArrayValidator().validate(question);
       case 'fields-group':
-        return new FieldGroupValidator();
+        return new FieldGroupValidator().validate(question);
       default:
         throw new Error('QuestionValidator is not defined');
     }

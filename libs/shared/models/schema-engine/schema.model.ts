@@ -78,7 +78,7 @@ export class SchemaModel {
     for (const key of Object.keys(payload)) {
       const question = questions.find(q => q.id === key);
       if (!question) continue;
-      validation[key] = QuestionValidatorFactory.create(question).validateQuestionValue(question as any);
+      validation[key] = QuestionValidatorFactory.validate(question);
     }
 
     return Joi.object(validation).required();

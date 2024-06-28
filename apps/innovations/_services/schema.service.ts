@@ -15,9 +15,7 @@ export class SchemaService extends BaseService {
    * Gets the last schema version.
    * It assumes the current schema is the latest version.
    */
-  async getCurrentSchema(
-    entityManager?: EntityManager
-  ): Promise<{ id: string; version: number; schema: IRSchemaType }> {
+  async getCurrentSchema(entityManager?: EntityManager): Promise<{ version: number; schema: IRSchemaType }> {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const schema = await em
@@ -28,6 +26,6 @@ export class SchemaService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_RECORD_SCHEMA_NOT_FOUND);
     }
 
-    return { id: schema.id, version: schema.version, schema: schema.schema };
+    return { version: schema.version, schema: schema.schema };
   }
 }
