@@ -1,6 +1,6 @@
 import { container } from '../_config';
 
-import { randUuid } from '@ngneat/falso';
+import { randFutureDate, randPastDate, randUuid } from '@ngneat/falso';
 import { NotificationScheduleEntity, NotifyMeSubscriptionEntity } from '@users/shared/entities';
 import { InnovationSupportStatusEnum } from '@users/shared/enums';
 import { BadRequestError, ForbiddenError, NotFoundError } from '@users/shared/errors';
@@ -9,7 +9,6 @@ import { AuthErrorsEnum } from '@users/shared/services/auth/authorization-valida
 import { TestsHelper } from '@users/shared/tests';
 import { DTOsHelper } from '@users/shared/tests/helpers/dtos.helper';
 import { isSupportUpdated } from '@users/shared/types';
-import { fail } from 'assert';
 import type { EntityManager } from 'typeorm';
 import type { NotifyMeService } from './notify-me.service';
 import SYMBOLS from './symbols';
@@ -78,13 +77,50 @@ describe('Users / _services / notify me service suite', () => {
 
       const dbResult = await em
         .getRepository(NotifyMeSubscriptionEntity)
-        .find({ where: { innovation: { id: scenario.users.johnInnovator.innovations.johnInnovationArchived.id } } });
-      expect(dbResult.length).toBe(1);
-      expect(dbResult[0]?.config).toStrictEqual(data);
+        .findOne({ where: { innovation: { id: scenario.users.johnInnovator.innovations.johnInnovationArchived.id } } });
+      expect(dbResult?.config).toStrictEqual(data);
     });
 
-    it.skip('should create a scheduled subscription', async () => {
-      fail('Not implemented');
+    it('should create a scheduled subscription', async () => {
+      const futureDate = randFutureDate();
+      const data = {
+        eventType: 'REMINDER',
+        customMessage: 'Custom message',
+        subscriptionType: 'SCHEDULED',
+        date: futureDate
+      } as const;
+      await sut.createSubscription(
+        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+        scenario.users.johnInnovator.innovations.johnInnovationArchived.id,
+        data,
+        em
+      );
+
+      const dbResult = await em
+        .getRepository(NotifyMeSubscriptionEntity)
+        .findOne({ where: { innovation: { id: scenario.users.johnInnovator.innovations.johnInnovationArchived.id } } });
+      expect(dbResult?.config).toStrictEqual({
+        ...data,
+        date: futureDate.toISOString()
+      });
+    });
+
+    it('should fail to create scheduled if date is not future', async () => {
+      const pastDate = randPastDate();
+      const data = {
+        eventType: 'REMINDER',
+        customMessage: 'Custom message',
+        subscriptionType: 'SCHEDULED',
+        date: pastDate
+      } as const;
+      await expect(
+        sut.createSubscription(
+          DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+          scenario.users.johnInnovator.innovations.johnInnovationArchived.id,
+          data,
+          em
+        )
+      ).rejects.toThrow(new BadRequestError(NotificationErrorsEnum.NOTIFY_ME_SCHEDULED_DATE_PAST));
     });
   });
 

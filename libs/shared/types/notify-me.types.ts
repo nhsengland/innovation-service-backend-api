@@ -48,7 +48,7 @@ export type Reminder = {
   eventType: 'REMINDER';
   subscriptionType: 'SCHEDULED';
   date: Date;
-  customMessages?: any;
+  customMessage: string;
 };
 
 export type SubscriptionConfig = SupportUpdated | ProgressUpdateCreated | InnovationRecordUpdated | Reminder;

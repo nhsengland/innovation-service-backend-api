@@ -12,7 +12,7 @@ export class NotificationScheduleEntity {
   sendDate: Date;
 
   @Column({ name: 'params', type: 'simple-json' })
-  params: { inApp: Record<string, unknown>; email: Record<string, unknown> };
+  params: Record<string, unknown>;
 
   @OneToOne(() => NotifyMeSubscriptionEntity, { nullable: false })
   @JoinColumn({ name: 'subscription_id' })

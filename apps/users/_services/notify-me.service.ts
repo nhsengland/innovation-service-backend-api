@@ -12,11 +12,11 @@ import {
 import { BadRequestError, ForbiddenError, NotFoundError, NotImplementedError } from '@users/shared/errors';
 import { NotificationErrorsEnum } from '@users/shared/errors/errors.enums';
 import { AuthErrorsEnum } from '@users/shared/services/auth/authorization-validation.model';
-import type { EventType } from '@users/shared/types';
 import {
-  ProgressUpdateCreated,
   isAccessorDomainContextType,
   type DomainContextType,
+  type EventType,
+  type ProgressUpdateCreated,
   type SubscriptionConfig,
   type SupportUpdated
 } from '@users/shared/types';
@@ -43,9 +43,13 @@ export class NotifyMeService extends BaseService {
     config: SubscriptionConfig,
     entityManager?: EntityManager
   ): Promise<void> {
+    if (config.subscriptionType === 'SCHEDULED' && config.date < new Date()) {
+      throw new BadRequestError(NotificationErrorsEnum.NOTIFY_ME_SCHEDULED_DATE_PAST);
+    }
+
     const em = entityManager ?? this.sqlConnection.manager;
 
-    await em.save(
+    const subscription = await em.save(
       NotifyMeSubscriptionEntity,
       NotifyMeSubscriptionEntity.new({
         createdBy: domainContext.id,
@@ -55,20 +59,18 @@ export class NotifyMeService extends BaseService {
       })
     );
 
-    /* TODO
     if (config.subscriptionType === 'SCHEDULED') {
-      await this.storageQueueService.sendMessage<NotifyMeMessageType<'REMINDER'>>(QueuesEnum.NOTIFY_ME, {
-        data: {
-          requestUser: domainContext,
-          innovationId,
-
-          type: 'REMINDER',
-
-          params: {}
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { date, subscriptionType, ...params } = config;
+      await em.save(NotificationScheduleEntity, {
+        subscriptionId: subscription.id,
+        sendDate: date,
+        params: params as any, // typescript error with deep partial
+        userRole: {
+          id: domainContext.currentRole.id
         }
       });
     }
-    */
   }
 
   async getInnovationSubscriptions(
