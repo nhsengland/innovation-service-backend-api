@@ -363,7 +363,24 @@ export class NotifyMeService extends BaseService {
       throw new BadRequestError(NotificationErrorsEnum.NOTIFY_ME_CANNOT_CHANGE_EVENT_TYPE);
     }
 
+    if (config.subscriptionType === 'SCHEDULED' && config.date < new Date()) {
+      throw new BadRequestError(NotificationErrorsEnum.NOTIFY_ME_SCHEDULED_DATE_PAST);
+    }
+
     await em.update(NotifyMeSubscriptionEntity, { id: subscriptionId }, { config });
+
+    if (config.subscriptionType === 'SCHEDULED') {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { date, subscriptionType, ...params } = config;
+      await em.save(NotificationScheduleEntity, {
+        subscriptionId: subscription.id,
+        sendDate: date,
+        params: params as any, // typescript error with deep partial
+        userRole: {
+          id: domainContext.currentRole.id
+        }
+      });
+    }
   }
 
   async deleteSubscription(

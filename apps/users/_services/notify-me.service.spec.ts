@@ -585,6 +585,29 @@ describe('Users / _services / notify me service suite', () => {
       ]);
     });
 
+    it('should update a scheduled subscription', async () => {
+      const futureDate = randFutureDate();
+      const subscription = scenario.users.bartQualifyingAccessor.notifyMeSubscriptions.adamScheduledInnovation;
+      await sut.updateSubscription(
+        DTOsHelper.getUserRequestContext(scenario.users.bartQualifyingAccessor),
+        subscription.id,
+        {
+          eventType: 'REMINDER',
+          customMessage: 'Custom message',
+          subscriptionType: 'SCHEDULED',
+          date: futureDate
+        },
+        em
+      );
+
+      const dbResult = await em.getRepository(NotifyMeSubscriptionEntity).findOne({ where: { id: subscription.id } });
+      expect(dbResult && 'date' in dbResult.config && dbResult.config.date).toBe(futureDate.toISOString());
+      const dbSchedule = await em
+        .getRepository(NotificationScheduleEntity)
+        .findOne({ where: { subscriptionId: subscription.id } });
+      expect(dbSchedule && dbSchedule.sendDate).toStrictEqual(futureDate);
+    });
+
     it('should fail if changing the subscription eventType', async () => {
       await expect(
         sut.updateSubscription(
@@ -614,6 +637,23 @@ describe('Users / _services / notify me service suite', () => {
           em
         )
       ).rejects.toThrow(new ForbiddenError(AuthErrorsEnum.AUTH_USER_ROLE_NOT_ALLOWED));
+    });
+
+    it('should fail if updating scheduled to past date', async () => {
+      const pastDate = randPastDate();
+      await expect(
+        sut.updateSubscription(
+          DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+          scenario.users.aliceQualifyingAccessor.notifyMeSubscriptions.johnInnovation.id,
+          {
+            eventType: 'REMINDER',
+            customMessage: 'Custom message',
+            subscriptionType: 'SCHEDULED',
+            date: pastDate
+          },
+          em
+        )
+      ).rejects.toThrow(new BadRequestError(NotificationErrorsEnum.NOTIFY_ME_SCHEDULED_DATE_PAST));
     });
   });
 

@@ -1,5 +1,5 @@
 import type { DeepPartial, EntityManager } from 'typeorm';
-import { NotifyMeSubscriptionEntity } from '../../entities';
+import { NotificationScheduleEntity, NotifyMeSubscriptionEntity } from '../../entities';
 import type { EventType, SubscriptionConfig, SubscriptionType } from '../../types';
 import { BaseBuilder } from './base.builder';
 
@@ -37,13 +37,27 @@ export class NotifyMeSubscriptionBuilder<T extends SubscriptionConfig> extends B
       throw new Error('NotifyMeSubscriptionBuilder: Missing required fields');
     }
 
-    const savedFile = await this.getEntityManager().getRepository(NotifyMeSubscriptionEntity).save(this.subscription);
+    const subscription = await this.getEntityManager()
+      .getRepository(NotifyMeSubscriptionEntity)
+      .save(this.subscription);
+
+    if (subscription.subscriptionType === 'SCHEDULED') {
+      const { date, subscriptionType, ...params } = subscription.config as any;
+      await this.getEntityManager()
+        .getRepository(NotificationScheduleEntity)
+        .save({
+          subscriptionId: subscription.id,
+          params,
+          sendDate: date,
+          userRole: { id: subscription.userRole.id }
+        });
+    }
 
     return {
-      id: savedFile.id,
-      eventType: savedFile.config.eventType,
-      subscriptionType: savedFile.config.subscriptionType,
-      config: savedFile.config as T
+      id: subscription.id,
+      eventType: subscription.config.eventType,
+      subscriptionType: subscription.config.subscriptionType,
+      config: subscription.config as T
     };
   }
 }
