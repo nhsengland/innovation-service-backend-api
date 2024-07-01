@@ -44,16 +44,14 @@ export type InnovationRecordUpdated = {
   };
 };
 
-export type SubscriptionConfig =
-  | SupportUpdated
-  | ProgressUpdateCreated
-  | InnovationRecordUpdated
-  | {
-      eventType: 'REMINDER';
-      subscriptionType: SubscriptionType;
-      date: Date;
-      customMessages?: any;
-    }; // TODO
+export type Reminder = {
+  eventType: 'REMINDER';
+  subscriptionType: 'SCHEDULED';
+  date: Date;
+  customMessages?: any;
+};
+
+export type SubscriptionConfig = SupportUpdated | ProgressUpdateCreated | InnovationRecordUpdated | Reminder;
 
 export const isSupportUpdated = (config: SubscriptionConfig): config is SupportUpdated => {
   return config.eventType === 'SUPPORT_UPDATED';
