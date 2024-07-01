@@ -467,6 +467,11 @@ export class InnovationSupportsService extends BaseService {
       }
     });
 
+    await this.notifierService.sendNotifyMe(domainContext, innovationId, 'SUPPORT_UPDATED', {
+      status: data.status,
+      units: organisationUnitId
+    });
+
     return result;
   }
 
