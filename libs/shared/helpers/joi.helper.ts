@@ -1,4 +1,4 @@
-import type { Root, Schema } from 'joi';
+import type { Schema } from 'joi';
 import Joi, { Context } from 'joi';
 
 import { BadRequestError, GenericErrorsEnum } from '../errors';
@@ -27,13 +27,8 @@ export class JoiHelper {
     return value;
   }
 
-  static AppCustomJoi(): Root & {
-    stringArray: () => Joi.ArraySchema;
-    stringArrayOfObjects: () => Joi.ArraySchema;
-    stringObject: () => Joi.ObjectSchema;
-    decodeURIString: () => Joi.StringSchema;
-    decodeURIDate: () => Joi.DateSchema;
-  } {
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+  static AppCustomJoi() {
     return Joi.extend(
       {
         type: 'stringArray',
@@ -84,6 +79,40 @@ export class JoiHelper {
         base: Joi.date().meta({ baseType: 'date' }),
         prepare(value, _helpers) {
           return typeof value !== 'string' ? { value } : { value: decodeURIComponent(value) };
+        }
+      },
+
+      {
+        type: 'dateWithDefaultTime',
+        base: Joi.date().meta({ baseType: 'date' }),
+        prepare(value, helpers) {
+          if (
+            value instanceof Date &&
+            value.getHours() === 0 &&
+            value.getMinutes() === 0 &&
+            value.getSeconds() === 0 &&
+            helpers.schema.$_getRule('defaultTime')?.args?.['time']
+          ) {
+            const [hours, minutes] = helpers.schema.$_getRule('defaultTime')?.args?.['time'].split(':');
+            value.setHours(hours, minutes);
+          } else {
+            return value;
+          }
+        },
+        rules: {
+          defaultTime: {
+            method(time) {
+              return this.$_addRule({ name: 'defaultTime', args: { time } });
+            },
+            args: [
+              {
+                name: 'time',
+                ref: true,
+                assert: value => typeof value === 'string' && !!value.match(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/),
+                message: 'must be a valid time (HH:MM)'
+              }
+            ]
+          }
         }
       }
     );

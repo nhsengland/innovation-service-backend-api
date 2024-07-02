@@ -1,14 +1,15 @@
 import type { NotifyMeSubscriptionEntity } from '@users/shared/entities';
 import { InnovationSupportStatusEnum } from '@users/shared/enums';
 import { CurrentCatalogTypes } from '@users/shared/schemas/innovation-record';
-import type {
-  EventType,
-  ExcludeEnum,
-  InnovationRecordUpdated,
-  ProgressUpdateCreated,
-  SubscriptionConfig,
-  SubscriptionType,
-  SupportUpdated
+import {
+  Reminder,
+  type EventType,
+  type ExcludeEnum,
+  type InnovationRecordUpdated,
+  type ProgressUpdateCreated,
+  type SubscriptionConfig,
+  type SubscriptionType,
+  type SupportUpdated
 } from '@users/shared/types';
 import Joi from 'joi';
 
@@ -48,10 +49,18 @@ const InnovationRecordUpdatedSchema = Joi.object<InnovationRecordUpdated>({
   }).required()
 }).required();
 
+const ReminderSchema = Joi.object<Reminder>({
+  eventType: Joi.string().valid('REMINDER').required(),
+  subscriptionType: Joi.string().valid('SCHEDULED').default('SCHEDULED'),
+  customMessage: Joi.string().required(),
+  date: Joi.date().required()
+});
+
 export const NotifyMeConfigSchema = Joi.alternatives(
   SupportUpdatedSchema,
   ProgressUpdateCreatedSchema,
-  InnovationRecordUpdatedSchema
+  InnovationRecordUpdatedSchema,
+  ReminderSchema
 ).required();
 //#endregion
 
