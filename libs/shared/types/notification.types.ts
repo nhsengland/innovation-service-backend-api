@@ -24,7 +24,14 @@ export const QANotificationCategories = [
 ] as const;
 type QANotificationCategories = (typeof QANotificationCategories)[number];
 
-export const INotificationCategories = ['SUPPORT', 'MESSAGES', 'TASK', 'DOCUMENTS', 'AUTOMATIC'] as const;
+export const INotificationCategories = [
+  'SUPPORT',
+  'MESSAGES',
+  'TASK',
+  'DOCUMENTS',
+  'AUTOMATIC',
+  'USER_RESEARCH_SURVEYS'
+] as const;
 type INotificationCategories = (typeof INotificationCategories)[number];
 
 export type NotificationPreferences =

@@ -2032,6 +2032,7 @@ paths:
                         - ACCOUNT
                         - AUTOMATIC
                         - NOTIFY_ME
+                        - USER_RESEARCH_SURVEYS
       responses:
         "204":
           description: Success

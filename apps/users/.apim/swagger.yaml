@@ -177,12 +177,18 @@ paths:
                           enum:
                             - YES
                             - NO
+                        USER_RESEARCH_SURVEYS:
+                          type: string
+                          enum:
+                            - YES
+                            - NO
                       required:
                         - SUPPORT
                         - MESSAGES
                         - TASK
                         - DOCUMENTS
                         - AUTOMATIC
+                        - USER_RESEARCH_SURVEYS
                       additionalProperties: false
                       x-required: true
               additionalProperties: false
@@ -662,6 +668,7 @@ paths:
                       - ACCOUNT
                       - AUTOMATIC
                       - NOTIFY_ME
+                      - USER_RESEARCH_SURVEYS
                   default: []
                 contextDetails:
                   type: array
@@ -810,6 +817,7 @@ paths:
                 - ACCOUNT
                 - AUTOMATIC
                 - NOTIFY_ME
+                - USER_RESEARCH_SURVEYS
             description: The context types to filter by
             default: []
         - name: unreadOnly
@@ -873,6 +881,7 @@ paths:
                             - ACCOUNT
                             - AUTOMATIC
                             - NOTIFY_ME
+                            - USER_RESEARCH_SURVEYS
                           description: The notification context category
                         contextDetail:
                           type: string

@@ -79,7 +79,8 @@ export const NotificationTypes = {
     'AU09_TRANSFER_EXPIRED',
     'AU10_ACCESSOR_IDLE_ENGAGING_SUPPORT_FOR_SIX_WEEKS'
   ] as const,
-  NOTIFY_ME: ['SUPPORT_UPDATED', 'PROGRESS_UPDATE_CREATED', 'INNOVATION_RECORD_UPDATED', 'REMINDER'] as const
+  NOTIFY_ME: ['SUPPORT_UPDATED', 'PROGRESS_UPDATE_CREATED', 'INNOVATION_RECORD_UPDATED', 'REMINDER'] as const,
+  USER_RESEARCH_SURVEYS: [] as const
 };
 export type NotificationTypes = typeof NotificationTypes;
 export const NotificationCategoryType = Object.keys(NotificationTypes).map(v => v);
