@@ -21,11 +21,11 @@ import {
   type SupportUpdated
 } from '@users/shared/types';
 import type {
+  DefaultOptions,
   DefaultResponseDTO,
   EntitySubscriptionConfigType,
   NotifyMeResponseTypes,
   OrganisationWithUnits,
-  PreconditionsOptions,
   SubscriptionResponseDTO
 } from '../_types/notify-me.types';
 import { BaseService } from './base.service';
@@ -124,10 +124,10 @@ export class NotifyMeService extends BaseService {
     INNOVATION_RECORD_UPDATED: this.defaultSubscriptionResponseDTO('INNOVATION_RECORD_UPDATED', ['sections']).bind(
       this
     ),
-    REMINDER: this.defaultSubscriptionResponseDTO('REMINDER', []).bind(this)
+    REMINDER: this.defaultSubscriptionResponseDTO('REMINDER', ['date', 'customMessage']).bind(this)
   };
 
-  private defaultSubscriptionResponseDTO<T extends EventType, K extends PreconditionsOptions<T>>(
+  private defaultSubscriptionResponseDTO<T extends EventType, K extends DefaultOptions<T>>(
     type: T | undefined,
     keys: K[]
   ): (subscriptions: EntitySubscriptionConfigType<T>[]) => DefaultResponseDTO<T, K>[] {
@@ -137,6 +137,7 @@ export class NotifyMeService extends BaseService {
         updatedAt: s.updatedAt,
         eventType: type,
         subscriptionType: s.config.subscriptionType,
+        ...(keys.length && pick(s.config, keys)),
         ...(keys.length && pick('preConditions' in s.config && s.config.preConditions, keys))
       })) as DefaultResponseDTO<T, K>[];
     };

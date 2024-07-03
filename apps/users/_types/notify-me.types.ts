@@ -83,13 +83,16 @@ export type EntitySubscriptionConfigType<T extends EventType> = NotifyMeSubscrip
   eventType: T;
   config: SubscriptionConfigType<T>;
 };
-export type PreconditionsOptions<T extends EventType> = 'preConditions' extends keyof (SubscriptionConfig & {
+type PreconditionsOptions<T extends EventType> = 'preConditions' extends keyof (SubscriptionConfig & {
   eventType: T;
 })
   ? keyof SubscriptionConfigType<T>['preConditions']
   : never;
+export type DefaultOptions<T extends EventType> =
+  | PreconditionsOptions<T>
+  | keyof Omit<SubscriptionConfigType<T>, 'id' | 'eventType' | 'subscriptionType' | 'preConditions'>;
 
-export type DefaultResponseDTO<T extends EventType, K extends PreconditionsOptions<T>> = {
+export type DefaultResponseDTO<T extends EventType, K extends DefaultOptions<T>> = {
   id: string;
   updatedAt: Date;
   eventType: T;
@@ -98,8 +101,12 @@ export type DefaultResponseDTO<T extends EventType, K extends PreconditionsOptio
   [k in K]: 'preConditions' extends keyof (SubscriptionConfig & { eventType: T })
     ? k extends keyof SubscriptionConfigType<T>['preConditions']
       ? SubscriptionConfigType<T>['preConditions'][k]
-      : never
-    : never;
+      : k extends keyof SubscriptionConfigType<T>
+        ? SubscriptionConfigType<T>[k]
+        : never
+    : k extends keyof SubscriptionConfigType<T>
+      ? SubscriptionConfigType<T>[k]
+      : never;
 };
 
 export type SupportUpdatedResponseDTO = {
