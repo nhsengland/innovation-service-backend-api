@@ -1,5 +1,6 @@
 import type { NotifyMeSubscriptionEntity } from '@users/shared/entities';
 import { InnovationSupportStatusEnum } from '@users/shared/enums';
+import { JoiHelper } from '@users/shared/helpers';
 import { CurrentCatalogTypes } from '@users/shared/schemas/innovation-record';
 import {
   Reminder,
@@ -53,7 +54,7 @@ const ReminderSchema = Joi.object<Reminder>({
   eventType: Joi.string().valid('REMINDER').required(),
   subscriptionType: Joi.string().valid('SCHEDULED').default('SCHEDULED'),
   customMessage: Joi.string().required(),
-  date: Joi.date().required()
+  date: JoiHelper.AppCustomJoi().dateWithDefaultTime().defaultTime('07:00').required()
 });
 
 export const NotifyMeConfigSchema = Joi.alternatives(

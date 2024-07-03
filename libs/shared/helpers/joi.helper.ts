@@ -1,4 +1,4 @@
-import type { Schema } from 'joi';
+import type { Root, Schema } from 'joi';
 import Joi, { Context } from 'joi';
 
 import { BadRequestError, GenericErrorsEnum } from '../errors';
@@ -27,8 +27,14 @@ export class JoiHelper {
     return value;
   }
 
-  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-  static AppCustomJoi() {
+  static AppCustomJoi(): Root & {
+    stringArray: () => Joi.ArraySchema;
+    stringArrayOfObjects: () => Joi.ArraySchema;
+    stringObject: () => Joi.ObjectSchema;
+    decodeURIString: () => Joi.StringSchema;
+    decodeURIDate: () => Joi.DateSchema;
+    dateWithDefaultTime: () => Joi.DateSchema & { defaultTime: (time: string) => Joi.DateSchema };
+  } {
     return Joi.extend(
       {
         type: 'stringArray',
@@ -85,7 +91,7 @@ export class JoiHelper {
       {
         type: 'dateWithDefaultTime',
         base: Joi.date().meta({ baseType: 'date' }),
-        prepare(value, helpers) {
+        coerce(value, helpers) {
           if (
             value instanceof Date &&
             value.getHours() === 0 &&
@@ -93,14 +99,16 @@ export class JoiHelper {
             value.getSeconds() === 0 &&
             helpers.schema.$_getRule('defaultTime')?.args?.['time']
           ) {
-            const [hours, minutes] = helpers.schema.$_getRule('defaultTime')?.args?.['time'].split(':');
+            const time = helpers.schema.$_getRule('defaultTime')?.args?.['time'].split(':');
+            const hours = parseInt(time[0], 10);
+            const minutes = parseInt(time[1], 10);
             value.setHours(hours, minutes);
-          } else {
-            return value;
           }
+          return { value };
         },
         rules: {
           defaultTime: {
+            convert: true,
             method(time) {
               return this.$_addRule({ name: 'defaultTime', args: { time } });
             },
