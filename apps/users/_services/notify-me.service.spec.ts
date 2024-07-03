@@ -9,7 +9,6 @@ import { AuthErrorsEnum } from '@users/shared/services/auth/authorization-valida
 import { TestsHelper } from '@users/shared/tests';
 import { DTOsHelper } from '@users/shared/tests/helpers/dtos.helper';
 import { isSupportUpdated } from '@users/shared/types';
-import Joi from 'joi';
 import type { EntityManager } from 'typeorm';
 import type { NotifyMeService } from './notify-me.service';
 import SYMBOLS from './symbols';
@@ -122,11 +121,6 @@ describe('Users / _services / notify me service suite', () => {
           em
         )
       ).rejects.toThrow(new BadRequestError(NotificationErrorsEnum.NOTIFY_ME_SCHEDULED_DATE_PAST));
-    });
-
-    it('test', () => {
-      const a = Joi.date().required().validate('2024-07-02');
-      console.log(a);
     });
   });
 
@@ -729,7 +723,7 @@ describe('Users / _services / notify me service suite', () => {
     it('deletes the subscription schedules', async () => {
       const subscription = scenario.users.bartQualifyingAccessor.notifyMeSubscriptions.adamScheduledInnovation;
       await sut.deleteSubscription(
-        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+        DTOsHelper.getUserRequestContext(scenario.users.bartQualifyingAccessor),
         subscription.id,
         em
       );

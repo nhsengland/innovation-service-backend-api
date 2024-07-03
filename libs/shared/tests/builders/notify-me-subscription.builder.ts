@@ -41,12 +41,14 @@ export class NotifyMeSubscriptionBuilder<T extends SubscriptionConfig> extends B
       .getRepository(NotifyMeSubscriptionEntity)
       .save(this.subscription);
 
-    if (subscription.subscriptionType === 'SCHEDULED') {
+    if (subscription.config.subscriptionType === 'SCHEDULED') {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { date, subscriptionType, ...params } = subscription.config as any;
       await this.getEntityManager()
         .getRepository(NotificationScheduleEntity)
         .save({
           subscriptionId: subscription.id,
+          innovationId: this.subscription.innovation?.id,
           params,
           sendDate: date,
           userRole: { id: subscription.userRole.id }

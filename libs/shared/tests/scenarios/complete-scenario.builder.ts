@@ -15,7 +15,7 @@ import {
   ThreadContextTypeEnum
 } from '../../enums/innovation.enums';
 import { ServiceRoleEnum, UserStatusEnum } from '../../enums/user.enums';
-import type { SupportUpdated } from '../../types';
+import type { Reminder, SupportUpdated } from '../../types';
 import { InnovationAssessmentBuilder } from '../builders/innovation-assessment.builder';
 import { InnovationCollaboratorBuilder } from '../builders/innovation-collaborator.builder';
 import { InnovationExportRequestBuilder } from '../builders/innovation-export-request.builder';
@@ -790,7 +790,7 @@ export class CompleteScenarioBuilder {
         })
         .save();
 
-      const bartScheduledForAdamInnovation = await new NotifyMeSubscriptionBuilder<SupportUpdated>(entityManager)
+      const bartScheduledForAdamInnovation = await new NotifyMeSubscriptionBuilder<Reminder>(entityManager)
         .setInnovation(adamInnovation.id)
         .setUserRole(bartQualifyingAccessor.roles['qaRole']!.id)
         .setConfig({

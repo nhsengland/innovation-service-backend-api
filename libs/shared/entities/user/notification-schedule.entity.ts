@@ -1,5 +1,6 @@
 import { Column, Entity, JoinColumn, ManyToOne, OneToOne, PrimaryColumn } from 'typeorm';
 
+import type { ScheduledConfig } from '../../types';
 import { NotifyMeSubscriptionEntity } from './notify-me-subscription.entity';
 import { UserRoleEntity } from './user-role.entity';
 
@@ -12,7 +13,7 @@ export class NotificationScheduleEntity {
   sendDate: Date;
 
   @Column({ name: 'params', type: 'simple-json' })
-  params: Record<string, unknown>;
+  params: ScheduledConfig;
 
   @OneToOne(() => NotifyMeSubscriptionEntity, { nullable: false })
   @JoinColumn({ name: 'subscription_id' })

@@ -52,6 +52,7 @@ export type Reminder = {
 };
 
 export type SubscriptionConfig = SupportUpdated | ProgressUpdateCreated | InnovationRecordUpdated | Reminder;
+export type ScheduledConfig = Omit<SubscriptionConfig & { subscriptionType: 'SCHEDULED' }, 'subscriptionType' | 'date'>;
 
 export const isSupportUpdated = (config: SubscriptionConfig): config is SupportUpdated => {
   return config.eventType === 'SUPPORT_UPDATED';

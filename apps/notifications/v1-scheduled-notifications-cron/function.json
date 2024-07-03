@@ -1,7 +1,7 @@
 {
   "bindings": [
     {
-      "schedule": "* */5 * * * *",
+      "schedule": "0 */1 * * * *", // TODO change to every 5 min
       "name": "myTimerScheduledNotificationsCron",
       "type": "timerTrigger",
       "direction": "in"

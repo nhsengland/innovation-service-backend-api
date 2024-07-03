@@ -100,18 +100,6 @@ export class NotifyMeHandler {
           }
           this.#inApps.push(inAppPayload);
           break;
-
-        /* currently not implemented 
-        // NOTE: Currently they are doing the same thing, if this changes just change it to specific.
-        case 'PERIODIC':
-        case 'SCHEDULED':
-          // This should be inside a transaction to handle errors (???)
-          await this.notifyMeService.createScheduledNotification(subscriber, {
-            inApp: inAppPayload,
-            email: emailPayload
-          });
-          break;
-        */
       }
     }
   }

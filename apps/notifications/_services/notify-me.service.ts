@@ -1,11 +1,11 @@
-import { NotificationScheduleEntity, NotifyMeSubscriptionEntity, UserRoleEntity } from '@notifications/shared/entities';
 import { injectable } from 'inversify';
+import { Brackets, EntityManager } from 'typeorm';
 
 import { BaseService } from './base.service';
 
+import { NotificationScheduleEntity, NotifyMeSubscriptionEntity, UserRoleEntity } from '@notifications/shared/entities';
 import { ServiceRoleEnum } from '@notifications/shared/enums';
-import type { EventType, SubscriptionConfig } from '@notifications/shared/types';
-import { Brackets, EntityManager, In } from 'typeorm';
+import type { EventType, ScheduledConfig, SubscriptionConfig } from '@notifications/shared/types';
 
 export type NotifyMeSubscriptionType<T extends EventType = EventType> = {
   id: string;
@@ -68,10 +68,7 @@ export class NotifyMeService extends BaseService {
    * It makes sure that no scheduled notification already exists for the given subscription
    * to prevent duplicates.
    */
-  async createScheduledNotification(
-    subscription: NotifyMeSubscriptionType,
-    params: { inApp: Record<string, unknown>; email: Record<string, unknown> }
-  ): Promise<void> {
+  async createScheduledNotification(subscription: NotifyMeSubscriptionType, params: ScheduledConfig): Promise<void> {
     /* Currently not implemented
     // If its a periodic we have to make sure that it doesn't exist one notification scheduled already.
     if (subscription.config.subscriptionType === 'PERIODIC') {
@@ -111,19 +108,11 @@ export class NotifyMeService extends BaseService {
 
   /**
    * Responsible for deleting the scheduled notifications for the given subscriptions
-   *
-   * Besides deleting the scheduled notifications that may exist, it makes sure to delete
-   * the subscription as-well if its of a type 'SCHEDULED' (business rule).
    */
-  async deleteScheduledNotifications(subscriptionIds: string[]): Promise<void> {
-    await this.sqlConnection.manager.delete(NotificationScheduleEntity, {
-      subscriptionId: In(subscriptionIds)
-    });
-
-    // We make sure to delete the subscription of the ones that were scheduled
-    await this.sqlConnection.manager.softDelete(NotifyMeSubscriptionEntity, {
-      id: In(subscriptionIds),
-      subscriptionType: 'SCHEDULED'
+  async deleteScheduledNotification(subscriptionId: string, entityManager?: EntityManager): Promise<void> {
+    const em = entityManager || this.sqlConnection.manager;
+    await em.delete(NotificationScheduleEntity, {
+      subscriptionId: subscriptionId
     });
   }
 
@@ -134,13 +123,26 @@ export class NotifyMeService extends BaseService {
    * to make sure that in case of failure there is no notifications lost a grace period of 2H
    * is applied.
    */
-  async getScheduledNotifications(): Promise<{ subscriptionId: string; params: Record<string, unknown> }[]> {
-    const scheduled = await this.sqlConnection.manager
+  async getScheduledNotifications(
+    entityManager?: EntityManager
+  ): Promise<{ subscriptionId: string; innovationId: string; roleId: string; params: ScheduledConfig }[]> {
+    const em = entityManager || this.sqlConnection.manager;
+
+    const scheduled = await em
       .createQueryBuilder(NotificationScheduleEntity, 'schedule')
+      .select(['schedule.subscriptionId', 'schedule.params', 'subscription.id', 'innovation.id', 'role.id'])
+      .innerJoin('schedule.subscription', 'subscription')
+      .innerJoin('subscription.innovation', 'innovation')
+      .innerJoin('schedule.userRole', 'role')
       .where('schedule.sendDate BETWEEN DATEADD(hour, -2, GETDATE()) AND GETDATE()')
       .getMany();
 
-    return scheduled.map(s => ({ subscriptionId: s.subscriptionId, params: s.params }));
+    return scheduled.map(s => ({
+      subscriptionId: s.subscriptionId,
+      innovationId: s.subscription.innovation.id,
+      roleId: s.userRole.id,
+      params: s.params
+    }));
   }
 
   /**

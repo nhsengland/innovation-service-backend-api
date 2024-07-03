@@ -65,7 +65,7 @@ export class NotifyMeService extends BaseService {
       await em.save(NotificationScheduleEntity, {
         subscriptionId: subscription.id,
         sendDate: date,
-        params: params as any, // typescript error with deep partial
+        params: params,
         userRole: {
           id: domainContext.currentRole.id
         }
@@ -376,7 +376,7 @@ export class NotifyMeService extends BaseService {
       await em.save(NotificationScheduleEntity, {
         subscriptionId: subscription.id,
         sendDate: date,
-        params: params as any, // typescript error with deep partial
+        params: params,
         userRole: {
           id: domainContext.currentRole.id
         }
