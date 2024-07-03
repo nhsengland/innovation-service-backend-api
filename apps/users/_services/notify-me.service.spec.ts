@@ -336,6 +336,32 @@ describe('Users / _services / notify me service suite', () => {
           }
         ]);
       });
+
+      it("returns the notification with optional fields that aren't preconditions", () => {
+        const test = {
+          id: randUuid(),
+          updatedAt: new Date(),
+          eventType: 'REMINDER',
+          config: {
+            date: new Date(),
+            customMessage: 'custom message',
+            subscriptionType: 'SCHEDULED'
+          }
+        } as any;
+        const func = sut['defaultSubscriptionResponseDTO']('REMINDER', ['customMessage', 'date']);
+        const res = func([test]);
+
+        expect(res).toMatchObject([
+          {
+            id: test.id,
+            updatedAt: test.updatedAt,
+            eventType: test.eventType,
+            subscriptionType: test.config.subscriptionType,
+            date: test.config.date,
+            customMessage: test.config.customMessage
+          }
+        ]);
+      });
     });
 
     describe('supportUpdateResponseDTO', () => {
