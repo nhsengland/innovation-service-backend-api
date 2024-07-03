@@ -726,15 +726,17 @@ describe('Users / _services / notify me service suite', () => {
       expect(dbResult).toBeNull();
     });
 
-    it.skip('deletes the subscription schedules', async () => {
-      const subscription = scenario.users.aliceQualifyingAccessor.notifyMeSubscriptions.johnInnovation; // TODO when we have a subscription with schedules
+    it('deletes the subscription schedules', async () => {
+      const subscription = scenario.users.bartQualifyingAccessor.notifyMeSubscriptions.adamScheduledInnovation;
       await sut.deleteSubscription(
         DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
         subscription.id,
         em
       );
 
-      const dbResult = await em.getRepository(NotifyMeSubscriptionEntity).findOne({ where: { id: subscription.id } });
+      const dbResult = await em
+        .getRepository(NotificationScheduleEntity)
+        .findOne({ where: { subscriptionId: subscription.id } });
       expect(dbResult).toBeNull();
     });
 
@@ -804,17 +806,16 @@ describe('Users / _services / notify me service suite', () => {
       expect(res.length).toBe(0);
     });
 
-    // TODO when we have schedules
-    it.skip('deletes the subscriptions schedules', async () => {
+    it('deletes the subscriptions schedules', async () => {
       await sut.deleteSubscriptions(
-        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+        DTOsHelper.getUserRequestContext(scenario.users.bartQualifyingAccessor),
         undefined,
         em
       );
 
       const res = await em
         .getRepository(NotificationScheduleEntity)
-        .find({ where: { userRole: { id: scenario.users.aliceQualifyingAccessor.roles.qaRole.id } } });
+        .find({ where: { userRole: { id: scenario.users.bartQualifyingAccessor.roles.qaRole.id } } });
       expect(res.length).toBe(0);
     });
   });
