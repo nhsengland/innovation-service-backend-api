@@ -10,7 +10,9 @@ import {
 import Joi from 'joi';
 
 // Helper
-const getPreferenceValidationsByRoleCategories = (arr: ReadonlyArray<NotificationCategoryType>) => {
+const getPreferenceValidationsByRoleCategories = (
+  arr: ReadonlyArray<NotificationCategoryType | 'USER_RESEARCH_SURVEYS'> // USER_RESEARCH_SURVEYS is special cause it's a fake notification category
+): Record<string, Joi.Schema> => {
   return arr.reduce((acc, c) => ({ ...acc, [c]: PreferenceValueSchema }), {});
 };
 

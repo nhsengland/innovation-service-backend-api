@@ -1,6 +1,11 @@
 import type { Schema } from 'joi';
 
-import { NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import {
+  NotificationCategoryType,
+  NotificationPreferenceEnum,
+  NotifierTypeEnum,
+  ServiceRoleEnum
+} from '@notifications/shared/enums';
 // import { GenericErrorsEnum, InternalServerError } from '@notifications/shared/errors';
 
 import type { Context } from '@azure/functions';
@@ -38,13 +43,31 @@ export class HandlersHelper {
         return TranslationHelper.translate(`TEAMS.${role}`);
       case ServiceRoleEnum.INNOVATOR:
         return data.isOwner === undefined ? 'Innovator' : data.isOwner ? 'Owner' : 'Collaborator';
-      default:
+      default: {
         const r: never = role;
         throw new NotImplementedError(GenericErrorsEnum.NOT_IMPLEMENTED_ERROR, { details: r });
+      }
     }
   }
 
   static transformIntoBullet(arr: string[], prefix: '-' | '*' = '*'): string {
     return arr.map(str => `${prefix} ${str} \n`).join('');
+  }
+
+  static getRequestUnitName(requestUser: DomainContextType): string {
+    return requestUser.currentRole.role === ServiceRoleEnum.ASSESSMENT
+      ? TranslationHelper.translate(`TEAMS.${requestUser.currentRole.role}`)
+      : requestUser.organisation?.organisationUnit?.name ?? '';
+  }
+
+  /**
+   * Helper method to verify users email notification preferences.
+   * Ex: this.shouldSendEmail(TASK, userData);
+   */
+  static shouldSendEmail(
+    type: NotificationCategoryType,
+    data?: Partial<{ [k in NotificationCategoryType]: NotificationPreferenceEnum }>
+  ): boolean {
+    return !data || !data[type] || data[type] === NotificationPreferenceEnum.YES;
   }
 }

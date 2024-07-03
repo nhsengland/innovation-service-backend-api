@@ -1,8 +1,15 @@
 import { inject, injectable } from 'inversify';
 
 import { NotifierTypeEnum, ServiceRoleEnum } from '../../enums';
-import type { AdminDomainContextType, DomainContextType, NotifierTemplatesType } from '../../types';
+import type {
+  AdminDomainContextType,
+  DomainContextType,
+  EventPayloads,
+  NotifierTemplatesType,
+  NotifyMeMessageType
+} from '../../types';
 
+import type { EventType } from '@notifications/shared/types';
 import SHARED_SYMBOLS from '../symbols';
 import type { LoggerService } from './logger.service';
 import { QueuesEnum, StorageQueueService } from './storage-queue.service';
@@ -42,8 +49,33 @@ export class NotifierService {
     } catch (error) {
       // TODO: What to return here? should we give an error to the user? Throw an error?
       this.loggerService.error('Error sending notification', error);
+      return false;
     }
 
+    return true;
+  }
+
+  async sendNotifyMe<T extends EventType>(
+    requestUser: DomainContextType,
+    innovationId: string,
+    type: T,
+    params: EventPayloads[T]
+  ): Promise<boolean> {
+    try {
+      await this.storageQueueService.sendMessage<NotifyMeMessageType<T>>(QueuesEnum.NOTIFY_ME, {
+        data: {
+          requestUser,
+          innovationId,
+          type,
+          params
+        }
+      });
+
+      this.loggerService.log(`Notify Me sent`, { type, params });
+    } catch (error) {
+      this.loggerService.error('Error sending notification', error);
+      return false;
+    }
     return true;
   }
 

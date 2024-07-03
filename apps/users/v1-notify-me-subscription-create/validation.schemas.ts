@@ -1,10 +1,11 @@
 import Joi from 'joi';
 
-import { NotifyMeConfigSchema, type NotifyMeConfig } from '../_types/notify-me.types';
+import type { SubscriptionConfig } from '@users/shared/types';
+import { NotifyMeConfigSchema } from '../_types/notify-me.types';
 
 export type BodyType = {
   innovationId: string;
-  config: NotifyMeConfig;
+  config: SubscriptionConfig;
 };
 export const BodySchema = Joi.object<BodyType>({
   innovationId: Joi.string().uuid().required(),

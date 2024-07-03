@@ -55,7 +55,7 @@ export class AuditService {
 
     try {
       await this.storageQueueService.sendMessage(QueuesEnum.AUDIT, entry, {
-        ...(entry.invocationId && { invocationId: entry.invocationId })
+        ...(entry.invocationId && { requestId: entry.invocationId })
       });
     } catch (err) {
       // TODO maybe handle errors sending audit message / retry strategy

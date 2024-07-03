@@ -22,12 +22,7 @@ class V1NotifyMeSubscriptionDelete {
     try {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
-      const auth = await authorizationService
-        .validate(context)
-        .checkAssessmentType()
-        .checkAccessorType()
-        .checkInnovatorType()
-        .verify();
+      const auth = await authorizationService.validate(context).checkAccessorType().verify();
 
       await notifyMeService.deleteSubscription(auth.getContext(), params.subscriptionId);
 
@@ -40,7 +35,7 @@ class V1NotifyMeSubscriptionDelete {
   }
 }
 
-export default openApi(V1NotifyMeSubscriptionDelete.httpTrigger as AzureFunction, '/v1/me/notify-me/{subscriptionId}', {
+export default openApi(V1NotifyMeSubscriptionDelete.httpTrigger as AzureFunction, '/v1/notify-me/{subscriptionId}', {
   delete: {
     description: 'Notify me subscription delete',
     operationId: 'v1-notify-me-subscription-delete',
