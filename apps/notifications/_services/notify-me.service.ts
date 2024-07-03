@@ -134,9 +134,7 @@ export class NotifyMeService extends BaseService {
    * to make sure that in case of failure there is no notifications lost a grace period of 2H
    * is applied.
    */
-  async getScheduledNotifications(): Promise<
-    { subscriptionId: string; params: { inApp: Record<string, unknown>; email: Record<string, unknown> } }[]
-  > {
+  async getScheduledNotifications(): Promise<{ subscriptionId: string; params: Record<string, unknown> }[]> {
     const scheduled = await this.sqlConnection.manager
       .createQueryBuilder(NotificationScheduleEntity, 'schedule')
       .where('schedule.sendDate BETWEEN DATEADD(hour, -2, GETDATE()) AND GETDATE()')

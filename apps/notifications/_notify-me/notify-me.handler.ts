@@ -6,7 +6,12 @@ import type { EntityManager } from 'typeorm';
 import type { EmailTemplatesType } from '../_config';
 import type { InAppTemplatesType } from '../_config/inapp.config';
 import { HandlersHelper } from '../_helpers/handlers.helper';
-import { innovationRecordSectionUrl, supportSummaryUrl, unsubscribeUrl } from '../_helpers/url.helper';
+import {
+  innovationOverviewUrl,
+  innovationRecordSectionUrl,
+  supportSummaryUrl,
+  unsubscribeUrl
+} from '../_helpers/url.helper';
 import type { NotifyMeService, NotifyMeSubscriptionType } from '../_services/notify-me.service';
 import type { RecipientType, RecipientsService } from '../_services/recipients.service';
 import type { MessageType as EmailMessageType } from '../v1-emails-listener/validation.schemas';
@@ -160,10 +165,10 @@ export class NotifyMeHandler {
 
       case 'REMINDER': {
         let message = 'This is a default description for the inApp';
-        if (subscription.config.subscriptionType === 'SCHEDULED' && subscription.config.customMessages?.inApp) {
-          message = subscription.config.customMessages.inApp;
+        if (subscription.config.subscriptionType === 'SCHEDULED' && subscription.config.customMessage) {
+          message = subscription.config.customMessage;
         }
-        return { innovation: innovation.name, message };
+        return { event: this.event.type, innovation: innovation.name, reason: message };
       }
 
       default:
@@ -193,7 +198,6 @@ export class NotifyMeHandler {
       case 'PROGRESS_UPDATE_CREATED':
         return {
           innovation: innovation.name,
-          event: this.event.type,
           organisation: HandlersHelper.getRequestUnitName(this.event.requestUser),
           supportSummaryUrl: supportSummaryUrl(
             recipient.role,
@@ -209,13 +213,13 @@ export class NotifyMeHandler {
         };
       case 'REMINDER': {
         let message = 'This is a default description for the email';
-        if (subscription.config.subscriptionType === 'SCHEDULED' && subscription.config.customMessages?.email) {
-          message = subscription.config.customMessages.email;
+        if (subscription.config.subscriptionType === 'SCHEDULED' && subscription.config.customMessage) {
+          message = subscription.config.customMessage;
         }
         return {
           innovation: innovation.name,
-          event: this.event.type,
-          message
+          reason: message,
+          innovation_overview_url: innovationOverviewUrl(recipient.role, innovation.id)
         };
       }
 

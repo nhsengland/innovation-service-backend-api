@@ -1116,6 +1116,27 @@ paths:
                         - preConditions
                       additionalProperties: false
                       x-required: true
+                    - type: object
+                      properties:
+                        eventType:
+                          type: string
+                          enum:
+                            - REMINDER
+                        subscriptionType:
+                          type: string
+                          enum:
+                            - SCHEDULED
+                          default: SCHEDULED
+                        customMessage:
+                          type: string
+                        date:
+                          type: string
+                          format: date-time
+                      required:
+                        - eventType
+                        - customMessage
+                        - date
+                      additionalProperties: false
               required:
                 - innovationId
                 - config
@@ -1350,6 +1371,27 @@ paths:
                     - preConditions
                   additionalProperties: false
                   x-required: true
+                - type: object
+                  properties:
+                    eventType:
+                      type: string
+                      enum:
+                        - REMINDER
+                    subscriptionType:
+                      type: string
+                      enum:
+                        - SCHEDULED
+                      default: SCHEDULED
+                    customMessage:
+                      type: string
+                    date:
+                      type: string
+                      format: date-time
+                  required:
+                    - eventType
+                    - customMessage
+                    - date
+                  additionalProperties: false
       responses:
         "204":
           description: Subscription created

@@ -5,6 +5,7 @@ import type { StorageQueueService } from '@notifications/shared/services';
 import { QueuesEnum } from '@notifications/shared/services/integrations/storage-queue.service';
 import SHARED_SYMBOLS from '@notifications/shared/services/symbols';
 
+import { BadRequestError, GenericErrorsEnum } from '@notifications/shared/errors';
 import { container } from '../_config';
 import type { NotifyMeService } from '../_services/notify-me.service';
 import SYMBOLS from '../_services/symbols';
@@ -16,7 +17,6 @@ import {
   MessageSchema as InAppMessageSchema,
   MessageType as InAppMessageType
 } from '../v1-in-app-listener/validation.schemas';
-import { BadRequestError, GenericErrorsEnum } from '@notifications/shared/errors';
 
 // Runs every 5 minutes
 class V1ScheduledNotificationsCron {
@@ -34,10 +34,10 @@ class V1ScheduledNotificationsCron {
       const handled: string[] = [];
       for (const notification of notifications) {
         try {
-          const email = JoiHelper.Validate<EmailMessageType>(EmailMessageSchema, notification.params.email);
+          const email = JoiHelper.Validate<EmailMessageType>(EmailMessageSchema, notification.params);
           await storageQueueService.sendMessage<EmailMessageType>(QueuesEnum.EMAIL, email);
 
-          const inApp = JoiHelper.Validate<InAppMessageType>(InAppMessageSchema, notification.params.inApp);
+          const inApp = JoiHelper.Validate<InAppMessageType>(InAppMessageSchema, notification.params);
           if (inApp.data.userRoleIds.length) {
             await storageQueueService.sendMessage<InAppMessageType>(QueuesEnum.IN_APP, inApp);
           }

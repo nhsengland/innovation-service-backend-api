@@ -2,15 +2,15 @@ import type { NotifyMeSubscriptionEntity } from '@users/shared/entities';
 import { InnovationSupportStatusEnum } from '@users/shared/enums';
 import { JoiHelper } from '@users/shared/helpers';
 import { CurrentCatalogTypes } from '@users/shared/schemas/innovation-record';
-import {
+import type {
+  EventType,
+  ExcludeEnum,
+  InnovationRecordUpdated,
+  ProgressUpdateCreated,
   Reminder,
-  type EventType,
-  type ExcludeEnum,
-  type InnovationRecordUpdated,
-  type ProgressUpdateCreated,
-  type SubscriptionConfig,
-  type SubscriptionType,
-  type SupportUpdated
+  SubscriptionConfig,
+  SubscriptionType,
+  SupportUpdated
 } from '@users/shared/types';
 import Joi from 'joi';
 
