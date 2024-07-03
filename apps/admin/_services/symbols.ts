@@ -6,8 +6,7 @@ export const SYMBOLS = {
   TermsOfUseService: Symbol.for('TermsOfUseService'),
   UsersService: Symbol.for('UsersService'),
   ValidationService: Symbol.for('ValidationService'),
-  SearchService: Symbol.for('SearchService'),
-  SchemaService: Symbol.for('SchemaService')
+  SearchService: Symbol.for('SearchService')
 };
 
 export default SYMBOLS;

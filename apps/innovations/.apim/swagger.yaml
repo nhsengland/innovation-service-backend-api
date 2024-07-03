@@ -2263,16 +2263,29 @@ paths:
       summary: Update an innovation section info.
       operationId: v1-innovation-section-update
       parameters:
-        - in: path
-          name: innovationId
+        - name: innovationId
+          in: path
           required: true
           schema:
             type: string
-        - in: path
-          name: sectionKey
+            format: uuid
+        - name: sectionKey
+          in: path
           required: true
           schema:
             type: string
+            enum:
+              - INNOVATION_DESCRIPTION
+              - UNDERSTANDING_OF_NEEDS
+              - EVIDENCE_OF_EFFECTIVENESS
+              - MARKET_RESEARCH
+              - CURRENT_CARE_PATHWAY
+              - TESTING_WITH_USERS
+              - REGULATIONS_AND_STANDARDS
+              - INTELLECTUAL_PROPERTY
+              - REVENUE_MODEL
+              - COST_OF_INNOVATION
+              - DEPLOYMENT
       requestBody:
         description: Innovation section info update request body.
         content:

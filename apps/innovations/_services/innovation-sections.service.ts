@@ -35,6 +35,7 @@ import type { EntityManager } from 'typeorm';
 import type { InnovationFileService } from './innovation-file.service';
 import SYMBOLS from './symbols';
 import type { InnovationDocumentService } from './innovation-document.service';
+import type { IRSchemaService } from '@notifications/shared/services';
 
 type SectionInfoType = {
   section: CurrentCatalogTypes.InnovationSections;
@@ -50,6 +51,7 @@ export class InnovationSectionsService extends BaseService {
     @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
     @inject(SHARED_SYMBOLS.IdentityProviderService) private identityService: IdentityProviderService,
     @inject(SHARED_SYMBOLS.RedisService) private redisService: RedisService,
+    @inject(SHARED_SYMBOLS.IRSchemaService) private irSchemaService: IRSchemaService,
     @inject(SYMBOLS.InnovationFileService) private innovationFileService: InnovationFileService,
     @inject(SYMBOLS.InnovationDocumentService) private innovationDocumentService: InnovationDocumentService
   ) {
@@ -732,10 +734,18 @@ export class InnovationSectionsService extends BaseService {
     data: { dataToUpdate: { [key: string]: any } | { [key: string]: any }[]; updatedBy: string; updatedAt?: Date },
     em: EntityManager
   ): Promise<void> {
+    const { version } = await this.irSchemaService.getSchema();
     await em.query(
       `UPDATE innovation_document_draft
-      SET document = JSON_MODIFY(document, @0, JSON_QUERY(@1)), updated_by=@2, updated_at=@3 WHERE id = @4`,
-      [`$.${sectionKey}`, JSON.stringify(data.dataToUpdate), data.updatedBy, data.updatedAt ?? new Date(), innovationId]
+      SET document = JSON_MODIFY(JSON_MODIFY(document, @0, JSON_QUERY(@1)), '$.version', @2)), updated_by=@3, updated_at=@4 WHERE id = @5`,
+      [
+        `$.${sectionKey}`,
+        JSON.stringify(data.dataToUpdate),
+        JSON.stringify(version),
+        data.updatedBy,
+        data.updatedAt ?? new Date(),
+        innovationId
+      ]
     );
   }
 

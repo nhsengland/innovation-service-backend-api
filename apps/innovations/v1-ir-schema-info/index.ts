@@ -3,21 +3,19 @@ import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
 import { ResponseHelper } from '@innovations/shared/helpers';
-import type { AuthorizationService } from '@innovations/shared/services';
+import type { AuthorizationService, IRSchemaService } from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
 
-import type { SchemaService } from '../_services/schema.service';
-import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
 
 class V1IrSchemaInfo {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, _request: HttpRequest): Promise<void> {
     const authorizationService = container.get<AuthorizationService>(SHARED_SYMBOLS.AuthorizationService);
-    const schemaService = container.get<SchemaService>(SYMBOLS.SchemaService);
+    const irSchemaService = container.get<IRSchemaService>(SHARED_SYMBOLS.IRSchemaService);
 
     try {
       await authorizationService
@@ -28,9 +26,9 @@ class V1IrSchemaInfo {
         .checkAdminType()
         .verify();
 
-      const result = await schemaService.getCurrentSchema();
+      const schema = await irSchemaService.getSchema();
 
-      context.res = ResponseHelper.Ok<ResponseDTO>(result);
+      context.res = ResponseHelper.Ok<ResponseDTO>(schema);
       return;
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);

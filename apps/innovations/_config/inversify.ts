@@ -14,7 +14,6 @@ import { InnovationTransferService } from '../_services/innovation-transfer.serv
 import { InnovationsService } from '../_services/innovations.service';
 import { StatisticsService } from '../_services/statistics.service';
 import { SearchService } from '../_services/search.service';
-import { SchemaService } from '../_services/schema.service';
 import { ValidationService } from '../_services/validation.service';
 import SYMBOLS from '../_services/symbols';
 
@@ -58,6 +57,5 @@ container.bind<ExportFileService>(SYMBOLS.ExportFileService).to(ExportFileServic
 container.bind<StatisticsService>(SYMBOLS.StatisticsService).to(StatisticsService).inSingletonScope();
 container.bind<ValidationService>(SYMBOLS.ValidationService).to(ValidationService).inSingletonScope();
 container.bind<SearchService>(SYMBOLS.SearchService).to(SearchService).inSingletonScope();
-container.bind<SchemaService>(SYMBOLS.SchemaService).to(SchemaService).inSingletonScope();
 
 export { container };
