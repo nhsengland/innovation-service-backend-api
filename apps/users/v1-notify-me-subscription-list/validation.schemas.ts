@@ -1,8 +1,9 @@
 import Joi from 'joi';
 
-export type QueryParamsType = {
-  innovationId?: string;
+export type QueryType = {
+  withDetails?: boolean;
 };
-export const QueryParamsSchema = Joi.object({
-  innovationId: Joi.string().guid()
+
+export const QuerySchema = Joi.object<QueryType>({
+  withDetails: Joi.boolean().optional()
 });

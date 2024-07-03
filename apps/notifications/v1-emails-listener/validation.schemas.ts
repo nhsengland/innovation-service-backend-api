@@ -6,7 +6,7 @@ export type MessageType = {
   data: {
     type: keyof EmailTemplates;
     to: string;
-    params: EmailTemplatesType[keyof EmailTemplates];
+    params: EmailTemplatesType[keyof EmailTemplates] & { displayName: string; unsubscribeUrl: string };
   };
 };
 

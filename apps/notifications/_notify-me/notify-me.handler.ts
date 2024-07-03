@@ -1,13 +1,14 @@
-import { ServiceRoleEnum } from '@notifications/shared/enums';
+import { GenericErrorsEnum, NotImplementedError } from '@notifications/shared/errors';
 import { TranslationHelper } from '@notifications/shared/helpers';
-import type { DomainContextType, EventPayloads, EventType, IdentityUserInfo } from '@notifications/shared/types';
-import { inject } from 'inversify';
+import type { DomainContextType, EventPayloads, EventType } from '@notifications/shared/types';
 import { isArray } from 'lodash';
+import type { EntityManager } from 'typeorm';
 import type { EmailTemplatesType } from '../_config';
 import type { InAppTemplatesType } from '../_config/inapp.config';
+import { HandlersHelper } from '../_helpers/handlers.helper';
+import { innovationRecordSectionUrl, supportSummaryUrl, unsubscribeUrl } from '../_helpers/url.helper';
 import type { NotifyMeService, NotifyMeSubscriptionType } from '../_services/notify-me.service';
-import type { RecipientsService } from '../_services/recipients.service';
-import SYMBOLS from '../_services/symbols';
+import type { RecipientType, RecipientsService } from '../_services/recipients.service';
 import type { MessageType as EmailMessageType } from '../v1-emails-listener/validation.schemas';
 import type { MessageType as InAppMessageType } from '../v1-in-app-listener/validation.schemas';
 
@@ -36,51 +37,66 @@ export class NotifyMeHandler {
   }
 
   constructor(
-    @inject(SYMBOLS.NotifyMeService) private notifyMeService: NotifyMeService,
-    @inject(SYMBOLS.RecipientsService) private recipientsService: RecipientsService,
+    private notifyMeService: NotifyMeService,
+    private recipientsService: RecipientsService,
     event: EventPayload
   ) {
     this.event = event;
   }
 
-  public async execute(): Promise<void> {
-    const eventSubscribers = await this.getTriggerSubscribers();
+  public async execute(transaction: EntityManager): Promise<void> {
+    const eventSubscriptions = await this.notifyMeService.getInnovationEventSubscriptions(
+      this.event.innovationId,
+      this.event.type,
+      transaction
+    );
 
-    const subscribers = [];
-    for (const subscriber of eventSubscribers) {
+    const subscriptions = [];
+    for (const subscriber of eventSubscriptions) {
       if (this.validatePreconditions(subscriber)) {
-        subscribers.push(subscriber);
+        subscriptions.push(subscriber);
       }
     }
-    if (!subscribers.length) return;
+    if (!subscriptions.length) return;
 
-    const innovation = await this.recipientsService.innovationInfo(this.event.innovationId);
+    const innovation = await this.recipientsService.innovationInfo(this.event.innovationId, false, transaction);
+    const subscribers = Array.from(new Set(subscriptions.map(t => t.roleId)));
     const recipients = new Map(
-      (await this.recipientsService.getRecipientsByRoleId(subscribers.map(t => t.roleId))).map(r => [r.roleId, r])
+      (await this.recipientsService.getRecipientsByRoleId(subscribers, transaction)).map(r => [r.roleId, r])
     );
     const identities = await this.recipientsService.usersIdentityInfo([...recipients.values()].map(r => r.identityId));
+    const preferences = await this.recipientsService.getEmailPreferences(subscribers, transaction);
 
-    for (const subscriber of subscribers) {
-      const recipient = recipients.get(subscriber.roleId);
+    for (const subscription of subscriptions) {
+      const recipient = recipients.get(subscription.roleId);
       if (!recipient) continue;
 
       const identity = identities.get(recipient.identityId);
       if (!identity) continue;
 
+      const shouldSendEmail = HandlersHelper.shouldSendEmail('NOTIFY_ME', preferences.get(subscription.roleId));
+
       const params = {
-        inApp: this.getInAppParams(subscriber, innovation),
-        email: this.getEmailParams(identity, subscriber, innovation)
+        inApp: this.getInAppParams(subscription, innovation),
+        email: {
+          ...this.getEmailParams(recipient, subscription, innovation),
+          displayName: identity.displayName,
+          unsubscribeUrl: unsubscribeUrl
+        }
       };
 
-      const inAppPayload = this.buildInApp(subscriber, params.inApp);
-      const emailPayload = this.buildEmail(identity.email, subscriber, params.email);
+      const inAppPayload = this.buildInApp(subscription, params.inApp);
+      const emailPayload = shouldSendEmail && this.buildEmail(identity.email, subscription, params.email);
 
-      switch (subscriber.config.subscriptionType) {
+      switch (subscription.config.subscriptionType) {
         case 'INSTANTLY':
-          this.#emails.push(emailPayload);
+          if (emailPayload) {
+            this.#emails.push(emailPayload);
+          }
           this.#inApps.push(inAppPayload);
           break;
 
+        /* currently not implemented 
         // NOTE: Currently they are doing the same thing, if this changes just change it to specific.
         case 'PERIODIC':
         case 'SCHEDULED':
@@ -90,16 +106,17 @@ export class NotifyMeHandler {
             email: emailPayload
           });
           break;
+        */
       }
     }
   }
 
-  protected async getTriggerSubscribers(): Promise<NotifyMeSubscriptionType[]> {
-    return await this.notifyMeService.getEventSubscribers(this.event);
-  }
-
+  // This function checks the subscription config and for each setting in the config it ensures that if the event has
+  // that setting it will be in the list of the settings.
+  // Additionally if the event is does not have the field but it is in the preconditions it will return true!
   protected validatePreconditions(subscription: NotifyMeSubscriptionType): boolean {
     if (this.event.type !== subscription.config.eventType) return false;
+    if (!('preConditions' in subscription.config)) return true;
 
     for (const [field, match] of Object.entries(subscription.config.preConditions)) {
       const matcher = isArray(match) ? match : [match];
@@ -122,16 +139,23 @@ export class NotifyMeHandler {
         return {
           innovation: innovation.name,
           event: this.event.type,
-          organisation: this.getRequestUnitName(),
-          supportStatus: this.event.params.status
+          organisation: HandlersHelper.getRequestUnitName(this.event.requestUser),
+          supportStatus: TranslationHelper.translate(`SUPPORT_STATUS.${this.event.params.status}`).toLowerCase()
         };
 
       case 'PROGRESS_UPDATE_CREATED':
         return {
           innovation: innovation.name,
-          event: this.event.type,
-          description: this.event.params.description,
-          unit: this.getRequestUnitName()
+          organisation: HandlersHelper.getRequestUnitName(this.event.requestUser),
+          event: this.event.type
+        };
+
+      case 'INNOVATION_RECORD_UPDATED':
+        return {
+          innovation: innovation.name,
+          section: this.event.params.sections,
+          sectionLabel: TranslationHelper.translate(`SECTION.${this.event.params.sections}`).toLowerCase(),
+          event: this.event.type
         };
 
       case 'REMINDER': {
@@ -149,44 +173,56 @@ export class NotifyMeHandler {
 
   // NOTE: This could be abstract and implemented by each of the trigger types
   protected getEmailParams(
-    identity: IdentityUserInfo,
+    recipient: RecipientType,
     subscription: NotifyMeSubscriptionType,
     innovation: { id: string; name: string }
-  ): EmailTemplatesType[keyof EmailTemplatesType] {
+  ): EmailTemplatesType[EventType] {
     switch (this.event.type) {
       case 'SUPPORT_UPDATED':
         return {
-          display_name: identity.displayName,
           innovation: innovation.name,
-          event: this.event.type,
-          organisation: this.getRequestUnitName(),
-          supportStatus: this.event.params.status
+          organisation: HandlersHelper.getRequestUnitName(this.event.requestUser),
+          supportStatus: TranslationHelper.translate(`SUPPORT_STATUS.${this.event.params.status}`).toLowerCase(),
+          supportSummaryUrl: supportSummaryUrl(
+            recipient.role,
+            this.event.innovationId,
+            this.event.requestUser.organisation?.organisationUnit?.id
+          )
         };
 
       case 'PROGRESS_UPDATE_CREATED':
         return {
-          display_name: identity.displayName,
           innovation: innovation.name,
           event: this.event.type,
-          unit: this.getRequestUnitName(),
-          description: this.event.params.description
+          organisation: HandlersHelper.getRequestUnitName(this.event.requestUser),
+          supportSummaryUrl: supportSummaryUrl(
+            recipient.role,
+            this.event.innovationId,
+            this.event.requestUser.organisation?.organisationUnit?.id
+          )
         };
-
+      case 'INNOVATION_RECORD_UPDATED':
+        return {
+          innovation: innovation.name,
+          section: TranslationHelper.translate(`SECTION.${this.event.params.sections}`).toLowerCase(),
+          sectionUrl: innovationRecordSectionUrl(recipient.role, this.event.innovationId, this.event.params.sections)
+        };
       case 'REMINDER': {
         let message = 'This is a default description for the email';
         if (subscription.config.subscriptionType === 'SCHEDULED' && subscription.config.customMessages?.email) {
           message = subscription.config.customMessages.email;
         }
         return {
-          display_name: identity.displayName,
           innovation: innovation.name,
           event: this.event.type,
           message
         };
       }
 
-      default:
-        return {};
+      default: {
+        const r: never = this.event;
+        throw new NotImplementedError(GenericErrorsEnum.NOT_IMPLEMENTED_ERROR, { details: r });
+      }
     }
   }
 
@@ -208,16 +244,10 @@ export class NotifyMeHandler {
   private buildEmail(
     email: string,
     subscription: NotifyMeSubscriptionType,
-    params: EmailTemplatesType[keyof EmailTemplatesType]
+    params: EmailTemplatesType[EventType] & { displayName: string; unsubscribeUrl: string }
   ): EmailMessageType {
     return {
       data: { type: subscription.config.eventType, to: email, params }
     };
-  }
-
-  private getRequestUnitName(): string {
-    return this.event.requestUser.currentRole.role === ServiceRoleEnum.ASSESSMENT
-      ? TranslationHelper.translate(`TEAMS.${this.event.requestUser.currentRole.role}`)
-      : this.event.requestUser.organisation?.organisationUnit?.name ?? '';
   }
 }

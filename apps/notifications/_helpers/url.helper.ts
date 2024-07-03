@@ -1,5 +1,6 @@
 import { ServiceRoleEnum } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
+import type { CurrentCatalogTypes } from '@notifications/shared/schemas/innovation-record';
 import { ENV } from '../_config';
 
 export const innovationOverviewUrl = (role: ServiceRoleEnum, innovationId: string): string => {
@@ -15,6 +16,18 @@ export const innovationRecordUrl = (role: ServiceRoleEnum, innovationId: string)
   return new UrlModel(ENV.webBaseTransactionalUrl)
     .addPath(':baseUrl/innovations/:innovationId/record')
     .setPathParams({ baseUrl, innovationId })
+    .buildUrl();
+};
+
+export const innovationRecordSectionUrl = (
+  role: ServiceRoleEnum,
+  innovationId: string,
+  section: CurrentCatalogTypes.InnovationSections
+): string => {
+  const baseUrl = frontendBaseUrl(role);
+  return new UrlModel(ENV.webBaseTransactionalUrl)
+    .addPath(':baseUrl/innovations/:innovationId/record/sections/:section')
+    .setPathParams({ baseUrl, innovationId, section })
     .buildUrl();
 };
 

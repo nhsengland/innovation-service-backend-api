@@ -1,3 +1,5 @@
+import type { CurrentCatalogTypes } from '@notifications/shared/schemas/innovation-record';
+
 export type InAppTemplatesType = {
   // Tasks
   TA01_TASK_CREATION_TO_INNOVATOR: {
@@ -285,19 +287,24 @@ export type InAppTemplatesType = {
 
   // Notify Me
   SUPPORT_UPDATED: {
+    event: string;
     innovation: string;
     supportStatus: string;
-    event: string;
     organisation: string;
+  };
+  PROGRESS_UPDATE_CREATED: {
+    event: string;
+    innovation: string;
+    organisation: string;
+  };
+  INNOVATION_RECORD_UPDATED: {
+    event: string;
+    innovation: string;
+    section: CurrentCatalogTypes.InnovationSections;
+    sectionLabel: string;
   };
   REMINDER: {
     innovation: string;
     message: string;
-  };
-  PROGRESS_UPDATE_CREATED: {
-    innovation: string;
-    event: string;
-    description: string;
-    unit: string;
   };
 };

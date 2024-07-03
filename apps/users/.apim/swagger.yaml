@@ -89,12 +89,18 @@ paths:
                           enum:
                             - YES
                             - NO
+                        NOTIFY_ME:
+                          type: string
+                          enum:
+                            - YES
+                            - NO
                       required:
                         - SUPPORT
                         - TASK
                         - MESSAGES
                         - INNOVATION_MANAGEMENT
                         - AUTOMATIC
+                        - NOTIFY_ME
                       additionalProperties: false
                       x-required: true
                     - type: object
@@ -129,6 +135,11 @@ paths:
                           enum:
                             - YES
                             - NO
+                        NOTIFY_ME:
+                          type: string
+                          enum:
+                            - YES
+                            - NO
                       required:
                         - ORGANISATION_SUGGESTIONS
                         - SUPPORT
@@ -136,6 +147,7 @@ paths:
                         - MESSAGES
                         - INNOVATION_MANAGEMENT
                         - AUTOMATIC
+                        - NOTIFY_ME
                       additionalProperties: false
                       x-required: true
                     - type: object
@@ -165,12 +177,18 @@ paths:
                           enum:
                             - YES
                             - NO
+                        USER_RESEARCH_SURVEYS:
+                          type: string
+                          enum:
+                            - YES
+                            - NO
                       required:
                         - SUPPORT
                         - MESSAGES
                         - TASK
                         - DOCUMENTS
                         - AUTOMATIC
+                        - USER_RESEARCH_SURVEYS
                       additionalProperties: false
                       x-required: true
               additionalProperties: false
@@ -727,6 +745,7 @@ paths:
                       - AU10_ACCESSOR_IDLE_ENGAGING_SUPPORT_FOR_SIX_WEEKS
                       - SUPPORT_UPDATED
                       - PROGRESS_UPDATE_CREATED
+                      - INNOVATION_RECORD_UPDATED
                       - REMINDER
                   default: []
                 dismissAll:
@@ -935,6 +954,7 @@ paths:
                             - AU10_ACCESSOR_IDLE_ENGAGING_SUPPORT_FOR_SIX_WEEKS
                             - SUPPORT_UPDATED
                             - PROGRESS_UPDATE_CREATED
+                            - INNOVATION_RECORD_UPDATED
                             - REMINDER
                           description: The notification context detail
                         contextId:
@@ -951,7 +971,35 @@ paths:
                         params:
                           type: object
                           description: The notification params
-  /v1/me/notify-me:
+  /v1/notify-me:
+    delete:
+      description: Notify me subscription delete
+      operationId: v1-notify-me-delete
+      tags:
+        - "[v1] Notify Me"
+      parameters:
+        - name: ids
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              format: uuid
+            minItems: 1
+      responses:
+        "204":
+          description: Subscriptions deleted
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+        "500":
+          description: Internal server error
     post:
       description: Notify me subscription create
       operationId: v1-notify-me-subscription-create
@@ -1009,6 +1057,71 @@ paths:
                         - preConditions
                       additionalProperties: false
                       x-required: true
+                    - type: object
+                      properties:
+                        eventType:
+                          type: string
+                          enum:
+                            - PROGRESS_UPDATE_CREATED
+                        subscriptionType:
+                          type: string
+                          enum:
+                            - INSTANTLY
+                          default: INSTANTLY
+                        preConditions:
+                          type: object
+                          properties:
+                            units:
+                              type: array
+                              items:
+                                type: string
+                                format: uuid
+                              minItems: 1
+                          required:
+                            - units
+                          additionalProperties: false
+                      required:
+                        - eventType
+                        - preConditions
+                      additionalProperties: false
+                      x-required: true
+                    - type: object
+                      properties:
+                        eventType:
+                          type: string
+                          enum:
+                            - INNOVATION_RECORD_UPDATED
+                        subscriptionType:
+                          type: string
+                          enum:
+                            - INSTANTLY
+                          default: INSTANTLY
+                        preConditions:
+                          type: object
+                          properties:
+                            sections:
+                              type: array
+                              items:
+                                type: string
+                                enum:
+                                  - INNOVATION_DESCRIPTION
+                                  - UNDERSTANDING_OF_NEEDS
+                                  - EVIDENCE_OF_EFFECTIVENESS
+                                  - MARKET_RESEARCH
+                                  - CURRENT_CARE_PATHWAY
+                                  - TESTING_WITH_USERS
+                                  - REGULATIONS_AND_STANDARDS
+                                  - INTELLECTUAL_PROPERTY
+                                  - REVENUE_MODEL
+                                  - COST_OF_INNOVATION
+                                  - DEPLOYMENT
+                              minItems: 1
+                          additionalProperties: false
+                      required:
+                        - eventType
+                        - preConditions
+                      additionalProperties: false
+                      x-required: true
               required:
                 - innovationId
                 - config
@@ -1031,16 +1144,9 @@ paths:
       operationId: v1-notify-me-subscription-list
       tags:
         - "[v1] Notify Me"
-      parameters:
-        - name: innovationId
-          in: query
-          required: false
-          schema:
-            type: string
-            format: uuid
       responses:
         "200":
-          description: List of user triggers
+          description: List of user custom notifications
         "400":
           description: Bad Request
         "401":
@@ -1051,7 +1157,33 @@ paths:
           description: Not found
         "500":
           description: Internal server error
-  /v1/me/notify-me/{subscriptionId}:
+  /v1/notify-me/innovation/{innovationId}:
+    get:
+      description: Notify me innovation subscriptions list
+      operationId: v1-notify-me-innovation-subscription-list
+      tags:
+        - "[v1] Notify Me"
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: List of user innovation custom notifications
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+        "500":
+          description: Internal server error
+  /v1/notify-me/{subscriptionId}:
     delete:
       description: Notify me subscription delete
       operationId: v1-notify-me-subscription-delete
@@ -1067,6 +1199,166 @@ paths:
       responses:
         "204":
           description: Subscription deleted
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+        "500":
+          description: Internal server error
+    get:
+      description: Notify me subscription get
+      operationId: v1-notify-me-subscription-get
+      tags:
+        - "[v1] Notify Me"
+      parameters:
+        - name: subscriptionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The subscription
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+        "500":
+          description: Internal server error
+    put:
+      description: Notify me subscription update
+      operationId: v1-notify-me-subscription-update
+      tags:
+        - "[v1] Notify Me"
+      parameters:
+        - name: subscriptionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              anyOf:
+                - type: object
+                  properties:
+                    eventType:
+                      type: string
+                      enum:
+                        - SUPPORT_UPDATED
+                    subscriptionType:
+                      type: string
+                      enum:
+                        - INSTANTLY
+                      default: INSTANTLY
+                    preConditions:
+                      type: object
+                      properties:
+                        units:
+                          type: array
+                          items:
+                            type: string
+                            format: uuid
+                          minItems: 1
+                        status:
+                          type: array
+                          items:
+                            type: string
+                            enum:
+                              - ENGAGING
+                              - WAITING
+                              - UNSUITABLE
+                              - CLOSED
+                          minItems: 1
+                      required:
+                        - units
+                        - status
+                      additionalProperties: false
+                  required:
+                    - eventType
+                    - preConditions
+                  additionalProperties: false
+                  x-required: true
+                - type: object
+                  properties:
+                    eventType:
+                      type: string
+                      enum:
+                        - PROGRESS_UPDATE_CREATED
+                    subscriptionType:
+                      type: string
+                      enum:
+                        - INSTANTLY
+                      default: INSTANTLY
+                    preConditions:
+                      type: object
+                      properties:
+                        units:
+                          type: array
+                          items:
+                            type: string
+                            format: uuid
+                          minItems: 1
+                      required:
+                        - units
+                      additionalProperties: false
+                  required:
+                    - eventType
+                    - preConditions
+                  additionalProperties: false
+                  x-required: true
+                - type: object
+                  properties:
+                    eventType:
+                      type: string
+                      enum:
+                        - INNOVATION_RECORD_UPDATED
+                    subscriptionType:
+                      type: string
+                      enum:
+                        - INSTANTLY
+                      default: INSTANTLY
+                    preConditions:
+                      type: object
+                      properties:
+                        sections:
+                          type: array
+                          items:
+                            type: string
+                            enum:
+                              - INNOVATION_DESCRIPTION
+                              - UNDERSTANDING_OF_NEEDS
+                              - EVIDENCE_OF_EFFECTIVENESS
+                              - MARKET_RESEARCH
+                              - CURRENT_CARE_PATHWAY
+                              - TESTING_WITH_USERS
+                              - REGULATIONS_AND_STANDARDS
+                              - INTELLECTUAL_PROPERTY
+                              - REVENUE_MODEL
+                              - COST_OF_INNOVATION
+                              - DEPLOYMENT
+                          minItems: 1
+                      additionalProperties: false
+                  required:
+                    - eventType
+                    - preConditions
+                  additionalProperties: false
+                  x-required: true
+      responses:
+        "204":
+          description: Subscription created
         "400":
           description: Bad Request
         "401":

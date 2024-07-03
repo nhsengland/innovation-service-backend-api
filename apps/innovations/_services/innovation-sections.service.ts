@@ -16,7 +16,12 @@ import {
   UserStatusEnum
 } from '@innovations/shared/enums';
 import { InnovationErrorsEnum, InternalServerError, NotFoundError } from '@innovations/shared/errors';
-import type { DomainService, IdentityProviderService, RedisService } from '@innovations/shared/services';
+import type {
+  DomainService,
+  IdentityProviderService,
+  NotifierService,
+  RedisService
+} from '@innovations/shared/services';
 
 import { BaseService } from './base.service';
 
@@ -53,7 +58,8 @@ export class InnovationSectionsService extends BaseService {
     @inject(SHARED_SYMBOLS.RedisService) private redisService: RedisService,
     @inject(SHARED_SYMBOLS.IRSchemaService) private irSchemaService: IRSchemaService,
     @inject(SYMBOLS.InnovationFileService) private innovationFileService: InnovationFileService,
-    @inject(SYMBOLS.InnovationDocumentService) private innovationDocumentService: InnovationDocumentService
+    @inject(SYMBOLS.InnovationDocumentService) private innovationDocumentService: InnovationDocumentService,
+    @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService
   ) {
     super();
   }
@@ -446,6 +452,10 @@ export class InnovationSectionsService extends BaseService {
           },
           { sectionId: savedSection.section }
         );
+
+        await this.notifierService.sendNotifyMe(domainContext, dbInnovation.id, 'INNOVATION_RECORD_UPDATED', {
+          sections: sectionKey
+        });
       }
 
       return { id: savedSection.id };
