@@ -92,11 +92,7 @@ describe('NotifyMe Service Suite', () => {
       expect(notifications[0]).toMatchObject({
         subscriptionId: subscription.id,
         innovationId: scenario.users.adamInnovator.innovations.adamInnovation.id,
-        roleId: scenario.users.bartQualifyingAccessor.roles.qaRole.id,
-        params: {
-          eventType: 'REMINDER',
-          customMessage: subscription.config.customMessage
-        }
+        roleId: scenario.users.bartQualifyingAccessor.roles.qaRole.id
       });
     });
 

@@ -3,9 +3,9 @@ import { Brackets, EntityManager } from 'typeorm';
 
 import { BaseService } from './base.service';
 
-import { NotificationScheduleEntity, NotifyMeSubscriptionEntity, UserRoleEntity } from '@notifications/shared/entities';
+import { NotificationScheduleEntity, NotifyMeSubscriptionEntity } from '@notifications/shared/entities';
 import { ServiceRoleEnum } from '@notifications/shared/enums';
-import type { EventType, ScheduledConfig, SubscriptionConfig } from '@notifications/shared/types';
+import type { EventType, SubscriptionConfig } from '@notifications/shared/types';
 
 export type NotifyMeSubscriptionType<T extends EventType = EventType> = {
   id: string;
@@ -68,7 +68,7 @@ export class NotifyMeService extends BaseService {
    * It makes sure that no scheduled notification already exists for the given subscription
    * to prevent duplicates.
    */
-  async createScheduledNotification(subscription: NotifyMeSubscriptionType, params: ScheduledConfig): Promise<void> {
+  async createScheduledNotification(subscription: NotifyMeSubscriptionType): Promise<void> {
     /* Currently not implemented
     // If its a periodic we have to make sure that it doesn't exist one notification scheduled already.
     if (subscription.config.subscriptionType === 'PERIODIC') {
@@ -99,9 +99,7 @@ export class NotifyMeService extends BaseService {
       NotificationScheduleEntity,
       NotificationScheduleEntity.new({
         subscription: NotifyMeSubscriptionEntity.new({ id: subscription.id }),
-        userRole: UserRoleEntity.new({ id: subscription.roleId }),
-        sendDate: now,
-        params: params
+        sendDate: now
       })
     );
   }
@@ -125,23 +123,30 @@ export class NotifyMeService extends BaseService {
    */
   async getScheduledNotifications(
     entityManager?: EntityManager
-  ): Promise<{ subscriptionId: string; innovationId: string; roleId: string; params: ScheduledConfig }[]> {
+  ): Promise<{ subscriptionId: string; innovationId: string; roleId: string; eventType: EventType }[]> {
     const em = entityManager || this.sqlConnection.manager;
 
     const scheduled = await em
       .createQueryBuilder(NotificationScheduleEntity, 'schedule')
-      .select(['schedule.subscriptionId', 'schedule.params', 'subscription.id', 'innovation.id', 'role.id'])
+      .select([
+        'schedule.subscriptionId',
+        'schedule.params',
+        'subscription.id',
+        'subscription.eventType',
+        'innovation.id',
+        'role.id'
+      ])
       .innerJoin('schedule.subscription', 'subscription')
       .innerJoin('subscription.innovation', 'innovation')
-      .innerJoin('schedule.userRole', 'role')
+      .innerJoin('subscription.userRole', 'role')
       .where('schedule.sendDate BETWEEN DATEADD(hour, -2, GETDATE()) AND GETDATE()')
       .getMany();
 
     return scheduled.map(s => ({
       subscriptionId: s.subscriptionId,
       innovationId: s.subscription.innovation.id,
-      roleId: s.userRole.id,
-      params: s.params
+      roleId: s.subscription.userRole.id,
+      eventType: s.subscription.eventType
     }));
   }
 

@@ -808,8 +808,11 @@ describe('Users / _services / notify me service suite', () => {
       );
 
       const res = await em
-        .getRepository(NotificationScheduleEntity)
-        .find({ where: { userRole: { id: scenario.users.bartQualifyingAccessor.roles.qaRole.id } } });
+        .createQueryBuilder(NotificationScheduleEntity, 'schedule')
+        .innerJoin('schedule.subscription', 'subscription')
+        .innerJoin('subscription.userRole', 'userRole')
+        .where('userRole.id = :roleId', { roleId: scenario.users.bartQualifyingAccessor.roles.qaRole.id })
+        .getMany();
       expect(res.length).toBe(0);
     });
   });
