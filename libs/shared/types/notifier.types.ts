@@ -202,4 +202,9 @@ export type NotifierTemplatesType = {
     innovationName: string;
     recipientEmail: string;
   };
+
+  // // Qualifying acessor and accessor welcome email
+  [NotifierTypeEnum.NEW_ACCOUNT]: {
+    recipientEmail: string;
+  };
 };

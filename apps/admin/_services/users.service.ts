@@ -206,6 +206,13 @@ export class UsersService extends BaseService {
         await this.addDbRole(domainContext, user.id, role, transaction);
       }
 
+      // Send notification to new account
+      if (data.email && user != undefined && user) {
+        await this.notifierService.send(domainContext, NotifierTypeEnum.NEW_ACCOUNT, {
+          recipientEmail: data.email
+        });
+      }
+
       return { id: user.id };
     });
   }
