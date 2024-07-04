@@ -93,14 +93,10 @@ export class NotifyMeHandler {
       const inAppPayload = this.buildInApp(subscription, params.inApp);
       const emailPayload = shouldSendEmail && this.buildEmail(identity.email, subscription, params.email);
 
-      switch (subscription.config.subscriptionType) {
-        case 'INSTANTLY':
-          if (emailPayload) {
-            this.#emails.push(emailPayload);
-          }
-          this.#inApps.push(inAppPayload);
-          break;
+      if (emailPayload) {
+        this.#emails.push(emailPayload);
       }
+      this.#inApps.push(inAppPayload);
     }
   }
 
