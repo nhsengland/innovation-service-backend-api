@@ -24,8 +24,10 @@ export class NotifyMeService extends BaseService {
   /**
    * Gets all the subscription related with the given event.
    *
-   * It fetches all the subscriptions for the event type and the innovation where the event occured.
+   * It fetches all the subscriptions for the event type and the innovation where the event occurred.
    * Subsequent validations (e.g., pre-conditions validation) is done outside this method.
+   *
+   * If the user role is not active the subscription is not considered.
    */
   async getInnovationEventSubscriptions<T extends EventType>(
     innovationId: string,
@@ -40,6 +42,7 @@ export class NotifyMeService extends BaseService {
       .innerJoin('subscription.userRole', 'role')
       .where('subscription.innovation_id = :innovationId', { innovationId: innovationId })
       .andWhere('subscription.eventType = :eventType', { eventType: eventType })
+      .andWhere('role.isActive = 1')
       // Currently this or could be simplified because only A/QA have subscription but future proofing
       .andWhere(
         new Brackets(qb => {

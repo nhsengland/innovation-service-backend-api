@@ -278,6 +278,31 @@ describe('Innovations / _services / innovation-supports suite', () => {
       expect(notifierSendSpy).toHaveBeenCalled();
     });
 
+    it('should send the notifyMe', async () => {
+      const context = DTOsHelper.getUserRequestContext(scenario.users.bartQualifyingAccessor);
+      const innovation = scenario.users.adamInnovator.innovations.adamInnovation.id;
+      await sut.createInnovationSupport(
+        context,
+        innovation,
+        {
+          status: InnovationSupportStatusEnum.ENGAGING,
+          message: randText({ charCount: 10 }),
+          accessors: [
+            {
+              id: scenario.users.jamieMadroxAccessor.id,
+              userRoleId: scenario.users.jamieMadroxAccessor.roles.aiRole.id
+            }
+          ]
+        },
+        em
+      );
+
+      expect(notifierSendNotifyMeSpy).toHaveBeenCalledWith(context, innovation, 'SUPPORT_UPDATED', {
+        status: InnovationSupportStatusEnum.ENGAGING,
+        units: context.organisation?.organisationUnit?.id
+      });
+    });
+
     it('should assign QA that created as accessor when status is WAITING', async () => {
       const support = await sut.createInnovationSupport(
         DTOsHelper.getUserRequestContext(scenario.users.bartQualifyingAccessor),

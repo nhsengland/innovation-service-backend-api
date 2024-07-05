@@ -24,7 +24,14 @@ export const QANotificationCategories = [
 ] as const;
 type QANotificationCategories = (typeof QANotificationCategories)[number];
 
-export const INotificationCategories = ['SUPPORT', 'MESSAGES', 'TASK', 'DOCUMENTS', 'AUTOMATIC'] as const;
+export const INotificationCategories = [
+  'SUPPORT',
+  'MESSAGES',
+  'TASK',
+  'DOCUMENTS',
+  'AUTOMATIC',
+  'USER_RESEARCH_SURVEYS'
+] as const;
 type INotificationCategories = (typeof INotificationCategories)[number];
 
 export type NotificationPreferences =
@@ -44,7 +51,7 @@ export type Role2PreferencesType<T extends ServiceRoleEnum> = T extends ServiceR
         : never;
 
 export const generatePreferencesObject = <T extends ServiceRoleEnum>(
-  arr: ReadonlyArray<NotificationCategoryType>,
+  arr: ReadonlyArray<NotificationCategoryType | 'USER_RESEARCH_SURVEYS'>, // USER_RESEARCH_SURVEYS is special cause it's a fake notification category
   value = NotificationPreferenceEnum.YES
 ): Role2PreferencesType<T> => {
   return arr.reduce((acc, c) => ({ ...acc, [c]: value }), {}) as Role2PreferencesType<T>;

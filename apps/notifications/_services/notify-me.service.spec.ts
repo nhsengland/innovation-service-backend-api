@@ -1,4 +1,4 @@
-import { NotificationScheduleEntity } from '@notifications/shared/entities';
+import { NotificationScheduleEntity, UserRoleEntity } from '@notifications/shared/entities';
 import { InnovationSupportStatusEnum } from '@notifications/shared/enums';
 import type { EntityManager } from 'typeorm';
 import { container } from '../_config';
@@ -78,6 +78,16 @@ describe('NotifyMe Service Suite', () => {
       await em.query(`DELETE FROM innovation_share WHERE organisation_id = @0`, [scenario.organisations.healthOrg.id]);
       const subscriptions = await sut.getInnovationEventSubscriptions(innovation.id, 'SUPPORT_UPDATED', em);
       expect(subscriptions.length).toBe(0);
+    });
+
+    it("shouldn't return the subscription if the user is not active", async () => {
+      await em.update(
+        UserRoleEntity,
+        { id: scenario.users.aliceQualifyingAccessor.roles.qaRole.id },
+        { isActive: false }
+      );
+      const subscriptions = await sut.getInnovationEventSubscriptions(innovation.id, 'SUPPORT_UPDATED', em);
+      expect(subscriptions.length).toBe(1);
     });
   });
 
