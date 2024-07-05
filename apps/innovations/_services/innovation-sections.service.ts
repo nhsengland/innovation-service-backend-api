@@ -747,7 +747,7 @@ export class InnovationSectionsService extends BaseService {
     const { version } = await this.irSchemaService.getSchema();
     await em.query(
       `UPDATE innovation_document_draft
-      SET document = JSON_MODIFY(JSON_MODIFY(document, @0, JSON_QUERY(@1)), '$.version', @2)), updated_by=@3, updated_at=@4 WHERE id = @5`,
+      SET document = JSON_MODIFY(JSON_MODIFY(document, @0, JSON_QUERY(@1)), '$.version', @2), updated_by=@3, updated_at=@4 WHERE id = @5`,
       [
         `$.${sectionKey}`,
         JSON.stringify(data.dataToUpdate),
