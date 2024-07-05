@@ -60,15 +60,9 @@ export class NotifyMeService extends BaseService {
     );
 
     if (config.subscriptionType === 'SCHEDULED') {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { date, subscriptionType, ...params } = config;
       await em.save(NotificationScheduleEntity, {
         subscriptionId: subscription.id,
-        sendDate: date,
-        params: params,
-        userRole: {
-          id: domainContext.currentRole.id
-        }
+        sendDate: config.date
       });
     }
   }
@@ -371,15 +365,9 @@ export class NotifyMeService extends BaseService {
     await em.update(NotifyMeSubscriptionEntity, { id: subscriptionId }, { config });
 
     if (config.subscriptionType === 'SCHEDULED') {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { date, subscriptionType, ...params } = config;
       await em.save(NotificationScheduleEntity, {
         subscriptionId: subscription.id,
-        sendDate: date,
-        params: params,
-        userRole: {
-          id: domainContext.currentRole.id
-        }
+        sendDate: config.date
       });
     }
   }
