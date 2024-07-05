@@ -131,14 +131,7 @@ export class NotifyMeService extends BaseService {
 
     const scheduled = await em
       .createQueryBuilder(NotificationScheduleEntity, 'schedule')
-      .select([
-        'schedule.subscriptionId',
-        'schedule.params',
-        'subscription.id',
-        'subscription.eventType',
-        'innovation.id',
-        'role.id'
-      ])
+      .select(['schedule.subscriptionId', 'subscription.id', 'subscription.eventType', 'innovation.id', 'role.id'])
       .innerJoin('schedule.subscription', 'subscription')
       .innerJoin('subscription.innovation', 'innovation')
       .innerJoin('subscription.userRole', 'role')

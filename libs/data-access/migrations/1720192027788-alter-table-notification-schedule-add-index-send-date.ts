@@ -1,6 +1,6 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class addIndexNotifyMe1719310027344 implements MigrationInterface {
+export class alterTableNotificationScheduleAddIndexSendDate1720192027788 implements MigrationInterface {
   async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       ALTER TABLE "notification_schedule" DROP CONSTRAINT "fk_notification_schedule_user_role_id";

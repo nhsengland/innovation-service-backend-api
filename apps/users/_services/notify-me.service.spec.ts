@@ -815,5 +815,21 @@ describe('Users / _services / notify me service suite', () => {
         .getMany();
       expect(res.length).toBe(0);
     });
+
+    it("doesn't delete the subscriptions schedules if user doesn't match", async () => {
+      await sut.deleteSubscriptions(
+        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+        [scenario.users.bartQualifyingAccessor.notifyMeSubscriptions.adamScheduledInnovation.id],
+        em
+      );
+
+      const res = await em
+        .createQueryBuilder(NotificationScheduleEntity, 'schedule')
+        .innerJoin('schedule.subscription', 'subscription')
+        .innerJoin('subscription.userRole', 'userRole')
+        .where('userRole.id = :roleId', { roleId: scenario.users.bartQualifyingAccessor.roles.qaRole.id })
+        .getMany();
+      expect(res.length).toBe(1);
+    });
   });
 });
