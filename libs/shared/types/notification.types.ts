@@ -3,7 +3,14 @@ import { NotificationCategoryType, NotificationPreferenceEnum, ServiceRoleEnum }
 export const NaNotificationCategories = ['NEEDS_ASSESSMENT', 'TASK', 'MESSAGES', 'INNOVATION_MANAGEMENT'] as const;
 type NaNotificationCategories = (typeof NaNotificationCategories)[number];
 
-export const ANotificationCategories = ['SUPPORT', 'TASK', 'MESSAGES', 'INNOVATION_MANAGEMENT', 'AUTOMATIC'] as const;
+export const ANotificationCategories = [
+  'SUPPORT',
+  'TASK',
+  'MESSAGES',
+  'INNOVATION_MANAGEMENT',
+  'AUTOMATIC',
+  'NOTIFY_ME'
+] as const;
 type ANotificationCategories = (typeof ANotificationCategories)[number];
 
 export const QANotificationCategories = [
@@ -12,11 +19,19 @@ export const QANotificationCategories = [
   'TASK',
   'MESSAGES',
   'INNOVATION_MANAGEMENT',
-  'AUTOMATIC'
+  'AUTOMATIC',
+  'NOTIFY_ME'
 ] as const;
 type QANotificationCategories = (typeof QANotificationCategories)[number];
 
-export const INotificationCategories = ['SUPPORT', 'MESSAGES', 'TASK', 'DOCUMENTS', 'AUTOMATIC'] as const;
+export const INotificationCategories = [
+  'SUPPORT',
+  'MESSAGES',
+  'TASK',
+  'DOCUMENTS',
+  'AUTOMATIC',
+  'USER_RESEARCH_SURVEYS'
+] as const;
 type INotificationCategories = (typeof INotificationCategories)[number];
 
 export type NotificationPreferences =
@@ -28,15 +43,15 @@ export type NotificationPreferences =
 export type Role2PreferencesType<T extends ServiceRoleEnum> = T extends ServiceRoleEnum.ASSESSMENT
   ? Record<NaNotificationCategories, NotificationPreferenceEnum>
   : T extends ServiceRoleEnum.ACCESSOR
-  ? Record<ANotificationCategories, NotificationPreferenceEnum>
-  : T extends ServiceRoleEnum.QUALIFYING_ACCESSOR
-  ? Record<QANotificationCategories, NotificationPreferenceEnum>
-  : T extends ServiceRoleEnum.INNOVATOR
-  ? Record<INotificationCategories, NotificationPreferenceEnum>
-  : never;
+    ? Record<ANotificationCategories, NotificationPreferenceEnum>
+    : T extends ServiceRoleEnum.QUALIFYING_ACCESSOR
+      ? Record<QANotificationCategories, NotificationPreferenceEnum>
+      : T extends ServiceRoleEnum.INNOVATOR
+        ? Record<INotificationCategories, NotificationPreferenceEnum>
+        : never;
 
 export const generatePreferencesObject = <T extends ServiceRoleEnum>(
-  arr: ReadonlyArray<NotificationCategoryType>,
+  arr: ReadonlyArray<NotificationCategoryType | 'USER_RESEARCH_SURVEYS'>, // USER_RESEARCH_SURVEYS is special cause it's a fake notification category
   value = NotificationPreferenceEnum.YES
 ): Role2PreferencesType<T> => {
   return arr.reduce((acc, c) => ({ ...acc, [c]: value }), {}) as Role2PreferencesType<T>;

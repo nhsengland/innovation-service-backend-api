@@ -20,8 +20,8 @@ export class SQLConnectionService {
     return this.connection;
   }
 
-  setConnection(conection: DataSource): void {
-    this.connection = conection;
+  setConnection(connection: DataSource): void {
+    this.connection = connection;
   }
 
   async destroy(): Promise<void> {

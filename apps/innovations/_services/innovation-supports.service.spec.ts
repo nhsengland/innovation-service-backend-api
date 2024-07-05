@@ -51,6 +51,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
   const activityLogSpy = jest.spyOn(DomainInnovationsService.prototype, 'addActivityLog');
   const supportLogSpy = jest.spyOn(DomainInnovationsService.prototype, 'addSupportLog');
   const notifierSendSpy = jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
+  const notifierSendNotifyMeSpy = jest.spyOn(NotifierService.prototype, 'sendNotifyMe').mockResolvedValue(true);
   const threadMessageMock = jest.spyOn(InnovationThreadsService.prototype, 'createThreadMessage').mockResolvedValue({
     threadMessage: InnovationThreadMessageEntity.new({ id: randUuid() })
   });
@@ -69,6 +70,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
     activityLogSpy.mockClear();
     supportLogSpy.mockClear();
     notifierSendSpy.mockClear();
+    notifierSendNotifyMeSpy.mockClear();
     threadMessageMock.mockClear();
   });
 
@@ -274,6 +276,31 @@ describe('Innovations / _services / innovation-supports suite', () => {
       expect(activityLogSpy).toHaveBeenCalled();
       expect(supportLogSpy).toHaveBeenCalled();
       expect(notifierSendSpy).toHaveBeenCalled();
+    });
+
+    it('should send the notifyMe', async () => {
+      const context = DTOsHelper.getUserRequestContext(scenario.users.bartQualifyingAccessor);
+      const innovation = scenario.users.adamInnovator.innovations.adamInnovation.id;
+      await sut.createInnovationSupport(
+        context,
+        innovation,
+        {
+          status: InnovationSupportStatusEnum.ENGAGING,
+          message: randText({ charCount: 10 }),
+          accessors: [
+            {
+              id: scenario.users.jamieMadroxAccessor.id,
+              userRoleId: scenario.users.jamieMadroxAccessor.roles.aiRole.id
+            }
+          ]
+        },
+        em
+      );
+
+      expect(notifierSendNotifyMeSpy).toHaveBeenCalledWith(context, innovation, 'SUPPORT_UPDATED', {
+        status: InnovationSupportStatusEnum.ENGAGING,
+        units: context.organisation?.organisationUnit?.id
+      });
     });
 
     it('should assign QA that created as accessor when status is WAITING', async () => {
@@ -857,6 +884,22 @@ describe('Innovations / _services / innovation-supports suite', () => {
       }
     );
 
+    it('should send a notifyMe when status is changed', async () => {
+      const context = DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor);
+      await sut.updateInnovationSupport(
+        context,
+        innovation.id,
+        innovation.supports.supportByHealthOrgUnit.id,
+        { status: InnovationSupportStatusEnum.CLOSED, message: randText({ charCount: 10 }) },
+        em
+      );
+
+      expect(notifierSendNotifyMeSpy).toHaveBeenCalledWith(context, innovation.id, 'SUPPORT_UPDATED', {
+        status: InnovationSupportStatusEnum.CLOSED,
+        units: context.organisation?.organisationUnit?.id
+      });
+    });
+
     it(`should throw a not found error if the support doesn't exist`, async () => {
       await expect(() =>
         sut.updateInnovationSupport(
@@ -1121,6 +1164,16 @@ describe('Innovations / _services / innovation-supports suite', () => {
         }
       );
       expect(fileExists).toBe(1);
+    });
+
+    it('should send a notifyMe when progress update is created', async () => {
+      const context = DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor);
+      const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+      await sut.createProgressUpdate(context, innovation.id, { description: randText(), title: randText() }, em);
+
+      expect(notifierSendNotifyMeSpy).toHaveBeenCalledWith(context, innovation.id, 'PROGRESS_UPDATE_CREATED', {
+        units: context.organisation?.organisationUnit?.id
+      });
     });
 
     it('should throw an NotFoundError when the unitId is not present in context', async () => {

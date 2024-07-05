@@ -4,6 +4,7 @@ import { container } from '../_config';
 import { InnovationEntity, InnovationSectionEntity } from '@innovations/shared/entities';
 import { InnovationSectionStatusEnum } from '@innovations/shared/enums';
 import { CurrentCatalogTypes, CurrentDocumentConfig } from '@innovations/shared/schemas/innovation-record';
+import { NotifierService } from '@innovations/shared/services';
 import { TestsHelper } from '@innovations/shared/tests';
 import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
 import { rand, randText } from '@ngneat/falso';
@@ -19,6 +20,8 @@ describe('Innovation Sections Suite', () => {
 
   let em: EntityManager;
 
+  const notifierSendNotifyMeSpy = jest.spyOn(NotifierService.prototype, 'sendNotifyMe').mockResolvedValue(true);
+
   beforeAll(async () => {
     sut = container.get<InnovationSectionsService>(SYMBOLS.InnovationSectionsService);
     await testsHelper.init();
@@ -30,6 +33,7 @@ describe('Innovation Sections Suite', () => {
 
   afterEach(async () => {
     await testsHelper.releaseQueryRunnerEntityManager();
+    notifierSendNotifyMeSpy.mockClear();
   });
 
   const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
@@ -143,6 +147,28 @@ describe('Innovation Sections Suite', () => {
       );
       // assert
       expect(section.id).toBeDefined();
+    });
+
+    it('should send the notifyMe notification', async () => {
+      await em.update(
+        InnovationSectionEntity,
+        { id: innovation.sections.INNOVATION_DESCRIPTION.id },
+        { status: InnovationSectionStatusEnum.DRAFT }
+      );
+      await sut.submitInnovationSection(
+        DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
+        innovation.id,
+        'INNOVATION_DESCRIPTION',
+        em
+      );
+      // assert
+      expect(notifierSendNotifyMeSpy).toHaveBeenCalledTimes(1);
+      expect(notifierSendNotifyMeSpy).toHaveBeenCalledWith(
+        DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
+        innovation.id,
+        'INNOVATION_RECORD_UPDATED',
+        { sections: 'INNOVATION_DESCRIPTION' }
+      );
     });
   });
 

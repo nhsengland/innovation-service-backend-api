@@ -3,7 +3,8 @@ const TRANSLATIONS = {
     EXPORT_REQUEST: {
       // TODO: This will be cleaned up after archive feature
       WITHDRAW: 'Since the innovator withdrew his innovation, this export request was automatically rejected.',
-      STOP_SHARING: 'This export request was rejected automatically, as the innovator has stopped sharing their innovation with this organisation.',
+      STOP_SHARING:
+        'This export request was rejected automatically, as the innovator has stopped sharing their innovation with this organisation.',
       ARCHIVE: 'This export request was rejected automatically, as the innovator has archived this innovation.'
     }
   },
@@ -20,6 +21,19 @@ const TRANSLATIONS = {
     OTHER_EFFECTIVENESS: 'Other evidence of effectiveness (for example environmental or social)',
     PRE_CLINICAL: 'Pre-clinical evidence',
     REAL_WORLD: 'Real world evidence'
+  },
+  SECTION: {
+    INNOVATION_DESCRIPTION: 'Description of innovation',
+    UNDERSTANDING_OF_NEEDS: 'Detailed understanding of needs and benefits',
+    EVIDENCE_OF_EFFECTIVENESS: 'Evidence of impact and benefit',
+    MARKET_RESEARCH: 'Market research',
+    CURRENT_CARE_PATHWAY: 'Current care pathway',
+    TESTING_WITH_USERS: 'Testing with users',
+    REGULATIONS_AND_STANDARDS: 'Regulatory approvals, standards and certifications',
+    INTELLECTUAL_PROPERTY: 'Intellectual property',
+    REVENUE_MODEL: 'Revenue Model',
+    COST_OF_INNOVATION: 'Cost of your innovation',
+    DEPLOYMENT: 'Deployment'
   },
   SERVICE_ROLES: {
     ADMIN: 'Administrator',
