@@ -138,7 +138,7 @@ export type NotifyMeResponseTypes = {
   SUPPORT_UPDATED: SupportUpdatedResponseDTO;
   PROGRESS_UPDATE_CREATED: ProgressUpdateCreatedResponseDTO;
   INNOVATION_RECORD_UPDATED: DefaultResponseDTO<'INNOVATION_RECORD_UPDATED', 'sections'>;
-  REMINDER: DefaultResponseDTO<'REMINDER', never>;
+  REMINDER: DefaultResponseDTO<'REMINDER', 'customMessage' | 'date'>;
 };
 
 export type SubscriptionResponseDTO = NotifyMeResponseTypes[keyof NotifyMeResponseTypes];
