@@ -9,11 +9,12 @@ import {
   UserErrorsEnum
 } from '../../errors';
 import { TranslationHelper } from '../../helpers';
-import type { InnovatorDomainContextType, RoleType } from '../../types';
+import type { DomainContextType, InnovatorDomainContextType, RoleType } from '../../types';
 
 import { UserPreferenceEntity } from '../../entities/user/user-preference.entity';
 import { UserRoleEntity, roleEntity2RoleType } from '../../entities/user/user-role.entity';
 import { UserEntity } from '../../entities/user/user.entity';
+import { AuthErrorsEnum } from '../auth/authorization-validation.model';
 import type { IdentityProviderService } from '../integrations/identity-provider.service';
 
 export class DomainUsersService {
@@ -347,6 +348,111 @@ export class DomainUsersService {
     return dbUserRole ? roleEntity2RoleType(dbUserRole) : null;
   }
 
+  async getDomainContextFromRole(roleId: string, activeOnly = true): Promise<DomainContextType> {
+    const query = this.sqlConnection
+      .createQueryBuilder(UserRoleEntity, 'userRole')
+      .select([
+        'userRole.id',
+        'userRole.role',
+        'userRole.isActive',
+        'organisation.id',
+        'organisation.name',
+        'organisation.acronym',
+        'organisationUnit.id',
+        'organisationUnit.name',
+        'organisationUnit.acronym',
+        'user.id',
+        'user.identityId'
+      ])
+      .leftJoin('userRole.organisation', 'organisation')
+      .leftJoin('userRole.organisationUnit', 'organisationUnit')
+      .innerJoin('userRole.user', 'user')
+      .where('userRole.id = :roleId', { roleId });
+
+    if (activeOnly) {
+      query.andWhere('userRole.isActive = 1');
+    }
+
+    const dbUserRole = await query.getOne();
+    if (!dbUserRole) {
+      throw new NotFoundError(UserErrorsEnum.USER_ROLE_NOT_FOUND);
+    }
+    const role = roleEntity2RoleType(dbUserRole);
+    return this.roleTypeToDomainContext(dbUserRole.user.id, dbUserRole.user.identityId, role);
+  }
+
+  async roleTypeToDomainContext(userId: string, identityId: string, role: RoleType): Promise<DomainContextType> {
+    switch (role.role) {
+      case ServiceRoleEnum.INNOVATOR:
+        if (!role.organisation) {
+          throw new InternalServerError(UserErrorsEnum.USER_ROLE_INVALID, { details: { role: role.id } });
+        }
+        return {
+          id: userId,
+          identityId: identityId,
+          organisation: {
+            id: role.organisation.id,
+            name: role.organisation.name,
+            acronym: role.organisation.acronym
+          },
+          currentRole: {
+            id: role.id,
+            role: role.role
+          }
+        };
+      case ServiceRoleEnum.QUALIFYING_ACCESSOR:
+      case ServiceRoleEnum.ACCESSOR:
+        if (!role.organisationUnit || !role.organisation) {
+          throw new InternalServerError(UserErrorsEnum.USER_ROLE_INVALID, { details: { role: role.id } });
+        }
+        return {
+          id: userId,
+          identityId: identityId,
+          organisation: {
+            id: role.organisation.id,
+            name: role.organisation.name,
+            acronym: role.organisation.acronym,
+            organisationUnit: {
+              id: role.organisationUnit.id,
+              name: role.organisationUnit.name,
+              acronym: role.organisationUnit.acronym
+            }
+          },
+          currentRole: {
+            id: role.id,
+            role: role.role
+          }
+        };
+
+      case ServiceRoleEnum.ASSESSMENT:
+        return {
+          id: userId,
+          identityId: identityId,
+          currentRole: {
+            id: role.id,
+            role: role.role
+          }
+        };
+
+      case ServiceRoleEnum.ADMIN:
+        return {
+          id: userId,
+          identityId: identityId,
+          currentRole: {
+            id: role.id,
+            role: role.role
+          }
+        };
+
+      default: {
+        const roleType: never = role.role;
+        throw new InternalServerError(AuthErrorsEnum.AUTH_USER_TYPE_UNKNOWN, {
+          details: { roleType }
+        });
+      }
+    }
+  }
+
   // try to deprecate
   getDisplayRoleInformation(userId: string, role: ServiceRoleEnum, innovationOwnerId?: string): string | undefined {
     if (role !== ServiceRoleEnum.INNOVATOR) {
@@ -387,9 +493,10 @@ export class DomainUsersService {
         return TranslationHelper.translate(`TEAMS.${role}`);
       case ServiceRoleEnum.INNOVATOR:
         return data.isOwner === undefined ? 'Innovator' : data.isOwner ? 'Owner' : 'Collaborator';
-      default:
+      default: {
         const r: never = role;
         throw new NotImplementedError(GenericErrorsEnum.NOT_IMPLEMENTED_ERROR, { details: r });
+      }
     }
   }
 

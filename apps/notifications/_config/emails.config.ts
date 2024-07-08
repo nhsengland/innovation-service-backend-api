@@ -469,7 +469,7 @@ export type EmailTemplatesType = {
   };
   REMINDER: {
     innovation: string;
-    event: string;
-    message: string;
+    reason: string;
+    innovation_overview_url: string;
   };
 };

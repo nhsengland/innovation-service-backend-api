@@ -51,6 +51,8 @@ describe('Users / _services / notifications service suite', () => {
         em
       );
 
+      result.data.sort((a, b) => a.id.localeCompare(b.id));
+
       expect(result).toMatchObject({
         total: 2,
         data: [
@@ -99,7 +101,7 @@ describe('Users / _services / notifications service suite', () => {
             params:
               scenario.users.johnInnovator.innovations.johnInnovation.notifications.notificationsFromMessage.params
           }
-        ]
+        ].sort((a, b) => a.id.localeCompare(b.id))
       });
     });
 

@@ -288,7 +288,8 @@ export class AuthorizationValidationModel {
       throw new ForbiddenError(AuthErrorsEnum.AUTH_MISSING_CURRENT_ROLE);
     }
 
-    // This is going to be reviewed with domainContext changes
+    // This is going to be reviewed with domainContext changes. Kept here but duplicated into the domain user service to
+    // have different errors and simplify there. Maybe review in the future.
     switch (role.role) {
       case ServiceRoleEnum.INNOVATOR:
         if (!role.organisation) {

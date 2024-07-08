@@ -1,11 +1,13 @@
 import type { NotifyMeSubscriptionEntity } from '@users/shared/entities';
 import { InnovationSupportStatusEnum } from '@users/shared/enums';
+import { JoiHelper } from '@users/shared/helpers';
 import { CurrentCatalogTypes } from '@users/shared/schemas/innovation-record';
 import type {
   EventType,
   ExcludeEnum,
   InnovationRecordUpdated,
   ProgressUpdateCreated,
+  Reminder,
   SubscriptionConfig,
   SubscriptionType,
   SupportUpdated
@@ -48,10 +50,18 @@ const InnovationRecordUpdatedSchema = Joi.object<InnovationRecordUpdated>({
   }).required()
 }).required();
 
+const ReminderSchema = Joi.object<Reminder>({
+  eventType: Joi.string().valid('REMINDER').required(),
+  subscriptionType: Joi.string().valid('SCHEDULED').default('SCHEDULED'),
+  customMessage: Joi.string().required(),
+  date: JoiHelper.AppCustomJoi().dateWithDefaultTime().defaultTime('07:00').required()
+});
+
 export const NotifyMeConfigSchema = Joi.alternatives(
   SupportUpdatedSchema,
   ProgressUpdateCreatedSchema,
-  InnovationRecordUpdatedSchema
+  InnovationRecordUpdatedSchema,
+  ReminderSchema
 ).required();
 //#endregion
 
@@ -73,13 +83,16 @@ export type EntitySubscriptionConfigType<T extends EventType> = NotifyMeSubscrip
   eventType: T;
   config: SubscriptionConfigType<T>;
 };
-export type PreconditionsOptions<T extends EventType> = 'preConditions' extends keyof (SubscriptionConfig & {
+type PreconditionsOptions<T extends EventType> = 'preConditions' extends keyof (SubscriptionConfig & {
   eventType: T;
 })
   ? keyof SubscriptionConfigType<T>['preConditions']
   : never;
+export type DefaultOptions<T extends EventType> =
+  | PreconditionsOptions<T>
+  | keyof Omit<SubscriptionConfigType<T>, 'id' | 'eventType' | 'subscriptionType' | 'preConditions'>;
 
-export type DefaultResponseDTO<T extends EventType, K extends PreconditionsOptions<T>> = {
+export type DefaultResponseDTO<T extends EventType, K extends DefaultOptions<T>> = {
   id: string;
   updatedAt: Date;
   eventType: T;
@@ -88,8 +101,12 @@ export type DefaultResponseDTO<T extends EventType, K extends PreconditionsOptio
   [k in K]: 'preConditions' extends keyof (SubscriptionConfig & { eventType: T })
     ? k extends keyof SubscriptionConfigType<T>['preConditions']
       ? SubscriptionConfigType<T>['preConditions'][k]
-      : never
-    : never;
+      : k extends keyof SubscriptionConfigType<T>
+        ? SubscriptionConfigType<T>[k]
+        : never
+    : k extends keyof SubscriptionConfigType<T>
+      ? SubscriptionConfigType<T>[k]
+      : never;
 };
 
 export type SupportUpdatedResponseDTO = {
@@ -121,7 +138,7 @@ export type NotifyMeResponseTypes = {
   SUPPORT_UPDATED: SupportUpdatedResponseDTO;
   PROGRESS_UPDATE_CREATED: ProgressUpdateCreatedResponseDTO;
   INNOVATION_RECORD_UPDATED: DefaultResponseDTO<'INNOVATION_RECORD_UPDATED', 'sections'>;
-  REMINDER: DefaultResponseDTO<'REMINDER', never>;
+  REMINDER: DefaultResponseDTO<'REMINDER', 'customMessage' | 'date'>;
 };
 
 export type SubscriptionResponseDTO = NotifyMeResponseTypes[keyof NotifyMeResponseTypes];
