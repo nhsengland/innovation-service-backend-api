@@ -5,7 +5,7 @@ import type { IRSchemaType } from './schema.model';
  * TODO: See if I can simplify this
  */
 const StringSchema = Joi.string().max(100);
-const id = Joi.string().regex(/^[_a-zA-Z][_a-zA-Z0-9]*$/);
+const id = Joi.string().max(250).required();
 const isRequired = Joi.alternatives(Joi.boolean().valid(true), StringSchema);
 const postcodeFormat = Joi.alternatives(Joi.boolean().valid(true), StringSchema);
 const urlFormat = Joi.alternatives(Joi.boolean().valid(true), StringSchema);
