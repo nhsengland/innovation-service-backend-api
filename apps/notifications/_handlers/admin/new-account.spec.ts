@@ -18,9 +18,9 @@ describe('Notifications / _handlers / new account', () => {
   const requestUser = scenario.users.allMighty;
   const fakeEmail = 'fakeEmail@test.com';
 
-  describe('AP09_NEW_ACCOUNT', () => {
+  describe('AP09_NEW_SUPPORTING_ACCOUNT', () => {
     it('should send an email to the new user', async () => {
-      await testEmails(NewAccountHandler, 'AP09_NEW_ACCOUNT', {
+      await testEmails(NewAccountHandler, 'AP09_NEW_SUPPORTING_ACCOUNT', {
         notificationPreferenceType: 'ADMIN',
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         recipients: [{ email: fakeEmail }],

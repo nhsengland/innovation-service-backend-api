@@ -204,7 +204,7 @@ export type NotifierTemplatesType = {
   };
 
   // // Qualifying acessor and accessor welcome email
-  [NotifierTypeEnum.NEW_ACCOUNT]: {
+  [NotifierTypeEnum.NEW_SUPPORTING_ACCOUNT]: {
     recipientEmail: string;
   };
 };

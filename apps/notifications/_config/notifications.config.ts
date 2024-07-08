@@ -361,9 +361,9 @@ export const NOTIFICATIONS_CONFIG = {
       newEmail: Joi.string().required()
     }).required()
   },
-  [NotifierTypeEnum.NEW_ACCOUNT]: {
+  [NotifierTypeEnum.NEW_SUPPORTING_ACCOUNT]: {
     handler: NewAccountHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.NEW_ACCOUNT]>({
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.NEW_SUPPORTING_ACCOUNT]>({
       recipientEmail: Joi.string().required()
     }).required()
   },

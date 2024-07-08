@@ -208,7 +208,7 @@ export class UsersService extends BaseService {
 
       // Send notification to new account
       if (data.email && user) {
-        await this.notifierService.send(domainContext, NotifierTypeEnum.NEW_ACCOUNT, {
+        await this.notifierService.send(domainContext, NotifierTypeEnum.NEW_SUPPORTING_ACCOUNT, {
           recipientEmail: data.email
         });
       }
