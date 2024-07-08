@@ -44,7 +44,20 @@ describe('Users / _services / notify me service suite', () => {
             status: [InnovationSupportStatusEnum.ENGAGING as const],
             units: [randUuid()]
           },
-          subscriptionType: 'INSTANTLY' as const
+          subscriptionType: 'INSTANTLY' as const,
+          notificationType: 'SUPPORT_UPDATED' as const
+        }
+      ],
+      [
+        'SUGGESTED_SUPPORT_UPDATED',
+        {
+          eventType: 'SUPPORT_UPDATED' as const,
+          preConditions: {
+            status: [InnovationSupportStatusEnum.ENGAGING as const],
+            units: [randUuid()]
+          },
+          subscriptionType: 'ONCE' as const,
+          notificationType: 'SUGGESTED_SUPPORT_UPDATED' as const
         }
       ],
       [
@@ -601,7 +614,8 @@ describe('Users / _services / notify me service suite', () => {
             status: [InnovationSupportStatusEnum.UNSUITABLE],
             units: [randUuid()]
           },
-          subscriptionType: 'INSTANTLY'
+          subscriptionType: 'INSTANTLY',
+          notificationType: 'SUPPORT_UPDATED' as const
         },
         em
       );
@@ -683,7 +697,8 @@ describe('Users / _services / notify me service suite', () => {
               status: [InnovationSupportStatusEnum.UNSUITABLE],
               units: [randUuid()]
             },
-            subscriptionType: 'INSTANTLY'
+            subscriptionType: 'INSTANTLY',
+            notificationType: 'SUPPORT_UPDATED' as const
           },
           em
         )

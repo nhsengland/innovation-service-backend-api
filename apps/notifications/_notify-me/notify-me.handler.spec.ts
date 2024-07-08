@@ -284,7 +284,8 @@ describe('NotifyMe Handler Suite', () => {
           preConditions: {
             status: [InnovationSupportStatusEnum.ENGAGING],
             units: [unit]
-          }
+          },
+          notificationType: 'SUPPORT_UPDATED'
         }
       });
 
@@ -312,7 +313,8 @@ describe('NotifyMe Handler Suite', () => {
           preConditions: {
             status: [InnovationSupportStatusEnum.WAITING, InnovationSupportStatusEnum.CLOSED],
             units: [unit]
-          }
+          },
+          notificationType: 'SUPPORT_UPDATED'
         }
       });
 
@@ -341,7 +343,8 @@ describe('NotifyMe Handler Suite', () => {
           preConditions: {
             status: [InnovationSupportStatusEnum.ENGAGING],
             units: [unit]
-          }
+          },
+          notificationType: 'SUPPORT_UPDATED'
         }
       });
 
@@ -368,7 +371,8 @@ describe('NotifyMe Handler Suite', () => {
           preConditions: {
             status: [InnovationSupportStatusEnum.ENGAGING],
             units: [unit]
-          }
+          },
+          notificationType: 'SUPPORT_UPDATED'
         }
       });
 
@@ -400,7 +404,8 @@ describe('NotifyMe Handler Suite', () => {
               preConditions: {
                 status: [InnovationSupportStatusEnum.ENGAGING],
                 units: [unit]
-              }
+              },
+              notificationType: 'SUPPORT_UPDATED'
             }
           },
           { id: randUuid(), name: 'Test Innovation' }
@@ -443,7 +448,8 @@ describe('NotifyMe Handler Suite', () => {
               preConditions: {
                 status: [InnovationSupportStatusEnum.ENGAGING],
                 units: [unit]
-              }
+              },
+              notificationType: 'SUPPORT_UPDATED'
             }
           },
           { id: innovationId, name: 'Test Innovation' }

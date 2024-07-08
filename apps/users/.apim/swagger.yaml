@@ -1028,6 +1028,7 @@ paths:
                           type: string
                           enum:
                             - INSTANTLY
+                            - ONCE
                           default: INSTANTLY
                         preConditions:
                           type: object
@@ -1052,6 +1053,12 @@ paths:
                             - units
                             - status
                           additionalProperties: false
+                        notificationType:
+                          type: string
+                          enum:
+                            - SUPPORT_UPDATED
+                            - SUGGESTED_SUPPORT_UPDATED
+                          default: SUPPORT_UPDATED
                       required:
                         - eventType
                         - preConditions
@@ -1283,6 +1290,7 @@ paths:
                       type: string
                       enum:
                         - INSTANTLY
+                        - ONCE
                       default: INSTANTLY
                     preConditions:
                       type: object
@@ -1307,6 +1315,12 @@ paths:
                         - units
                         - status
                       additionalProperties: false
+                    notificationType:
+                      type: string
+                      enum:
+                        - SUPPORT_UPDATED
+                        - SUGGESTED_SUPPORT_UPDATED
+                      default: SUPPORT_UPDATED
                   required:
                     - eventType
                     - preConditions

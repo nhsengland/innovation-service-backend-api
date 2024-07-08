@@ -28,7 +28,8 @@ const SupportUpdatedSchema = Joi.object<SupportUpdated>({
       )
       .min(1)
       .required()
-  }).required()
+  }).required(),
+  notificationType: Joi.string().valid('SUPPORT_UPDATED', 'SUGGESTED_SUPPORT_UPDATED').default('SUPPORT_UPDATED')
 }).required();
 
 const ProgressUpdateCreatedSchema = Joi.object<ProgressUpdateCreated>({
@@ -116,6 +117,7 @@ export type SupportUpdatedResponseDTO = {
   subscriptionType: 'INSTANTLY' | 'ONCE';
   organisations: OrganisationWithUnits[];
   status: ExcludeEnum<InnovationSupportStatusEnum, InnovationSupportStatusEnum.UNASSIGNED>[];
+  notificationType: 'SUPPORT_UPDATED' | 'SUGGESTED_SUPPORT_UPDATED';
 };
 
 export type ProgressUpdateCreatedResponseDTO = {
