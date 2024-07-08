@@ -61,7 +61,8 @@ describe('NotifyMe Handler Suite', () => {
           }
         }
       }
-    ])
+    ]),
+    deleteSubscription: jest.fn().mockResolvedValue(undefined)
   };
 
   beforeAll(async () => {
@@ -162,6 +163,53 @@ describe('NotifyMe Handler Suite', () => {
       expect(handler.emails).toHaveLength(1);
     });
 
+    it("should remove notification if it's run once", async () => {
+      const subscriptionId = randUuid();
+      notifyMeServiceMock.getInnovationEventSubscriptions.mockResolvedValueOnce([
+        {
+          id: subscriptionId,
+          roleId: userContext.currentRole.id,
+          innovationId: innovation.id,
+          config: {
+            eventType: 'SUPPORT_UPDATED',
+            subscriptionType: 'ONCE',
+            preConditions: {
+              status: [InnovationSupportStatusEnum.ENGAGING],
+              units: [unit]
+            }
+          }
+        },
+        {
+          id: randUuid(),
+          roleId: userContext.currentRole.id,
+          innovationId: innovation.id,
+          config: {
+            eventType: 'SUPPORT_UPDATED',
+            subscriptionType: 'INSTANTLY',
+            preConditions: {
+              status: [InnovationSupportStatusEnum.ENGAGING],
+              units: [unit]
+            }
+          }
+        }
+      ]);
+
+      const handler = new NotifyMeHandler(notifyMeServiceMock as any, recipientMock as any, {
+        innovationId: innovation.id,
+        requestUser: userContext,
+        params: {
+          status: InnovationSupportStatusEnum.ENGAGING,
+          units: unit
+        } as any,
+        type: 'SUPPORT_UPDATED' as const
+      });
+      await handler.execute(em);
+
+      // Only call for the once
+      expect(notifyMeServiceMock.deleteSubscription).toHaveBeenCalledTimes(1);
+      expect(notifyMeServiceMock.deleteSubscription).toHaveBeenCalledWith(subscriptionId, em);
+    });
+
     it('should return if no subscription found', async () => {
       const handler = new NotifyMeHandler(notifyMeServiceMock as any, recipientMock as any, {
         innovationId: randUuid(),
@@ -173,7 +221,7 @@ describe('NotifyMe Handler Suite', () => {
         type: 'SUPPORT_UPDATED' as const
       });
 
-      notifyMeServiceMock.getInnovationEventSubscriptions.mockResolvedValue([]);
+      notifyMeServiceMock.getInnovationEventSubscriptions.mockResolvedValueOnce([]);
 
       await handler.execute(em);
 

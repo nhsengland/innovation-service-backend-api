@@ -17,7 +17,7 @@ import Joi from 'joi';
 //#region CreateDTO
 const SupportUpdatedSchema = Joi.object<SupportUpdated>({
   eventType: Joi.string().valid('SUPPORT_UPDATED').required(),
-  subscriptionType: Joi.string().valid('INSTANTLY').default('INSTANTLY'),
+  subscriptionType: Joi.string().valid('INSTANTLY', 'ONCE').default('INSTANTLY'),
   preConditions: Joi.object({
     units: Joi.array().items(Joi.string().uuid()).min(1).required(),
     status: Joi.array()
@@ -113,7 +113,7 @@ export type SupportUpdatedResponseDTO = {
   id: string;
   updatedAt: Date;
   eventType: 'SUPPORT_UPDATED';
-  subscriptionType: 'INSTANTLY';
+  subscriptionType: 'INSTANTLY' | 'ONCE';
   organisations: OrganisationWithUnits[];
   status: ExcludeEnum<InnovationSupportStatusEnum, InnovationSupportStatusEnum.UNASSIGNED>[];
 };

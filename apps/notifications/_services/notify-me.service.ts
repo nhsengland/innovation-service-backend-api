@@ -66,45 +66,17 @@ export class NotifyMeService extends BaseService {
   }
 
   /**
-   * Creates a new scheduled notification for the current subscription.
-   *
-   * It makes sure that no scheduled notification already exists for the given subscription
-   * to prevent duplicates.
+   * Responsible for deleting the subscription and all the scheduled notifications related to it
    */
-  async createScheduledNotification(subscription: NotifyMeSubscriptionType): Promise<void> {
-    /* Currently not implemented
-    // If its a periodic we have to make sure that it doesn't exist one notification scheduled already.
-    if (subscription.config.subscriptionType === 'PERIODIC') {
-      const hasScheduledNotification = await this.hasScheduledNotification(subscription);
-      if (hasScheduledNotification) return;
-    }
-    */
-
-    let now = new Date();
-    switch (subscription.config.subscriptionType) {
-      // case 'PERIODIC':
-      //   switch (subscription.config.periodicity) {
-      //     case 'DAILY':
-      //       now.setDate(now.getDate() + 1);
-      //       break;
-      //     case 'HOURLY':
-      //       now.setHours(now.getHours() + 1);
-      //       break;
-      //   }
-      //   break;
-
-      case 'SCHEDULED':
-        now = subscription.config.date;
-        break;
+  async deleteSubscription(subscriptionId: string, entityManager?: EntityManager): Promise<void> {
+    if (!entityManager) {
+      return this.sqlConnection.manager.transaction(t => {
+        return this.deleteSubscription(subscriptionId, t);
+      });
     }
 
-    await this.sqlConnection.manager.save(
-      NotificationScheduleEntity,
-      NotificationScheduleEntity.new({
-        subscription: NotifyMeSubscriptionEntity.new({ id: subscription.id }),
-        sendDate: now
-      })
-    );
+    await entityManager.softDelete(NotifyMeSubscriptionEntity, subscriptionId);
+    await entityManager.delete(NotificationScheduleEntity, { subscriptionId: subscriptionId });
   }
 
   /**
