@@ -68,6 +68,7 @@ export type EventPayloads = {
   SUPPORT_UPDATED: {
     status: InnovationSupportStatusEnum;
     units: string;
+    message: string;
   };
   PROGRESS_UPDATE_CREATED: {
     units: string;

@@ -469,7 +469,8 @@ export class InnovationSupportsService extends BaseService {
 
     await this.notifierService.sendNotifyMe(domainContext, innovationId, 'SUPPORT_UPDATED', {
       status: data.status,
-      units: organisationUnitId
+      units: organisationUnitId,
+      message: data.message
     });
 
     return result;
@@ -725,7 +726,8 @@ export class InnovationSupportsService extends BaseService {
 
     await this.notifierService.sendNotifyMe(domainContext, innovationId, 'SUPPORT_UPDATED', {
       status: data.status,
-      units: dbSupport.organisationUnit.id
+      units: dbSupport.organisationUnit.id,
+      message: data.message
     });
 
     return result;
