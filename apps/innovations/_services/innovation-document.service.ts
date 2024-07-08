@@ -3,7 +3,7 @@ import { injectable } from 'inversify';
 import type { EntityManager } from 'typeorm';
 
 import { ServiceRoleEnum } from '@innovations/shared/enums';
-import { ConflictError, InnovationErrorsEnum, NotFoundError } from '@innovations/shared/errors';
+import { InnovationErrorsEnum, NotFoundError } from '@innovations/shared/errors';
 import {
   CurrentDocumentConfig,
   DocumentType,
@@ -21,6 +21,7 @@ export class InnovationDocumentService extends BaseService {
   }
 
   /**
+   * TODO: Change this when changing the Return of DocumentTypeFromVersion
    * retrieves the latest version of a document from the database and validates the version
    * @param innovationId the innovation id
    * @param version version of the document to retrieve
@@ -45,7 +46,7 @@ export class InnovationDocumentService extends BaseService {
             'document'
           )
           .where('document.id = :innovationId', { innovationId })
-          .andWhere('document.version = :version', { version })
+          // .andWhere('document.version = :version', { version })
           .getOne()
       )?.document;
     } else {
@@ -68,9 +69,9 @@ export class InnovationDocumentService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
     }
 
-    if (document.version !== version) {
-      throw new ConflictError(InnovationErrorsEnum.INNOVATION_DOCUMENT_VERSION_MISMATCH);
-    }
+    // if (document.version !== version) {
+    //   throw new ConflictError(InnovationErrorsEnum.INNOVATION_DOCUMENT_VERSION_MISMATCH);
+    // }
 
     return document as T;
   }

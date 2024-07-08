@@ -28,7 +28,7 @@ export type SchemaValidationError = {
 };
 
 export class SchemaModel {
-  private schema: IRSchemaType;
+  public schema: IRSchemaType;
   private errorList: SchemaValidationError[];
 
   private subSections = new Map<string, string[]>();
@@ -78,6 +78,15 @@ export class SchemaModel {
     for (const key of Object.keys(payload)) {
       const question = questions.find(q => q.id === key);
       if (!question) continue;
+
+      // WARNING: big hack due to itemsFromAnswer.
+      if ('items' in question && question.items[0] && 'itemsFromAnswer' in question.items[0]) {
+        const referencedQuestion = this.questions.get(question.items[0].itemsFromAnswer);
+        if (referencedQuestion && 'items' in referencedQuestion) {
+          question.items = referencedQuestion.items;
+        }
+      }
+
       validation[key] = QuestionValidatorFactory.validate(question);
     }
 
@@ -163,8 +172,6 @@ export class SchemaModel {
               message: `${path}.items must reference a previous question`,
               context: question
             });
-          } else {
-            question.items = idList[item['itemsFromAnswer']]?.items ?? [];
           }
         } else {
           // item.id cannot be repeated
