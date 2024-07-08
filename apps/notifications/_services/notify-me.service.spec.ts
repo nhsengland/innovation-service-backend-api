@@ -1,4 +1,4 @@
-import { NotificationScheduleEntity, UserRoleEntity } from '@notifications/shared/entities';
+import { NotificationScheduleEntity, NotifyMeSubscriptionEntity, UserRoleEntity } from '@notifications/shared/entities';
 import { InnovationSupportStatusEnum } from '@notifications/shared/enums';
 import type { EntityManager } from 'typeorm';
 import { container } from '../_config';
@@ -125,11 +125,23 @@ describe('NotifyMe Service Suite', () => {
     });
   });
 
+  describe('deleteSubscription', () => {
+    const subscription = scenario.users.bartQualifyingAccessor.notifyMeSubscriptions.adamScheduledInnovation;
+    it('should delete the subscription', async () => {
+      await sut.deleteSubscription(subscription.id, em);
+      const sub = await em.getRepository(NotifyMeSubscriptionEntity).findOneBy({ id: subscription.id });
+      expect(sub).toBeNull();
+      const sch = await em.getRepository(NotificationScheduleEntity).findOneBy({ subscriptionId: subscription.id });
+      expect(sch).toBeNull();
+    });
+  });
+
   describe('deleteScheduledNotification', () => {
     const notification = scenario.users.bartQualifyingAccessor.notifyMeSubscriptions.adamScheduledInnovation;
     it('should delete the scheduled notification', async () => {
       await sut.deleteScheduledNotification(notification.id, em);
-      await em.getRepository(NotificationScheduleEntity).findOneBy({ subscriptionId: notification.id });
+      const sch = await em.getRepository(NotificationScheduleEntity).findOneBy({ subscriptionId: notification.id });
+      expect(sch).toBeNull();
     });
   });
 });

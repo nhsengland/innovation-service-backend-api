@@ -16,16 +16,14 @@ export type NotifyMeMessageType<T extends EventType> = {
 
 // export type SubscriptionConfig = TriggerConfigFromEventPayloads & SubscriptionTypes;
 
-// TODO: Untying SubscriptionConfig from the EventPayloads, validate with Diogo, Progress update created also had unitId and some other stuff
-// that seems to be extra information, the validator for the event listener is the payload.
-// The listener will be generic as it currently is
 export type SupportUpdated = {
   eventType: 'SUPPORT_UPDATED';
-  subscriptionType: 'INSTANTLY';
+  subscriptionType: 'INSTANTLY' | 'ONCE';
   preConditions: {
     units: string[];
     status: ExcludeEnum<InnovationSupportStatusEnum, InnovationSupportStatusEnum.UNASSIGNED>[];
   };
+  //  notificationType: 'SUPPORT_UPDATED' | 'SUGGESTED_SUPPORT_UPDATED';
 };
 
 export type ProgressUpdateCreated = {
@@ -92,8 +90,9 @@ export type EventType = (typeof EventType)[number];
  * Contains the subscription types and specific payloads configurations that each contain.
  */
 export type SubscriptionType = SubscriptionTypes['subscriptionType'];
-export type SubscriptionTypes = InstantSubscriptionType | ScheduledSubscriptionType; // | PeriodicSubscriptionType;
+export type SubscriptionTypes = InstantSubscriptionType | ScheduledSubscriptionType | OnceSubscriptionType; // | PeriodicSubscriptionType;
 export type InstantSubscriptionType = { subscriptionType: 'INSTANTLY' };
+export type OnceSubscriptionType = { subscriptionType: 'ONCE' };
 export type ScheduledSubscriptionType = {
   subscriptionType: 'SCHEDULED';
   date: Date;

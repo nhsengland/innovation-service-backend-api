@@ -399,6 +399,7 @@ describe('Users / _services / notify me service suite', () => {
           {
             config: {
               ...scenario.users.aliceQualifyingAccessor.notifyMeSubscriptions.johnInnovation.config,
+              subscriptionType: 'INSTANTLY',
               eventType: 'PROGRESS_UPDATE_CREATED'
             }
           }

@@ -97,6 +97,10 @@ export class NotifyMeHandler {
         this.#emails.push(emailPayload);
       }
       this.#inApps.push(inAppPayload);
+
+      if (subscription.config.subscriptionType === 'ONCE') {
+        await this.notifyMeService.deleteSubscription(subscription.id, transaction);
+      }
     }
   }
 
