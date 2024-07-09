@@ -19,6 +19,8 @@ export type CurrentDocumentType = DocumentType202304;
 export type CurrentEvidenceType = NonNullable<CurrentDocumentType['evidences']>[number];
 export const CurrentEvidenceSchema = EvidenceSchema202304;
 
+export { InnovationRecordDocumentType, requiredSectionsAndQuestions } from './202407/document.types';
+
 // Helpers
 export type DocumentTypeFromVersion<V extends DocumentType['version']> = V extends '202304'
   ? CurrentDocumentType
