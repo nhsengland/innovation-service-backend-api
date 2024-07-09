@@ -33,7 +33,6 @@ import { BaseService } from './base.service';
 @injectable()
 export class NotifyMeService extends BaseService {
   constructor() {
-    // @inject(SHARED_SYMBOLS.StorageQueueService) private storageQueueService: StorageQueueService
     super();
   }
 
@@ -76,17 +75,10 @@ export class NotifyMeService extends BaseService {
 
     const query = em
       .createQueryBuilder(NotifyMeSubscriptionEntity, 'subscription')
-      .select([
-        'subscription.id',
-        'subscription.eventType',
-        'subscription.config',
-        'subscription.updatedAt'
-        // 'scheduled.sendDate',
-        // 'scheduled.params'
-      ])
-      // .leftJoin('subscription.scheduledNotification', 'scheduled')
+      .select(['subscription.id', 'subscription.eventType', 'subscription.config', 'subscription.updatedAt'])
       .where('subscription.user_role_id = :roleId', { roleId: domainContext.currentRole.id })
       .andWhere('subscription.innovation_id = :innovationId', { innovationId: innovationId })
+      .andWhere("subscription.eventType != 'ONCE'") // at least for now once subscriptions should be hidden
       .orderBy('subscription.updatedAt', 'DESC');
 
     const subscriptions = await query.getMany();
@@ -233,15 +225,7 @@ export class NotifyMeService extends BaseService {
 
     const subscription = await em
       .createQueryBuilder(NotifyMeSubscriptionEntity, 'subscription')
-      .select([
-        'subscription.id',
-        'subscription.eventType',
-        'subscription.config',
-        'subscription.updatedAt'
-        // 'scheduled.sendDate',
-        // 'scheduled.params'
-      ])
-      // .leftJoin('subscription.scheduledNotification', 'scheduled')
+      .select(['subscription.id', 'subscription.eventType', 'subscription.config', 'subscription.updatedAt'])
       .where('subscription.id = :subscriptionId', { subscriptionId })
       .andWhere('subscription.user_role_id = :roleId', { roleId: domainContext.currentRole.id })
       .getOne();
@@ -279,6 +263,7 @@ export class NotifyMeService extends BaseService {
       .select(['innovation.id as id', 'innovation.name as name', 'COUNT(subscription.id) as count'])
       .innerJoin('subscription.innovation', 'innovation')
       .where('subscription.user_role_id = :roleId', { roleId: domainContext.currentRole.id })
+      .andWhere("subscription.eventType != 'ONCE'") // at least for now once subscriptions should be hidden
       .groupBy('innovation.id')
       .addGroupBy('innovation.name')
       .addOrderBy('innovation.name');
