@@ -27,7 +27,7 @@ import { DomainInnovationsService, NotifierService } from '@innovations/shared/s
 import { TestsHelper } from '@innovations/shared/tests';
 import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
 import { randNumber, randText, randUuid } from '@ngneat/falso';
-import { EntityManager } from 'typeorm';
+import { EntityManager, IsNull } from 'typeorm';
 import { InnovationTasksService } from './innovation-tasks.service';
 import { InnovationThreadsService } from './innovation-threads.service';
 import SYMBOLS from './symbols';
@@ -417,7 +417,11 @@ describe('Innovation Tasks Suite', () => {
         em
       );
 
-      expect(tasks.count).toBe(1);
+      // Test was picking more than 1 innovation sometimes, so fetching from the db to make sure there are no repeated names
+      const dbTasks = await em.getRepository(InnovationTaskEntity).find({
+        where: { innovationSection: { innovation: { name: innovation.name } }, innovationSupport: { id: IsNull() } } // the condition has more than this complexity but this is enough to pinpoint the scenario
+      });
+      expect(tasks.count).toBe(dbTasks.length);
     });
 
     it('should list no tasks that match an innovation name when no match', async () => {
@@ -604,8 +608,8 @@ describe('Innovation Tasks Suite', () => {
           order === 'innovationName'
             ? a.innovation.name
             : order === 'createdAt' || order === 'updatedAt'
-            ? a[order].toISOString()
-            : a[order]
+              ? a[order].toISOString()
+              : a[order]
         );
         expect(data).toEqual([...data].sort());
       }
@@ -634,8 +638,8 @@ describe('Innovation Tasks Suite', () => {
           order === 'innovationName'
             ? a.innovation.name
             : order === 'createdAt' || order === 'updatedAt'
-            ? a[order].toISOString()
-            : a[order]
+              ? a[order].toISOString()
+              : a[order]
         );
         expect(data).toEqual([...data].sort().reverse());
       }

@@ -79,3 +79,5 @@ export const toArray = <T>(value: T | T[] | undefined): T[] => {
     return [value];
   }
 };
+
+export const sleep = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
