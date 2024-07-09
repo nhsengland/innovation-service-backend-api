@@ -1,3 +1,4 @@
+import { requiredSectionsAndQuestions } from '../../schemas/innovation-record';
 import Joi from 'joi';
 import type { Question } from './question.types';
 import { QuestionValidatorFactory } from './question.validator';
@@ -95,10 +96,7 @@ export class SchemaModel {
 
   private validateIdNotRepeated(context: any, path: string, idList: { [key: string]: any }) {
     if (idList[context.id]) {
-      this.errorList.push({
-        message: `${path}.id is repeated`,
-        context: context
-      });
+      this.errorList.push({ message: `${path}.id is repeated`, context: context });
     } else {
       idList[context.id] = context;
     }
@@ -204,6 +202,24 @@ export class SchemaModel {
     }
   }
 
+  private validateRequiredFields() {
+    for (const [subSectionId, questions] of requiredSectionsAndQuestions.entries()) {
+      const curSchemaQuestions = this.subSections.get(subSectionId);
+      if (!curSchemaQuestions) {
+        this.errorList.push({ message: `subSections[${subSectionId}] is required`, context: {} });
+      } else {
+        for (const question of questions) {
+          if (!curSchemaQuestions.includes(question)) {
+            this.errorList.push({
+              message: `subSections[${subSectionId}].question[${question}] is required`,
+              context: {}
+            });
+          }
+        }
+      }
+    }
+  }
+
   public runRules(): { schema: IRSchemaType | null; errors: SchemaValidationError[] } {
     this.errorList = [];
 
@@ -235,6 +251,8 @@ export class SchemaModel {
         });
       });
     });
+
+    this.validateRequiredFields();
 
     // clear the structures when errors occur.
     if (this.errorList.length) {
