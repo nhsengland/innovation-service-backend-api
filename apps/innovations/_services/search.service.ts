@@ -415,7 +415,7 @@ export class SearchService extends BaseService {
         builder.addMust({ term: { 'owner.id': targetUser[0].id } });
         return;
       }
-
+      // If is not an email we do the normal search
       // Define individual queries
       const mainQuery: QueryDslQueryContainer = {
         multi_match: {
@@ -477,7 +477,6 @@ export class SearchService extends BaseService {
         }
       };
 
-      // Use orQuery helper function
       const searchQuery = orQuery([mainQuery, evidencesQuery, regulationsQuery, userTestsQuery]);
 
       // Add the combined query to the builder
