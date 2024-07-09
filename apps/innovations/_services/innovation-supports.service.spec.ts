@@ -281,12 +281,13 @@ describe('Innovations / _services / innovation-supports suite', () => {
     it('should send the notifyMe', async () => {
       const context = DTOsHelper.getUserRequestContext(scenario.users.bartQualifyingAccessor);
       const innovation = scenario.users.adamInnovator.innovations.adamInnovation.id;
+      const message = randText({ charCount: 10 });
       await sut.createInnovationSupport(
         context,
         innovation,
         {
           status: InnovationSupportStatusEnum.ENGAGING,
-          message: randText({ charCount: 10 }),
+          message,
           accessors: [
             {
               id: scenario.users.jamieMadroxAccessor.id,
@@ -299,7 +300,8 @@ describe('Innovations / _services / innovation-supports suite', () => {
 
       expect(notifierSendNotifyMeSpy).toHaveBeenCalledWith(context, innovation, 'SUPPORT_UPDATED', {
         status: InnovationSupportStatusEnum.ENGAGING,
-        units: context.organisation?.organisationUnit?.id
+        units: context.organisation?.organisationUnit?.id,
+        message
       });
     });
 
@@ -886,17 +888,19 @@ describe('Innovations / _services / innovation-supports suite', () => {
 
     it('should send a notifyMe when status is changed', async () => {
       const context = DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor);
+      const message = randText({ charCount: 10 });
       await sut.updateInnovationSupport(
         context,
         innovation.id,
         innovation.supports.supportByHealthOrgUnit.id,
-        { status: InnovationSupportStatusEnum.CLOSED, message: randText({ charCount: 10 }) },
+        { status: InnovationSupportStatusEnum.CLOSED, message },
         em
       );
 
       expect(notifierSendNotifyMeSpy).toHaveBeenCalledWith(context, innovation.id, 'SUPPORT_UPDATED', {
         status: InnovationSupportStatusEnum.CLOSED,
-        units: context.organisation?.organisationUnit?.id
+        units: context.organisation?.organisationUnit?.id,
+        message
       });
     });
 
