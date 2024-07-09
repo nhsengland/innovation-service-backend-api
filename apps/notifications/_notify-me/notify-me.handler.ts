@@ -133,14 +133,16 @@ export class NotifyMeHandler {
           innovation: innovation.name,
           event: this.event.type,
           organisation: HandlersHelper.getRequestUnitName(this.event.requestUser),
-          supportStatus: TranslationHelper.translate(`SUPPORT_STATUS.${this.event.params.status}`).toLowerCase()
+          supportStatus: TranslationHelper.translate(`SUPPORT_STATUS.${this.event.params.status}`).toLowerCase(),
+          unitId: this.event.params.units
         };
 
       case 'PROGRESS_UPDATE_CREATED':
         return {
           innovation: innovation.name,
           organisation: HandlersHelper.getRequestUnitName(this.event.requestUser),
-          event: this.event.type
+          event: this.event.type,
+          unitId: this.event.params.units
         };
 
       case 'INNOVATION_RECORD_UPDATED':

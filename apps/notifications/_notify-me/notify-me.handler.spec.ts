@@ -410,7 +410,8 @@ describe('NotifyMe Handler Suite', () => {
           innovation: 'Test Innovation',
           event: 'SUPPORT_UPDATED',
           organisation: 'Health Org Unit',
-          supportStatus: 'engaging'
+          supportStatus: 'engaging',
+          unitId: unit
         });
       });
     });
