@@ -26,6 +26,7 @@ import {
   UnprocessableEntityError
 } from '@innovations/shared/errors';
 import { TranslationHelper } from '@innovations/shared/helpers';
+import { sleep } from '@innovations/shared/helpers/misc.helper';
 import { DomainInnovationsService, NotifierService } from '@innovations/shared/services';
 import { TestsHelper } from '@innovations/shared/tests';
 import { InnovationSupportLogBuilder } from '@innovations/shared/tests/builders/innovation-support-log.builder';
@@ -583,6 +584,10 @@ describe('Innovations / _services / innovation-supports suite', () => {
         .setCreatedBy(paul, paul.roles.assessmentRole)
         .setSuggestedUnits([scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id])
         .save();
+
+      // Using sleeps because tests randomly fail and I suspect it's related with the created sort
+      await sleep(10);
+
       // Suggested by QA
       const qaSuggestion = await new InnovationSupportLogBuilder(em)
         .setInnovation(innovation.id)
@@ -591,6 +596,9 @@ describe('Innovations / _services / innovation-supports suite', () => {
         .setSupportStatus(InnovationSupportStatusEnum.ENGAGING)
         .setSuggestedUnits([scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id])
         .save();
+
+      await sleep(10);
+
       // Update status
       const statusUpdate = await new InnovationSupportLogBuilder(em)
         .setInnovation(innovation.id)
@@ -598,6 +606,9 @@ describe('Innovations / _services / innovation-supports suite', () => {
         .setCreatedBy(jamieMadrox, jamieMadrox.roles.aiRole)
         .setSupportStatus(InnovationSupportStatusEnum.ENGAGING)
         .save();
+
+      await sleep(10);
+
       // Create Progress Update
       const progressUpdate = await new InnovationSupportLogBuilder(em)
         .setInnovation(innovation.id)
@@ -606,6 +617,9 @@ describe('Innovations / _services / innovation-supports suite', () => {
         .setCreatedBy(jamieMadrox, jamieMadrox.roles.aiRole)
         .setParams({ title: randText() })
         .save();
+
+      await sleep(10);
+
       // Archive Innovation
       const archiveInnovationUpdate = await new InnovationSupportLogBuilder(em)
         .setInnovation(innovation.id)
@@ -614,6 +628,9 @@ describe('Innovations / _services / innovation-supports suite', () => {
         .setCreatedBy(johnInnovator, johnInnovator.roles.innovatorRole)
         .setOrganisationUnit(jamieMadrox.roles.aiRole.organisationUnit!.id)
         .save();
+
+      await sleep(10);
+
       // Innovator stop share Innovation
       const stopShareUpdate = await new InnovationSupportLogBuilder(em)
         .setInnovation(innovation.id)
@@ -622,6 +639,8 @@ describe('Innovations / _services / innovation-supports suite', () => {
         .setCreatedBy(johnInnovator, johnInnovator.roles.innovatorRole)
         .setOrganisationUnit(jamieMadrox.roles.aiRole.organisationUnit!.id)
         .save();
+
+      await sleep(10);
 
       const unitInfo = await sut.getSupportSummaryUnitInfo(
         DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
