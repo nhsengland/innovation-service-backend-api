@@ -418,14 +418,42 @@ export class SearchService extends BaseService {
 
       // If is not an email we do the normal search
       const searchQuery: QueryDslQueryContainer = {
-        multi_match: {
-          type: 'best_fields',
-          query: search,
-          fields: [...priorities, 'document.*'],
-          fuzziness: 0, // Fuzziness AUTO with highlight is causing major slowdowns, fuzziness and highlight is causing slow
-          prefix_length: 2,
-          tie_breaker: 0.3
-          // minimum_should_match: '2<-25% 9<-3'
+        bool: {
+          should: [
+            {
+              multi_match: {
+                type: 'best_fields',
+                query: search,
+                fields: [...priorities, 'document.*'],
+                fuzziness: 0, // Fuzziness AUTO with highlight is causing major slowdowns, fuzziness and highlight is causing slow
+                prefix_length: 2,
+                tie_breaker: 0.3
+                // minimum_should_match: '2<-25% 9<-3'
+              }
+            },
+            {
+              nested: {
+                path: 'document.evidences',
+                query: {
+                  multi_match: {
+                    type: 'best_fields',
+                    query: search,
+                    fields: [
+                      'document.evidences.id',
+                      'document.evidences.evidenceSubmitType',
+                      'document.evidences.evidenceType',
+                      'document.evidences.description',
+                      'document.evidences.summary'
+                    ],
+                    fuzziness: 0,
+                    prefix_length: 2,
+                    tie_breaker: 0.3
+                    // minimum_should_match: '2<-25% 9<-3'
+                  }
+                }
+              }
+            }
+          ]
         }
       };
       builder.addMust(searchQuery);
@@ -436,6 +464,9 @@ export class SearchService extends BaseService {
           'owner.companyName': {},
           'document.*': {
             number_of_fragments: 1000 // we require the fragments to show the counts so the default 5 isn't enough
+          },
+          'document.evidences.*': {
+            number_of_fragments: 1000
           }
         }
       });
