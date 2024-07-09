@@ -484,11 +484,11 @@ export class SearchService extends BaseService {
       builder.addMust(searchQuery);
       builder.addHighlight({
         order: 'score',
-        highlight_query: searchQuery,
+        highlight_query: searchQuery, // the search query is required to avoid highlighting things from the filters
         fields: {
           'owner.companyName': {},
           'document.*': {
-            number_of_fragments: 1000
+            number_of_fragments: 1000 // we require the fragments to show the counts so the default 5 isn't enough
           },
           'document.evidences.*': {
             number_of_fragments: 1000
