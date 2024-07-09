@@ -693,7 +693,8 @@ export class CompleteScenarioBuilder {
           preConditions: {
             status: [InnovationSupportStatusEnum.ENGAGING],
             units: [medTechOrgUnit.id]
-          }
+          },
+          notificationType: 'SUPPORT_UPDATED'
         })
         .save();
 
@@ -708,7 +709,8 @@ export class CompleteScenarioBuilder {
           preConditions: {
             status: [InnovationSupportStatusEnum.ENGAGING],
             units: [medTechOrgUnit.id]
-          }
+          },
+          notificationType: 'SUPPORT_UPDATED'
         })
         .save();
 
@@ -786,7 +788,8 @@ export class CompleteScenarioBuilder {
           preConditions: {
             status: [InnovationSupportStatusEnum.ENGAGING],
             units: [medTechOrgUnit.id]
-          }
+          },
+          notificationType: 'SUPPORT_UPDATED'
         })
         .save();
 

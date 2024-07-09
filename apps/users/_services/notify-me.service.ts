@@ -144,7 +144,8 @@ export class NotifyMeService extends BaseService {
       eventType: s.config.eventType,
       subscriptionType: s.config.subscriptionType,
       organisations: this.groupUnitsByOrganisation(s.config.preConditions.units, retrievedUnits),
-      status: s.config.preConditions.status
+      status: s.config.preConditions.status,
+      notificationType: s.config.notificationType
     }));
   }
 

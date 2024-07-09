@@ -182,7 +182,11 @@ export class NotifyMeHandler {
             recipient.role,
             this.event.innovationId,
             this.event.requestUser.organisation?.organisationUnit?.id
-          )
+          ),
+          ...('notificationType' in subscription.config &&
+            subscription.config.notificationType === 'SUGGESTED_SUPPORT_UPDATED' && {
+              message: this.event.params.message
+            })
         };
 
       case 'PROGRESS_UPDATE_CREATED':
@@ -224,11 +228,13 @@ export class NotifyMeHandler {
     subscription: NotifyMeSubscriptionType,
     params: InAppTemplatesType[keyof InAppTemplatesType]
   ): InAppMessageType {
+    const type =
+      'notificationType' in subscription.config ? subscription.config.notificationType : subscription.config.eventType;
     return {
       data: {
         requestUser: { id: this.event.requestUser.id },
         innovationId: this.event.innovationId,
-        context: { type: 'NOTIFY_ME', detail: subscription.config.eventType, id: subscription.id },
+        context: { type: 'NOTIFY_ME', detail: type, id: subscription.id },
         userRoleIds: [subscription.roleId],
         params
       }
@@ -240,8 +246,10 @@ export class NotifyMeHandler {
     subscription: NotifyMeSubscriptionType,
     params: EmailTemplatesType[EventType] & { displayName: string; unsubscribeUrl: string }
   ): EmailMessageType {
+    const type =
+      'notificationType' in subscription.config ? subscription.config.notificationType : subscription.config.eventType;
     return {
-      data: { type: subscription.config.eventType, to: email, params }
+      data: { type: type, to: email, params }
     };
   }
 }
