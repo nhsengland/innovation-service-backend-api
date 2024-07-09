@@ -109,8 +109,8 @@ export class CheckboxArrayValidator implements QuestionTypeValidator<CheckboxArr
 export class FieldGroupValidator implements QuestionTypeValidator<FieldsGroup> {
   validate(question: FieldsGroup): Joi.Schema {
     // When addQuestion is not defined the payload is a string array.
-    if(!question.addQuestion) {
-      return JoiHelper.AppCustomJoi().stringArray().required();
+    if (!question.addQuestion) {
+      return JoiHelper.AppCustomJoi().stringArray().items(Joi.string()).required();
     }
 
     let validation = Joi.array();
