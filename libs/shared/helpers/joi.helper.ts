@@ -33,6 +33,7 @@ export class JoiHelper {
     stringObject: () => Joi.ObjectSchema;
     decodeURIString: () => Joi.StringSchema;
     decodeURIDate: () => Joi.DateSchema;
+    dateWithDefaultTime: () => Joi.DateSchema & { defaultTime: (time: string) => Joi.DateSchema };
   } {
     return Joi.extend(
       {
@@ -84,6 +85,42 @@ export class JoiHelper {
         base: Joi.date().meta({ baseType: 'date' }),
         prepare(value, _helpers) {
           return typeof value !== 'string' ? { value } : { value: decodeURIComponent(value) };
+        }
+      },
+
+      {
+        type: 'dateWithDefaultTime',
+        base: Joi.date().meta({ baseType: 'date' }),
+        coerce(value, helpers) {
+          if (
+            value instanceof Date &&
+            value.getHours() === 0 &&
+            value.getMinutes() === 0 &&
+            value.getSeconds() === 0 &&
+            helpers.schema.$_getRule('defaultTime')?.args?.['time']
+          ) {
+            const time = helpers.schema.$_getRule('defaultTime')?.args?.['time'].split(':');
+            const hours = parseInt(time[0], 10);
+            const minutes = parseInt(time[1], 10);
+            value.setHours(hours, minutes);
+          }
+          return { value };
+        },
+        rules: {
+          defaultTime: {
+            convert: true,
+            method(time) {
+              return this.$_addRule({ name: 'defaultTime', args: { time } });
+            },
+            args: [
+              {
+                name: 'time',
+                ref: true,
+                assert: value => typeof value === 'string' && !!value.match(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/),
+                message: 'must be a valid time (HH:MM)'
+              }
+            ]
+          }
         }
       }
     );

@@ -3,6 +3,7 @@ export { BaseHandler } from './base.handler';
 export { AccountCreationHandler } from './account/account-creation.handler';
 export { LockUserHandler } from './admin/lock-user.handler';
 export { UnitInactivatedHandler } from './admin/unit-inactivated.handler';
+export { NewAccountHandler } from './admin/new-account.handler';
 export { IdleSupportAccessorHandler } from './automatic/idle-support-accessor.handler';
 export { IdleSupportInnovatorHandler } from './automatic/idle-support-innovator.handler';
 export { IncompleteRecordHandler } from './automatic/incomplete-record.handler';

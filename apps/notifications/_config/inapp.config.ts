@@ -304,7 +304,8 @@ export type InAppTemplatesType = {
     sectionLabel: string;
   };
   REMINDER: {
+    event: string;
     innovation: string;
-    message: string;
+    reason: string;
   };
 };

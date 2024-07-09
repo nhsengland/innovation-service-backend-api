@@ -12,20 +12,20 @@ import {
 import { BadRequestError, ForbiddenError, NotFoundError, NotImplementedError } from '@users/shared/errors';
 import { NotificationErrorsEnum } from '@users/shared/errors/errors.enums';
 import { AuthErrorsEnum } from '@users/shared/services/auth/authorization-validation.model';
-import type { EventType } from '@users/shared/types';
 import {
-  ProgressUpdateCreated,
   isAccessorDomainContextType,
   type DomainContextType,
+  type EventType,
+  type ProgressUpdateCreated,
   type SubscriptionConfig,
   type SupportUpdated
 } from '@users/shared/types';
 import type {
+  DefaultOptions,
   DefaultResponseDTO,
   EntitySubscriptionConfigType,
   NotifyMeResponseTypes,
   OrganisationWithUnits,
-  PreconditionsOptions,
   SubscriptionResponseDTO
 } from '../_types/notify-me.types';
 import { BaseService } from './base.service';
@@ -43,9 +43,13 @@ export class NotifyMeService extends BaseService {
     config: SubscriptionConfig,
     entityManager?: EntityManager
   ): Promise<void> {
+    if (config.subscriptionType === 'SCHEDULED' && config.date < new Date()) {
+      throw new BadRequestError(NotificationErrorsEnum.NOTIFY_ME_SCHEDULED_DATE_PAST);
+    }
+
     const em = entityManager ?? this.sqlConnection.manager;
 
-    await em.save(
+    const subscription = await em.save(
       NotifyMeSubscriptionEntity,
       NotifyMeSubscriptionEntity.new({
         createdBy: domainContext.id,
@@ -55,20 +59,12 @@ export class NotifyMeService extends BaseService {
       })
     );
 
-    /* TODO
     if (config.subscriptionType === 'SCHEDULED') {
-      await this.storageQueueService.sendMessage<NotifyMeMessageType<'REMINDER'>>(QueuesEnum.NOTIFY_ME, {
-        data: {
-          requestUser: domainContext,
-          innovationId,
-
-          type: 'REMINDER',
-
-          params: {}
-        }
+      await em.save(NotificationScheduleEntity, {
+        subscriptionId: subscription.id,
+        sendDate: config.date
       });
     }
-    */
   }
 
   async getInnovationSubscriptions(
@@ -122,10 +118,10 @@ export class NotifyMeService extends BaseService {
     INNOVATION_RECORD_UPDATED: this.defaultSubscriptionResponseDTO('INNOVATION_RECORD_UPDATED', ['sections']).bind(
       this
     ),
-    REMINDER: this.defaultSubscriptionResponseDTO('REMINDER', []).bind(this)
+    REMINDER: this.defaultSubscriptionResponseDTO('REMINDER', ['date', 'customMessage']).bind(this)
   };
 
-  private defaultSubscriptionResponseDTO<T extends EventType, K extends PreconditionsOptions<T>>(
+  private defaultSubscriptionResponseDTO<T extends EventType, K extends DefaultOptions<T>>(
     type: T | undefined,
     keys: K[]
   ): (subscriptions: EntitySubscriptionConfigType<T>[]) => DefaultResponseDTO<T, K>[] {
@@ -135,6 +131,7 @@ export class NotifyMeService extends BaseService {
         updatedAt: s.updatedAt,
         eventType: type,
         subscriptionType: s.config.subscriptionType,
+        ...(keys.length && pick(s.config, keys)),
         ...(keys.length && pick('preConditions' in s.config && s.config.preConditions, keys))
       })) as DefaultResponseDTO<T, K>[];
     };
@@ -361,7 +358,18 @@ export class NotifyMeService extends BaseService {
       throw new BadRequestError(NotificationErrorsEnum.NOTIFY_ME_CANNOT_CHANGE_EVENT_TYPE);
     }
 
+    if (config.subscriptionType === 'SCHEDULED' && config.date < new Date()) {
+      throw new BadRequestError(NotificationErrorsEnum.NOTIFY_ME_SCHEDULED_DATE_PAST);
+    }
+
     await em.update(NotifyMeSubscriptionEntity, { id: subscriptionId }, { config });
+
+    if (config.subscriptionType === 'SCHEDULED') {
+      await em.save(NotificationScheduleEntity, {
+        subscriptionId: subscription.id,
+        sendDate: config.date
+      });
+    }
   }
 
   async deleteSubscription(
@@ -396,16 +404,18 @@ export class NotifyMeService extends BaseService {
       });
     }
 
-    const result = await entityManager.softDelete(NotifyMeSubscriptionEntity, {
+    await entityManager
+      .createQueryBuilder(NotificationScheduleEntity, 'scheduled')
+      .delete()
+      .where(
+        'EXISTS (SELECT 1 FROM notify_me_subscription WHERE id = notification_schedule.subscription_id AND user_role_id = :roleId)',
+        { roleId: domainContext.currentRole.id }
+      )
+      .execute();
+
+    await entityManager.softDelete(NotifyMeSubscriptionEntity, {
       userRole: { id: domainContext.currentRole.id },
       ...(ids?.length && { id: In(ids) })
     });
-
-    if (result?.affected) {
-      await entityManager.delete(NotificationScheduleEntity, {
-        userRole: { id: domainContext.currentRole.id },
-        ...(ids?.length && { subscription: { id: In(ids) } })
-      });
-    }
   }
 }
