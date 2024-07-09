@@ -416,56 +416,87 @@ export class SearchService extends BaseService {
         return;
       }
 
-      // If is not an email we do the normal search
-      const searchQuery: QueryDslQueryContainer = {
-        bool: {
-          should: [
-            {
-              multi_match: {
-                type: 'best_fields',
-                query: search,
-                fields: [...priorities, 'document.*'],
-                fuzziness: 0, // Fuzziness AUTO with highlight is causing major slowdowns, fuzziness and highlight is causing slow
-                prefix_length: 2,
-                tie_breaker: 0.3
-                // minimum_should_match: '2<-25% 9<-3'
-              }
-            },
-            {
-              nested: {
-                path: 'document.evidences',
-                query: {
-                  multi_match: {
-                    type: 'best_fields',
-                    query: search,
-                    fields: [
-                      'document.evidences.id',
-                      'document.evidences.evidenceSubmitType',
-                      'document.evidences.evidenceType',
-                      'document.evidences.description',
-                      'document.evidences.summary'
-                    ],
-                    fuzziness: 0,
-                    prefix_length: 2,
-                    tie_breaker: 0.3
-                    // minimum_should_match: '2<-25% 9<-3'
-                  }
-                }
-              }
-            }
-          ]
+      // Define individual queries
+      const mainQuery: QueryDslQueryContainer = {
+        multi_match: {
+          type: 'best_fields',
+          query: search,
+          fields: [...priorities, 'document.*'],
+          fuzziness: 0, // Fuzziness AUTO with highlight is causing major slowdowns, fuzziness and highlight is causing slow
+          prefix_length: 2,
+          tie_breaker: 0.3
+          // minimum_should_match: '2<-25% 9<-3'
         }
       };
+
+      const evidencesQuery: QueryDslQueryContainer = {
+        nested: {
+          path: 'document.evidences',
+          query: {
+            multi_match: {
+              type: 'best_fields',
+              query: search,
+              fields: ['document.evidences.*'],
+              fuzziness: 0,
+              prefix_length: 2,
+              tie_breaker: 0.3
+            }
+          }
+        }
+      };
+
+      const regulationsQuery: QueryDslQueryContainer = {
+        nested: {
+          path: 'document.REGULATIONS_AND_STANDARDS.standards',
+          query: {
+            multi_match: {
+              type: 'best_fields',
+              query: search,
+              fields: ['document.REGULATIONS_AND_STANDARDS.standards.*'],
+              fuzziness: 0,
+              prefix_length: 2,
+              tie_breaker: 0.3
+            }
+          }
+        }
+      };
+
+      const userTestsQuery: QueryDslQueryContainer = {
+        nested: {
+          path: 'document.TESTING_WITH_USERS.userTests',
+          query: {
+            multi_match: {
+              type: 'best_fields',
+              query: search,
+              fields: ['document.TESTING_WITH_USERS.userTests.*'],
+              fuzziness: 0,
+              prefix_length: 2,
+              tie_breaker: 0.3
+            }
+          }
+        }
+      };
+
+      // Use orQuery helper function
+      const searchQuery = orQuery([mainQuery, evidencesQuery, regulationsQuery, userTestsQuery]);
+
+      // Add the combined query to the builder
       builder.addMust(searchQuery);
       builder.addHighlight({
         order: 'score',
-        highlight_query: searchQuery, // the search query is required to avoid highlighting things from the filters
+        highlight_query: searchQuery,
         fields: {
           'owner.companyName': {},
           'document.*': {
-            number_of_fragments: 1000 // we require the fragments to show the counts so the default 5 isn't enough
+            number_of_fragments: 1000
           },
           'document.evidences.*': {
+            number_of_fragments: 1000
+          },
+          'document.REGULATIONS_AND_STANDARDS.standards.*': {
+            number_of_fragments: 1000
+          },
+          'document.TESTING_WITH_USERS.userTests.*': {
             number_of_fragments: 1000
           }
         }
