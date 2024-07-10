@@ -391,14 +391,17 @@ export class NotifyMeService extends BaseService {
       });
     }
 
-    await entityManager
-      .createQueryBuilder(NotificationScheduleEntity, 'scheduled')
-      .delete()
-      .where(
-        'EXISTS (SELECT 1 FROM notify_me_subscription WHERE id = notification_schedule.subscription_id AND user_role_id = :roleId)',
-        { roleId: domainContext.currentRole.id }
-      )
-      .execute();
+    const query = entityManager.createQueryBuilder(NotificationScheduleEntity, 'scheduled').delete().where(
+      // Delete only if the subscription belongs to the current user
+      'EXISTS (SELECT 1 FROM notify_me_subscription WHERE id = notification_schedule.subscription_id AND user_role_id = :roleId)',
+      { roleId: domainContext.currentRole.id }
+    );
+
+    if (ids?.length) {
+      query.andWhere('notification_schedule.subscription_id IN (:...ids)', { ids });
+    }
+
+    await query.execute();
 
     await entityManager.softDelete(NotifyMeSubscriptionEntity, {
       userRole: { id: domainContext.currentRole.id },
