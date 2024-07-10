@@ -51,6 +51,13 @@ export class IRSchemaService {
     return this.model.getSubSectionPayloadValidation(subSectionId, payload);
   }
 
+  getCalculatedFields(subSectionId: string, payload: { [key: string]: any }) {
+    if (!this.model) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_RECORD_SCHEMA_NOT_FOUND);
+    }
+    return this.model.getCalculatedFields(subSectionId, payload);
+  }
+
   /**
    * Orchestrate the update of a schema, this includes validating the schema,
    * creating a new schema in the DB, and lastly update the in-memory schema and model.

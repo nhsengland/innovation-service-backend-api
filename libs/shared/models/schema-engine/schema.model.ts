@@ -37,6 +37,7 @@ export class SchemaModel {
 
   private subSections = new Map<string, string[]>();
   private questions = new Map<string, Question>();
+  private conditions = new Map<string, Record<string, Condition[]>>();
 
   constructor(schema: any) {
     this.errorList = [];
@@ -70,6 +71,25 @@ export class SchemaModel {
 
   isSubsectionValid(subSectionId: string): boolean {
     return this.subSections.has(subSectionId);
+  }
+
+  /**
+   * Calculated fields
+   */
+  getCalculatedFields(subSectionId: string, payload: { [key: string]: any }) {
+    const out: { [key: string]: string } = {};
+    const conditionalFields = this.conditions.get(subSectionId);
+    if (!conditionalFields) return out;
+
+    for (const [field, conditions] of Object.entries(conditionalFields)) {
+      for (const condition of conditions) {
+        const cur = payload[condition.id];
+        if (cur && (condition.options.includes(cur) || !condition.options.length)) {
+          out[field] = Array.isArray(cur) ? cur[0] : cur;
+        }
+      }
+    }
+    return out;
   }
 
   /**
@@ -267,6 +287,7 @@ export class SchemaModel {
               );
             });
           });
+          this.conditions.set(subSection.id, subSection.calculatedFields);
         }
       });
     });
@@ -277,6 +298,7 @@ export class SchemaModel {
     if (this.errorList.length) {
       this.subSections.clear();
       this.questions.clear();
+      this.conditions.clear();
     }
 
     return { schema, errors: this.errorList };
