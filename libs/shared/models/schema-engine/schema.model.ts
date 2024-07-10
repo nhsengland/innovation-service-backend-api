@@ -16,12 +16,15 @@ export type InnovationRecordSubSectionType = {
   id: string;
   title: string;
   steps: InnovationRecordStepType[];
+  calculatedFields?: Record<string, Condition[]>;
 };
 
 export type InnovationRecordStepType = {
   questions: Question[];
-  condition?: { id: string; options: string[] };
+  condition?: Condition;
 };
+
+type Condition = { id: string; options: string[] };
 
 export type SchemaValidationError = {
   message: string;
@@ -102,7 +105,11 @@ export class SchemaModel {
     }
   }
 
-  private validateCondition(step: InnovationRecordStepType, path: string, idList: { [key: string]: any }) {
+  private validateCondition(
+    step: InnovationRecordStepType | { condition: Condition },
+    path: string,
+    idList: { [key: string]: any }
+  ) {
     const condition = step.condition;
     if (condition) {
       if (idList[condition.id]) {
@@ -249,6 +256,18 @@ export class SchemaModel {
         subSection.steps?.forEach((step, k: number) => {
           this.validateStep(subSection.id, step, `sections[${i}].subSections[${j}].steps[${k}]`, questionList);
         });
+
+        if (subSection.calculatedFields) {
+          Object.entries(subSection.calculatedFields).forEach(([field, conditions]) => {
+            conditions.forEach(condition => {
+              this.validateCondition(
+                { condition },
+                `sections[${i}].subSections[${j}].calculatedFields[${field}]`,
+                questionList
+              );
+            });
+          });
+        }
       });
     });
 
