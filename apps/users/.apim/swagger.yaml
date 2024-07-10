@@ -731,6 +731,7 @@ paths:
                       - AP03_USER_LOCKED_TO_LOCKED_USER
                       - AP07_UNIT_INACTIVATED_TO_ENGAGING_INNOVATIONS
                       - AP08_USER_EMAIL_ADDRESS_UPDATED
+                      - AP09_NEW_SUPPORTING_ACCOUNT
                       - CA01_ACCOUNT_CREATION_OF_INNOVATOR
                       - CA02_ACCOUNT_CREATION_OF_COLLABORATOR
                       - AU01_INNOVATOR_INCOMPLETE_RECORD
@@ -747,6 +748,7 @@ paths:
                       - PROGRESS_UPDATE_CREATED
                       - INNOVATION_RECORD_UPDATED
                       - REMINDER
+                      - SUGGESTED_SUPPORT_UPDATED
                   default: []
                 dismissAll:
                   type: boolean
@@ -940,6 +942,7 @@ paths:
                             - AP03_USER_LOCKED_TO_LOCKED_USER
                             - AP07_UNIT_INACTIVATED_TO_ENGAGING_INNOVATIONS
                             - AP08_USER_EMAIL_ADDRESS_UPDATED
+                            - AP09_NEW_SUPPORTING_ACCOUNT
                             - CA01_ACCOUNT_CREATION_OF_INNOVATOR
                             - CA02_ACCOUNT_CREATION_OF_COLLABORATOR
                             - AU01_INNOVATOR_INCOMPLETE_RECORD
@@ -956,6 +959,7 @@ paths:
                             - PROGRESS_UPDATE_CREATED
                             - INNOVATION_RECORD_UPDATED
                             - REMINDER
+                            - SUGGESTED_SUPPORT_UPDATED
                           description: The notification context detail
                         contextId:
                           type: string
