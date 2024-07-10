@@ -78,7 +78,7 @@ export class NotifyMeService extends BaseService {
       .select(['subscription.id', 'subscription.eventType', 'subscription.config', 'subscription.updatedAt'])
       .where('subscription.user_role_id = :roleId', { roleId: domainContext.currentRole.id })
       .andWhere('subscription.innovation_id = :innovationId', { innovationId: innovationId })
-      .andWhere("subscription.eventType != 'ONCE'") // at least for now once subscriptions should be hidden
+      .andWhere("subscription.subscriptionType != 'ONCE'") // at least for now once subscriptions should be hidden
       .orderBy('subscription.updatedAt', 'DESC');
 
     const subscriptions = await query.getMany();
@@ -264,7 +264,7 @@ export class NotifyMeService extends BaseService {
       .select(['innovation.id as id', 'innovation.name as name', 'COUNT(subscription.id) as count'])
       .innerJoin('subscription.innovation', 'innovation')
       .where('subscription.user_role_id = :roleId', { roleId: domainContext.currentRole.id })
-      .andWhere("subscription.eventType != 'ONCE'") // at least for now once subscriptions should be hidden
+      .andWhere("subscription.subscriptionType != 'ONCE'") // at least for now once subscriptions should be hidden
       .groupBy('innovation.id')
       .addGroupBy('innovation.name')
       .addOrderBy('innovation.name');
@@ -276,6 +276,7 @@ export class NotifyMeService extends BaseService {
         WHERE innovation_id=innovation.id
         AND user_role_id=:roleId
         AND deleted_at IS NULL
+        AND subscription_type != 'ONCE'
         ORDER BY updated_at DESC
         FOR JSON AUTO)) as subscriptions`);
     }
