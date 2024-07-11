@@ -78,6 +78,10 @@ export class IRSchemaService {
     return this.model?.isSubsectionValid(subSectionId) ?? false;
   }
 
+  canUploadFiles(subSectionId: string): boolean {
+    return this.model?.canUploadFiles(subSectionId) ?? false;
+  }
+
   /**
    * This method is responsible for getting from the DB the schema version.
    */

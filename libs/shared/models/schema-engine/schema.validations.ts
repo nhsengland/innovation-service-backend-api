@@ -108,7 +108,8 @@ const subSection = Joi.object({
   id,
   title: Joi.string().min(1).required(),
   steps: Joi.array().items(Joi.object({ questions: questions, condition: condition.optional() })),
-  calculatedFields: Joi.object()
+  calculatedFields: Joi.object(),
+  hasFiles: Joi.boolean()
 });
 
 const section = Joi.object({

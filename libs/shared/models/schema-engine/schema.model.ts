@@ -17,6 +17,7 @@ export type InnovationRecordSubSectionType = {
   title: string;
   steps: InnovationRecordStepType[];
   calculatedFields?: Record<string, Condition[]>;
+  hasFiles?: boolean;
 };
 
 export type InnovationRecordStepType = {
@@ -38,6 +39,7 @@ export class SchemaModel {
   private subSections = new Map<string, string[]>();
   private questions = new Map<string, Question>();
   private conditions = new Map<string, Record<string, Condition[]>>();
+  private allowFileUploads = new Set<string>();
 
   constructor(schema: any) {
     this.errorList = [];
@@ -71,6 +73,10 @@ export class SchemaModel {
 
   isSubsectionValid(subSectionId: string): boolean {
     return this.subSections.has(subSectionId);
+  }
+
+  canUploadFiles(subSectionId: string): boolean {
+    return this.allowFileUploads.has(subSectionId);
   }
 
   /**
@@ -290,6 +296,10 @@ export class SchemaModel {
           });
           this.conditions.set(subSection.id, subSection.calculatedFields);
         }
+
+        if(subSection.hasFiles) {
+          this.allowFileUploads.add(subSection.id);
+        }
       });
     });
 
@@ -300,6 +310,7 @@ export class SchemaModel {
       this.subSections.clear();
       this.questions.clear();
       this.conditions.clear();
+      this.allowFileUploads.clear();
     }
 
     return { schema, errors: this.errorList };
