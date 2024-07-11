@@ -86,6 +86,7 @@ export class SchemaModel {
         const cur = payload[condition.id];
         if (cur && (condition.options.includes(cur) || !condition.options.length)) {
           out[field] = Array.isArray(cur) ? cur[0] : cur;
+          break;
         }
       }
     }
