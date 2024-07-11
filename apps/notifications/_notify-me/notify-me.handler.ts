@@ -109,6 +109,10 @@ export class NotifyMeHandler {
   // Additionally if the event is does not have the field but it is in the preconditions it will return true!
   protected validatePreconditions(subscription: NotifyMeSubscriptionType): boolean {
     if (this.event.type !== subscription.config.eventType) return false;
+
+    // If the event specifies a subscriptionId ensure that the subscriptionId matches the one in the event (ie: REMINDER)
+    if ('subscriptionId' in this.event.params && this.event.params.subscriptionId !== subscription.id) return false;
+
     if (!('preConditions' in subscription.config)) return true;
 
     for (const [field, match] of Object.entries(subscription.config.preConditions)) {

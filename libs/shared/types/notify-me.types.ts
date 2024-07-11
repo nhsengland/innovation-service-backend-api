@@ -76,7 +76,9 @@ export type EventPayloads = {
   INNOVATION_RECORD_UPDATED: {
     sections: CurrentCatalogTypes.InnovationSections;
   };
-  REMINDER: Record<string, never>;
+  REMINDER: {
+    subscriptionId: string;
+  };
 };
 export const EventType = [
   'SUPPORT_UPDATED',
