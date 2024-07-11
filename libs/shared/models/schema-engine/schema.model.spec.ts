@@ -1,6 +1,9 @@
 import { IRSchemaType, SchemaModel } from './schema.model';
+import { requiredSectionsAndQuestions } from '../../schemas/innovation-record';
 
 describe('models / schema-engine / schema.model.ts', () => {
+  beforeAll(() => { requiredSectionsAndQuestions.clear() });
+
   it('should give error when schema format is not right', () => {
     const body: any = { sections: [{ id: 'id1', subSections: [] }] };
 
@@ -8,7 +11,7 @@ describe('models / schema-engine / schema.model.ts', () => {
 
     const { errors } = schema.runRules();
 
-    expect(errors).toStrictEqual([ { context: undefined, message: '"sections[0].title" is required' } ]);
+    expect(errors).toStrictEqual([{ context: undefined, message: '"sections[0].title" is required' }]);
   });
 
   it('should give an error when two sections have the same id', () => {
@@ -239,9 +242,7 @@ describe('models / schema-engine / schema.model.ts', () => {
             {
               id: 'subId1',
               title: 'Subsection 1.1',
-              steps: [
-                { questions: [ { id: 'q1', dataType: 'text', label: 'Label 1', validations: {} } ] }
-              ]
+              steps: [{ questions: [{ id: 'q1', dataType: 'text', label: 'Label 1', validations: {} }] }]
             }
           ]
         }
@@ -361,7 +362,7 @@ describe('models / schema-engine / schema.model.ts', () => {
                     ]
                   },
                   {
-                    questions: [ { id: 'q2', dataType: 'text', label: 'Label 2' } ],
+                    questions: [{ id: 'q2', dataType: 'text', label: 'Label 2' }],
                     condition: { id: 'q1', options: ['basedOutsideUk', 'basedOutsideUs'] }
                   }
                 ]
@@ -376,9 +377,10 @@ describe('models / schema-engine / schema.model.ts', () => {
 
       expect(errors).toStrictEqual([
         {
-          message: 'sections[0].subSections[0].steps[1].condition references a wrong option (basedOutsideUk,basedOutsideUs)',
+          message:
+            'sections[0].subSections[0].steps[1].condition references a wrong option (basedOutsideUk,basedOutsideUs)',
           context: {
-            questions: [ { id: 'q2', dataType: 'text', label: 'Label 2' } ],
+            questions: [{ id: 'q2', dataType: 'text', label: 'Label 2' }],
             condition: { id: 'q1', options: ['basedOutsideUk', 'basedOutsideUs'] }
           }
         }
@@ -396,9 +398,9 @@ describe('models / schema-engine / schema.model.ts', () => {
                 id: 'subId1',
                 title: 'Subsection 1.1',
                 steps: [
-                  { questions: [ { id: 'q1', dataType: 'text', label: 'Question 1' } ] },
+                  { questions: [{ id: 'q1', dataType: 'text', label: 'Question 1' }] },
                   {
-                    questions: [ { id: 'q2', dataType: 'text', label: 'Label 2' } ],
+                    questions: [{ id: 'q2', dataType: 'text', label: 'Label 2' }],
                     condition: { id: 'q1', options: ['basedOutsideUk'] }
                   }
                 ]
@@ -415,7 +417,7 @@ describe('models / schema-engine / schema.model.ts', () => {
         {
           message: 'sections[0].subSections[0].steps[1].condition references non-tipified dataType (q1)',
           context: {
-            questions: [ { id: 'q2', dataType: 'text', label: 'Label 2' } ],
+            questions: [{ id: 'q2', dataType: 'text', label: 'Label 2' }],
             condition: { id: 'q1', options: ['basedOutsideUk'] }
           }
         }
@@ -434,7 +436,7 @@ describe('models / schema-engine / schema.model.ts', () => {
                 title: 'Subsection 1.1',
                 steps: [
                   {
-                    questions: [ { id: 'q2', dataType: 'text', label: 'Label 2' } ],
+                    questions: [{ id: 'q2', dataType: 'text', label: 'Label 2' }],
                     condition: { id: 'q1', options: ['basedOutsideUk'] }
                   },
                   {
@@ -461,11 +463,50 @@ describe('models / schema-engine / schema.model.ts', () => {
         {
           message: 'sections[0].subSections[0].steps[0].condition must reference a previous question (q1)',
           context: {
-            questions: [ { id: 'q2', dataType: 'text', label: 'Label 2' } ],
+            questions: [{ id: 'q2', dataType: 'text', label: 'Label 2' }],
             condition: { id: 'q1', options: ['basedOutsideUk'] }
           }
         }
       ]);
+    });
+  });
+
+  describe('canUploadFiles', () => {
+    it('should return true if section can upload files', () => {
+      const body: IRSchemaType = {
+        sections: [
+          {
+            id: 'id1',
+            title: 'Section 1',
+            subSections: [
+              {
+                id: 'subId1',
+                title: 'Subsection 1.1',
+                hasFiles: true,
+                steps: []
+              }
+            ]
+          }
+        ]
+      };
+      const schema = new SchemaModel(body);
+      schema.runRules();
+      expect(schema.canUploadFiles('subId1')).toBe(true);
+    });
+
+    it('should return false if section cannot upload files', () => {
+      const body: IRSchemaType = {
+        sections: [
+          {
+            id: 'id1',
+            title: 'Section 1',
+            subSections: [{ id: 'subId1', title: 'Subsection 1.1', steps: [], hasFiles: false }]
+          }
+        ]
+      };
+      const schema = new SchemaModel(body);
+      schema.runRules();
+      expect(schema.canUploadFiles('subId1')).toBe(false);
     });
   });
 });
