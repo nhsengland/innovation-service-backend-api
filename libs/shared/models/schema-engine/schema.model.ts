@@ -16,12 +16,15 @@ export type InnovationRecordSubSectionType = {
   id: string;
   title: string;
   steps: InnovationRecordStepType[];
+  calculatedFields?: Record<string, Condition[]>;
 };
 
 export type InnovationRecordStepType = {
   questions: Question[];
-  condition?: { id: string; options: string[] };
+  condition?: Condition;
 };
+
+type Condition = { id: string; options: string[] };
 
 export type SchemaValidationError = {
   message: string;
@@ -34,6 +37,7 @@ export class SchemaModel {
 
   private subSections = new Map<string, string[]>();
   private questions = new Map<string, Question>();
+  private conditions = new Map<string, Record<string, Condition[]>>();
 
   constructor(schema: any) {
     this.errorList = [];
@@ -70,6 +74,26 @@ export class SchemaModel {
   }
 
   /**
+   * Calculated fields
+   */
+  getCalculatedFields(subSectionId: string, payload: { [key: string]: any }) {
+    const out: { [key: string]: string } = {};
+    const conditionalFields = this.conditions.get(subSectionId);
+    if (!conditionalFields) return out;
+
+    for (const [field, conditions] of Object.entries(conditionalFields)) {
+      for (const condition of conditions) {
+        const cur = payload[condition.id];
+        if (cur && (condition.options.includes(cur) || !condition.options.length)) {
+          out[field] = Array.isArray(cur) ? cur[0] : cur;
+          break;
+        }
+      }
+    }
+    return out;
+  }
+
+  /**
    * Validations
    */
   public getSubSectionPayloadValidation(subSectionId: string, payload: { [key: string]: any }) {
@@ -102,7 +126,11 @@ export class SchemaModel {
     }
   }
 
-  private validateCondition(step: InnovationRecordStepType, path: string, idList: { [key: string]: any }) {
+  private validateCondition(
+    step: InnovationRecordStepType | { condition: Condition },
+    path: string,
+    idList: { [key: string]: any }
+  ) {
     const condition = step.condition;
     if (condition) {
       if (idList[condition.id]) {
@@ -249,6 +277,19 @@ export class SchemaModel {
         subSection.steps?.forEach((step, k: number) => {
           this.validateStep(subSection.id, step, `sections[${i}].subSections[${j}].steps[${k}]`, questionList);
         });
+
+        if (subSection.calculatedFields) {
+          Object.entries(subSection.calculatedFields).forEach(([field, conditions]) => {
+            conditions.forEach(condition => {
+              this.validateCondition(
+                { condition },
+                `sections[${i}].subSections[${j}].calculatedFields[${field}]`,
+                questionList
+              );
+            });
+          });
+          this.conditions.set(subSection.id, subSection.calculatedFields);
+        }
       });
     });
 
@@ -258,6 +299,7 @@ export class SchemaModel {
     if (this.errorList.length) {
       this.subSections.clear();
       this.questions.clear();
+      this.conditions.clear();
     }
 
     return { schema, errors: this.errorList };

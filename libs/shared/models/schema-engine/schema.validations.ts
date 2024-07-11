@@ -107,7 +107,8 @@ const questions = Joi.array().items(text, textArea, radioGroup, autocompleteArra
 const subSection = Joi.object({
   id,
   title: Joi.string().min(1).required(),
-  steps: Joi.array().items(Joi.object({ questions: questions, condition: condition.optional() }))
+  steps: Joi.array().items(Joi.object({ questions: questions, condition: condition.optional() })),
+  calculatedFields: Joi.object()
 });
 
 const section = Joi.object({
