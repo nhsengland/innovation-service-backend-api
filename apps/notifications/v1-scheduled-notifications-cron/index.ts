@@ -31,7 +31,9 @@ class V1ScheduledNotificationsCron {
         continue;
       }
 
-      await notifierService.sendNotifyMe(context, notification.innovationId, notification.eventType, {});
+      await notifierService.sendNotifyMe(context, notification.innovationId, notification.eventType, {
+        subscriptionId: notification.subscriptionId
+      });
       await notifyMeService.deleteScheduledNotification(notification.subscriptionId);
     }
   }

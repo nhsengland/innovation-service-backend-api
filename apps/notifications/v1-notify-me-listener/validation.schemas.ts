@@ -44,5 +44,7 @@ export const EventParamsSchema: { [key in EventType]: ObjectSchema<EventPayloads
   INNOVATION_RECORD_UPDATED: Joi.object<EventPayloads['INNOVATION_RECORD_UPDATED']>({
     sections: Joi.string().valid(...CurrentCatalogTypes.InnovationSections)
   }).required(),
-  REMINDER: Joi.object<EventPayloads['REMINDER']>({})
+  REMINDER: Joi.object<EventPayloads['REMINDER']>({
+    subscriptionId: Joi.string().guid().required()
+  }).required()
 };

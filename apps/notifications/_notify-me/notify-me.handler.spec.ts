@@ -378,6 +378,56 @@ describe('NotifyMe Handler Suite', () => {
 
       expect(res).toBe(true);
     });
+
+    it("returns false if the event has a subscriptionId that doesn't match the subscription", () => {
+      const handler = new NotifyMeHandler(notifyMeServiceMock as any, recipientMock as any, {
+        innovationId: randUuid(),
+        requestUser: userContext,
+        params: {
+          subscriptionId: '1'
+        } as any,
+        type: 'REMINDER' as const
+      });
+
+      const res = handler['validatePreconditions']({
+        id: '2',
+        roleId: userContext.currentRole.id,
+        innovationId: randUuid(),
+        config: {
+          eventType: 'REMINDER',
+          subscriptionType: 'SCHEDULED',
+          date: new Date(),
+          customMessage: 'test'
+        }
+      });
+
+      expect(res).toBe(false);
+    });
+
+    it('returns true if the event has a subscriptionId matches the subscription and other conditions met', () => {
+      const handler = new NotifyMeHandler(notifyMeServiceMock as any, recipientMock as any, {
+        innovationId: randUuid(),
+        requestUser: userContext,
+        params: {
+          subscriptionId: '1'
+        } as any,
+        type: 'REMINDER' as const
+      });
+
+      const res = handler['validatePreconditions']({
+        id: '1',
+        roleId: userContext.currentRole.id,
+        innovationId: randUuid(),
+        config: {
+          eventType: 'REMINDER',
+          subscriptionType: 'SCHEDULED',
+          date: new Date(),
+          customMessage: 'test'
+        }
+      });
+
+      expect(res).toBe(true);
+    });
   });
 
   describe('getInAppParams', () => {
