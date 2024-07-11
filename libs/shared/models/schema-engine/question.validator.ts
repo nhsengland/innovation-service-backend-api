@@ -83,7 +83,7 @@ export class AutocompleteArrayValidator implements QuestionTypeValidator<Autocom
 
 export class CheckboxArrayValidator implements QuestionTypeValidator<CheckboxArray> {
   validate(question: CheckboxArray): Joi.Schema {
-    let validation = JoiHelper.AppCustomJoi().stringArray();
+    let checkboxValidation = JoiHelper.AppCustomJoi().stringArray();
     const validItems = [];
     for (const item of question.items) {
       if ('id' in item) {
@@ -91,18 +91,28 @@ export class CheckboxArrayValidator implements QuestionTypeValidator<CheckboxArr
       }
     }
     if (validItems.length) {
-      validation = validation.items(Joi.string().valid(...validItems));
+      checkboxValidation = checkboxValidation.items(Joi.string().valid(...validItems));
     }
     if (question.validations?.max) {
-      validation = validation.max(question.validations.max.length);
+      checkboxValidation = checkboxValidation.max(question.validations.max.length);
     }
     if (question.validations?.min) {
-      validation = validation.min(question.validations.min.length);
+      checkboxValidation = checkboxValidation.min(question.validations.min.length);
     }
     if (question.validations?.isRequired) {
-      validation = validation.required();
+      checkboxValidation = checkboxValidation.required();
     }
-    return validation;
+
+    // This means its an array of objects (e.g., standards)
+    if(question.addQuestion) {
+      const objectTypeSchema = Joi.object({
+        [question.checkboxAnswerId ?? question.id]: checkboxValidation,
+        [question.addQuestion.id]: QuestionValidatorFactory.validate(question.addQuestion)
+      });
+      return Joi.array().items(objectTypeSchema).min(1);
+    }
+
+    return checkboxValidation;
   }
 }
 
