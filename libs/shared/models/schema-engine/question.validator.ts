@@ -83,13 +83,24 @@ export class AutocompleteArrayValidator implements QuestionTypeValidator<Autocom
 
 export class CheckboxArrayValidator implements QuestionTypeValidator<CheckboxArray> {
   validate(question: CheckboxArray): Joi.Schema {
-    let checkboxValidation = JoiHelper.AppCustomJoi().stringArray();
     const validItems = [];
     for (const item of question.items) {
       if ('id' in item) {
         validItems.push(item.id);
       }
     }
+
+    // This means its an array of objects (e.g., standards)
+    if(question.addQuestion) {
+      const objectTypeSchema = Joi.object({
+        [question.checkboxAnswerId ?? question.id]: Joi.string().valid(...validItems),
+        // "Optional" added due to the nature of this type of question and save per question. The question is just answered after the selection of the checkbox.
+        [question.addQuestion.id]: QuestionValidatorFactory.validate(question.addQuestion).optional()
+      });
+      return Joi.array().items(objectTypeSchema).min(1);
+    }
+
+    let checkboxValidation = JoiHelper.AppCustomJoi().stringArray();
     if (validItems.length) {
       checkboxValidation = checkboxValidation.items(Joi.string().valid(...validItems));
     }
@@ -101,15 +112,6 @@ export class CheckboxArrayValidator implements QuestionTypeValidator<CheckboxArr
     }
     if (question.validations?.isRequired) {
       checkboxValidation = checkboxValidation.required();
-    }
-
-    // This means its an array of objects (e.g., standards)
-    if(question.addQuestion) {
-      const objectTypeSchema = Joi.object({
-        [question.checkboxAnswerId ?? question.id]: checkboxValidation,
-        [question.addQuestion.id]: QuestionValidatorFactory.validate(question.addQuestion)
-      });
-      return Joi.array().items(objectTypeSchema).min(1);
     }
 
     return checkboxValidation;
