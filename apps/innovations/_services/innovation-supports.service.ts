@@ -1509,8 +1509,8 @@ export class InnovationSupportsService extends BaseService {
         'org.id',
         'org.acronym'
       ])
-      .leftJoin('assessment.organisationUnits', 'units')
-      .innerJoin('assessment.assignTo', 'assignedTo')
+      .leftJoin('assessment.assignTo', 'assignedTo')
+      .innerJoin('assessment.organisationUnits', 'units')
       .innerJoin('units.organisation', 'org')
       .where('assessment.innovation_id = :innovationId', { innovationId })
       .getOne();
