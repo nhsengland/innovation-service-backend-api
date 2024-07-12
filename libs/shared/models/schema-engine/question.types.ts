@@ -48,6 +48,8 @@ export type CheckboxArray = Base & {
     | { id: string; label: string; group?: string; conditional?: string; exclusive?: boolean }
   )[];
   size?: 'small' | 'normal';
+  addQuestion?: Question;
+  checkboxAnswerId?: string;
 };
 
 export type AutocompleteArray = Base & {

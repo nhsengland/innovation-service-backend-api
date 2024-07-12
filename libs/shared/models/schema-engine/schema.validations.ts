@@ -76,6 +76,7 @@ const checkboxArray = Joi.object({
   label: Joi.string().min(1).required(),
   description: Joi.string().min(1).optional(),
   validations: Joi.object({ isRequired, max, min }),
+  checkboxAnswerId: id.optional(),
   items: Joi.array()
     .items(
       Joi.object({ type: 'separator' }),
@@ -88,7 +89,7 @@ const checkboxArray = Joi.object({
       })
     )
     .required(),
-  addQuestion: Joi.alternatives(text, textArea, radioGroup)
+  addQuestion: Joi.alternatives(text, textArea, radioGroup),
 });
 
 const fieldsGroup = Joi.object({
