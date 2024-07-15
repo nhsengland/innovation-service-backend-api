@@ -2,7 +2,7 @@ import type { Context } from '@azure/functions';
 import type { NotifierTypeEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { BaseHandler } from '../base.handler';
-import { nhsInnovationServiceUrl } from 'apps/notifications/_helpers/url.helper';
+import { nhsInnovationServiceUrl } from '../../_helpers/url.helper';
 
 export class NewAccountHandler extends BaseHandler<
   NotifierTypeEnum.NEW_SUPPORTING_ACCOUNT,
