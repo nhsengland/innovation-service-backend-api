@@ -86,16 +86,18 @@ export const EmailTemplates = {
   AP03_USER_LOCKED_TO_LOCKED_USER: '95751f8f-ba65-436c-baa6-dabca6ca7acf',
   AP07_UNIT_INACTIVATED_TO_ENGAGING_INNOVATIONS: '9e18194c-99fd-408e-89a6-47616e647c27',
   AP08_USER_EMAIL_ADDRESS_UPDATED: '170a57ee-718d-44f5-b836-ba9c77de89f4',
+  AP09_NEW_SUPPORTING_ACCOUNT: 'a126c3e1-d2df-44ee-9313-d71bcd16d510',
 
   // ACCOUNT
   CA01_ACCOUNT_CREATION_OF_INNOVATOR: 'd4bd42fa-a3a2-4eb3-ab71-844caba26044',
   CA02_ACCOUNT_CREATION_OF_COLLABORATOR: '7dbfa868-126c-4eee-828c-be6f8831342c',
 
   // NOTIFY ME
-  SUPPORT_UPDATED: 'c24edce0-69cb-463d-bd65-d05304847dec',
-  PROGRESS_UPDATE_CREATED: '27f2a823-b8e4-4861-a208-8a5834c93516',
   INNOVATION_RECORD_UPDATED: '2dce9787-9a38-4d51-9e33-6ddf7683397d',
-  REMINDER: 'e8c593a4-2341-4177-89b5-b92aaaeac595'
+  PROGRESS_UPDATE_CREATED: '27f2a823-b8e4-4861-a208-8a5834c93516',
+  REMINDER: 'e8c593a4-2341-4177-89b5-b92aaaeac595',
+  SUGGESTED_SUPPORT_UPDATED: '6d442fc5-2056-4515-9afc-e32a790ef231',
+  SUPPORT_UPDATED: 'c24edce0-69cb-463d-bd65-d05304847dec'
 } as const;
 export type EmailTemplates = typeof EmailTemplates;
 
@@ -439,6 +441,9 @@ export type EmailTemplatesType = {
   AP08_USER_EMAIL_ADDRESS_UPDATED: {
     new_email_address: string;
   };
+  AP09_NEW_SUPPORTING_ACCOUNT: {
+    nhs_innovation_service_url: string;
+  };
 
   // Account
   CA01_ACCOUNT_CREATION_OF_INNOVATOR: {
@@ -469,7 +474,14 @@ export type EmailTemplatesType = {
   };
   REMINDER: {
     innovation: string;
-    event: string;
+    reason: string;
+    innovation_overview_url: string;
+  };
+  SUGGESTED_SUPPORT_UPDATED: {
+    innovation: string;
+    support_status: string;
     message: string;
+    organisation: string;
+    support_summary_url: string;
   };
 };

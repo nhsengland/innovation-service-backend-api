@@ -61,7 +61,8 @@ describe('NotifyMe Handler Suite', () => {
           }
         }
       }
-    ])
+    ]),
+    deleteSubscription: jest.fn().mockResolvedValue(undefined)
   };
 
   beforeAll(async () => {
@@ -162,6 +163,53 @@ describe('NotifyMe Handler Suite', () => {
       expect(handler.emails).toHaveLength(1);
     });
 
+    it("should remove notification if it's run once", async () => {
+      const subscriptionId = randUuid();
+      notifyMeServiceMock.getInnovationEventSubscriptions.mockResolvedValueOnce([
+        {
+          id: subscriptionId,
+          roleId: userContext.currentRole.id,
+          innovationId: innovation.id,
+          config: {
+            eventType: 'SUPPORT_UPDATED',
+            subscriptionType: 'ONCE',
+            preConditions: {
+              status: [InnovationSupportStatusEnum.ENGAGING],
+              units: [unit]
+            }
+          }
+        },
+        {
+          id: randUuid(),
+          roleId: userContext.currentRole.id,
+          innovationId: innovation.id,
+          config: {
+            eventType: 'SUPPORT_UPDATED',
+            subscriptionType: 'INSTANTLY',
+            preConditions: {
+              status: [InnovationSupportStatusEnum.ENGAGING],
+              units: [unit]
+            }
+          }
+        }
+      ]);
+
+      const handler = new NotifyMeHandler(notifyMeServiceMock as any, recipientMock as any, {
+        innovationId: innovation.id,
+        requestUser: userContext,
+        params: {
+          status: InnovationSupportStatusEnum.ENGAGING,
+          units: unit
+        } as any,
+        type: 'SUPPORT_UPDATED' as const
+      });
+      await handler.execute(em);
+
+      // Only call for the once
+      expect(notifyMeServiceMock.deleteSubscription).toHaveBeenCalledTimes(1);
+      expect(notifyMeServiceMock.deleteSubscription).toHaveBeenCalledWith(subscriptionId, em);
+    });
+
     it('should return if no subscription found', async () => {
       const handler = new NotifyMeHandler(notifyMeServiceMock as any, recipientMock as any, {
         innovationId: randUuid(),
@@ -173,7 +221,7 @@ describe('NotifyMe Handler Suite', () => {
         type: 'SUPPORT_UPDATED' as const
       });
 
-      notifyMeServiceMock.getInnovationEventSubscriptions.mockResolvedValue([]);
+      notifyMeServiceMock.getInnovationEventSubscriptions.mockResolvedValueOnce([]);
 
       await handler.execute(em);
 
@@ -236,7 +284,8 @@ describe('NotifyMe Handler Suite', () => {
           preConditions: {
             status: [InnovationSupportStatusEnum.ENGAGING],
             units: [unit]
-          }
+          },
+          notificationType: 'SUPPORT_UPDATED'
         }
       });
 
@@ -264,7 +313,8 @@ describe('NotifyMe Handler Suite', () => {
           preConditions: {
             status: [InnovationSupportStatusEnum.WAITING, InnovationSupportStatusEnum.CLOSED],
             units: [unit]
-          }
+          },
+          notificationType: 'SUPPORT_UPDATED'
         }
       });
 
@@ -293,7 +343,8 @@ describe('NotifyMe Handler Suite', () => {
           preConditions: {
             status: [InnovationSupportStatusEnum.ENGAGING],
             units: [unit]
-          }
+          },
+          notificationType: 'SUPPORT_UPDATED'
         }
       });
 
@@ -320,7 +371,58 @@ describe('NotifyMe Handler Suite', () => {
           preConditions: {
             status: [InnovationSupportStatusEnum.ENGAGING],
             units: [unit]
-          }
+          },
+          notificationType: 'SUPPORT_UPDATED'
+        }
+      });
+
+      expect(res).toBe(true);
+    });
+
+    it("returns false if the event has a subscriptionId that doesn't match the subscription", () => {
+      const handler = new NotifyMeHandler(notifyMeServiceMock as any, recipientMock as any, {
+        innovationId: randUuid(),
+        requestUser: userContext,
+        params: {
+          subscriptionId: '1'
+        } as any,
+        type: 'REMINDER' as const
+      });
+
+      const res = handler['validatePreconditions']({
+        id: '2',
+        roleId: userContext.currentRole.id,
+        innovationId: randUuid(),
+        config: {
+          eventType: 'REMINDER',
+          subscriptionType: 'SCHEDULED',
+          date: new Date(),
+          customMessage: 'test'
+        }
+      });
+
+      expect(res).toBe(false);
+    });
+
+    it('returns true if the event has a subscriptionId matches the subscription and other conditions met', () => {
+      const handler = new NotifyMeHandler(notifyMeServiceMock as any, recipientMock as any, {
+        innovationId: randUuid(),
+        requestUser: userContext,
+        params: {
+          subscriptionId: '1'
+        } as any,
+        type: 'REMINDER' as const
+      });
+
+      const res = handler['validatePreconditions']({
+        id: '1',
+        roleId: userContext.currentRole.id,
+        innovationId: randUuid(),
+        config: {
+          eventType: 'REMINDER',
+          subscriptionType: 'SCHEDULED',
+          date: new Date(),
+          customMessage: 'test'
         }
       });
 
@@ -352,7 +454,8 @@ describe('NotifyMe Handler Suite', () => {
               preConditions: {
                 status: [InnovationSupportStatusEnum.ENGAGING],
                 units: [unit]
-              }
+              },
+              notificationType: 'SUPPORT_UPDATED'
             }
           },
           { id: randUuid(), name: 'Test Innovation' }
@@ -362,7 +465,8 @@ describe('NotifyMe Handler Suite', () => {
           innovation: 'Test Innovation',
           event: 'SUPPORT_UPDATED',
           organisation: 'Health Org Unit',
-          supportStatus: 'engaging'
+          supportStatus: 'engaging',
+          unitId: unit
         });
       });
     });
@@ -395,7 +499,8 @@ describe('NotifyMe Handler Suite', () => {
               preConditions: {
                 status: [InnovationSupportStatusEnum.ENGAGING],
                 units: [unit]
-              }
+              },
+              notificationType: 'SUPPORT_UPDATED'
             }
           },
           { id: innovationId, name: 'Test Innovation' }

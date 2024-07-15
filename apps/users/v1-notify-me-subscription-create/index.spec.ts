@@ -32,7 +32,8 @@ const exampleDTO = {
     preConditions: {
       status: [InnovationSupportStatusEnum.ENGAGING as const],
       units: [randUuid()]
-    }
+    },
+    notificationType: 'SUPPORT_UPDATED' as const
   }
 };
 

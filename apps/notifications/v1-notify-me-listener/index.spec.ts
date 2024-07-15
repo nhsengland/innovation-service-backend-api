@@ -1,4 +1,4 @@
-import { randUuid } from '@ngneat/falso';
+import { randText, randUuid } from '@ngneat/falso';
 import { InnovationSupportStatusEnum } from '@notifications/shared/enums';
 import { BadRequestError, GenericErrorsEnum } from '@notifications/shared/errors';
 import { StorageQueueService } from '@notifications/shared/services';
@@ -41,7 +41,8 @@ describe('NotifyMe Listener Suite', () => {
           type: 'SUPPORT_UPDATED',
           params: {
             status: InnovationSupportStatusEnum.ENGAGING,
-            units: randUuid()
+            units: randUuid(),
+            message: randText()
           }
         })
         .call<{ done: boolean }>(v1NotifyMeListener);
@@ -76,7 +77,8 @@ describe('NotifyMe Listener Suite', () => {
         type: 'SUPPORT_UPDATED',
         params: {
           status: InnovationSupportStatusEnum.ENGAGING,
-          units: randUuid()
+          units: randUuid(),
+          message: randText()
         }
       });
 

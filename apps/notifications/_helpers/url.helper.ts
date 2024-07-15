@@ -153,6 +153,10 @@ export const createAccountUrl = (): string => {
   return new UrlModel(ENV.webBaseTransactionalUrl).addPath('signup').buildUrl();
 };
 
+export const nhsInnovationServiceUrl = (): string => {
+  return new UrlModel(ENV.webBaseTransactionalUrl).buildUrl();
+};
+
 export const unsubscribeUrl = new UrlModel(ENV.webBaseTransactionalUrl)
   .addPath('account/email-notifications')
   .buildUrl();

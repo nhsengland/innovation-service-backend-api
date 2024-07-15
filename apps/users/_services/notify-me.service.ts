@@ -12,20 +12,20 @@ import {
 import { BadRequestError, ForbiddenError, NotFoundError, NotImplementedError } from '@users/shared/errors';
 import { NotificationErrorsEnum } from '@users/shared/errors/errors.enums';
 import { AuthErrorsEnum } from '@users/shared/services/auth/authorization-validation.model';
-import type { EventType } from '@users/shared/types';
 import {
-  ProgressUpdateCreated,
   isAccessorDomainContextType,
   type DomainContextType,
+  type EventType,
+  type ProgressUpdateCreated,
   type SubscriptionConfig,
   type SupportUpdated
 } from '@users/shared/types';
 import type {
+  DefaultOptions,
   DefaultResponseDTO,
   EntitySubscriptionConfigType,
   NotifyMeResponseTypes,
   OrganisationWithUnits,
-  PreconditionsOptions,
   SubscriptionResponseDTO
 } from '../_types/notify-me.types';
 import { BaseService } from './base.service';
@@ -33,7 +33,6 @@ import { BaseService } from './base.service';
 @injectable()
 export class NotifyMeService extends BaseService {
   constructor() {
-    // @inject(SHARED_SYMBOLS.StorageQueueService) private storageQueueService: StorageQueueService
     super();
   }
 
@@ -43,9 +42,13 @@ export class NotifyMeService extends BaseService {
     config: SubscriptionConfig,
     entityManager?: EntityManager
   ): Promise<void> {
+    if (config.subscriptionType === 'SCHEDULED' && config.date < new Date()) {
+      throw new BadRequestError(NotificationErrorsEnum.NOTIFY_ME_SCHEDULED_DATE_PAST);
+    }
+
     const em = entityManager ?? this.sqlConnection.manager;
 
-    await em.save(
+    const subscription = await em.save(
       NotifyMeSubscriptionEntity,
       NotifyMeSubscriptionEntity.new({
         createdBy: domainContext.id,
@@ -55,20 +58,12 @@ export class NotifyMeService extends BaseService {
       })
     );
 
-    /* TODO
     if (config.subscriptionType === 'SCHEDULED') {
-      await this.storageQueueService.sendMessage<NotifyMeMessageType<'REMINDER'>>(QueuesEnum.NOTIFY_ME, {
-        data: {
-          requestUser: domainContext,
-          innovationId,
-
-          type: 'REMINDER',
-
-          params: {}
-        }
+      await em.save(NotificationScheduleEntity, {
+        subscriptionId: subscription.id,
+        sendDate: config.date
       });
     }
-    */
   }
 
   async getInnovationSubscriptions(
@@ -80,17 +75,10 @@ export class NotifyMeService extends BaseService {
 
     const query = em
       .createQueryBuilder(NotifyMeSubscriptionEntity, 'subscription')
-      .select([
-        'subscription.id',
-        'subscription.eventType',
-        'subscription.config',
-        'subscription.updatedAt'
-        // 'scheduled.sendDate',
-        // 'scheduled.params'
-      ])
-      // .leftJoin('subscription.scheduledNotification', 'scheduled')
+      .select(['subscription.id', 'subscription.eventType', 'subscription.config', 'subscription.updatedAt'])
       .where('subscription.user_role_id = :roleId', { roleId: domainContext.currentRole.id })
       .andWhere('subscription.innovation_id = :innovationId', { innovationId: innovationId })
+      .andWhere("subscription.subscriptionType != 'ONCE'") // at least for now once subscriptions should be hidden
       .orderBy('subscription.updatedAt', 'DESC');
 
     const subscriptions = await query.getMany();
@@ -122,10 +110,10 @@ export class NotifyMeService extends BaseService {
     INNOVATION_RECORD_UPDATED: this.defaultSubscriptionResponseDTO('INNOVATION_RECORD_UPDATED', ['sections']).bind(
       this
     ),
-    REMINDER: this.defaultSubscriptionResponseDTO('REMINDER', []).bind(this)
+    REMINDER: this.defaultSubscriptionResponseDTO('REMINDER', ['date', 'customMessage']).bind(this)
   };
 
-  private defaultSubscriptionResponseDTO<T extends EventType, K extends PreconditionsOptions<T>>(
+  private defaultSubscriptionResponseDTO<T extends EventType, K extends DefaultOptions<T>>(
     type: T | undefined,
     keys: K[]
   ): (subscriptions: EntitySubscriptionConfigType<T>[]) => DefaultResponseDTO<T, K>[] {
@@ -135,6 +123,7 @@ export class NotifyMeService extends BaseService {
         updatedAt: s.updatedAt,
         eventType: type,
         subscriptionType: s.config.subscriptionType,
+        ...(keys.length && pick(s.config, keys)),
         ...(keys.length && pick('preConditions' in s.config && s.config.preConditions, keys))
       })) as DefaultResponseDTO<T, K>[];
     };
@@ -155,7 +144,8 @@ export class NotifyMeService extends BaseService {
       eventType: s.config.eventType,
       subscriptionType: s.config.subscriptionType,
       organisations: this.groupUnitsByOrganisation(s.config.preConditions.units, retrievedUnits),
-      status: s.config.preConditions.status
+      status: s.config.preConditions.status,
+      notificationType: s.config.notificationType
     }));
   }
 
@@ -236,15 +226,7 @@ export class NotifyMeService extends BaseService {
 
     const subscription = await em
       .createQueryBuilder(NotifyMeSubscriptionEntity, 'subscription')
-      .select([
-        'subscription.id',
-        'subscription.eventType',
-        'subscription.config',
-        'subscription.updatedAt'
-        // 'scheduled.sendDate',
-        // 'scheduled.params'
-      ])
-      // .leftJoin('subscription.scheduledNotification', 'scheduled')
+      .select(['subscription.id', 'subscription.eventType', 'subscription.config', 'subscription.updatedAt'])
       .where('subscription.id = :subscriptionId', { subscriptionId })
       .andWhere('subscription.user_role_id = :roleId', { roleId: domainContext.currentRole.id })
       .getOne();
@@ -282,6 +264,7 @@ export class NotifyMeService extends BaseService {
       .select(['innovation.id as id', 'innovation.name as name', 'COUNT(subscription.id) as count'])
       .innerJoin('subscription.innovation', 'innovation')
       .where('subscription.user_role_id = :roleId', { roleId: domainContext.currentRole.id })
+      .andWhere("subscription.subscriptionType != 'ONCE'") // at least for now once subscriptions should be hidden
       .groupBy('innovation.id')
       .addGroupBy('innovation.name')
       .addOrderBy('innovation.name');
@@ -293,6 +276,7 @@ export class NotifyMeService extends BaseService {
         WHERE innovation_id=innovation.id
         AND user_role_id=:roleId
         AND deleted_at IS NULL
+        AND subscription_type != 'ONCE'
         ORDER BY updated_at DESC
         FOR JSON AUTO)) as subscriptions`);
     }
@@ -361,7 +345,18 @@ export class NotifyMeService extends BaseService {
       throw new BadRequestError(NotificationErrorsEnum.NOTIFY_ME_CANNOT_CHANGE_EVENT_TYPE);
     }
 
+    if (config.subscriptionType === 'SCHEDULED' && config.date < new Date()) {
+      throw new BadRequestError(NotificationErrorsEnum.NOTIFY_ME_SCHEDULED_DATE_PAST);
+    }
+
     await em.update(NotifyMeSubscriptionEntity, { id: subscriptionId }, { config });
+
+    if (config.subscriptionType === 'SCHEDULED') {
+      await em.save(NotificationScheduleEntity, {
+        subscriptionId: subscription.id,
+        sendDate: config.date
+      });
+    }
   }
 
   async deleteSubscription(
@@ -396,16 +391,21 @@ export class NotifyMeService extends BaseService {
       });
     }
 
-    const result = await entityManager.softDelete(NotifyMeSubscriptionEntity, {
+    const query = entityManager.createQueryBuilder(NotificationScheduleEntity, 'scheduled').delete().where(
+      // Delete only if the subscription belongs to the current user
+      'EXISTS (SELECT 1 FROM notify_me_subscription WHERE id = notification_schedule.subscription_id AND user_role_id = :roleId)',
+      { roleId: domainContext.currentRole.id }
+    );
+
+    if (ids?.length) {
+      query.andWhere('notification_schedule.subscription_id IN (:...ids)', { ids });
+    }
+
+    await query.execute();
+
+    await entityManager.softDelete(NotifyMeSubscriptionEntity, {
       userRole: { id: domainContext.currentRole.id },
       ...(ids?.length && { id: In(ids) })
     });
-
-    if (result?.affected) {
-      await entityManager.delete(NotificationScheduleEntity, {
-        userRole: { id: domainContext.currentRole.id },
-        ...(ids?.length && { subscription: { id: In(ids) } })
-      });
-    }
   }
 }

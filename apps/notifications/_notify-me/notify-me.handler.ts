@@ -6,7 +6,12 @@ import type { EntityManager } from 'typeorm';
 import type { EmailTemplatesType } from '../_config';
 import type { InAppTemplatesType } from '../_config/inapp.config';
 import { HandlersHelper } from '../_helpers/handlers.helper';
-import { innovationRecordSectionUrl, supportSummaryUrl, unsubscribeUrl } from '../_helpers/url.helper';
+import {
+  innovationOverviewUrl,
+  innovationRecordSectionUrl,
+  supportSummaryUrl,
+  unsubscribeUrl
+} from '../_helpers/url.helper';
 import type { NotifyMeService, NotifyMeSubscriptionType } from '../_services/notify-me.service';
 import type { RecipientType, RecipientsService } from '../_services/recipients.service';
 import type { MessageType as EmailMessageType } from '../v1-emails-listener/validation.schemas';
@@ -88,25 +93,13 @@ export class NotifyMeHandler {
       const inAppPayload = this.buildInApp(subscription, params.inApp);
       const emailPayload = shouldSendEmail && this.buildEmail(identity.email, subscription, params.email);
 
-      switch (subscription.config.subscriptionType) {
-        case 'INSTANTLY':
-          if (emailPayload) {
-            this.#emails.push(emailPayload);
-          }
-          this.#inApps.push(inAppPayload);
-          break;
+      if (emailPayload) {
+        this.#emails.push(emailPayload);
+      }
+      this.#inApps.push(inAppPayload);
 
-        /* currently not implemented 
-        // NOTE: Currently they are doing the same thing, if this changes just change it to specific.
-        case 'PERIODIC':
-        case 'SCHEDULED':
-          // This should be inside a transaction to handle errors (???)
-          await this.notifyMeService.createScheduledNotification(subscriber, {
-            inApp: inAppPayload,
-            email: emailPayload
-          });
-          break;
-        */
+      if (subscription.config.subscriptionType === 'ONCE') {
+        await this.notifyMeService.deleteSubscription(subscription.id, transaction);
       }
     }
   }
@@ -116,6 +109,10 @@ export class NotifyMeHandler {
   // Additionally if the event is does not have the field but it is in the preconditions it will return true!
   protected validatePreconditions(subscription: NotifyMeSubscriptionType): boolean {
     if (this.event.type !== subscription.config.eventType) return false;
+
+    // If the event specifies a subscriptionId ensure that the subscriptionId matches the one in the event (ie: REMINDER)
+    if ('subscriptionId' in this.event.params && this.event.params.subscriptionId !== subscription.id) return false;
+
     if (!('preConditions' in subscription.config)) return true;
 
     for (const [field, match] of Object.entries(subscription.config.preConditions)) {
@@ -140,14 +137,16 @@ export class NotifyMeHandler {
           innovation: innovation.name,
           event: this.event.type,
           organisation: HandlersHelper.getRequestUnitName(this.event.requestUser),
-          supportStatus: TranslationHelper.translate(`SUPPORT_STATUS.${this.event.params.status}`).toLowerCase()
+          supportStatus: TranslationHelper.translate(`SUPPORT_STATUS.${this.event.params.status}`).toLowerCase(),
+          unitId: this.event.params.units
         };
 
       case 'PROGRESS_UPDATE_CREATED':
         return {
           innovation: innovation.name,
           organisation: HandlersHelper.getRequestUnitName(this.event.requestUser),
-          event: this.event.type
+          event: this.event.type,
+          unitId: this.event.params.units
         };
 
       case 'INNOVATION_RECORD_UPDATED':
@@ -160,10 +159,10 @@ export class NotifyMeHandler {
 
       case 'REMINDER': {
         let message = 'This is a default description for the inApp';
-        if (subscription.config.subscriptionType === 'SCHEDULED' && subscription.config.customMessages?.inApp) {
-          message = subscription.config.customMessages.inApp;
+        if (subscription.config.subscriptionType === 'SCHEDULED' && subscription.config.customMessage) {
+          message = subscription.config.customMessage;
         }
-        return { innovation: innovation.name, message };
+        return { event: this.event.type, innovation: innovation.name, reason: message };
       }
 
       default:
@@ -187,13 +186,16 @@ export class NotifyMeHandler {
             recipient.role,
             this.event.innovationId,
             this.event.requestUser.organisation?.organisationUnit?.id
-          )
+          ),
+          ...('notificationType' in subscription.config &&
+            subscription.config.notificationType === 'SUGGESTED_SUPPORT_UPDATED' && {
+              message: this.event.params.message
+            })
         };
 
       case 'PROGRESS_UPDATE_CREATED':
         return {
           innovation: innovation.name,
-          event: this.event.type,
           organisation: HandlersHelper.getRequestUnitName(this.event.requestUser),
           supportSummaryUrl: supportSummaryUrl(
             recipient.role,
@@ -209,13 +211,13 @@ export class NotifyMeHandler {
         };
       case 'REMINDER': {
         let message = 'This is a default description for the email';
-        if (subscription.config.subscriptionType === 'SCHEDULED' && subscription.config.customMessages?.email) {
-          message = subscription.config.customMessages.email;
+        if (subscription.config.subscriptionType === 'SCHEDULED' && subscription.config.customMessage) {
+          message = subscription.config.customMessage;
         }
         return {
           innovation: innovation.name,
-          event: this.event.type,
-          message
+          reason: message,
+          innovation_overview_url: innovationOverviewUrl(recipient.role, innovation.id)
         };
       }
 
@@ -230,11 +232,13 @@ export class NotifyMeHandler {
     subscription: NotifyMeSubscriptionType,
     params: InAppTemplatesType[keyof InAppTemplatesType]
   ): InAppMessageType {
+    const type =
+      'notificationType' in subscription.config ? subscription.config.notificationType : subscription.config.eventType;
     return {
       data: {
         requestUser: { id: this.event.requestUser.id },
         innovationId: this.event.innovationId,
-        context: { type: 'NOTIFY_ME', detail: subscription.config.eventType, id: subscription.id },
+        context: { type: 'NOTIFY_ME', detail: type, id: subscription.id },
         userRoleIds: [subscription.roleId],
         params
       }
@@ -246,8 +250,10 @@ export class NotifyMeHandler {
     subscription: NotifyMeSubscriptionType,
     params: EmailTemplatesType[EventType] & { displayName: string; unsubscribeUrl: string }
   ): EmailMessageType {
+    const type =
+      'notificationType' in subscription.config ? subscription.config.notificationType : subscription.config.eventType;
     return {
-      data: { type: subscription.config.eventType, to: email, params }
+      data: { type: type, to: email, params }
     };
   }
 }

@@ -1,11 +1,11 @@
-import { NotificationScheduleEntity, NotifyMeSubscriptionEntity, UserRoleEntity } from '@notifications/shared/entities';
 import { injectable } from 'inversify';
+import { Brackets, EntityManager } from 'typeorm';
 
 import { BaseService } from './base.service';
 
+import { NotificationScheduleEntity, NotifyMeSubscriptionEntity } from '@notifications/shared/entities';
 import { ServiceRoleEnum } from '@notifications/shared/enums';
 import type { EventType, SubscriptionConfig } from '@notifications/shared/types';
-import { Brackets, EntityManager, In } from 'typeorm';
 
 export type NotifyMeSubscriptionType<T extends EventType = EventType> = {
   id: string;
@@ -66,67 +66,26 @@ export class NotifyMeService extends BaseService {
   }
 
   /**
-   * Creates a new scheduled notification for the current subscription.
-   *
-   * It makes sure that no scheduled notification already exists for the given subscription
-   * to prevent duplicates.
+   * Responsible for deleting the subscription and all the scheduled notifications related to it
    */
-  async createScheduledNotification(
-    subscription: NotifyMeSubscriptionType,
-    params: { inApp: Record<string, unknown>; email: Record<string, unknown> }
-  ): Promise<void> {
-    /* Currently not implemented
-    // If its a periodic we have to make sure that it doesn't exist one notification scheduled already.
-    if (subscription.config.subscriptionType === 'PERIODIC') {
-      const hasScheduledNotification = await this.hasScheduledNotification(subscription);
-      if (hasScheduledNotification) return;
-    }
-    */
-
-    let now = new Date();
-    switch (subscription.config.subscriptionType) {
-      // case 'PERIODIC':
-      //   switch (subscription.config.periodicity) {
-      //     case 'DAILY':
-      //       now.setDate(now.getDate() + 1);
-      //       break;
-      //     case 'HOURLY':
-      //       now.setHours(now.getHours() + 1);
-      //       break;
-      //   }
-      //   break;
-
-      case 'SCHEDULED':
-        now = subscription.config.date;
-        break;
+  async deleteSubscription(subscriptionId: string, entityManager?: EntityManager): Promise<void> {
+    if (!entityManager) {
+      return this.sqlConnection.manager.transaction(t => {
+        return this.deleteSubscription(subscriptionId, t);
+      });
     }
 
-    await this.sqlConnection.manager.save(
-      NotificationScheduleEntity,
-      NotificationScheduleEntity.new({
-        subscription: NotifyMeSubscriptionEntity.new({ id: subscription.id }),
-        userRole: UserRoleEntity.new({ id: subscription.roleId }),
-        sendDate: now,
-        params: params
-      })
-    );
+    await entityManager.softDelete(NotifyMeSubscriptionEntity, subscriptionId);
+    await entityManager.delete(NotificationScheduleEntity, { subscriptionId: subscriptionId });
   }
 
   /**
    * Responsible for deleting the scheduled notifications for the given subscriptions
-   *
-   * Besides deleting the scheduled notifications that may exist, it makes sure to delete
-   * the subscription as-well if its of a type 'SCHEDULED' (business rule).
    */
-  async deleteScheduledNotifications(subscriptionIds: string[]): Promise<void> {
-    await this.sqlConnection.manager.delete(NotificationScheduleEntity, {
-      subscriptionId: In(subscriptionIds)
-    });
-
-    // We make sure to delete the subscription of the ones that were scheduled
-    await this.sqlConnection.manager.softDelete(NotifyMeSubscriptionEntity, {
-      id: In(subscriptionIds),
-      subscriptionType: 'SCHEDULED'
+  async deleteScheduledNotification(subscriptionId: string, entityManager?: EntityManager): Promise<void> {
+    const em = entityManager || this.sqlConnection.manager;
+    await em.delete(NotificationScheduleEntity, {
+      subscriptionId: subscriptionId
     });
   }
 
@@ -137,15 +96,26 @@ export class NotifyMeService extends BaseService {
    * to make sure that in case of failure there is no notifications lost a grace period of 2H
    * is applied.
    */
-  async getScheduledNotifications(): Promise<
-    { subscriptionId: string; params: { inApp: Record<string, unknown>; email: Record<string, unknown> } }[]
-  > {
-    const scheduled = await this.sqlConnection.manager
+  async getScheduledNotifications(
+    entityManager?: EntityManager
+  ): Promise<{ subscriptionId: string; innovationId: string; roleId: string; eventType: EventType }[]> {
+    const em = entityManager || this.sqlConnection.manager;
+
+    const scheduled = await em
       .createQueryBuilder(NotificationScheduleEntity, 'schedule')
+      .select(['schedule.subscriptionId', 'subscription.id', 'subscription.eventType', 'innovation.id', 'role.id'])
+      .innerJoin('schedule.subscription', 'subscription')
+      .innerJoin('subscription.innovation', 'innovation')
+      .innerJoin('subscription.userRole', 'role')
       .where('schedule.sendDate BETWEEN DATEADD(hour, -2, GETDATE()) AND GETDATE()')
       .getMany();
 
-    return scheduled.map(s => ({ subscriptionId: s.subscriptionId, params: s.params }));
+    return scheduled.map(s => ({
+      subscriptionId: s.subscriptionId,
+      innovationId: s.subscription.innovation.id,
+      roleId: s.subscription.userRole.id,
+      eventType: s.subscription.eventType
+    }));
   }
 
   /**

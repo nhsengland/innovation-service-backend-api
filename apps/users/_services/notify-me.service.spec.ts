@@ -1,6 +1,6 @@
 import { container } from '../_config';
 
-import { randUuid } from '@ngneat/falso';
+import { randFutureDate, randPastDate, randUuid } from '@ngneat/falso';
 import { NotificationScheduleEntity, NotifyMeSubscriptionEntity } from '@users/shared/entities';
 import { InnovationSupportStatusEnum } from '@users/shared/enums';
 import { BadRequestError, ForbiddenError, NotFoundError } from '@users/shared/errors';
@@ -9,7 +9,6 @@ import { AuthErrorsEnum } from '@users/shared/services/auth/authorization-valida
 import { TestsHelper } from '@users/shared/tests';
 import { DTOsHelper } from '@users/shared/tests/helpers/dtos.helper';
 import { isSupportUpdated } from '@users/shared/types';
-import { fail } from 'assert';
 import type { EntityManager } from 'typeorm';
 import type { NotifyMeService } from './notify-me.service';
 import SYMBOLS from './symbols';
@@ -45,7 +44,20 @@ describe('Users / _services / notify me service suite', () => {
             status: [InnovationSupportStatusEnum.ENGAGING as const],
             units: [randUuid()]
           },
-          subscriptionType: 'INSTANTLY' as const
+          subscriptionType: 'INSTANTLY' as const,
+          notificationType: 'SUPPORT_UPDATED' as const
+        }
+      ],
+      [
+        'SUGGESTED_SUPPORT_UPDATED',
+        {
+          eventType: 'SUPPORT_UPDATED' as const,
+          preConditions: {
+            status: [InnovationSupportStatusEnum.ENGAGING as const],
+            units: [randUuid()]
+          },
+          subscriptionType: 'ONCE' as const,
+          notificationType: 'SUGGESTED_SUPPORT_UPDATED' as const
         }
       ],
       [
@@ -78,13 +90,50 @@ describe('Users / _services / notify me service suite', () => {
 
       const dbResult = await em
         .getRepository(NotifyMeSubscriptionEntity)
-        .find({ where: { innovation: { id: scenario.users.johnInnovator.innovations.johnInnovationArchived.id } } });
-      expect(dbResult.length).toBe(1);
-      expect(dbResult[0]?.config).toStrictEqual(data);
+        .findOne({ where: { innovation: { id: scenario.users.johnInnovator.innovations.johnInnovationArchived.id } } });
+      expect(dbResult?.config).toStrictEqual(data);
     });
 
-    it.skip('should create a scheduled subscription', async () => {
-      fail('Not implemented');
+    it('should create a scheduled subscription', async () => {
+      const futureDate = randFutureDate();
+      const data = {
+        eventType: 'REMINDER',
+        customMessage: 'Custom message',
+        subscriptionType: 'SCHEDULED',
+        date: futureDate
+      } as const;
+      await sut.createSubscription(
+        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+        scenario.users.johnInnovator.innovations.johnInnovationArchived.id,
+        data,
+        em
+      );
+
+      const dbResult = await em
+        .getRepository(NotifyMeSubscriptionEntity)
+        .findOne({ where: { innovation: { id: scenario.users.johnInnovator.innovations.johnInnovationArchived.id } } });
+      expect(dbResult?.config).toStrictEqual({
+        ...data,
+        date: futureDate.toISOString()
+      });
+    });
+
+    it('should fail to create scheduled if date is not future', async () => {
+      const pastDate = randPastDate();
+      const data = {
+        eventType: 'REMINDER',
+        customMessage: 'Custom message',
+        subscriptionType: 'SCHEDULED',
+        date: pastDate
+      } as const;
+      await expect(
+        sut.createSubscription(
+          DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+          scenario.users.johnInnovator.innovations.johnInnovationArchived.id,
+          data,
+          em
+        )
+      ).rejects.toThrow(new BadRequestError(NotificationErrorsEnum.NOTIFY_ME_SCHEDULED_DATE_PAST));
     });
   });
 
@@ -294,6 +343,32 @@ describe('Users / _services / notify me service suite', () => {
           }
         ]);
       });
+
+      it("returns the notification with optional fields that aren't preconditions", () => {
+        const test = {
+          id: randUuid(),
+          updatedAt: new Date(),
+          eventType: 'REMINDER',
+          config: {
+            date: new Date(),
+            customMessage: 'custom message',
+            subscriptionType: 'SCHEDULED'
+          }
+        } as any;
+        const func = sut['defaultSubscriptionResponseDTO']('REMINDER', ['customMessage', 'date']);
+        const res = func([test]);
+
+        expect(res).toMatchObject([
+          {
+            id: test.id,
+            updatedAt: test.updatedAt,
+            eventType: test.eventType,
+            subscriptionType: test.config.subscriptionType,
+            date: test.config.date,
+            customMessage: test.config.customMessage
+          }
+        ]);
+      });
     });
 
     describe('supportUpdateResponseDTO', () => {
@@ -337,6 +412,7 @@ describe('Users / _services / notify me service suite', () => {
           {
             config: {
               ...scenario.users.aliceQualifyingAccessor.notifyMeSubscriptions.johnInnovation.config,
+              subscriptionType: 'INSTANTLY',
               eventType: 'PROGRESS_UPDATE_CREATED'
             }
           }
@@ -538,7 +614,8 @@ describe('Users / _services / notify me service suite', () => {
             status: [InnovationSupportStatusEnum.UNSUITABLE],
             units: [randUuid()]
           },
-          subscriptionType: 'INSTANTLY'
+          subscriptionType: 'INSTANTLY',
+          notificationType: 'SUPPORT_UPDATED' as const
         },
         em
       );
@@ -547,6 +624,53 @@ describe('Users / _services / notify me service suite', () => {
       expect(dbResult && isSupportUpdated(dbResult.config) && dbResult.config.preConditions.status).toStrictEqual([
         InnovationSupportStatusEnum.UNSUITABLE
       ]);
+    });
+
+    it('should update a scheduled subscription', async () => {
+      const futureDate = randFutureDate();
+      const subscription = scenario.users.bartQualifyingAccessor.notifyMeSubscriptions.adamScheduledInnovation;
+      await sut.updateSubscription(
+        DTOsHelper.getUserRequestContext(scenario.users.bartQualifyingAccessor),
+        subscription.id,
+        {
+          eventType: 'REMINDER',
+          customMessage: 'Custom message',
+          subscriptionType: 'SCHEDULED',
+          date: futureDate
+        },
+        em
+      );
+
+      const dbResult = await em.getRepository(NotifyMeSubscriptionEntity).findOne({ where: { id: subscription.id } });
+      expect(dbResult && 'date' in dbResult.config && dbResult.config.date).toBe(futureDate.toISOString());
+      const dbSchedule = await em
+        .getRepository(NotificationScheduleEntity)
+        .findOne({ where: { subscriptionId: subscription.id } });
+      expect(dbSchedule && dbSchedule.sendDate).toStrictEqual(futureDate);
+    });
+
+    it('should create the scheduled subscription if it does not exist', async () => {
+      const futureDate = randFutureDate();
+      const subscription = scenario.users.bartQualifyingAccessor.notifyMeSubscriptions.adamScheduledInnovation;
+      await em.delete(NotificationScheduleEntity, { subscriptionId: subscription.id });
+      await sut.updateSubscription(
+        DTOsHelper.getUserRequestContext(scenario.users.bartQualifyingAccessor),
+        subscription.id,
+        {
+          eventType: 'REMINDER',
+          customMessage: 'Custom message',
+          subscriptionType: 'SCHEDULED',
+          date: futureDate
+        },
+        em
+      );
+
+      const dbResult = await em.getRepository(NotifyMeSubscriptionEntity).findOne({ where: { id: subscription.id } });
+      expect(dbResult && 'date' in dbResult.config && dbResult.config.date).toBe(futureDate.toISOString());
+      const dbSchedule = await em
+        .getRepository(NotificationScheduleEntity)
+        .findOne({ where: { subscriptionId: subscription.id } });
+      expect(dbSchedule && dbSchedule.sendDate).toStrictEqual(futureDate);
     });
 
     it('should fail if changing the subscription eventType', async () => {
@@ -573,11 +697,29 @@ describe('Users / _services / notify me service suite', () => {
               status: [InnovationSupportStatusEnum.UNSUITABLE],
               units: [randUuid()]
             },
-            subscriptionType: 'INSTANTLY'
+            subscriptionType: 'INSTANTLY',
+            notificationType: 'SUPPORT_UPDATED' as const
           },
           em
         )
       ).rejects.toThrow(new ForbiddenError(AuthErrorsEnum.AUTH_USER_ROLE_NOT_ALLOWED));
+    });
+
+    it('should fail if updating scheduled to past date', async () => {
+      const pastDate = randPastDate();
+      await expect(
+        sut.updateSubscription(
+          DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+          scenario.users.aliceQualifyingAccessor.notifyMeSubscriptions.johnInnovation.id,
+          {
+            eventType: 'REMINDER',
+            customMessage: 'Custom message',
+            subscriptionType: 'SCHEDULED',
+            date: pastDate
+          },
+          em
+        )
+      ).rejects.toThrow(new BadRequestError(NotificationErrorsEnum.NOTIFY_ME_SCHEDULED_DATE_PAST));
     });
   });
 
@@ -594,15 +736,17 @@ describe('Users / _services / notify me service suite', () => {
       expect(dbResult).toBeNull();
     });
 
-    it.skip('deletes the subscription schedules', async () => {
-      const subscription = scenario.users.aliceQualifyingAccessor.notifyMeSubscriptions.johnInnovation; // TODO when we have a subscription with schedules
+    it('deletes the subscription schedules', async () => {
+      const subscription = scenario.users.bartQualifyingAccessor.notifyMeSubscriptions.adamScheduledInnovation;
       await sut.deleteSubscription(
-        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+        DTOsHelper.getUserRequestContext(scenario.users.bartQualifyingAccessor),
         subscription.id,
         em
       );
 
-      const dbResult = await em.getRepository(NotifyMeSubscriptionEntity).findOne({ where: { id: subscription.id } });
+      const dbResult = await em
+        .getRepository(NotificationScheduleEntity)
+        .findOne({ where: { subscriptionId: subscription.id } });
       expect(dbResult).toBeNull();
     });
 
@@ -672,18 +816,52 @@ describe('Users / _services / notify me service suite', () => {
       expect(res.length).toBe(0);
     });
 
-    // TODO when we have schedules
-    it.skip('deletes the subscriptions schedules', async () => {
+    it('deletes the subscriptions schedules', async () => {
       await sut.deleteSubscriptions(
-        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+        DTOsHelper.getUserRequestContext(scenario.users.bartQualifyingAccessor),
         undefined,
         em
       );
 
       const res = await em
-        .getRepository(NotificationScheduleEntity)
-        .find({ where: { userRole: { id: scenario.users.aliceQualifyingAccessor.roles.qaRole.id } } });
+        .createQueryBuilder(NotificationScheduleEntity, 'schedule')
+        .innerJoin('schedule.subscription', 'subscription')
+        .innerJoin('subscription.userRole', 'userRole')
+        .where('userRole.id = :roleId', { roleId: scenario.users.bartQualifyingAccessor.roles.qaRole.id })
+        .getMany();
       expect(res.length).toBe(0);
+    });
+
+    it("doesn't delete the subscriptions schedules if user doesn't match", async () => {
+      await sut.deleteSubscriptions(
+        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+        [scenario.users.bartQualifyingAccessor.notifyMeSubscriptions.adamScheduledInnovation.id],
+        em
+      );
+
+      const res = await em
+        .createQueryBuilder(NotificationScheduleEntity, 'schedule')
+        .innerJoin('schedule.subscription', 'subscription')
+        .innerJoin('subscription.userRole', 'userRole')
+        .where('userRole.id = :roleId', { roleId: scenario.users.bartQualifyingAccessor.roles.qaRole.id })
+        .getMany();
+      expect(res.length).toBe(1);
+    });
+
+    it("doesn't delete the subscriptions schedules if subscription doesn't match", async () => {
+      await sut.deleteSubscriptions(
+        DTOsHelper.getUserRequestContext(scenario.users.bartQualifyingAccessor),
+        [randUuid()],
+        em
+      );
+
+      const res = await em
+        .createQueryBuilder(NotificationScheduleEntity, 'schedule')
+        .innerJoin('schedule.subscription', 'subscription')
+        .innerJoin('subscription.userRole', 'userRole')
+        .where('userRole.id = :roleId', { roleId: scenario.users.bartQualifyingAccessor.roles.qaRole.id })
+        .getMany();
+      expect(res.length).toBe(1);
     });
   });
 });

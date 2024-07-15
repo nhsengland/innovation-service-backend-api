@@ -42,7 +42,8 @@ const expected = {
   ],
   status: [InnovationSupportStatusEnum.ENGAGING as const],
   subscriptionType: 'INSTANTLY' as const,
-  updatedAt: new Date()
+  updatedAt: new Date(),
+  notificationType: 'SUPPORT_UPDATED' as const
 };
 const mock = jest.spyOn(NotifyMeService.prototype, 'getSubscription').mockResolvedValue(expected);
 

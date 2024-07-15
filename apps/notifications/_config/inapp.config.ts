@@ -291,11 +291,13 @@ export type InAppTemplatesType = {
     innovation: string;
     supportStatus: string;
     organisation: string;
+    unitId: string;
   };
   PROGRESS_UPDATE_CREATED: {
     event: string;
     innovation: string;
     organisation: string;
+    unitId: string;
   };
   INNOVATION_RECORD_UPDATED: {
     event: string;
@@ -304,7 +306,14 @@ export type InAppTemplatesType = {
     sectionLabel: string;
   };
   REMINDER: {
+    event: string;
     innovation: string;
-    message: string;
+    reason: string;
+  };
+  SUGGESTED_SUPPORT_UPDATED: {
+    event: string;
+    innovation: string;
+    supportStatus: string;
+    organisation: string;
   };
 };

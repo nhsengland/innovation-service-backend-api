@@ -415,9 +415,9 @@ export class SearchService extends BaseService {
         builder.addMust({ term: { 'owner.id': targetUser[0].id } });
         return;
       }
-
       // If is not an email we do the normal search
-      const searchQuery: QueryDslQueryContainer = {
+      // Define individual queries
+      const mainQuery: QueryDslQueryContainer = {
         multi_match: {
           type: 'best_fields',
           query: search,
@@ -428,6 +428,58 @@ export class SearchService extends BaseService {
           // minimum_should_match: '2<-25% 9<-3'
         }
       };
+
+      const evidencesQuery: QueryDslQueryContainer = {
+        nested: {
+          path: 'document.evidences',
+          query: {
+            multi_match: {
+              type: 'best_fields',
+              query: search,
+              fields: ['document.evidences.*'],
+              fuzziness: 0,
+              prefix_length: 2,
+              tie_breaker: 0.3
+            }
+          }
+        }
+      };
+
+      const regulationsQuery: QueryDslQueryContainer = {
+        nested: {
+          path: 'document.REGULATIONS_AND_STANDARDS.standards',
+          query: {
+            multi_match: {
+              type: 'best_fields',
+              query: search,
+              fields: ['document.REGULATIONS_AND_STANDARDS.standards.*'],
+              fuzziness: 0,
+              prefix_length: 2,
+              tie_breaker: 0.3
+            }
+          }
+        }
+      };
+
+      const userTestsQuery: QueryDslQueryContainer = {
+        nested: {
+          path: 'document.TESTING_WITH_USERS.userTests',
+          query: {
+            multi_match: {
+              type: 'best_fields',
+              query: search,
+              fields: ['document.TESTING_WITH_USERS.userTests.*'],
+              fuzziness: 0,
+              prefix_length: 2,
+              tie_breaker: 0.3
+            }
+          }
+        }
+      };
+
+      const searchQuery = orQuery([mainQuery, evidencesQuery, regulationsQuery, userTestsQuery]);
+
+      // Add the combined query to the builder
       builder.addMust(searchQuery);
       builder.addHighlight({
         order: 'score',
@@ -436,6 +488,15 @@ export class SearchService extends BaseService {
           'owner.companyName': {},
           'document.*': {
             number_of_fragments: 1000 // we require the fragments to show the counts so the default 5 isn't enough
+          },
+          'document.evidences.*': {
+            number_of_fragments: 1000
+          },
+          'document.REGULATIONS_AND_STANDARDS.standards.*': {
+            number_of_fragments: 1000
+          },
+          'document.TESTING_WITH_USERS.userTests.*': {
+            number_of_fragments: 1000
           }
         }
       });

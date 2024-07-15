@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { DataSource } from 'typeorm';
 
-import { randEmail, randProductDescription, randSoonDate, randText, randUuid } from '@ngneat/falso';
+import { randEmail, randFutureDate, randProductDescription, randSoonDate, randText, randUuid } from '@ngneat/falso';
 import {
   InnovationCollaboratorStatusEnum,
   InnovationExportRequestStatusEnum,
@@ -15,7 +15,7 @@ import {
   ThreadContextTypeEnum
 } from '../../enums/innovation.enums';
 import { ServiceRoleEnum, UserStatusEnum } from '../../enums/user.enums';
-import type { SupportUpdated } from '../../types';
+import type { Reminder, SupportUpdated } from '../../types';
 import { InnovationAssessmentBuilder } from '../builders/innovation-assessment.builder';
 import { InnovationCollaboratorBuilder } from '../builders/innovation-collaborator.builder';
 import { InnovationExportRequestBuilder } from '../builders/innovation-export-request.builder';
@@ -693,7 +693,8 @@ export class CompleteScenarioBuilder {
           preConditions: {
             status: [InnovationSupportStatusEnum.ENGAGING],
             units: [medTechOrgUnit.id]
-          }
+          },
+          notificationType: 'SUPPORT_UPDATED'
         })
         .save();
 
@@ -708,7 +709,8 @@ export class CompleteScenarioBuilder {
           preConditions: {
             status: [InnovationSupportStatusEnum.ENGAGING],
             units: [medTechOrgUnit.id]
-          }
+          },
+          notificationType: 'SUPPORT_UPDATED'
         })
         .save();
 
@@ -786,7 +788,19 @@ export class CompleteScenarioBuilder {
           preConditions: {
             status: [InnovationSupportStatusEnum.ENGAGING],
             units: [medTechOrgUnit.id]
-          }
+          },
+          notificationType: 'SUPPORT_UPDATED'
+        })
+        .save();
+
+      const bartScheduledForAdamInnovation = await new NotifyMeSubscriptionBuilder<Reminder>(entityManager)
+        .setInnovation(adamInnovation.id)
+        .setUserRole(bartQualifyingAccessor.roles['qaRole']!.id)
+        .setConfig({
+          eventType: 'REMINDER',
+          subscriptionType: 'SCHEDULED',
+          date: randFutureDate(),
+          customMessage: randText()
         })
         .save();
 
@@ -1156,7 +1170,8 @@ export class CompleteScenarioBuilder {
               }
             },
             notifyMeSubscriptions: {
-              johnInnovation: battNotifyMeOnMedTechOrgForJohnInnovation
+              johnInnovation: battNotifyMeOnMedTechOrgForJohnInnovation,
+              adamScheduledInnovation: bartScheduledForAdamInnovation
             }
           },
           lisaQualifyingAccessor: {

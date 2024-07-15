@@ -731,6 +731,7 @@ paths:
                       - AP03_USER_LOCKED_TO_LOCKED_USER
                       - AP07_UNIT_INACTIVATED_TO_ENGAGING_INNOVATIONS
                       - AP08_USER_EMAIL_ADDRESS_UPDATED
+                      - AP09_NEW_SUPPORTING_ACCOUNT
                       - CA01_ACCOUNT_CREATION_OF_INNOVATOR
                       - CA02_ACCOUNT_CREATION_OF_COLLABORATOR
                       - AU01_INNOVATOR_INCOMPLETE_RECORD
@@ -747,6 +748,7 @@ paths:
                       - PROGRESS_UPDATE_CREATED
                       - INNOVATION_RECORD_UPDATED
                       - REMINDER
+                      - SUGGESTED_SUPPORT_UPDATED
                   default: []
                 dismissAll:
                   type: boolean
@@ -940,6 +942,7 @@ paths:
                             - AP03_USER_LOCKED_TO_LOCKED_USER
                             - AP07_UNIT_INACTIVATED_TO_ENGAGING_INNOVATIONS
                             - AP08_USER_EMAIL_ADDRESS_UPDATED
+                            - AP09_NEW_SUPPORTING_ACCOUNT
                             - CA01_ACCOUNT_CREATION_OF_INNOVATOR
                             - CA02_ACCOUNT_CREATION_OF_COLLABORATOR
                             - AU01_INNOVATOR_INCOMPLETE_RECORD
@@ -956,6 +959,7 @@ paths:
                             - PROGRESS_UPDATE_CREATED
                             - INNOVATION_RECORD_UPDATED
                             - REMINDER
+                            - SUGGESTED_SUPPORT_UPDATED
                           description: The notification context detail
                         contextId:
                           type: string
@@ -1028,6 +1032,7 @@ paths:
                           type: string
                           enum:
                             - INSTANTLY
+                            - ONCE
                           default: INSTANTLY
                         preConditions:
                           type: object
@@ -1052,6 +1057,12 @@ paths:
                             - units
                             - status
                           additionalProperties: false
+                        notificationType:
+                          type: string
+                          enum:
+                            - SUPPORT_UPDATED
+                            - SUGGESTED_SUPPORT_UPDATED
+                          default: SUPPORT_UPDATED
                       required:
                         - eventType
                         - preConditions
@@ -1122,6 +1133,27 @@ paths:
                         - preConditions
                       additionalProperties: false
                       x-required: true
+                    - type: object
+                      properties:
+                        eventType:
+                          type: string
+                          enum:
+                            - REMINDER
+                        subscriptionType:
+                          type: string
+                          enum:
+                            - SCHEDULED
+                          default: SCHEDULED
+                        customMessage:
+                          type: string
+                        date:
+                          type: string
+                          format: date-time
+                      required:
+                        - eventType
+                        - customMessage
+                        - date
+                      additionalProperties: false
               required:
                 - innovationId
                 - config
@@ -1262,6 +1294,7 @@ paths:
                       type: string
                       enum:
                         - INSTANTLY
+                        - ONCE
                       default: INSTANTLY
                     preConditions:
                       type: object
@@ -1286,6 +1319,12 @@ paths:
                         - units
                         - status
                       additionalProperties: false
+                    notificationType:
+                      type: string
+                      enum:
+                        - SUPPORT_UPDATED
+                        - SUGGESTED_SUPPORT_UPDATED
+                      default: SUPPORT_UPDATED
                   required:
                     - eventType
                     - preConditions
@@ -1356,6 +1395,27 @@ paths:
                     - preConditions
                   additionalProperties: false
                   x-required: true
+                - type: object
+                  properties:
+                    eventType:
+                      type: string
+                      enum:
+                        - REMINDER
+                    subscriptionType:
+                      type: string
+                      enum:
+                        - SCHEDULED
+                      default: SCHEDULED
+                    customMessage:
+                      type: string
+                    date:
+                      type: string
+                      format: date-time
+                  required:
+                    - eventType
+                    - customMessage
+                    - date
+                  additionalProperties: false
       responses:
         "204":
           description: Subscription created
