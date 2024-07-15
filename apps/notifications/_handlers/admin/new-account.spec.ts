@@ -4,7 +4,7 @@ import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { testEmails } from '../../_helpers/tests.helper';
 import { NotificationsTestsHelper } from '../../_tests/notifications-test.helper';
 import { NewAccountHandler } from './new-account.handler';
-import { nhsInnovationServiceUrl } from 'apps/notifications/_helpers/url.helper';
+import { nhsInnovationServiceUrl } from '../../_helpers/url.helper';
 
 // this is needed to ensure that import is not removed by compiler and it's needed for inversify to work
 if (1 > Number(5)) console.log(container);
