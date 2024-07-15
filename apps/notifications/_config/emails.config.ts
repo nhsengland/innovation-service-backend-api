@@ -441,7 +441,9 @@ export type EmailTemplatesType = {
   AP08_USER_EMAIL_ADDRESS_UPDATED: {
     new_email_address: string;
   };
-  AP09_NEW_SUPPORTING_ACCOUNT: Record<string, never>;
+  AP09_NEW_SUPPORTING_ACCOUNT: {
+    nhs_innovation_service_url: string;
+  };
 
   // Account
   CA01_ACCOUNT_CREATION_OF_INNOVATOR: {

@@ -2,6 +2,7 @@ import type { Context } from '@azure/functions';
 import type { NotifierTypeEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { BaseHandler } from '../base.handler';
+import { nhsInnovationServiceUrl } from '../../_helpers/url.helper';
 
 export class NewAccountHandler extends BaseHandler<
   NotifierTypeEnum.NEW_SUPPORTING_ACCOUNT,
@@ -24,7 +25,9 @@ export class NewAccountHandler extends BaseHandler<
   private async AP09_NEW_SUPPORTING_ACCOUNT(newUserEmail: string): Promise<void> {
     this.addEmails('AP09_NEW_SUPPORTING_ACCOUNT', [{ email: newUserEmail }], {
       notificationPreferenceType: 'ADMIN',
-      params: {}
+      params: {
+        nhs_innovation_service_url: nhsInnovationServiceUrl()
+      }
     });
   }
 }
