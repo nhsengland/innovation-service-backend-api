@@ -14,6 +14,8 @@ class V1InnovationUpdateIndexCron {
 
     logger.log('Running cron job: V1InnovationUpdateIndexCron');
 
+    if (1 === Number(1)) return;
+
     let innovationId: string | null = null;
     try {
       while ((innovationId = await redisService.popFromSet('elasticsearch')) !== null) {
@@ -21,7 +23,7 @@ class V1InnovationUpdateIndexCron {
         logger.log(`${innovationId} was reindexed.`);
       }
     } catch (err) {
-      if(innovationId !== null) {
+      if (innovationId !== null) {
         await redisService.addToSet('elasticsearch', innovationId);
       }
       logger.error('Error running cron job: V1InnovationUpdateIndexCron', err);

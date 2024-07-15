@@ -1,13 +1,10 @@
 import { randBoolean, randCountry, randProduct, randText } from '@ngneat/falso';
 import { ElasticSearchDocumentType202304, ElasticSearchSchema202304 } from './202304/elastic-search.schema';
-import type { DocumentType202209 } from './202209/document.types';
 import { DocumentValidationSchema202304Map, EvidenceSchema202304 } from './202304/document.schema';
-import type { DocumentType202304 } from './202304/document.types';
+import type { InnovationRecordDocumentType } from './202407/document.types';
 
 // All versions
-export type DocumentType = DocumentType202209 | DocumentType202304;
-export const DocumentVersions = ['202209', '202304'] as const;
-export type DocumentVersions = (typeof DocumentVersions)[number];
+export type DocumentType = InnovationRecordDocumentType;
 
 // Current version links
 export * as CurrentCatalogTypes from './202304/catalog.types';
@@ -15,18 +12,11 @@ export * as CurrentDocumentConfig from './202304/document.config';
 export const ElasticSearchSchema = ElasticSearchSchema202304;
 export type CurrentElasticSearchDocumentType = ElasticSearchDocumentType202304;
 export const CurrentDocumentSchemaMap = DocumentValidationSchema202304Map;
-export type CurrentDocumentType = DocumentType202304;
+export type CurrentDocumentType = InnovationRecordDocumentType;
 export type CurrentEvidenceType = NonNullable<CurrentDocumentType['evidences']>[number];
 export const CurrentEvidenceSchema = EvidenceSchema202304;
 
 export { InnovationRecordDocumentType, requiredSectionsAndQuestions } from './202407/document.types';
-
-// Helpers
-export type DocumentTypeFromVersion<V extends DocumentType['version']> = V extends '202304'
-  ? CurrentDocumentType
-  : V extends '202209'
-    ? DocumentType202209
-    : never;
 
 // Maybe move this to a separate file
 export const createSampleDocument = (data?: {
@@ -36,7 +26,7 @@ export const createSampleDocument = (data?: {
   postcode?: string;
 }): CurrentDocumentType => {
   return {
-    version: '202304',
+    version: 202304, // TODO: DC Change this
     INNOVATION_DESCRIPTION: {
       name: data?.name ?? randProduct().title,
       description: data?.description ?? randProduct().description,

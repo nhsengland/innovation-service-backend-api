@@ -3,7 +3,7 @@ import { container } from '../_config';
 
 import { InnovationEntity, InnovationSectionEntity } from '@innovations/shared/entities';
 import { InnovationSectionStatusEnum } from '@innovations/shared/enums';
-import { CurrentCatalogTypes, CurrentDocumentConfig } from '@innovations/shared/schemas/innovation-record';
+import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import { NotifierService } from '@innovations/shared/services';
 import { TestsHelper } from '@innovations/shared/tests';
 import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
@@ -276,7 +276,7 @@ describe('Innovation Sections Suite', () => {
       const allSectionsInfo = await sut.findAllSections(
         DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
         innovation.id,
-        CurrentDocumentConfig.version,
+        undefined,
         em
       );
 

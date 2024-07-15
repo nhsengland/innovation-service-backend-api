@@ -1,3 +1,5 @@
+import type { catalogEvidenceSubmitType, catalogEvidenceType } from '../202304/catalog.types';
+
 type OtherKeyValues = { [key: string]: any };
 
 export type InnovationRecordDocumentType = {
@@ -39,8 +41,8 @@ export type InnovationRecordDocumentType = {
   DEPLOYMENT: OtherKeyValues;
   evidences?: {
     id: string;
-    evidenceSubmitType: string;
-    evidenceType?: string;
+    evidenceSubmitType: catalogEvidenceSubmitType;
+    evidenceType?: catalogEvidenceType;
     description?: string;
     summary: string;
   }[];

@@ -1,4 +1,4 @@
-import { DocumentType, DocumentVersions } from '@innovations/shared/schemas/innovation-record';
+import type { DocumentType } from '@innovations/shared/schemas/innovation-record';
 import Joi from 'joi';
 
 export type ParamsType = {
@@ -13,5 +13,5 @@ export type QueryParamsType = {
 };
 
 export const QueryParamsSchema = Joi.object<QueryParamsType>({
-  version: Joi.string().valid(...DocumentVersions)
+  version: Joi.number().min(0)
 });
