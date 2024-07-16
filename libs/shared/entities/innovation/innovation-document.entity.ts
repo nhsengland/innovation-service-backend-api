@@ -2,7 +2,7 @@ import { Column, Entity, JoinColumn, OneToOne, PrimaryColumn } from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
 
-import { CurrentDocumentConfig, CurrentDocumentType, DocumentType } from '../../schemas/innovation-record/index';
+import { CurrentDocumentConfig, DocumentType } from '../../schemas/innovation-record/index';
 import { InnovationEntity } from './innovation.entity';
 
 @Entity('innovation_document')
@@ -36,19 +36,26 @@ export const createDocumentFromInnovation = (
   innovation: InnovationEntity,
   fields: {
     name: string;
-    description?: string;
+    description: string;
     countryName: string;
+    officeLocation: string;
+    countryLocation?: string;
     postcode?: string;
+    hasWebsite: string;
     website?: string;
   }
 ): InnovationDocumentEntity => {
-  const document: CurrentDocumentType = {
+  // TODO: This is changing when removing the old IR versions PR.
+  const document: any = {
     version: CurrentDocumentConfig.version,
     INNOVATION_DESCRIPTION: {
       name: fields.name,
       description: fields.description,
       countryName: fields.countryName,
       postcode: fields.postcode,
+      officeLocation: fields.officeLocation,
+      countryLocation: fields.countryLocation,
+      hasWebsite: fields.hasWebsite,
       website: fields.website
     },
     UNDERSTANDING_OF_NEEDS: {},
