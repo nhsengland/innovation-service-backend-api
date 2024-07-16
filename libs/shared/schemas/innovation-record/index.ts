@@ -8,7 +8,6 @@ export type DocumentType = InnovationRecordDocumentType;
 
 // Current version links
 export * as CurrentCatalogTypes from './202304/catalog.types';
-export * as CurrentDocumentConfig from './202304/document.config';
 export const ElasticSearchSchema = ElasticSearchSchema202304;
 export type CurrentElasticSearchDocumentType = ElasticSearchDocumentType202304;
 export const CurrentDocumentSchemaMap = DocumentValidationSchema202304Map;
@@ -17,6 +16,21 @@ export type CurrentEvidenceType = NonNullable<CurrentDocumentType['evidences']>[
 export const CurrentEvidenceSchema = EvidenceSchema202304;
 
 export { InnovationRecordDocumentType, requiredSectionsAndQuestions } from './202407/document.types';
+
+// To remove?
+export enum InnovationSectionAliasEnum {
+  INNOVATION_DESCRIPTION = 'ID',
+  UNDERSTANDING_OF_NEEDS = 'UN',
+  EVIDENCE_OF_EFFECTIVENESS = 'EE',
+  MARKET_RESEARCH = 'MR',
+  CURRENT_CARE_PATHWAY = 'CP',
+  TESTING_WITH_USERS = 'TU',
+  REGULATIONS_AND_STANDARDS = 'RS',
+  INTELLECTUAL_PROPERTY = 'IP',
+  REVENUE_MODEL = 'RM',
+  COST_OF_INNOVATION = 'CI',
+  DEPLOYMENT = 'D'
+}
 
 // Maybe move this to a separate file
 export const createSampleDocument = (data?: {

@@ -1,6 +1,5 @@
 import Joi from 'joi';
 import { DocumentValidationSchema202304Map } from './document.schema';
-import type { DocumentType202304 } from './document.types';
 
 // This will be replaced in the future this is only here in the meanwhile while the IR gets refactored
 const categoriesTranslation = {
@@ -478,7 +477,7 @@ export const translateValue = (fields: string[], value: string): string => {
 };
 
 // This is a naive implementation of the cleanup, not doing anything on the validation errors for now
-export const cleanup = (source: Record<string, any>): DocumentType202304 => {
+export const cleanup = (source: Record<string, any>): any => {
   const result = Joi.object(DocumentValidationSchema202304Map).validate(source, {
     abortEarly: false,
     stripUnknown: true

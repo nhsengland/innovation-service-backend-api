@@ -29,13 +29,12 @@ import {
   catalogYesNotYet,
   catalogYesNotYetNo
 } from './catalog.types';
-import type { DocumentType202304 } from './document.types';
 
 export type DocumentValidationSchema202304Map = {
-  [k in keyof Omit<DocumentType202304, 'version'>]: Joi.Schema<DocumentType202304[k]>;
+  [k in keyof Omit<any, 'version'>]: Joi.Schema<any[k]>;
 };
 
-export const EvidenceSchema202304 = Joi.object<NonNullable<DocumentType202304['evidences']>[number]>({
+export const EvidenceSchema202304 = Joi.object<NonNullable<any['evidences']>[number]>({
   evidenceSubmitType: Joi.string()
     .valid(...catalogEvidenceSubmitType)
     .required(),
@@ -45,7 +44,7 @@ export const EvidenceSchema202304 = Joi.object<NonNullable<DocumentType202304['e
 });
 
 export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Map = {
-  INNOVATION_DESCRIPTION: Joi.object<DocumentType202304['INNOVATION_DESCRIPTION']>({
+  INNOVATION_DESCRIPTION: Joi.object<any['INNOVATION_DESCRIPTION']>({
     name: Joi.string().max(100).trim(),
     description: Joi.string().max(TEXTAREA_LENGTH_LIMIT.s),
     countryName: Joi.string().max(100),
@@ -72,7 +71,7 @@ export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Ma
   })
     .required()
     .min(1),
-  UNDERSTANDING_OF_NEEDS: Joi.object<DocumentType202304['UNDERSTANDING_OF_NEEDS']>({
+  UNDERSTANDING_OF_NEEDS: Joi.object<any['UNDERSTANDING_OF_NEEDS']>({
     problemsTackled: Joi.string().max(TEXTAREA_LENGTH_LIMIT.l),
     howInnovationWork: Joi.string().max(TEXTAREA_LENGTH_LIMIT.l),
     benefitsOrImpact: Joi.array().items(Joi.string().max(TEXTAREA_LENGTH_LIMIT.xs)).min(1),
@@ -89,7 +88,7 @@ export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Ma
   })
     .required()
     .min(1),
-  EVIDENCE_OF_EFFECTIVENESS: Joi.object<DocumentType202304['EVIDENCE_OF_EFFECTIVENESS']>({
+  EVIDENCE_OF_EFFECTIVENESS: Joi.object<any['EVIDENCE_OF_EFFECTIVENESS']>({
     hasEvidence: Joi.string().valid(...catalogYesNotYet),
     currentlyCollectingEvidence: Joi.string().valid(...catalogYesNo),
     summaryOngoingEvidenceGathering: Joi.string().max(TEXTAREA_LENGTH_LIMIT.l),
@@ -99,7 +98,7 @@ export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Ma
   })
     .required()
     .min(1),
-  MARKET_RESEARCH: Joi.object<DocumentType202304['MARKET_RESEARCH']>({
+  MARKET_RESEARCH: Joi.object<any['MARKET_RESEARCH']>({
     hasMarketResearch: Joi.string().valid(...catalogYesInProgressNotYet),
     marketResearch: Joi.string().max(TEXTAREA_LENGTH_LIMIT.l),
     optionBestDescribesInnovation: Joi.string().valid(...catalogOptionBestDescribesInnovation),
@@ -107,13 +106,13 @@ export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Ma
   })
     .required()
     .min(1),
-  CURRENT_CARE_PATHWAY: Joi.object<DocumentType202304['CURRENT_CARE_PATHWAY']>({
+  CURRENT_CARE_PATHWAY: Joi.object<any['CURRENT_CARE_PATHWAY']>({
     innovationPathwayKnowledge: Joi.string().valid(...catalogPathwayKnowledge),
     potentialPathway: Joi.string().max(TEXTAREA_LENGTH_LIMIT.m)
   })
     .required()
     .min(1),
-  TESTING_WITH_USERS: Joi.object<DocumentType202304['TESTING_WITH_USERS']>({
+  TESTING_WITH_USERS: Joi.object<any['TESTING_WITH_USERS']>({
     involvedUsersDesignProcess: Joi.string().valid(...catalogYesInProgressNotYet),
     testedWithIntendedUsers: Joi.string().valid(...catalogYesInProgressNotYet),
     intendedUserGroupsEngaged: Joi.array()
@@ -131,7 +130,7 @@ export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Ma
   })
     .required()
     .min(1),
-  REGULATIONS_AND_STANDARDS: Joi.object<DocumentType202304['REGULATIONS_AND_STANDARDS']>({
+  REGULATIONS_AND_STANDARDS: Joi.object<any['REGULATIONS_AND_STANDARDS']>({
     hasRegulationKnowledge: Joi.string().valid(...catalogHasRegulationKnowledge),
     standards: Joi.array()
       .items(
@@ -147,7 +146,7 @@ export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Ma
   })
     .required()
     .min(1),
-  INTELLECTUAL_PROPERTY: Joi.object<DocumentType202304['INTELLECTUAL_PROPERTY']>({
+  INTELLECTUAL_PROPERTY: Joi.object<any['INTELLECTUAL_PROPERTY']>({
     hasPatents: Joi.string().valid(...catalogHasPatents),
     patentNumbers: Joi.string().max(100),
     hasOtherIntellectual: Joi.string().valid(...catalogYesNo),
@@ -155,7 +154,7 @@ export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Ma
   })
     .required()
     .min(1),
-  REVENUE_MODEL: Joi.object<DocumentType202304['REVENUE_MODEL']>({
+  REVENUE_MODEL: Joi.object<any['REVENUE_MODEL']>({
     hasRevenueModel: Joi.string().valid(...catalogHasRevenueModel),
     revenues: Joi.array()
       .items(Joi.string().valid(...catalogRevenues))
@@ -168,7 +167,7 @@ export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Ma
   })
     .required()
     .min(1),
-  COST_OF_INNOVATION: Joi.object<DocumentType202304['COST_OF_INNOVATION']>({
+  COST_OF_INNOVATION: Joi.object<any['COST_OF_INNOVATION']>({
     hasCostKnowledge: Joi.string().valid(...catalogHasCostKnowledge),
     costDescription: Joi.string().max(TEXTAREA_LENGTH_LIMIT.m),
     patientsRange: Joi.string().valid(...catalogPatientRange),
@@ -179,7 +178,7 @@ export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Ma
   })
     .required()
     .min(1),
-  DEPLOYMENT: Joi.object<DocumentType202304['DEPLOYMENT']>({
+  DEPLOYMENT: Joi.object<any['DEPLOYMENT']>({
     hasDeployPlan: Joi.string().valid(...catalogYesNo),
     isDeployed: Joi.string().valid(...catalogYesNo),
     deploymentPlans: Joi.array().items(Joi.string().max(100)).min(1),
