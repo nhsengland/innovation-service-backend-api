@@ -65,9 +65,6 @@ export class InnovationAssessmentsService extends BaseService {
       .leftJoinAndSelect('assessment.assignTo', 'assignTo')
       .leftJoinAndSelect('assessment.organisationUnits', 'organisationUnit')
       .leftJoinAndSelect('organisationUnit.organisation', 'organisation')
-      // Deleted assessments are necessary for history / activity log purposes.
-      // This query will retrieve deleted records from InnovationAssessmentEntity and InnovationReassessmentRequestEntity.
-      .withDeleted()
       .leftJoinAndSelect('assessment.reassessmentRequest', 'reassessmentRequest')
       .where('assessment.id = :assessmentId', { assessmentId })
       .getOne();
