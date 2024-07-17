@@ -45,6 +45,8 @@ export const createSampleDocument = (data?: {
       name: data?.name ?? randProduct().title,
       description: data?.description ?? randProduct().description,
       countryName: data?.countryName ?? randCountry(),
+      officeLocation: 'Based outside UK',
+      countryLocation: data?.countryName ?? randCountry(),
       postcode: data?.postcode ?? undefined,
 
       areas: ['COVID_19'],

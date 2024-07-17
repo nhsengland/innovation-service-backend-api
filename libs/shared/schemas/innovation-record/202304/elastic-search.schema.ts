@@ -51,7 +51,7 @@ export type ElasticSearchDocumentType202304 = {
     countryName: CurrentDocumentType['INNOVATION_DESCRIPTION']['countryName'];
     categories: CurrentDocumentType['INNOVATION_DESCRIPTION']['categories'];
     careSettings: CurrentDocumentType['INNOVATION_DESCRIPTION']['careSettings'];
-    involvedAACProgrammes: CurrentDocumentType['INNOVATION_DESCRIPTION']['careSettings'];
+    involvedAACProgrammes: CurrentDocumentType['INNOVATION_DESCRIPTION']['involvedAACProgrammes'];
     diseasesAndConditions: CurrentDocumentType['UNDERSTANDING_OF_NEEDS']['diseasesConditionsImpact'];
     keyHealthInequalities: CurrentDocumentType['UNDERSTANDING_OF_NEEDS']['keyHealthInequalities'];
   };
@@ -168,6 +168,9 @@ export const ElasticSearchSchema202304: CreateIndexParams = {
               description: { type: 'text' },
               postcode: { type: 'text' },
               countryName: { type: 'text' },
+              officeLocation: { type: 'text' },
+              countryLocation: { type: 'text' },
+              hasWebsite: { type: 'text' },
               website: { type: 'text' },
               categories: { type: 'text' },
               otherCategoryDescription: { type: 'text' },
