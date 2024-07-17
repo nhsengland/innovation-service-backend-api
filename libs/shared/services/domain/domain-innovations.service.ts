@@ -899,8 +899,9 @@ export class DomainInnovationsService {
   ): Promise<CurrentElasticSearchDocumentType | undefined | CurrentElasticSearchDocumentType[]> {
     let sql = `WITH
       innovations AS (
-        SELECT i.id, i.status, archived_status, status_updated_at, submitted_at, i.updated_at, last_assessment_request_at, grouped_status,
-          u.id AS owner_id, u.external_id AS owner_external_id, u.status AS owner_status, o.name AS owner_company
+        SELECT i.id, i.status, archived_status, status_updated_at, submitted_at, i.updated_at, i.current_assessment_id, 
+        last_assessment_request_at, grouped_status, u.id AS owner_id, u.external_id AS owner_external_id, 
+        u.status AS owner_status, o.name AS owner_company
         FROM innovation i
           INNER JOIN innovation_grouped_status_view_entity g ON i.id = g.id
           LEFT JOIN [user] u on i.owner_id = u.id AND u.status !='DELETED'
@@ -983,7 +984,7 @@ export class DomainInnovationsService {
       ) AS suggestions
     FROM innovations i
       INNER JOIN innovation_document d ON i.id = d.id
-      LEFT JOIN innovation_assessment a ON i.id = a.innovation_id AND a.deleted_at IS NULL`;
+      LEFT JOIN innovation_assessment a ON i.id = a.innovation_id AND i.current_assessment_id = a.id AND a.deleted_at IS NULL`;
 
     if (innovationId) {
       sql += ` WHERE i.id = @0`;

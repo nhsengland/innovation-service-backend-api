@@ -38,9 +38,9 @@ import type { InnovationAssessmentType } from '../_types/innovation.types';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { EntityManager } from 'typeorm';
 import { BaseService } from './base.service';
+import type { InnovationDocumentService } from './innovation-document.service';
 import type { InnovationThreadsService } from './innovation-threads.service';
 import SYMBOLS from './symbols';
-import type { InnovationDocumentService } from './innovation-document.service';
 
 @injectable()
 export class InnovationAssessmentsService extends BaseService {
@@ -404,6 +404,7 @@ export class InnovationAssessmentsService extends BaseService {
     data: { updatedInnovationRecord: YesOrNoCatalogueType; description: string },
     entityManager?: EntityManager
   ): Promise<{ assessment: { id: string }; reassessment: { id: string } }> {
+    if (1 < Number(5)) throw new Error('TODO');
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const innovation = await connection

@@ -134,6 +134,12 @@ export class InnovationAssessmentEntity extends BaseEntity {
   })
   organisationUnits: OrganisationUnitEntity[];
 
+  @OneToOne(() => InnovationAssessmentEntity, record => record.previousAssessment, {
+    nullable: true
+  })
+  @JoinColumn({ name: 'previous_assessment_id' })
+  previousAssessment: InnovationAssessmentEntity | null;
+
   static new(data: Partial<InnovationAssessmentEntity>): InnovationAssessmentEntity {
     const instance = new InnovationAssessmentEntity();
     Object.assign(instance, data);

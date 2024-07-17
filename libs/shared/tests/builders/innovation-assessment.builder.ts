@@ -1,6 +1,6 @@
 import { randProductDescription, randText } from '@ngneat/falso';
 import type { DeepPartial, EntityManager } from 'typeorm';
-import { InnovationAssessmentEntity } from '../../entities/innovation/innovation-assessment.entity';
+import { InnovationAssessmentEntity, InnovationEntity } from '../../entities';
 import type { MaturityLevelCatalogueType, YesPartiallyNoCatalogueType } from '../../enums/index';
 import { BaseBuilder } from './base.builder';
 import type { TestOrganisationUnitType } from './organisation-unit.builder';
@@ -93,6 +93,12 @@ export class InnovationAssessmentBuilder extends BaseBuilder {
       .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
       .where('assessment.id = :id', { id: savedAssessment.id })
       .getOne();
+
+    await this.getEntityManager().update(
+      InnovationEntity,
+      { id: this.assessment.innovation?.id },
+      { currentAssessment: { id: savedAssessment.id } }
+    );
 
     if (!result) {
       throw new Error('Error saving/retriving assessment information.');

@@ -499,7 +499,7 @@ export class InnovationsService extends BaseService {
     if (fields.length) {
       query
         .addSelect(fields.filter(f => !['assignedTo', 'isExempt'].includes(f)).map(f => `assessment.${f}`))
-        .leftJoin('innovation.assessment', 'assessment');
+        .leftJoin('innovation.currentAssessment', 'assessment');
 
       if (fields.includes('assignedTo')) {
         query.leftJoin('assessment.assignTo', 'assessor');
@@ -651,7 +651,7 @@ export class InnovationsService extends BaseService {
       [
         i.ownerId,
         i.supports?.[0]?.updatedBy,
-        i.assessment?.assignTo?.id,
+        i.currentAssessment?.assignTo?.id,
         ...(i.engagingUnits?.flatMap(u => u.assignedAccessors) || [])
       ]
         .filter(isString)
@@ -912,10 +912,11 @@ export class InnovationsService extends BaseService {
     query: SelectQueryBuilder<InnovationListView>,
     value: boolean
   ): void {
+    // TODO this will be changed in a future story as the logic for suggested will be updated
     if (value && isAccessorDomainContextType(domainContext)) {
       query
         .innerJoin('innovation', 'i', 'i.id = innovation.id')
-        .leftJoin('i.assessments', 'assessments')
+        .leftJoin('i.currentAssessment', 'assessments')
 
         .leftJoin('assessments.organisationUnits', 'assessmentOrganisationUnits')
         .leftJoin('i.innovationSupportLogs', 'supportLogs', 'supportLogs.type = :supportLogType', {
@@ -1045,14 +1046,14 @@ export class InnovationsService extends BaseService {
     fields.forEach(field => {
       switch (field) {
         case 'assignedTo':
-          res[field] = extra.users.get(item.assessment?.assignTo?.id ?? '')?.displayName ?? null;
-          item.assessment?.assignTo ?? null;
+          res[field] = extra.users.get(item.currentAssessment?.assignTo?.id ?? '')?.displayName ?? null;
+          item.currentAssessment?.assignTo ?? null;
           break;
         case 'isExempt':
-          res[field] = !!item.assessment?.exemptedAt;
+          res[field] = !!item.currentAssessment?.exemptedAt;
           break;
         default:
-          res[field] = item.assessment?.[field] ?? null;
+          res[field] = item.currentAssessment?.[field] ?? null;
       }
     });
     return res;
@@ -1223,15 +1224,17 @@ export class InnovationsService extends BaseService {
 
     // Assessment relations.
     if (filters.fields?.includes('assessment')) {
-      query.leftJoin('innovation.assessments', 'innovationAssessments');
-      query.leftJoin('innovationAssessments.assignTo', 'assignTo');
+      query.leftJoin('innovation.currentAssessment', 'currentAssessment');
+      query.leftJoin('currentAssessment.assignTo', 'assignTo', 'assignTo.status != :deletedStatus', {
+        deletedStatus: UserStatusEnum.DELETED
+      });
       query.leftJoin('assignTo.serviceRoles', 'assignToRoles', 'assignToRoles.role = :assessmentRole', {
         assessmentRole: ServiceRoleEnum.ASSESSMENT
       });
       query.addSelect([
-        'innovationAssessments.id',
-        'innovationAssessments.createdAt',
-        'innovationAssessments.finishedAt',
+        'currentAssessment.id',
+        'currentAssessment.createdAt',
+        'currentAssessment.finishedAt',
         'assignTo.id',
         'assignTo.status',
         'assignToRoles.id'
@@ -1271,14 +1274,7 @@ export class InnovationsService extends BaseService {
       .getRawOne();
 
     // Fetch users names.
-    const assessmentUsersIds = filters.fields?.includes('assessment')
-      ? innovation.assessments
-          ?.filter(
-            (assessment): assessment is InnovationAssessmentEntity & { assignTo: { id: string } } =>
-              assessment.assignTo != null && assessment.assignTo?.status !== UserStatusEnum.DELETED
-          )
-          .map(assessment => assessment.assignTo.id)
-      : [];
+    const assessmentUsersIds = innovation.currentAssessment?.assignTo?.id ?? [];
     const categories = documentData.categories ? JSON.parse(documentData.categories) : [];
     let usersInfo = [];
     let ownerInfo = undefined;
@@ -1307,30 +1303,19 @@ export class InnovationsService extends BaseService {
         };
 
     if (filters.fields?.includes('assessment')) {
-      if (innovation.assessments.length === 0) {
-        assessment = null;
-      } else {
-        if (innovation.assessments.length > 1) {
-          // This should never happen, but...
-          this.logger.error(`Innovation ${innovation.id} with ${innovation.assessments.length} assessments detected`);
-        }
-
-        const assignTo = usersInfo.find(item => item.id === innovation.assessments[0]?.assignTo?.id && item.isActive);
-
-        if (innovation.assessments[0]) {
-          // ... but if exists, on this list, we show information about one of them.
-          assessment = {
-            id: innovation.assessments[0].id,
-            createdAt: innovation.assessments[0].createdAt,
-            finishedAt: innovation.assessments[0].finishedAt,
+      const assignTo = usersInfo.find(item => item.id === innovation.currentAssessment?.assignTo?.id && item.isActive);
+      assessment = innovation.currentAssessment
+        ? {
+            id: innovation.currentAssessment.id,
+            createdAt: innovation.currentAssessment.createdAt,
+            finishedAt: innovation.currentAssessment.finishedAt,
             ...(assignTo &&
               assignTo.roles[0] && {
                 assignedTo: { id: assignTo.id, name: assignTo.displayName, userRoleId: assignTo.roles[0].id }
               }),
             reassessmentCount: (await innovation.reassessmentRequests).length
-          };
-        }
-      }
+          }
+        : null;
     }
 
     return {
@@ -1400,14 +1385,14 @@ export class InnovationsService extends BaseService {
 
     const query = connection
       .createQueryBuilder(InnovationEntity, 'innovation')
-      .leftJoinAndSelect('innovation.assessments', 'assessments')
+      .leftJoinAndSelect('innovation.currentAssessment', 'currentAssessment')
       .where('innovation.status IN (:...innovationStatus)', {
         innovationStatus: filters.innovationStatus
       })
-      .andWhere(`DATEDIFF(day, innovation.submitted_at, GETDATE()) > 7 AND assessments.finished_at IS NULL`);
+      .andWhere(`DATEDIFF(day, innovation.submitted_at, GETDATE()) > 7 AND currentAssessment.finished_at IS NULL`);
 
     if (filters.assignedToMe) {
-      query.andWhere('assessments.assign_to_id = :assignToId', { assignToId: domainContext.id });
+      query.andWhere('currentAssessment.assign_to_id = :assignToId', { assignToId: domainContext.id });
     }
 
     return query.getCount();
