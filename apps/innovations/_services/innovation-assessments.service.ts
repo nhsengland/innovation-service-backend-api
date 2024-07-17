@@ -159,15 +159,6 @@ export class InnovationAssessmentsService extends BaseService {
     }
 
     return connection.transaction(async transaction => {
-      await transaction.update(
-        InnovationEntity,
-        { id: innovationId },
-        {
-          status: InnovationStatusEnum.NEEDS_ASSESSMENT,
-          statusUpdatedAt: new Date().toISOString()
-        }
-      );
-
       const assessment = await transaction.save(
         InnovationAssessmentEntity,
         InnovationAssessmentEntity.new({
@@ -177,6 +168,16 @@ export class InnovationAssessmentsService extends BaseService {
           createdBy: domainContext.id,
           updatedBy: domainContext.id
         })
+      );
+
+      await transaction.update(
+        InnovationEntity,
+        { id: innovationId },
+        {
+          currentAssessment: { id: assessment.id },
+          status: InnovationStatusEnum.NEEDS_ASSESSMENT,
+          statusUpdatedAt: new Date().toISOString()
+        }
       );
 
       const thread = await this.threadService.createThreadOrMessage(
@@ -404,7 +405,6 @@ export class InnovationAssessmentsService extends BaseService {
     data: { updatedInnovationRecord: YesOrNoCatalogueType; description: string },
     entityManager?: EntityManager
   ): Promise<{ assessment: { id: string }; reassessment: { id: string } }> {
-    if (1 < Number(5)) throw new Error('TODO');
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const innovation = await connection
@@ -489,19 +489,6 @@ export class InnovationAssessmentsService extends BaseService {
         );
       }
 
-      await transaction.update(
-        InnovationEntity,
-        { id: assessment.innovation.id },
-        {
-          lastAssessmentRequestAt: now,
-          status: InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
-          statusUpdatedAt: now,
-          archivedStatus: null,
-          archiveReason: null,
-          updatedBy: assessment.createdBy
-        }
-      );
-
       await this.documentService.syncDocumentVersions(domainContext, innovationId, transaction, { updatedAt: now });
 
       await transaction.softDelete(InnovationAssessmentEntity, { id: assessment.id });
@@ -512,14 +499,30 @@ export class InnovationAssessmentsService extends BaseService {
           id,
           finishedAt,
           createdAt,
+          createdBy,
           updatedAt,
+          updatedBy,
           deletedAt,
           assignTo,
           exemptedAt,
           exemptedReason,
           exemptedMessage,
           ...item
-        }) => item)(assessment) // Clones assessment variable, without some keys (id, finishedAt, ...).
+        }) => ({ ...item, createdBy: domainContext.id, updatedBy: domainContext.id }))(assessment) // Clones assessment variable, without some keys (id, finishedAt, ...).
+      );
+
+      await transaction.update(
+        InnovationEntity,
+        { id: assessment.innovation.id },
+        {
+          lastAssessmentRequestAt: now,
+          status: InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
+          statusUpdatedAt: now,
+          archivedStatus: null,
+          archiveReason: null,
+          updatedBy: assessmentClone.createdBy,
+          currentAssessment: { id: assessmentClone.id }
+        }
       );
 
       const reassessment = await transaction.save(

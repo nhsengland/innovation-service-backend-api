@@ -1274,20 +1274,20 @@ export class InnovationsService extends BaseService {
       .getRawOne();
 
     // Fetch users names.
-    const assessmentUsersIds = innovation.currentAssessment?.assignTo?.id ?? [];
+    const assessmentUsersId = innovation.currentAssessment?.assignTo?.id;
     const categories = documentData.categories ? JSON.parse(documentData.categories) : [];
-    let usersInfo = [];
+    let usersInfo: Awaited<ReturnType<DomainService['users']['getUsersList']>> = [];
     let ownerInfo = undefined;
     let ownerPreferences = undefined;
 
     if (innovation.owner && innovation.owner.status !== UserStatusEnum.DELETED) {
       ownerPreferences = await this.domainService.users.getUserPreferences(innovation.owner.id);
       usersInfo = await this.domainService.users.getUsersList({
-        userIds: [...assessmentUsersIds, ...[innovation.owner.id]]
+        userIds: [innovation.owner.id, ...(assessmentUsersId ? [assessmentUsersId] : [])]
       });
       ownerInfo = usersInfo.find(item => item.id === innovation.owner?.id);
-    } else {
-      usersInfo = await this.domainService.users.getUsersList({ userIds: [...assessmentUsersIds] });
+    } else if (assessmentUsersId) {
+      usersInfo = await this.domainService.users.getUsersList({ userIds: [assessmentUsersId] });
     }
 
     // Assessment parsing.
