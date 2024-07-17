@@ -156,7 +156,9 @@ describe('Innovations / _services / innovations suite', () => {
           name: randCompanyName(),
           description: randText({ charCount: 10 }),
           countryName: randCountry(),
+          officeLocation: randCountry(),
           postcode: randCountryCode(),
+          hasWebsite: 'YES',
           website: randDomainName()
         },
         em
@@ -175,8 +177,10 @@ describe('Innovations / _services / innovations suite', () => {
             name: scenario.users.johnInnovator.innovations.johnInnovation.name,
             description: randText({ charCount: 10 }),
             countryName: randCountry(),
+            officeLocation: randCountry(),
             postcode: randCountryCode(),
-            website: randDomainName()
+            website: randDomainName(),
+            hasWebsite: 'YES'
           },
           em
         )
