@@ -14,6 +14,22 @@ export class alterTableInnovationAssessmentAddCurrentPrevious1721135878744 imple
         WHERE id IN (select innovation_assessment_id from innovation_reassessment_request);
     `);
 
+    // Set the current assessment id
+    await queryRunner.query(`
+      UPDATE innovation SET current_assessment_id = t2.id
+      FROM innovation i
+      INNER JOIN (
+        SELECT a.innovation_id, id
+        FROM innovation_assessment a
+        INNER JOIN  (
+          SELECT innovation_id, MAX(created_at) as created_at
+          FROM innovation_assessment
+          WHERE deleted_at IS NULL
+          GROUP by innovation_id) t on t.innovation_id = a.innovation_id AND t.created_at = a.created_at
+      ) t2 ON i.id = t2.innovation_id;
+    `);
+
+    // Set the previous assessment id
     await queryRunner.query(`
       WITH previous AS (
         SELECT innovation_id, id, created_at,
