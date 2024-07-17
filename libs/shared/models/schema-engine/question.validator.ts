@@ -91,7 +91,7 @@ export class CheckboxArrayValidator implements QuestionTypeValidator<CheckboxArr
     }
 
     // This means its an array of objects (e.g., standards)
-    if(question.addQuestion) {
+    if (question.addQuestion) {
       const objectTypeSchema = Joi.object({
         [question.checkboxAnswerId ?? question.id]: Joi.string().valid(...validItems),
         // "Optional" added due to the nature of this type of question and save per question. The question is just answered after the selection of the checkbox.
@@ -131,7 +131,9 @@ export class FieldGroupValidator implements QuestionTypeValidator<FieldsGroup> {
       obj[question.field.id] = QuestionValidatorFactory.validate(question.field);
     }
     if (question.addQuestion) {
-      obj[question.addQuestion.id] = QuestionValidatorFactory.validate(question.addQuestion);
+      // Since we have step by step, the first time the question is answered it doesn't have "yet" the answer for this
+      // question. To prevent the validator to fail we make it optional.
+      obj[question.addQuestion.id] = QuestionValidatorFactory.validate(question.addQuestion).optional();
     }
     if (Object.keys(obj).length) {
       validation = validation.items(Joi.object(obj));

@@ -1420,7 +1420,10 @@ export class InnovationsService extends BaseService {
       name: string;
       description: string;
       countryName: string;
+      officeLocation: string;
+      countryLocation?: string;
       postcode?: string;
+      hasWebsite: string;
       website?: string;
     },
     entityManager?: EntityManager

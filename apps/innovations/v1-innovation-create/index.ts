@@ -3,7 +3,7 @@ import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { Audit, ElasticSearchDocumentUpdate, JwtDecoder } from '@innovations/shared/decorators';
 import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
-import type { AuthorizationService } from '@innovations/shared/services';
+import type { AuthorizationService, IRSchemaService } from '@innovations/shared/services';
 import { ActionEnum, TargetEnum } from '@innovations/shared/services/integrations/audit.service';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { CustomContextType } from '@innovations/shared/types';
@@ -13,7 +13,12 @@ import { container } from '../_config';
 import type { InnovationsService } from '../_services/innovations.service';
 import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
-import { BodySchema, BodyType } from './validation.schemas';
+import {
+  BodySchema,
+  BodySchemaAfterCalculatedFieldsSchema,
+  BodySchemaAfterCalculatedFieldsType,
+  BodyType
+} from './validation.schemas';
 
 class V1InnovationCreate {
   @JwtDecoder()
@@ -25,10 +30,19 @@ class V1InnovationCreate {
   @ElasticSearchDocumentUpdate({ identifierResponseField: 'id' })
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
     const authorizationService = container.get<AuthorizationService>(SHARED_SYMBOLS.AuthorizationService);
+    const irSchemaService = container.get<IRSchemaService>(SHARED_SYMBOLS.IRSchemaService);
     const innovationService = container.get<InnovationsService>(SYMBOLS.InnovationsService);
 
     try {
-      const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
+      // Make sure it has all the required keys for the creation.
+      const requestBody = JoiHelper.Validate<BodyType>(BodySchema, request.body);
+
+      // Validate Payload
+      const validation = irSchemaService.getPayloadValidation('INNOVATION_DESCRIPTION', requestBody);
+      const body = JoiHelper.Validate<BodySchemaAfterCalculatedFieldsType>(BodySchemaAfterCalculatedFieldsSchema, {
+        ...JoiHelper.Validate<BodyType>(validation, requestBody),
+        ...irSchemaService.getCalculatedFields('INNOVATION_DESCRIPTION', requestBody)
+      });
 
       const auth = await authorizationService.validate(context).checkInnovatorType().verify();
 

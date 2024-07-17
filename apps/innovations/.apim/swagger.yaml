@@ -912,25 +912,18 @@ paths:
             schema:
               type: object
               properties:
-                name:
-                  type: string
-                  maxLength: 100
-                description:
-                  type: string
-                  maxLength: 500
-                countryName:
-                  type: string
-                  maxLength: 100
-                postcode:
-                  type: string
-                  maxLength: 8
-                website:
-                  type: string
-                  maxLength: 100
+                name: {}
+                description: {}
+                officeLocation: {}
+                countryLocation: {}
+                postcode: {}
+                hasWebsite: {}
+                website: {}
               required:
                 - name
                 - description
-                - countryName
+                - officeLocation
+                - hasWebsite
               additionalProperties: false
       responses:
         "200":

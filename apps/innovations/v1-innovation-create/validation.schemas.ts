@@ -1,17 +1,23 @@
-import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
 import Joi from 'joi';
 
 export type BodyType = {
   name: string;
   description: string;
-  countryName: string;
+  officeLocation: string;
+  countryLocation?: string;
   postcode?: string;
+  hasWebsite: string;
   website?: string;
 };
 export const BodySchema = Joi.object<BodyType>({
-  name: Joi.string().max(100).required().trim(),
-  description: Joi.string().max(TEXTAREA_LENGTH_LIMIT.s).required(),
-  countryName: Joi.string().max(100).required(),
-  postcode: Joi.string().max(8),
-  website: Joi.string().max(100) // TODO not validating URL format atm
+  name: Joi.required(),
+  description: Joi.required(),
+  officeLocation: Joi.required(),
+  countryLocation: Joi.optional(),
+  postcode: Joi.optional(),
+  hasWebsite: Joi.required(),
+  website: Joi.optional()
 }).required();
+
+export type BodySchemaAfterCalculatedFieldsType = BodyType & { countryName: string };
+export const BodySchemaAfterCalculatedFieldsSchema = BodySchema.append({ countryName: Joi.required() });

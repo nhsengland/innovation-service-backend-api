@@ -37,9 +37,12 @@ export const createDocumentFromInnovation = (
   version: number,
   fields: {
     name: string;
-    description?: string;
+    description: string;
     countryName: string;
+    officeLocation: string;
+    countryLocation?: string;
     postcode?: string;
+    hasWebsite: string;
     website?: string;
   }
 ): InnovationDocumentEntity => {
@@ -50,6 +53,9 @@ export const createDocumentFromInnovation = (
       description: fields.description,
       countryName: fields.countryName,
       postcode: fields.postcode,
+      officeLocation: fields.officeLocation,
+      countryLocation: fields.countryLocation,
+      hasWebsite: fields.hasWebsite,
       website: fields.website
     },
     UNDERSTANDING_OF_NEEDS: {},
