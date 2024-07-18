@@ -4,11 +4,11 @@ import type {
   InnovationStatusEnum,
   InnovationSupportStatusEnum,
   UserStatusEnum
-} from '../../../enums';
-import type { CreateIndexParams } from '../../../services/integrations/elastic-search.service';
-import type { CurrentDocumentType, DocumentType } from '../index';
+} from '../../enums';
+import type { CreateIndexParams } from '../../services/integrations/elastic-search.service';
+import type { InnovationRecordDocumentType } from './document.types';
 
-export type ElasticSearchDocumentType202304 = {
+export type ElasticSearchDocumentType = {
   id: string;
   status: InnovationStatusEnum;
   rawStatus: InnovationStatusEnum;
@@ -47,19 +47,19 @@ export type ElasticSearchDocumentType202304 = {
     suggestedBy: string[];
   }[];
   filters: {
-    name: CurrentDocumentType['INNOVATION_DESCRIPTION']['name'];
-    countryName: CurrentDocumentType['INNOVATION_DESCRIPTION']['countryName'];
-    categories: CurrentDocumentType['INNOVATION_DESCRIPTION']['categories'];
-    careSettings: CurrentDocumentType['INNOVATION_DESCRIPTION']['careSettings'];
-    involvedAACProgrammes: CurrentDocumentType['INNOVATION_DESCRIPTION']['involvedAACProgrammes'];
-    diseasesAndConditions: CurrentDocumentType['UNDERSTANDING_OF_NEEDS']['diseasesConditionsImpact'];
-    keyHealthInequalities: CurrentDocumentType['UNDERSTANDING_OF_NEEDS']['keyHealthInequalities'];
+    name: InnovationRecordDocumentType['INNOVATION_DESCRIPTION']['name'];
+    countryName: InnovationRecordDocumentType['INNOVATION_DESCRIPTION']['countryName'];
+    categories: InnovationRecordDocumentType['INNOVATION_DESCRIPTION']['categories'];
+    careSettings: InnovationRecordDocumentType['INNOVATION_DESCRIPTION']['careSettings'];
+    involvedAACProgrammes: InnovationRecordDocumentType['INNOVATION_DESCRIPTION']['involvedAACProgrammes'];
+    diseasesAndConditions: InnovationRecordDocumentType['UNDERSTANDING_OF_NEEDS']['diseasesConditionsImpact'];
+    keyHealthInequalities: InnovationRecordDocumentType['UNDERSTANDING_OF_NEEDS']['keyHealthInequalities'];
   };
 };
 
 const KeywordType: MappingProperty = { type: 'keyword', normalizer: 'lowercase' };
 
-export const ElasticSearchSchema202304: CreateIndexParams = {
+export const ElasticSearchSchema: CreateIndexParams = {
   settings: {
     analysis: {
       analyzer: {

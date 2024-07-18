@@ -1,44 +1,54 @@
-import type { catalogEvidenceSubmitType, catalogEvidenceType } from '../202304/catalog.types';
-import type { InnovationSections } from './catalog.types';
+import type {
+  InnovationSections,
+  catalogEvidenceSubmitType,
+  catalogEvidenceType,
+  catalogCategory,
+  catalogAreas,
+  catalogCareSettings,
+  catalogInvolvedAACProgrammes,
+  catalogKeyHealthInequalities,
+  catalogNeedsSupportAnyArea,
+  catalogStandardsType
+} from './catalog.types';
 
 type OtherKeyValues = { [key: string]: any };
 
 export type InnovationRecordDocumentType = {
   version: number;
   INNOVATION_DESCRIPTION: {
-    name: string; // N
-    description?: string; // N
-    postcode?: string; // N
-    countryName?: string; // N
+    name: string;
+    description?: string;
+    postcode?: string;
+    countryName?: string;
     officeLocation?: string;
     countryLocation?: string;
-    categories?: string[]; // N
-    otherCategoryDescription?: string; // N
-    mainCategory?: string; // N
-    areas?: string[]; // N
-    careSettings?: string[]; // N
-    otherCareSetting?: string; // N
-    involvedAACProgrammes?: string[]; // N
+    categories?: catalogCategory[];
+    otherCategoryDescription?: string;
+    mainCategory?: catalogCategory;
+    areas?: catalogAreas[];
+    careSettings?: catalogCareSettings[];
+    otherCareSetting?: string;
+    involvedAACProgrammes?: catalogInvolvedAACProgrammes[];
     hasWebsite?: string;
     website?: string;
   } & OtherKeyValues;
   UNDERSTANDING_OF_NEEDS: {
-    diseasesConditionsImpact?: string[]; // N
-    keyHealthInequalities?: string[]; // N
+    diseasesConditionsImpact?: string[];
+    keyHealthInequalities?: catalogKeyHealthInequalities[];
   } & OtherKeyValues;
   EVIDENCE_OF_EFFECTIVENESS: {
     hasEvidence?: string;
     currentlyCollectingEvidence?: string;
     summaryOngoingEvidenceGathering?: string;
-    needsSupportAnyArea?: string[];
+    needsSupportAnyArea?: catalogNeedsSupportAnyArea[];
   } & OtherKeyValues;
   MARKET_RESEARCH: OtherKeyValues;
   CURRENT_CARE_PATHWAY: OtherKeyValues;
   TESTING_WITH_USERS: {
-    userTests?: { kind: string; feedback?: string }[]; // N
+    userTests?: { kind: string; feedback?: string }[];
   } & OtherKeyValues;
   REGULATIONS_AND_STANDARDS: {
-    standards?: { type: string; hasMet?: string }[]; // N
+    standards?: { type: catalogStandardsType; hasMet?: string }[];
   } & OtherKeyValues;
   INTELLECTUAL_PROPERTY: OtherKeyValues;
   REVENUE_MODEL: OtherKeyValues;

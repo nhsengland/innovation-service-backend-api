@@ -1,21 +1,20 @@
 import { randBoolean, randCountry, randProduct, randText } from '@ngneat/falso';
-import { ElasticSearchDocumentType202304, ElasticSearchSchema202304 } from './202304/elastic-search.schema';
-import { DocumentValidationSchema202304Map, EvidenceSchema202304 } from './202304/document.schema';
-import type { InnovationRecordDocumentType } from './202407/document.types';
+import type { ElasticSearchDocumentType } from './elastic-search.schema';
+import { EvidenceSchema } from './document.schema';
+import type { InnovationRecordDocumentType } from './document.types';
 
 // All versions
 export type DocumentType = InnovationRecordDocumentType;
 
 // Current version links
-export * as CurrentCatalogTypes from './202304/catalog.types';
-export const ElasticSearchSchema = ElasticSearchSchema202304;
-export type CurrentElasticSearchDocumentType = ElasticSearchDocumentType202304;
-export const CurrentDocumentSchemaMap = DocumentValidationSchema202304Map;
+export * as CurrentCatalogTypes from './catalog.types';
+export { ElasticSearchSchema } from './elastic-search.schema';
+export type CurrentElasticSearchDocumentType = ElasticSearchDocumentType;
 export type CurrentDocumentType = InnovationRecordDocumentType;
 export type CurrentEvidenceType = NonNullable<CurrentDocumentType['evidences']>[number];
-export const CurrentEvidenceSchema = EvidenceSchema202304;
+export const CurrentEvidenceSchema = EvidenceSchema;
 
-export { InnovationRecordDocumentType, requiredSectionsAndQuestions } from './202407/document.types';
+export { InnovationRecordDocumentType, requiredSectionsAndQuestions } from './document.types';
 
 // To remove?
 export enum InnovationSectionAliasEnum {

@@ -14,8 +14,6 @@ class V1InnovationUpdateIndexCron {
 
     logger.log('Running cron job: V1InnovationUpdateIndexCron');
 
-    if (1 === Number(1)) return;
-
     let innovationId: string | null = null;
     try {
       while ((innovationId = await redisService.popFromSet('elasticsearch')) !== null) {
