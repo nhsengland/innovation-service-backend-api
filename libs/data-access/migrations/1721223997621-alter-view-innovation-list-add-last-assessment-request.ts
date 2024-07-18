@@ -1,6 +1,6 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AlterViewInnovationListAddLastAssessmentRequest1712228260385 implements MigrationInterface {
+export class AlterViewInnovationListAddLastAssessmentRequest1721223997621 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
     CREATE OR ALTER VIEW innovation_list_view AS
@@ -15,6 +15,7 @@ export class AlterViewInnovationListAddLastAssessmentRequest1712228260385 implem
       i.updated_at,
       i.archived_status,
       i.status_updated_at,
+      i.current_assessment_id,
       i.last_assessment_request_at,
       gs.grouped_status as grouped_status
       FROM innovation i

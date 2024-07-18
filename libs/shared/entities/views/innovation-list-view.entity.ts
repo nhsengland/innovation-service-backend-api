@@ -1,4 +1,14 @@
-import { Column, JoinTable, ManyToMany, OneToMany, OneToOne, PrimaryColumn, ViewColumn, ViewEntity } from 'typeorm';
+import {
+  Column,
+  JoinColumn,
+  JoinTable,
+  ManyToMany,
+  OneToMany,
+  OneToOne,
+  PrimaryColumn,
+  ViewColumn,
+  ViewEntity
+} from 'typeorm';
 import type { InnovationGroupedStatusEnum, InnovationStatusEnum } from '../../enums';
 import type {
   catalogCareSettings,
@@ -83,8 +93,9 @@ export class InnovationListView {
   @Column({ name: 'engaging_units', type: 'simple-json' })
   engagingUnits: { unitId: string; name: string; acronym: string; assignedAccessors: string[] | null }[] | null;
 
-  @OneToOne(() => InnovationAssessmentEntity, record => record.innovation)
-  assessment: InnovationAssessmentEntity | null;
+  @OneToOne(() => InnovationAssessmentEntity)
+  @JoinColumn({ name: 'current_assessment_id' })
+  currentAssessment: InnovationAssessmentEntity | null;
 
   @OneToMany(() => InnovationSupportEntity, record => record.innovation)
   supports: InnovationSupportEntity[] | null;
