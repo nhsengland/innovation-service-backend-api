@@ -38,9 +38,9 @@ import type { InnovationAssessmentType } from '../_types/innovation.types';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { EntityManager } from 'typeorm';
 import { BaseService } from './base.service';
+import type { InnovationDocumentService } from './innovation-document.service';
 import type { InnovationThreadsService } from './innovation-threads.service';
 import SYMBOLS from './symbols';
-import type { InnovationDocumentService } from './innovation-document.service';
 
 @injectable()
 export class InnovationAssessmentsService extends BaseService {
@@ -65,9 +65,6 @@ export class InnovationAssessmentsService extends BaseService {
       .leftJoinAndSelect('assessment.assignTo', 'assignTo')
       .leftJoinAndSelect('assessment.organisationUnits', 'organisationUnit')
       .leftJoinAndSelect('organisationUnit.organisation', 'organisation')
-      // Deleted assessments are necessary for history / activity log purposes.
-      // This query will retrieve deleted records from InnovationAssessmentEntity and InnovationReassessmentRequestEntity.
-      .withDeleted()
       .leftJoinAndSelect('assessment.reassessmentRequest', 'reassessmentRequest')
       .where('assessment.id = :assessmentId', { assessmentId })
       .getOne();
@@ -160,15 +157,6 @@ export class InnovationAssessmentsService extends BaseService {
     }
 
     return connection.transaction(async transaction => {
-      await transaction.update(
-        InnovationEntity,
-        { id: innovationId },
-        {
-          status: InnovationStatusEnum.NEEDS_ASSESSMENT,
-          statusUpdatedAt: new Date().toISOString()
-        }
-      );
-
       const assessment = await transaction.save(
         InnovationAssessmentEntity,
         InnovationAssessmentEntity.new({
@@ -178,6 +166,16 @@ export class InnovationAssessmentsService extends BaseService {
           createdBy: domainContext.id,
           updatedBy: domainContext.id
         })
+      );
+
+      await transaction.update(
+        InnovationEntity,
+        { id: innovationId },
+        {
+          currentAssessment: { id: assessment.id },
+          status: InnovationStatusEnum.NEEDS_ASSESSMENT,
+          statusUpdatedAt: new Date().toISOString()
+        }
       );
 
       const thread = await this.threadService.createThreadOrMessage(
@@ -498,19 +496,6 @@ export class InnovationAssessmentsService extends BaseService {
         );
       }
 
-      await transaction.update(
-        InnovationEntity,
-        { id: assessment.innovation.id },
-        {
-          lastAssessmentRequestAt: now,
-          status: InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
-          statusUpdatedAt: now,
-          archivedStatus: null,
-          archiveReason: null,
-          updatedBy: assessment.createdBy
-        }
-      );
-
       await this.documentService.syncDocumentVersions(domainContext, innovationId, transaction, { updatedAt: now });
 
       await transaction.softDelete(InnovationAssessmentEntity, { id: assessment.id });
@@ -521,14 +506,30 @@ export class InnovationAssessmentsService extends BaseService {
           id,
           finishedAt,
           createdAt,
+          createdBy,
           updatedAt,
+          updatedBy,
           deletedAt,
           assignTo,
           exemptedAt,
           exemptedReason,
           exemptedMessage,
           ...item
-        }) => item)(assessment) // Clones assessment variable, without some keys (id, finishedAt, ...).
+        }) => ({ ...item, createdBy: domainContext.id, updatedBy: domainContext.id }))(assessment) // Clones assessment variable, without some keys (id, finishedAt, ...).
+      );
+
+      await transaction.update(
+        InnovationEntity,
+        { id: assessment.innovation.id },
+        {
+          lastAssessmentRequestAt: now,
+          status: InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
+          statusUpdatedAt: now,
+          archivedStatus: null,
+          archiveReason: null,
+          updatedBy: assessmentClone.createdBy,
+          currentAssessment: { id: assessmentClone.id }
+        }
       );
 
       const reassessment = await transaction.save(

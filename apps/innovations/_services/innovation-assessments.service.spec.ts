@@ -188,6 +188,21 @@ describe('Innovation Assessments Suite', () => {
         )
       ).rejects.toThrowError(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_ALREADY_EXISTS));
     });
+
+    it('should update the innovation current assessment', async () => {
+      const assessment = await sut.createInnovationAssessment(
+        DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
+        innovationWithoutAssessment.id,
+        { message: 'test assessment' },
+        em
+      );
+
+      const innovation = await em
+        .getRepository(InnovationEntity)
+        .findOne({ where: { id: innovationWithoutAssessment.id }, relations: ['currentAssessment'] });
+
+      expect(innovation?.currentAssessment?.id).toBe(assessment.id);
+    });
   });
 
   describe('updateInnovationAssessment', () => {
