@@ -111,14 +111,18 @@ export class SchemaModel {
       if (!question) continue;
 
       // WARNING: big hack due to itemsFromAnswer.
+      let itemsFromAnswer: any = null;
       if ('items' in question && question.items[0] && 'itemsFromAnswer' in question.items[0]) {
         const referencedQuestion = this.questions.get(question.items[0].itemsFromAnswer);
         if (referencedQuestion && 'items' in referencedQuestion) {
-          question.items = referencedQuestion.items;
+          itemsFromAnswer = referencedQuestion.items;
         }
       }
 
-      validation[key] = QuestionValidatorFactory.validate(question);
+      validation[key] = QuestionValidatorFactory.validate({
+        ...question,
+        ...(itemsFromAnswer && { items: itemsFromAnswer })
+      });
     }
 
     return Joi.object(validation).required();
@@ -297,7 +301,7 @@ export class SchemaModel {
           this.conditions.set(subSection.id, subSection.calculatedFields);
         }
 
-        if(subSection.hasFiles) {
+        if (subSection.hasFiles) {
           this.allowFileUploads.add(subSection.id);
         }
       });
