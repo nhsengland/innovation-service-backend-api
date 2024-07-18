@@ -24,7 +24,7 @@ describe('Tasks To Submit Statistics Handler Suite', () => {
   const expectedGetLastUpdatedTask = {
     id: randUuid(),
     updatedAt: randPastDate(),
-    section: CurrentCatalogTypes.InnovationSections[0]
+    section: CurrentCatalogTypes.InnovationSections[0]!
   };
   const mockGetTasksCounter = jest
     .spyOn(StatisticsService.prototype, 'getTasksCounter')

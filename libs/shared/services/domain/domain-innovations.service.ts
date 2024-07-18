@@ -42,7 +42,7 @@ import {
   UnprocessableEntityError
 } from '../../errors';
 import { TranslationHelper } from '../../helpers';
-import { cleanup, translate } from '../../schemas/innovation-record/202304/translation.helper';
+import { translate } from '../../schemas/innovation-record/translation.helper';
 import type { CurrentElasticSearchDocumentType } from '../../schemas/innovation-record/index';
 import type { ActivitiesParamsType, DomainContextType, IdentityUserInfo, SupportLogParams } from '../../types';
 import type { IdentityProviderService } from '../integrations/identity-provider.service';
@@ -992,7 +992,9 @@ export class DomainInnovationsService {
     const innovations = await this.sqlConnection.query(sql, innovationId ? [innovationId] : []);
 
     const parsed: CurrentElasticSearchDocumentType[] = innovations.map((innovation: any) => {
-      const document = cleanup(JSON.parse(innovation.document ?? {}));
+      // TODO: Is not cleaning for now.
+      // const document = this.irSchemaService.cleanupDocument(JSON.parse(innovation.document ?? {}));
+      const document = JSON.parse(innovation.document ?? {});
       return {
         id: innovation.id,
         status: innovation.status,

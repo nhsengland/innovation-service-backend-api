@@ -6,6 +6,7 @@ import type { SQLConnectionService } from './sql-connection.service';
 import { InnovationRecordSchemaEntity } from '../../entities/innovation/innovation-record-schema.entity';
 import { BadRequestError, GenericErrorsEnum, InnovationErrorsEnum, NotFoundError } from '../../errors';
 import type Joi from 'joi';
+import type { CurrentDocumentType } from '../../schemas/innovation-record';
 
 type Schema = {
   version: number;
@@ -56,6 +57,11 @@ export class IRSchemaService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_RECORD_SCHEMA_NOT_FOUND);
     }
     return this.model.getCalculatedFields(subSectionId, payload);
+  }
+
+  // TODO: Needs to be implemented
+  cleanupDocument(doc: CurrentDocumentType) {
+    return doc;
   }
 
   /**

@@ -21,8 +21,12 @@ import {
   UnprocessableEntityError
 } from '@innovations/shared/errors';
 import { TranslationHelper, type PaginationQueryParamsType } from '@innovations/shared/helpers';
-import { CurrentDocumentConfig } from '@innovations/shared/schemas/innovation-record';
-import type { FileStorageService, IdentityProviderService, IRSchemaService, NotifierService } from '@innovations/shared/services';
+import type {
+  FileStorageService,
+  IdentityProviderService,
+  IRSchemaService,
+  NotifierService
+} from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import {
   isAccessorDomainContextType,
@@ -613,8 +617,7 @@ export class InnovationFileService extends BaseService {
   ) => {
     const document = await this.innovationDocumentService.getInnovationDocument(
       innovationId,
-      CurrentDocumentConfig.version,
-      this.innovationDocumentService.getDocumentTypeAccordingWithRole(role),
+      { type: this.innovationDocumentService.getDocumentTypeAccordingWithRole(role) },
       entityManager
     );
 

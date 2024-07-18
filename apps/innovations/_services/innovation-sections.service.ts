@@ -29,7 +29,6 @@ import { TranslationHelper } from '@innovations/shared/helpers';
 import type { DocumentType } from '@innovations/shared/schemas/innovation-record';
 import {
   CurrentCatalogTypes,
-  CurrentDocumentConfig,
   CurrentDocumentType,
   CurrentEvidenceType
 } from '@innovations/shared/schemas/innovation-record';
@@ -206,8 +205,7 @@ export class InnovationSectionsService extends BaseService {
 
     const document = await this.innovationDocumentService.getInnovationDocument(
       innovationId,
-      CurrentDocumentConfig.version,
-      this.innovationDocumentService.getDocumentTypeAccordingWithRole(domainContext.currentRole.role),
+      { type: this.innovationDocumentService.getDocumentTypeAccordingWithRole(domainContext.currentRole.role) },
       connection
     );
 
@@ -472,8 +470,10 @@ export class InnovationSectionsService extends BaseService {
 
     const document = await this.innovationDocumentService.getInnovationDocument(
       innovationId,
-      version ?? CurrentDocumentConfig.version,
-      this.innovationDocumentService.getDocumentTypeAccordingWithRole(domainContext.currentRole.role),
+      {
+        version,
+        type: this.innovationDocumentService.getDocumentTypeAccordingWithRole(domainContext.currentRole.role)
+      },
       em
     );
     const innovationSections = this.getDocumentSections(document).map(section => ({
@@ -521,12 +521,7 @@ export class InnovationSectionsService extends BaseService {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     // Check if innovation exists and is of current version (throws error if it doesn't)
-    await this.innovationDocumentService.getInnovationDocument(
-      innovationId,
-      CurrentDocumentConfig.version,
-      'DRAFT',
-      connection
-    );
+    await this.innovationDocumentService.getInnovationDocument(innovationId, { type: 'DRAFT' }, connection);
 
     const section = await connection
       .createQueryBuilder(InnovationSectionEntity, 'section')
@@ -573,11 +568,7 @@ export class InnovationSectionsService extends BaseService {
     evidenceId: string,
     evidenceData: Omit<CurrentEvidenceType, 'id'>
   ): Promise<void> {
-    const document = await this.innovationDocumentService.getInnovationDocument(
-      innovationId,
-      CurrentDocumentConfig.version,
-      'DRAFT'
-    );
+    const document = await this.innovationDocumentService.getInnovationDocument(innovationId, { type: 'DRAFT' });
 
     const evidenceIndex = document.evidences?.findIndex(e => e.id === evidenceId) ?? -1;
     const evidence = document.evidences?.[evidenceIndex];
@@ -631,11 +622,7 @@ export class InnovationSectionsService extends BaseService {
     innovationId: string,
     evidenceId: string
   ): Promise<void> {
-    const document = await this.innovationDocumentService.getInnovationDocument(
-      innovationId,
-      CurrentDocumentConfig.version,
-      'DRAFT'
-    );
+    const document = await this.innovationDocumentService.getInnovationDocument(innovationId, { type: 'DRAFT' });
 
     let evidences = document.evidences;
     const evidence = evidences?.find(e => e.id === evidenceId);
@@ -680,11 +667,9 @@ export class InnovationSectionsService extends BaseService {
     innovationId: string,
     evidenceId: string
   ): Promise<CurrentEvidenceType> {
-    const document = await this.innovationDocumentService.getInnovationDocument(
-      innovationId,
-      CurrentDocumentConfig.version,
-      this.innovationDocumentService.getDocumentTypeAccordingWithRole(domainContext.currentRole.role)
-    );
+    const document = await this.innovationDocumentService.getInnovationDocument(innovationId, {
+      type: this.innovationDocumentService.getDocumentTypeAccordingWithRole(domainContext.currentRole.role)
+    });
 
     const evidence = document.evidences?.find(e => e.id === evidenceId);
     if (!evidence) {
@@ -720,7 +705,7 @@ export class InnovationSectionsService extends BaseService {
     let evidenceData;
 
     // Special case for evidence data
-    if (document.version === '202304') {
+    if ('EVIDENCE_OF_EFFECTIVENESS' in document) {
       evidenceData =
         sectionKey !== 'EVIDENCE_OF_EFFECTIVENESS'
           ? undefined
@@ -765,11 +750,7 @@ export class InnovationSectionsService extends BaseService {
     data: { updatedBy: string; updatedAt?: Date; description?: string },
     em: EntityManager
   ): Promise<void> {
-    const document = await this.innovationDocumentService.getInnovationDocument(
-      innovationId,
-      CurrentDocumentConfig.version,
-      'DRAFT'
-    );
+    const document = await this.innovationDocumentService.getInnovationDocument(innovationId, { type: 'DRAFT' });
 
     const { evidences, ...draftSection } = this.getSectionData(document, sectionKey);
     const entriesToUpdate: { key: string; data: unknown }[] = [{ key: sectionKey, data: draftSection }];
