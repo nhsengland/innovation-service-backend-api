@@ -374,7 +374,7 @@ describe('Innovation Assessments Suite', () => {
     it('should not create a reassessment if the innovation has no assessment', async () => {
       await expect(async () =>
         sut.createInnovationReassessment(
-          DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
+          DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
           innovationWithoutAssessment.id,
           { updatedInnovationRecord: 'YES', description: randText() },
           em
@@ -396,7 +396,7 @@ describe('Innovation Assessments Suite', () => {
     it('should not create a reassessment if the innovation has ongoing supports', async () => {
       await expect(async () =>
         sut.createInnovationReassessment(
-          DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
+          DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
           innovationWithAssessment.id,
           { updatedInnovationRecord: 'YES', description: randText() },
           em

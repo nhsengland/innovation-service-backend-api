@@ -2134,19 +2134,33 @@ paths:
           application/json:
             schema:
               type: object
-              properties:
-                updatedInnovationRecord:
-                  type: string
-                  enum:
-                    - YES
-                    - NO
-                description:
-                  type: string
-                  maxLength: 500
-              required:
-                - updatedInnovationRecord
-                - description
+              properties: {}
               additionalProperties: false
+              oneOf:
+                - type: object
+                  properties:
+                    updatedInnovationRecord:
+                      type: string
+                      enum:
+                        - YES
+                        - NO
+                    description:
+                      type: string
+                      maxLength: 500
+                  required:
+                    - updatedInnovationRecord
+                    - description
+                  additionalProperties: false
+                  x-required: true
+                - type: object
+                  properties:
+                    reasonForReassessment:
+                      type: string
+                      maxLength: 2000
+                  required:
+                    - reasonForReassessment
+                  additionalProperties: false
+                  x-required: true
       responses:
         "200":
           description: Returns the reassessment request and the cloned assessment id

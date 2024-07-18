@@ -1,3 +1,4 @@
+import { ServiceRoleEnum } from '@users/shared/enums';
 import Joi from 'joi';
 
 import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
@@ -11,12 +12,28 @@ export const ParamsSchema = Joi.object<ParamsType>({
 }).required();
 
 export type BodyType = {
-  updatedInnovationRecord: YesOrNoCatalogueType;
-  description: string;
+  updatedInnovationRecord?: YesOrNoCatalogueType;
+  description?: string;
+  reasonForReassessment?: string;
 };
-export const BodySchema = Joi.object<BodyType>({
-  updatedInnovationRecord: Joi.string()
-    .valid(...Object.values(YesOrNoCatalogueType))
-    .required(),
-  description: Joi.string().max(TEXTAREA_LENGTH_LIMIT.s).required()
-}).required();
+
+export const BodySchema = Joi.object<BodyType>().when('$userRole', [
+  {
+    is: ServiceRoleEnum.INNOVATOR,
+    then: Joi.object({
+      updatedInnovationRecord: Joi.string()
+        .valid(...Object.values(YesOrNoCatalogueType))
+        .required(),
+      description: Joi.string().max(TEXTAREA_LENGTH_LIMIT.s).required(),
+      reasonForReassessment: Joi.forbidden()
+    }).required()
+  },
+  {
+    is: ServiceRoleEnum.ASSESSMENT,
+    then: Joi.object({
+      updatedInnovationRecord: Joi.forbidden(),
+      description: Joi.forbidden(),
+      reasonForReassessment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).required()
+    }).required()
+  }
+]);

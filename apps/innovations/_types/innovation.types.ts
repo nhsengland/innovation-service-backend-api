@@ -23,7 +23,11 @@ export interface InnovationSectionModel {
 
 export type InnovationAssessmentType = {
   id: string;
-  reassessment?: { updatedInnovationRecord: CurrentCatalogTypes.catalogYesNo; description: string };
+  reassessment?: {
+    updatedInnovationRecord?: CurrentCatalogTypes.catalogYesNo;
+    description?: string;
+    reasonForReassessment?: string;
+  };
   summary: null | string;
   description: null | string;
   finishedAt: null | Date;

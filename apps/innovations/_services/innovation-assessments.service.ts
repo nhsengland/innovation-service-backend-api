@@ -94,7 +94,8 @@ export class InnovationAssessmentsService extends BaseService {
         : {
             reassessment: {
               updatedInnovationRecord: assessment.reassessmentRequest.updatedInnovationRecord,
-              description: assessment.reassessmentRequest.description
+              description: assessment.reassessmentRequest.description,
+              reasonForReassessment: assessment.reassessmentRequest.reasonForReassessment
             }
           }),
       summary: assessment.summary,
@@ -393,7 +394,7 @@ export class InnovationAssessmentsService extends BaseService {
   }
 
   /**
-   * @param domainContext - The user requesting the action. In this case, it's an innovator.
+   * @param domainContext - The user requesting the action. In this case, it can be an innovator or a NA
    * @param innovationId
    * @param data - The data to be used to create the new assessment request.
    * @returns - The assessment request id and the new assessment id.
@@ -401,7 +402,7 @@ export class InnovationAssessmentsService extends BaseService {
   async createInnovationReassessment(
     domainContext: DomainContextType,
     innovationId: string,
-    data: { updatedInnovationRecord: YesOrNoCatalogueType; description: string },
+    data: { updatedInnovationRecord?: YesOrNoCatalogueType; description?: string; reasonForReassessment?: string },
     entityManager?: EntityManager
   ): Promise<{ assessment: { id: string }; reassessment: { id: string } }> {
     const connection = entityManager ?? this.sqlConnection.manager;
@@ -420,20 +421,29 @@ export class InnovationAssessmentsService extends BaseService {
       .innerJoin('innovation.innovationSupports', 'support')
       .where('innovation.id = :innovationId', { innovationId })
       .getOne();
-    if (
-      innovation &&
-      innovation.status === InnovationStatusEnum.IN_PROGRESS &&
-      innovation.innovationSupports?.some(s => s.status === InnovationSupportStatusEnum.ENGAGING)
-    ) {
-      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_CANNOT_REQUEST_REASSESSMENT);
-    }
+    if (domainContext.currentRole.role === ServiceRoleEnum.INNOVATOR) {
+      if (
+        innovation &&
+        innovation.status === InnovationStatusEnum.IN_PROGRESS &&
+        innovation.innovationSupports?.some(s => s.status === InnovationSupportStatusEnum.ENGAGING)
+      ) {
+        throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_CANNOT_REQUEST_REASSESSMENT);
+      }
 
-    if (
-      innovation &&
-      innovation.status === InnovationStatusEnum.ARCHIVED &&
-      innovation.owner?.id !== domainContext.id
-    ) {
-      throw new ForbiddenError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_MUST_BE_OWNER);
+      if (
+        innovation &&
+        innovation.status === InnovationStatusEnum.ARCHIVED &&
+        innovation.owner?.id !== domainContext.id
+      ) {
+        throw new ForbiddenError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_MUST_BE_OWNER);
+      }
+      if (
+        innovation &&
+        innovation.status !== InnovationStatusEnum.ARCHIVED &&
+        innovation.status !== InnovationStatusEnum.IN_PROGRESS
+      ) {
+        throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_CANNOT_REQUEST_REASSESSMENT);
+      }
     }
 
     // Get the latest assessment record.
@@ -527,6 +537,7 @@ export class InnovationAssessmentsService extends BaseService {
           assessment: InnovationAssessmentEntity.new({ id: assessmentClone.id }),
           innovation: InnovationEntity.new({ id: innovationId }),
           updatedInnovationRecord: data.updatedInnovationRecord,
+          reasonForReassessment: data.reasonForReassessment,
           description: data.description,
           createdBy: assessmentClone.createdBy,
           updatedBy: assessmentClone.updatedBy

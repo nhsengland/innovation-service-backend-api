@@ -2,7 +2,6 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { ElasticSearchDocumentUpdate, JwtDecoder } from '@innovations/shared/decorators';
-import { InnovationStatusEnum } from '@innovations/shared/enums';
 import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import type { AuthorizationService } from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
@@ -26,15 +25,19 @@ class V1InnovationReassessmentRequestCreate {
 
     try {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
-      const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
       const auth = await authorizationService
         .validate(context)
         .setInnovation(params.innovationId)
         .checkInnovatorType()
-        .checkInnovation({ status: [InnovationStatusEnum.IN_PROGRESS, InnovationStatusEnum.ARCHIVED] })
+        .checkAssessmentType()
+        .checkInnovation()
         .verify();
       const domainContext = auth.getContext();
+
+      const body = JoiHelper.Validate<BodyType>(BodySchema, request.body, {
+        userRole: domainContext.currentRole.role
+      });
 
       const result = await innovationAssessmentsService.createInnovationReassessment(
         domainContext,
