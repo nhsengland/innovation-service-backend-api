@@ -19,6 +19,7 @@ import { InnovationErrorsEnum, InternalServerError, NotFoundError } from '@innov
 import type {
   DomainService,
   IdentityProviderService,
+  IRSchemaService,
   NotifierService,
   RedisService
 } from '@innovations/shared/services';
@@ -39,7 +40,6 @@ import type { EntityManager } from 'typeorm';
 import type { InnovationFileService } from './innovation-file.service';
 import SYMBOLS from './symbols';
 import type { InnovationDocumentService } from './innovation-document.service';
-import type { IRSchemaService } from '@notifications/shared/services';
 
 type SectionInfoType = {
   section: CurrentCatalogTypes.InnovationSections;
