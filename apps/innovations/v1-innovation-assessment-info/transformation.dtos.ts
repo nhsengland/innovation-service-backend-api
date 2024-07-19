@@ -2,7 +2,7 @@ import type { YesOrNoCatalogueType } from '@innovations/shared/enums';
 
 export type ResponseDTO = {
   id: string;
-  reassessment?: { updatedInnovationRecord: YesOrNoCatalogueType; description: string };
+  reassessment?: { updatedInnovationRecord: YesOrNoCatalogueType; description: string; previousAssessmentId: string };
   summary: null | string;
   description: null | string;
   finishedAt: null | Date;
@@ -31,4 +31,5 @@ export type ResponseDTO = {
   }[];
   updatedAt: null | Date;
   updatedBy: { id: string; name: string };
+  isLatest: boolean;
 };

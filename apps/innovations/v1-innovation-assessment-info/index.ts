@@ -73,7 +73,8 @@ class V1InnovationAssessmentInfo {
           units: item.units
         })),
         updatedAt: result.updatedAt,
-        updatedBy: result.updatedBy
+        updatedBy: result.updatedBy,
+        isLatest: result.isLatest
       });
       return;
     } catch (error) {

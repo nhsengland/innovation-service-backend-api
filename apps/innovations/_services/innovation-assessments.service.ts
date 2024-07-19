@@ -25,6 +25,7 @@ import {
 import {
   ForbiddenError,
   InnovationErrorsEnum,
+  InternalServerError,
   NotFoundError,
   UnprocessableEntityError,
   UserErrorsEnum
@@ -62,10 +63,51 @@ export class InnovationAssessmentsService extends BaseService {
 
     const assessment = await connection
       .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
-      .leftJoinAndSelect('assessment.assignTo', 'assignTo')
-      .leftJoinAndSelect('assessment.organisationUnits', 'organisationUnit')
-      .leftJoinAndSelect('organisationUnit.organisation', 'organisation')
-      .leftJoinAndSelect('assessment.reassessmentRequest', 'reassessmentRequest')
+      .select([
+        'assessment.id',
+        'assessment.description',
+        'assessment.finishedAt',
+        'assessment.summary',
+        'assessment.updatedAt',
+        'assessment.updatedBy',
+        // questions
+        'assessment.maturityLevel',
+        'assessment.maturityLevelComment',
+        'assessment.hasRegulatoryApprovals',
+        'assessment.hasRegulatoryApprovalsComment',
+        'assessment.hasEvidence',
+        'assessment.hasEvidenceComment',
+        'assessment.hasValidation',
+        'assessment.hasValidationComment',
+        'assessment.hasProposition',
+        'assessment.hasPropositionComment',
+        'assessment.hasCompetitionKnowledge',
+        'assessment.hasCompetitionKnowledgeComment',
+        'assessment.hasImplementationPlan',
+        'assessment.hasImplementationPlanComment',
+        'assessment.hasScaleResource',
+        'assessment.hasScaleResourceComment',
+        // relations
+        'assignTo.id',
+        'organisationUnit.id',
+        'organisationUnit.name',
+        'organisationUnit.acronym',
+        'organisation.id',
+        'organisation.name',
+        'organisation.acronym',
+        'previousAssessment.id',
+        'reassessmentRequest.updatedInnovationRecord',
+        'reassessmentRequest.description',
+        'innovation.id',
+        'currentAssessment.id'
+      ])
+      .leftJoin('assessment.assignTo', 'assignTo')
+      .leftJoin('assessment.organisationUnits', 'organisationUnit')
+      .leftJoin('organisationUnit.organisation', 'organisation')
+      .leftJoin('assessment.reassessmentRequest', 'reassessmentRequest')
+      .leftJoin('assessment.previousAssessment', 'previousAssessment')
+      .innerJoin('assessment.innovation', 'innovation')
+      .innerJoin('innovation.currentAssessment', 'currentAssessment')
       .where('assessment.id = :assessmentId', { assessmentId })
       .getOne();
     if (!assessment) {
@@ -84,16 +126,23 @@ export class InnovationAssessmentsService extends BaseService {
       userIds: [...(assessment.assignTo ? [assessment.assignTo.id] : []), assessment.updatedBy]
     });
 
+    if (assessment.reassessmentRequest && !assessment.previousAssessment) {
+      throw new InternalServerError(
+        InnovationErrorsEnum.INNOVATION_ASSESSMENT_REASSESSMENT_REQUEST_WITHOUT_PREVIOUS_ASSESSMENT
+      );
+    }
+
     return {
       id: assessment.id,
-      ...(!assessment.reassessmentRequest
-        ? {}
-        : {
+      ...(assessment.reassessmentRequest
+        ? {
             reassessment: {
               updatedInnovationRecord: assessment.reassessmentRequest.updatedInnovationRecord,
-              description: assessment.reassessmentRequest.description
+              description: assessment.reassessmentRequest.description,
+              previousAssessmentId: assessment.previousAssessment!.id // validated above
             }
-          }),
+          }
+        : {}),
       summary: assessment.summary,
       description: assessment.description,
       finishedAt: assessment.finishedAt,
@@ -135,7 +184,8 @@ export class InnovationAssessmentsService extends BaseService {
       updatedBy: {
         id: assessment.updatedBy,
         name: usersInfo.find(user => user.id === assessment.updatedBy)?.displayName || ''
-      }
+      },
+      isLatest: assessment.id === assessment.innovation.currentAssessment?.id
     };
   }
 
