@@ -162,7 +162,7 @@ export const ElasticSearchSchema: CreateIndexParams = {
 
       document: {
         properties: {
-          version: { type: 'constant_keyword' },
+          version: { type: 'keyword' },
           INNOVATION_DESCRIPTION: {
             properties: {
               name: { type: 'text' },
