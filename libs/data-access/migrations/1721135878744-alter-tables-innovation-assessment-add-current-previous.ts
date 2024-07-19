@@ -11,7 +11,25 @@ export class alterTableInnovationAssessmentAddCurrentPrevious1721135878744 imple
       -- Recover only the assessments that are related to reassessment requests
       -- at least in production once there was an assessment that got deleted because it was created duplicate
       UPDATE innovation_assessment SET DELETED_AT=NULL
-        WHERE id IN (select innovation_assessment_id from innovation_reassessment_request);
+        WHERE innovation_id IN (select innovation_id from innovation_reassessment_request);
+    `);
+
+    // Fix for deleted_at that assessment that were duplicated (one case in production but safe since there wasn't a
+    // reassessment request, but there is one case in dev so here just in case)
+    await queryRunner.query(`
+      WITH bad_assessments AS (
+        SELECT a.innovation_id, MAX(a.updated_at) AS updated_at
+        FROM innovation_assessment a
+        LEFT JOIN innovation_reassessment_request r ON a.id = r.innovation_assessment_id
+        WHERE r.id IS NULL AND a.deleted_at IS NOT NULL
+        GROUP BY a.innovation_id
+        HAVING COUNT(*) > 1
+      ) UPDATE innovation_assessment
+      SET deleted_at = GETDATE()
+      FROM innovation_assessment a
+      INNER JOIN bad_assessments b ON a.innovation_id = b.innovation_id
+      LEFT JOIN innovation_reassessment_request r ON a.id = r.innovation_assessment_id
+      WHERE r.id IS NULL AND a.updated_at < b.updated_at;
     `);
 
     // Set the current assessment id
