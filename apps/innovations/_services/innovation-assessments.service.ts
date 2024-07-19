@@ -139,13 +139,13 @@ export class InnovationAssessmentsService extends BaseService {
           ? {
               reassessment: {
                 updatedInnovationRecord: assessment.reassessmentRequest.updatedInnovationRecord,
-                description: assessment.reassessmentRequest.description
+                description: assessment.reassessmentRequest.description,
                 previousAssessmentId: assessment.previousAssessment!.id
               }
             }
           : {
               reassessment: {
-                description: assessment.reassessmentRequest.description
+                description: assessment.reassessmentRequest.description,
                 previousAssessmentId: assessment.previousAssessment!.id
               }
             }),
@@ -495,6 +495,11 @@ export class InnovationAssessmentsService extends BaseService {
         innovation.status !== InnovationStatusEnum.ARCHIVED &&
         innovation.status !== InnovationStatusEnum.IN_PROGRESS
       ) {
+        throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_CANNOT_REQUEST_REASSESSMENT);
+      }
+    }
+    if (domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT) {
+      if (innovation && innovation.status !== InnovationStatusEnum.IN_PROGRESS) {
         throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_CANNOT_REQUEST_REASSESSMENT);
       }
     }
