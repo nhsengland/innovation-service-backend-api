@@ -84,7 +84,11 @@ describe('v1-innovation-assessment-info', () => {
     it('should return success with reassessment', async () => {
       const expectedWithReassessment = {
         ...expected,
-        reassessment: { updatedInnovationRecord: 'YES' as const, description: randText() }
+        reassessment: {
+          updatedInnovationRecord: 'YES' as const,
+          description: randText(),
+          previousAssessmentId: randUuid()
+        }
       };
       mock.mockResolvedValueOnce(expectedWithReassessment);
       const result = await new AzureHttpTriggerBuilder()
