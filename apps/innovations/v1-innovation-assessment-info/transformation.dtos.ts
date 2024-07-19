@@ -1,12 +1,8 @@
-import type { YesOrNoCatalogueType } from '@innovations/shared/enums';
+import type { ReassessmentType } from '../_types/innovation.types';
 
 export type ResponseDTO = {
   id: string;
-  reassessment?: {
-    updatedInnovationRecord?: YesOrNoCatalogueType;
-    description?: string;
-    reasonForReassessment?: string;
-  };
+  reassessment?: ReassessmentType;
   summary: null | string;
   description: null | string;
   finishedAt: null | Date;

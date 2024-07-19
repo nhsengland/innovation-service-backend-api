@@ -2146,7 +2146,7 @@ paths:
                         - NO
                     description:
                       type: string
-                      maxLength: 500
+                      maxLength: 2000
                   required:
                     - updatedInnovationRecord
                     - description
@@ -2154,11 +2154,11 @@ paths:
                   x-required: true
                 - type: object
                   properties:
-                    reasonForReassessment:
+                    description:
                       type: string
                       maxLength: 2000
                   required:
-                    - reasonForReassessment
+                    - description
                   additionalProperties: false
                   x-required: true
       responses:

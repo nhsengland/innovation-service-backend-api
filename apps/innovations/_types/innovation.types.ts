@@ -21,13 +21,16 @@ export interface InnovationSectionModel {
   submittedAt: Date | null;
 }
 
+export type ReassessmentType =
+  | {
+      updatedInnovationRecord: CurrentCatalogTypes.catalogYesNo;
+      description: string;
+    }
+  | { description: string };
+
 export type InnovationAssessmentType = {
   id: string;
-  reassessment?: {
-    updatedInnovationRecord?: CurrentCatalogTypes.catalogYesNo;
-    description?: string;
-    reasonForReassessment?: string;
-  };
+  reassessment?: ReassessmentType;
   summary: null | string;
   description: null | string;
   finishedAt: null | Date;

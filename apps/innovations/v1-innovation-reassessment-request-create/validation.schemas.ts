@@ -13,8 +13,7 @@ export const ParamsSchema = Joi.object<ParamsType>({
 
 export type BodyType = {
   updatedInnovationRecord?: YesOrNoCatalogueType;
-  description?: string;
-  reasonForReassessment?: string;
+  description: string;
 };
 
 export const BodySchema = Joi.object<BodyType>().when('$userRole', [
@@ -24,16 +23,14 @@ export const BodySchema = Joi.object<BodyType>().when('$userRole', [
       updatedInnovationRecord: Joi.string()
         .valid(...Object.values(YesOrNoCatalogueType))
         .required(),
-      description: Joi.string().max(TEXTAREA_LENGTH_LIMIT.s).required(),
-      reasonForReassessment: Joi.forbidden()
+      description: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).required()
     }).required()
   },
   {
     is: ServiceRoleEnum.ASSESSMENT,
     then: Joi.object({
       updatedInnovationRecord: Joi.forbidden(),
-      description: Joi.forbidden(),
-      reasonForReassessment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).required()
+      description: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).required()
     }).required()
   }
 ]);

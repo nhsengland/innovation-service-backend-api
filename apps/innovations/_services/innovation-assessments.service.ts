@@ -19,7 +19,6 @@ import {
   NotifierTypeEnum,
   ServiceRoleEnum,
   ThreadContextTypeEnum,
-  YesOrNoCatalogueType,
   YesPartiallyNoCatalogueType
 } from '@innovations/shared/enums';
 import {
@@ -33,7 +32,7 @@ import type { DomainService, NotifierService } from '@innovations/shared/service
 import type { DomainContextType, InnovationAssessmentKPIExemptionType } from '@innovations/shared/types';
 
 import { InnovationHelper } from '../_helpers/innovation.helper';
-import type { InnovationAssessmentType } from '../_types/innovation.types';
+import type { InnovationAssessmentType, ReassessmentType } from '../_types/innovation.types';
 
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { EntityManager } from 'typeorm';
@@ -88,13 +87,18 @@ export class InnovationAssessmentsService extends BaseService {
       id: assessment.id,
       ...(!assessment.reassessmentRequest
         ? {}
-        : {
-            reassessment: {
-              updatedInnovationRecord: assessment.reassessmentRequest.updatedInnovationRecord,
-              description: assessment.reassessmentRequest.description,
-              reasonForReassessment: assessment.reassessmentRequest.reasonForReassessment
+        : assessment.reassessmentRequest.updatedInnovationRecord
+          ? {
+              reassessment: {
+                updatedInnovationRecord: assessment.reassessmentRequest.updatedInnovationRecord,
+                description: assessment.reassessmentRequest.description
+              }
             }
-          }),
+          : {
+              reassessment: {
+                description: assessment.reassessmentRequest.description
+              }
+            }),
       summary: assessment.summary,
       description: assessment.description,
       finishedAt: assessment.finishedAt,
@@ -400,7 +404,7 @@ export class InnovationAssessmentsService extends BaseService {
   async createInnovationReassessment(
     domainContext: DomainContextType,
     innovationId: string,
-    data: { updatedInnovationRecord?: YesOrNoCatalogueType; description?: string; reasonForReassessment?: string },
+    data: ReassessmentType,
     entityManager?: EntityManager
   ): Promise<{ assessment: { id: string }; reassessment: { id: string } }> {
     const connection = entityManager ?? this.sqlConnection.manager;
@@ -537,8 +541,7 @@ export class InnovationAssessmentsService extends BaseService {
         InnovationReassessmentRequestEntity.new({
           assessment: InnovationAssessmentEntity.new({ id: assessmentClone.id }),
           innovation: InnovationEntity.new({ id: innovationId }),
-          updatedInnovationRecord: data.updatedInnovationRecord,
-          reasonForReassessment: data.reasonForReassessment,
+          ...('updatedInnovationRecord' in data ? { updatedInnovationRecord: data.updatedInnovationRecord } : {}),
           description: data.description,
           createdBy: assessmentClone.createdBy,
           updatedBy: assessmentClone.updatedBy

@@ -1,15 +1,15 @@
 import { randText } from '@ngneat/falso';
 import type { DeepPartial, EntityManager } from 'typeorm';
 import { InnovationAssessmentEntity, InnovationEntity, InnovationReassessmentRequestEntity } from '../../entities';
-import { InnovationStatusEnum, type YesOrNoCatalogueType } from '../../enums';
+import { InnovationStatusEnum } from '../../enums';
 import { BaseBuilder } from './base.builder';
 import type { TestInnovationAssessmentType } from './innovation-assessment.builder';
 import type { TestInnovationType } from './innovation.builder';
+import type { ReassessmentType } from 'apps/innovations/_types/innovation.types';
 
 export type TestInnovationReassessmentType = {
   id: string;
-  description: string;
-  updatedInnovationRecord: YesOrNoCatalogueType;
+  reassessment: ReassessmentType;
 };
 
 export class InnovationReassessmentRequestBuilder extends BaseBuilder {
@@ -69,8 +69,9 @@ export class InnovationReassessmentRequestBuilder extends BaseBuilder {
 
     return {
       id: result.id,
-      description: result.description,
-      updatedInnovationRecord: result.updatedInnovationRecord
+      reassessment: result.updatedInnovationRecord
+        ? { description: result.description, updatedInnovationRecord: result.updatedInnovationRecord }
+        : { description: result.description }
     };
   }
 }

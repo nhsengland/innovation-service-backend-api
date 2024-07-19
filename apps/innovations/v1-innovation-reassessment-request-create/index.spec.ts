@@ -59,7 +59,7 @@ describe('v1-innovation-reassessment-request-create Suite', () => {
           innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id
         })
         .setBody<BodyType>({
-          reasonForReassessment: randText()
+          description: randText()
         })
         .call<ResponseDTO>(azureFunction);
 
@@ -73,6 +73,7 @@ describe('v1-innovation-reassessment-request-create Suite', () => {
     it.each([
       ['Admin', 403, scenario.users.allMighty],
       ['QA', 403, scenario.users.aliceQualifyingAccessor],
+      ['Needs accessor', 400, scenario.users.paulNeedsAssessor], // should give 400 because the body is sending the updatedInnovationRecord
       ['Innovator owner', 200, scenario.users.johnInnovator],
       ['Innovator collaborator', 200, scenario.users.janeInnovator],
       ['Innovator other', 403, scenario.users.ottoOctaviusInnovator]
