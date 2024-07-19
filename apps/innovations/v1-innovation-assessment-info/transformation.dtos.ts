@@ -31,4 +31,5 @@ export type ResponseDTO = {
   }[];
   updatedAt: null | Date;
   updatedBy: { id: string; name: string };
+  isLatest: boolean;
 };

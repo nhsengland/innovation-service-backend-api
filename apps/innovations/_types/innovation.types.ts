@@ -49,6 +49,7 @@ export type InnovationAssessmentType = {
   suggestedOrganisations: OrganisationWithUnitsType[];
   updatedAt: null | Date;
   updatedBy: { id: string; name: string };
+  isLatest: boolean;
 };
 
 export type ThreadListModel = {

@@ -97,13 +97,17 @@ export class InnovationAssessmentsService extends BaseService {
         'organisation.acronym',
         'previousAssessment.id',
         'reassessmentRequest.updatedInnovationRecord',
-        'reassessmentRequest.description'
+        'reassessmentRequest.description',
+        'innovation.id',
+        'currentAssessment.id'
       ])
       .leftJoin('assessment.assignTo', 'assignTo')
       .leftJoin('assessment.organisationUnits', 'organisationUnit')
       .leftJoin('organisationUnit.organisation', 'organisation')
       .leftJoin('assessment.reassessmentRequest', 'reassessmentRequest')
       .leftJoin('assessment.previousAssessment', 'previousAssessment')
+      .innerJoin('assessment.innovation', 'innovation')
+      .innerJoin('innovation.currentAssessment', 'currentAssessment')
       .where('assessment.id = :assessmentId', { assessmentId })
       .getOne();
     if (!assessment) {
@@ -180,7 +184,8 @@ export class InnovationAssessmentsService extends BaseService {
       updatedBy: {
         id: assessment.updatedBy,
         name: usersInfo.find(user => user.id === assessment.updatedBy)?.displayName || ''
-      }
+      },
+      isLatest: assessment.id === assessment.innovation.currentAssessment?.id
     };
   }
 

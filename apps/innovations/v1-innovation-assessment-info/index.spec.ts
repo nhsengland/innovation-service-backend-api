@@ -55,7 +55,8 @@ const expected = {
     }
   ],
   updatedAt: randPastDate(),
-  updatedBy: { id: randUuid(), name: randUserName() }
+  updatedBy: { id: randUuid(), name: randUserName() },
+  isLatest: true
 };
 const mock = jest
   .spyOn(InnovationAssessmentsService.prototype, 'getInnovationAssessmentInfo')

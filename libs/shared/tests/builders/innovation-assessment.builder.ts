@@ -61,6 +61,11 @@ export class InnovationAssessmentBuilder extends BaseBuilder {
     return this;
   }
 
+  setPreviousAssessment(assessmentId: string): this {
+    this.assessment.previousAssessment = { id: assessmentId };
+    return this;
+  }
+
   setNeedsAssessor(userId: string): this {
     this.assessment.assignTo = { id: userId };
     return this;
