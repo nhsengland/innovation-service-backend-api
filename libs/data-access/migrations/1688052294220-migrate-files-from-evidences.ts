@@ -11,7 +11,7 @@ import { InnovationFileContextTypeEnum, ServiceRoleEnum } from '../../shared/enu
 import type {
   catalogEvidenceSubmitType,
   catalogEvidenceType
-} from '../../shared/schemas/innovation-record/202304/catalog.types';
+} from '../../shared/schemas/innovation-record/catalog.types';
 
 type OldEvidenceType = {
   id: string;
@@ -31,7 +31,7 @@ export class migrateFilesFromEvidences1688052294220 implements MigrationInterfac
     // Get all files and respective evidence info from the IR documents
     const fileAndEvidenceMap = new Map<string, string>();
     for (const document of documents) {
-      if (document.document.version === '202304') {
+      if (String(document.document.version) === '202304') {
         // This is needed since we took of files from the document type but in reality while running this migration they do exist
         // Another approach would be if we created a new IR version without the files (was decided to do the changes in the current IR version)
         const evidences: OldEvidenceType[] = document.document.evidences ?? [];
