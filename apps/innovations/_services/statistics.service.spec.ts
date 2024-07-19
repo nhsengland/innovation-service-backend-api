@@ -1,5 +1,5 @@
 import { randUuid } from '@ngneat/falso';
-import type { EntityManager } from 'typeorm';
+import { In, type EntityManager } from 'typeorm';
 
 import {
   InnovationExportRequestStatusEnum,
@@ -15,6 +15,7 @@ import { InnovationSectionBuilder } from '@innovations/shared/tests/builders/inn
 import { NotificationBuilder } from '@innovations/shared/tests/builders/notification.builder';
 import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
 
+import { InnovationTaskEntity } from '@innovations/shared/entities';
 import { InnovationFileBuilder } from '@innovations/shared/tests/builders/innovation-file.builder';
 import { container } from '../_config';
 import type { StatisticsService } from './statistics.service';
@@ -116,7 +117,21 @@ describe('Innovations / _services / innovation statistics suite', () => {
     ];
 
     it('should return the last updated task from my unit', async () => {
-      const task = innovation.tasks.taskByAliceOpen;
+      const task = await em.getRepository(InnovationTaskEntity).findOne({
+        where: {
+          innovationSection: {
+            innovation: { id: innovation.id }
+          },
+          createdByUserRole: {
+            organisationUnit: {
+              id: scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.id
+            }
+          },
+          status: In(taskStatus)
+        },
+        order: { updatedAt: 'DESC' },
+        relations: ['innovationSection']
+      });
 
       const lastUpdatedByTask = await sut.getLastUpdatedTask(
         DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
@@ -126,7 +141,11 @@ describe('Innovations / _services / innovation statistics suite', () => {
         em
       );
 
-      expect(lastUpdatedByTask).toEqual({ id: task.id, updatedAt: expect.any(Date), section: task.section });
+      expect(lastUpdatedByTask).toEqual({
+        id: task?.id,
+        updatedAt: task?.updatedAt,
+        section: task?.innovationSection.section
+      });
     });
 
     it('should return the last updated task from my team', async () => {

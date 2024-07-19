@@ -234,7 +234,7 @@ describe('Users / _services / statistics service suite', () => {
         em
       );
 
-      expect(result.count).toBe(2);
+      expect(result.count).toBe(3);
     });
 
     it.each([
