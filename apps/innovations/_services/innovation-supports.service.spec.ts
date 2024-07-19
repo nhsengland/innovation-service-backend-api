@@ -26,7 +26,6 @@ import {
   UnprocessableEntityError
 } from '@innovations/shared/errors';
 import { TranslationHelper } from '@innovations/shared/helpers';
-import { sleep } from '@innovations/shared/helpers/misc.helper';
 import { DomainInnovationsService, NotifierService } from '@innovations/shared/services';
 import { TestsHelper } from '@innovations/shared/tests';
 import { InnovationSupportLogBuilder } from '@innovations/shared/tests/builders/innovation-support-log.builder';
@@ -585,9 +584,6 @@ describe('Innovations / _services / innovation-supports suite', () => {
         .setSuggestedUnits([scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id])
         .save();
 
-      // Using sleeps because tests randomly fail and I suspect it's related with the created sort
-      await sleep(10);
-
       // Suggested by QA
       const qaSuggestion = await new InnovationSupportLogBuilder(em)
         .setInnovation(innovation.id)
@@ -597,8 +593,6 @@ describe('Innovations / _services / innovation-supports suite', () => {
         .setSuggestedUnits([scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id])
         .save();
 
-      await sleep(10);
-
       // Update status
       const statusUpdate = await new InnovationSupportLogBuilder(em)
         .setInnovation(innovation.id)
@@ -606,8 +600,6 @@ describe('Innovations / _services / innovation-supports suite', () => {
         .setCreatedBy(jamieMadrox, jamieMadrox.roles.aiRole)
         .setSupportStatus(InnovationSupportStatusEnum.ENGAGING)
         .save();
-
-      await sleep(10);
 
       // Create Progress Update
       const progressUpdate = await new InnovationSupportLogBuilder(em)
@@ -618,8 +610,6 @@ describe('Innovations / _services / innovation-supports suite', () => {
         .setParams({ title: randText() })
         .save();
 
-      await sleep(10);
-
       // Archive Innovation
       const archiveInnovationUpdate = await new InnovationSupportLogBuilder(em)
         .setInnovation(innovation.id)
@@ -628,8 +618,6 @@ describe('Innovations / _services / innovation-supports suite', () => {
         .setCreatedBy(johnInnovator, johnInnovator.roles.innovatorRole)
         .setOrganisationUnit(jamieMadrox.roles.aiRole.organisationUnit!.id)
         .save();
-
-      await sleep(10);
 
       // Innovator stop share Innovation
       const stopShareUpdate = await new InnovationSupportLogBuilder(em)
@@ -640,8 +628,6 @@ describe('Innovations / _services / innovation-supports suite', () => {
         .setOrganisationUnit(jamieMadrox.roles.aiRole.organisationUnit!.id)
         .save();
 
-      await sleep(10);
-
       const unitInfo = await sut.getSupportSummaryUnitInfo(
         DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
         innovation.id,
@@ -649,75 +635,77 @@ describe('Innovations / _services / innovation-supports suite', () => {
         em
       );
 
-      expect(unitInfo).toMatchObject([
-        {
-          id: stopShareUpdate.id,
-          createdAt: stopShareUpdate.createdAt,
-          createdBy: { id: johnInnovator.id, name: johnInnovator.name, displayRole: 'Owner' },
-          type: 'STOP_SHARE',
-          params: { supportStatus: InnovationSupportStatusEnum.CLOSED }
-        },
-        {
-          id: archiveInnovationUpdate.id,
-          createdAt: archiveInnovationUpdate.createdAt,
-          createdBy: { id: johnInnovator.id, name: johnInnovator.name, displayRole: 'Owner' },
-          type: 'INNOVATION_ARCHIVED',
-          params: {
-            supportStatus: InnovationSupportStatusEnum.CLOSED,
-            message: archiveInnovationUpdate.description
+      expect(unitInfo).toMatchObject(
+        [
+          {
+            id: stopShareUpdate.id,
+            createdAt: stopShareUpdate.createdAt,
+            createdBy: { id: johnInnovator.id, name: johnInnovator.name, displayRole: 'Owner' },
+            type: 'STOP_SHARE',
+            params: { supportStatus: InnovationSupportStatusEnum.CLOSED }
+          },
+          {
+            id: archiveInnovationUpdate.id,
+            createdAt: archiveInnovationUpdate.createdAt,
+            createdBy: { id: johnInnovator.id, name: johnInnovator.name, displayRole: 'Owner' },
+            type: 'INNOVATION_ARCHIVED',
+            params: {
+              supportStatus: InnovationSupportStatusEnum.CLOSED,
+              message: archiveInnovationUpdate.description
+            }
+          },
+          {
+            id: progressUpdate.id,
+            createdAt: progressUpdate.createdAt,
+            createdBy: {
+              id: jamieMadrox.id,
+              name: jamieMadrox.name,
+              displayRole: TranslationHelper.translate(`SERVICE_ROLES.${jamieMadrox.roles.aiRole.role}`)
+            },
+            type: 'PROGRESS_UPDATE',
+            params: {
+              title: progressUpdate.params && 'title' in progressUpdate.params ? progressUpdate.params.title : '',
+              message: progressUpdate.description
+            }
+          },
+          {
+            id: statusUpdate.id,
+            createdAt: statusUpdate.createdAt,
+            createdBy: {
+              id: jamieMadrox.id,
+              name: jamieMadrox.name,
+              displayRole: TranslationHelper.translate(`SERVICE_ROLES.${jamieMadrox.roles.aiRole.role}`)
+            },
+            type: 'SUPPORT_UPDATE',
+            params: { supportStatus: statusUpdate.innovationSupportStatus, message: statusUpdate.description }
+          },
+          {
+            id: qaSuggestion.id,
+            createdAt: qaSuggestion.createdAt,
+            createdBy: {
+              id: alice.id,
+              name: alice.name,
+              displayRole: TranslationHelper.translate(`SERVICE_ROLES.${alice.roles.qaRole.role}`)
+            },
+            type: 'SUGGESTED_ORGANISATION',
+            params: {
+              suggestedByName: alice.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
+              message: qaSuggestion.description
+            }
+          },
+          {
+            id: naSuggestion.id,
+            createdAt: naSuggestion.createdAt,
+            createdBy: {
+              id: paul.id,
+              name: paul.name,
+              displayRole: TranslationHelper.translate(`SERVICE_ROLES.${paul.roles.assessmentRole.role}`)
+            },
+            type: 'SUGGESTED_ORGANISATION',
+            params: {}
           }
-        },
-        {
-          id: progressUpdate.id,
-          createdAt: progressUpdate.createdAt,
-          createdBy: {
-            id: jamieMadrox.id,
-            name: jamieMadrox.name,
-            displayRole: TranslationHelper.translate(`SERVICE_ROLES.${jamieMadrox.roles.aiRole.role}`)
-          },
-          type: 'PROGRESS_UPDATE',
-          params: {
-            title: progressUpdate.params && 'title' in progressUpdate.params ? progressUpdate.params.title : '',
-            message: progressUpdate.description
-          }
-        },
-        {
-          id: statusUpdate.id,
-          createdAt: statusUpdate.createdAt,
-          createdBy: {
-            id: jamieMadrox.id,
-            name: jamieMadrox.name,
-            displayRole: TranslationHelper.translate(`SERVICE_ROLES.${jamieMadrox.roles.aiRole.role}`)
-          },
-          type: 'SUPPORT_UPDATE',
-          params: { supportStatus: statusUpdate.innovationSupportStatus, message: statusUpdate.description }
-        },
-        {
-          id: qaSuggestion.id,
-          createdAt: qaSuggestion.createdAt,
-          createdBy: {
-            id: alice.id,
-            name: alice.name,
-            displayRole: TranslationHelper.translate(`SERVICE_ROLES.${alice.roles.qaRole.role}`)
-          },
-          type: 'SUGGESTED_ORGANISATION',
-          params: {
-            suggestedByName: alice.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
-            message: qaSuggestion.description
-          }
-        },
-        {
-          id: naSuggestion.id,
-          createdAt: naSuggestion.createdAt,
-          createdBy: {
-            id: paul.id,
-            name: paul.name,
-            displayRole: TranslationHelper.translate(`SERVICE_ROLES.${paul.roles.assessmentRole.role}`)
-          },
-          type: 'SUGGESTED_ORGANISATION',
-          params: {}
-        }
-      ]);
+        ].sort((a, b) => b.createdAt!.getTime() - a.createdAt!.getTime())
+      );
       expect(unitInfo.every((s, i) => i === 0 || s.createdAt! <= unitInfo[i - 1]!.createdAt!)).toBeTruthy();
     });
 
