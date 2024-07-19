@@ -1,4 +1,5 @@
 import type { MappingProperty } from '@elastic/elasticsearch/lib/api/types';
+import type { CurrentDocumentType } from '.';
 import type {
   InnovationGroupedStatusEnum,
   InnovationStatusEnum,
@@ -18,7 +19,7 @@ export type ElasticSearchDocumentType = {
   submittedAt: Date | null;
   updatedAt: Date;
   lastAssessmentRequestAt: Date | null;
-  document: DocumentType;
+  document: CurrentDocumentType;
   owner?: { id: string; identityId: string; companyName: string | null; status: UserStatusEnum };
   engagingOrganisations?: { organisationId: string; name: string; acronym: string }[];
   engagingUnits?: {
