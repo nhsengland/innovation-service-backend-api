@@ -7,8 +7,8 @@ import { randProductDescription, randProductName, randUuid } from '@ngneat/falso
 import { InnovationsService } from '../_services/innovations.service';
 import type { ResponseDTO } from './transformation.dtos';
 import type { BodyType } from './validation.schemas';
-import { IRSchemaService } from '@innovations/shared/services';
 import Joi from 'joi';
+import { SchemaModel } from '@innovations/shared/models';
 
 jest.mock('@innovations/shared/decorators', () => ({
   JwtDecoder: jest.fn().mockImplementation(() => (_: any, __: string, descriptor: PropertyDescriptor) => {
@@ -36,9 +36,10 @@ const sampleBody = {
 const expected = { id: randUuid() };
 const mock = jest.spyOn(InnovationsService.prototype, 'createInnovation').mockResolvedValue(expected);
 const calculatedFieldsMock = jest
-  .spyOn(IRSchemaService.prototype, 'getCalculatedFields')
+  .spyOn(SchemaModel.prototype, 'getCalculatedFields')
   .mockReturnValue({ countryName: 'England' });
-const payloadValidationMock = jest.spyOn(IRSchemaService.prototype, 'getPayloadValidation')
+const payloadValidationMock = jest
+  .spyOn(SchemaModel.prototype, 'getSubSectionPayloadValidation')
   .mockReturnValue(Joi.object());
 
 afterEach(() => {

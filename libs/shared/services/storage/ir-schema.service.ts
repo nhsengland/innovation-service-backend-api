@@ -5,58 +5,40 @@ import SHARED_SYMBOLS from '../symbols';
 import type { SQLConnectionService } from './sql-connection.service';
 import { InnovationRecordSchemaEntity } from '../../entities/innovation/innovation-record-schema.entity';
 import { BadRequestError, GenericErrorsEnum, InnovationErrorsEnum, NotFoundError } from '../../errors';
-import type Joi from 'joi';
 import type { CurrentDocumentType } from '../../schemas/innovation-record';
+import type { CacheConfigType, CacheService } from './cache.service';
 
-type Schema = {
-  version: number;
-  schema: IRSchemaType;
-};
+type Schema = { version: number; model: SchemaModel; };
+
+const LATEST_VERSION = 'latest_version';
 
 @injectable()
 export class IRSchemaService {
-  private schema: Schema | null = null;
+  private version: number | null = null;
   private model: SchemaModel | null = null;
   private sqlConnection: DataSource;
+  private cache: CacheConfigType['IrSchema'];
 
   constructor(
-    @inject(SHARED_SYMBOLS.SQLConnectionService) private readonly sqlConnectionService: SQLConnectionService
+    @inject(SHARED_SYMBOLS.SQLConnectionService) private readonly sqlConnectionService: SQLConnectionService,
+    @inject(SHARED_SYMBOLS.CacheService) private readonly cacheService: CacheService
   ) {
     this.sqlConnection = this.sqlConnectionService.getConnection();
+    this.cache = this.cacheService.get('IrSchema');
   }
 
   /**
    * This method orchestrates the schema getter. Loads from DB if it doesn't exist,
    * otherwise returns the one in memory.
    */
-  async getSchema(reload?: boolean): Promise<Schema> {
-    if (!this.schema || reload) {
-      this.schema = await this.getSchemaVersion();
-      if (this.schema?.schema) {
-        this.model = this.createModelAndValidate(this.schema?.schema);
-      }
+  async getSchema(): Promise<Schema> {
+    if ((await this.cache.get(LATEST_VERSION)) !== this?.version) {
+      await this.reSyncIrSchema();
     }
-    if (!this.schema) {
+    if (!this.model || this.version === null) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_RECORD_SCHEMA_NOT_FOUND);
     }
-    return this.schema;
-  }
-
-  /**
-   * Returns the dynamic validation for a specific section based on the payload sent.
-   */
-  getPayloadValidation(subSectionId: string, payload: { [key: string]: any }): Joi.ObjectSchema {
-    if (!this.model) {
-      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_RECORD_SCHEMA_NOT_FOUND);
-    }
-    return this.model.getSubSectionPayloadValidation(subSectionId, payload);
-  }
-
-  getCalculatedFields(subSectionId: string, payload: { [key: string]: any }) {
-    if (!this.model) {
-      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_RECORD_SCHEMA_NOT_FOUND);
-    }
-    return this.model.getCalculatedFields(subSectionId, payload);
+    return { version: this.version, model: this.model };
   }
 
   // TODO: Needs to be implemented
@@ -71,27 +53,28 @@ export class IRSchemaService {
   async updateSchema(newSchema: IRSchemaType, updatedBy: string) {
     this.model = this.createModelAndValidate(newSchema);
     if (this.model.schema) {
-      await this.sqlConnection.manager.save(
+      const { version } = await this.sqlConnection.manager.save(
         InnovationRecordSchemaEntity,
         InnovationRecordSchemaEntity.new({ schema: this.model.schema, createdBy: updatedBy, updatedBy })
       );
-      this.schema = null;
-      await this.getSchema(true);
+      this.cache.set(LATEST_VERSION, version);
     }
   }
 
-  isSubsectionValid(subSectionId: string): boolean {
-    return this.model?.isSubsectionValid(subSectionId) ?? false;
-  }
-
-  canUploadFiles(subSectionId: string): boolean {
-    return this.model?.canUploadFiles(subSectionId) ?? false;
+  private async reSyncIrSchema(): Promise<void> {
+    const dbSchema = await this.getSchemaVersion();
+    if (!dbSchema) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_RECORD_SCHEMA_NOT_FOUND);
+    }
+    this.cache.set(LATEST_VERSION, dbSchema.version);
+    this.model = this.createModelAndValidate(dbSchema.schema);
+    this.version = dbSchema.version;
   }
 
   /**
    * This method is responsible for getting from the DB the schema version.
    */
-  private async getSchemaVersion(version?: number): Promise<Schema | null> {
+  private async getSchemaVersion(version?: number): Promise<{ version: number; schema: IRSchemaType } | null> {
     const query = this.sqlConnection
       .createQueryBuilder(InnovationRecordSchemaEntity, 'schema')
       .orderBy('schema.version', 'DESC');

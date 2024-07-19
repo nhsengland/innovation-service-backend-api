@@ -15,6 +15,7 @@ import { RedisCache } from './redis-cache.service';
  */
 export type CacheConfigType = {
   IdentityUserInfo: RedisCache<IdentityUserInfo>;
+  IrSchema: RedisCache<number>; // Saves de latest version
 };
 
 @injectable()
@@ -34,7 +35,8 @@ export class CacheService {
     this.redis = this.redisService.client;
     // Setting the cacheConfigMap here before connecting so that it's already available at injection time
     this.cacheConfigMap = {
-      IdentityUserInfo: new RedisCache<IdentityUserInfo>(this.redis, this.logger, 'IdentityUserInfo')
+      IdentityUserInfo: new RedisCache<IdentityUserInfo>(this.redis, this.logger, 'IdentityUserInfo'),
+      IrSchema: new RedisCache<number>(this.redis, this.logger, 'IrSchema')
     };
   }
 
