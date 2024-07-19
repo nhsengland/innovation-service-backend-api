@@ -46,7 +46,7 @@ class V1InnovationSectionUpdate {
       const body = {
         ...JoiHelper.Validate<{ [key: string]: any }>(validation, request.body['data']),
         ...irSchemaService.getCalculatedFields(params.sectionKey, request.body['data'])
-      }
+      };
 
       const result = await innovationSectionsService.updateInnovationSectionInfo(
         auth.getContext(),
