@@ -56,6 +56,7 @@ describe('Innovation Assessments Suite', () => {
   const innovationWithAssessmentInProgress =
     scenario.users.ottoOctaviusInnovator.innovations.brainComputerInterfaceInnovation;
   const innovationWithArchivedStatus = scenario.users.johnInnovator.innovations.johnInnovationArchived;
+  const innovationWithMultipleAssessments = scenario.users.tristanInnovator.innovations.innovationMultipleAssessments;
 
   describe('getInnovationAssessmentInfo', () => {
     const naUser = DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor);
@@ -120,7 +121,8 @@ describe('Innovation Assessments Suite', () => {
           }
         ],
         updatedAt: expect.any(Date),
-        updatedBy: { id: scenario.users.paulNeedsAssessor.id, name: scenario.users.paulNeedsAssessor.name }
+        updatedBy: { id: scenario.users.paulNeedsAssessor.id, name: scenario.users.paulNeedsAssessor.name },
+        isLatest: true
       });
     });
 
@@ -146,6 +148,26 @@ describe('Innovation Assessments Suite', () => {
         em
       );
       expect(res).toBeDefined();
+    });
+
+    it('should return the previous assessment if it exists', async () => {
+      const res = await sut.getInnovationAssessmentInfo(naUser, innovationWithMultipleAssessments.assessment.id);
+      expect(res.reassessment?.previousAssessmentId).toBe(innovationWithMultipleAssessments.previousAssessment.id);
+    });
+
+    it("should return latest if it's the current assessment", async () => {
+      const res = await sut.getInnovationAssessmentInfo(naUser, innovationWithMultipleAssessments.assessment.id);
+
+      expect(res.isLatest).toBe(true);
+    });
+
+    it("shouldn't return latest if it isn't the current assessment", async () => {
+      const res = await sut.getInnovationAssessmentInfo(
+        naUser,
+        innovationWithMultipleAssessments.previousAssessment.id
+      );
+
+      expect(res.isLatest).toBe(false);
     });
 
     it.each([

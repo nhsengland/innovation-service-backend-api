@@ -13,6 +13,8 @@ export type TestInnovationReassessmentType = {
 };
 
 export class InnovationReassessmentRequestBuilder extends BaseBuilder {
+  updateStatus = true;
+
   private request: DeepPartial<InnovationReassessmentRequestEntity> = {
     description: randText(),
     updatedInnovationRecord: 'YES'
@@ -32,6 +34,11 @@ export class InnovationReassessmentRequestBuilder extends BaseBuilder {
     return this;
   }
 
+  setUpdateStatus(updateStatus: boolean): this {
+    this.updateStatus = updateStatus;
+    return this;
+  }
+
   async save(): Promise<TestInnovationReassessmentType> {
     // Assertions
     if (!this.request.assessment) {
@@ -46,11 +53,13 @@ export class InnovationReassessmentRequestBuilder extends BaseBuilder {
       .save(this.request);
 
     // Update related entity status as failsafe
-    await this.getEntityManager().update(
-      InnovationEntity,
-      { id: this.request.innovation.id },
-      { status: InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT }
-    );
+    if (this.updateStatus) {
+      await this.getEntityManager().update(
+        InnovationEntity,
+        { id: this.request.innovation.id },
+        { status: InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT }
+      );
+    }
 
     await this.getEntityManager().update(
       InnovationAssessmentEntity,
