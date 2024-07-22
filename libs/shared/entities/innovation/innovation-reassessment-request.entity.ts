@@ -14,7 +14,7 @@ export class InnovationReassessmentRequestEntity extends BaseEntity {
   @Column({ name: 'updated_innovation_record', type: 'varchar', nullable: true, length: 3 })
   updatedInnovationRecord: YesOrNoCatalogueType | null;
 
-  @Column({ name: 'description', type: 'nvarchar', nullable: true })
+  @Column({ name: 'description', type: 'nvarchar' })
   description: string;
 
   @ManyToOne(() => InnovationEntity, { nullable: false })

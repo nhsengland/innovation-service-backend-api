@@ -73,11 +73,11 @@ describe('v1-innovation-reassessment-request-create Suite', () => {
     it.each([
       ['Admin', 403, scenario.users.allMighty],
       ['QA', 403, scenario.users.aliceQualifyingAccessor],
-      ['Needs accessor', 400, scenario.users.paulNeedsAssessor], // should give 400 because the body is sending the updatedInnovationRecord
+      ['NA', 200, scenario.users.paulNeedsAssessor],
       ['Innovator owner', 200, scenario.users.johnInnovator],
       ['Innovator collaborator', 200, scenario.users.janeInnovator],
       ['Innovator other', 403, scenario.users.ottoOctaviusInnovator]
-    ])('access with user %s should give %i', async (_role: string, status: number, user: TestUserType) => {
+    ])('access with user %s should give %i', async (role: string, status: number, user: TestUserType) => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(user)
         .setParams<ParamsType>({
@@ -85,7 +85,7 @@ describe('v1-innovation-reassessment-request-create Suite', () => {
         })
         .setBody<BodyType>({
           description: randText(),
-          updatedInnovationRecord: randBoolean() ? 'YES' : 'NO'
+          ...(role !== 'NA' && { updatedInnovationRecord: randBoolean() ? 'YES' : 'NO' })
         })
         .call<ErrorResponseType>(azureFunction);
 

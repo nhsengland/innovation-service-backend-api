@@ -31,7 +31,8 @@ export enum UserErrorsEnum {
   USER_ANNOUNCEMENT_NOT_FOUND = 'U.0011',
   USER_ROLE_NOT_FOUND = 'U.0012',
   USER_IDENTITY_CONFLICT = 'U.0013',
-  USER_ROLE_INVALID = 'U.0014'
+  USER_ROLE_INVALID = 'U.0014',
+  USER_ROLE_NOT_ALLOWED = 'U.0015'
 }
 
 export enum OrganisationErrorsEnum {
