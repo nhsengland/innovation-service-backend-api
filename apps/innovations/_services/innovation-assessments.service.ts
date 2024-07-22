@@ -464,7 +464,7 @@ export class InnovationAssessmentsService extends BaseService {
         'support.archiveSnapshot'
       ])
       .leftJoin('innovation.owner', 'innovationOwner')
-      .innerJoin('innovation.innovationSupports', 'support')
+      .leftJoin('innovation.innovationSupports', 'support')
       .where('innovation.id = :innovationId', { innovationId })
       .getOne();
 
