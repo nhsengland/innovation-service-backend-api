@@ -37,15 +37,15 @@ class V1InnovationSectionUpdate {
         throw new ConflictError(InnovationErrorsEnum.INNOVATION_RECORD_SCHEMA_VERSION_MISMATCH);
       }
 
-      if (!irSchemaService.isSubsectionValid(params.sectionKey)) {
+      if (!schema.model.isSubsectionValid(params.sectionKey)) {
         throw new InternalServerError(InnovationErrorsEnum.INNOVATION_SECTIONS_CONFIG_UNAVAILABLE);
       }
 
       // Validate Payload
-      const validation = irSchemaService.getPayloadValidation(params.sectionKey, request.body['data']);
+      const validation = schema.model.getSubSectionPayloadValidation(params.sectionKey, request.body['data']);
       const body = {
         ...JoiHelper.Validate<{ [key: string]: any }>(validation, request.body['data']),
-        ...irSchemaService.getCalculatedFields(params.sectionKey, request.body['data'])
+        ...schema.model.getCalculatedFields(params.sectionKey, request.body['data'])
       };
 
       const result = await innovationSectionsService.updateInnovationSectionInfo(

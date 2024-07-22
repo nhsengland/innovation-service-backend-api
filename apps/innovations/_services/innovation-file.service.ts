@@ -366,10 +366,11 @@ export class InnovationFileService extends BaseService {
   ): Promise<{ id: string }> {
     const connection = entityManager ?? this.sqlConnection.manager;
 
+    const schema = await this.irSchemaService.getSchema();
     if (
       innovationStatus === InnovationStatusEnum.CREATED &&
       data.context.type === InnovationFileContextTypeEnum.INNOVATION_SECTION &&
-      !this.irSchemaService.canUploadFiles(data.context.id)
+      !schema.model.canUploadFiles(data.context.id)
     ) {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_FILE_FORBIDDEN_SECTION);
     }

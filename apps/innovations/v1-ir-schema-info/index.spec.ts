@@ -5,6 +5,7 @@ import type { TestUserType } from '@innovations/shared/tests/builders/user.build
 import type { ErrorResponseType } from '@innovations/shared/types';
 import type { ResponseDTO } from './transformation.dtos';
 import { IRSchemaService } from '@innovations/shared/services';
+import { SchemaModel } from '@innovations/shared/models';
 
 jest.mock('@innovations/shared/decorators', () => ({
   JwtDecoder: jest.fn().mockImplementation(() => (_: any, __: string, descriptor: PropertyDescriptor) => descriptor),
@@ -18,13 +19,12 @@ beforeAll(async () => {
   await testsHelper.init();
 });
 
-const expected = {
-  version: 1,
-  schema: [
-    { id: 'id1', title: 'Section 1', subSections: [] },
-    { id: 'id2', title: 'Section 2', subSections: [] }
-  ]
-};
+const model = new SchemaModel([
+  { id: 'id1', title: 'Section 1', subSections: [] },
+  { id: 'id2', title: 'Section 2', subSections: [] }
+]);
+model.runRules();
+const expected = { version: 1, model };
 const mock = jest.spyOn(IRSchemaService.prototype, 'getSchema').mockResolvedValue(expected as any);
 
 afterEach(() => {
@@ -38,7 +38,7 @@ describe('v1-innovations-search Suite', () => {
         .setAuth(scenario.users.aliceQualifyingAccessor)
         .call<ResponseDTO>(azureFunction);
 
-      expect(result.body).toStrictEqual(expected);
+      expect(result.body).toStrictEqual({ version: expected.version, schema: expected.model.schema });
       expect(result.status).toBe(200);
       expect(mock).toHaveBeenCalledTimes(1);
     });

@@ -28,7 +28,7 @@ class V1IrSchemaInfo {
 
       const schema = await irSchemaService.getSchema();
 
-      context.res = ResponseHelper.Ok<ResponseDTO>(schema);
+      context.res = ResponseHelper.Ok<ResponseDTO>({ version: schema.version, schema: schema.model.schema });
       return;
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);

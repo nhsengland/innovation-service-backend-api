@@ -38,10 +38,11 @@ class V1InnovationCreate {
       const requestBody = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
       // Validate Payload
-      const validation = irSchemaService.getPayloadValidation('INNOVATION_DESCRIPTION', requestBody);
+      const schema = await irSchemaService.getSchema();
+      const validation = schema.model.getSubSectionPayloadValidation('INNOVATION_DESCRIPTION', requestBody);
       const body = JoiHelper.Validate<BodySchemaAfterCalculatedFieldsType>(BodySchemaAfterCalculatedFieldsSchema, {
         ...JoiHelper.Validate<BodyType>(validation, requestBody),
-        ...irSchemaService.getCalculatedFields('INNOVATION_DESCRIPTION', requestBody)
+        ...schema.model.getCalculatedFields('INNOVATION_DESCRIPTION', requestBody)
       });
 
       const auth = await authorizationService.validate(context).checkInnovatorType().verify();
