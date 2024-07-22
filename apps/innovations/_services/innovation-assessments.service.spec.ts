@@ -5,6 +5,7 @@ import {
   InnovationAssessmentEntity,
   InnovationEntity,
   InnovationReassessmentRequestEntity,
+  InnovationSectionEntity,
   InnovationSupportEntity
 } from '@innovations/shared/entities';
 import { InnovationStatusEnum, InnovationSupportStatusEnum } from '@innovations/shared/enums';
@@ -155,6 +156,14 @@ describe('Innovation Assessments Suite', () => {
       expect(res.reassessment?.previousAssessmentId).toBe(innovationWithMultipleAssessments.previousAssessment.id);
     });
 
+    it('should return the sections changed since the previous assessment', async () => {
+      const res = await sut.getInnovationAssessmentInfo(naUser, innovationWithMultipleAssessments.assessment.id);
+      expect(res.reassessment?.sectionsUpdatedSinceLastAssessment).toEqual([
+        'INNOVATION_DESCRIPTION',
+        'COST_OF_INNOVATION'
+      ]);
+    });
+
     it("should return latest if it's the current assessment", async () => {
       const res = await sut.getInnovationAssessmentInfo(naUser, innovationWithMultipleAssessments.assessment.id);
 
@@ -182,6 +191,47 @@ describe('Innovation Assessments Suite', () => {
           em
         )
       ).rejects.toThrow(new ForbiddenError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_SUBMITTED));
+    });
+  });
+
+  describe('getSectionsUpdatedSincePreviousAssessment', () => {
+    const innovation = scenario.users.tristanInnovator.innovations.innovationMultipleAssessments;
+    it('should return the sections updated since the previous assessment', async () => {
+      const res = await sut.getSectionsUpdatedSincePreviousAssessment(innovation.assessment.id, em);
+
+      expect(res).toEqual(['INNOVATION_DESCRIPTION', 'COST_OF_INNOVATION']);
+    });
+
+    it("shouldn't return a section updated after the new reassessment", async () => {
+      await em.update(
+        InnovationAssessmentEntity,
+        { id: innovation.previousAssessment.id },
+        { finishedAt: '2024-01-01' }
+      );
+      await em.update(InnovationAssessmentEntity, { id: innovation.assessment.id }, { finishedAt: '2024-02-01' });
+      await em.update(
+        InnovationSectionEntity,
+        { innovation: { id: innovation.id }, section: 'INNOVATION_DESCRIPTION' },
+        { updatedAt: '2024-01-15' }
+      );
+      await em.update(
+        InnovationSectionEntity,
+        { innovation: { id: innovation.id }, section: 'COST_OF_INNOVATION' },
+        { updatedAt: '2024-02-15' }
+      );
+      const res = await sut.getSectionsUpdatedSincePreviousAssessment(innovation.assessment.id, em);
+      expect(res).toEqual(['INNOVATION_DESCRIPTION']);
+    });
+
+    it('should return an empty array if there is no previous assessment', async () => {
+      const res = await sut.getSectionsUpdatedSincePreviousAssessment(innovation.previousAssessment.id, em);
+      expect(res).toEqual([]);
+    });
+
+    it('should return an empty array if there are no sections updated since the previous assessment', async () => {
+      await em.update(InnovationSectionEntity, { innovation: { id: innovation.id } }, { updatedAt: '2022-01-01' });
+      const res = await sut.getSectionsUpdatedSincePreviousAssessment(innovation.assessment.id, em);
+      expect(res).toEqual([]);
     });
   });
 
