@@ -2134,7 +2134,12 @@ paths:
           application/json:
             schema:
               type: object
-              properties: {}
+              properties:
+                description:
+                  type: string
+                  maxLength: 2000
+              required:
+                - description
               additionalProperties: false
               oneOf:
                 - type: object
@@ -2144,21 +2149,8 @@ paths:
                       enum:
                         - YES
                         - NO
-                    description:
-                      type: string
-                      maxLength: 2000
                   required:
                     - updatedInnovationRecord
-                    - description
-                  additionalProperties: false
-                  x-required: true
-                - type: object
-                  properties:
-                    description:
-                      type: string
-                      maxLength: 2000
-                  required:
-                    - description
                   additionalProperties: false
                   x-required: true
       responses:
