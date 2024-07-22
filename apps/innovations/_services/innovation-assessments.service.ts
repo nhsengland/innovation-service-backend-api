@@ -19,7 +19,6 @@ import {
   NotifierTypeEnum,
   ServiceRoleEnum,
   ThreadContextTypeEnum,
-  YesOrNoCatalogueType,
   YesPartiallyNoCatalogueType
 } from '@innovations/shared/enums';
 import {
@@ -34,7 +33,7 @@ import type { DomainService, NotifierService } from '@innovations/shared/service
 import type { DomainContextType, InnovationAssessmentKPIExemptionType } from '@innovations/shared/types';
 
 import { InnovationHelper } from '../_helpers/innovation.helper';
-import type { InnovationAssessmentType } from '../_types/innovation.types';
+import type { InnovationAssessmentType, ReassessmentType } from '../_types/innovation.types';
 
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { EntityManager } from 'typeorm';
@@ -134,15 +133,15 @@ export class InnovationAssessmentsService extends BaseService {
 
     return {
       id: assessment.id,
-      ...(assessment.reassessmentRequest
-        ? {
-            reassessment: {
-              updatedInnovationRecord: assessment.reassessmentRequest.updatedInnovationRecord,
-              description: assessment.reassessmentRequest.description,
-              previousAssessmentId: assessment.previousAssessment!.id // validated above
-            }
-          }
-        : {}),
+      ...(assessment.reassessmentRequest && {
+        reassessment: {
+          ...(assessment.reassessmentRequest.updatedInnovationRecord && {
+            updatedInnovationRecord: assessment.reassessmentRequest.updatedInnovationRecord
+          }),
+          description: assessment.reassessmentRequest.description,
+          previousAssessmentId: assessment.previousAssessment!.id // It's safe to assume that previousAssessment is not null here as it was validated before
+        }
+      }),
       summary: assessment.summary,
       description: assessment.description,
       finishedAt: assessment.finishedAt,
@@ -441,7 +440,7 @@ export class InnovationAssessmentsService extends BaseService {
   }
 
   /**
-   * @param domainContext - The user requesting the action. In this case, it's an innovator.
+   * @param domainContext - The user requesting the action. In this case, it can be an innovator or a NA
    * @param innovationId
    * @param data - The data to be used to create the new assessment request.
    * @returns - The assessment request id and the new assessment id.
@@ -449,7 +448,7 @@ export class InnovationAssessmentsService extends BaseService {
   async createInnovationReassessment(
     domainContext: DomainContextType,
     innovationId: string,
-    data: { updatedInnovationRecord: YesOrNoCatalogueType; description: string },
+    data: ReassessmentType,
     entityManager?: EntityManager
   ): Promise<{ assessment: { id: string }; reassessment: { id: string } }> {
     const connection = entityManager ?? this.sqlConnection.manager;
@@ -468,20 +467,42 @@ export class InnovationAssessmentsService extends BaseService {
       .innerJoin('innovation.innovationSupports', 'support')
       .where('innovation.id = :innovationId', { innovationId })
       .getOne();
-    if (
-      innovation &&
-      innovation.status === InnovationStatusEnum.IN_PROGRESS &&
-      innovation.innovationSupports?.some(s => s.status === InnovationSupportStatusEnum.ENGAGING)
-    ) {
-      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_CANNOT_REQUEST_REASSESSMENT);
+
+    if (!innovation) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
     }
 
-    if (
-      innovation &&
-      innovation.status === InnovationStatusEnum.ARCHIVED &&
-      innovation.owner?.id !== domainContext.id
-    ) {
-      throw new ForbiddenError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_MUST_BE_OWNER);
+    // Extra validation constraints
+    switch (domainContext.currentRole.role) {
+      case ServiceRoleEnum.INNOVATOR: {
+        if (
+          innovation.status === InnovationStatusEnum.IN_PROGRESS &&
+          innovation.innovationSupports?.some(s => s.status === InnovationSupportStatusEnum.ENGAGING)
+        ) {
+          throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_CANNOT_REQUEST_REASSESSMENT);
+        }
+
+        if (innovation.status === InnovationStatusEnum.ARCHIVED && innovation.owner?.id !== domainContext.id) {
+          throw new ForbiddenError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_MUST_BE_OWNER);
+        }
+        if (
+          innovation.status !== InnovationStatusEnum.ARCHIVED &&
+          innovation.status !== InnovationStatusEnum.IN_PROGRESS
+        ) {
+          throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_CANNOT_REQUEST_REASSESSMENT);
+        }
+        break;
+      }
+      case ServiceRoleEnum.ASSESSMENT: {
+        if (innovation.status !== InnovationStatusEnum.IN_PROGRESS) {
+          throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_CANNOT_REQUEST_REASSESSMENT);
+        }
+        break;
+      }
+      default: {
+        // Shouldn't happen since the user role is checked before.
+        throw new ForbiddenError(UserErrorsEnum.USER_ROLE_NOT_ALLOWED);
+      }
     }
 
     // Get the latest assessment record.
@@ -577,7 +598,7 @@ export class InnovationAssessmentsService extends BaseService {
         InnovationReassessmentRequestEntity.new({
           assessment: InnovationAssessmentEntity.new({ id: assessmentClone.id }),
           innovation: InnovationEntity.new({ id: innovationId }),
-          updatedInnovationRecord: data.updatedInnovationRecord,
+          ...('updatedInnovationRecord' in data && { updatedInnovationRecord: data.updatedInnovationRecord }),
           description: data.description,
           createdBy: assessmentClone.createdBy,
           updatedBy: assessmentClone.updatedBy

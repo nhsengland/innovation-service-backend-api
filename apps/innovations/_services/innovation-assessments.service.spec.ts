@@ -136,7 +136,7 @@ describe('Innovation Assessments Suite', () => {
     });
 
     it('should not get an innovation assessment if it does not exist', async () => {
-      await expect(() => sut.getInnovationAssessmentInfo(naUser, randUuid())).rejects.toThrowError(
+      await expect(() => sut.getInnovationAssessmentInfo(naUser, randUuid())).rejects.toThrow(
         new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND)
       );
     });
@@ -181,7 +181,7 @@ describe('Innovation Assessments Suite', () => {
           innovationWithAssessmentInProgress.assessmentInProgress.id,
           em
         )
-      ).rejects.toThrowError(new ForbiddenError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_SUBMITTED));
+      ).rejects.toThrow(new ForbiddenError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_SUBMITTED));
     });
   });
 
@@ -208,7 +208,7 @@ describe('Innovation Assessments Suite', () => {
           { message: 'test assessment' },
           em
         )
-      ).rejects.toThrowError(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_ALREADY_EXISTS));
+      ).rejects.toThrow(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_ALREADY_EXISTS));
     });
 
     it('should update the innovation current assessment', async () => {
@@ -257,7 +257,7 @@ describe('Innovation Assessments Suite', () => {
             { summary: 'test update assessment' },
             em
           )
-      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND));
     });
 
     it('should not update assessment if the assessment does not exist', async () => {
@@ -270,7 +270,7 @@ describe('Innovation Assessments Suite', () => {
             { summary: 'test update assessment' },
             em
           )
-      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND));
     });
 
     it('should submit an assessment', async () => {
@@ -413,10 +413,10 @@ describe('Innovation Assessments Suite', () => {
         sut.createInnovationReassessment(
           DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
           innovationWithoutAssessment.id,
-          { updatedInnovationRecord: 'YES', description: randText() },
+          { description: randText() },
           em
         )
-      ).rejects.toThrowError(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND));
     });
 
     it('should not create a reassessment if the innovation is in archived status and user is a collaborator', async () => {
@@ -430,17 +430,54 @@ describe('Innovation Assessments Suite', () => {
       ).rejects.toThrow(new ForbiddenError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_MUST_BE_OWNER));
     });
 
-    it('should not create a reassessment if the innovation has ongoing supports', async () => {
+    it('should not create a reassessment if the innovation has ongoing supports when req by innov', async () => {
       await expect(async () =>
         sut.createInnovationReassessment(
-          DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
+          DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
           innovationWithAssessment.id,
           { updatedInnovationRecord: 'YES', description: randText() },
           em
         )
-      ).rejects.toThrowError(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_CANNOT_REQUEST_REASSESSMENT));
+      ).rejects.toThrow(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_CANNOT_REQUEST_REASSESSMENT));
     });
 
+    it('should not create a reassessment if the innovation is not in progress when req by NA', async () => {
+      await expect(async () =>
+        sut.createInnovationReassessment(
+          DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
+          innovationWithArchivedStatus.id,
+          { description: randText() },
+          em
+        )
+      ).rejects.toThrow(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_CANNOT_REQUEST_REASSESSMENT));
+    });
+
+    it('should create a reassessment if the innovation has ongoing supports when req by NA', async () => {
+      await em.update(
+        InnovationSupportEntity,
+        { innovation: { id: innovationWithAssessment.id } },
+        { status: InnovationSupportStatusEnum.CLOSED }
+      );
+      const innovationReassessment = await sut.createInnovationReassessment(
+        DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
+        innovationWithAssessment.id,
+        { description: randText() },
+        em
+      );
+
+      const bdReassessment = await em
+        .createQueryBuilder(InnovationReassessmentRequestEntity, 'reassessment')
+        .leftJoinAndSelect('reassessment.assessment', 'assessment')
+        .where('reassessment.id = :reassessmentId', {
+          reassessmentId: innovationReassessment.reassessment.id
+        })
+        .getOne();
+
+      expect(innovationReassessment).toEqual({
+        assessment: { id: bdReassessment?.assessment.id },
+        reassessment: { id: bdReassessment?.id }
+      });
+    });
     it.each(['finishedAt', 'assignTo', 'exemptedAt', 'exemptedReason', 'exemptedMessage'] as const)(
       'should not include field %s from previous assessment',
       async field => {
@@ -494,7 +531,7 @@ describe('Innovation Assessments Suite', () => {
             randUuid(),
             em
           )
-        ).rejects.toThrowError(new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND));
+        ).rejects.toThrow(new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND));
       });
 
       it('should not update assessor if the innovation has no assessment', async () => {
@@ -507,7 +544,7 @@ describe('Innovation Assessments Suite', () => {
             newAssessor.id,
             em
           )
-        ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND));
+        ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND));
       });
     });
   });
@@ -583,7 +620,7 @@ describe('Innovation Assessments Suite', () => {
           { reason: 'SERVICE_UNAVAILABLE' },
           em
         )
-      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND));
     });
   });
 
@@ -619,7 +656,7 @@ describe('Innovation Assessments Suite', () => {
     });
 
     it("should return a NotFoundError when an assessment doesn't exist", async () => {
-      await expect(() => sut.getExemption(randUuid(), em)).rejects.toThrowError(
+      await expect(() => sut.getExemption(randUuid(), em)).rejects.toThrow(
         new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND)
       );
     });

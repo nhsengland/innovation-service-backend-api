@@ -36,7 +36,7 @@ afterEach(() => {
 
 describe('v1-innovation-reassessment-request-create Suite', () => {
   describe('200', () => {
-    it('should create a new reassessment request', async () => {
+    it('should create a new reassessment request from an innnovator', async () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.johnInnovator)
         .setParams<ParamsType>({
@@ -52,17 +52,32 @@ describe('v1-innovation-reassessment-request-create Suite', () => {
       expect(result.status).toBe(200);
       expect(mock).toHaveBeenCalledTimes(1);
     });
+    it('should create a new reassessment request from an needs accessor', async () => {
+      const result = await new AzureHttpTriggerBuilder()
+        .setAuth(scenario.users.paulNeedsAssessor)
+        .setParams<ParamsType>({
+          innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id
+        })
+        .setBody<BodyType>({
+          description: randText()
+        })
+        .call<ResponseDTO>(azureFunction);
+
+      expect(result.body).toStrictEqual({ id: expected.assessment.id });
+      expect(result.status).toBe(200);
+      expect(mock).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('Access', () => {
     it.each([
       ['Admin', 403, scenario.users.allMighty],
       ['QA', 403, scenario.users.aliceQualifyingAccessor],
-      ['NA', 403, scenario.users.paulNeedsAssessor],
+      ['NA', 200, scenario.users.paulNeedsAssessor],
       ['Innovator owner', 200, scenario.users.johnInnovator],
       ['Innovator collaborator', 200, scenario.users.janeInnovator],
       ['Innovator other', 403, scenario.users.ottoOctaviusInnovator]
-    ])('access with user %s should give %i', async (_role: string, status: number, user: TestUserType) => {
+    ])('access with user %s should give %i', async (role: string, status: number, user: TestUserType) => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(user)
         .setParams<ParamsType>({
@@ -70,7 +85,7 @@ describe('v1-innovation-reassessment-request-create Suite', () => {
         })
         .setBody<BodyType>({
           description: randText(),
-          updatedInnovationRecord: randBoolean() ? 'YES' : 'NO'
+          ...(role !== 'NA' && { updatedInnovationRecord: randBoolean() ? 'YES' : 'NO' })
         })
         .call<ErrorResponseType>(azureFunction);
 

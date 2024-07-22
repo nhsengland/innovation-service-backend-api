@@ -12,9 +12,9 @@ export class InnovationReassessmentRequestEntity extends BaseEntity {
   id: string;
 
   @Column({ name: 'updated_innovation_record', type: 'varchar', nullable: true, length: 3 })
-  updatedInnovationRecord: YesOrNoCatalogueType;
+  updatedInnovationRecord: YesOrNoCatalogueType | null;
 
-  @Column({ name: 'description', type: 'nvarchar', nullable: false, length: 200 })
+  @Column({ name: 'description', type: 'nvarchar' })
   description: string;
 
   @ManyToOne(() => InnovationEntity, { nullable: false })
