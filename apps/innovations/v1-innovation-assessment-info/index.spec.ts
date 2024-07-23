@@ -88,7 +88,8 @@ describe('v1-innovation-assessment-info', () => {
         reassessment: {
           updatedInnovationRecord: 'YES' as const,
           description: randText(),
-          previousAssessmentId: randUuid()
+          previousAssessmentId: randUuid(),
+          sectionsUpdatedSinceLastAssessment: []
         }
       };
       mock.mockResolvedValueOnce(expectedWithReassessment);

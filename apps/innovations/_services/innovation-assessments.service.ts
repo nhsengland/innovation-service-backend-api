@@ -4,6 +4,7 @@ import {
   InnovationAssessmentEntity,
   InnovationEntity,
   InnovationReassessmentRequestEntity,
+  InnovationSectionEntity,
   InnovationSupportEntity,
   OrganisationEntity,
   OrganisationUnitEntity,
@@ -139,7 +140,11 @@ export class InnovationAssessmentsService extends BaseService {
             updatedInnovationRecord: assessment.reassessmentRequest.updatedInnovationRecord
           }),
           description: assessment.reassessmentRequest.description,
-          previousAssessmentId: assessment.previousAssessment!.id // It's safe to assume that previousAssessment is not null here as it was validated before
+          previousAssessmentId: assessment.previousAssessment!.id, // It's safe to assume that previousAssessment is not null here as it was validated before
+          sectionsUpdatedSinceLastAssessment: await this.getSectionsUpdatedSincePreviousAssessment(
+            assessment.id,
+            connection
+          )
         }
       }),
       summary: assessment.summary,
@@ -186,6 +191,27 @@ export class InnovationAssessmentsService extends BaseService {
       },
       isLatest: assessment.id === assessment.innovation.currentAssessment?.id
     };
+  }
+
+  /**
+   * returns the sections updated since the previous assessment, it will return empty if there's no previous assessment.
+   */
+  async getSectionsUpdatedSincePreviousAssessment(
+    assessmentId: string,
+    entityManager?: EntityManager
+  ): Promise<string[]> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const dbResult = await em
+      .createQueryBuilder(InnovationSectionEntity, 'section')
+      .select(['section.section'])
+      .innerJoin(InnovationAssessmentEntity, 'assessment', 'section.innovation_id = assessment.innovation_id')
+      .innerJoin(InnovationAssessmentEntity, 'previous', 'previous.id = assessment.previous_assessment_id')
+      .where('assessment.id = :assessmentId', { assessmentId })
+      .andWhere('section.updatedAt BETWEEN previous.finished_at AND COALESCE(assessment.finished_at, GETDATE())')
+      .getMany();
+
+    return dbResult.map(item => item.section);
   }
 
   async createInnovationAssessment(

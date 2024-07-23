@@ -32,6 +32,7 @@ export type InnovationAssessmentType = {
   id: string;
   reassessment?: ReassessmentType & {
     previousAssessmentId: string;
+    sectionsUpdatedSinceLastAssessment: string[];
   };
   summary: null | string;
   description: null | string;
