@@ -1,8 +1,9 @@
-import { requiredSectionsAndQuestions } from '../../schemas/innovation-record';
+import { CurrentDocumentType, requiredSectionsAndQuestions } from '../../schemas/innovation-record';
 import Joi from 'joi';
 import type { Question } from './question.types';
 import { QuestionValidatorFactory } from './question.validator';
 import { SchemaValidation } from './schema.validations';
+import { pick } from 'lodash';
 
 export type IRSchemaType = {
   sections: {
@@ -77,6 +78,22 @@ export class SchemaModel {
 
   canUploadFiles(subSectionId: string): boolean {
     return this.allowFileUploads.has(subSectionId);
+  }
+
+  /**
+   * Method to remove fields that may exist on the document and are not anymore defined on the current schema version.
+   */
+  cleanUpDocument(document: { [key: string]: any }): CurrentDocumentType {
+    const keys: string[] = ['evidences', 'version'];
+    const empty: { [key: string]: any } = {};
+    for (const [subSectionId, questionIds] of this.subSections.entries()) {
+      const conditionalFields = this.conditions.get(subSectionId);
+      const questions = [...questionIds, ...Object.keys(conditionalFields ?? {})];
+      keys.push(...questions.map(question => `${subSectionId}.${question}`));
+      // default for when the section doesn't have values.
+      empty[subSectionId] = {};
+    }
+    return { ...empty, ...pick(document, keys) } as CurrentDocumentType;
   }
 
   /**
