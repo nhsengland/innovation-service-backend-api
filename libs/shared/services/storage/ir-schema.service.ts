@@ -1,14 +1,12 @@
 import { inject, injectable } from 'inversify';
 import { IRSchemaType, SchemaModel } from '../../models/schema-engine/schema.model';
-import type { DataSource } from 'typeorm';
 import SHARED_SYMBOLS from '../symbols';
 import type { SQLConnectionService } from './sql-connection.service';
 import { InnovationRecordSchemaEntity } from '../../entities/innovation/innovation-record-schema.entity';
 import { BadRequestError, GenericErrorsEnum, InnovationErrorsEnum, NotFoundError } from '../../errors';
-import type { CurrentDocumentType } from '../../schemas/innovation-record';
 import type { CacheConfigType, CacheService } from './cache.service';
 
-type Schema = { version: number; model: SchemaModel; };
+type Schema = { version: number; model: SchemaModel };
 
 const LATEST_VERSION = 'latest_version';
 
@@ -16,14 +14,12 @@ const LATEST_VERSION = 'latest_version';
 export class IRSchemaService {
   private version: number | null = null;
   private model: SchemaModel | null = null;
-  private sqlConnection: DataSource;
   private cache: CacheConfigType['IrSchema'];
 
   constructor(
     @inject(SHARED_SYMBOLS.SQLConnectionService) private readonly sqlConnectionService: SQLConnectionService,
     @inject(SHARED_SYMBOLS.CacheService) private readonly cacheService: CacheService
   ) {
-    this.sqlConnection = this.sqlConnectionService.getConnection();
     this.cache = this.cacheService.get('IrSchema');
   }
 
@@ -41,11 +37,6 @@ export class IRSchemaService {
     return { version: this.version, model: this.model };
   }
 
-  // TODO: Needs to be implemented
-  cleanupDocument(doc: CurrentDocumentType) {
-    return doc;
-  }
-
   /**
    * Orchestrate the update of a schema, this includes validating the schema,
    * creating a new schema in the DB, and lastly update the in-memory schema and model.
@@ -53,10 +44,12 @@ export class IRSchemaService {
   async updateSchema(newSchema: IRSchemaType, updatedBy: string) {
     this.model = this.createModelAndValidate(newSchema);
     if (this.model.schema) {
-      const { version } = await this.sqlConnection.manager.save(
-        InnovationRecordSchemaEntity,
-        InnovationRecordSchemaEntity.new({ schema: this.model.schema, createdBy: updatedBy, updatedBy })
-      );
+      const { version } = await this.sqlConnectionService
+        .getConnection()
+        .manager.save(
+          InnovationRecordSchemaEntity,
+          InnovationRecordSchemaEntity.new({ schema: this.model.schema, createdBy: updatedBy, updatedBy })
+        );
       this.cache.set(LATEST_VERSION, version);
     }
   }
@@ -75,7 +68,8 @@ export class IRSchemaService {
    * This method is responsible for getting from the DB the schema version.
    */
   private async getSchemaVersion(version?: number): Promise<{ version: number; schema: IRSchemaType } | null> {
-    const query = this.sqlConnection
+    const query = this.sqlConnectionService
+      .getConnection()
       .createQueryBuilder(InnovationRecordSchemaEntity, 'schema')
       .orderBy('schema.version', 'DESC');
     if (version) {

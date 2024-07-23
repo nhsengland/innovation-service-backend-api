@@ -48,6 +48,7 @@ import type { ActivitiesParamsType, DomainContextType, IdentityUserInfo, Support
 import type { IdentityProviderService } from '../integrations/identity-provider.service';
 import type { NotifierService } from '../integrations/notifier.service';
 import type { DomainUsersService } from './domain-users.service';
+import type { IRSchemaService } from '../storage/ir-schema.service';
 
 export class DomainInnovationsService {
   innovationRepository: Repository<InnovationEntity>;
@@ -58,7 +59,8 @@ export class DomainInnovationsService {
     private sqlConnection: DataSource,
     private identityProviderService: IdentityProviderService,
     private notifierService: NotifierService,
-    private domainUsersService: DomainUsersService
+    private domainUsersService: DomainUsersService,
+    private irSchemaService: IRSchemaService
   ) {
     this.innovationRepository = this.sqlConnection.getRepository(InnovationEntity);
     this.innovationSupportRepository = this.sqlConnection.getRepository(InnovationSupportEntity);
@@ -899,8 +901,8 @@ export class DomainInnovationsService {
   ): Promise<CurrentElasticSearchDocumentType | undefined | CurrentElasticSearchDocumentType[]> {
     let sql = `WITH
       innovations AS (
-        SELECT i.id, i.status, archived_status, status_updated_at, submitted_at, i.updated_at, i.current_assessment_id, 
-        last_assessment_request_at, grouped_status, u.id AS owner_id, u.external_id AS owner_external_id, 
+        SELECT i.id, i.status, archived_status, status_updated_at, submitted_at, i.updated_at, i.current_assessment_id,
+        last_assessment_request_at, grouped_status, u.id AS owner_id, u.external_id AS owner_external_id,
         u.status AS owner_status, o.name AS owner_company
         FROM innovation i
           INNER JOIN innovation_grouped_status_view_entity g ON i.id = g.id
@@ -992,10 +994,10 @@ export class DomainInnovationsService {
 
     const innovations = await this.sqlConnection.query(sql, innovationId ? [innovationId] : []);
 
+    const schema = await this.irSchemaService.getSchema();
+
     const parsed: CurrentElasticSearchDocumentType[] = innovations.map((innovation: any) => {
-      // TODO: Is not cleaning for now.
-      // const document = this.irSchemaService.cleanupDocument(JSON.parse(innovation.document ?? {}));
-      const document = JSON.parse(innovation.document ?? {});
+      const document = schema.model.cleanUpDocument(JSON.parse(innovation.document ?? {}));
       return {
         id: innovation.id,
         status: innovation.status,

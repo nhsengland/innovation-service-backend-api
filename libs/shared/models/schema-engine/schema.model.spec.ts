@@ -1,8 +1,11 @@
 import { IRSchemaType, SchemaModel } from './schema.model';
 import { requiredSectionsAndQuestions } from '../../schemas/innovation-record';
+import { randCountry, randText } from '@ngneat/falso';
 
 describe('models / schema-engine / schema.model.ts', () => {
-  beforeAll(() => { requiredSectionsAndQuestions.clear() });
+  beforeAll(() => {
+    requiredSectionsAndQuestions.clear();
+  });
 
   it('should give error when schema format is not right', () => {
     const body: any = { sections: [{ id: 'id1', subSections: [] }] };
@@ -507,6 +510,61 @@ describe('models / schema-engine / schema.model.ts', () => {
       const schema = new SchemaModel(body);
       schema.runRules();
       expect(schema.canUploadFiles('subId1')).toBe(false);
+    });
+  });
+
+  describe('cleanUpDocument', () => {
+    it('should remove old fields that are not on the schema anymore', async () => {
+      const body: IRSchemaType = {
+        sections: [
+          {
+            id: 'id1',
+            title: 'Section 1',
+            subSections: [
+              {
+                id: 'subId1',
+                title: 'Subsection 1.1',
+                steps: [
+                  { questions: [{ id: 'name', dataType: 'text', label: 'What is the name?' }] },
+                  {
+                    questions: [
+                      {
+                        id: 'officeLocation',
+                        dataType: 'radio-group',
+                        label: 'Where is your head office located?',
+                        items: [{ id: 'England', label: 'England' }]
+                      }
+                    ]
+                  }
+                ],
+                calculatedFields: { countryName: [{ id: 'officeLocation', options: ['England'] }] }
+              },
+              {
+                id: 'subId2',
+                title: 'Subsection 1.2',
+                steps: [{ questions: [{ id: 'description', dataType: 'text', label: 'What is the description?' }] }]
+              }
+            ]
+          }
+        ]
+      };
+
+      const schema = new SchemaModel(body);
+      schema.runRules();
+      const doc = {
+        version: 0,
+        subId1: { name: randText(), officeLocation: 'England', countryName: 'England', country: randCountry() },
+        subId2: { name: randText(), description: randText() }
+      };
+      expect(schema.cleanUpDocument(doc)).toStrictEqual({
+        version: doc.version,
+        subId1: {
+          name: doc.subId1.name,
+          officeLocation: doc.subId1.officeLocation,
+          countryName: doc.subId1.countryName
+        },
+        subId2: { description: doc.subId2.description }
+      });
     });
   });
 });
