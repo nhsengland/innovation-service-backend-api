@@ -42,7 +42,7 @@ export class InnovationBuilder extends BaseBuilder {
   };
 
   private document: CurrentDocumentType = {
-    version: '202304',
+    version: 202304,
     INNOVATION_DESCRIPTION: {
       name: this.innovation.name!,
       description: randProduct().description,

@@ -44,7 +44,7 @@ import {
   UnprocessableEntityError
 } from '@innovations/shared/errors';
 import { PaginationQueryParamsType, TranslationHelper } from '@innovations/shared/helpers';
-import type { DomainService, DomainUsersService, NotifierService } from '@innovations/shared/services';
+import type { DomainService, DomainUsersService, IRSchemaService, NotifierService } from '@innovations/shared/services';
 import {
   isAccessorDomainContextType,
   isAdminDomainContextType,
@@ -208,6 +208,7 @@ export class InnovationsService extends BaseService {
   constructor(
     @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
     @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
+    @inject(SHARED_SYMBOLS.IRSchemaService) private irSchemaService: IRSchemaService,
     @inject(SYMBOLS.InnovationDocumentService) private innovationDocumentService: InnovationDocumentService
   ) {
     super();
@@ -1404,7 +1405,10 @@ export class InnovationsService extends BaseService {
       name: string;
       description: string;
       countryName: string;
+      officeLocation: string;
+      countryLocation?: string;
       postcode?: string;
+      hasWebsite: string;
       website?: string;
     },
     entityManager?: EntityManager
@@ -1442,7 +1446,8 @@ export class InnovationsService extends BaseService {
         })
       );
 
-      const document = createDocumentFromInnovation(savedInnovation, data);
+      const { version } = await this.irSchemaService.getSchema();
+      const document = createDocumentFromInnovation(savedInnovation, version, data);
       await transaction.save(InnovationDocumentEntity, document);
       await transaction.save(InnovationDocumentDraftEntity, omit(document, ['isSnapshot', 'description']));
 

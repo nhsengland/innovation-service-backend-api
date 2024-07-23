@@ -16,3 +16,4 @@ export { CacheService, CacheConfigType } from './storage/cache.service';
 export { FileStorageService } from './storage/file-storage.service';
 export { SQLConnectionService } from './storage/sql-connection.service';
 export { RedisService } from './storage/redis.service';
+export { IRSchemaService } from './storage/ir-schema.service';

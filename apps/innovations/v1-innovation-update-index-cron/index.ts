@@ -21,7 +21,7 @@ class V1InnovationUpdateIndexCron {
         logger.log(`${innovationId} was reindexed.`);
       }
     } catch (err) {
-      if(innovationId !== null) {
+      if (innovationId !== null) {
         await redisService.addToSet('elasticsearch', innovationId);
       }
       logger.error('Error running cron job: V1InnovationUpdateIndexCron', err);

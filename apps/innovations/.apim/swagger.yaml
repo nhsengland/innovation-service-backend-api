@@ -912,25 +912,18 @@ paths:
             schema:
               type: object
               properties:
-                name:
-                  type: string
-                  maxLength: 100
-                description:
-                  type: string
-                  maxLength: 500
-                countryName:
-                  type: string
-                  maxLength: 100
-                postcode:
-                  type: string
-                  maxLength: 8
-                website:
-                  type: string
-                  maxLength: 100
+                name: {}
+                description: {}
+                officeLocation: {}
+                countryLocation: {}
+                postcode: {}
+                hasWebsite: {}
+                website: {}
               required:
                 - name
                 - description
-                - countryName
+                - officeLocation
+                - hasWebsite
               additionalProperties: false
       responses:
         "200":
@@ -2269,16 +2262,29 @@ paths:
       summary: Update an innovation section info.
       operationId: v1-innovation-section-update
       parameters:
-        - in: path
-          name: innovationId
+        - name: innovationId
+          in: path
           required: true
           schema:
             type: string
-        - in: path
-          name: sectionKey
+            format: uuid
+        - name: sectionKey
+          in: path
           required: true
           schema:
             type: string
+            enum:
+              - INNOVATION_DESCRIPTION
+              - UNDERSTANDING_OF_NEEDS
+              - EVIDENCE_OF_EFFECTIVENESS
+              - MARKET_RESEARCH
+              - CURRENT_CARE_PATHWAY
+              - TESTING_WITH_USERS
+              - REGULATIONS_AND_STANDARDS
+              - INTELLECTUAL_PROPERTY
+              - REVENUE_MODEL
+              - COST_OF_INNOVATION
+              - DEPLOYMENT
       requestBody:
         description: Innovation section info update request body.
         content:
@@ -4920,3 +4926,25 @@ paths:
           description: The user is not authorized to access validation data.
         "500":
           description: An error occurred while fetching the validation data.
+  /v1/ir-schema:
+    get:
+      operationId: v1-ir-schema-info
+      description: Get current ir schema
+      tags:
+        - "[v1] IR Schema"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+        "400":
+          description: Bad request
+        "401":
+          description: Not authorized
+        "403":
+          description: Forbidden
+        "500":
+          description: An error occurred

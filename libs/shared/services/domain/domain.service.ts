@@ -35,7 +35,7 @@ export class DomainService {
     private identityProviderService: IdentityProviderService,
     @inject(SHARED_SYMBOLS.SqlProvider) public sqlProvider: SqlProvider,
     @inject(SHARED_SYMBOLS.NotifierService)
-    private notifierService: NotifierService
+    private notifierService: NotifierService,
   ) {}
 
   setConnection(connection: DataSource): void {

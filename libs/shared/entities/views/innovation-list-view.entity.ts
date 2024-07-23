@@ -15,7 +15,7 @@ import type {
   catalogCategory,
   catalogInvolvedAACProgrammes,
   catalogKeyHealthInequalities
-} from '../../schemas/innovation-record/202304/catalog.types';
+} from '../../schemas/innovation-record/catalog.types';
 import { InnovationAssessmentEntity } from '../innovation/innovation-assessment.entity';
 import { InnovationSupportEntity } from '../innovation/innovation-support.entity';
 import { OrganisationEntity } from '../organisation/organisation.entity';
