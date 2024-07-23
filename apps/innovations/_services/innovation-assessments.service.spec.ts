@@ -279,11 +279,11 @@ describe('Innovation Assessments Suite', () => {
 
   describe('updateInnovationAssessment', () => {
     it('should update an assessment', async () => {
-      const assessment = innovationWithAssessment.assessment;
+      const assessment = innovationWithAssessmentInProgress.assessmentInProgress;
 
       const updatedAssessment = await sut.updateInnovationAssessment(
         DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
-        innovationWithAssessment.id,
+        innovationWithAssessmentInProgress.id,
         assessment.id,
         { summary: 'test update assessment' },
         em
@@ -295,6 +295,20 @@ describe('Innovation Assessments Suite', () => {
 
       expect(updatedAssessment.id).toBe(assessment.id);
       expect(dbUpdatedAssessment?.summary).toBe('test update assessment');
+    });
+
+    it('should not update a finished assessment', async () => {
+      const assessment = innovationWithAssessment.assessment;
+
+      await expect(
+        sut.updateInnovationAssessment(
+          DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
+          innovationWithAssessment.id,
+          assessment.id,
+          { summary: 'test update assessment' },
+          em
+        )
+      ).rejects.toThrow(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_ALREADY_SUBMITTED));
     });
 
     it('should not update assessment if the innovation does not exist', async () => {

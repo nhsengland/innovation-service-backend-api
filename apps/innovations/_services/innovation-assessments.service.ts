@@ -335,6 +335,10 @@ export class InnovationAssessmentsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND);
     }
 
+    if (dbAssessment.finishedAt) {
+      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_ALREADY_SUBMITTED);
+    }
+
     const result = await connection.transaction(async transaction => {
       // Merge new data with assessment record.
       const assessment = Object.entries(data).reduce((acc, item) => ({ ...acc, [item[0]]: item[1] }), dbAssessment);
