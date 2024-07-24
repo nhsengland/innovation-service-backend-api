@@ -40,7 +40,6 @@ import { NotifyMeSubscriptionBuilder } from '../builders/notify-me-subscription.
 import { OrganisationUnitBuilder } from '../builders/organisation-unit.builder';
 import { OrganisationBuilder } from '../builders/organisation.builder';
 import { TestUserType, UserBuilder } from '../builders/user.builder';
-import { IrSchemaBuilder } from '../builders/ir-schema.builder';
 
 export type CompleteScenarioType = Awaited<ReturnType<CompleteScenarioBuilder['createScenario']>>;
 
@@ -59,9 +58,6 @@ export class CompleteScenarioBuilder {
   // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   async createScenario(sqlConnection: DataSource) {
     const res = await sqlConnection.transaction(async entityManager => {
-      // Innovation Record schema.
-      await new IrSchemaBuilder(entityManager).save();
-
       // Needs assessors
       const paulNeedsAssessor = await new UserBuilder(entityManager)
         .setName('Paul Needs Assessor')

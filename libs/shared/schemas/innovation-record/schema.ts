@@ -1,29 +1,12 @@
-import { randomUUID } from 'crypto';
-import { InnovationRecordSchemaEntity } from '../../entities/innovation/innovation-record-schema.entity';
-import type { EntityManager } from 'typeorm';
-import { BaseBuilder } from './base.builder';
-
-export class IrSchemaBuilder extends BaseBuilder {
-  constructor(entityManager: EntityManager) {
-    super(entityManager);
-  }
-
-  async save(): Promise<void> {
-    await this.getEntityManager()
-      .getRepository(InnovationRecordSchemaEntity)
-      .save({ version: 0, schema: schema as any, createdBy: randomUUID(), updatedBy: randomUUID() });
-  }
-}
-
-const schema = {
+export const IR_SCHEMA = {
   sections: [
     {
       id: 'aboutYourInnovation',
-      title: 'About your innovation (V3)',
+      title: 'About your innovation',
       subSections: [
         {
           id: 'INNOVATION_DESCRIPTION',
-          title: 'Description of innovation (V3)',
+          title: 'Description of innovation',
           steps: [
             {
               questions: [
@@ -62,14 +45,33 @@ const schema = {
                   label: 'Where is your head office located?',
                   description:
                     '<p>If your head office is overseas but you have a UK office, use the UK address.</p><p>If you are not part of a company or organisation, put where you are based.</p><p>We ask this to identify the organisations and people who are in the best position to support you.</p>',
-                  validations: { isRequired: 'Choose one option' },
+                  validations: {
+                    isRequired: 'Choose one option'
+                  },
                   items: [
-                    { id: 'England', label: 'England' },
-                    { id: 'Scotland', label: 'Scotland' },
-                    { id: 'Wales', label: 'Wales' },
-                    { id: 'Northern Ireland', label: 'Northern Ireland' },
-                    { type: 'separator' },
-                    { id: 'Based outside UK', label: "I'm based outside of the UK" }
+                    {
+                      id: 'England',
+                      label: 'England'
+                    },
+                    {
+                      id: 'Scotland',
+                      label: 'Scotland'
+                    },
+                    {
+                      id: 'Wales',
+                      label: 'Wales'
+                    },
+                    {
+                      id: 'Northern Ireland',
+                      label: 'Northern Ireland'
+                    },
+                    {
+                      type: 'separator'
+                    },
+                    {
+                      id: 'Based outside UK',
+                      label: "I'm based outside of the UK"
+                    }
                   ]
                 }
               ]
@@ -106,24 +108,786 @@ const schema = {
                     }
                   },
                   items: [
-                    { id: 'Afghanistan', label: 'Afghanistan' },
-                    { id: 'Albania', label: 'Albania' },
-                    { id: 'Algeria', label: 'Algeria' },
-                    { id: 'Andorra', label: 'Andorra' },
-                    { id: 'Angola', label: 'Angola' },
-                    { id: 'Antigua and Barbuda', label: 'Antigua and Barbuda' },
-                    { id: 'Argentina', label: 'Argentina' },
-                    { id: 'Armenia', label: 'Armenia' },
-                    { id: 'Poland', label: 'Poland' },
-                    { id: 'Portugal', label: 'Portugal' },
-                    { id: 'Romania', label: 'Romania' },
-                    { id: 'Russia', label: 'Russia' },
-                    { id: 'Spain', label: 'Spain' },
-                    { id: 'United Kingdom', label: 'United Kingdom' },
-                    { id: 'United States of America', label: 'United States of America' },
-                    { id: 'Uruguay', label: 'Uruguay' },
-                    { id: 'Zambia', label: 'Zambia' },
-                    { id: 'Zimbabwe', label: 'Zimbabwe' }
+                    {
+                      id: 'Afghanistan',
+                      label: 'Afghanistan'
+                    },
+                    {
+                      id: 'Albania',
+                      label: 'Albania'
+                    },
+                    {
+                      id: 'Algeria',
+                      label: 'Algeria'
+                    },
+                    {
+                      id: 'Andorra',
+                      label: 'Andorra'
+                    },
+                    {
+                      id: 'Angola',
+                      label: 'Angola'
+                    },
+                    {
+                      id: 'Antigua and Barbuda',
+                      label: 'Antigua and Barbuda'
+                    },
+                    {
+                      id: 'Argentina',
+                      label: 'Argentina'
+                    },
+                    {
+                      id: 'Armenia',
+                      label: 'Armenia'
+                    },
+                    {
+                      id: 'Australia',
+                      label: 'Australia'
+                    },
+                    {
+                      id: 'Austria',
+                      label: 'Austria'
+                    },
+                    {
+                      id: 'Azerbaijan',
+                      label: 'Azerbaijan'
+                    },
+                    {
+                      id: 'Bahamas',
+                      label: 'Bahamas'
+                    },
+                    {
+                      id: 'Bahrain',
+                      label: 'Bahrain'
+                    },
+                    {
+                      id: 'Bangladesh',
+                      label: 'Bangladesh'
+                    },
+                    {
+                      id: 'Barbados',
+                      label: 'Barbados'
+                    },
+                    {
+                      id: 'Belarus',
+                      label: 'Belarus'
+                    },
+                    {
+                      id: 'Belgium',
+                      label: 'Belgium'
+                    },
+                    {
+                      id: 'Belize',
+                      label: 'Belize'
+                    },
+                    {
+                      id: 'Benin',
+                      label: 'Benin'
+                    },
+                    {
+                      id: 'Bhutan',
+                      label: 'Bhutan'
+                    },
+                    {
+                      id: 'Bolivia',
+                      label: 'Bolivia'
+                    },
+                    {
+                      id: 'Bosnia and Herzegovina',
+                      label: 'Bosnia and Herzegovina'
+                    },
+                    {
+                      id: 'Botswana',
+                      label: 'Botswana'
+                    },
+                    {
+                      id: 'Brazil',
+                      label: 'Brazil'
+                    },
+                    {
+                      id: 'Brunei',
+                      label: 'Brunei'
+                    },
+                    {
+                      id: 'Bulgaria',
+                      label: 'Bulgaria'
+                    },
+                    {
+                      id: 'Burkina Faso',
+                      label: 'Burkina Faso'
+                    },
+                    {
+                      id: 'Burundi',
+                      label: 'Burundi'
+                    },
+                    {
+                      id: "Côte d'Ivoire",
+                      label: "Côte d'Ivoire"
+                    },
+                    {
+                      id: 'Cabo Verde',
+                      label: 'Cabo Verde'
+                    },
+                    {
+                      id: 'Cambodia',
+                      label: 'Cambodia'
+                    },
+                    {
+                      id: 'Cameroon',
+                      label: 'Cameroon'
+                    },
+                    {
+                      id: 'Canada',
+                      label: 'Canada'
+                    },
+                    {
+                      id: 'Central African Republic',
+                      label: 'Central African Republic'
+                    },
+                    {
+                      id: 'Chad',
+                      label: 'Chad'
+                    },
+                    {
+                      id: 'Chile',
+                      label: 'Chile'
+                    },
+                    {
+                      id: 'China',
+                      label: 'China'
+                    },
+                    {
+                      id: 'Colombia',
+                      label: 'Colombia'
+                    },
+                    {
+                      id: 'Comoros',
+                      label: 'Comoros'
+                    },
+                    {
+                      id: 'Congo (Congo-Brazzaville)',
+                      label: 'Congo (Congo-Brazzaville)'
+                    },
+                    {
+                      id: 'Costa Rica',
+                      label: 'Costa Rica'
+                    },
+                    {
+                      id: 'Croatia',
+                      label: 'Croatia'
+                    },
+                    {
+                      id: 'Cuba',
+                      label: 'Cuba'
+                    },
+                    {
+                      id: 'Cyprus',
+                      label: 'Cyprus'
+                    },
+                    {
+                      id: 'Czechia (Czech Republic)',
+                      label: 'Czechia (Czech Republic)'
+                    },
+                    {
+                      id: 'Democratic Republic of the Congo',
+                      label: 'Democratic Republic of the Congo'
+                    },
+                    {
+                      id: 'Denmark',
+                      label: 'Denmark'
+                    },
+                    {
+                      id: 'Djibouti',
+                      label: 'Djibouti'
+                    },
+                    {
+                      id: 'Dominica',
+                      label: 'Dominica'
+                    },
+                    {
+                      id: 'Dominican Republic',
+                      label: 'Dominican Republic'
+                    },
+                    {
+                      id: 'Ecuador',
+                      label: 'Ecuador'
+                    },
+                    {
+                      id: 'Egypt',
+                      label: 'Egypt'
+                    },
+                    {
+                      id: 'El Salvador',
+                      label: 'El Salvador'
+                    },
+                    {
+                      id: 'Equatorial Guinea',
+                      label: 'Equatorial Guinea'
+                    },
+                    {
+                      id: 'Eritrea',
+                      label: 'Eritrea'
+                    },
+                    {
+                      id: 'Estonia',
+                      label: 'Estonia'
+                    },
+                    {
+                      id: 'Eswatini (fmr. "Swaziland")',
+                      label: 'Eswatini (fmr. "Swaziland")'
+                    },
+                    {
+                      id: 'Ethiopia',
+                      label: 'Ethiopia'
+                    },
+                    {
+                      id: 'Fiji',
+                      label: 'Fiji'
+                    },
+                    {
+                      id: 'Finland',
+                      label: 'Finland'
+                    },
+                    {
+                      id: 'France',
+                      label: 'France'
+                    },
+                    {
+                      id: 'Gabon',
+                      label: 'Gabon'
+                    },
+                    {
+                      id: 'Gambia',
+                      label: 'Gambia'
+                    },
+                    {
+                      id: 'Georgia',
+                      label: 'Georgia'
+                    },
+                    {
+                      id: 'Germany',
+                      label: 'Germany'
+                    },
+                    {
+                      id: 'Ghana',
+                      label: 'Ghana'
+                    },
+                    {
+                      id: 'Greece',
+                      label: 'Greece'
+                    },
+                    {
+                      id: 'Grenada',
+                      label: 'Grenada'
+                    },
+                    {
+                      id: 'Guatemala',
+                      label: 'Guatemala'
+                    },
+                    {
+                      id: 'Guinea',
+                      label: 'Guinea'
+                    },
+                    {
+                      id: 'Guinea-Bissau',
+                      label: 'Guinea-Bissau'
+                    },
+                    {
+                      id: 'Guyana',
+                      label: 'Guyana'
+                    },
+                    {
+                      id: 'Haiti',
+                      label: 'Haiti'
+                    },
+                    {
+                      id: 'Holy See',
+                      label: 'Holy See'
+                    },
+                    {
+                      id: 'Honduras',
+                      label: 'Honduras'
+                    },
+                    {
+                      id: 'Hungary',
+                      label: 'Hungary'
+                    },
+                    {
+                      id: 'Iceland',
+                      label: 'Iceland'
+                    },
+                    {
+                      id: 'India',
+                      label: 'India'
+                    },
+                    {
+                      id: 'Indonesia',
+                      label: 'Indonesia'
+                    },
+                    {
+                      id: 'Iran',
+                      label: 'Iran'
+                    },
+                    {
+                      id: 'Iraq',
+                      label: 'Iraq'
+                    },
+                    {
+                      id: 'Ireland',
+                      label: 'Ireland'
+                    },
+                    {
+                      id: 'Israel',
+                      label: 'Israel'
+                    },
+                    {
+                      id: 'Italy',
+                      label: 'Italy'
+                    },
+                    {
+                      id: 'Jamaica',
+                      label: 'Jamaica'
+                    },
+                    {
+                      id: 'Japan',
+                      label: 'Japan'
+                    },
+                    {
+                      id: 'Jordan',
+                      label: 'Jordan'
+                    },
+                    {
+                      id: 'Kazakhstan',
+                      label: 'Kazakhstan'
+                    },
+                    {
+                      id: 'Kenya',
+                      label: 'Kenya'
+                    },
+                    {
+                      id: 'Kiribati',
+                      label: 'Kiribati'
+                    },
+                    {
+                      id: 'Kuwait',
+                      label: 'Kuwait'
+                    },
+                    {
+                      id: 'Kyrgyzstan',
+                      label: 'Kyrgyzstan'
+                    },
+                    {
+                      id: 'Laos',
+                      label: 'Laos'
+                    },
+                    {
+                      id: 'Latvia',
+                      label: 'Latvia'
+                    },
+                    {
+                      id: 'Lebanon',
+                      label: 'Lebanon'
+                    },
+                    {
+                      id: 'Lesotho',
+                      label: 'Lesotho'
+                    },
+                    {
+                      id: 'Liberia',
+                      label: 'Liberia'
+                    },
+                    {
+                      id: 'Libya',
+                      label: 'Libya'
+                    },
+                    {
+                      id: 'Liechtenstein',
+                      label: 'Liechtenstein'
+                    },
+                    {
+                      id: 'Lithuania',
+                      label: 'Lithuania'
+                    },
+                    {
+                      id: 'Luxembourg',
+                      label: 'Luxembourg'
+                    },
+                    {
+                      id: 'Madagascar',
+                      label: 'Madagascar'
+                    },
+                    {
+                      id: 'Malawi',
+                      label: 'Malawi'
+                    },
+                    {
+                      id: 'Malaysia',
+                      label: 'Malaysia'
+                    },
+                    {
+                      id: 'Maldives',
+                      label: 'Maldives'
+                    },
+                    {
+                      id: 'Mali',
+                      label: 'Mali'
+                    },
+                    {
+                      id: 'Malta',
+                      label: 'Malta'
+                    },
+                    {
+                      id: 'Marshall Islands',
+                      label: 'Marshall Islands'
+                    },
+                    {
+                      id: 'Mauritania',
+                      label: 'Mauritania'
+                    },
+                    {
+                      id: 'Mauritius',
+                      label: 'Mauritius'
+                    },
+                    {
+                      id: 'Mexico',
+                      label: 'Mexico'
+                    },
+                    {
+                      id: 'Micronesia',
+                      label: 'Micronesia'
+                    },
+                    {
+                      id: 'Moldova',
+                      label: 'Moldova'
+                    },
+                    {
+                      id: 'Monaco',
+                      label: 'Monaco'
+                    },
+                    {
+                      id: 'Mongolia',
+                      label: 'Mongolia'
+                    },
+                    {
+                      id: 'Montenegro',
+                      label: 'Montenegro'
+                    },
+                    {
+                      id: 'Morocco',
+                      label: 'Morocco'
+                    },
+                    {
+                      id: 'Mozambique',
+                      label: 'Mozambique'
+                    },
+                    {
+                      id: 'Myanmar (formerly Burma)',
+                      label: 'Myanmar (formerly Burma)'
+                    },
+                    {
+                      id: 'Namibia',
+                      label: 'Namibia'
+                    },
+                    {
+                      id: 'Nauru',
+                      label: 'Nauru'
+                    },
+                    {
+                      id: 'Nepal',
+                      label: 'Nepal'
+                    },
+                    {
+                      id: 'Netherlands',
+                      label: 'Netherlands'
+                    },
+                    {
+                      id: 'New Zealand',
+                      label: 'New Zealand'
+                    },
+                    {
+                      id: 'Nicaragua',
+                      label: 'Nicaragua'
+                    },
+                    {
+                      id: 'Niger',
+                      label: 'Niger'
+                    },
+                    {
+                      id: 'Nigeria',
+                      label: 'Nigeria'
+                    },
+                    {
+                      id: 'North Korea',
+                      label: 'North Korea'
+                    },
+                    {
+                      id: 'North Macedonia',
+                      label: 'North Macedonia'
+                    },
+                    {
+                      id: 'Norway',
+                      label: 'Norway'
+                    },
+                    {
+                      id: 'Oman',
+                      label: 'Oman'
+                    },
+                    {
+                      id: 'Pakistan',
+                      label: 'Pakistan'
+                    },
+                    {
+                      id: 'Palau',
+                      label: 'Palau'
+                    },
+                    {
+                      id: 'Palestine State',
+                      label: 'Palestine State'
+                    },
+                    {
+                      id: 'Panama',
+                      label: 'Panama'
+                    },
+                    {
+                      id: 'Papua New Guinea',
+                      label: 'Papua New Guinea'
+                    },
+                    {
+                      id: 'Paraguay',
+                      label: 'Paraguay'
+                    },
+                    {
+                      id: 'Peru',
+                      label: 'Peru'
+                    },
+                    {
+                      id: 'Philippines',
+                      label: 'Philippines'
+                    },
+                    {
+                      id: 'Poland',
+                      label: 'Poland'
+                    },
+                    {
+                      id: 'Portugal',
+                      label: 'Portugal'
+                    },
+                    {
+                      id: 'Qatar',
+                      label: 'Qatar'
+                    },
+                    {
+                      id: 'Romania',
+                      label: 'Romania'
+                    },
+                    {
+                      id: 'Russia',
+                      label: 'Russia'
+                    },
+                    {
+                      id: 'Rwanda',
+                      label: 'Rwanda'
+                    },
+                    {
+                      id: 'Saint Kitts and Nevis',
+                      label: 'Saint Kitts and Nevis'
+                    },
+                    {
+                      id: 'Saint Lucia',
+                      label: 'Saint Lucia'
+                    },
+                    {
+                      id: 'Saint Vincent and the Grenadines',
+                      label: 'Saint Vincent and the Grenadines'
+                    },
+                    {
+                      id: 'Samoa',
+                      label: 'Samoa'
+                    },
+                    {
+                      id: 'San Marino',
+                      label: 'San Marino'
+                    },
+                    {
+                      id: 'Sao Tome and Principe',
+                      label: 'Sao Tome and Principe'
+                    },
+                    {
+                      id: 'Saudi Arabia',
+                      label: 'Saudi Arabia'
+                    },
+                    {
+                      id: 'Senegal',
+                      label: 'Senegal'
+                    },
+                    {
+                      id: 'Serbia',
+                      label: 'Serbia'
+                    },
+                    {
+                      id: 'Seychelles',
+                      label: 'Seychelles'
+                    },
+                    {
+                      id: 'Sierra Leone',
+                      label: 'Sierra Leone'
+                    },
+                    {
+                      id: 'Singapore',
+                      label: 'Singapore'
+                    },
+                    {
+                      id: 'Slovakia',
+                      label: 'Slovakia'
+                    },
+                    {
+                      id: 'Slovenia',
+                      label: 'Slovenia'
+                    },
+                    {
+                      id: 'Solomon Islands',
+                      label: 'Solomon Islands'
+                    },
+                    {
+                      id: 'Somalia',
+                      label: 'Somalia'
+                    },
+                    {
+                      id: 'South Africa',
+                      label: 'South Africa'
+                    },
+                    {
+                      id: 'South Korea',
+                      label: 'South Korea'
+                    },
+                    {
+                      id: 'South Sudan',
+                      label: 'South Sudan'
+                    },
+                    {
+                      id: 'Spain',
+                      label: 'Spain'
+                    },
+                    {
+                      id: 'Sri Lanka',
+                      label: 'Sri Lanka'
+                    },
+                    {
+                      id: 'Sudan',
+                      label: 'Sudan'
+                    },
+                    {
+                      id: 'Suriname',
+                      label: 'Suriname'
+                    },
+                    {
+                      id: 'Sweden',
+                      label: 'Sweden'
+                    },
+                    {
+                      id: 'Switzerland',
+                      label: 'Switzerland'
+                    },
+                    {
+                      id: 'Syria',
+                      label: 'Syria'
+                    },
+                    {
+                      id: 'Tajikistan',
+                      label: 'Tajikistan'
+                    },
+                    {
+                      id: 'Tanzania',
+                      label: 'Tanzania'
+                    },
+                    {
+                      id: 'Thailand',
+                      label: 'Thailand'
+                    },
+                    {
+                      id: 'Timor-Leste',
+                      label: 'Timor-Leste'
+                    },
+                    {
+                      id: 'Togo',
+                      label: 'Togo'
+                    },
+                    {
+                      id: 'Tonga',
+                      label: 'Tonga'
+                    },
+                    {
+                      id: 'Trinidad and Tobago',
+                      label: 'Trinidad and Tobago'
+                    },
+                    {
+                      id: 'Tunisia',
+                      label: 'Tunisia'
+                    },
+                    {
+                      id: 'Turkey',
+                      label: 'Turkey'
+                    },
+                    {
+                      id: 'Turkmenistan',
+                      label: 'Turkmenistan'
+                    },
+                    {
+                      id: 'Tuvalu',
+                      label: 'Tuvalu'
+                    },
+                    {
+                      id: 'Uganda',
+                      label: 'Uganda'
+                    },
+                    {
+                      id: 'Ukraine',
+                      label: 'Ukraine'
+                    },
+                    {
+                      id: 'United Arab Emirates',
+                      label: 'United Arab Emirates'
+                    },
+                    {
+                      id: 'United Kingdom',
+                      label: 'United Kingdom'
+                    },
+                    {
+                      id: 'United States of America',
+                      label: 'United States of America'
+                    },
+                    {
+                      id: 'Uruguay',
+                      label: 'Uruguay'
+                    },
+                    {
+                      id: 'Uzbekistan',
+                      label: 'Uzbekistan'
+                    },
+                    {
+                      id: 'Vanuatu',
+                      label: 'Vanuatu'
+                    },
+                    {
+                      id: 'Venezuela',
+                      label: 'Venezuela'
+                    },
+                    {
+                      id: 'Vietnam',
+                      label: 'Vietnam'
+                    },
+                    {
+                      id: 'Yemen',
+                      label: 'Yemen'
+                    },
+                    {
+                      id: 'Zambia',
+                      label: 'Zambia'
+                    },
+                    {
+                      id: 'Zimbabwe',
+                      label: 'Zimbabwe'
+                    }
                   ]
                 }
               ],
@@ -138,7 +902,9 @@ const schema = {
                   id: 'hasWebsite',
                   dataType: 'radio-group',
                   label: 'Does your innovation have a website?',
-                  validations: { isRequired: 'Choose one option' },
+                  validations: {
+                    isRequired: 'Choose one option'
+                  },
                   items: [
                     {
                       id: 'YES',
@@ -172,18 +938,54 @@ const schema = {
                     isRequired: 'Choose at least one category'
                   },
                   items: [
-                    { id: 'MEDICAL_DEVICE', label: 'Medical device' },
-                    { id: 'IN_VITRO_DIAGNOSTIC', label: 'In vitro diagnostic' },
-                    { id: 'PHARMACEUTICAL', label: 'Pharmaceutical' },
-                    { id: 'DIGITAL', label: 'Digital (including apps, platforms, software)' },
-                    { id: 'AI', label: 'Artificial intelligence (AI)' },
-                    { id: 'EDUCATION', label: 'Education or training of workforce' },
-                    { id: 'PPE', label: 'Personal protective equipment (PPE)' },
-                    { id: 'MODELS_CARE', label: 'Models of care and clinical pathways' },
-                    { id: 'ESTATES_FACILITIES', label: 'Estates and facilities' },
-                    { id: 'TRAVEL_TRANSPORT', label: 'Travel and transport' },
-                    { id: 'FOOD_NUTRITION', label: 'Food and nutrition' },
-                    { id: 'DATA_MONITORING', label: 'Data and monitoring' },
+                    {
+                      id: 'MEDICAL_DEVICE',
+                      label: 'Medical device'
+                    },
+                    {
+                      id: 'IN_VITRO_DIAGNOSTIC',
+                      label: 'In vitro diagnostic'
+                    },
+                    {
+                      id: 'PHARMACEUTICAL',
+                      label: 'Pharmaceutical'
+                    },
+                    {
+                      id: 'DIGITAL',
+                      label: 'Digital (including apps, platforms, software)'
+                    },
+                    {
+                      id: 'AI',
+                      label: 'Artificial intelligence (AI)'
+                    },
+                    {
+                      id: 'EDUCATION',
+                      label: 'Education or training of workforce'
+                    },
+                    {
+                      id: 'PPE',
+                      label: 'Personal protective equipment (PPE)'
+                    },
+                    {
+                      id: 'MODELS_CARE',
+                      label: 'Models of care and clinical pathways'
+                    },
+                    {
+                      id: 'ESTATES_FACILITIES',
+                      label: 'Estates and facilities'
+                    },
+                    {
+                      id: 'TRAVEL_TRANSPORT',
+                      label: 'Travel and transport'
+                    },
+                    {
+                      id: 'FOOD_NUTRITION',
+                      label: 'Food and nutrition'
+                    },
+                    {
+                      id: 'DATA_MONITORING',
+                      label: 'Data and monitoring'
+                    },
                     {
                       id: 'OTHER',
                       label: 'Other',
@@ -207,8 +1009,14 @@ const schema = {
                   id: 'mainCategory',
                   dataType: 'radio-group',
                   label: 'Select a primary category to describe your innovation',
-                  validations: { isRequired: 'Choose one option' },
-                  items: [{ itemsFromAnswer: 'categories' }]
+                  validations: {
+                    isRequired: 'Choose one option'
+                  },
+                  items: [
+                    {
+                      itemsFromAnswer: 'categories'
+                    }
+                  ]
                 }
               ]
             },
@@ -224,16 +1032,46 @@ const schema = {
                     isRequired: 'Choose at least one option'
                   },
                   items: [
-                    { id: 'COVID_19', label: 'COVID-19' },
-                    { id: 'DATA_ANALYTICS_AND_RESEARCH', label: 'Data, analytics and research' },
-                    { id: 'DIGITALISING_SYSTEM', label: 'Digitalising the system' },
-                    { id: 'IMPROVING_SYSTEM_FLOW', label: 'Improving system flow' },
-                    { id: 'INDEPENDENCE_AND_PREVENTION', label: 'Independence and prevention' },
-                    { id: 'OPERATIONAL_EXCELLENCE', label: 'Operational excellence' },
-                    { id: 'PATIENT_ACTIVATION_AND_SELF_CARE', label: 'Patient activation and self-care' },
-                    { id: 'PATIENT_SAFETY', label: 'Patient safety and quality improvement' },
-                    { id: 'WORKFORCE_RESOURCE_OPTIMISATION', label: 'Workforce resource optimisation' },
-                    { id: 'NET_ZERO_GREENER_INNOVATION', label: 'Net zero NHS or greener innovation' }
+                    {
+                      id: 'COVID_19',
+                      label: 'COVID-19'
+                    },
+                    {
+                      id: 'DATA_ANALYTICS_AND_RESEARCH',
+                      label: 'Data, analytics and research'
+                    },
+                    {
+                      id: 'DIGITALISING_SYSTEM',
+                      label: 'Digitalising the system'
+                    },
+                    {
+                      id: 'IMPROVING_SYSTEM_FLOW',
+                      label: 'Improving system flow'
+                    },
+                    {
+                      id: 'INDEPENDENCE_AND_PREVENTION',
+                      label: 'Independence and prevention'
+                    },
+                    {
+                      id: 'OPERATIONAL_EXCELLENCE',
+                      label: 'Operational excellence'
+                    },
+                    {
+                      id: 'PATIENT_ACTIVATION_AND_SELF_CARE',
+                      label: 'Patient activation and self-care'
+                    },
+                    {
+                      id: 'PATIENT_SAFETY',
+                      label: 'Patient safety and quality improvement'
+                    },
+                    {
+                      id: 'WORKFORCE_RESOURCE_OPTIMISATION',
+                      label: 'Workforce resource optimisation'
+                    },
+                    {
+                      id: 'NET_ZERO_GREENER_INNOVATION',
+                      label: 'Net zero NHS or greener innovation'
+                    }
                   ]
                 }
               ]
@@ -248,21 +1086,66 @@ const schema = {
                     isRequired: 'Choose at least one category'
                   },
                   items: [
-                    { id: 'ACADEMIA', label: 'Academia' },
-                    { id: 'ACUTE_TRUSTS_INPATIENT', label: 'Acute trust - inpatient' },
-                    { id: 'ACUTE_TRUSTS_OUTPATIENT', label: 'Acute trust - outpatient' },
-                    { id: 'AMBULANCE', label: 'Ambulance' },
-                    { id: 'CARE_HOMES_CARE_SETTING', label: 'Care homes or care setting' },
-                    { id: 'END_LIFE_CARE', label: 'End of life care (EOLC)' },
-                    { id: 'ICS', label: 'ICS' },
-                    { id: 'INDUSTRY', label: 'Industry' },
-                    { id: 'LOCAL_AUTHORITY_EDUCATION', label: 'Local authority - education' },
-                    { id: 'MENTAL_HEALTH', label: 'Mental health' },
-                    { id: 'PHARMACY', label: 'Pharmacies' },
-                    { id: 'PRIMARY_CARE', label: 'Primary care' },
-                    { id: 'SOCIAL_CARE', label: 'Social care' },
-                    { id: 'THIRD_SECTOR_ORGANISATIONS', label: 'Third sector organisations' },
-                    { id: 'URGENT_AND_EMERGENCY', label: 'Urgent and emergency' },
+                    {
+                      id: 'ACADEMIA',
+                      label: 'Academia'
+                    },
+                    {
+                      id: 'ACUTE_TRUSTS_INPATIENT',
+                      label: 'Acute trust - inpatient'
+                    },
+                    {
+                      id: 'ACUTE_TRUSTS_OUTPATIENT',
+                      label: 'Acute trust - outpatient'
+                    },
+                    {
+                      id: 'AMBULANCE',
+                      label: 'Ambulance'
+                    },
+                    {
+                      id: 'CARE_HOMES_CARE_SETTING',
+                      label: 'Care homes or care setting'
+                    },
+                    {
+                      id: 'END_LIFE_CARE',
+                      label: 'End of life care (EOLC)'
+                    },
+                    {
+                      id: 'ICS',
+                      label: 'ICS'
+                    },
+                    {
+                      id: 'INDUSTRY',
+                      label: 'Industry'
+                    },
+                    {
+                      id: 'LOCAL_AUTHORITY_EDUCATION',
+                      label: 'Local authority - education'
+                    },
+                    {
+                      id: 'MENTAL_HEALTH',
+                      label: 'Mental health'
+                    },
+                    {
+                      id: 'PHARMACY',
+                      label: 'Pharmacies'
+                    },
+                    {
+                      id: 'PRIMARY_CARE',
+                      label: 'Primary care'
+                    },
+                    {
+                      id: 'SOCIAL_CARE',
+                      label: 'Social care'
+                    },
+                    {
+                      id: 'THIRD_SECTOR_ORGANISATIONS',
+                      label: 'Third sector organisations'
+                    },
+                    {
+                      id: 'URGENT_AND_EMERGENCY',
+                      label: 'Urgent and emergency'
+                    },
                     {
                       id: 'OTHER',
                       label: 'Other',
@@ -292,13 +1175,34 @@ const schema = {
                     isRequired: 'Choose one option'
                   },
                   items: [
-                    { id: 'PREVENT_CONDITION', label: 'Preventing a condition or symptom from happening or worsening' },
-                    { id: 'PREDICT_CONDITION', label: 'Predicting the occurence of a condition or symptom' },
-                    { id: 'DIAGNOSE_CONDITION', label: 'Diagnosing a condition' },
-                    { id: 'MONITOR_CONDITION', label: 'Monitoring a condition, treatment or therapy' },
-                    { id: 'PROVIDE_TREATMENT', label: 'Providing treatment or therapy' },
-                    { id: 'MANAGE_CONDITION', label: 'Managing a condition' },
-                    { id: 'ENABLING_CARE', label: 'Enabling care, services or communication' },
+                    {
+                      id: 'PREVENT_CONDITION',
+                      label: 'Preventing a condition or symptom from happening or worsening'
+                    },
+                    {
+                      id: 'PREDICT_CONDITION',
+                      label: 'Predicting the occurence of a condition or symptom'
+                    },
+                    {
+                      id: 'DIAGNOSE_CONDITION',
+                      label: 'Diagnosing a condition'
+                    },
+                    {
+                      id: 'MONITOR_CONDITION',
+                      label: 'Monitoring a condition, treatment or therapy'
+                    },
+                    {
+                      id: 'PROVIDE_TREATMENT',
+                      label: 'Providing treatment or therapy'
+                    },
+                    {
+                      id: 'MANAGE_CONDITION',
+                      label: 'Managing a condition'
+                    },
+                    {
+                      id: 'ENABLING_CARE',
+                      label: 'Enabling care, services or communication'
+                    },
                     {
                       id: 'RISKS_CLIMATE_CHANGE',
                       label:
@@ -316,7 +1220,9 @@ const schema = {
                   label: 'What support are you seeking from the Innovation Service?',
                   description:
                     '<p>For example, support with clinical trials, product development, real-world evidence, regulatory advice, or adoption.</p><p>You will have the opportunity to explain how your innovation works and its benefits later in the record</p>',
-                  validations: { isRequired: 'A description is required' },
+                  validations: {
+                    isRequired: 'A description is required'
+                  },
                   lengthLimit: 'xl'
                 }
               ]
@@ -328,8 +1234,10 @@ const schema = {
                   dataType: 'textarea',
                   label: 'Are you currently receiving any support for your innovation?',
                   description:
-                    'This can include any UK funding to support the development of your innovation, or any support you are currently receiving from <a href={{urls.ORGANISATIONS_BEHIND_THE_SERVICE}} target="_blank" rel="noopener noreferrer">NHS Innovation Service organisations (opens in a new window)</a>.',
-                  validations: { isRequired: 'A description is required' },
+                    'This can include any UK funding to support the development of your innovation, or any support you are currently receiving from <a href="{{urls.ORGANISATIONS_BEHIND_THE_SERVICE}}" target="_blank" rel="noopener noreferrer">NHS Innovation Service organisations (opens in a new window)</a>.',
+                  validations: {
+                    isRequired: 'A description is required'
+                  },
                   lengthLimit: 'xl'
                 }
               ]
@@ -345,15 +1253,30 @@ const schema = {
                     isRequired: 'Choose at least one category'
                   },
                   items: [
-                    { id: 'No', label: 'No', exclusive: true },
-                    { type: 'separator' },
-                    { id: 'Health Innovation Network', label: 'Health Innovation Network' },
+                    {
+                      id: 'No',
+                      label: 'No',
+                      exclusive: true
+                    },
+                    {
+                      type: 'separator'
+                    },
+                    {
+                      id: 'Health Innovation Network',
+                      label: 'Health Innovation Network'
+                    },
                     {
                       id: 'Artificial Intelligence in Health and Care Award',
                       label: 'Artificial Intelligence in Health and Care Award'
                     },
-                    { id: 'Clinical Entrepreneur Programme', label: 'Clinical Entrepreneur Programme' },
-                    { id: 'Early Access to Medicines Scheme', label: 'Early Access to Medicines Scheme' },
+                    {
+                      id: 'Clinical Entrepreneur Programme',
+                      label: 'Clinical Entrepreneur Programme'
+                    },
+                    {
+                      id: 'Early Access to Medicines Scheme',
+                      label: 'Early Access to Medicines Scheme'
+                    },
                     {
                       id: 'Innovation for Healthcare Inequalities Programme',
                       label: 'Innovation for Healthcare Inequalities Programme'
@@ -362,15 +1285,30 @@ const schema = {
                       id: 'Innovation and Technology Payment Programme',
                       label: 'Innovation and Technology Payment Programme'
                     },
-                    { id: 'NHS Innovation Accelerator', label: 'NHS Innovation Accelerator' },
-                    { id: 'NHS Insights Prioritisation Programme', label: 'NHS Insights Prioritisation Programme' },
-                    { id: 'Pathway Transformation Fund', label: 'Pathway Transformation Fund' },
-                    { id: 'Rapid Uptake Products Programme', label: 'Rapid Uptake Products Programme' },
+                    {
+                      id: 'NHS Innovation Accelerator',
+                      label: 'NHS Innovation Accelerator'
+                    },
+                    {
+                      id: 'NHS Insights Prioritisation Programme',
+                      label: 'NHS Insights Prioritisation Programme'
+                    },
+                    {
+                      id: 'Pathway Transformation Fund',
+                      label: 'Pathway Transformation Fund'
+                    },
+                    {
+                      id: 'Rapid Uptake Products Programme',
+                      label: 'Rapid Uptake Products Programme'
+                    },
                     {
                       id: 'Small Business Research Initiative for Healthcare',
                       label: 'Small Business Research Initiative for Healthcare'
                     },
-                    { id: 'Test beds', label: 'Test beds' }
+                    {
+                      id: 'Test beds',
+                      label: 'Test beds'
+                    }
                   ]
                 }
               ]
@@ -378,8 +1316,14 @@ const schema = {
           ],
           calculatedFields: {
             countryName: [
-              { id: 'officeLocation', options: ['England', 'Scotland', 'Wales', 'Northern Ireland'] },
-              { id: 'countryLocation', options: [] }
+              {
+                id: 'officeLocation',
+                options: ['England', 'Scotland', 'Wales']
+              },
+              {
+                id: 'countryLocation',
+                options: []
+              }
             ]
           }
         }
@@ -387,11 +1331,11 @@ const schema = {
     },
     {
       id: 'valueProposition',
-      title: 'Value proposition (V3)',
+      title: 'Value proposition',
       subSections: [
         {
           id: 'UNDERSTANDING_OF_NEEDS',
-          title: 'Detailed understanding of needs and benefits (V3)',
+          title: 'Detailed understanding of needs and benefits',
           steps: [
             {
               questions: [
@@ -415,7 +1359,7 @@ const schema = {
                   dataType: 'textarea',
                   label: 'Give an overview of how your innovation works',
                   description:
-                    '<p>If this is or might be a medical device, include the <a href={{urls.MEDICAL_DEVICES_INTENDED_PURPOSE_STATEMENT}} target="_blank" rel="noopener noreferrer">intended purpose statement (opens in a new window)</a>.</p><p>For example, GPs will identify patients with suspected atrial fibrillation from their history and reported symptoms. This innovation is a portable device that patients wear over a 7-day period. The device will monitor the patient’s heart rate continuously whilst they are wearing it. GPs will need to be trained in using the device and interpreting the results. GP practices will need to store the device and consumables.</p>',
+                    '<p>If this is or might be a medical device, include the <a href="{{urls.MEDICAL_DEVICES_INTENDED_PURPOSE_STATEMENT}}" target="_blank" rel="noopener noreferrer">intended purpose statement (opens in a new window)</a>.</p><p>For example, GPs will identify patients with suspected atrial fibrillation from their history and reported symptoms. This innovation is a portable device that patients wear over a 7-day period. The device will monitor the patient’s heart rate continuously whilst they are wearing it. GPs will need to be trained in using the device and interpreting the results. GP practices will need to store the device and consumables.</p>',
                   validations: {
                     isRequired: 'A description is required'
                   },
@@ -429,10 +1373,18 @@ const schema = {
                   id: 'hasProductServiceOrPrototype',
                   dataType: 'radio-group',
                   label: 'Do you have a working product, service or prototype?',
-                  validations: { isRequired: 'Choose one option' },
+                  validations: {
+                    isRequired: 'Choose one option'
+                  },
                   items: [
-                    { id: 'YES', label: 'Yes' },
-                    { id: 'NO', label: 'No' }
+                    {
+                      id: 'YES',
+                      label: 'Yes'
+                    },
+                    {
+                      id: 'NO',
+                      label: 'No'
+                    }
                   ]
                 }
               ]
@@ -443,7 +1395,9 @@ const schema = {
                   id: 'benefitsOrImpact',
                   dataType: 'checkbox-array',
                   label: 'What are the benefits or impact of your innovation?',
-                  validations: { isRequired: 'Choose at least one option' },
+                  validations: {
+                    isRequired: 'Choose at least one option'
+                  },
                   items: [
                     {
                       id: 'Reduces mortality',
@@ -606,10 +1560,18 @@ const schema = {
                   id: 'impactDiseaseCondition',
                   dataType: 'radio-group',
                   label: 'Does your innovation impact a disease or condition?',
-                  validations: { isRequired: 'Choose one option' },
+                  validations: {
+                    isRequired: 'Choose one option'
+                  },
                   items: [
-                    { id: 'YES', label: 'Yes' },
-                    { id: 'NO', label: 'No' }
+                    {
+                      id: 'YES',
+                      label: 'Yes'
+                    },
+                    {
+                      id: 'NO',
+                      label: 'No'
+                    }
                   ]
                 }
               ]
@@ -649,32 +1611,110 @@ const schema = {
                       id: 'BLOOD_AND_IMMUNE_SYSTEM_CONDITIONS_SYSTEMIC_LUPUS_ERYTHEMATOSUS',
                       label: 'Blood and immune system conditions - Systemic lupus erythematosus'
                     },
-                    { id: 'CANCER', label: 'Cancer' },
-                    { id: 'CANCER_BLADDER_CANCER', label: 'Cancer - Bladder cancer' },
-                    { id: 'CANCER_BLOOD_AND_BONE_MARROW_CANCERS', label: 'Cancer - Blood and bone marrow cancers' },
-                    { id: 'CANCER_BRAIN_CANCERS', label: 'Cancer - Brain cancers' },
-                    { id: 'CANCER_BREAST_CANCER', label: 'Cancer - Breast cancer' },
-                    { id: 'CANCER_CERVICAL_CANCER', label: 'Cancer - Cervical cancer' },
-                    { id: 'CANCER_COLORECTAL_CANCER', label: 'Cancer - Colorectal cancer' },
-                    { id: 'CANCER_COMPLICATIONS_OF_CANCER', label: 'Cancer - Complications of cancer' },
-                    { id: 'CANCER_ENDOMETRIAL_CANCERS', label: 'Cancer - Endometrial cancers' },
-                    { id: 'CANCER_HEAD_AND_NECK_CANCERS', label: 'Cancer - Head and neck cancers' },
-                    { id: 'CANCER_LIVER_CANCERS', label: 'Cancer - Liver cancers' },
-                    { id: 'CANCER_LUNG_CANCER', label: 'Cancer - Lung cancer' },
-                    { id: 'CANCER_METASTASES', label: 'Cancer - Metastases' },
-                    { id: 'CANCER_OESOPHAGEAL_CANCER', label: 'Cancer - Oesophageal cancer' },
-                    { id: 'CANCER_OVARIAN_CANCER', label: 'Cancer - Ovarian cancer' },
-                    { id: 'CANCER_PANCREATIC_CANCER', label: 'Cancer - Pancreatic cancer' },
-                    { id: 'CANCER_PENILE_AND_TESTICULAR_CANCER', label: 'Cancer - Penile and testicular cancer' },
-                    { id: 'CANCER_PERITONEAL_CANCER', label: 'Cancer - Peritoneal cancer' },
-                    { id: 'CANCER_PROSTATE_CANCER', label: 'Cancer - Prostate cancer' },
-                    { id: 'CANCER_RENAL_CANCER', label: 'Cancer - Renal cancer' },
-                    { id: 'CANCER_SARCOMA', label: 'Cancer - Sarcoma' },
-                    { id: 'CANCER_SKIN_CANCER', label: 'Cancer - Skin cancer' },
-                    { id: 'CANCER_STOMACH_CANCER', label: 'Cancer - Stomach cancer' },
-                    { id: 'CANCER_THYROID_CANCER', label: 'Cancer - Thyroid cancer' },
-                    { id: 'CANCER_UPPER_AIRWAYS_TRACT_CANCERS', label: 'Cancer - Upper airways tract cancers' },
-                    { id: 'CARDIOVASCULAR_CONDITIONS', label: 'Cardiovascular conditions' },
+                    {
+                      id: 'CANCER',
+                      label: 'Cancer'
+                    },
+                    {
+                      id: 'CANCER_BLADDER_CANCER',
+                      label: 'Cancer - Bladder cancer'
+                    },
+                    {
+                      id: 'CANCER_BLOOD_AND_BONE_MARROW_CANCERS',
+                      label: 'Cancer - Blood and bone marrow cancers'
+                    },
+                    {
+                      id: 'CANCER_BRAIN_CANCERS',
+                      label: 'Cancer - Brain cancers'
+                    },
+                    {
+                      id: 'CANCER_BREAST_CANCER',
+                      label: 'Cancer - Breast cancer'
+                    },
+                    {
+                      id: 'CANCER_CERVICAL_CANCER',
+                      label: 'Cancer - Cervical cancer'
+                    },
+                    {
+                      id: 'CANCER_COLORECTAL_CANCER',
+                      label: 'Cancer - Colorectal cancer'
+                    },
+                    {
+                      id: 'CANCER_COMPLICATIONS_OF_CANCER',
+                      label: 'Cancer - Complications of cancer'
+                    },
+                    {
+                      id: 'CANCER_ENDOMETRIAL_CANCERS',
+                      label: 'Cancer - Endometrial cancers'
+                    },
+                    {
+                      id: 'CANCER_HEAD_AND_NECK_CANCERS',
+                      label: 'Cancer - Head and neck cancers'
+                    },
+                    {
+                      id: 'CANCER_LIVER_CANCERS',
+                      label: 'Cancer - Liver cancers'
+                    },
+                    {
+                      id: 'CANCER_LUNG_CANCER',
+                      label: 'Cancer - Lung cancer'
+                    },
+                    {
+                      id: 'CANCER_METASTASES',
+                      label: 'Cancer - Metastases'
+                    },
+                    {
+                      id: 'CANCER_OESOPHAGEAL_CANCER',
+                      label: 'Cancer - Oesophageal cancer'
+                    },
+                    {
+                      id: 'CANCER_OVARIAN_CANCER',
+                      label: 'Cancer - Ovarian cancer'
+                    },
+                    {
+                      id: 'CANCER_PANCREATIC_CANCER',
+                      label: 'Cancer - Pancreatic cancer'
+                    },
+                    {
+                      id: 'CANCER_PENILE_AND_TESTICULAR_CANCER',
+                      label: 'Cancer - Penile and testicular cancer'
+                    },
+                    {
+                      id: 'CANCER_PERITONEAL_CANCER',
+                      label: 'Cancer - Peritoneal cancer'
+                    },
+                    {
+                      id: 'CANCER_PROSTATE_CANCER',
+                      label: 'Cancer - Prostate cancer'
+                    },
+                    {
+                      id: 'CANCER_RENAL_CANCER',
+                      label: 'Cancer - Renal cancer'
+                    },
+                    {
+                      id: 'CANCER_SARCOMA',
+                      label: 'Cancer - Sarcoma'
+                    },
+                    {
+                      id: 'CANCER_SKIN_CANCER',
+                      label: 'Cancer - Skin cancer'
+                    },
+                    {
+                      id: 'CANCER_STOMACH_CANCER',
+                      label: 'Cancer - Stomach cancer'
+                    },
+                    {
+                      id: 'CANCER_THYROID_CANCER',
+                      label: 'Cancer - Thyroid cancer'
+                    },
+                    {
+                      id: 'CANCER_UPPER_AIRWAYS_TRACT_CANCERS',
+                      label: 'Cancer - Upper airways tract cancers'
+                    },
+                    {
+                      id: 'CARDIOVASCULAR_CONDITIONS',
+                      label: 'Cardiovascular conditions'
+                    },
                     {
                       id: 'CARDIOVASCULAR_CONDITIONS_ACUTE_CORONARY_SYNDROMES',
                       label: 'Cardiovascular conditions - Acute coronary syndromes'
@@ -699,7 +1739,10 @@ const schema = {
                       id: 'CARDIOVASCULAR_CONDITIONS_HEART_RHYTHM_CONDITIONS',
                       label: 'Cardiovascular conditions - Heart rhythm conditions'
                     },
-                    { id: 'CARDIOVASCULAR_CONDITIONS_HYPERTENSION', label: 'Cardiovascular conditions - Hypertension' },
+                    {
+                      id: 'CARDIOVASCULAR_CONDITIONS_HYPERTENSION',
+                      label: 'Cardiovascular conditions - Hypertension'
+                    },
                     {
                       id: 'CARDIOVASCULAR_CONDITIONS_PERIPHERAL_CIRCULATORY_CONDITIONS',
                       label: 'Cardiovascular conditions - Peripheral circulatory conditions'
@@ -1220,7 +2263,7 @@ const schema = {
                   dataType: 'radio-group',
                   label: 'Have you estimated the carbon reduction or savings that your innovation will bring?',
                   description:
-                    '<p>All NHS suppliers will be expected to provide the carbon footprint associated with the use of their innovation, as outlined in the <a href={{urls.DELIVERING_A_NET_ZERO_NHS}} target="_blank" rel="noopener noreferrer">Delivering a Net Zero NHS report (opens in a new window)</a>.</p><p>If this is something you are unsure of, the NHS Innovation Service can support you with this.</p>',
+                    '<p>All NHS suppliers will be expected to provide the carbon footprint associated with the use of their innovation, as outlined in the <a href="{{urls.DELIVERING_A_NET_ZERO_NHS}}" target="_blank" rel="noopener noreferrer">Delivering a Net Zero NHS report (opens in a new window)</a>.</p><p>If this is something you are unsure of, the NHS Innovation Service can support you with this.</p>',
                   validations: {
                     isRequired: 'Choose one option'
                   },
@@ -1310,7 +2353,7 @@ const schema = {
                   dataType: 'checkbox-array',
                   label: 'Which key health inequalities does your innovation impact?',
                   description:
-                    '<p>Core20PLUS5 is a national NHS England approach to support the reduction of health inequalities, defining target populations and clinical areas that require improvement.</p><p>More information is available on the <a href={{urls.CORE20PLUS5}} target="_blank" rel="noopener noreferrer">Core20PLUS5 web page (opens in a new window)</a>.</p>',
+                    '<p>Core20PLUS5 is a national NHS England approach to support the reduction of health inequalities, defining target populations and clinical areas that require improvement.</p><p>More information is available on the <a href="{{urls.CORE20PLUS5}}" target="_blank" rel="noopener noreferrer">Core20PLUS5 web page (opens in a new window)</a>.</p>',
                   validations: {
                     isRequired: 'Choose at least one item'
                   },
@@ -1354,7 +2397,7 @@ const schema = {
                   dataType: 'radio-group',
                   label: 'Have you completed a health inequalities impact assessment?',
                   description:
-                    '<p>By this, we mean a document or template which assesses the impact of your innovation on health inequalities and on those with protected characteristics. Health inequalities are the unfair and avoidable differences in health across the population, and between different groups within society.</p><p>An example of a completed health inequalities impact assessment can be found on <a href={{urls.EQUALITY_AND_HEALTH_INEQUALITIES_IMPACT_ASSESSMENT_EHIA}} target="_blank" rel="noopener noreferrer">NHS England\'s web page (opens in a new window)</a>.</p>',
+                    '<p>By this, we mean a document or template which assesses the impact of your innovation on health inequalities and on those with protected characteristics. Health inequalities are the unfair and avoidable differences in health across the population, and between different groups within society.</p><p>An example of a completed health inequalities impact assessment can be found on <a href="{{urls.EQUALITY_AND_HEALTH_INEQUALITIES_IMPACT_ASSESSMENT_EHIA}}" target="_blank" rel="noopener noreferrer">NHS England\'s web page (opens in a new window)</a>.</p>',
                   validations: {
                     isRequired: 'Choose one option'
                   },
@@ -1376,7 +2419,7 @@ const schema = {
         },
         {
           id: 'EVIDENCE_OF_EFFECTIVENESS',
-          title: 'Evidence of impact and benefit (V3)',
+          title: 'Evidence of impact and benefit',
           steps: [
             {
               questions: [
@@ -1431,7 +2474,7 @@ const schema = {
                   label:
                     'Write a short summary of your ongoing or planned evidence gathering, including the IRAS number if known.',
                   description:
-                    'An IRAS ID is a unique identifier, which is generated by IRAS when you first create a project. It is the accepted common study identifier, allowing research to be traced across its study lifecycle. For more information visit the <a href={{urls.MY_RESEARCH_PROJECT}} target="_blank" rel="noopener noreferrer">IRAS website (opens in a new window)</a>.',
+                    'An IRAS ID is a unique identifier, which is generated by IRAS when you first create a project. It is the accepted common study identifier, allowing research to be traced across its study lifecycle. For more information visit the <a href="{{urls.MY_RESEARCH_PROJECT}}" target="_blank" rel="noopener noreferrer">IRAS website (opens in a new window)</a>.',
                   validations: {
                     isRequired: 'A description is required'
                   },
@@ -1492,11 +2535,11 @@ const schema = {
     },
     {
       id: 'marketResearchAndCurrentCarePathway',
-      title: 'Market research and current care pathway (V3)',
+      title: 'Market research and current care pathway',
       subSections: [
         {
           id: 'MARKET_RESEARCH',
-          title: 'Market research (V3)',
+          title: 'Market research',
           steps: [
             {
               questions: [
@@ -1606,7 +2649,7 @@ const schema = {
         },
         {
           id: 'CURRENT_CARE_PATHWAY',
-          title: 'Current care pathway (V3)',
+          title: 'Current care pathway',
           steps: [
             {
               questions: [
@@ -1669,11 +2712,11 @@ const schema = {
     },
     {
       id: 'testingWithUsers',
-      title: 'Testing with users (V3)',
+      title: 'Testing with users',
       subSections: [
         {
           id: 'TESTING_WITH_USERS',
-          title: 'Testing with users (V3)',
+          title: 'Testing with users',
           steps: [
             {
               questions: [
@@ -1828,11 +2871,11 @@ const schema = {
     },
     {
       id: 'regulationsStandardsCertificationsAndIntellectualProperty',
-      title: 'Regulations, standards, certifications and intellectual property (V3)',
+      title: 'Regulations, standards, certifications and intellectual property',
       subSections: [
         {
           id: 'REGULATIONS_AND_STANDARDS',
-          title: 'Regulatory approvals, standards and certifications (V3)',
+          title: 'Regulatory approvals, standards and certifications',
           steps: [
             {
               questions: [
@@ -1874,7 +2917,7 @@ const schema = {
                   checkboxAnswerId: 'type',
                   label: 'Which regulations, standards and certifications apply to your innovation?',
                   description:
-                    'Find out more about <a href="{{urls.UNDERSTANDING_REGULATIONS_MEDICAL_DEVICES}}" target="_blank" rel="noopener noreferrer">UKCA / CE marking (opens in a new window)</a>, <a href="{{urls.UNDERSTANDING_CQC_REGULATIONS}}" target="_blank" rel="noopener noreferrer">CQC registration (opens in a new window)</a>, or <a href={{urls.NHS_DIGITAL_TECHNOLOGY_ASSESSMENT_CRITERIA}} target="_blank" rel="noopener noreferrer">DTAC (opens in a new window)</a>.',
+                    'Find out more about <a href="{{urls.UNDERSTANDING_REGULATIONS_MEDICAL_DEVICES}}" target="_blank" rel="noopener noreferrer">UKCA / CE marking (opens in a new window)</a>, <a href="{{urls.UNDERSTANDING_CQC_REGULATIONS}}" target="_blank" rel="noopener noreferrer">CQC registration (opens in a new window)</a>, or <a href="{{urls.NHS_DIGITAL_TECHNOLOGY_ASSESSMENT_CRITERIA}}" target="_blank" rel="noopener noreferrer">DTAC (opens in a new window)</a>.',
                   addQuestion: {
                     id: 'hasMet',
                     dataType: 'radio-group',
@@ -1984,7 +3027,7 @@ const schema = {
         },
         {
           id: 'INTELLECTUAL_PROPERTY',
-          title: 'Intellectual property (V3)',
+          title: 'Intellectual property',
           steps: [
             {
               questions: [
@@ -2028,7 +3071,7 @@ const schema = {
                   dataType: 'radio-group',
                   label: 'Do you have any other intellectual property for your innovation?',
                   description:
-                    'Find out more about <a href={{urls.INNOVATION_GUIDES_INTELLECTUAL_PROPERTY}} target="_blank" rel="noopener noreferrer">intellectual property (opens in a new window)</a>.',
+                    'Find out more about <a href="{{urls.INNOVATION_GUIDES_INTELLECTUAL_PROPERTY}}" target="_blank" rel="noopener noreferrer">intellectual property (opens in a new window)</a>.',
                   validations: {
                     isRequired: 'Choose one option'
                   },
@@ -2060,11 +3103,11 @@ const schema = {
     },
     {
       id: 'revenueModel',
-      title: 'Revenue model (V3)',
+      title: 'Revenue model',
       subSections: [
         {
           id: 'REVENUE_MODEL',
-          title: 'Revenue model (V3)',
+          title: 'Revenue model',
           steps: [
             {
               questions: [
@@ -2239,11 +3282,11 @@ const schema = {
     },
     {
       id: 'costAndSavings',
-      title: 'Cost and savings (V3)',
+      title: 'Cost and savings',
       subSections: [
         {
           id: 'COST_OF_INNOVATION',
-          title: 'Cost of your innovation (V3)',
+          title: 'Cost of your innovation',
           steps: [
             {
               questions: [
@@ -2412,11 +3455,11 @@ const schema = {
     },
     {
       id: 'deployment',
-      title: 'Deployment (V3)',
+      title: 'Deployment',
       subSections: [
         {
           id: 'DEPLOYMENT',
-          title: 'Deployment (V3)',
+          title: 'Deployment',
           steps: [
             {
               questions: [
@@ -2425,7 +3468,7 @@ const schema = {
                   dataType: 'radio-group',
                   label: 'Is your innovation ready for wider adoption across the health and care system?',
                   description:
-                    'Find out more about <a href={{urls.INNOVATION_GUIDES_COMISSIONING_AND_ADOPTION}} target="_blank" rel="noopener noreferrer">commissioning and adoption (opens in a new window)</a>.',
+                    'Find out more about <a href="{{urls.INNOVATION_GUIDES_COMISSIONING_AND_ADOPTION}}" target="_blank" rel="noopener noreferrer">commissioning and adoption (opens in a new window)</a>.',
                   validations: {
                     isRequired: 'Choose one option'
                   },

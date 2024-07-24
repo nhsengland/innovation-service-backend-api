@@ -1,4 +1,5 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
+import { IR_SCHEMA } from '../../shared/schemas/innovation-record/schema';
 
 export class createIrSchemaTable1717682269961 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -16,6 +17,11 @@ export class createIrSchemaTable1717682269961 implements MigrationInterface {
             CONSTRAINT "CK_innovation_record_schema_schema_is_json" CHECK (ISJSON("schema")=1)
         )
       `);
+
+    await queryRunner.query(`
+      INSERT INTO innovation_record_schema ("schema", "created_by", "updated_by")
+      VALUES (@0, @1, @2)
+    `, [JSON.stringify(IR_SCHEMA),'00000000-0000-0000-0000-000000000000', '00000000-0000-0000-0000-000000000000']);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
