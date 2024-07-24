@@ -1071,6 +1071,14 @@ export const IR_SCHEMA = {
                     {
                       id: 'NET_ZERO_GREENER_INNOVATION',
                       label: 'Net zero NHS or greener innovation'
+                    },
+                    {
+                      type: 'separator'
+                    },
+                    {
+                      id: 'NONE',
+                      label: 'None of those listed',
+                      exclusive: true
                     }
                   ]
                 }
