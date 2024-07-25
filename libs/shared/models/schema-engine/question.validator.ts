@@ -69,6 +69,11 @@ export class AutocompleteArrayValidator implements QuestionTypeValidator<Autocom
       validation = validation.items(Joi.string().valid(...validItems));
     }
     if (question.validations?.max) {
+      if (question.validations.max.length === 1) {
+        return Joi.string()
+          .valid(...validItems)
+          .required();
+      }
       validation = validation.max(question.validations.max.length);
     }
     if (question.validations?.min) {
