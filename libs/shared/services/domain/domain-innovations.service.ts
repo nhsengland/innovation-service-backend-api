@@ -42,13 +42,13 @@ import {
   UnprocessableEntityError
 } from '../../errors';
 import { TranslationHelper } from '../../helpers';
-import { translate } from '../../schemas/innovation-record/translation.helper';
 import type { CurrentElasticSearchDocumentType } from '../../schemas/innovation-record/index';
+import { translate } from '../../schemas/innovation-record/translation.helper';
 import type { ActivitiesParamsType, DomainContextType, IdentityUserInfo, SupportLogParams } from '../../types';
 import type { IdentityProviderService } from '../integrations/identity-provider.service';
 import type { NotifierService } from '../integrations/notifier.service';
-import type { DomainUsersService } from './domain-users.service';
 import type { IRSchemaService } from '../storage/ir-schema.service';
+import type { DomainUsersService } from './domain-users.service';
 
 export class DomainInnovationsService {
   innovationRepository: Repository<InnovationEntity>;
@@ -242,6 +242,7 @@ export class DomainInnovationsService {
 
     return await em.transaction(async transaction => {
       for (const innovation of archivedInnovationsInfo) {
+        let newAssessmentId: string | null = null;
         if (
           innovation.prevStatus === InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT ||
           innovation.prevStatus === InnovationStatusEnum.NEEDS_ASSESSMENT
@@ -268,7 +269,7 @@ export class DomainInnovationsService {
             }
           } else {
             // This innovation never had an assessment so we need to create and complete one
-            await transaction.save(
+            const newAssessment = await transaction.save(
               InnovationAssessmentEntity,
               InnovationAssessmentEntity.new({
                 description: '',
@@ -276,9 +277,12 @@ export class DomainInnovationsService {
                 assignTo: null,
                 createdBy: domainContext.id,
                 updatedBy: domainContext.id,
+                startedAt: archivedAt,
                 finishedAt: archivedAt
               })
             );
+
+            newAssessmentId = newAssessment.id;
           }
         }
 
@@ -367,7 +371,8 @@ export class DomainInnovationsService {
             archiveReason: innovation.reason,
             statusUpdatedAt: archivedAt,
             updatedBy: domainContext.id,
-            expires_at: null
+            expires_at: null,
+            ...(newAssessmentId && { currentAssessment: { id: newAssessmentId } })
           }
         );
 
