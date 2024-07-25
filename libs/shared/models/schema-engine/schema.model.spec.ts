@@ -1,6 +1,7 @@
 import { IRSchemaType, SchemaModel } from './schema.model';
 import { requiredSectionsAndQuestions } from '../../schemas/innovation-record';
 import { randCountry, randText } from '@ngneat/falso';
+import { IR_SCHEMA } from '../../schemas/innovation-record/schema';
 
 describe('models / schema-engine / schema.model.ts', () => {
   beforeAll(() => {
@@ -564,6 +565,229 @@ describe('models / schema-engine / schema.model.ts', () => {
           countryName: doc.subId1.countryName
         },
         subId2: { description: doc.subId2.description }
+      });
+    });
+  });
+
+  describe('translateDocument', () => {
+    it('should translate document info', () => {
+      const schema = new SchemaModel(IR_SCHEMA);
+      schema.runRules();
+
+      const document = {
+        version: '6',
+        INNOVATION_DESCRIPTION: {
+          name: 'New innovationasasdasdadasda',
+          hasWebsite: 'NO',
+          categories: ['IN_VITRO_DIAGNOSTIC'],
+          mainCategory: 'IN_VITRO_DIAGNOSTIC',
+          areas: ['DATA_ANALYTICS_AND_RESEARCH', 'DIGITALISING_SYSTEM', 'IMPROVING_SYSTEM_FLOW'],
+          careSettings: [ 'END_LIFE_CARE', 'INDUSTRY', 'LOCAL_AUTHORITY_EDUCATION', 'OTHER' ],
+          otherCareSetting: 'I want another',
+          mainPurpose: 'ENABLING_CARE',
+          involvedAACProgrammes: [
+            'Health Innovation Network',
+            'Artificial Intelligence in Health and Care Award',
+            'Innovation for Healthcare Inequalities Programme'
+          ],
+          countryName: 'Northern Ireland'
+        },
+        UNDERSTANDING_OF_NEEDS: {
+          howInnovationWork: 'daasdadsa',
+          hasProductServiceOrPrototype: 'YES',
+          benefitsOrImpact: [
+            'Increases self-management',
+            'Increases quality of life',
+            'Enables shared care',
+            'Changes delivery of care from secondary care(for example hospitals) to primary care(for example GP or community services)',
+            'Change in delivery of care from inpatient to day case'
+          ],
+          impactDiseaseCondition: 'YES',
+          diseasesConditionsImpact: ['BLOOD_AND_IMMUNE_SYSTEM_CONDITIONS_ALLERGIES'],
+          carbonReductionPlan: 'WORKING_ON',
+          keyHealthInequalities: ['SEVER_MENTAL_ILLNESS', 'EARLY_CANCER_DIAGNOSIS'],
+          completedHealthInequalitiesImpactAssessment: 'YES'
+        },
+        EVIDENCE_OF_EFFECTIVENESS: {
+          hasEvidence: 'YES',
+          currentlyCollectingEvidence: 'YES',
+          summaryOngoingEvidenceGathering: 'asda',
+          needsSupportAnyArea: ['UNDERSTANDING_LAWS', 'APPROVAL_DATA_STUDIES']
+        },
+        COST_OF_INNOVATION: {
+          hasCostKnowledge: 'DETAILED_ESTIMATE',
+          patientsRange: 'MORE_THAN_500000',
+          costComparison: 'COSTS_MORE_WITH_SAVINGS'
+        },
+        CURRENT_CARE_PATHWAY: {
+          innovationPathwayKnowledge: 'PATHWAY_EXISTS_AND_CHANGED',
+          potentialPathway: 'qweqasd\nasd\nasd'
+        },
+        DEPLOYMENT: {},
+        INTELLECTUAL_PROPERTY: {
+          hasPatents: 'APPLIED_AT_LEAST_ONE',
+          hasOtherIntellectual: 'YES',
+          otherIntellectual: 'Asda'
+        },
+        MARKET_RESEARCH: {
+          hasMarketResearch: 'IN_PROGRESS',
+          marketResearch: 'asdqw',
+          optionBestDescribesInnovation: 'COST_EFFECT_ALTERNATIVE',
+          whatCompetitorsAlternativesExist: 'qwe'
+        },
+        REGULATIONS_AND_STANDARDS: {
+          hasRegulationKnowledge: 'YES_ALL',
+          standards: [
+            { type: 'CE_UKCA_NON_MEDICAL', hasMet: 'YES' },
+            { type: 'CE_UKCA_CLASS_I', hasMet: 'YES' },
+            { type: 'IVD_GENERAL', hasMet: 'IN_PROGRESS' },
+            { type: 'IVD_SELF_TEST', hasMet: 'IN_PROGRESS' }
+          ]
+        },
+        REVENUE_MODEL: {
+          hasRevenueModel: 'YES',
+          revenues: ['DIRECT_PRODUCT_SALES', 'LEASE', 'SALES_OF_CONSUMABLES_OR_ACCESSORIES'],
+          payingOrganisations: 'qwqewqweq',
+          benefittingOrganisations: 'qweqw',
+          hasFunding: 'YES',
+          fundingDescription: 'qweqwq'
+        },
+        TESTING_WITH_USERS: {
+          involvedUsersDesignProcess: 'YES',
+          testedWithIntendedUsers: 'YES',
+          intendedUserGroupsEngaged: [
+            'CLINICAL_SOCIAL_CARE_WORKING_INSIDE_UK',
+            'CLINICAL_SOCIAL_CARE_WORKING_OUTSIDE_UK'
+          ],
+          userTests: [
+            { kind: 'First type', feedback: 'Adasqweasd' },
+            { kind: 'Second type', feedback: 'qweqwq' }
+          ]
+        },
+        evidences: [
+          {
+            id: 'df376215-7194-453c-b308-57198d631af8',
+            evidenceType: 'UNPUBLISHED_DATA',
+            evidenceSubmitType: 'CLINICAL_OR_CARE',
+            summary: 'asda'
+          },
+          {
+            id: '175b159f-6c5c-4f7b-9ba4-e0d708b2c16b',
+            evidenceType: 'UNPUBLISHED_DATA',
+            evidenceSubmitType: 'PRE_CLINICAL',
+            summary: 'asd'
+          }
+        ]
+      };
+
+      expect(schema.translateDocument(document)).toStrictEqual({
+        INNOVATION_DESCRIPTION: {
+          name: 'New innovationasasdasdadasda',
+          hasWebsite: 'No',
+          countryName: 'Northern Ireland',
+          otherCareSetting: 'I want another',
+          areas: ['Data, analytics and research', 'Digitalising the system', 'Improving system flow'],
+          mainCategory: 'In vitro diagnostic',
+          categories: ['In vitro diagnostic'],
+          involvedAACProgrammes: [
+            'Health Innovation Network',
+            'Artificial Intelligence in Health and Care Award',
+            'Innovation for Healthcare Inequalities Programme'
+          ],
+          mainPurpose: 'Enabling care, services or communication',
+          careSettings: [ 'End of life care (EOLC)', 'Industry', 'Local authority - education', 'Other' ]
+        },
+        UNDERSTANDING_OF_NEEDS: {
+          diseasesConditionsImpact: ['Blood and immune system conditions - Allergies'],
+          hasProductServiceOrPrototype: 'Yes',
+          carbonReductionPlan: 'I am working on one',
+          completedHealthInequalitiesImpactAssessment: 'Yes',
+          benefitsOrImpact: [
+            'Increases self-management',
+            'Increases quality of life',
+            'Enables shared care',
+            'Changes delivery of care from secondary care(for example hospitals) to primary care(for example GP or community services)',
+            'Change in delivery of care from inpatient to day case'
+          ],
+          impactDiseaseCondition: 'Yes',
+          howInnovationWork: 'daasdadsa',
+          keyHealthInequalities: ['Severe mental illness', 'Early cancer diagnosis']
+        },
+        EVIDENCE_OF_EFFECTIVENESS: {
+          currentlyCollectingEvidence: 'Yes',
+          needsSupportAnyArea: [
+            'Understanding the laws that regulate the use of health and care data',
+            'Approval of data studies'
+          ],
+          summaryOngoingEvidenceGathering: 'asda',
+          hasEvidence: 'Yes'
+        },
+        MARKET_RESEARCH: {
+          hasMarketResearch: "I'm currently doing market research",
+          marketResearch: 'asdqw',
+          optionBestDescribesInnovation: 'A more cost-effect alternative to those that already exist',
+          whatCompetitorsAlternativesExist: 'qwe'
+        },
+        CURRENT_CARE_PATHWAY: {
+          innovationPathwayKnowledge: 'There is a pathway, and my innovation changes it',
+          potentialPathway: 'qweqasd\nasd\nasd'
+        },
+        TESTING_WITH_USERS: {
+          involvedUsersDesignProcess: 'Yes',
+          intendedUserGroupsEngaged: [
+            'Clinical or social care professionals working in the UK health and social care system',
+            'Clinical or social care professionals working outside the UK'
+          ],
+          userTests: [
+            { feedback: 'Adasqweasd', kind: 'First type' },
+            { feedback: 'qweqwq', kind: 'Second type' }
+          ],
+          testedWithIntendedUsers: 'Yes'
+        },
+        REGULATIONS_AND_STANDARDS: {
+          standards: [
+            { hasMet: 'Yes', type: 'Non-medical device' },
+            { hasMet: 'Yes', type: 'Class I medical device' },
+            { hasMet: 'I am actively working towards it', type: 'IVD general' },
+            { hasMet: 'I am actively working towards it', type: 'IVD self-test' }
+          ],
+          hasRegulationKnowledge: 'Yes, I know all of them'
+        },
+        INTELLECTUAL_PROPERTY: {
+          otherIntellectual: 'Asda',
+          hasPatents: 'I have applied for one or more patents',
+          hasOtherIntellectual: 'Yes'
+        },
+        REVENUE_MODEL: {
+          payingOrganisations: 'qwqewqweq',
+          hasFunding: 'Yes',
+          benefittingOrganisations: 'qweqw',
+          revenues: ['Direct product sales', 'Lease', 'Sales of consumables or accessories'],
+          fundingDescription: 'qweqwq',
+          hasRevenueModel: 'Yes'
+        },
+        COST_OF_INNOVATION: {
+          hasCostKnowledge: 'Yes, I have a detailed estimate',
+          costComparison:
+            'My innovation costs more to purchase, but has greater benefits that will lead to overall cost savings',
+          patientsRange: 'More than half a million per year',
+        },
+        DEPLOYMENT: {},
+        version: '6',
+        evidences: [
+          {
+            summary: 'asda',
+            evidenceType: 'Unpublished data',
+            id: 'df376215-7194-453c-b308-57198d631af8',
+            evidenceSubmitType: 'Evidence of clinical or care outcomes'
+          },
+          {
+            summary: 'asd',
+            evidenceType: 'Unpublished data',
+            id: '175b159f-6c5c-4f7b-9ba4-e0d708b2c16b',
+            evidenceSubmitType: 'Pre-clinical evidence'
+          }
+        ]
       });
     });
   });

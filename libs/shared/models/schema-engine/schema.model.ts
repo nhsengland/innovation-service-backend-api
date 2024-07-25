@@ -1,9 +1,10 @@
-import { CurrentDocumentType, requiredSectionsAndQuestions } from '../../schemas/innovation-record';
 import Joi from 'joi';
+import { pick } from 'lodash';
+import { CurrentDocumentType, requiredSectionsAndQuestions } from '../../schemas/innovation-record';
 import type { Question } from './question.types';
 import { QuestionValidatorFactory } from './question.validator';
 import { SchemaValidation } from './schema.validations';
-import { pick } from 'lodash';
+import { translateEvidences } from '../../schemas/innovation-record/translation.helper';
 
 export type IRSchemaType = {
   sections: {
@@ -96,6 +97,70 @@ export class SchemaModel {
     return { ...empty, ...pick(document, keys) } as CurrentDocumentType;
   }
 
+  translateDocument(document: { [key: string]: any }) {
+    for (const [subSection, questions] of Object.entries(document)) {
+      if (subSection === 'version') continue;
+      if (subSection === 'evidences' && questions && Array.isArray(questions)) {
+        document['evidences'] = translateEvidences(questions);
+      }
+
+      for (const [questionId, value] of Object.entries(questions)) {
+        const config = this.getQuestionAndItemTranslations(questionId);
+        if (!config) continue;
+
+        const question = config.question;
+        if (question.dataType === 'checkbox-array' && question.addQuestion) {
+          const addQuestion = this.getQuestionAndItemTranslations(question.addQuestion.id);
+          if (!addQuestion) continue;
+
+          // Checkbox-array + addQuestion is an array of objects
+          if (Array.isArray(value)) {
+            document[subSection][questionId] = value.map(v => {
+              const fieldKey = question.checkboxAnswerId ?? question.id;
+              const addQuestionKey = addQuestion.question.id;
+              return {
+                [fieldKey]: config.translations.get(v[fieldKey]) ?? v[fieldKey],
+                [addQuestionKey]: addQuestion.translations.get(v[addQuestionKey]) ?? v[addQuestionKey]
+              };
+            });
+          }
+        } else {
+          if (Array.isArray(value)) {
+            document[subSection][questionId] = value.map(v => config.translations.get(v) ?? v);
+          } else if (typeof value === 'string') {
+            document[subSection][questionId] = config.translations.get(value) ?? value;
+          }
+        }
+      }
+    }
+    return document;
+  }
+
+  /**
+   * Helper to get the question and associated items if it has items.
+   */
+  private getQuestionAndItemTranslations(
+    questionId: string
+  ): { question: Question; translations: Map<string, string> } | null {
+    const question = this.questions.get(questionId);
+    if (!question || !('items' in question)) return null;
+    const translations = this.getItemsTranslations(question);
+    if (!translations) return null;
+    return { question, translations };
+  }
+
+  private getItemsTranslations(question: Question): Map<string, string> | null {
+    if (!('items' in question)) return null;
+    const items = this.checkItemsFromAnswer(question) ?? question.items;
+    const translations = new Map<string, string>();
+    for (const item of items) {
+      if ('label' in item && item.label) {
+        translations.set(item.id, item.label);
+      }
+    }
+    return translations;
+  }
+
   /**
    * Calculated fields
    */
@@ -128,13 +193,7 @@ export class SchemaModel {
       if (!question) continue;
 
       // WARNING: big hack due to itemsFromAnswer.
-      let itemsFromAnswer: any = null;
-      if ('items' in question && question.items[0] && 'itemsFromAnswer' in question.items[0]) {
-        const referencedQuestion = this.questions.get(question.items[0].itemsFromAnswer);
-        if (referencedQuestion && 'items' in referencedQuestion) {
-          itemsFromAnswer = referencedQuestion.items;
-        }
-      }
+      const itemsFromAnswer = this.checkItemsFromAnswer(question);
 
       validation[key] = QuestionValidatorFactory.validate({
         ...question,
@@ -335,5 +394,20 @@ export class SchemaModel {
     }
 
     return { schema, errors: this.errorList };
+  }
+
+  /**
+   * Function that checks if item has a reference to other question. If it does it returns the items from
+   * the referenced question.
+   */
+  private checkItemsFromAnswer(question: Question) {
+    let itemsFromAnswer: any = null;
+    if ('items' in question && question.items[0] && 'itemsFromAnswer' in question.items[0]) {
+      const referencedQuestion = this.questions.get(question.items[0].itemsFromAnswer);
+      if (referencedQuestion && 'items' in referencedQuestion) {
+        itemsFromAnswer = referencedQuestion.items;
+      }
+    }
+    return itemsFromAnswer;
   }
 }
