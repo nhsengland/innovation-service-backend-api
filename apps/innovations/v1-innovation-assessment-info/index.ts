@@ -48,6 +48,7 @@ class V1InnovationAssessmentInfo {
         ...(result.reassessment === undefined ? {} : { reassessment: result.reassessment }),
         summary: result.summary,
         description: result.description,
+        startedAt: result.startedAt,
         finishedAt: result.finishedAt,
         ...(result.assignTo && { assignTo: { id: result.assignTo.id, name: result.assignTo.name } }),
         maturityLevel: result.maturityLevel,

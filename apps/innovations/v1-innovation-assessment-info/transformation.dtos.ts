@@ -5,6 +5,7 @@ export type ResponseDTO = {
   reassessment?: ReassessmentType & { previousAssessmentId: string; sectionsUpdatedSinceLastAssessment: string[] };
   summary: null | string;
   description: null | string;
+  startedAt: null | Date;
   finishedAt: null | Date;
   assignTo?: { id: string; name: string };
   maturityLevel: null | string;

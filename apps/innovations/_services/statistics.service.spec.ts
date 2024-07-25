@@ -261,11 +261,7 @@ describe('Innovations / _services / innovation statistics suite', () => {
         .setStatus(InnovationSectionStatusEnum.SUBMITTED)
         .save();
 
-      const sections = await sut.getSubmittedSectionsSinceAssessmentStart(
-        innovation.id,
-        DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
-        em
-      );
+      const sections = await sut.getSubmittedSectionsSinceAssessmentStart(innovation.id, em);
 
       expect(sections).toMatchObject([
         {
