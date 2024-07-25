@@ -77,6 +77,7 @@ describe('Innovation Assessments Suite', () => {
         id: assessment.id,
         summary: assessment.summary,
         description: assessment.description,
+        startedAt: new Date(assessment.startedAt!),
         finishedAt: new Date(assessment.finishedAt!),
         assignTo: { id: assessment.assignedTo.id, name: assessment.assignedTo.name },
         maturityLevel: assessment.maturityLevel,

@@ -23,10 +23,7 @@ export class SectionsSubmittedSinceAssessmentStartStatisticsHandler extends Inno
   > {
     const statisticsService = container.get<StatisticsService>(SYMBOLS.StatisticsService);
 
-    const submittedSections = await statisticsService.getSubmittedSectionsSinceAssessmentStart(
-      this.data.innovationId,
-      this.domainContext
-    );
+    const submittedSections = await statisticsService.getSubmittedSectionsSinceAssessmentStart(this.data.innovationId);
 
     const sections = submittedSections;
     const totalSections = CurrentCatalogTypes.InnovationSections.length;

@@ -66,6 +66,7 @@ export class InnovationAssessmentsService extends BaseService {
       .select([
         'assessment.id',
         'assessment.description',
+        'assessment.startedAt',
         'assessment.finishedAt',
         'assessment.summary',
         'assessment.updatedAt',
@@ -149,6 +150,7 @@ export class InnovationAssessmentsService extends BaseService {
       }),
       summary: assessment.summary,
       description: assessment.description,
+      startedAt: assessment.startedAt,
       finishedAt: assessment.finishedAt,
       ...(assessment.assignTo && {
         assignTo: {
@@ -237,6 +239,7 @@ export class InnovationAssessmentsService extends BaseService {
           description: '', // assessment.description,
           innovation: InnovationEntity.new({ id: innovationId }),
           assignTo: UserEntity.new({ id: domainContext.id }),
+          startedAt: new Date(),
           createdBy: domainContext.id,
           updatedBy: domainContext.id
         })
@@ -442,6 +445,7 @@ export class InnovationAssessmentsService extends BaseService {
         // if the innovation has a reassessment request and is in state WAITING_NEEDS_ASSESSMENT
         // change innovation state to NEEDS_ASSESSMENT
         if (dbAssessment.reassessmentRequest && innovation.status === InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT) {
+          assessment.startedAt = new Date();
           await transaction.update(
             InnovationEntity,
             { id: innovationId },
@@ -594,6 +598,7 @@ export class InnovationAssessmentsService extends BaseService {
         (({
           id,
           finishedAt,
+          startedAt,
           createdAt,
           createdBy,
           updatedAt,

@@ -28,6 +28,7 @@ const expected = {
   //   reassessment?: { updatedInnovationRecord: CurrentCatalogTypes.catalogYesNo; description: string },
   summary: randText(),
   description: randText(),
+  startedAt: randPastDate(),
   finishedAt: randPastDate(),
   assignTo: { id: randUuid(), name: randUserName() },
   maturityLevel: 'READY' as const,

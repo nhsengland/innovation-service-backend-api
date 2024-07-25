@@ -11,6 +11,7 @@ export type TestInnovationAssessmentType = {
   summary: string | null;
   maturityLevel: MaturityLevelCatalogueType | null;
   maturityLevelComment: string | null;
+  startedAt: Date | null;
   finishedAt: Date | null;
   hasRegulatoryApprovals: YesPartiallyNoCatalogueType | null;
   hasRegulatoryApprovalsComment: string | null;
@@ -31,6 +32,7 @@ export type TestInnovationAssessmentType = {
 export class InnovationAssessmentBuilder extends BaseBuilder {
   private assessment: DeepPartial<InnovationAssessmentEntity> = {
     description: randProductDescription(),
+    startedAt: new Date(),
     summary: randText(),
     maturityLevel: 'READY',
     maturityLevelComment: randText(),
@@ -115,6 +117,7 @@ export class InnovationAssessmentBuilder extends BaseBuilder {
       summary: result.summary,
       maturityLevel: result.maturityLevel,
       maturityLevelComment: result.maturityLevelComment,
+      startedAt: result.startedAt,
       finishedAt: result.finishedAt,
       hasRegulatoryApprovals: result.hasRegulatoryApprovals,
       hasRegulatoryApprovalsComment: result.hasRegulatoryApprovalsComment,

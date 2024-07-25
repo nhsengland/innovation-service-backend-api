@@ -36,6 +36,9 @@ export class InnovationAssessmentEntity extends BaseEntity {
   @Column({ name: 'maturity_level_comment', type: 'nvarchar', nullable: true, length: 200 })
   maturityLevelComment: null | string;
 
+  @Column({ name: 'started_at', type: 'datetime2', nullable: true })
+  startedAt: null | Date;
+
   @Column({ name: 'finished_at', type: 'datetime2', nullable: true })
   finishedAt: null | Date;
 
