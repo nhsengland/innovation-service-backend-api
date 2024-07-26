@@ -48,6 +48,7 @@ import type { IdentityProviderService } from '../integrations/identity-provider.
 import type { NotifierService } from '../integrations/notifier.service';
 import type { DomainUsersService } from './domain-users.service';
 import type { IRSchemaService } from '../storage/ir-schema.service';
+import { cloneDeep } from 'lodash';
 
 export class DomainInnovationsService {
   innovationRepository: Repository<InnovationEntity>;
@@ -1007,7 +1008,7 @@ export class DomainInnovationsService {
         submittedAt: innovation.submittedAt,
         updatedAt: innovation.updatedAt,
         lastAssessmentRequestAt: innovation.lastAssessmentRequestAt,
-        document: schema.model.translateDocument(document),
+        document: schema.model.translateDocument(cloneDeep(document)),
         ...(innovation.owner && { owner: JSON.parse(innovation.owner) }),
         ...(innovation.engagingOrganisations && {
           engagingOrganisations: JSON.parse(innovation.engagingOrganisations)

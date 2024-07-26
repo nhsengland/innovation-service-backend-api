@@ -97,6 +97,7 @@ export class SchemaModel {
     return { ...empty, ...pick(document, keys) } as CurrentDocumentType;
   }
 
+  // Translates the document passed, it mutates the passed input.
   translateDocument(document: { [key: string]: any }) {
     for (const [subSection, questions] of Object.entries(document)) {
       if (subSection === 'version') continue;
