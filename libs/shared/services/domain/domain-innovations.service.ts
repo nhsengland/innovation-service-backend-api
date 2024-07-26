@@ -42,7 +42,6 @@ import {
   UnprocessableEntityError
 } from '../../errors';
 import { TranslationHelper } from '../../helpers';
-import { translate } from '../../schemas/innovation-record/translation.helper';
 import type { CurrentElasticSearchDocumentType } from '../../schemas/innovation-record/index';
 import type { ActivitiesParamsType, DomainContextType, IdentityUserInfo, SupportLogParams } from '../../types';
 import type { IdentityProviderService } from '../integrations/identity-provider.service';
@@ -1008,7 +1007,7 @@ export class DomainInnovationsService {
         submittedAt: innovation.submittedAt,
         updatedAt: innovation.updatedAt,
         lastAssessmentRequestAt: innovation.lastAssessmentRequestAt,
-        document: translate(document),
+        document: schema.model.translateDocument(document),
         ...(innovation.owner && { owner: JSON.parse(innovation.owner) }),
         ...(innovation.engagingOrganisations && {
           engagingOrganisations: JSON.parse(innovation.engagingOrganisations)
