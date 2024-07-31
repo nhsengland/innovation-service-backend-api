@@ -7,6 +7,8 @@ import type { TestOrganisationUnitType } from './organisation-unit.builder';
 
 export type TestInnovationAssessmentType = {
   id: string;
+  majorVersion: number;
+  minorVersion: number;
   description: string | null;
   summary: string | null;
   maturityLevel: MaturityLevelCatalogueType | null;
@@ -31,6 +33,8 @@ export type TestInnovationAssessmentType = {
 
 export class InnovationAssessmentBuilder extends BaseBuilder {
   private assessment: DeepPartial<InnovationAssessmentEntity> = {
+    majorVersion: 1,
+    minorVersion: 1,
     description: randProductDescription(),
     startedAt: new Date(),
     summary: randText(),
@@ -60,6 +64,12 @@ export class InnovationAssessmentBuilder extends BaseBuilder {
 
   setInnovation(innovationId: string): this {
     this.assessment.innovation = { id: innovationId };
+    return this;
+  }
+
+  setVersion(major: number, minor: number): this {
+    this.assessment.majorVersion = major;
+    this.assessment.minorVersion = minor;
     return this;
   }
 
@@ -113,6 +123,8 @@ export class InnovationAssessmentBuilder extends BaseBuilder {
 
     return {
       id: result.id,
+      majorVersion: result.majorVersion,
+      minorVersion: result.minorVersion,
       description: result.description,
       summary: result.summary,
       maturityLevel: result.maturityLevel,

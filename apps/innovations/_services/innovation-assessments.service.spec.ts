@@ -75,6 +75,8 @@ describe('Innovation Assessments Suite', () => {
 
       expect(res).toEqual({
         id: assessment.id,
+        majorVersion: assessment.majorVersion,
+        minorVersion: assessment.minorVersion,
         summary: assessment.summary,
         description: assessment.description,
         startedAt: new Date(assessment.startedAt!),
@@ -154,7 +156,7 @@ describe('Innovation Assessments Suite', () => {
 
     it('should return the previous assessment if it exists', async () => {
       const res = await sut.getInnovationAssessmentInfo(naUser, innovationWithMultipleAssessments.assessment.id);
-      expect(res.reassessment?.previousAssessmentId).toBe(innovationWithMultipleAssessments.previousAssessment.id);
+      expect(res.previousAssessment?.id).toBe(innovationWithMultipleAssessments.previousAssessment.id);
     });
 
     it('should return the sections changed since the previous assessment', async () => {

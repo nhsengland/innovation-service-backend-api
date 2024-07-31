@@ -25,6 +25,8 @@ beforeAll(async () => {
 
 const expected = {
   id: randUuid(),
+  majorVersion: 0,
+  minorVersion: 0,
   //   reassessment?: { updatedInnovationRecord: CurrentCatalogTypes.catalogYesNo; description: string },
   summary: randText(),
   description: randText(),
