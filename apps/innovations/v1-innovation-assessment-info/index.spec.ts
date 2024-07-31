@@ -25,7 +25,7 @@ beforeAll(async () => {
 
 const expected = {
   id: randUuid(),
-  //   reassessment?: { updatedInnovationRecord: CurrentCatalogTypes.catalogYesNo; description: string },
+  // reassessment?: { updatedInnovationRecord: CurrentCatalogTypes.catalogYesNo; description: string },
   summary: randText(),
   description: randText(),
   startedAt: randPastDate(),
@@ -87,8 +87,9 @@ describe('v1-innovation-assessment-info', () => {
       const expectedWithReassessment = {
         ...expected,
         reassessment: {
-          updatedInnovationRecord: 'YES' as const,
+          reassessmentReason: [],
           description: randText(),
+          whatSupportDoYouNeed: randText(),
           previousAssessmentId: randUuid(),
           sectionsUpdatedSinceLastAssessment: []
         }

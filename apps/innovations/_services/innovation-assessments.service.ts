@@ -99,6 +99,10 @@ export class InnovationAssessmentsService extends BaseService {
         'previousAssessment.id',
         'reassessmentRequest.updatedInnovationRecord',
         'reassessmentRequest.description',
+        'reassessmentRequest.reassessmentReason',
+        'reassessmentRequest.otherReassessmentReason',
+        'reassessmentRequest.whatSupportDoYouNeed',
+        'reassessmentRequest.createdAt',
         'innovation.id',
         'currentAssessment.id'
       ])
@@ -137,10 +141,16 @@ export class InnovationAssessmentsService extends BaseService {
       id: assessment.id,
       ...(assessment.reassessmentRequest && {
         reassessment: {
+          createdAt: assessment.reassessmentRequest.createdAt,
           ...(assessment.reassessmentRequest.updatedInnovationRecord && {
             updatedInnovationRecord: assessment.reassessmentRequest.updatedInnovationRecord
           }),
+          reassessmentReason: assessment.reassessmentRequest.reassessmentReason,
+          ...(assessment.reassessmentRequest.otherReassessmentReason && {
+            otherReassessmentReason: assessment.reassessmentRequest.otherReassessmentReason
+          }),
           description: assessment.reassessmentRequest.description,
+          whatSupportDoYouNeed: assessment.reassessmentRequest.whatSupportDoYouNeed,
           previousAssessmentId: assessment.previousAssessment!.id, // It's safe to assume that previousAssessment is not null here as it was validated before
           sectionsUpdatedSinceLastAssessment: await this.getSectionsUpdatedSincePreviousAssessment(
             assessment.id,
@@ -637,8 +647,10 @@ export class InnovationAssessmentsService extends BaseService {
         InnovationReassessmentRequestEntity.new({
           assessment: InnovationAssessmentEntity.new({ id: assessmentClone.id }),
           innovation: InnovationEntity.new({ id: innovationId }),
-          ...('updatedInnovationRecord' in data && { updatedInnovationRecord: data.updatedInnovationRecord }),
           description: data.description,
+          reassessmentReason: data.reassessmentReason,
+          ...(data.otherReassessmentReason && { otherReassessmentReason: data.otherReassessmentReason }),
+          whatSupportDoYouNeed: data.whatSupportDoYouNeed,
           createdBy: assessmentClone.createdBy,
           updatedBy: assessmentClone.updatedBy
         })

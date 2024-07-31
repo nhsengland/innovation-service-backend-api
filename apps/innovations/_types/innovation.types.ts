@@ -22,17 +22,25 @@ export interface InnovationSectionModel {
 }
 
 export type ReassessmentType =
-  | {
-      updatedInnovationRecord: CurrentCatalogTypes.catalogYesNo;
-      description: string;
-    }
-  | { description: string };
+  // | {
+  //     updatedInnovationRecord: CurrentCatalogTypes.catalogYesNo;
+  //     description: string;
+  //   }
+  // | { description: string }
+  // |
+  {
+    reassessmentReason: string[];
+    otherReassessmentReason?: string;
+    description: string;
+    whatSupportDoYouNeed: string;
+  };
 
 export type InnovationAssessmentType = {
   id: string;
   reassessment?: ReassessmentType & {
     previousAssessmentId: string;
     sectionsUpdatedSinceLastAssessment: string[];
+    createdAt: Date;
   };
   summary: null | string;
   description: null | string;

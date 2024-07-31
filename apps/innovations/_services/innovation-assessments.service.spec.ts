@@ -416,7 +416,7 @@ describe('Innovation Assessments Suite', () => {
       const innovationReassessment = await sut.createInnovationReassessment(
         DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
         innovationWithAssessment.id,
-        { updatedInnovationRecord: 'YES', description: randText() },
+        { reassessmentReason: [], description: randText(), whatSupportDoYouNeed: randText() },
         em
       );
 
@@ -445,7 +445,7 @@ describe('Innovation Assessments Suite', () => {
       await sut.createInnovationReassessment(
         DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
         innovationWithAssessment.id,
-        { updatedInnovationRecord: 'YES', description: randText() },
+        { reassessmentReason: [], description: randText(), whatSupportDoYouNeed: randText() },
         em
       );
 
@@ -478,7 +478,7 @@ describe('Innovation Assessments Suite', () => {
         sut.createInnovationReassessment(
           DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
           innovationWithoutAssessment.id,
-          { description: randText() },
+          { reassessmentReason: [], description: randText(), whatSupportDoYouNeed: randText() },
           em
         )
       ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND));
@@ -489,7 +489,7 @@ describe('Innovation Assessments Suite', () => {
         sut.createInnovationReassessment(
           DTOsHelper.getUserRequestContext(scenario.users.janeInnovator),
           innovationWithArchivedStatus.id,
-          { updatedInnovationRecord: 'YES', description: randText() },
+          { reassessmentReason: [], description: randText(), whatSupportDoYouNeed: randText() },
           em
         )
       ).rejects.toThrow(new ForbiddenError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_MUST_BE_OWNER));
@@ -500,7 +500,7 @@ describe('Innovation Assessments Suite', () => {
         sut.createInnovationReassessment(
           DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
           innovationWithAssessment.id,
-          { updatedInnovationRecord: 'YES', description: randText() },
+          { reassessmentReason: [], description: randText(), whatSupportDoYouNeed: randText() },
           em
         )
       ).rejects.toThrow(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_CANNOT_REQUEST_REASSESSMENT));
@@ -511,7 +511,7 @@ describe('Innovation Assessments Suite', () => {
         sut.createInnovationReassessment(
           DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
           innovationWithArchivedStatus.id,
-          { description: randText() },
+          { reassessmentReason: [], description: randText(), whatSupportDoYouNeed: randText() },
           em
         )
       ).rejects.toThrow(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_CANNOT_REQUEST_REASSESSMENT));
@@ -526,7 +526,7 @@ describe('Innovation Assessments Suite', () => {
       const innovationReassessment = await sut.createInnovationReassessment(
         DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
         innovationWithAssessment.id,
-        { description: randText() },
+        { reassessmentReason: [], description: randText(), whatSupportDoYouNeed: randText() },
         em
       );
 
@@ -554,7 +554,7 @@ describe('Innovation Assessments Suite', () => {
         const innovationReassessment = await sut.createInnovationReassessment(
           DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
           innovationWithAssessment.id,
-          { updatedInnovationRecord: 'YES', description: randText() },
+          { reassessmentReason: [], description: randText(), whatSupportDoYouNeed: randText() },
           em
         );
 
@@ -580,7 +580,7 @@ describe('Innovation Assessments Suite', () => {
       const { assessment } = await sut.createInnovationReassessment(
         DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
         innovationWithAssessment.id,
-        { updatedInnovationRecord: 'YES', description: randText() },
+        { reassessmentReason: [], description: randText(), whatSupportDoYouNeed: randText() },
         em
       );
 
@@ -598,7 +598,7 @@ describe('Innovation Assessments Suite', () => {
       const { assessment } = await sut.createInnovationReassessment(
         DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
         innovationWithAssessment.id,
-        { updatedInnovationRecord: 'YES', description: randText() },
+        { reassessmentReason: [], description: randText(), whatSupportDoYouNeed: randText() },
         em
       );
 
@@ -618,7 +618,7 @@ describe('Innovation Assessments Suite', () => {
       const { assessment } = await sut.createInnovationReassessment(
         DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
         innovationWithAssessment.id,
-        { updatedInnovationRecord: 'YES', description: randText() },
+        { reassessmentReason: [], description: randText(), whatSupportDoYouNeed: randText() },
         em
       );
 

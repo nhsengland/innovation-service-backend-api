@@ -17,6 +17,15 @@ export class InnovationReassessmentRequestEntity extends BaseEntity {
   @Column({ name: 'description', type: 'nvarchar' })
   description: string;
 
+  @Column({ name: 'reassessment_reason', type: 'simple-array' })
+  reassessmentReason: string[];
+
+  @Column({ name: 'other_reassessment_reason', type: 'nvarchar' })
+  otherReassessmentReason: string;
+
+  @Column({ name: 'what_support_do_you_need', type: 'nvarchar' })
+  whatSupportDoYouNeed: string;
+
   @ManyToOne(() => InnovationEntity, { nullable: false })
   @JoinColumn({ name: 'innovation_id' })
   innovation: InnovationEntity;

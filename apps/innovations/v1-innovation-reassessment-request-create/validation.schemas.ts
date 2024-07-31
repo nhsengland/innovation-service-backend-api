@@ -1,7 +1,6 @@
 import Joi from 'joi';
 
 import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
-import { ServiceRoleEnum, YesOrNoCatalogueType } from '@innovations/shared/enums';
 
 export type ParamsType = {
   innovationId: string;
@@ -11,19 +10,15 @@ export const ParamsSchema = Joi.object<ParamsType>({
 }).required();
 
 export type BodyType = {
-  updatedInnovationRecord?: YesOrNoCatalogueType;
+  reassessmentReason: string[];
+  otherReassessmentReason?: string;
   description: string;
+  whatSupportDoYouNeed: string;
 };
 
 export const BodySchema = Joi.object<BodyType>({
-  description: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).required()
-}).when('$userRole', [
-  {
-    is: ServiceRoleEnum.INNOVATOR,
-    then: Joi.object({
-      updatedInnovationRecord: Joi.string()
-        .valid(...Object.values(YesOrNoCatalogueType))
-        .required()
-    }).required()
-  }
-]);
+  reassessmentReason: Joi.array().items(Joi.string()).min(1).required(),
+  otherReassessmentReason: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xs).optional(),
+  description: Joi.string().max(TEXTAREA_LENGTH_LIMIT.l).required(),
+  whatSupportDoYouNeed: Joi.string().max(TEXTAREA_LENGTH_LIMIT.l).required()
+});
