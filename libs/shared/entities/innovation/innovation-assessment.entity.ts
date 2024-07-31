@@ -24,6 +24,12 @@ export class InnovationAssessmentEntity extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Column({ name: 'major_version', type: 'smallint' })
+  majorVersion: string;
+
+  @Column({ name: 'minor_version', type: 'smallint' })
+  minorVersion: string;
+
   @Column({ name: 'description', type: 'nvarchar', nullable: true })
   description: null | string;
 
