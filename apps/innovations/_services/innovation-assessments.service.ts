@@ -53,6 +53,48 @@ export class InnovationAssessmentsService extends BaseService {
     super();
   }
 
+  /**
+   * Gets the list of completed assessments for a given innovation
+   */
+  async getAssessmentsList(
+    innovationId: string,
+    entityManager?: EntityManager
+  ): Promise<
+    {
+      id: string;
+      majorVersion: number;
+      minorVersion: number;
+      startedAt: Date;
+      finishedAt: Date;
+    }[]
+  > {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const assessments = await em
+      .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
+      .select([
+        'assessment.id',
+        'assessment.majorVersion',
+        'assessment.minorVersion',
+        'assessment.startedAt',
+        'assessment.finishedAt'
+      ])
+      .where('assessment.innovation_id = :innovationId', { innovationId })
+      .andWhere('assessment.startedAt IS NOT NULL')
+      .andWhere('assessment.finishedAt IS NOT NULL')
+      .orderBy('assessment.startedAt', 'DESC')
+      .getMany();
+
+    return assessments.map(a => ({
+      id: a.id,
+      majorVersion: a.majorVersion,
+      minorVersion: a.minorVersion,
+      // We verify that is not null on the query.
+      startedAt: a.startedAt!,
+      finishedAt: a.finishedAt!
+    }));
+  }
+
   async getInnovationAssessmentInfo(
     domainContext: DomainContextType,
     assessmentId: string,
