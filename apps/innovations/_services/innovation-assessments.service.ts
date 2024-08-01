@@ -25,7 +25,6 @@ import {
 import {
   ForbiddenError,
   InnovationErrorsEnum,
-  InternalServerError,
   NotFoundError,
   UnprocessableEntityError,
   UserErrorsEnum
@@ -65,6 +64,8 @@ export class InnovationAssessmentsService extends BaseService {
       .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
       .select([
         'assessment.id',
+        'assessment.majorVersion',
+        'assessment.minorVersion',
         'assessment.description',
         'assessment.startedAt',
         'assessment.finishedAt',
@@ -97,6 +98,8 @@ export class InnovationAssessmentsService extends BaseService {
         'organisation.name',
         'organisation.acronym',
         'previousAssessment.id',
+        'previousAssessment.majorVersion',
+        'previousAssessment.minorVersion',
         'reassessmentRequest.updatedInnovationRecord',
         'reassessmentRequest.description',
         'innovation.id',
@@ -127,21 +130,23 @@ export class InnovationAssessmentsService extends BaseService {
       userIds: [...(assessment.assignTo ? [assessment.assignTo.id] : []), assessment.updatedBy]
     });
 
-    if (assessment.reassessmentRequest && !assessment.previousAssessment) {
-      throw new InternalServerError(
-        InnovationErrorsEnum.INNOVATION_ASSESSMENT_REASSESSMENT_REQUEST_WITHOUT_PREVIOUS_ASSESSMENT
-      );
-    }
-
     return {
       id: assessment.id,
+      majorVersion: assessment.majorVersion,
+      minorVersion: assessment.minorVersion,
+      ...(assessment.previousAssessment && {
+        previousAssessment: {
+          id: assessment.previousAssessment.id,
+          majorVersion: assessment.previousAssessment.majorVersion,
+          minorVersion: assessment.previousAssessment.minorVersion
+        }
+      }),
       ...(assessment.reassessmentRequest && {
         reassessment: {
           ...(assessment.reassessmentRequest.updatedInnovationRecord && {
             updatedInnovationRecord: assessment.reassessmentRequest.updatedInnovationRecord
           }),
           description: assessment.reassessmentRequest.description,
-          previousAssessmentId: assessment.previousAssessment!.id, // It's safe to assume that previousAssessment is not null here as it was validated before
           sectionsUpdatedSinceLastAssessment: await this.getSectionsUpdatedSincePreviousAssessment(
             assessment.id,
             connection
