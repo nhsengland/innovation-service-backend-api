@@ -2151,24 +2151,30 @@ paths:
             schema:
               type: object
               properties:
+                reassessmentReason:
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                      - NO_SUPPORT
+                      - PREVIOUSLY_ARCHIVED
+                      - HAS_PROGRESSED_SIGNIFICANTLY
+                      - OTHER
+                  minItems: 1
+                otherReassessmentReason:
+                  type: string
+                  maxLength: 200
                 description:
                   type: string
-                  maxLength: 2000
+                  maxLength: 1500
+                whatSupportDoYouNeed:
+                  type: string
+                  maxLength: 1500
               required:
+                - reassessmentReason
                 - description
+                - whatSupportDoYouNeed
               additionalProperties: false
-              oneOf:
-                - type: object
-                  properties:
-                    updatedInnovationRecord:
-                      type: string
-                      enum:
-                        - YES
-                        - NO
-                  required:
-                    - updatedInnovationRecord
-                  additionalProperties: false
-                  x-required: true
       responses:
         "200":
           description: Returns the reassessment request and the cloned assessment id

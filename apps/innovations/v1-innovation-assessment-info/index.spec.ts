@@ -25,9 +25,18 @@ beforeAll(async () => {
 
 const expected = {
   id: randUuid(),
-  majorVersion: 0,
+  majorVersion: 1,
   minorVersion: 0,
-  //   reassessment?: { updatedInnovationRecord: CurrentCatalogTypes.catalogYesNo; description: string },
+  previousAssessment: { id: '', majorVersion: 0, minorVersion: 0 },
+  reassessment: {
+    description: randText(),
+    reassessmentReason: ['NO_SUPPORT'],
+    otherReassessmentReason: randText(),
+    whatSupportDoYouNeed: randText(),
+    sectionsUpdatedSinceLastAssessment: [],
+    createdAt: new Date(),
+    previousCreatedAt: new Date()
+  },
   summary: randText(),
   description: randText(),
   startedAt: randPastDate(),
@@ -89,8 +98,11 @@ describe('v1-innovation-assessment-info', () => {
       const expectedWithReassessment = {
         ...expected,
         reassessment: {
-          updatedInnovationRecord: 'YES' as const,
+          reassessmentReason: ['NO_SUPPORT'],
+          createdAt: new Date(),
+          previousCreatedAt: new Date(),
           description: randText(),
+          whatSupportDoYouNeed: randText(),
           previousAssessmentId: randUuid(),
           sectionsUpdatedSinceLastAssessment: []
         }

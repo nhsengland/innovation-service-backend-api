@@ -142,8 +142,13 @@ export class InnovationAssessmentsService extends BaseService {
         'previousAssessment.id',
         'previousAssessment.majorVersion',
         'previousAssessment.minorVersion',
+        'previousAssessment.createdAt',
         'reassessmentRequest.updatedInnovationRecord',
         'reassessmentRequest.description',
+        'reassessmentRequest.reassessmentReason',
+        'reassessmentRequest.otherReassessmentReason',
+        'reassessmentRequest.whatSupportDoYouNeed',
+        'reassessmentRequest.createdAt',
         'innovation.id',
         'currentAssessment.id'
       ])
@@ -185,10 +190,17 @@ export class InnovationAssessmentsService extends BaseService {
       }),
       ...(assessment.reassessmentRequest && {
         reassessment: {
+          createdAt: assessment.reassessmentRequest.createdAt,
           ...(assessment.reassessmentRequest.updatedInnovationRecord && {
             updatedInnovationRecord: assessment.reassessmentRequest.updatedInnovationRecord
           }),
+          ...(assessment.previousAssessment && { previousCreatedAt: assessment.previousAssessment?.createdAt }),
+          reassessmentReason: assessment.reassessmentRequest.reassessmentReason,
+          ...(assessment.reassessmentRequest.otherReassessmentReason && {
+            otherReassessmentReason: assessment.reassessmentRequest.otherReassessmentReason
+          }),
           description: assessment.reassessmentRequest.description,
+          whatSupportDoYouNeed: assessment.reassessmentRequest.whatSupportDoYouNeed,
           sectionsUpdatedSinceLastAssessment: await this.getSectionsUpdatedSincePreviousAssessment(
             assessment.id,
             connection
@@ -587,15 +599,13 @@ export class InnovationAssessmentsService extends BaseService {
     }
 
     // Get the latest assessment record.
-    const assessment = await connection
+    const previousAssessment = await connection
       .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
-      .innerJoinAndSelect('assessment.innovation', 'innovation')
-      .leftJoinAndSelect('assessment.assignTo', 'assignTo')
-      .leftJoinAndSelect('assessment.organisationUnits', 'organisationUnits')
-      .where('innovation.id = :innovationId', { innovationId })
+      .select(['assessment.id', 'assessment.majorVersion'])
+      .where('assessment.innovation_id = :innovationId', { innovationId })
       .orderBy('assessment.createdAt', 'DESC') // Not needed, but it doesn't do any harm.
       .getOne();
-    if (!assessment) {
+    if (!previousAssessment) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND);
     }
 
@@ -640,29 +650,19 @@ export class InnovationAssessmentsService extends BaseService {
 
       await this.documentService.syncDocumentVersions(domainContext, innovationId, transaction, { updatedAt: now });
 
-      const assessmentClone = await transaction.save(
+      const assessment = await transaction.save(
         InnovationAssessmentEntity,
-        (({
-          id,
-          finishedAt,
-          startedAt,
-          createdAt,
-          createdBy,
-          updatedAt,
-          updatedBy,
-          deletedAt,
-          assignTo,
-          exemptedAt,
-          exemptedReason,
-          exemptedMessage,
-          previousAssessment,
-          ...item
-        }) => ({
-          ...item,
+        InnovationAssessmentEntity.new({
+          description: '', // assessment.description,
+          innovation: InnovationEntity.new({ id: innovationId }),
+          assignTo: UserEntity.new({ id: domainContext.id }),
+          startedAt: new Date(),
           createdBy: domainContext.id,
           updatedBy: domainContext.id,
-          previousAssessment: { id: assessment.id }
-        }))(assessment) // Clones assessment variable, without some keys (id, finishedAt, ...).
+          previousAssessment: InnovationAssessmentEntity.new({ id: previousAssessment.id }),
+          majorVersion: previousAssessment.majorVersion + 1,
+          minorVersion: 0
+        })
       );
 
       await transaction.update(
@@ -674,20 +674,22 @@ export class InnovationAssessmentsService extends BaseService {
           statusUpdatedAt: now,
           archivedStatus: null,
           archiveReason: null,
-          updatedBy: assessmentClone.createdBy,
-          currentAssessment: { id: assessmentClone.id }
+          updatedBy: assessment.createdBy,
+          currentAssessment: { id: assessment.id }
         }
       );
 
       const reassessment = await transaction.save(
         InnovationReassessmentRequestEntity,
         InnovationReassessmentRequestEntity.new({
-          assessment: InnovationAssessmentEntity.new({ id: assessmentClone.id }),
+          assessment: InnovationAssessmentEntity.new({ id: assessment.id }),
           innovation: InnovationEntity.new({ id: innovationId }),
-          ...('updatedInnovationRecord' in data && { updatedInnovationRecord: data.updatedInnovationRecord }),
           description: data.description,
-          createdBy: assessmentClone.createdBy,
-          updatedBy: assessmentClone.updatedBy
+          reassessmentReason: data.reassessmentReason,
+          ...(data.otherReassessmentReason && { otherReassessmentReason: data.otherReassessmentReason }),
+          whatSupportDoYouNeed: data.whatSupportDoYouNeed,
+          createdBy: assessment.createdBy,
+          updatedBy: assessment.updatedBy
         })
       );
 
@@ -698,10 +700,10 @@ export class InnovationAssessmentsService extends BaseService {
           activity: ActivityEnum.NEEDS_ASSESSMENT_REASSESSMENT_REQUESTED,
           domainContext
         },
-        { assessment: { id: assessmentClone.id }, reassessment: { id: reassessment.id } }
+        { assessment: { id: assessment.id }, reassessment: { id: reassessment.id } }
       );
 
-      return { assessment: { id: assessmentClone.id }, reassessment: { id: reassessment.id } };
+      return { assessment: { id: assessment.id }, reassessment: { id: reassessment.id } };
     });
 
     await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_SUBMITTED, {

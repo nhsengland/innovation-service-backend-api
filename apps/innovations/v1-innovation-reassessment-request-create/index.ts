@@ -30,7 +30,6 @@ class V1InnovationReassessmentRequestCreate {
         .validate(context)
         .setInnovation(params.innovationId)
         .checkInnovatorType()
-        .checkAssessmentType()
         .checkInnovation()
         .verify();
       const domainContext = auth.getContext();
