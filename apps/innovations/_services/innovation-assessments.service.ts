@@ -560,7 +560,7 @@ export class InnovationAssessmentsService extends BaseService {
     const previousAssessment = await connection
       .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
       .select(['assessment.id', 'assessment.majorVersion'])
-      .where('innovation.id = :innovationId', { innovationId })
+      .where('assessment.innovation_id = :innovationId', { innovationId })
       .orderBy('assessment.createdAt', 'DESC') // Not needed, but it doesn't do any harm.
       .getOne();
     if (!previousAssessment) {

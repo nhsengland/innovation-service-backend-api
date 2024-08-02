@@ -45,23 +45,6 @@ describe('v1-innovation-reassessment-request-create Suite', () => {
         .setBody<BodyType>({
           description: randText(),
           whatSupportDoYouNeed: randText(),
-          reassessmentReason: []
-        })
-        .call<ResponseDTO>(azureFunction);
-
-      expect(result.body).toStrictEqual({ id: expected.assessment.id });
-      expect(result.status).toBe(200);
-      expect(mock).toHaveBeenCalledTimes(1);
-    });
-    it('should create a new reassessment request from an needs accessor', async () => {
-      const result = await new AzureHttpTriggerBuilder()
-        .setAuth(scenario.users.paulNeedsAssessor)
-        .setParams<ParamsType>({
-          innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id
-        })
-        .setBody<BodyType>({
-          description: randText(),
-          whatSupportDoYouNeed: randText(),
           reassessmentReason: ['NO_SUPPORT']
         })
         .call<ResponseDTO>(azureFunction);
@@ -76,7 +59,7 @@ describe('v1-innovation-reassessment-request-create Suite', () => {
     it.each([
       ['Admin', 403, scenario.users.allMighty],
       ['QA', 403, scenario.users.aliceQualifyingAccessor],
-      ['NA', 200, scenario.users.paulNeedsAssessor],
+      ['NA', 403, scenario.users.paulNeedsAssessor],
       ['Innovator owner', 200, scenario.users.johnInnovator],
       ['Innovator collaborator', 200, scenario.users.janeInnovator],
       ['Innovator other', 403, scenario.users.ottoOctaviusInnovator]
@@ -88,7 +71,7 @@ describe('v1-innovation-reassessment-request-create Suite', () => {
         })
         .setBody<BodyType>({
           description: randText(),
-          reassessmentReason: [],
+          reassessmentReason: ['NO_SUPPORT'],
           whatSupportDoYouNeed: randText()
         })
         .call<ErrorResponseType>(azureFunction);

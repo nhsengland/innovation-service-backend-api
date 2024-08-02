@@ -30,7 +30,7 @@ const expected = {
   previousAssessment: { id: '', majorVersion: 0, minorVersion: 0 },
   reassessment: {
     description: randText(),
-    reassessmentReason: [],
+    reassessmentReason: ['NO_SUPPORT'],
     otherReassessmentReason: randText(),
     whatSupportDoYouNeed: randText(),
     sectionsUpdatedSinceLastAssessment: [],
@@ -98,7 +98,7 @@ describe('v1-innovation-assessment-info', () => {
       const expectedWithReassessment = {
         ...expected,
         reassessment: {
-          reassessmentReason: [],
+          reassessmentReason: ['NO_SUPPORT'],
           createdAt: new Date(),
           previousCreatedAt: new Date(),
           description: randText(),
