@@ -534,6 +534,29 @@ paths:
           description: The innovation does not exist.
         "500":
           description: An error occurred while creating the innovation assessment.
+    get:
+      description: Get all completed assessments from an innovation
+      operationId: v1-innovation-assessments-list
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Returns the complete assessments
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
   /v1/{innovationId}/assessments/{assessmentId}/exemption:
     get:
       description: Get an assessment kpi exemption.
