@@ -610,31 +610,6 @@ export class InnovationAssessmentsService extends BaseService {
 
       await this.documentService.syncDocumentVersions(domainContext, innovationId, transaction, { updatedAt: now });
 
-      // const assessmentClone = await transaction.save(
-      //   InnovationAssessmentEntity,
-      //   (({
-      //     id,
-      //     finishedAt,
-      //     startedAt,
-      //     createdAt,
-      //     createdBy,
-      //     updatedAt,
-      //     updatedBy,
-      //     deletedAt,
-      //     assignTo,
-      //     exemptedAt,
-      //     exemptedReason,
-      //     exemptedMessage,
-      //     previousAssessment,
-      //     ...item
-      //   }) => ({
-      //     ...item,
-      //     createdBy: domainContext.id,
-      //     updatedBy: domainContext.id,
-      //     previousAssessment: { id: assessment.id }
-      //   }))(assessment) // Clones assessment variable, without some keys (id, finishedAt, ...).
-      // );
-
       const assessment = await transaction.save(
         InnovationAssessmentEntity,
         InnovationAssessmentEntity.new({

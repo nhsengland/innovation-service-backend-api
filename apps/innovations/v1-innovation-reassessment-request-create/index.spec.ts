@@ -3,7 +3,7 @@ import azureFunction from '.';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@innovations/shared/tests';
 import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@innovations/shared/types';
-import { rand, randText, randUuid } from '@ngneat/falso';
+import { randText, randUuid } from '@ngneat/falso';
 import { InnovationAssessmentsService } from '../_services/innovation-assessments.service';
 import type { ResponseDTO } from './transformation.dtos';
 import type { BodyType, ParamsType } from './validation.schemas';
@@ -46,8 +46,6 @@ describe('v1-innovation-reassessment-request-create Suite', () => {
           description: randText(),
           whatSupportDoYouNeed: randText(),
           reassessmentReason: ['NO_SUPPORT']
-
-          // updatedInnovationRecord: randBoolean() ? 'YES' : 'NO'
         })
         .call<ResponseDTO>(azureFunction);
 
@@ -82,7 +80,7 @@ describe('v1-innovation-reassessment-request-create Suite', () => {
       ['Innovator owner', 200, scenario.users.johnInnovator],
       ['Innovator collaborator', 200, scenario.users.janeInnovator],
       ['Innovator other', 403, scenario.users.ottoOctaviusInnovator]
-    ])('access with user %s should give %i', async (role: string, status: number, user: TestUserType) => {
+    ])('access with user %s should give %i', async (_role: string, status: number, user: TestUserType) => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(user)
         .setParams<ParamsType>({

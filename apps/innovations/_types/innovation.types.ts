@@ -21,19 +21,12 @@ export interface InnovationSectionModel {
   submittedAt: Date | null;
 }
 
-export type ReassessmentType =
-  // | {
-  //     updatedInnovationRecord: CurrentCatalogTypes.catalogYesNo;
-  //     description: string;
-  //   }
-  // | { description: string }
-  // |
-  {
-    reassessmentReason: string[];
-    otherReassessmentReason?: string;
-    description: string;
-    whatSupportDoYouNeed: string;
-  };
+export type ReassessmentType = {
+  reassessmentReason: string[];
+  otherReassessmentReason?: string;
+  description: string;
+  whatSupportDoYouNeed: string;
+};
 
 export type InnovationAssessmentType = {
   id: string;
@@ -44,7 +37,11 @@ export type InnovationAssessmentType = {
     majorVersion: number;
     minorVersion: number;
   };
-  reassessment?: ReassessmentType & { sectionsUpdatedSinceLastAssessment: string[]; createdAt: Date };
+  reassessment?: ReassessmentType & {
+    sectionsUpdatedSinceLastAssessment: string[];
+    createdAt: Date;
+    previousCreatedAt?: Date;
+  };
   summary: null | string;
   description: null | string;
   startedAt: null | Date;
