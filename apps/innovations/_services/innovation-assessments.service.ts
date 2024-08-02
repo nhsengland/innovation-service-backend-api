@@ -25,7 +25,6 @@ import {
 import {
   ForbiddenError,
   InnovationErrorsEnum,
-  InternalServerError,
   NotFoundError,
   UnprocessableEntityError,
   UserErrorsEnum
@@ -65,6 +64,8 @@ export class InnovationAssessmentsService extends BaseService {
       .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
       .select([
         'assessment.id',
+        'assessment.majorVersion',
+        'assessment.minorVersion',
         'assessment.description',
         'assessment.startedAt',
         'assessment.finishedAt',
@@ -97,6 +98,9 @@ export class InnovationAssessmentsService extends BaseService {
         'organisation.name',
         'organisation.acronym',
         'previousAssessment.id',
+        'previousAssessment.majorVersion',
+        'previousAssessment.minorVersion',
+        'previousAssessment.createdAt',
         'reassessmentRequest.updatedInnovationRecord',
         'reassessmentRequest.description',
         'reassessmentRequest.reassessmentReason',
@@ -131,27 +135,30 @@ export class InnovationAssessmentsService extends BaseService {
       userIds: [...(assessment.assignTo ? [assessment.assignTo.id] : []), assessment.updatedBy]
     });
 
-    if (assessment.reassessmentRequest && !assessment.previousAssessment) {
-      throw new InternalServerError(
-        InnovationErrorsEnum.INNOVATION_ASSESSMENT_REASSESSMENT_REQUEST_WITHOUT_PREVIOUS_ASSESSMENT
-      );
-    }
-
     return {
       id: assessment.id,
+      majorVersion: assessment.majorVersion,
+      minorVersion: assessment.minorVersion,
+      ...(assessment.previousAssessment && {
+        previousAssessment: {
+          id: assessment.previousAssessment.id,
+          majorVersion: assessment.previousAssessment.majorVersion,
+          minorVersion: assessment.previousAssessment.minorVersion
+        }
+      }),
       ...(assessment.reassessmentRequest && {
         reassessment: {
           createdAt: assessment.reassessmentRequest.createdAt,
           ...(assessment.reassessmentRequest.updatedInnovationRecord && {
             updatedInnovationRecord: assessment.reassessmentRequest.updatedInnovationRecord
           }),
+          ...(assessment.previousAssessment && { previousCreatedAt: assessment.previousAssessment?.createdAt }),
           reassessmentReason: assessment.reassessmentRequest.reassessmentReason,
           ...(assessment.reassessmentRequest.otherReassessmentReason && {
             otherReassessmentReason: assessment.reassessmentRequest.otherReassessmentReason
           }),
           description: assessment.reassessmentRequest.description,
           whatSupportDoYouNeed: assessment.reassessmentRequest.whatSupportDoYouNeed,
-          previousAssessmentId: assessment.previousAssessment!.id, // It's safe to assume that previousAssessment is not null here as it was validated before
           sectionsUpdatedSinceLastAssessment: await this.getSectionsUpdatedSincePreviousAssessment(
             assessment.id,
             connection
@@ -550,7 +557,7 @@ export class InnovationAssessmentsService extends BaseService {
     }
 
     // Get the latest assessment record.
-    const assessment = await connection
+    const previousAssessment = await connection
       .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
       .innerJoinAndSelect('assessment.innovation', 'innovation')
       .leftJoinAndSelect('assessment.assignTo', 'assignTo')
@@ -558,7 +565,7 @@ export class InnovationAssessmentsService extends BaseService {
       .where('innovation.id = :innovationId', { innovationId })
       .orderBy('assessment.createdAt', 'DESC') // Not needed, but it doesn't do any harm.
       .getOne();
-    if (!assessment) {
+    if (!previousAssessment) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND);
     }
 
@@ -603,29 +610,44 @@ export class InnovationAssessmentsService extends BaseService {
 
       await this.documentService.syncDocumentVersions(domainContext, innovationId, transaction, { updatedAt: now });
 
-      const assessmentClone = await transaction.save(
+      // const assessmentClone = await transaction.save(
+      //   InnovationAssessmentEntity,
+      //   (({
+      //     id,
+      //     finishedAt,
+      //     startedAt,
+      //     createdAt,
+      //     createdBy,
+      //     updatedAt,
+      //     updatedBy,
+      //     deletedAt,
+      //     assignTo,
+      //     exemptedAt,
+      //     exemptedReason,
+      //     exemptedMessage,
+      //     previousAssessment,
+      //     ...item
+      //   }) => ({
+      //     ...item,
+      //     createdBy: domainContext.id,
+      //     updatedBy: domainContext.id,
+      //     previousAssessment: { id: assessment.id }
+      //   }))(assessment) // Clones assessment variable, without some keys (id, finishedAt, ...).
+      // );
+
+      const assessment = await transaction.save(
         InnovationAssessmentEntity,
-        (({
-          id,
-          finishedAt,
-          startedAt,
-          createdAt,
-          createdBy,
-          updatedAt,
-          updatedBy,
-          deletedAt,
-          assignTo,
-          exemptedAt,
-          exemptedReason,
-          exemptedMessage,
-          previousAssessment,
-          ...item
-        }) => ({
-          ...item,
+        InnovationAssessmentEntity.new({
+          description: '', // assessment.description,
+          innovation: InnovationEntity.new({ id: innovationId }),
+          assignTo: UserEntity.new({ id: domainContext.id }),
+          startedAt: new Date(),
           createdBy: domainContext.id,
           updatedBy: domainContext.id,
-          previousAssessment: { id: assessment.id }
-        }))(assessment) // Clones assessment variable, without some keys (id, finishedAt, ...).
+          previousAssessment: InnovationAssessmentEntity.new({ id: previousAssessment.id }),
+          majorVersion: previousAssessment.majorVersion + 1,
+          minorVersion: 0
+        })
       );
 
       await transaction.update(
@@ -637,22 +659,22 @@ export class InnovationAssessmentsService extends BaseService {
           statusUpdatedAt: now,
           archivedStatus: null,
           archiveReason: null,
-          updatedBy: assessmentClone.createdBy,
-          currentAssessment: { id: assessmentClone.id }
+          updatedBy: assessment.createdBy,
+          currentAssessment: { id: assessment.id }
         }
       );
 
       const reassessment = await transaction.save(
         InnovationReassessmentRequestEntity,
         InnovationReassessmentRequestEntity.new({
-          assessment: InnovationAssessmentEntity.new({ id: assessmentClone.id }),
+          assessment: InnovationAssessmentEntity.new({ id: assessment.id }),
           innovation: InnovationEntity.new({ id: innovationId }),
           description: data.description,
           reassessmentReason: data.reassessmentReason,
           ...(data.otherReassessmentReason && { otherReassessmentReason: data.otherReassessmentReason }),
           whatSupportDoYouNeed: data.whatSupportDoYouNeed,
-          createdBy: assessmentClone.createdBy,
-          updatedBy: assessmentClone.updatedBy
+          createdBy: assessment.createdBy,
+          updatedBy: assessment.updatedBy
         })
       );
 
@@ -663,10 +685,10 @@ export class InnovationAssessmentsService extends BaseService {
           activity: ActivityEnum.NEEDS_ASSESSMENT_REASSESSMENT_REQUESTED,
           domainContext
         },
-        { assessment: { id: assessmentClone.id }, reassessment: { id: reassessment.id } }
+        { assessment: { id: assessment.id }, reassessment: { id: reassessment.id } }
       );
 
-      return { assessment: { id: assessmentClone.id }, reassessment: { id: reassessment.id } };
+      return { assessment: { id: assessment.id }, reassessment: { id: reassessment.id } };
     });
 
     await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_SUBMITTED, {

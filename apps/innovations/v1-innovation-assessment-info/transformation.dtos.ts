@@ -2,7 +2,10 @@ import type { ReassessmentType } from '../_types/innovation.types';
 
 export type ResponseDTO = {
   id: string;
-  reassessment?: ReassessmentType & { previousAssessmentId: string; sectionsUpdatedSinceLastAssessment: string[] };
+  majorVersion: number;
+  minorVersion: number;
+  previousAssessment?: { id: string; majorVersion: number; minorVersion: number };
+  reassessment?: ReassessmentType & { sectionsUpdatedSinceLastAssessment: string[] };
   summary: null | string;
   description: null | string;
   startedAt: null | Date;

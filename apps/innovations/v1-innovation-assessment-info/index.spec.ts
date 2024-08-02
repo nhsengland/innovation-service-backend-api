@@ -25,7 +25,10 @@ beforeAll(async () => {
 
 const expected = {
   id: randUuid(),
-  // reassessment?: { updatedInnovationRecord: CurrentCatalogTypes.catalogYesNo; description: string },
+  majorVersion: 0,
+  minorVersion: 0,
+  previousAssessment: { id: '', majorVersion: 0, minorVersion: 0 },
+  //   reassessment?: { updatedInnovationRecord: CurrentCatalogTypes.catalogYesNo; description: string },
   summary: randText(),
   description: randText(),
   startedAt: randPastDate(),
@@ -88,6 +91,7 @@ describe('v1-innovation-assessment-info', () => {
         ...expected,
         reassessment: {
           reassessmentReason: [],
+          createdAt: new Date(),
           description: randText(),
           whatSupportDoYouNeed: randText(),
           previousAssessmentId: randUuid(),
