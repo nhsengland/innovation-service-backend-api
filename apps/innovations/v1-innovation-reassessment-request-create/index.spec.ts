@@ -45,7 +45,7 @@ describe('v1-innovation-reassessment-request-create Suite', () => {
         .setBody<BodyType>({
           description: randText(),
           whatSupportDoYouNeed: randText(),
-          reassessmentReason: ['NO_SUPPORT']
+          reassessmentReason: []
         })
         .call<ResponseDTO>(azureFunction);
 

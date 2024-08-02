@@ -559,9 +559,7 @@ export class InnovationAssessmentsService extends BaseService {
     // Get the latest assessment record.
     const previousAssessment = await connection
       .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
-      .innerJoinAndSelect('assessment.innovation', 'innovation')
-      .leftJoinAndSelect('assessment.assignTo', 'assignTo')
-      .leftJoinAndSelect('assessment.organisationUnits', 'organisationUnits')
+      .select(['assessment.id', 'assessment.majorVersion'])
       .where('innovation.id = :innovationId', { innovationId })
       .orderBy('assessment.createdAt', 'DESC') // Not needed, but it doesn't do any harm.
       .getOne();

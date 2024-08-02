@@ -22,11 +22,14 @@ export interface InnovationSectionModel {
 }
 
 export type ReassessmentType = {
-  reassessmentReason: string[];
+  reassessmentReason: ReassessmentReasonsType[] | null;
   otherReassessmentReason?: string;
   description: string;
-  whatSupportDoYouNeed: string;
+  whatSupportDoYouNeed: string | null;
 };
+
+export const ReassessmentReasons = ['NO_SUPPORT', 'PREVIOUSLY_ARCHIVED', 'HAS_PROGRESSED_SIGNIFICANTLY', 'OTHER'];
+export type ReassessmentReasonsType = (typeof ReassessmentReasons)[number];
 
 export type InnovationAssessmentType = {
   id: string;

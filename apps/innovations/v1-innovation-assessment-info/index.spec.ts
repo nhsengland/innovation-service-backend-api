@@ -30,7 +30,7 @@ const expected = {
   previousAssessment: { id: '', majorVersion: 0, minorVersion: 0 },
   reassessment: {
     description: randText(),
-    reassessmentReason: [''],
+    reassessmentReason: [],
     otherReassessmentReason: randText(),
     whatSupportDoYouNeed: randText(),
     sectionsUpdatedSinceLastAssessment: [],

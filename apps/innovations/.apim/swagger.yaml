@@ -2106,62 +2106,6 @@ paths:
           description: Ok.
         "400":
           description: Bad request.
-  /v1/{innovationId}/reassessments:
-    post:
-      operationId: v1-innovation-reassessment-request-create
-      description: Create a reassessment request for an innovation.
-      summary: Create a reassessment request for an innovation.
-      tags:
-        - "[v1] Innovation Assessments"
-      parameters:
-        - name: innovationId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        description: Create a reassessment request for an innovation.
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                reassessmentReason:
-                  type: array
-                  items:
-                    type: string
-                  minItems: 1
-                otherReassessmentReason:
-                  type: string
-                  maxLength: 200
-                description:
-                  type: string
-                  maxLength: 1500
-                whatSupportDoYouNeed:
-                  type: string
-                  maxLength: 1500
-              required:
-                - reassessmentReason
-                - description
-                - whatSupportDoYouNeed
-              additionalProperties: false
-      responses:
-        "200":
-          description: Returns the reassessment request and the cloned assessment id
-        "400":
-          description: Bad request
-        "401":
-          description: Unauthorized
-        "403":
-          description: Forbidden
-        "404":
-          description: Not found
-        "422":
-          description: Unprocessable entity
-        "500":
-          description: Internal server error
   /v1/{innovationId}/sections/{sectionKey}:
     get:
       description: Get an innovation section info.
