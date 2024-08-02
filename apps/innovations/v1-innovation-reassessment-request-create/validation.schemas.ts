@@ -18,7 +18,10 @@ export type BodyType = {
 };
 
 export const BodySchema = Joi.object<BodyType>({
-  reassessmentReason: Joi.array().items(Joi.string().valid(ReassessmentReasons)).min(1).required(),
+  reassessmentReason: Joi.array()
+    .items(Joi.string().valid(...ReassessmentReasons))
+    .min(1)
+    .required(),
   otherReassessmentReason: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xs).optional(),
   description: Joi.string().max(TEXTAREA_LENGTH_LIMIT.l).required(),
   whatSupportDoYouNeed: Joi.string().max(TEXTAREA_LENGTH_LIMIT.l).required()
