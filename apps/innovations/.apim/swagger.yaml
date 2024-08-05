@@ -534,6 +534,29 @@ paths:
           description: The innovation does not exist.
         "500":
           description: An error occurred while creating the innovation assessment.
+    get:
+      description: Get all completed assessments from an innovation
+      operationId: v1-innovation-assessments-list
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Returns the complete assessments
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
   /v1/{innovationId}/assessments/edit:
     post:
       summary: Create a new assessment when editing an assessment
@@ -1138,6 +1161,8 @@ paths:
                 - otherCategoryDescription
                 - postcode
                 - assessment.id
+                - assessment.majorVersion
+                - assessment.minorVersion
                 - assessment.isExempt
                 - assessment.assignedTo
                 - assessment.updatedAt
@@ -2179,24 +2204,30 @@ paths:
             schema:
               type: object
               properties:
+                reassessmentReason:
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                      - NO_SUPPORT
+                      - PREVIOUSLY_ARCHIVED
+                      - HAS_PROGRESSED_SIGNIFICANTLY
+                      - OTHER
+                  minItems: 1
+                otherReassessmentReason:
+                  type: string
+                  maxLength: 200
                 description:
                   type: string
-                  maxLength: 2000
+                  maxLength: 1500
+                whatSupportDoYouNeed:
+                  type: string
+                  maxLength: 1500
               required:
+                - reassessmentReason
                 - description
+                - whatSupportDoYouNeed
               additionalProperties: false
-              oneOf:
-                - type: object
-                  properties:
-                    updatedInnovationRecord:
-                      type: string
-                      enum:
-                        - YES
-                        - NO
-                  required:
-                    - updatedInnovationRecord
-                  additionalProperties: false
-                  x-required: true
       responses:
         "200":
           description: Returns the reassessment request and the cloned assessment id
@@ -4845,6 +4876,8 @@ paths:
                 - otherCategoryDescription
                 - postcode
                 - assessment.id
+                - assessment.majorVersion
+                - assessment.minorVersion
                 - assessment.isExempt
                 - assessment.assignedTo
                 - assessment.updatedAt
