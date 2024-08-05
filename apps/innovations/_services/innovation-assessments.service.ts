@@ -109,6 +109,7 @@ export class InnovationAssessmentsService extends BaseService {
         'assessment.id',
         'assessment.majorVersion',
         'assessment.minorVersion',
+        'assessment.editReason',
         'assessment.description',
         'assessment.startedAt',
         'assessment.finishedAt',
@@ -182,6 +183,7 @@ export class InnovationAssessmentsService extends BaseService {
       id: assessment.id,
       majorVersion: assessment.majorVersion,
       minorVersion: assessment.minorVersion,
+      editReason: assessment.editReason,
       ...(assessment.previousAssessment && {
         previousAssessment: {
           id: assessment.previousAssessment.id,

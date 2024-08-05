@@ -9,6 +9,7 @@ export type TestInnovationAssessmentType = {
   id: string;
   majorVersion: number;
   minorVersion: number;
+  editReason: string | null;
   description: string | null;
   summary: string | null;
   maturityLevel: MaturityLevelCatalogueType | null;
@@ -125,6 +126,7 @@ export class InnovationAssessmentBuilder extends BaseBuilder {
       id: result.id,
       majorVersion: result.majorVersion,
       minorVersion: result.minorVersion,
+      editReason: result.editReason,
       description: result.description,
       summary: result.summary,
       maturityLevel: result.maturityLevel,

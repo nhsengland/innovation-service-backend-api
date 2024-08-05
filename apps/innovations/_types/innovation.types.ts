@@ -35,6 +35,7 @@ export type InnovationAssessmentType = {
   id: string;
   majorVersion: number;
   minorVersion: number;
+  editReason: null | string;
   previousAssessment?: {
     id: string;
     majorVersion: number;

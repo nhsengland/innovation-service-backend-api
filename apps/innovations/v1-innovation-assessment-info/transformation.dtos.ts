@@ -4,6 +4,7 @@ export type ResponseDTO = {
   id: string;
   majorVersion: number;
   minorVersion: number;
+  editReason: null | string;
   previousAssessment?: { id: string; majorVersion: number; minorVersion: number };
   reassessment?: ReassessmentType & { sectionsUpdatedSinceLastAssessment: string[] };
   summary: null | string;

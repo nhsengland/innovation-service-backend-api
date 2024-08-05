@@ -101,6 +101,7 @@ describe('Innovation Assessments Suite', () => {
         id: assessment.id,
         majorVersion: assessment.majorVersion,
         minorVersion: assessment.minorVersion,
+        editReason: assessment.editReason,
         summary: assessment.summary,
         description: assessment.description,
         startedAt: new Date(assessment.startedAt!),
