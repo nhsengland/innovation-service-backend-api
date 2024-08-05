@@ -276,6 +276,9 @@ export type ActivityLogTemplatesType = {
   [ActivityEnum.NEEDS_ASSESSMENT_START]: {
     params: { comment: { id: string; value: string } };
   };
+  [ActivityEnum.NEEDS_ASSESSMENT_START_EDIT]: {
+    params: { assessmentId: string };
+  };
   [ActivityEnum.NEEDS_ASSESSMENT_COMPLETED]: {
     params: { assessmentId: string };
   };

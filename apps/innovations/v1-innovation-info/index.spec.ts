@@ -155,11 +155,7 @@ describe('v1-innovation-info Suite', () => {
         ...expectedWithOwner,
         status: InnovationStatusEnum.ARCHIVED,
         owner: {
-          ...pick(expectedWithOwner.owner, [
-            'id',
-            'name',
-            'isActive',
-          ]),
+          ...pick(expectedWithOwner.owner, ['id', 'name', 'isActive']),
           organisation: undefined
         }
       });
@@ -221,6 +217,8 @@ describe('v1-innovation-info Suite', () => {
         ...expected,
         assessment: {
           id: randUuid(),
+          majorVersion: randNumber(),
+          minorVersion: randNumber(),
           assignedTo: { id: randUuid(), name: randFullName(), userRoleId: randUuid() },
           createdAt: randPastDate(),
           finishedAt: randPastDate(),

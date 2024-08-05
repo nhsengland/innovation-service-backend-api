@@ -23,6 +23,7 @@ import {
   YesPartiallyNoCatalogueType
 } from '@innovations/shared/enums';
 import {
+  ConflictError,
   ForbiddenError,
   InnovationErrorsEnum,
   NotFoundError,
@@ -246,7 +247,9 @@ export class InnovationAssessmentsService extends BaseService {
           assignTo: UserEntity.new({ id: domainContext.id }),
           startedAt: new Date(),
           createdBy: domainContext.id,
-          updatedBy: domainContext.id
+          updatedBy: domainContext.id,
+          majorVersion: 1,
+          minorVersion: 0
         })
       );
 
@@ -290,6 +293,87 @@ export class InnovationAssessmentsService extends BaseService {
       });
 
       return { id: assessment['id'] };
+    });
+  }
+
+  async editInnovationAssessment(
+    domainContext: DomainContextType,
+    innovationId: string,
+    data: { reason: string },
+    entityManager?: EntityManager
+  ): Promise<{ id: string }> {
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    // Get the latest assessment record.
+    const latestAssessment = await connection
+      .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
+      .innerJoinAndSelect('assessment.innovation', 'innovation')
+      .leftJoinAndSelect('assessment.assignTo', 'assignTo')
+      .leftJoinAndSelect('assessment.organisationUnits', 'organisationUnits')
+      .where('innovation.id = :innovationId', { innovationId })
+      .orderBy('assessment.createdAt', 'DESC') // Not needed, but it doesn't do any harm.
+      .getOne();
+
+    if (!latestAssessment) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND);
+    }
+
+    if (!latestAssessment.finishedAt) {
+      throw new ConflictError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_SUBMITTED);
+    }
+
+    return connection.transaction(async transaction => {
+      const assessmentClone = await transaction.save(
+        InnovationAssessmentEntity,
+        (({
+          id,
+          finishedAt,
+          startedAt,
+          createdAt,
+          createdBy,
+          updatedAt,
+          updatedBy,
+          deletedAt,
+          assignTo,
+          previousAssessment,
+          reassessmentRequest,
+          ...item
+        }) => ({
+          ...item,
+          createdBy: domainContext.id,
+          updatedBy: domainContext.id,
+          assignTo: UserEntity.new({ id: domainContext.id }),
+          majorVersion: latestAssessment.majorVersion,
+          minorVersion: latestAssessment.minorVersion + 1,
+          editReason: data.reason,
+          previousAssessment: { id: latestAssessment.id }
+        }))(latestAssessment) // Clones assessment variable, without some keys (id, finishedAt, ...).
+      );
+
+      const now = new Date();
+
+      await transaction.update(
+        InnovationEntity,
+        { id: latestAssessment.innovation.id },
+        {
+          status: InnovationStatusEnum.NEEDS_ASSESSMENT,
+          statusUpdatedAt: now,
+          updatedBy: assessmentClone.createdBy,
+          currentAssessment: { id: assessmentClone.id }
+        }
+      );
+
+      await this.domainService.innovations.addActivityLog(
+        transaction,
+        {
+          innovationId: innovationId,
+          activity: ActivityEnum.NEEDS_ASSESSMENT_START_EDIT,
+          domainContext
+        },
+        { assessmentId: assessmentClone.id }
+      );
+
+      return { id: assessmentClone.id };
     });
   }
 

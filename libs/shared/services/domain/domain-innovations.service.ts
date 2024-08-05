@@ -1052,6 +1052,7 @@ export class DomainInnovationsService {
 
       case ActivityEnum.INNOVATION_SUBMISSION:
       case ActivityEnum.NEEDS_ASSESSMENT_START:
+      case ActivityEnum.NEEDS_ASSESSMENT_START_EDIT:
       case ActivityEnum.NEEDS_ASSESSMENT_COMPLETED:
       case ActivityEnum.NEEDS_ASSESSMENT_EDITED:
       case ActivityEnum.NEEDS_ASSESSMENT_REASSESSMENT_REQUESTED:
