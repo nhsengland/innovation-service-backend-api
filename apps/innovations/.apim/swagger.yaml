@@ -1110,6 +1110,8 @@ paths:
                 - otherCategoryDescription
                 - postcode
                 - assessment.id
+                - assessment.majorVersion
+                - assessment.minorVersion
                 - assessment.isExempt
                 - assessment.assignedTo
                 - assessment.updatedAt
@@ -4823,6 +4825,8 @@ paths:
                 - otherCategoryDescription
                 - postcode
                 - assessment.id
+                - assessment.majorVersion
+                - assessment.minorVersion
                 - assessment.isExempt
                 - assessment.assignedTo
                 - assessment.updatedAt
