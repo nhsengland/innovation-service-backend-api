@@ -89,6 +89,8 @@ export const InnovationListSelectType = [
   'postcode',
   // Relation fields
   'assessment.id',
+  'assessment.majorVersion',
+  'assessment.minorVersion',
   'assessment.isExempt',
   'assessment.assignedTo',
   'assessment.updatedAt',
