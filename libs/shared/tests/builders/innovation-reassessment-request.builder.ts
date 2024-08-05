@@ -78,9 +78,11 @@ export class InnovationReassessmentRequestBuilder extends BaseBuilder {
 
     return {
       id: result.id,
-      reassessment: result.updatedInnovationRecord
-        ? { description: result.description, updatedInnovationRecord: result.updatedInnovationRecord }
-        : { description: result.description }
+      reassessment: {
+        description: result.description,
+        reassessmentReason: result.reassessmentReason,
+        whatSupportDoYouNeed: result.whatSupportDoYouNeed
+      }
     };
   }
 }

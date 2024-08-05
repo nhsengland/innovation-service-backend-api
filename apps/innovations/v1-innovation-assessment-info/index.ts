@@ -45,6 +45,9 @@ class V1InnovationAssessmentInfo {
       const result = await innovationAssessmentsService.getInnovationAssessmentInfo(domainContext, params.assessmentId);
       context.res = ResponseHelper.Ok<ResponseDTO>({
         id: result.id,
+        majorVersion: result.majorVersion,
+        minorVersion: result.minorVersion,
+        ...(result.previousAssessment && { previousAssessment: result.previousAssessment }),
         ...(result.reassessment === undefined ? {} : { reassessment: result.reassessment }),
         summary: result.summary,
         description: result.description,

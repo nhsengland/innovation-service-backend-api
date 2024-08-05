@@ -912,6 +912,7 @@ export class CompleteScenarioBuilder {
 
       const innovationMultipleAssessmentsAssessmentByPaul = await new InnovationAssessmentBuilder(entityManager)
         .setInnovation(innovationMultipleAssessments.id)
+        .setVersion(1, 0)
         .setNeedsAssessor(paulNeedsAssessor.id)
         .setUpdatedBy(paulNeedsAssessor.id)
         .setFinishedAt(randPastDate())
@@ -920,6 +921,7 @@ export class CompleteScenarioBuilder {
 
       const innovationMultipleAssessmentsAssessmentByPaulLatest = await new InnovationAssessmentBuilder(entityManager)
         .setInnovation(innovationMultipleAssessments.id)
+        .setVersion(1, 1)
         .setPreviousAssessment(innovationMultipleAssessmentsAssessmentByPaul.id)
         .setNeedsAssessor(paulNeedsAssessor.id)
         .setUpdatedBy(paulNeedsAssessor.id)
