@@ -1101,7 +1101,7 @@ export class InnovationSupportsService extends BaseService {
           {
             const file = await this.getProgressUpdateFile(domainContext, innovationId, supportLog.id);
 
-            if (supportLog.params) {
+            if (supportLog.params && !('assessmentId' in supportLog.params)) {
               summary.push({
                 ...defaultSummary,
                 type: 'PROGRESS_UPDATE',

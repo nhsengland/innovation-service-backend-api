@@ -574,7 +574,8 @@ export class InnovationAssessmentsService extends BaseService {
               {
                 type: InnovationSupportLogTypeEnum.ASSESSMENT_SUGGESTION,
                 description: 'NA suggested units',
-                suggestedOrganisationUnits: newSuggestions
+                suggestedOrganisationUnits: newSuggestions,
+                params: { assessmentId }
               }
             );
 

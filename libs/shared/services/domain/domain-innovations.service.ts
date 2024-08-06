@@ -539,7 +539,8 @@ export class DomainInnovationsService {
         params.type === InnovationSupportLogTypeEnum.ASSESSMENT_SUGGESTION) && {
         suggestedOrganisationUnits: params.suggestedOrganisationUnits.map(id => OrganisationUnitEntity.new({ id }))
       }),
-      ...(params.type === InnovationSupportLogTypeEnum.PROGRESS_UPDATE && { params: params.params })
+      ...((params.type === InnovationSupportLogTypeEnum.PROGRESS_UPDATE ||
+        params.type === InnovationSupportLogTypeEnum.ASSESSMENT_SUGGESTION) && { params: params.params })
     });
 
     try {

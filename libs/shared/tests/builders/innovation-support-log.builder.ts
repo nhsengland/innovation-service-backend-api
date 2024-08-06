@@ -4,7 +4,7 @@ import { InnovationSupportLogEntity } from '../../entities/innovation/innovation
 import { OrganisationUnitEntity } from '../../entities/organisation/organisation-unit.entity';
 import { UserRoleEntity } from '../../entities/user/user-role.entity';
 import { InnovationSupportLogTypeEnum, InnovationSupportStatusEnum } from '../../enums/innovation.enums';
-import type { RoleType, SupportLogProgressUpdate } from '../../types';
+import type { RoleType, SupportLogAssessmentSuggestion, SupportLogProgressUpdate } from '../../types';
 import { BaseBuilder } from './base.builder';
 import type { TestUserType } from './user.builder';
 
@@ -15,7 +15,7 @@ export type TestInnovationSupportLogType = {
   innovationSupportStatus?: string;
   createdBy: string;
   createdAt: Date;
-  params?: SupportLogProgressUpdate['params'];
+  params?: SupportLogProgressUpdate['params'] | SupportLogAssessmentSuggestion['params'];
 };
 
 export class InnovationSupportLogBuilder extends BaseBuilder {
@@ -90,7 +90,7 @@ export class InnovationSupportLogBuilder extends BaseBuilder {
       innovationSupportStatus: savedLog.innovationSupportStatus ?? undefined,
       createdAt: savedLog.createdAt,
       createdBy: savedLog.createdBy,
-      params: savedLog.params ?? undefined
+      params: savedLog.params ? savedLog.params : undefined
     };
   }
 }
