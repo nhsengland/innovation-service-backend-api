@@ -47,6 +47,7 @@ class V1InnovationAssessmentInfo {
         id: result.id,
         majorVersion: result.majorVersion,
         minorVersion: result.minorVersion,
+        editReason: result.editReason,
         ...(result.previousAssessment && { previousAssessment: result.previousAssessment }),
         ...(result.reassessment === undefined ? {} : { reassessment: result.reassessment }),
         summary: result.summary,

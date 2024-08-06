@@ -30,6 +30,9 @@ export class InnovationAssessmentEntity extends BaseEntity {
   @Column({ name: 'minor_version', type: 'smallint' })
   minorVersion: number;
 
+  @Column({ name: 'edit_reason', type: 'nvarchar', nullable: true })
+  editReason: null | string;
+
   @Column({ name: 'description', type: 'nvarchar', nullable: true })
   description: null | string;
 

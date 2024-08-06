@@ -10,6 +10,7 @@ import {
 } from '@innovations/shared/entities';
 import { InnovationStatusEnum, InnovationSupportStatusEnum } from '@innovations/shared/enums';
 import {
+  ConflictError,
   ForbiddenError,
   InnovationErrorsEnum,
   NotFoundError,
@@ -100,6 +101,7 @@ describe('Innovation Assessments Suite', () => {
         id: assessment.id,
         majorVersion: assessment.majorVersion,
         minorVersion: assessment.minorVersion,
+        editReason: assessment.editReason,
         summary: assessment.summary,
         description: assessment.description,
         startedAt: new Date(assessment.startedAt!),
@@ -300,6 +302,45 @@ describe('Innovation Assessments Suite', () => {
         .findOne({ where: { id: innovationWithoutAssessment.id }, relations: ['currentAssessment'] });
 
       expect(innovation?.currentAssessment?.id).toBe(assessment.id);
+    });
+  });
+
+  describe('editInnovationAssessment', () => {
+    it('should create a new assessment when editing an assessment', async () => {
+      const assessment = await sut.editInnovationAssessment(
+        DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
+        innovationWithAssessment.id,
+        { reason: 'test edit assessment' },
+        em
+      );
+
+      const dbAssessment = await em.getRepository(InnovationAssessmentEntity).findOne({ where: { id: assessment.id } });
+
+      expect(assessment.id).toBeDefined();
+      expect(dbAssessment).toBeDefined();
+    });
+
+    it('should not edit assessment if the assessment does not exist', async () => {
+      await expect(
+        async () =>
+          await sut.editInnovationAssessment(
+            DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
+            innovationWithoutAssessment.id,
+            { reason: 'test edit assessment' },
+            em
+          )
+      ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND));
+    });
+
+    it('should not edit assessment if assessment is not submitted', async () => {
+      await expect(
+        sut.editInnovationAssessment(
+          DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
+          innovationWithAssessmentInProgress.id,
+          { reason: 'test edit assessment' },
+          em
+        )
+      ).rejects.toThrow(new ConflictError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_SUBMITTED));
     });
   });
 

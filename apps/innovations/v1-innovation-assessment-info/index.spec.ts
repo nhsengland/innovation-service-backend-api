@@ -27,6 +27,7 @@ const expected = {
   id: randUuid(),
   majorVersion: 1,
   minorVersion: 0,
+  editReason: null,
   previousAssessment: { id: '', majorVersion: 0, minorVersion: 0 },
   reassessment: {
     description: randText(),

@@ -1180,6 +1180,8 @@ export class InnovationsService extends BaseService {
     lastEndSupportAt: null | Date;
     assessment?: null | {
       id: string;
+      majorVersion: number;
+      minorVersion: number;
       createdAt: Date;
       finishedAt: null | Date;
       assignedTo?: { id: string; name: string; userRoleId: string };
@@ -1236,6 +1238,8 @@ export class InnovationsService extends BaseService {
       });
       query.addSelect([
         'currentAssessment.id',
+        'currentAssessment.majorVersion',
+        'currentAssessment.minorVersion',
         'currentAssessment.createdAt',
         'currentAssessment.finishedAt',
         'assignTo.id',
@@ -1299,6 +1303,8 @@ export class InnovationsService extends BaseService {
       | null
       | {
           id: string;
+          majorVersion: number;
+          minorVersion: number;
           createdAt: Date;
           finishedAt: null | Date;
           assignedTo?: { id: string; name: string; userRoleId: string };
@@ -1310,6 +1316,8 @@ export class InnovationsService extends BaseService {
       assessment = innovation.currentAssessment
         ? {
             id: innovation.currentAssessment.id,
+            majorVersion: innovation.currentAssessment.majorVersion,
+            minorVersion: innovation.currentAssessment.minorVersion,
             createdAt: innovation.currentAssessment.createdAt,
             finishedAt: innovation.currentAssessment.finishedAt,
             ...(assignTo &&

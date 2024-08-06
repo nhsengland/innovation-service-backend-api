@@ -557,6 +557,57 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
+  /v1/{innovationId}/assessments/edit:
+    post:
+      summary: Create a new assessment when editing an assessment
+      description: Create a new assessment as a minor version of a previous assessment.
+      operationId: v1-innovation-assessment-edit
+      tags:
+        - Innovation Assessment
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  maxLength: 2000
+              required:
+                - reason
+              additionalProperties: false
+      responses:
+        "200":
+          description: The minor assessment version has been created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                    description: The innovation assessment id.
+                required:
+                  - id
+        "400":
+          description: The minor assessment version has not been created.
+        "401":
+          description: The user is not authenticated.
+        "403":
+          description: The user is not authorized to create a minor assessment version.
+        "404":
+          description: The innovation does not exist.
+        "500":
+          description: An error occurred while creating the minor assessment version.
   /v1/{innovationId}/assessments/{assessmentId}/exemption:
     get:
       description: Get an assessment kpi exemption.
