@@ -482,9 +482,15 @@ export class InnovationAssessmentsService extends BaseService {
     if (!dbAssessment) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND);
     }
-
     if (dbAssessment.finishedAt) {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_ALREADY_SUBMITTED);
+    }
+    // Validate rule that no suggestion can be removed after being suggested
+    if (
+      data.suggestedOrganisationUnitsIds &&
+      dbAssessment.organisationUnits.some(u => !data.suggestedOrganisationUnitsIds!.includes(u.id))
+    ) {
+      throw new ConflictError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_SUGGESTIONS_CANT_BE_REMOVED);
     }
 
     const result = await connection.transaction(async transaction => {
