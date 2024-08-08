@@ -11,7 +11,7 @@ export type BodyType = {
 };
 export const BodySchema = Joi.object<BodyType>({
   subject: Joi.string().max(200).required(),
-  message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xxl).required(),
+  message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xxl).trim().required(),
   file: InnovationFileSchema,
   followerUserRoleIds: Joi.array().items(Joi.string().guid()).required()
 }).required();
