@@ -378,6 +378,8 @@ export class InnovationAssessmentsService extends BaseService {
       throw new ConflictError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_SUBMITTED);
     }
 
+    const now = new Date();
+
     return connection.transaction(async transaction => {
       const assessmentClone = await transaction.save(
         InnovationAssessmentEntity,
@@ -396,6 +398,7 @@ export class InnovationAssessmentsService extends BaseService {
           ...item
         }) => ({
           ...item,
+          startedAt: now,
           createdBy: domainContext.id,
           updatedBy: domainContext.id,
           assignTo: UserEntity.new({ id: domainContext.id }),
@@ -405,8 +408,6 @@ export class InnovationAssessmentsService extends BaseService {
           previousAssessment: { id: latestAssessment.id }
         }))(latestAssessment) // Clones assessment variable, without some keys (id, finishedAt, ...).
       );
-
-      const now = new Date();
 
       await transaction.update(
         InnovationEntity,
