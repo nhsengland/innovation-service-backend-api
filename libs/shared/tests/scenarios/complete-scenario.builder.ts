@@ -276,6 +276,13 @@ export class CompleteScenarioBuilder {
         .setFinishedAt()
         .suggestOrganisationUnits(healthOrgUnit, innovTechOrgUnit)
         .save();
+      await new InnovationSupportLogBuilder(entityManager)
+        .setInnovation(johnInnovation.id)
+        .setCreatedBy(paulNeedsAssessor, paulNeedsAssessor.roles['assessmentRole']!)
+        .setLogType(InnovationSupportLogTypeEnum.ASSESSMENT_SUGGESTION)
+        .setSuggestedUnits([healthOrgUnit.id, innovTechOrgUnit.id])
+        .setParams({ assessmentId: johnInnovationAssessmentByPaul.id })
+        .save();
 
       // support on johnInnovation by HealthOrgUnit accessors (alice and jamie)
       const johnInnovationSupportByHealthOrgUnit = await new InnovationSupportBuilder(entityManager)
@@ -917,6 +924,13 @@ export class CompleteScenarioBuilder {
         .setUpdatedBy(paulNeedsAssessor.id)
         .setFinishedAt(randPastDate())
         .suggestOrganisationUnits(healthOrgUnit, innovTechOrgUnit)
+        .save();
+      await new InnovationSupportLogBuilder(entityManager)
+        .setInnovation(innovationMultipleAssessments.id)
+        .setCreatedBy(paulNeedsAssessor, paulNeedsAssessor.roles['assessmentRole']!)
+        .setLogType(InnovationSupportLogTypeEnum.ASSESSMENT_SUGGESTION)
+        .setSuggestedUnits([healthOrgUnit.id, innovTechOrgUnit.id])
+        .setParams({ assessmentId: innovationMultipleAssessmentsAssessmentByPaul.id })
         .save();
 
       const innovationMultipleAssessmentsAssessmentByPaulLatest = await new InnovationAssessmentBuilder(entityManager)

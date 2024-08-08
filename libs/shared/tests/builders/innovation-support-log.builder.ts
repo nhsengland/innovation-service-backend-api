@@ -57,7 +57,7 @@ export class InnovationSupportLogBuilder extends BaseBuilder {
     return this;
   }
 
-  setParams(params: SupportLogProgressUpdate['params']): this {
+  setParams(params: SupportLogProgressUpdate['params'] | SupportLogAssessmentSuggestion['params']): this {
     this.supportLog.params = params;
     return this;
   }

@@ -4,6 +4,7 @@ import { Brackets, EntityManager, In } from 'typeorm';
 import {
   InnovationAssessmentEntity,
   InnovationEntity,
+  InnovationSuggestedUnitsView,
   InnovationSupportEntity,
   InnovationSupportLogEntity,
   InnovationTaskEntity,
@@ -1466,95 +1467,36 @@ export class InnovationSupportsService extends BaseService {
     innovationId: string,
     em: EntityManager
   ): Promise<Map<string, { id: string; name: string; orgId: string; orgAcronym: string }>> {
-    const suggestedUnitsInfo: { id: string; name: string; orgId: string; orgAcronym: string }[] = [
-      ...(await this.getSuggestedUnitsByNA(innovationId, em)).map(u => ({
-        id: u.id,
-        name: u.name,
-        orgId: u.orgId,
-        orgAcronym: u.orgAcronym
-      })),
-      ...(await this.getSuggestedUnitsByQA(innovationId, em))
-    ];
-
-    return new Map(suggestedUnitsInfo.map(u => [u.id, u]));
+    const suggestedUnits = await this.getSuggestedUnits(innovationId, em);
+    return new Map(suggestedUnits.map(u => [u.id, u]));
   }
 
-  /**
-   * This function returns the suggestions from NA assessment
-   * If unitId = undefined -> will return all the suggestions
-   * If unit != undefined -> will return an array with just the unit if it was suggested by the NA or an empty array
-   */
-  private async getSuggestedUnitsByNA(
-    innovationId: string,
-    em: EntityManager
-  ): Promise<
-    {
-      id: string;
-      name: string;
-      assessmentId: string;
-      updatedAt: Date;
-      assignTo?: string;
-      orgId: string;
-      orgAcronym: string;
-    }[]
-  > {
-    const suggestedByNA = await em
-      .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
-      .select([
-        'assessment.id',
-        'assessment.updatedAt',
-        'assignedTo.id',
-        'units.id',
-        'units.name',
-        'org.id',
-        'org.acronym'
-      ])
-      .leftJoin('assessment.assignTo', 'assignedTo')
-      .innerJoin('assessment.organisationUnits', 'units')
-      .innerJoin('units.organisation', 'org')
-      .where('assessment.innovation_id = :innovationId', { innovationId })
-      .getOne();
-
-    if (!suggestedByNA) {
-      return [];
-    }
-
-    return suggestedByNA.organisationUnits.map(u => ({
-      id: u.id,
-      name: u.name,
-      assessmentId: suggestedByNA.id,
-      updatedAt: suggestedByNA.updatedAt,
-      assignTo: suggestedByNA.assignTo?.id,
-      orgId: u.organisation.id,
-      orgAcronym: u.organisation.acronym || ''
-    }));
-  }
-
-  private async getSuggestedUnitsByQA(
+  private async getSuggestedUnits(
     innovationId: string,
     em: EntityManager
   ): Promise<{ id: string; name: string; orgId: string; orgAcronym: string }[]> {
-    const suggestedByQA = await em
-      .createQueryBuilder(InnovationSupportLogEntity, 'log')
-      .select(['log.id', 'suggestedUnits.id', 'suggestedUnits.name', 'suggestedUnits.acronym', 'org.id', 'org.acronym'])
-      .leftJoin('log.suggestedOrganisationUnits', 'suggestedUnits')
-      .innerJoin('suggestedUnits.organisation', 'org')
-      .where('log.innovation_id = :innovationId', { innovationId })
-      .andWhere('log.type = :suggestionStatus', {
-        suggestionStatus: InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION
-      })
+    const suggestions = await em
+      .createQueryBuilder(InnovationSuggestedUnitsView, 'suggestion')
+      .select([
+        'suggestion.suggestedBy',
+        'suggestion.suggestedUnitId',
+        'unit.id',
+        'unit.name',
+        'unit.acronym',
+        'org.id',
+        'org.acronym'
+      ])
+      .leftJoin('suggestion.suggestedUnit', 'unit')
+      .leftJoin('unit.organisation', 'org')
+      .where('suggestion.innovation_id = :innovationId', { innovationId })
       .getMany();
 
-    return suggestedByQA
-      .map(log =>
-        (log.suggestedOrganisationUnits ?? []).map(u => ({
-          id: u.id,
-          name: u.name,
-          orgId: u.organisation.id,
-          orgAcronym: u.organisation.acronym || ''
-        }))
-      )
-      .flat();
+    return suggestions.map(s => ({
+      id: s.suggestedUnit.id,
+      name: s.suggestedUnit.name,
+      orgId: s.suggestedUnit.organisation.id,
+      orgAcronym: s.suggestedUnit.organisation.acronym ?? ''
+    }));
   }
 
   private async getSuggestedUnitsSupportInfoMap(

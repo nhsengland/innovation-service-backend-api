@@ -487,6 +487,7 @@ export class InnovationAssessmentsService extends BaseService {
     }
     // Validate rule that no suggestion can be removed after being suggested
     if (
+      data.isSubmission &&
       data.suggestedOrganisationUnitsIds &&
       dbAssessment.organisationUnits.some(u => !data.suggestedOrganisationUnitsIds!.includes(u.id))
     ) {

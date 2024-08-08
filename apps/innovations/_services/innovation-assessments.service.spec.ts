@@ -420,7 +420,10 @@ describe('Innovation Assessments Suite', () => {
           DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
           innovation.id,
           innovation.assessmentInProgress.id,
-          { suggestedOrganisationUnitsIds: [scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id] },
+          {
+            isSubmission: true,
+            suggestedOrganisationUnitsIds: [scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id]
+          },
           em
         )
       ).rejects.toThrow(new ConflictError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_SUGGESTIONS_CANT_BE_REMOVED));
