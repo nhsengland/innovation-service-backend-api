@@ -741,7 +741,7 @@ export class InnovationAssessmentsService extends BaseService {
         InnovationAssessmentEntity.new({
           description: '', // assessment.description,
           innovation: InnovationEntity.new({ id: innovationId }),
-          assignTo: UserEntity.new({ id: domainContext.id }),
+          assignTo: null,
           startedAt: new Date(),
           createdBy: domainContext.id,
           updatedBy: domainContext.id,
