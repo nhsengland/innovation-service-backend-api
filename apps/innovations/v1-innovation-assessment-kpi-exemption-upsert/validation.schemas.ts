@@ -20,5 +20,5 @@ export const BodySchema = Joi.object<BodyType>({
   reason: Joi.string()
     .valid(...InnovationAssessmentKPIExemption)
     .required(),
-  message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).optional()
+  message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).trim().optional()
 }).required();

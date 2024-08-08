@@ -18,7 +18,7 @@ export type BodyType = {
 } & SupportLogProgressUpdate['params'];
 
 const BaseSchema = Joi.object<BodyType>({
-  description: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).required(),
+  description: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).trim().required(),
   document: InnovationFileSchema.optional(),
   createdAt: Joi.date().max('now')
 });

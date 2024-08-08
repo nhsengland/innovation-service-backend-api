@@ -13,5 +13,5 @@ export type BodyType = {
   message: string;
 };
 export const BodySchema = Joi.object<BodyType>({
-  message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.s).required()
+  message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.s).trim().required()
 }).required();

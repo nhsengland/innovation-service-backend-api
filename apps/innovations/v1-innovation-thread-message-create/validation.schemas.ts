@@ -8,7 +8,7 @@ export type BodyType = {
   file?: InnovationFileType;
 };
 export const BodySchema = Joi.object<BodyType>({
-  message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xxl).required(),
+  message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xxl).trim().required(),
   file: InnovationFileSchema
 }).required();
 
