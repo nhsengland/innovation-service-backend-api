@@ -278,7 +278,9 @@ export class DomainInnovationsService {
                 createdBy: domainContext.id,
                 updatedBy: domainContext.id,
                 startedAt: archivedAt,
-                finishedAt: archivedAt
+                finishedAt: archivedAt,
+                majorVersion: 1,
+                minorVersion: 0
               })
             );
 
