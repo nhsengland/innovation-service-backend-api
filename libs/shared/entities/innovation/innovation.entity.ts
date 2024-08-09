@@ -26,6 +26,7 @@ import { InnovationSupportEntity } from './innovation-support.entity';
 import { InnovationTransferEntity } from './innovation-transfer.entity';
 
 import { InnovationStatusEnum } from '../../enums/innovation.enums';
+import { InnovationSuggestedUnitsView } from '../views/innovation-suggested-units.view.entity';
 
 @Entity('innovation')
 export class InnovationEntity extends BaseEntity {
@@ -133,6 +134,9 @@ export class InnovationEntity extends BaseEntity {
     cascade: ['insert', 'update']
   })
   transfers: InnovationTransferEntity[];
+
+  @OneToMany(() => InnovationSuggestedUnitsView, record => record.innovationInfo )
+  suggestions: InnovationSuggestedUnitsView[];
 
   static new(data: Partial<InnovationEntity>): InnovationEntity {
     const instance = new InnovationEntity();

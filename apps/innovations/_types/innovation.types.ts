@@ -151,17 +151,19 @@ export type InnovationUnitSuggestionsType = {
 export type InnovationSuggestionsType = {
   accessors: InnovationSuggestionAccessor[];
   assessment: {
-    suggestedOrganisations: {
-      id: string;
-      name: string;
-      acronym: string | null;
-      organisationUnits: {
-        id: string;
-        name: string;
-        acronym: string | null;
-      }[];
-    }[];
+    suggestedOrganisations: SuggestedOrganisationInfo[];
   };
+};
+
+export type SuggestedOrganisationInfo = {
+  id: string;
+  name: string;
+  acronym: string | null;
+  organisationUnits: {
+    id: string;
+    name: string;
+    acronym: string | null;
+  }[];
 };
 
 export type InnovationSuggestionAccessor = {
@@ -170,16 +172,7 @@ export type InnovationSuggestionAccessor = {
     name: string;
     acronym: string | null;
   };
-  suggestedOrganisations: {
-    id: string;
-    name: string;
-    acronym: string | null;
-    organisationUnits: {
-      id: string;
-      name: string;
-      acronym: string | null;
-    }[];
-  }[];
+  suggestedOrganisations: SuggestedOrganisationInfo[];
 };
 
 export type InnovationFileType = {

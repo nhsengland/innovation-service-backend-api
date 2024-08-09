@@ -382,6 +382,7 @@ type TwoLevelProgressUpdateParams = { category: string; subCategories: string[] 
 export type SupportLogAssessmentSuggestion = {
   type: InnovationSupportLogTypeEnum.ASSESSMENT_SUGGESTION;
   suggestedOrganisationUnits: string[];
+  params: { assessmentId: string };
 };
 
 export type SupportLogInnovationArchive = {

@@ -404,6 +404,31 @@ describe('Innovation Assessments Suite', () => {
       ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND));
     });
 
+    it('should not update assessment if the suggestions were removed', async () => {
+      const innovation = innovationWithAssessmentInProgress;
+
+      await sut.updateInnovationAssessment(
+        DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
+        innovation.id,
+        innovation.assessmentInProgress.id,
+        { suggestedOrganisationUnitsIds: [scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id] },
+        em
+      );
+
+      await expect(
+        sut.updateInnovationAssessment(
+          DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
+          innovation.id,
+          innovation.assessmentInProgress.id,
+          {
+            isSubmission: true,
+            suggestedOrganisationUnitsIds: [scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id]
+          },
+          em
+        )
+      ).rejects.toThrow(new ConflictError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_SUGGESTIONS_CANT_BE_REMOVED));
+    });
+
     it('should submit an assessment', async () => {
       const assessment = innovationWithAssessmentInProgress.assessmentInProgress;
 
