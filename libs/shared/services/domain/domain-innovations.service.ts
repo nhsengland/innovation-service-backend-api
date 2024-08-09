@@ -219,7 +219,8 @@ export class DomainInnovationsService {
 
     const dbInnovations = await em
       .createQueryBuilder(InnovationEntity, 'innovation')
-      .select(['innovation.id', 'innovation.status'])
+      .select(['innovation.id', 'innovation.status', 'assessment.id'])
+      .leftJoin('innovation.currentAssessment', 'assessment')
       .where('innovation.id IN (:...innovationIds)', { innovationIds: innovations.map(i => i.id) })
       .getMany();
 
@@ -232,7 +233,8 @@ export class DomainInnovationsService {
         reason: innovation.reason,
         prevStatus: dbInno.status,
         affectedUsers: [] as { userId: string; userType: ServiceRoleEnum; unitId?: string }[],
-        isReassessment: !!(await dbInno.reassessmentRequests).length
+        isReassessment: !!(await dbInno.reassessmentRequests).length,
+        currentAssessmentId: dbInno.currentAssessment?.id
       };
     });
 
@@ -253,7 +255,7 @@ export class DomainInnovationsService {
             .leftJoin('assessment.assignTo', 'assignedUser', 'assignedUser.status <> :userDeleted', {
               userDeleted: UserStatusEnum.DELETED
             })
-            .where('assessment.innovation_id = :innovationId', { innovationId: innovation.id })
+            .where('assessment.id = :currentAssessmentId', { currentAssessmentId: innovation.currentAssessmentId })
             .getOne();
 
           if (assessment) {
