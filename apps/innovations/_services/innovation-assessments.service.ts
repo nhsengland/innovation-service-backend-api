@@ -505,7 +505,6 @@ export class InnovationAssessmentsService extends BaseService {
         assessment.assignTo = UserEntity.new({ id: domainContext.id });
       }
 
-      const currentUnitSuggestionsIds = (assessment.organisationUnits ?? []).map(u => u.id);
       if (data.suggestedOrganisationUnitsIds) {
         assessment.organisationUnits = data.suggestedOrganisationUnitsIds.map(id => OrganisationUnitEntity.new({ id }));
       }
@@ -571,9 +570,21 @@ export class InnovationAssessmentsService extends BaseService {
             { organisations: organisations.map(item => item.name) }
           );
 
-          const newSuggestions = dbAssessment.finishedAt
-            ? data.suggestedOrganisationUnitsIds.filter(id => !currentUnitSuggestionsIds.includes(id))
-            : data.suggestedOrganisationUnitsIds;
+          let newSuggestions = data.suggestedOrganisationUnitsIds;
+          // If it's the edition of a (re)assessment, compare the new suggested org units with the latest (re)assessment.
+          if (assessment.minorVersion > 0) {
+            const lastSubmittedAssessment = await connection
+              .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
+              .leftJoinAndSelect('assessment.organisationUnits', 'organisationUnits')
+              .where('assessment.finishedAt IS NOT NULL')
+              .andWhere('assessment.innovation = :innovationId', { innovationId })
+              .orderBy('assessment.finishedAt', 'DESC')
+              .getOne();
+
+            const lastestAssessmentUnitsIds = lastSubmittedAssessment?.organisationUnits.map(unit => unit.id) ?? [];
+            newSuggestions = data.suggestedOrganisationUnitsIds.filter(id => !lastestAssessmentUnitsIds.includes(id));
+          }
+
           if (newSuggestions.length > 0) {
             await this.domainService.innovations.addSupportLog(
               transaction,
