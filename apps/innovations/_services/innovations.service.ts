@@ -339,10 +339,11 @@ export class InnovationsService extends BaseService {
       // automatically add in_progress since A/QA can't see the others (yet). This might become a filter for A/QAs in the future
       // current rule is A/QA can see innovations in progress or archived innovations that were in progress
       query.andWhere(
-        '(innovation.status IN (:...innovationStatus) OR (innovation.status = :innovationArchivedStatus AND innovation.archivedStatus IN (:...innovationStatus)))',
+        '(innovation.status IN (:...innovationStatus) OR (innovation.status = :innovationArchivedStatus AND innovation.archivedStatus IN (:...innovationStatus))) OR innovation.groupedStatus = :awaitingNeedsReassessmentStatus',
         {
           innovationStatus: [InnovationStatusEnum.IN_PROGRESS],
-          innovationArchivedStatus: InnovationStatusEnum.ARCHIVED
+          innovationArchivedStatus: InnovationStatusEnum.ARCHIVED,
+          awaitingNeedsReassessmentStatus: InnovationGroupedStatusEnum.AWAITING_NEEDS_REASSESSMENT
         }
       );
 
