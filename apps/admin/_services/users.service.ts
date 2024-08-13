@@ -6,6 +6,7 @@ import { OrganisationEntity, OrganisationUnitEntity, UserEntity, UserRoleEntity 
 import { NotifierTypeEnum, ServiceRoleEnum, UserStatusEnum } from '@admin/shared/enums';
 import {
   BadRequestError,
+  ForbiddenError,
   GenericErrorsEnum,
   NotFoundError,
   NotImplementedError,
@@ -20,7 +21,12 @@ import {
   IdentityProviderService,
   NotifierService
 } from '@admin/shared/services';
-import type { CreateRolesType, DomainContextType, RoleType } from '@admin/shared/types';
+import {
+  isAdminDomainContextType,
+  type CreateRolesType,
+  type DomainContextType,
+  type RoleType
+} from '@admin/shared/types';
 
 import SHARED_SYMBOLS from '@admin/shared/services/symbols';
 import { AdminOperationEnum, validationsHelper } from '../_config/admin-operations.config';
@@ -215,6 +221,25 @@ export class UsersService extends BaseService {
 
       return { id: user.id };
     });
+  }
+
+  async deleteUser(domainContext: DomainContextType, userId: string, entityManager?: EntityManager): Promise<void> {
+    // This shouldn't be here but adding anyway as a failsafe since this is a destructive operation
+    if (!isAdminDomainContextType(domainContext)) {
+      throw new ForbiddenError(GenericErrorsEnum.FORBIDDEN_ERROR);
+    }
+
+    const validations = await validationsHelper(AdminOperationEnum.DELETE_USER, { userId });
+    if (validations.find(v => v.valid === false)) {
+      throw new BadRequestError(UserErrorsEnum.USER_CANNOT_BE_DELETED, { details: { validations } });
+    }
+
+    await this.domainService.users.deleteUser(
+      domainContext,
+      userId,
+      { reason: 'User deleted by admin' },
+      entityManager
+    );
   }
 
   async getUserInfo(

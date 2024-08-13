@@ -7,6 +7,7 @@ import { UserEntity, UserRoleEntity } from '@admin/shared/entities';
 import { NotifierTypeEnum, ServiceRoleEnum, UserStatusEnum } from '@admin/shared/enums';
 import {
   BadRequestError,
+  ForbiddenError,
   GenericErrorsEnum,
   NotFoundError,
   OrganisationErrorsEnum,
@@ -341,6 +342,51 @@ describe('Admin / _services / users service suite', () => {
     });
   });
 
+  describe('deleteUser', () => {
+    const validationMock = jest.spyOn(AdminOperationsConfig, 'validationsHelper').mockResolvedValue([]);
+
+    beforeEach(() => {
+      validationMock.mockClear();
+    });
+
+    afterAll(() => {
+      validationMock.mockRestore();
+    });
+
+    it('should delete a innovator user', async () => {
+      const user = scenario.users.johnInnovator;
+
+      await sut.deleteUser(userAdminContext, user.id, em);
+
+      const deletedUser = await em
+        .createQueryBuilder(UserEntity, 'user')
+        .where('user.id = :userId', { userId: user.id })
+        .getOne();
+
+      expect(deletedUser?.status).toBe(UserStatusEnum.DELETED);
+    });
+
+    it('should throw an error if the user does not exist', async () => {
+      await expect(sut.deleteUser(userAdminContext, randUuid(), em)).rejects.toThrow(
+        new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND)
+      );
+    });
+
+    it("should throw an error if user can't be deleted", async () => {
+      validationMock.mockResolvedValueOnce([{ valid: false, rule: 'test' as any }]);
+
+      await expect(sut.deleteUser(userAdminContext, scenario.users.aliceQualifyingAccessor.id, em)).rejects.toThrow(
+        new BadRequestError(UserErrorsEnum.USER_CANNOT_BE_DELETED)
+      );
+    });
+
+    it('should throw an error if the request user is not admin', async () => {
+      await expect(
+        sut.deleteUser(DTOsHelper.getUserRequestContext(scenario.users.johnInnovator), randUuid(), em)
+      ).rejects.toThrow(new ForbiddenError(GenericErrorsEnum.FORBIDDEN_ERROR));
+    });
+  });
+
   describe('getUserInfo()', () => {
     const johnInnovator = scenario.users.johnInnovator;
     const jamieMadroxAccessor = scenario.users.jamieMadroxAccessor;
@@ -381,7 +427,7 @@ describe('Admin / _services / users service suite', () => {
   describe('addRoles', () => {
     const validationMock = jest.spyOn(AdminOperationsConfig, 'validationsHelper').mockResolvedValue([]);
 
-    afterEach(() => {
+    beforeEach(() => {
       validationMock.mockClear();
     });
 
