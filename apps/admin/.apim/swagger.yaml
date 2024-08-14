@@ -618,6 +618,88 @@ paths:
           description: The user is not authorized to create a user.
         "500":
           description: An error occurred while creating the user.
+  /v1/users/{userId}:
+    delete:
+      description: delete a user.
+      operationId: v1-admin-user-delete
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: The user has been deleted.
+        "400":
+          description: Bad request.
+        "403":
+          description: The user is not authorized to delete a user.
+        "500":
+          description: An error occurred while deleting the user.
+    patch:
+      description: Update a user.
+      operationId: v1-admin-user-update
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            description: Id of the user to lock.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                accountEnabled:
+                  type: boolean
+                  description: Activate or inactivate the user.
+                role:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      enum:
+                        - ACCESSOR
+                        - QUALIFYING_ACCESSOR
+                      description: Name of the role.
+                    organisationId:
+                      type: string
+                      format: uuid
+                      description: Id of the organisation.
+                  required:
+                    - name
+                    - organisationId
+                  additionalProperties: false
+                email:
+                  type: string
+                  format: email
+                  description: Email of the user.
+              additionalProperties: false
+      responses:
+        "200":
+          description: The user has been updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userId:
+                    type: string
+                    description: Id of the user.
+        "400":
+          description: Bad request.
+        "401":
+          description: The user is not authorized to lock a user.
+        "404":
+          description: The user does not exist.
+        "500":
+          description: An error occurred while locking a user.
   /v1/users/{userIdOrEmail}:
     get:
       operationId: v1-admin-user-info
@@ -829,69 +911,6 @@ paths:
           description: The user is not authorized to access this resource.
         "500":
           description: An error occurred while processing the request.
-  /v1/users/{userId}:
-    patch:
-      description: Update a user.
-      operationId: v1-admin-user-update
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-            description: Id of the user to lock.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                accountEnabled:
-                  type: boolean
-                  description: Activate or inactivate the user.
-                role:
-                  type: object
-                  properties:
-                    name:
-                      type: string
-                      enum:
-                        - ACCESSOR
-                        - QUALIFYING_ACCESSOR
-                      description: Name of the role.
-                    organisationId:
-                      type: string
-                      format: uuid
-                      description: Id of the organisation.
-                  required:
-                    - name
-                    - organisationId
-                  additionalProperties: false
-                email:
-                  type: string
-                  format: email
-                  description: Email of the user.
-              additionalProperties: false
-      responses:
-        "200":
-          description: The user has been updated.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  userId:
-                    type: string
-                    description: Id of the user.
-        "400":
-          description: Bad request.
-        "401":
-          description: The user is not authorized to lock a user.
-        "404":
-          description: The user does not exist.
-        "500":
-          description: An error occurred while locking a user.
   /v1/users/{userId}/validate:
     get:
       description: Get validation information.

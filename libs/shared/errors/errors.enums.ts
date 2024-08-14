@@ -14,7 +14,9 @@ export enum GenericErrorsEnum {
 
   UNKNOWN_ERROR = 'ERR.1000',
   NOT_IMPLEMENTED_ERROR = 'ERR.1001',
-  EXTERNAL_SERVICE_ERROR = 'ERR.1002'
+  EXTERNAL_SERVICE_ERROR = 'ERR.1002',
+
+  FORBIDDEN_ERROR = 'ERR.2000'
 }
 
 export enum UserErrorsEnum {
@@ -32,7 +34,8 @@ export enum UserErrorsEnum {
   USER_ROLE_NOT_FOUND = 'U.0012',
   USER_IDENTITY_CONFLICT = 'U.0013',
   USER_ROLE_INVALID = 'U.0014',
-  USER_ROLE_NOT_ALLOWED = 'U.0015'
+  USER_ROLE_NOT_ALLOWED = 'U.0015',
+  USER_CANNOT_BE_DELETED = 'U.0016'
 }
 
 export enum OrganisationErrorsEnum {

@@ -34,9 +34,9 @@ import type {
 } from '@users/shared/services';
 import SHARED_SYMBOLS from '@users/shared/services/symbols';
 
-import { BaseService } from './base.service';
-import type { DomainContextType } from '@users/shared/types';
 import type { HowDidYouFindUsAnswersType } from '@users/shared/entities/user/user.entity';
+import type { DomainContextType } from '@users/shared/types';
+import { BaseService } from './base.service';
 
 @injectable()
 export class UsersService extends BaseService {
@@ -465,87 +465,8 @@ export class UsersService extends BaseService {
     data: { reason: string },
     entityManager?: EntityManager
   ): Promise<void> {
-    const em = entityManager ?? this.sqlConnection.manager;
-
-    const dbUser = await em
-      .createQueryBuilder(UserEntity, 'user')
-      .innerJoinAndSelect('user.serviceRoles', 'roles')
-      .where('user.id = :userId', { userId: domainContext.id })
-      .getOne();
-    if (!dbUser) {
-      throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND);
-    }
-
-    const user = await this.identityProviderService.getUserInfo(dbUser.identityId);
-    if (!user) {
-      throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
-    }
-
-    const innovationsWithPendingTransfer: { id: string; transferExpireDate: string }[] = [];
-
-    return em.transaction(async transaction => {
-      // If user has innovator role, deals with it's innovations.
-      const userInnovatorRole = dbUser.serviceRoles.find(item => item.role === ServiceRoleEnum.INNOVATOR);
-
-      if (userInnovatorRole) {
-        const dbInnovations = await this.domainService.innovations.getInnovationsByOwnerId(dbUser.id, transaction);
-
-        await this.domainService.innovations.bulkUpdateCollaboratorStatusByEmail(
-          transaction,
-          { id: dbUser.id, email: user.email },
-          { current: InnovationCollaboratorStatusEnum.PENDING, next: InnovationCollaboratorStatusEnum.DECLINED }
-        );
-        await this.domainService.innovations.bulkUpdateCollaboratorStatusByEmail(
-          transaction,
-          { id: dbUser.id, email: user.email },
-          { current: InnovationCollaboratorStatusEnum.ACTIVE, next: InnovationCollaboratorStatusEnum.LEFT }
-        );
-
-        const archiveResponse = await this.domainService.innovations.archiveInnovationsWithDeleteSideffects(
-          domainContext,
-          dbInnovations.filter(i => i.expirationTransferDate === null).map(i => ({ id: i.id, reason: data.reason })),
-          transaction
-        );
-
-        for (const dbInnovation of dbInnovations.filter(i => i.expirationTransferDate !== null)) {
-          innovationsWithPendingTransfer.push({
-            id: dbInnovation.id,
-            transferExpireDate: dbInnovation.expirationTransferDate
-              ? dbInnovation.expirationTransferDate.toDateString()
-              : ''
-          });
-
-          await transaction
-            .getRepository(InnovationEntity)
-            .update(
-              { id: dbInnovation.id },
-              { updatedBy: dbUser.id, owner: null, expires_at: dbInnovation.expirationTransferDate }
-            );
-        }
-
-        // Send notification to collaborators if there are innovations with pending transfer
-        await this.notifierService.send(domainContext, NotifierTypeEnum.ACCOUNT_DELETION, {
-          innovations: [
-            ...innovationsWithPendingTransfer,
-            ...archiveResponse.map(item => ({
-              id: item.id,
-              affectedUsers: item.affectedUsers.filter(user => user.userType === ServiceRoleEnum.INNOVATOR)
-            }))
-          ]
-        });
-      }
-
-      await transaction.update(UserRoleEntity, { user: { id: dbUser.id } }, { isActive: false });
-
-      await transaction.update(
-        UserEntity,
-        { id: dbUser.id },
-        { deleteReason: data.reason, status: UserStatusEnum.DELETED }
-      );
-
-      // If all went well, deleted from B2C.
-      await this.identityProviderService.deleteUser(dbUser.identityId);
-    });
+    // This function calls the domain function to delete self
+    await this.domainService.users.deleteUser(domainContext, domainContext.id, data, entityManager);
   }
 
   async getUserMfaInfo(

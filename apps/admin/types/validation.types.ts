@@ -8,6 +8,10 @@ export type ValidationResult = {
 };
 
 export type AdminValidationsTemplatesType = {
+  [AdminOperationEnum.DELETE_USER]: {
+    userId: string;
+  };
+
   [AdminOperationEnum.LOCK_USER]: {
     userId: string;
   };
