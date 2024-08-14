@@ -94,6 +94,7 @@ export const InnovationListSelectType = [
   'assessment.isExempt',
   'assessment.assignedTo',
   'assessment.updatedAt',
+  'assessment.finishedAt',
   'engagingOrganisations',
   'engagingUnits',
   // NOTE: The suggestion is always related to the unit from the QA accessing
@@ -114,7 +115,7 @@ export const InnovationListSelectType = [
 type InnovationListViewFields = Omit<InnovationListView, 'assessment' | 'supports' | 'ownerId'>;
 export type InnovationListSelectType =
   | keyof InnovationListViewFields
-  | `assessment.${keyof Pick<InnovationAssessmentEntity, 'id' | 'updatedAt'>}`
+  | `assessment.${keyof Pick<InnovationAssessmentEntity, 'id' | 'updatedAt' | 'finishedAt'>}`
   | 'assessment.assignedTo'
   | 'assessment.isExempt'
   | `support.${keyof Pick<InnovationSupportEntity, 'id' | 'status' | 'updatedAt' | 'updatedBy'>}`
@@ -336,15 +337,8 @@ export class InnovationsService extends BaseService {
           })
         );
 
-      // automatically add in_progress since A/QA can't see the others (yet). This might become a filter for A/QAs in the future
-      // current rule is A/QA can see innovations in progress or archived innovations that were in progress
-      query.andWhere(
-        '(innovation.status IN (:...innovationStatus) OR (innovation.status = :innovationArchivedStatus AND innovation.archivedStatus IN (:...innovationStatus)))',
-        {
-          innovationStatus: [InnovationStatusEnum.IN_PROGRESS],
-          innovationArchivedStatus: InnovationStatusEnum.ARCHIVED
-        }
-      );
+      // current rule is A/QA can see innovations that have had their first assessment
+      query.andWhere('innovation.hasBeenAssessed = 1');
 
       // Accessors can only see innovations that they are supporting
       if (domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR) {
@@ -1076,7 +1070,7 @@ export class InnovationsService extends BaseService {
       // distinguish if there's multiple roles for the same user
       updatedBy?.roles.some(r => r.role === ServiceRoleEnum.INNOVATOR)
         ? 'Innovator'
-        : updatedBy?.displayName ?? null;
+        : (updatedBy?.displayName ?? null);
 
     // support is handled differently to remove the nested array since it's only 1 element in this case
     return {
