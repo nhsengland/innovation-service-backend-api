@@ -472,18 +472,8 @@ export class AuthorizationValidationModel {
 
       query
         .innerJoin('innovation.organisationShares', 'innovationShares')
-        .andWhere(
-          new Brackets(qb => {
-            qb.where('innovation.status IN (:...accessorInnovationStatus)', {
-              accessorInnovationStatus: [InnovationStatusEnum.IN_PROGRESS]
-            }).orWhere(
-              'innovation.status = :archivedStatus AND innovation.archivedStatus IN (:...accessorInnovationStatus)',
-              {
-                archivedStatus: InnovationStatusEnum.ARCHIVED
-              }
-            );
-          })
-        )
+        // this changed from previous implementation where innovation need to be in progress
+        .andWhere('innovation.hasBeenAssessed = :hasBeenAssessed', { hasBeenAssessed: true })
         .andWhere('innovationShares.id = :accessorOrganisationId', {
           accessorOrganisationId: context.organisation.id
         });

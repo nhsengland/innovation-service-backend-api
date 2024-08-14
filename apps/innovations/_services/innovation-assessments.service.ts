@@ -513,40 +513,26 @@ export class InnovationAssessmentsService extends BaseService {
       if (data.isSubmission) {
         assessment.finishedAt = new Date();
 
-        // If it's first assessment submission
-        if (!dbAssessment.finishedAt) {
-          await transaction.update(
-            InnovationEntity,
-            { id: innovationId },
-            {
-              status: InnovationStatusEnum.IN_PROGRESS,
-              statusUpdatedAt: new Date().toISOString(),
-              updatedBy: domainContext.id
-            }
-          );
+        await transaction.update(
+          InnovationEntity,
+          { id: innovationId },
+          {
+            hasBeenAssessed: true,
+            status: InnovationStatusEnum.IN_PROGRESS,
+            statusUpdatedAt: new Date().toISOString(),
+            updatedBy: domainContext.id
+          }
+        );
 
-          await this.domainService.innovations.addActivityLog(
-            transaction,
-            {
-              innovationId: innovationId,
-              activity: ActivityEnum.NEEDS_ASSESSMENT_COMPLETED,
-              domainContext
-            },
-            { assessmentId: assessment.id }
-          );
-
-          // if it's editing an already submitted assessment
-        } else {
-          await this.domainService.innovations.addActivityLog(
-            transaction,
-            {
-              innovationId: innovationId,
-              activity: ActivityEnum.NEEDS_ASSESSMENT_EDITED,
-              domainContext
-            },
-            { assessmentId: assessment.id }
-          );
-        }
+        await this.domainService.innovations.addActivityLog(
+          transaction,
+          {
+            innovationId: innovationId,
+            activity: ActivityEnum.NEEDS_ASSESSMENT_COMPLETED,
+            domainContext
+          },
+          { assessmentId: assessment.id }
+        );
 
         if (data.suggestedOrganisationUnitsIds?.length) {
           // Add suggested organisations (NOT units) names to activity log.

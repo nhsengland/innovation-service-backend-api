@@ -445,7 +445,10 @@ describe('Innovation Assessments Suite', () => {
         .findOne({ where: { id: innovationWithAssessment.id } });
 
       expect(updatedAssessment.id).toBe(assessment.id);
-      expect(dbUpdatedInnovation?.status).toBe(InnovationStatusEnum.IN_PROGRESS);
+      expect(dbUpdatedInnovation).toMatchObject({
+        status: InnovationStatusEnum.IN_PROGRESS,
+        hasBeenAssessed: true
+      });
     });
 
     it('should save a reassessment', async () => {
@@ -493,7 +496,10 @@ describe('Innovation Assessments Suite', () => {
         .findOne({ where: { id: innovationWithAssessment.id } });
 
       expect(updatedAssessment.id).toBe(assessment.id);
-      expect(dbUpdatedInnovation?.status).toBe(InnovationStatusEnum.IN_PROGRESS);
+      expect(dbUpdatedInnovation).toMatchObject({
+        status: InnovationStatusEnum.IN_PROGRESS,
+        hasBeenAssessed: true
+      });
     });
   });
 
