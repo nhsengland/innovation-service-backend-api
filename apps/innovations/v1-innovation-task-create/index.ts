@@ -9,6 +9,7 @@ import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
 
+import { InnovationStatusEnum } from '@innovations/shared/enums';
 import type { InnovationTasksService } from '../_services/innovation-tasks.service';
 import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
@@ -29,7 +30,12 @@ class V1InnovationTaskCreate {
         .setInnovation(params.innovationId)
         .checkAccessorType()
         .checkAssessmentType()
-        .checkInnovation()
+        .checkInnovation({
+          status: {
+            ACCESSOR: [InnovationStatusEnum.IN_PROGRESS],
+            QUALIFYING_ACCESSOR: [InnovationStatusEnum.IN_PROGRESS]
+          }
+        })
         .checkNotArchived()
         .verify();
 
