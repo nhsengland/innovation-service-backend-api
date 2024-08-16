@@ -1,6 +1,6 @@
 import Joi from 'joi';
 
-import type { AnnouncementParamsType, ServiceRoleEnum } from '@admin/shared/enums';
+import { AnnouncementParamsType, AnnouncementTypeEnum, ServiceRoleEnum } from '@admin/shared/enums';
 
 // Helpers
 const JoiLinkValidation = Joi.object({
@@ -21,6 +21,7 @@ export type BodyType = {
   params: AnnouncementParamsType['GENERIC'];
   startsAt: Date;
   expiresAt?: Date;
+  type: AnnouncementTypeEnum;
 };
 export const BodySchema = Joi.object<BodyType>({
   title: Joi.string().max(100).optional(),
@@ -38,5 +39,8 @@ export const BodySchema = Joi.object<BodyType>({
   }),
 
   startsAt: Joi.date().optional(),
-  expiresAt: Joi.date().optional()
+  expiresAt: Joi.date().optional(),
+  type: Joi.string()
+    .valid(...Object.values(AnnouncementTypeEnum))
+    .optional()
 }).required();

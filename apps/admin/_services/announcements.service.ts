@@ -130,6 +130,7 @@ export class AnnouncementsService extends BaseService {
       params: AnnouncementParamsType['GENERIC']; // For now, only the generic template is possible to create.
       startsAt: Date;
       expiresAt?: Date;
+      type: AnnouncementTypeEnum;
     },
     config?: { usersToExclude?: string[] },
     entityManager?: EntityManager
@@ -148,6 +149,7 @@ export class AnnouncementsService extends BaseService {
         params: data.params ?? null,
         startsAt: data.startsAt,
         expiresAt: data.expiresAt ?? null,
+        type: data.type,
         createdBy: requestContext.id,
         updatedBy: requestContext.id
       });
@@ -181,6 +183,7 @@ export class AnnouncementsService extends BaseService {
       params?: AnnouncementParamsType['GENERIC']; // For now, only the generic template is possible to create.
       startsAt?: Date;
       expiresAt?: Date;
+      type?: AnnouncementTypeEnum;
     },
     entityManager?: EntityManager
   ): Promise<void> {

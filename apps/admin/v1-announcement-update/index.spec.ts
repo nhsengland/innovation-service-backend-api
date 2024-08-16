@@ -1,6 +1,6 @@
 import azureFunction from '.';
 
-import { ServiceRoleEnum } from '@admin/shared/enums';
+import { AnnouncementTypeEnum, ServiceRoleEnum } from '@admin/shared/enums';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@admin/shared/tests';
 import type { TestUserType } from '@admin/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@admin/shared/types';
@@ -40,7 +40,8 @@ describe('v1-admin-announcement-update Suite', () => {
           title: randText(),
           startsAt: randFutureDate(),
           userRoles: [ServiceRoleEnum.ACCESSOR],
-          params: {}
+          params: {},
+          type: AnnouncementTypeEnum.LOG_IN
         })
         .call<never>(azureFunction);
 
@@ -65,7 +66,8 @@ describe('v1-admin-announcement-update Suite', () => {
           title: randText(),
           startsAt: randFutureDate(),
           userRoles: [ServiceRoleEnum.ACCESSOR],
-          params: {}
+          params: {},
+          type: AnnouncementTypeEnum.LOG_IN
         })
         .call<ErrorResponseType>(azureFunction);
 

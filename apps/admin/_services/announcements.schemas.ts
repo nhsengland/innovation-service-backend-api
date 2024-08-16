@@ -1,4 +1,4 @@
-import { AnnouncementParamsType, ServiceRoleEnum } from '@admin/shared/enums';
+import { AnnouncementParamsType, AnnouncementTypeEnum, ServiceRoleEnum } from '@admin/shared/enums';
 import Joi from 'joi';
 
 // Announcement Schema for scheduled status
@@ -8,6 +8,7 @@ export type AnnouncementScheduledBodyType = {
   params: AnnouncementParamsType['GENERIC'];
   startsAt: Date;
   expiresAt?: Date;
+  type: AnnouncementTypeEnum;
 };
 export const AnnouncementScheduledBodySchema = Joi.object<AnnouncementScheduledBodyType>({
   title: Joi.string().max(100).required().description('Title of the announcement'),
@@ -37,7 +38,10 @@ export const AnnouncementScheduledBodySchema = Joi.object<AnnouncementScheduledB
   }),
 
   startsAt: Joi.date().required(),
-  expiresAt: Joi.date().greater(Joi.ref('startsAt')).optional()
+  expiresAt: Joi.date().greater(Joi.ref('startsAt')).optional(),
+  type: Joi.string()
+    .valid(...Object.values(AnnouncementTypeEnum))
+    .required()
 }).required();
 
 // Announcement Schema for active status

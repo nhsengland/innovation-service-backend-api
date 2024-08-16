@@ -12,6 +12,7 @@ import {
   UserRoleEntity
 } from '@admin/shared/entities';
 import {
+  AnnouncementTypeEnum,
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
   InnovationTaskStatusEnum,
@@ -603,7 +604,8 @@ export class OrganisationsService extends BaseService {
           inset: reusableAnnouncementInfo.inset,
           content:
             'If you think this organisation will be able to support you, you can share your innovation with them in your data sharing preferences.'
-        }
+        },
+        type: AnnouncementTypeEnum.LOG_IN
       },
       {},
       transaction
@@ -619,7 +621,8 @@ export class OrganisationsService extends BaseService {
           inset: reusableAnnouncementInfo.inset,
           content:
             'If you think this organisation could offer suitable support to an innovation, you can suggest it to them.'
-        }
+        },
+        type: AnnouncementTypeEnum.LOG_IN
       },
       {},
       transaction
@@ -633,7 +636,8 @@ export class OrganisationsService extends BaseService {
         startsAt: reusableAnnouncementInfo.startsAt,
         params: {
           inset: reusableAnnouncementInfo.inset
-        }
+        },
+        type: AnnouncementTypeEnum.LOG_IN
       },
       {},
       transaction

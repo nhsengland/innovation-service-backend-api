@@ -5,7 +5,12 @@ import SYMBOLS from './symbols';
 import type { AnnouncementsService } from './announcements.service';
 import { AnnouncementEntity, AnnouncementUserEntity } from '@admin/shared/entities';
 import { randFutureDate, randPastDate, randText, randUuid } from '@ngneat/falso';
-import { AnnouncementStatusEnum, AnnouncementTemplateType, ServiceRoleEnum } from '@admin/shared/enums';
+import {
+  AnnouncementStatusEnum,
+  AnnouncementTemplateType,
+  AnnouncementTypeEnum,
+  ServiceRoleEnum
+} from '@admin/shared/enums';
 import { AnnouncementErrorsEnum, BadRequestError, NotFoundError, UnprocessableEntityError } from '@admin/shared/errors';
 import { DTOsHelper } from '@admin/shared/tests/helpers/dtos.helper';
 import type { EntityManager } from 'typeorm';
@@ -137,7 +142,8 @@ describe('Admin / _services / announcements service suite', () => {
         title: randText({ charCount: 10 }),
         userRoles: [ServiceRoleEnum.INNOVATOR],
         params: {},
-        startsAt: randFutureDate()
+        startsAt: randFutureDate(),
+        type: AnnouncementTypeEnum.LOG_IN
       };
 
       const result = await sut.createAnnouncement(
@@ -155,7 +161,8 @@ describe('Admin / _services / announcements service suite', () => {
         title: randText({ charCount: 10 }),
         userRoles: [ServiceRoleEnum.INNOVATOR],
         params: {},
-        startsAt: randFutureDate()
+        startsAt: randFutureDate(),
+        type: AnnouncementTypeEnum.LOG_IN
       };
 
       const result = await sut.createAnnouncement(
@@ -183,7 +190,8 @@ describe('Admin / _services / announcements service suite', () => {
         title: randText({ charCount: 10 }),
         userRoles: [],
         params: {},
-        startsAt: randFutureDate()
+        startsAt: randFutureDate(),
+        type: AnnouncementTypeEnum.LOG_IN
       };
 
       await expect(() =>
@@ -205,14 +213,16 @@ describe('Admin / _services / announcements service suite', () => {
         userRoles: [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR],
         params: {},
         startsAt: randFutureDate(),
-        expiresAt: null
+        expiresAt: null,
+        type: AnnouncementTypeEnum.LOG_IN
       });
 
       const updatedAnnouncementParams = {
         title: randText({ charCount: 10 }),
         userRoles: [ServiceRoleEnum.INNOVATOR],
         params: {},
-        startsAt: randFutureDate()
+        startsAt: randFutureDate(),
+        type: AnnouncementTypeEnum.LOG_IN
       };
 
       await sut.updateAnnouncement(
