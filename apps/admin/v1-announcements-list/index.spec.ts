@@ -1,6 +1,6 @@
 import azureFunction from '.';
 
-import { AnnouncementStatusEnum, ServiceRoleEnum } from '@admin/shared/enums';
+import { AnnouncementStatusEnum, AnnouncementTypeEnum, ServiceRoleEnum } from '@admin/shared/enums';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@admin/shared/tests';
 import type { TestUserType } from '@admin/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@admin/shared/types';
@@ -34,7 +34,8 @@ const expected = {
       startsAt: randFutureDate(),
       status: AnnouncementStatusEnum.SCHEDULED,
       title: randText(),
-      userRoles: [ServiceRoleEnum.ASSESSMENT]
+      userRoles: [ServiceRoleEnum.ASSESSMENT],
+      type: AnnouncementTypeEnum.LOG_IN
     }
   ]
 };
@@ -51,7 +52,7 @@ describe('v1-admin-announcement-list Suite', () => {
 
       expect(result.body).toStrictEqual({
         count: expected.count,
-        data: expected.data.map(a => pick(a, ['id', 'title', 'startsAt', 'status', 'expiresAt']))
+        data: expected.data.map(a => pick(a, ['id', 'title', 'startsAt', 'status', 'expiresAt', 'type']))
       });
       expect(result.status).toBe(200);
       expect(mock).toHaveBeenCalledTimes(1);
