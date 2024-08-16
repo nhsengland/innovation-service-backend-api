@@ -3,7 +3,7 @@ import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { BaseEntity } from '../base.entity';
 
 import type { ServiceRoleEnum } from '../../enums/user.enums';
-import { AnnouncementTemplateType } from '../../enums/announcement.enums';
+import { AnnouncementTemplateType, AnnouncementTypeEnum } from '../../enums/announcement.enums';
 
 import { AnnouncementUserEntity } from './announcement-user.entity';
 
@@ -29,6 +29,9 @@ export class AnnouncementEntity extends BaseEntity {
 
   @Column({ name: 'params', type: 'simple-json', nullable: true })
   params: null | Record<string, unknown>;
+
+  @Column({ name: 'type', type: 'simple-enum', enum: AnnouncementTypeEnum })
+  type: AnnouncementTypeEnum;
 
   @OneToMany(() => AnnouncementUserEntity, record => record.announcement, { cascade: ['insert', 'update'] })
   announcementUsers: AnnouncementUserEntity[];
