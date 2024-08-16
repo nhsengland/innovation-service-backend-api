@@ -2,7 +2,7 @@ import { injectable } from 'inversify';
 import type { EntityManager } from 'typeorm';
 
 import { AnnouncementEntity, AnnouncementUserEntity, UserEntity, UserRoleEntity } from '@users/shared/entities';
-import type { AnnouncementTemplateType } from '@users/shared/enums';
+import { AnnouncementTypeEnum, type AnnouncementTemplateType } from '@users/shared/enums';
 import type { DomainContextType } from '@users/shared/types';
 
 import { BaseService } from './base.service';
@@ -60,6 +60,7 @@ export class AnnouncementsService extends BaseService {
       .andWhere('GETDATE() > announcement.starts_at')
       .andWhere('(announcement.expires_at IS NULL OR GETDATE() < announcement.expires_at)')
       .andWhere('announcementUsers.read_at IS NULL')
+      .andWhere('announcement.type = :type', { type: AnnouncementTypeEnum.LOG_IN })
       .getMany();
 
     return announcements.map(announcement => ({
