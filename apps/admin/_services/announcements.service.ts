@@ -2,7 +2,12 @@ import { injectable } from 'inversify';
 import { EntityManager, In } from 'typeorm';
 
 import { AnnouncementEntity, AnnouncementUserEntity, UserEntity } from '@admin/shared/entities';
-import { AnnouncementParamsType, AnnouncementStatusEnum, ServiceRoleEnum } from '@admin/shared/enums';
+import {
+  AnnouncementParamsType,
+  AnnouncementStatusEnum,
+  AnnouncementTypeEnum,
+  ServiceRoleEnum
+} from '@admin/shared/enums';
 import { AnnouncementErrorsEnum, BadRequestError, NotFoundError, UnprocessableEntityError } from '@admin/shared/errors';
 import { JoiHelper, PaginationQueryParamsType } from '@admin/shared/helpers';
 import type { DomainContextType } from '@admin/shared/types';
@@ -34,19 +39,23 @@ export class AnnouncementsService extends BaseService {
       startsAt: Date;
       expiresAt: null | Date;
       status: AnnouncementStatusEnum;
+      type: AnnouncementTypeEnum;
     }[];
   }> {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const [dbAnnouncements, dbCount] = await em
       .createQueryBuilder(AnnouncementEntity, 'announcement')
+      .withDeleted()
       .select([
         'announcement.id',
         'announcement.title',
         'announcement.userRoles',
         'announcement.params',
         'announcement.startsAt',
-        'announcement.expiresAt'
+        'announcement.expiresAt',
+        'announcement.type',
+        'announcement.deletedAt'
       ])
       .skip(pagination.skip)
       .take(pagination.take)
@@ -62,7 +71,8 @@ export class AnnouncementsService extends BaseService {
         params: announcement.params,
         startsAt: announcement.startsAt,
         expiresAt: announcement.expiresAt,
-        status: this.getAnnouncementStatus(announcement.startsAt, announcement.expiresAt)
+        status: this.getAnnouncementStatus(announcement.startsAt, announcement.expiresAt, announcement.deletedAt),
+        type: announcement.type
       }))
     };
   }
@@ -83,13 +93,15 @@ export class AnnouncementsService extends BaseService {
 
     const announcement = await em
       .createQueryBuilder(AnnouncementEntity, 'announcement')
+      .withDeleted()
       .select([
         'announcement.id',
         'announcement.title',
         'announcement.userRoles',
         'announcement.params',
         'announcement.startsAt',
-        'announcement.expiresAt'
+        'announcement.expiresAt',
+        'announcement.deletedAt'
       ])
       .where('announcement.id = :announcementId', { announcementId })
       .getOne();
@@ -105,7 +117,7 @@ export class AnnouncementsService extends BaseService {
       params: announcement.params,
       startsAt: announcement.startsAt,
       expiresAt: announcement.expiresAt,
-      status: this.getAnnouncementStatus(announcement.startsAt, announcement.expiresAt)
+      status: this.getAnnouncementStatus(announcement.startsAt, announcement.expiresAt, announcement.deletedAt)
     };
   }
 
@@ -181,7 +193,8 @@ export class AnnouncementsService extends BaseService {
         'announcement.userRoles',
         'announcement.params',
         'announcement.startsAt',
-        'announcement.expiresAt'
+        'announcement.expiresAt',
+        'announcement.deletedAt'
       ])
       .where('announcement.id = :announcementId', { announcementId })
       .getOne();
@@ -190,7 +203,11 @@ export class AnnouncementsService extends BaseService {
       throw new NotFoundError(AnnouncementErrorsEnum.ANNOUNCEMENT_NOT_FOUND);
     }
 
-    const announcementStatus = this.getAnnouncementStatus(dbAnnouncement.startsAt, dbAnnouncement.expiresAt);
+    const announcementStatus = this.getAnnouncementStatus(
+      dbAnnouncement.startsAt,
+      dbAnnouncement.expiresAt,
+      dbAnnouncement.deletedAt
+    );
 
     const body = this.validateAnnouncementBody(announcementStatus, data, { startsAt: dbAnnouncement.startsAt });
 
@@ -254,7 +271,15 @@ export class AnnouncementsService extends BaseService {
     throw new UnprocessableEntityError(AnnouncementErrorsEnum.ANNOUNCEMENT_CANT_BE_UPDATED_IN_DONE_STATUS);
   }
 
-  private getAnnouncementStatus(startsAt: Date, expiresAt: null | Date): AnnouncementStatusEnum {
+  private getAnnouncementStatus(
+    startsAt: Date,
+    expiresAt: null | Date,
+    deletedAt: null | Date
+  ): AnnouncementStatusEnum {
+    if (deletedAt) {
+      return AnnouncementStatusEnum.DELETED;
+    }
+
     const now = new Date();
 
     if (now <= startsAt) {

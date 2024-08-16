@@ -12,5 +12,11 @@ export type AnnouncementParamsType = {
 export enum AnnouncementStatusEnum {
   SCHEDULED = 'SCHEDULED',
   ACTIVE = 'ACTIVE',
-  DONE = 'DONE'
+  DONE = 'DONE',
+  DELETED = 'DELETED'
+}
+
+export enum AnnouncementTypeEnum {
+  LOG_IN = 'LOG_IN',
+  HOMEPAGE = 'HOMEPAGE'
 }

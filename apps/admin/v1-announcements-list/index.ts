@@ -34,7 +34,8 @@ class V1AnnouncementsList {
           title: item.title,
           startsAt: item.startsAt,
           expiresAt: item.expiresAt,
-          status: item.status
+          status: item.status,
+          type: item.type
         }))
       });
       return;
