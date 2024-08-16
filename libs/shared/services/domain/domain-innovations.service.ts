@@ -1,5 +1,6 @@
 import { DataSource, EntityManager, In, Repository } from 'typeorm';
 
+import { cloneDeep } from 'lodash';
 import { EXPIRATION_DATES } from '../../constants';
 import type { UserEntity } from '../../entities';
 import { ActivityLogEntity } from '../../entities/innovation/activity-log.entity';
@@ -48,7 +49,6 @@ import type { IdentityProviderService } from '../integrations/identity-provider.
 import type { NotifierService } from '../integrations/notifier.service';
 import type { IRSchemaService } from '../storage/ir-schema.service';
 import type { DomainUsersService } from './domain-users.service';
-import { cloneDeep } from 'lodash';
 
 export class DomainInnovationsService {
   innovationRepository: Repository<InnovationEntity>;
@@ -912,8 +912,8 @@ export class DomainInnovationsService {
     let sql = `WITH
       innovations AS (
         SELECT i.id, i.status, archived_status, status_updated_at, submitted_at, i.updated_at, i.current_assessment_id,
-        last_assessment_request_at, grouped_status, u.id AS owner_id, u.external_id AS owner_external_id,
-        u.status AS owner_status, o.name AS owner_company
+        i.has_been_assessed, last_assessment_request_at, grouped_status, u.id AS owner_id, 
+        u.external_id AS owner_external_id, u.status AS owner_status, o.name AS owner_company
         FROM innovation i
           INNER JOIN innovation_grouped_status_view_entity g ON i.id = g.id
           LEFT JOIN [user] u on i.owner_id = u.id AND u.status !='DELETED'
@@ -945,6 +945,7 @@ export class DomainInnovationsService {
       IIF(i.status = 'ARCHIVED', i.archived_status, i.status) AS rawStatus,
       i.status_updated_at AS statusUpdatedAt,
       i.grouped_status AS groupedStatus,
+      i.has_been_assessed AS hasBeenAssessed,
       i.submitted_at AS submittedAt,
       i.updated_at AS updatedAt,
       i.last_assessment_request_at AS lastAssessmentRequestAt,
@@ -1015,6 +1016,7 @@ export class DomainInnovationsService {
         rawStatus: innovation.rawStatus,
         statusUpdatedAt: innovation.statusUpdatedAt,
         groupedStatus: innovation.groupedStatus,
+        hasBeenAssessed: !!innovation.hasBeenAssessed,
         submittedAt: innovation.submittedAt,
         updatedAt: innovation.updatedAt,
         lastAssessmentRequestAt: innovation.lastAssessmentRequestAt,

@@ -335,7 +335,7 @@ export class SearchService extends BaseService {
         // distinguish if there's multiple roles for the same user
         updatedBy?.roles.some(r => r.role === ServiceRoleEnum.INNOVATOR)
           ? 'Innovator'
-          : updatedBy?.displayName ?? null;
+          : (updatedBy?.displayName ?? null);
 
       // support is handled differently to remove the nested array since it's only 1 element in this case
       return {
@@ -693,8 +693,8 @@ export class SearchService extends BaseService {
       });
       const isArchived = boolQuery({ mustNot: { term: { status: InnovationStatusEnum.ARCHIVED } } });
 
-      // Was in rawStatus Progress (archived or current)
-      builder.addFilter({ term: { rawStatus: InnovationStatusEnum.IN_PROGRESS } });
+      // Had an assessment completed
+      builder.addFilter({ term: { hasBeenAssessed: true } });
       // Was shared OR supported
       builder.addFilter(orQuery([isShared, hasSupport]));
       // Is currently archived OR supported
