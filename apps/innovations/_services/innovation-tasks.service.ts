@@ -473,6 +473,11 @@ export class InnovationTasksService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
     }
 
+    // Accessors can only update tasks from innovations in progress
+    if (isAccessorDomainContextType(domainContext) && innovation.status !== InnovationStatusEnum.IN_PROGRESS) {
+      throw new ForbiddenError(InnovationErrorsEnum.INNOVATION_TASK_FROM_INNOVATION_NOT_IN_PROGRESS);
+    }
+
     // Get section & support data.
     const innovationSection = innovation.sections.find(sec => sec.section === data.section);
     if (!innovationSection) {
@@ -568,6 +573,11 @@ export class InnovationTasksService extends BaseService {
       .getOne();
     if (!dbTask) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_TASK_NOT_FOUND);
+    }
+
+    // Tasks cannot be updated if the innovation is not in progress
+    if (dbTask.innovationSection.innovation.status !== InnovationStatusEnum.IN_PROGRESS) {
+      throw new ForbiddenError(InnovationErrorsEnum.INNOVATION_TASK_FROM_INNOVATION_NOT_IN_PROGRESS);
     }
 
     // Tasks can only be updated from users from the same org unit
