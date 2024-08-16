@@ -16,6 +16,7 @@ export type ElasticSearchDocumentType = {
   archivedStatus: InnovationStatusEnum | null;
   statusUpdatedAt: Date;
   groupedStatus: InnovationGroupedStatusEnum;
+  hasBeenShared: boolean;
   submittedAt: Date | null;
   updatedAt: Date;
   lastAssessmentRequestAt: Date | null;
@@ -88,6 +89,7 @@ export const ElasticSearchSchema: CreateIndexParams = {
       rawStatus: { type: 'keyword' },
       statusUpdatedAt: { type: 'date' },
       groupedStatus: { type: 'keyword' },
+      hasBeenAssessed: { type: 'boolean' },
       submittedAt: { type: 'date' },
       updatedAt: { type: 'date' },
       lastAssessmentRequestAt: { type: 'date' },
