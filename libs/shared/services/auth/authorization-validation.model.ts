@@ -231,7 +231,7 @@ export class AuthorizationValidationModel {
     if (data?.status && domainContext.currentRole) {
       const status = Array.isArray(data.status) ? data.status : data.status[domainContext.currentRole.role];
 
-      if (!(status ?? []).some(status => status === this.innovation.data?.status)) {
+      if (status && !status.some(status => status === this.innovation.data?.status)) {
         return AuthErrorsEnum.AUTH_INNOVATION_STATUS_NOT_ALLOWED;
       }
     }

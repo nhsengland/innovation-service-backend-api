@@ -33,13 +33,13 @@ class V1InnovationThreadMessageCreate {
         .checkInnovatorType()
         .checkAccessorType()
         .checkAssessmentType()
+        .checkNotArchived()
         .checkInnovation({
           status: {
             ACCESSOR: [InnovationStatusEnum.IN_PROGRESS],
             QUALIFYING_ACCESSOR: [InnovationStatusEnum.IN_PROGRESS]
           }
         })
-        .checkNotArchived()
         .verify();
 
       const domainContext = auth.getContext();

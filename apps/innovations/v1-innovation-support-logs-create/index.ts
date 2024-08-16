@@ -32,8 +32,8 @@ class V1InnovationsSupportLogCreate {
         .validate(context)
         .setInnovation(params.innovationId)
         .checkAccessorType({ organisationRole: [ServiceRoleEnum.QUALIFYING_ACCESSOR] })
-        .checkInnovation({ status: [InnovationStatusEnum.IN_PROGRESS] })
         .checkNotArchived()
+        .checkInnovation({ status: [InnovationStatusEnum.IN_PROGRESS] })
         .verify();
       const domainContext = auth.getContext();
 
