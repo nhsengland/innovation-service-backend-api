@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { ElasticSearchDocumentUpdate, JwtDecoder } from '@innovations/shared/decorators';
-import { ServiceRoleEnum } from '@innovations/shared/enums';
+import { InnovationStatusEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
 import type { AuthorizationService } from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
@@ -32,7 +32,7 @@ class V1InnovationsSupportLogCreate {
         .validate(context)
         .setInnovation(params.innovationId)
         .checkAccessorType({ organisationRole: [ServiceRoleEnum.QUALIFYING_ACCESSOR] })
-        .checkInnovation()
+        .checkInnovation({ status: [InnovationStatusEnum.IN_PROGRESS] })
         .checkNotArchived()
         .verify();
       const domainContext = auth.getContext();
