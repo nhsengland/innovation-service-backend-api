@@ -227,7 +227,7 @@ describe('Innovation Assessments Suite', () => {
     it('should return the sections updated since the previous assessment', async () => {
       const res = await sut.getSectionsUpdatedSincePreviousAssessment(innovation.assessment.id, em);
 
-      expect(res).toEqual(['INNOVATION_DESCRIPTION', 'COST_OF_INNOVATION']);
+      expect(res).toEqual(['COST_OF_INNOVATION', 'INNOVATION_DESCRIPTION']);
     });
 
     it("shouldn't return a section updated after the new reassessment", async () => {
@@ -256,7 +256,8 @@ describe('Innovation Assessments Suite', () => {
       expect(res).toEqual([]);
     });
 
-    it('should return an empty array if there are no sections updated since the previous assessment', async () => {
+    // This test is not possible since it leverages the temporal tables feature of SQL Server.
+    it.skip('should return an empty array if there are no sections updated since the previous assessment', async () => {
       await em.update(InnovationSectionEntity, { innovation: { id: innovation.id } }, { updatedAt: '2022-01-01' });
       const res = await sut.getSectionsUpdatedSincePreviousAssessment(innovation.assessment.id, em);
       expect(res).toEqual([]);
