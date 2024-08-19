@@ -430,6 +430,7 @@ export class InnovationSupportsService extends BaseService {
     data: {
       status: InnovationSupportStatusEnum;
       message: string;
+      file?: InnovationFileType;
       accessors?: { id: string; userRoleId: string }[];
     },
     entityManager?: EntityManager
@@ -516,6 +517,24 @@ export class InnovationSupportsService extends BaseService {
       );
 
       await this.assignAccessors(domainContext, savedSupport, accessors, thread.thread.id, transaction);
+
+      if (data.file) {
+        await this.innovationFileService.createFile(
+          domainContext,
+          innovationId,
+          {
+            name: data.file.name,
+            description: data.file.description,
+            file: data.file.file,
+            context: {
+              id: thread.message.id,
+              type: InnovationFileContextTypeEnum.INNOVATION_MESSAGE
+            }
+          },
+          undefined,
+          entityManager
+        );
+      }
 
       return { id: savedSupport.id, threadId: thread.thread.id };
     });
