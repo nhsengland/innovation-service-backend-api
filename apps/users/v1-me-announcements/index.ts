@@ -1,9 +1,9 @@
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
-import type { AzureFunction } from '@azure/functions';
+import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@users/shared/decorators';
 import { AnnouncementTemplateType, ServiceRoleEnum } from '@users/shared/enums';
-import { ResponseHelper } from '@users/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@users/shared/helpers';
 import type { AuthorizationService } from '@users/shared/services';
 import SHARED_SYMBOLS from '@users/shared/services/symbols';
 import type { CustomContextType } from '@users/shared/types';
@@ -13,14 +13,17 @@ import type { AnnouncementsService } from '../_services/announcements.service';
 import SYMBOLS from '../_services/symbols';
 
 import type { ResponseDTO } from './transformation.dtos';
+import { QueryParamsType, QueryParamsSchema } from '../v1-me-announcements/validation.schemas';
 
 class V1MeAnnouncements {
   @JwtDecoder()
-  static async httpTrigger(context: CustomContextType): Promise<void> {
+  static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
     const authorizationService = container.get<AuthorizationService>(SHARED_SYMBOLS.AuthorizationService);
     const announcementsService = container.get<AnnouncementsService>(SYMBOLS.AnnouncementsService);
 
     try {
+      const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
+
       const auth = await authorizationService
         .validate(context)
         .checkAccessorType()
@@ -29,7 +32,10 @@ class V1MeAnnouncements {
         .verify();
       const requestContext = auth.getContext();
 
-      const announcements = await announcementsService.getUserRoleAnnouncements(requestContext.currentRole.id);
+      const announcements = await announcementsService.getUserRoleAnnouncements(
+        requestContext.currentRole.id,
+        queryParams.filters
+      );
 
       context.res = ResponseHelper.Ok<ResponseDTO>(
         announcements.map(announcement => ({
@@ -54,6 +60,7 @@ export default openApi(V1MeAnnouncements.httpTrigger as AzureFunction, '/v1/me/a
     description: 'Returns unread announcements',
     operationId: 'v1-me-announcements',
     tags: ['[v1] Announcements'],
+    parameters: SwaggerHelper.paramJ2S({ query: QueryParamsSchema }),
     responses: {
       200: {
         description: 'Success',

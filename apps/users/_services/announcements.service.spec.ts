@@ -60,7 +60,7 @@ describe('Users / _services / announcements service suite', () => {
         params: null
       });
 
-      const result = await sut.getUserRoleAnnouncements(scenario.users.samAccessor.roles.accessorRole.id, em);
+      const result = await sut.getUserRoleAnnouncements(scenario.users.samAccessor.roles.accessorRole.id, {}, em);
 
       expect(result).toMatchObject([
         {
@@ -75,7 +75,7 @@ describe('Users / _services / announcements service suite', () => {
     });
 
     it('should return an empty array when there are no announcements for the given roleId', async () => {
-      const result = await sut.getUserRoleAnnouncements(randUuid(), em);
+      const result = await sut.getUserRoleAnnouncements(randUuid(), {}, em);
 
       expect(result).toHaveLength(0);
     });

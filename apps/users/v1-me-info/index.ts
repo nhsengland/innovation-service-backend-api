@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction } from '@azure/functions';
 
 import { JwtDecoder } from '@users/shared/decorators';
-import { PhoneUserPreferenceEnum, ServiceRoleEnum } from '@users/shared/enums';
+import { AnnouncementTypeEnum, PhoneUserPreferenceEnum, ServiceRoleEnum } from '@users/shared/enums';
 import { ResponseHelper } from '@users/shared/helpers';
 import type { DomainService } from '@users/shared/services';
 import SHARED_SYMBOLS from '@users/shared/services/symbols';
@@ -56,7 +56,10 @@ class V1MeInfo {
 
         termsOfUseAccepted = (await termsOfUseService.getActiveTermsOfUseInfo({ id: requestUser.id }, userRole.role))
           .isAccepted;
-        hasAnnouncements = (await announcementsService.getUserRoleAnnouncements(userRole.id)).length > 0;
+        // TO DO: Maybe update variable name
+        hasAnnouncements =
+          (await announcementsService.getUserRoleAnnouncements(userRole.id, { type: [AnnouncementTypeEnum.LOG_IN] }))
+            .length > 0;
 
         if (userRole.role === ServiceRoleEnum.INNOVATOR) {
           userPreferences = await domainService.users.getUserPreferences(requestUser.id);
