@@ -50,6 +50,7 @@ const expected: Awaited<ReturnType<InnovationsService['getInnovationInfo']>> = {
   description: randProductDescription(),
   countryName: randCountry(),
   groupedStatus: InnovationGroupedStatusEnum.AWAITING_NEEDS_ASSESSMENT,
+  hasBeenAssessed: false,
   lastEndSupportAt: randPastDate(),
   otherCategoryDescription: null,
   postCode: null,
