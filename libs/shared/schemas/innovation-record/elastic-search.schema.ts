@@ -16,7 +16,7 @@ export type ElasticSearchDocumentType = {
   archivedStatus: InnovationStatusEnum | null;
   statusUpdatedAt: Date;
   groupedStatus: InnovationGroupedStatusEnum;
-  hasBeenShared: boolean;
+  hasBeenAssessed: boolean;
   submittedAt: Date | null;
   updatedAt: Date;
   lastAssessmentRequestAt: Date | null;
