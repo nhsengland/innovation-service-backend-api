@@ -4,7 +4,6 @@ import {
   InnovationAssessmentEntity,
   InnovationEntity,
   InnovationReassessmentRequestEntity,
-  InnovationSectionEntity,
   InnovationSupportEntity,
   OrganisationEntity,
   OrganisationUnitEntity,
@@ -266,16 +265,21 @@ export class InnovationAssessmentsService extends BaseService {
   ): Promise<string[]> {
     const em = entityManager ?? this.sqlConnection.manager;
 
-    const dbResult = await em
-      .createQueryBuilder(InnovationSectionEntity, 'section')
-      .select(['section.section'])
-      .innerJoin(InnovationAssessmentEntity, 'assessment', 'section.innovation_id = assessment.innovation_id')
-      .innerJoin(InnovationAssessmentEntity, 'previous', 'previous.id = assessment.previous_assessment_id')
-      .where('assessment.id = :assessmentId', { assessmentId })
-      .andWhere('section.updatedAt BETWEEN previous.finished_at AND COALESCE(assessment.finished_at, GETDATE())')
-      .getMany();
+    // This needs to be a temporal query and those aren't supported by typeOrm, so we need to do it manually.
+    const dbResult = await em.query(
+      `
+      SELECT DISTINCT(section) as section
+      FROM innovation_section FOR system_time ALL s
+      INNER join innovation_assessment a on s.innovation_id = a.innovation_id
+      INNER join innovation_assessment p on a.previous_assessment_id = p.id
+      WHERE
+      s.updated_at BETWEEN p.finished_at AND COALESCE(a.finished_at, GETDATE())
+      AND a.id = @0;
+      `,
+      [assessmentId]
+    );
 
-    return dbResult.map(item => item.section);
+    return dbResult.map((item: any) => item.section);
   }
 
   async createInnovationAssessment(
