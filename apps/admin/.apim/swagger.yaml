@@ -967,13 +967,9 @@ paths:
                     description: User roles that will see the announcement.
                   minItems: 1
                 params:
-                  type: object
-                  properties:
-                    inset:
-                      type: object
+                  anyOf:
+                    - type: object
                       properties:
-                        title:
-                          type: string
                         content:
                           type: string
                         link:
@@ -984,27 +980,44 @@ paths:
                             url:
                               type: string
                           additionalProperties: false
+                      required:
+                        - content
                       additionalProperties: false
-                    content:
-                      type: string
-                    actionLink:
-                      type: object
+                    - type: object
                       properties:
-                        label:
+                        content:
                           type: string
-                        url:
-                          type: string
+                        link:
+                          type: object
+                          properties:
+                            label:
+                              type: string
+                            url:
+                              type: string
+                          additionalProperties: false
+                        filters:
+                          type: object
+                          properties: {}
+                          additionalProperties: false
+                      required:
+                        - content
+                        - filters
                       additionalProperties: false
-                  additionalProperties: false
                 startsAt:
                   type: string
                   format: date-time
                 expiresAt:
                   type: string
                   format: date-time
+                type:
+                  type: string
+                  enum:
+                    - LOG_IN
+                    - HOMEPAGE
               required:
                 - title
                 - startsAt
+                - type
               additionalProperties: false
       responses:
         "200":
@@ -1017,11 +1030,15 @@ paths:
                   id:
                     type: string
         "400":
-          description: Bad request
+          description: Bad Request
         "401":
-          description: Not authorized
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
         "500":
-          description: An error occurred
+          description: Internal Server Error
     get:
       description: Returns announcements list
       operationId: v1-announcements-list
@@ -1044,6 +1061,8 @@ paths:
                       type: string
                       enum:
                         - "0"
+                        - "1"
+                        - "2"
                     userRoles:
                       type: array
                       items:
@@ -1107,6 +1126,8 @@ paths:
                     type: string
                     enum:
                       - "0"
+                      - "1"
+                      - "2"
                   userRoles:
                     type: array
                     items:
@@ -1155,13 +1176,9 @@ paths:
                   type: array
                   items: {}
                 params:
-                  type: object
-                  properties:
-                    inset:
-                      type: object
+                  anyOf:
+                    - type: object
                       properties:
-                        title:
-                          type: string
                         content:
                           type: string
                         link:
@@ -1173,23 +1190,34 @@ paths:
                               type: string
                           additionalProperties: false
                       additionalProperties: false
-                    content:
-                      type: string
-                    actionLink:
-                      type: object
+                    - type: object
                       properties:
-                        label:
+                        content:
                           type: string
-                        url:
-                          type: string
+                        link:
+                          type: object
+                          properties:
+                            label:
+                              type: string
+                            url:
+                              type: string
+                          additionalProperties: false
+                        filters:
+                          type: object
+                          properties: {}
+                          additionalProperties: false
                       additionalProperties: false
-                  additionalProperties: false
                 startsAt:
                   type: string
                   format: date-time
                 expiresAt:
                   type: string
                   format: date-time
+                type:
+                  type: string
+                  enum:
+                    - LOG_IN
+                    - HOMEPAGE
               additionalProperties: false
       responses:
         "200":

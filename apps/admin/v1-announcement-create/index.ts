@@ -54,9 +54,11 @@ export default openApi(V1AnnouncementsCreate.httpTrigger as AzureFunction, '/v1/
           }
         }
       },
-      '400': { description: 'Bad request' },
-      '401': { description: 'Not authorized' },
-      '500': { description: 'An error occurred' }
+      '400': { description: 'Bad Request' },
+      '401': { description: 'Unauthorized' },
+      '403': { description: 'Forbidden' },
+      '404': { description: 'Not Found' },
+      '500': { description: 'Internal Server Error' }
     }
   }
 });

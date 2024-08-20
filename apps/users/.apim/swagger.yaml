@@ -275,6 +275,8 @@ paths:
                       type: string
                       enum:
                         - "0"
+                        - "1"
+                        - "2"
                     userRoles:
                       type: array
                       items:
