@@ -59,7 +59,7 @@ export default openApi(V1AnnouncementsInfo.httpTrigger as AzureFunction, '/v1/an
               type: 'object',
               properties: {
                 id: { type: 'string', format: 'uuid' },
-                template: { type: 'string', enum: Object.keys(AnnouncementTemplateType) },
+                template: { type: 'string', enum: [...AnnouncementTemplateType] },
                 userRoles: { type: 'array', items: { type: 'string', enum: Object.keys(ServiceRoleEnum) } },
                 params: { type: 'object' },
                 createdAt: { type: 'string', format: 'date-time' },

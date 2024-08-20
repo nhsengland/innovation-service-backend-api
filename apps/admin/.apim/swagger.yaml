@@ -1060,9 +1060,9 @@ paths:
                     template:
                       type: string
                       enum:
-                        - "0"
-                        - "1"
-                        - "2"
+                        - GENERIC
+                        - FILTERED
+                        - DEPRECATED
                     userRoles:
                       type: array
                       items:
@@ -1125,9 +1125,9 @@ paths:
                   template:
                     type: string
                     enum:
-                      - "0"
-                      - "1"
-                      - "2"
+                      - GENERIC
+                      - FILTERED
+                      - DEPRECATED
                   userRoles:
                     type: array
                     items:
