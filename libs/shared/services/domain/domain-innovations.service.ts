@@ -912,7 +912,7 @@ export class DomainInnovationsService {
     let sql = `WITH
       innovations AS (
         SELECT i.id, i.status, archived_status, status_updated_at, submitted_at, i.updated_at, i.current_assessment_id,
-        i.has_been_assessed, last_assessment_request_at, grouped_status, u.id AS owner_id, 
+        i.has_been_assessed, last_assessment_request_at, grouped_status, u.id AS owner_id,
         u.external_id AS owner_external_id, u.status AS owner_status, o.name AS owner_company
         FROM innovation i
           INNER JOIN innovation_grouped_status_view_entity g ON i.id = g.id
@@ -987,7 +987,7 @@ export class DomainInnovationsService {
       IIF(
         a.id IS NULL,
         NULL,
-        JSON_OBJECT('id': a.id, 'updatedAt': a.updated_at, 'isExempt': CONVERT(BIT, IIF(a.exempted_at IS NULL, 0, 1)), 'assignedToId': a.assign_to_id ABSENT ON NULL)
+        JSON_OBJECT('id': a.id, 'majorVersion': a.major_version, 'minorVersion': a.minor_version, 'updatedAt': a.updated_at, 'isExempt': CONVERT(BIT, IIF(a.exempted_at IS NULL, 0, 1)), 'assignedToId': a.assign_to_id ABSENT ON NULL)
       ) AS assessment,
       (
         SELECT suggested_unit_id as suggestedUnitId, suggested_by_units_acronyms AS suggestedBy
