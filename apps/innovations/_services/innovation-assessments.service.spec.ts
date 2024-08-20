@@ -186,10 +186,9 @@ describe('Innovation Assessments Suite', () => {
 
     it('should return the sections changed since the previous assessment', async () => {
       const res = await sut.getInnovationAssessmentInfo(naUser, innovationWithMultipleAssessments.assessment.id);
-      expect(res.reassessment?.sectionsUpdatedSinceLastAssessment).toEqual([
-        'INNOVATION_DESCRIPTION',
-        'COST_OF_INNOVATION'
-      ]);
+      expect(res.reassessment?.sectionsUpdatedSinceLastAssessment.sort()).toEqual(
+        ['COST_OF_INNOVATION', 'INNOVATION_DESCRIPTION'].sort()
+      );
     });
 
     it("should return latest if it's the current assessment", async () => {
