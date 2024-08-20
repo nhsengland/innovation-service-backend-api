@@ -1533,7 +1533,7 @@ export class InnovationsService extends BaseService {
 
     const innovation = await em
       .createQueryBuilder(InnovationEntity, 'innovation')
-      .select(['innovation.id', 'innovation.status', 'organisationShares.id'])
+      .select(['innovation.id', 'innovation.status', 'innovation.hasBeenAssessed', 'organisationShares.id'])
       .leftJoin('innovation.organisationShares', 'organisationShares')
       .where('innovation.id = :innovationId', { innovationId })
       .getOne();
@@ -1675,7 +1675,7 @@ export class InnovationsService extends BaseService {
       return toReturn;
     });
 
-    if (addedShares.length > 0 && innovation.status === InnovationStatusEnum.IN_PROGRESS) {
+    if (addedShares.length > 0 && innovation.hasBeenAssessed) {
       await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_DELAYED_SHARE, {
         innovationId: innovation.id,
         newSharedOrgIds: addedShares
