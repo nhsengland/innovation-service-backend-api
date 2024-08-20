@@ -274,7 +274,9 @@ paths:
                     template:
                       type: string
                       enum:
-                        - "0"
+                        - GENERIC
+                        - FILTERED
+                        - DEPRECATED
                     userRoles:
                       type: array
                       items:

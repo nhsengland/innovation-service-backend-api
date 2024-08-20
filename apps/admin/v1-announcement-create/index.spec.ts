@@ -37,7 +37,7 @@ describe('v1-admin-announcement-create Suite', () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.allMighty)
         .setBody<BodyType>({
-          params: {},
+          params: { content: randText() },
           startsAt: randFutureDate(),
           title: randText(),
           userRoles: [ServiceRoleEnum.ASSESSMENT],
@@ -62,7 +62,7 @@ describe('v1-admin-announcement-create Suite', () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(user)
         .setBody<BodyType>({
-          params: {},
+          params: { content: randText() },
           startsAt: randFutureDate(),
           title: randText(),
           userRoles: [ServiceRoleEnum.ASSESSMENT],
