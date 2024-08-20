@@ -5,6 +5,7 @@ import type { Question } from './question.types';
 import { QuestionValidatorFactory } from './question.validator';
 import { SchemaValidation } from './schema.validations';
 import { translateEvidences } from '../../schemas/innovation-record/translation.helper';
+import type { AnnouncementFilterPayload } from '@admin/shared/enums';
 
 export type IRSchemaType = {
   sections: {
@@ -98,7 +99,7 @@ export class SchemaModel {
   }
 
   // Translates the document passed, it mutates the passed input.
-  translateDocument(document: { [key: string]: any }) {
+  translateDocument(document: { [key: string]: any }): { [key: string]: any } {
     for (const [subSection, questions] of Object.entries(document)) {
       if (subSection === 'version') continue;
       if (subSection === 'evidences' && questions && Array.isArray(questions)) {
@@ -165,7 +166,7 @@ export class SchemaModel {
   /**
    * Calculated fields
    */
-  getCalculatedFields(subSectionId: string, payload: { [key: string]: any }) {
+  getCalculatedFields(subSectionId: string, payload: { [key: string]: any }): { [key: string]: string } {
     const out: { [key: string]: string } = {};
     const conditionalFields = this.conditions.get(subSectionId);
     if (!conditionalFields) return out;
@@ -185,7 +186,7 @@ export class SchemaModel {
   /**
    * Validations
    */
-  public getSubSectionPayloadValidation(subSectionId: string, payload: { [key: string]: any }) {
+  public getSubSectionPayloadValidation(subSectionId: string, payload: { [key: string]: any }): Joi.ObjectSchema<any> {
     const questions = this.getSubsectionQuestions(subSectionId);
 
     const validation: Joi.PartialSchemaMap = {};
@@ -205,7 +206,7 @@ export class SchemaModel {
     return Joi.object(validation).required();
   }
 
-  private validateIdNotRepeated(context: any, path: string, idList: { [key: string]: any }) {
+  private validateIdNotRepeated(context: any, path: string, idList: { [key: string]: any }): void {
     if (idList[context.id]) {
       this.errorList.push({ message: `${path}.id is repeated`, context: context });
     } else {
@@ -217,7 +218,7 @@ export class SchemaModel {
     step: InnovationRecordStepType | { condition: Condition },
     path: string,
     idList: { [key: string]: any }
-  ) {
+  ): void {
     const condition = step.condition;
     if (condition) {
       if (idList[condition.id]) {
@@ -258,7 +259,7 @@ export class SchemaModel {
     step: InnovationRecordStepType,
     path: string,
     idList: { [key: string]: any }
-  ) {
+  ): void {
     step.questions?.forEach((question: Question, i: number) => {
       this.validateQuestion(subSectionId, question, `${path}.questions[${i}]`, idList);
     });
@@ -269,8 +270,13 @@ export class SchemaModel {
     }
   }
 
-  private validateQuestion(subSectionId: string, question: Question, path: string, idList: { [key: string]: any }) {
-    // Done here to make sure since we questions inside questions (e.g., conditional)
+  private validateQuestion(
+    subSectionId: string,
+    question: Question,
+    path: string,
+    idList: { [key: string]: any }
+  ): void {
+    // Done here to make sure since we have questions inside questions (e.g., conditional)
     this.addToSubSections(subSectionId, question.id);
     this.questions.set(question.id, question);
 
@@ -317,7 +323,7 @@ export class SchemaModel {
     }
   }
 
-  private validateRequiredFields() {
+  private validateRequiredFields(): void {
     for (const [subSectionId, questions] of requiredSectionsAndQuestions.entries()) {
       const curSchemaQuestions = this.subSections.get(subSectionId);
       if (!curSchemaQuestions) {
@@ -410,5 +416,22 @@ export class SchemaModel {
       }
     }
     return itemsFromAnswer;
+  }
+
+  public getAnnouncementFilterPayloadValidation(payload: { [key: string]: any }): Joi.ObjectSchema<any> {
+    const filters: AnnouncementFilterPayload[] = payload['filters'];
+    const validation: Joi.PartialSchemaMap = {};
+
+    for (const filter of filters) {
+      const questionsFromSchema = this.getSubsectionQuestions(filter.section);
+      const question = questionsFromSchema.find(q => q.id === filter.question);
+      if (!question) continue;
+
+      validation[filter.section + filter.question] = Joi.object({
+        [filter.question]: QuestionValidatorFactory.validate(question)
+      });
+    }
+
+    return Joi.object(validation).required();
   }
 }

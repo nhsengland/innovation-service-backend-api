@@ -3,7 +3,7 @@ import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@admin/shared/decorators';
 import { JoiHelper, ResponseHelper, SwaggerHelper } from '@admin/shared/helpers';
-import type { AuthorizationService } from '@admin/shared/services';
+import type { AuthorizationService, IRSchemaService } from '@admin/shared/services';
 import type { CustomContextType } from '@admin/shared/types';
 
 import { container } from '../_config';
@@ -21,7 +21,13 @@ class V1AnnouncementsCreate {
     const announcementsService = container.get<AnnouncementsService>(SYMBOLS.AnnouncementsService);
 
     try {
-      const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
+      const requestBody = JoiHelper.Validate<BodyType>(BodySchema, request.body);
+
+      const irSchemaService = container.get<IRSchemaService>(SHARED_SYMBOLS.IRSchemaService);
+      const schema = await irSchemaService.getSchema();
+      const validation = schema.model.getAnnouncementFilterPayloadValidation(requestBody);
+
+      const body = JoiHelper.Validate<BodyType>(validation, requestBody);
 
       const auth = await authorizationService.validate(context).checkAdminType().verify();
 

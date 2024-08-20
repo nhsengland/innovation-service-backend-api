@@ -9,6 +9,12 @@ export type AnnouncementParamsType = {
   };
 };
 
+export type AnnouncementFilterPayload = {
+  section: string;
+  question: string;
+  answers: string[];
+};
+
 export enum AnnouncementStatusEnum {
   SCHEDULED = 'SCHEDULED',
   ACTIVE = 'ACTIVE',

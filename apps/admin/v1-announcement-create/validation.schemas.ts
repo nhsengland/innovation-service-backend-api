@@ -1,6 +1,11 @@
 import Joi from 'joi';
 
-import { AnnouncementParamsType, ServiceRoleEnum } from '@admin/shared/enums';
+import {
+  AnnouncementFilterPayload,
+  AnnouncementParamsType,
+  AnnouncementTypeEnum,
+  ServiceRoleEnum
+} from '@admin/shared/enums';
 
 export type BodyType = {
   title: string;
@@ -8,7 +13,10 @@ export type BodyType = {
   params: AnnouncementParamsType['GENERIC'];
   startsAt: Date;
   expiresAt?: Date;
+  type?: AnnouncementTypeEnum;
+  filters?: AnnouncementFilterPayload[];
 };
+
 export const BodySchema = Joi.object<BodyType>({
   title: Joi.string().max(100).required().description('Title of the announcement'),
 
@@ -38,5 +46,15 @@ export const BodySchema = Joi.object<BodyType>({
   }),
 
   startsAt: Joi.date().required(),
-  expiresAt: Joi.date().greater(Joi.ref('startsAt')).optional()
+  expiresAt: Joi.date().greater(Joi.ref('startsAt')).optional(),
+  type: Joi.string().optional(),
+  filters: Joi.array()
+    .items(
+      Joi.object<AnnouncementFilterPayload>({
+        section: Joi.string().required(),
+        question: Joi.string().required(),
+        answers: Joi.array().items(Joi.string()).min(1).required()
+      })
+    )
+    .optional()
 }).required();

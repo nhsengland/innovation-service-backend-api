@@ -3,6 +3,7 @@ import { EntityManager, In } from 'typeorm';
 
 import { AnnouncementEntity, AnnouncementUserEntity, UserEntity } from '@admin/shared/entities';
 import {
+  AnnouncementFilterPayload,
   AnnouncementParamsType,
   AnnouncementStatusEnum,
   AnnouncementTypeEnum,
@@ -40,6 +41,7 @@ export class AnnouncementsService extends BaseService {
       expiresAt: null | Date;
       status: AnnouncementStatusEnum;
       type: AnnouncementTypeEnum;
+      filters: null | AnnouncementFilterPayload[];
     }[];
   }> {
     const em = entityManager ?? this.sqlConnection.manager;
@@ -72,7 +74,8 @@ export class AnnouncementsService extends BaseService {
         startsAt: announcement.startsAt,
         expiresAt: announcement.expiresAt,
         status: this.getAnnouncementStatus(announcement.startsAt, announcement.expiresAt, announcement.deletedAt),
-        type: announcement.type
+        type: announcement.type,
+        filters: announcement.filters
       }))
     };
   }
@@ -130,6 +133,7 @@ export class AnnouncementsService extends BaseService {
       params: AnnouncementParamsType['GENERIC']; // For now, only the generic template is possible to create.
       startsAt: Date;
       expiresAt?: Date;
+      filters?: AnnouncementFilterPayload[];
     },
     config?: { usersToExclude?: string[] },
     entityManager?: EntityManager
@@ -149,7 +153,8 @@ export class AnnouncementsService extends BaseService {
         startsAt: data.startsAt,
         expiresAt: data.expiresAt ?? null,
         createdBy: requestContext.id,
-        updatedBy: requestContext.id
+        updatedBy: requestContext.id,
+        filters: data.filters ?? null
       });
 
       if (config?.usersToExclude && config.usersToExclude.length > 0) {

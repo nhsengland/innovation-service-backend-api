@@ -35,7 +35,8 @@ class V1AnnouncementsList {
           startsAt: item.startsAt,
           expiresAt: item.expiresAt,
           status: item.status,
-          type: item.type
+          type: item.type,
+          filters: item.filters
         }))
       });
       return;

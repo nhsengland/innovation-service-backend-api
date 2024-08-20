@@ -35,7 +35,8 @@ const expected = {
       status: AnnouncementStatusEnum.SCHEDULED,
       title: randText(),
       userRoles: [ServiceRoleEnum.ASSESSMENT],
-      type: AnnouncementTypeEnum.LOG_IN
+      type: AnnouncementTypeEnum.LOG_IN,
+      filters: null
     }
   ]
 };
@@ -52,7 +53,7 @@ describe('v1-admin-announcement-list Suite', () => {
 
       expect(result.body).toStrictEqual({
         count: expected.count,
-        data: expected.data.map(a => pick(a, ['id', 'title', 'startsAt', 'status', 'expiresAt', 'type']))
+        data: expected.data.map(a => pick(a, ['id', 'title', 'startsAt', 'status', 'expiresAt', 'type', 'filters']))
       });
       expect(result.status).toBe(200);
       expect(mock).toHaveBeenCalledTimes(1);
