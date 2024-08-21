@@ -129,11 +129,10 @@ export class AnnouncementsService extends BaseService {
     data: {
       title: string;
       userRoles: ServiceRoleEnum[];
-      // template: T;
-      params: AnnouncementParamsType['GENERIC']; // For now, only the generic template is possible to create.
+      params: AnnouncementParamsType[keyof AnnouncementParamsType];
       startsAt: Date;
       expiresAt?: Date;
-      type?: AnnouncementTypeEnum;
+      type: AnnouncementTypeEnum;
       filters?: FilterPayload[];
     },
     config?: { usersToExclude?: string[] },
@@ -148,11 +147,12 @@ export class AnnouncementsService extends BaseService {
     return await em.transaction(async transaction => {
       const savedAnnouncement = await transaction.save(AnnouncementEntity, {
         title: data.title,
-        template: 'GENERIC',
+        template: 'filters' in data.params ? 'FILTERED' : 'GENERIC',
         userRoles: data.userRoles,
         params: data.params ?? null,
         startsAt: data.startsAt,
         expiresAt: data.expiresAt ?? null,
+        type: data.type,
         createdBy: requestContext.id,
         updatedBy: requestContext.id,
         type: data.type ?? AnnouncementTypeEnum.LOG_IN,
@@ -184,10 +184,10 @@ export class AnnouncementsService extends BaseService {
     data: {
       title?: string;
       userRoles?: ServiceRoleEnum[];
-      // template: T;
-      params?: AnnouncementParamsType['GENERIC']; // For now, only the generic template is possible to create.
+      params?: AnnouncementParamsType[keyof AnnouncementParamsType];
       startsAt?: Date;
       expiresAt?: Date;
+      type?: AnnouncementTypeEnum;
     },
     entityManager?: EntityManager
   ): Promise<void> {

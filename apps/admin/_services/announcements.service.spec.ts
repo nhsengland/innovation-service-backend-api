@@ -5,7 +5,12 @@ import SYMBOLS from './symbols';
 import type { AnnouncementsService } from './announcements.service';
 import { AnnouncementEntity, AnnouncementUserEntity } from '@admin/shared/entities';
 import { randFutureDate, randPastDate, randText, randUuid } from '@ngneat/falso';
-import { AnnouncementStatusEnum, AnnouncementTemplateType, ServiceRoleEnum } from '@admin/shared/enums';
+import {
+  AnnouncementStatusEnum,
+  AnnouncementTemplateType,
+  AnnouncementTypeEnum,
+  ServiceRoleEnum
+} from '@admin/shared/enums';
 import { AnnouncementErrorsEnum, BadRequestError, NotFoundError, UnprocessableEntityError } from '@admin/shared/errors';
 import { DTOsHelper } from '@admin/shared/tests/helpers/dtos.helper';
 import type { EntityManager } from 'typeorm';
@@ -38,7 +43,7 @@ describe('Admin / _services / announcements service suite', () => {
         title: randText({ charCount: 10 }),
         template: AnnouncementTemplateType[0],
         userRoles: [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR],
-        params: {},
+        params: { content: randText() },
         startsAt: new Date('01/01/2023'),
         expiresAt: null
       });
@@ -47,7 +52,7 @@ describe('Admin / _services / announcements service suite', () => {
         title: randText({ charCount: 10 }),
         template: AnnouncementTemplateType[0],
         userRoles: [ServiceRoleEnum.INNOVATOR],
-        params: {},
+        params: { content: randText() },
         startsAt: randFutureDate(),
         expiresAt: null
       });
@@ -56,7 +61,7 @@ describe('Admin / _services / announcements service suite', () => {
         title: randText({ charCount: 10 }),
         template: AnnouncementTemplateType[0],
         userRoles: [ServiceRoleEnum.INNOVATOR],
-        params: {},
+        params: { content: randText() },
         startsAt: new Date('01/01/2022'),
         expiresAt: new Date('01/02/2022')
       });
@@ -106,7 +111,7 @@ describe('Admin / _services / announcements service suite', () => {
         title: randText({ charCount: 10 }),
         template: AnnouncementTemplateType[0],
         userRoles: [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR],
-        params: {},
+        params: { content: randText() },
         startsAt: randPastDate(),
         expiresAt: null
       });
@@ -136,8 +141,9 @@ describe('Admin / _services / announcements service suite', () => {
       const announcementParams = {
         title: randText({ charCount: 10 }),
         userRoles: [ServiceRoleEnum.INNOVATOR],
-        params: {},
-        startsAt: randFutureDate()
+        params: { content: randText() },
+        startsAt: randFutureDate(),
+        type: AnnouncementTypeEnum.LOG_IN
       };
 
       const result = await sut.createAnnouncement(
@@ -154,8 +160,9 @@ describe('Admin / _services / announcements service suite', () => {
       const announcementParams = {
         title: randText({ charCount: 10 }),
         userRoles: [ServiceRoleEnum.INNOVATOR],
-        params: {},
-        startsAt: randFutureDate()
+        params: { content: randText() },
+        startsAt: randFutureDate(),
+        type: AnnouncementTypeEnum.LOG_IN
       };
 
       const result = await sut.createAnnouncement(
@@ -182,8 +189,9 @@ describe('Admin / _services / announcements service suite', () => {
       const announcementParams = {
         title: randText({ charCount: 10 }),
         userRoles: [],
-        params: {},
-        startsAt: randFutureDate()
+        params: { content: randText() },
+        startsAt: randFutureDate(),
+        type: AnnouncementTypeEnum.LOG_IN
       };
 
       await expect(() =>
@@ -203,16 +211,18 @@ describe('Admin / _services / announcements service suite', () => {
         title: randText({ charCount: 10 }),
         template: AnnouncementTemplateType[0],
         userRoles: [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR],
-        params: {},
+        params: { content: randText() },
         startsAt: randFutureDate(),
-        expiresAt: null
+        expiresAt: null,
+        type: AnnouncementTypeEnum.LOG_IN
       });
 
       const updatedAnnouncementParams = {
         title: randText({ charCount: 10 }),
         userRoles: [ServiceRoleEnum.INNOVATOR],
-        params: {},
-        startsAt: randFutureDate()
+        params: { content: randText() },
+        startsAt: randFutureDate(),
+        type: AnnouncementTypeEnum.LOG_IN
       };
 
       await sut.updateAnnouncement(
@@ -237,7 +247,7 @@ describe('Admin / _services / announcements service suite', () => {
         title: randText({ charCount: 10 }),
         template: AnnouncementTemplateType[0],
         userRoles: [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR],
-        params: {},
+        params: { content: randText() },
         startsAt: randPastDate(),
         expiresAt: randPastDate()
       });
@@ -263,7 +273,7 @@ describe('Admin / _services / announcements service suite', () => {
         title: randText({ charCount: 10 }),
         template: AnnouncementTemplateType[0],
         userRoles: [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR],
-        params: {},
+        params: { content: randText() },
         startsAt: randFutureDate(),
         expiresAt: null
       });
@@ -289,7 +299,7 @@ describe('Admin / _services / announcements service suite', () => {
         title: randText({ charCount: 10 }),
         template: AnnouncementTemplateType[0],
         userRoles: [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR],
-        params: {},
+        params: { content: randText() },
         startsAt: randPastDate(),
         expiresAt: null
       });
@@ -315,7 +325,7 @@ describe('Admin / _services / announcements service suite', () => {
         title: randText({ charCount: 10 }),
         template: AnnouncementTemplateType[0],
         userRoles: [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR],
-        params: {},
+        params: { content: randText() },
         startsAt: randPastDate(),
         expiresAt: null
       });
@@ -349,7 +359,7 @@ describe('Admin / _services / announcements service suite', () => {
         title: randText({ charCount: 10 }),
         template: AnnouncementTemplateType[0],
         userRoles: [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR],
-        params: {},
+        params: { content: randText() },
         startsAt: randPastDate(),
         expiresAt: null
       });
@@ -378,7 +388,7 @@ describe('Admin / _services / announcements service suite', () => {
         title: randText({ charCount: 10 }),
         template: AnnouncementTemplateType[0],
         userRoles: [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR],
-        params: {},
+        params: { content: randText() },
         startsAt: randPastDate(),
         expiresAt: randPastDate()
       });
