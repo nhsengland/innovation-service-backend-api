@@ -94,6 +94,7 @@ export const InnovationListSelectType = [
   'assessment.isExempt',
   'assessment.assignedTo',
   'assessment.updatedAt',
+  'assessment.finishedAt',
   'engagingOrganisations',
   'engagingUnits',
   // NOTE: The suggestion is always related to the unit from the QA accessing
@@ -114,7 +115,7 @@ export const InnovationListSelectType = [
 type InnovationListViewFields = Omit<InnovationListView, 'assessment' | 'supports' | 'ownerId'>;
 export type InnovationListSelectType =
   | keyof InnovationListViewFields
-  | `assessment.${keyof Pick<InnovationAssessmentEntity, 'id' | 'updatedAt'>}`
+  | `assessment.${keyof Pick<InnovationAssessmentEntity, 'id' | 'updatedAt' | 'finishedAt'>}`
   | 'assessment.assignedTo'
   | 'assessment.isExempt'
   | `support.${keyof Pick<InnovationSupportEntity, 'id' | 'status' | 'updatedAt' | 'updatedBy'>}`
@@ -336,15 +337,8 @@ export class InnovationsService extends BaseService {
           })
         );
 
-      // automatically add in_progress since A/QA can't see the others (yet). This might become a filter for A/QAs in the future
-      // current rule is A/QA can see innovations in progress or archived innovations that were in progress
-      query.andWhere(
-        '(innovation.status IN (:...innovationStatus) OR (innovation.status = :innovationArchivedStatus AND innovation.archivedStatus IN (:...innovationStatus)))',
-        {
-          innovationStatus: [InnovationStatusEnum.IN_PROGRESS],
-          innovationArchivedStatus: InnovationStatusEnum.ARCHIVED
-        }
-      );
+      // current rule is A/QA can see innovations that have had their first assessment
+      query.andWhere('innovation.hasBeenAssessed = 1');
 
       // Accessors can only see innovations that they are supporting
       if (domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR) {
@@ -1076,7 +1070,7 @@ export class InnovationsService extends BaseService {
       // distinguish if there's multiple roles for the same user
       updatedBy?.roles.some(r => r.role === ServiceRoleEnum.INNOVATOR)
         ? 'Innovator'
-        : updatedBy?.displayName ?? null;
+        : (updatedBy?.displayName ?? null);
 
     // support is handled differently to remove the nested array since it's only 1 element in this case
     return {
@@ -1158,6 +1152,7 @@ export class InnovationsService extends BaseService {
     status: InnovationStatusEnum;
     archivedStatus?: InnovationStatusEnum;
     groupedStatus: InnovationGroupedStatusEnum;
+    hasBeenAssessed: boolean;
     statusUpdatedAt: Date;
     submittedAt: null | Date;
     countryName: null | string;
@@ -1201,6 +1196,7 @@ export class InnovationsService extends BaseService {
         'innovation.status',
         'innovation.statusUpdatedAt',
         'innovation.archivedStatus',
+        'innovation.hasBeenAssessed',
         'innovation.lastAssessmentRequestAt',
         'innovation.createdAt',
         'innovationOwner.id',
@@ -1336,6 +1332,7 @@ export class InnovationsService extends BaseService {
       version: documentData.version,
       status: innovation.status,
       groupedStatus: innovation.innovationGroupedStatus.groupedStatus,
+      hasBeenAssessed: innovation.hasBeenAssessed,
       statusUpdatedAt: innovation.statusUpdatedAt,
       submittedAt: innovation.lastAssessmentRequestAt,
       countryName: documentData.countryName,
@@ -1536,7 +1533,7 @@ export class InnovationsService extends BaseService {
 
     const innovation = await em
       .createQueryBuilder(InnovationEntity, 'innovation')
-      .select(['innovation.id', 'innovation.status', 'organisationShares.id'])
+      .select(['innovation.id', 'innovation.status', 'innovation.hasBeenAssessed', 'organisationShares.id'])
       .leftJoin('innovation.organisationShares', 'organisationShares')
       .where('innovation.id = :innovationId', { innovationId })
       .getOne();
@@ -1678,7 +1675,7 @@ export class InnovationsService extends BaseService {
       return toReturn;
     });
 
-    if (addedShares.length > 0 && innovation.status === InnovationStatusEnum.IN_PROGRESS) {
+    if (addedShares.length > 0 && innovation.hasBeenAssessed) {
       await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_DELAYED_SHARE, {
         innovationId: innovation.id,
         newSharedOrgIds: addedShares

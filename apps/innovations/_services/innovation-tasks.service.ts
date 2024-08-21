@@ -156,13 +156,7 @@ export class InnovationTasksService extends BaseService {
           'accessorSupports.organisation_unit_id = :accessorSupportsOrganisationUnitId',
           { accessorSupportsOrganisationUnitId: domainContext.organisation.organisationUnit.id }
         )
-        .andWhere(
-          '(innovation.status IN (:...innovationStatus) OR (innovation.status = :innovationArchivedStatus AND innovation.archivedStatus IN (:...innovationStatus)))',
-          {
-            innovationStatus: [InnovationStatusEnum.IN_PROGRESS],
-            innovationArchivedStatus: InnovationStatusEnum.ARCHIVED
-          }
-        )
+        .andWhere('innovation.hasBeenAssessed = 1')
         .andWhere('shares.id = :accessorOrganisationId', {
           accessorOrganisationId: domainContext.organisation.id
         });

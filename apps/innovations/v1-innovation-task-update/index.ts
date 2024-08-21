@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
-import { ServiceRoleEnum } from '@innovations/shared/enums';
+import { InnovationStatusEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 import { BadRequestError, GenericErrorsEnum } from '@innovations/shared/errors';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
 import type { AuthorizationService } from '@innovations/shared/services';
@@ -31,7 +31,12 @@ class V1InnovationTaskUpdate {
         .checkAccessorType()
         .checkInnovatorType()
         .checkAssessmentType()
-        .checkInnovation()
+        .checkInnovation({
+          status: {
+            ACCESSOR: [InnovationStatusEnum.IN_PROGRESS],
+            QUALIFYING_ACCESSOR: [InnovationStatusEnum.IN_PROGRESS]
+          }
+        })
         .verify();
       const domainContext = auth.getContext();
 

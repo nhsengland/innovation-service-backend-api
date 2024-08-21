@@ -1166,6 +1166,7 @@ paths:
                 - assessment.isExempt
                 - assessment.assignedTo
                 - assessment.updatedAt
+                - assessment.finishedAt
                 - engagingOrganisations
                 - engagingUnits
                 - suggestion.suggestedBy
@@ -4881,6 +4882,7 @@ paths:
                 - assessment.isExempt
                 - assessment.assignedTo
                 - assessment.updatedAt
+                - assessment.finishedAt
                 - engagingOrganisations
                 - engagingUnits
                 - suggestion.suggestedBy

@@ -16,6 +16,7 @@ export type ElasticSearchDocumentType = {
   archivedStatus: InnovationStatusEnum | null;
   statusUpdatedAt: Date;
   groupedStatus: InnovationGroupedStatusEnum;
+  hasBeenAssessed: boolean;
   submittedAt: Date | null;
   updatedAt: Date;
   lastAssessmentRequestAt: Date | null;
@@ -39,6 +40,8 @@ export type ElasticSearchDocumentType = {
   }[];
   assessment?: {
     id: string;
+    majorVersion: number;
+    minorVersion: number;
     assignedToId: string | null;
     updatedAt: Date;
     isExempt: boolean;
@@ -88,6 +91,7 @@ export const ElasticSearchSchema: CreateIndexParams = {
       rawStatus: { type: 'keyword' },
       statusUpdatedAt: { type: 'date' },
       groupedStatus: { type: 'keyword' },
+      hasBeenAssessed: { type: 'boolean' },
       submittedAt: { type: 'date' },
       updatedAt: { type: 'date' },
       lastAssessmentRequestAt: { type: 'date' },
@@ -141,6 +145,8 @@ export const ElasticSearchSchema: CreateIndexParams = {
       assessment: {
         properties: {
           id: { type: 'keyword' },
+          majorVersion: { type: 'keyword' },
+          minorVersion: { type: 'keyword' },
           assignedToId: { type: 'keyword' },
           assignedToIdentityId: { type: 'keyword' },
           updatedAt: { type: 'date' },

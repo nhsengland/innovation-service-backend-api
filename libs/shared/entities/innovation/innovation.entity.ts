@@ -57,6 +57,9 @@ export class InnovationEntity extends BaseEntity {
   @Column({ name: 'archive_reason', type: 'nvarchar', nullable: true })
   archiveReason: null | string;
 
+  @Column({ name: 'has_been_assessed', type: 'bit', default: false })
+  hasBeenAssessed: boolean;
+
   @ManyToOne(() => UserEntity, { nullable: true })
   @JoinColumn({ name: 'owner_id' })
   owner: null | UserEntity;
@@ -135,7 +138,7 @@ export class InnovationEntity extends BaseEntity {
   })
   transfers: InnovationTransferEntity[];
 
-  @OneToMany(() => InnovationSuggestedUnitsView, record => record.innovationInfo )
+  @OneToMany(() => InnovationSuggestedUnitsView, record => record.innovationInfo)
   suggestions: InnovationSuggestedUnitsView[];
 
   static new(data: Partial<InnovationEntity>): InnovationEntity {

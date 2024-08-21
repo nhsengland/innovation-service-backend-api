@@ -1,6 +1,6 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class createInnovationSuggestedUnitsView1713262730896 implements MigrationInterface {
+export class createInnovationSuggestedUnitsView1724247186881 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       CREATE OR ALTER VIEW innovation_suggested_units_view AS
@@ -14,7 +14,7 @@ export class createInnovationSuggestedUnitsView1713262730896 implements Migratio
               COALESCE(suggestedByUnit.id, '00000000-0000-0000-0001-000000000001') as suggested_by_id,
               COALESCE(suggestedByUnit.acronym, 'Needs assessment') as suggested_by_acronym,
               islou.organisation_unit_id as suggested_unit_id,
-              CASE WHEN isl.[type] = 'ASSESSMENT_SUGGESTION' THEN max(isl.created_at) ELSE min(isl.created_at) END as suggested_on
+              min(isl.created_at) as suggested_on
           FROM innovation_support_log isl
           INNER JOIN innovation_support_log_organisation_unit islou ON islou.innovation_support_log_id = isl.id
           LEFT JOIN organisation_unit suggestedByUnit ON suggestedByUnit.id = isl.organisation_unit_id

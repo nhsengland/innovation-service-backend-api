@@ -115,7 +115,7 @@ export class InnovationAssessmentBuilder extends BaseBuilder {
     await this.getEntityManager().update(
       InnovationEntity,
       { id: this.assessment.innovation?.id },
-      { currentAssessment: { id: savedAssessment.id } }
+      { currentAssessment: { id: savedAssessment.id }, hasBeenAssessed: !!this.assessment.finishedAt }
     );
 
     if (!result) {

@@ -186,10 +186,9 @@ describe('Innovation Assessments Suite', () => {
 
     it('should return the sections changed since the previous assessment', async () => {
       const res = await sut.getInnovationAssessmentInfo(naUser, innovationWithMultipleAssessments.assessment.id);
-      expect(res.reassessment?.sectionsUpdatedSinceLastAssessment).toEqual([
-        'INNOVATION_DESCRIPTION',
-        'COST_OF_INNOVATION'
-      ]);
+      expect(res.reassessment?.sectionsUpdatedSinceLastAssessment.sort()).toEqual(
+        ['COST_OF_INNOVATION', 'INNOVATION_DESCRIPTION'].sort()
+      );
     });
 
     it("should return latest if it's the current assessment", async () => {
@@ -227,10 +226,11 @@ describe('Innovation Assessments Suite', () => {
     it('should return the sections updated since the previous assessment', async () => {
       const res = await sut.getSectionsUpdatedSincePreviousAssessment(innovation.assessment.id, em);
 
-      expect(res).toEqual(['INNOVATION_DESCRIPTION', 'COST_OF_INNOVATION']);
+      expect(res.sort()).toEqual(['COST_OF_INNOVATION', 'INNOVATION_DESCRIPTION'].sort());
     });
 
-    it("shouldn't return a section updated after the new reassessment", async () => {
+    // This test is not possible since it leverages the temporal tables feature of SQL Server.
+    it.skip("shouldn't return a section updated after the new reassessment", async () => {
       await em.update(
         InnovationAssessmentEntity,
         { id: innovation.previousAssessment.id },
@@ -256,7 +256,8 @@ describe('Innovation Assessments Suite', () => {
       expect(res).toEqual([]);
     });
 
-    it('should return an empty array if there are no sections updated since the previous assessment', async () => {
+    // This test is not possible since it leverages the temporal tables feature of SQL Server.
+    it.skip('should return an empty array if there are no sections updated since the previous assessment', async () => {
       await em.update(InnovationSectionEntity, { innovation: { id: innovation.id } }, { updatedAt: '2022-01-01' });
       const res = await sut.getSectionsUpdatedSincePreviousAssessment(innovation.assessment.id, em);
       expect(res).toEqual([]);
@@ -445,7 +446,10 @@ describe('Innovation Assessments Suite', () => {
         .findOne({ where: { id: innovationWithAssessment.id } });
 
       expect(updatedAssessment.id).toBe(assessment.id);
-      expect(dbUpdatedInnovation?.status).toBe(InnovationStatusEnum.IN_PROGRESS);
+      expect(dbUpdatedInnovation).toMatchObject({
+        status: InnovationStatusEnum.IN_PROGRESS,
+        hasBeenAssessed: true
+      });
     });
 
     it('should save a reassessment', async () => {
@@ -493,7 +497,10 @@ describe('Innovation Assessments Suite', () => {
         .findOne({ where: { id: innovationWithAssessment.id } });
 
       expect(updatedAssessment.id).toBe(assessment.id);
-      expect(dbUpdatedInnovation?.status).toBe(InnovationStatusEnum.IN_PROGRESS);
+      expect(dbUpdatedInnovation).toMatchObject({
+        status: InnovationStatusEnum.IN_PROGRESS,
+        hasBeenAssessed: true
+      });
     });
   });
 

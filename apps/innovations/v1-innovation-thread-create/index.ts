@@ -10,6 +10,7 @@ import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
 
+import { InnovationStatusEnum } from '@innovations/shared/enums';
 import type { InnovationThreadsService } from '../_services/innovation-threads.service';
 import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
@@ -36,8 +37,13 @@ class V1InnovationThreadCreate {
         .checkInnovatorType()
         .checkAccessorType()
         .checkAssessmentType()
-        .checkInnovation()
         .checkNotArchived()
+        .checkInnovation({
+          status: {
+            ACCESSOR: [InnovationStatusEnum.IN_PROGRESS],
+            QUALIFYING_ACCESSOR: [InnovationStatusEnum.IN_PROGRESS]
+          }
+        })
         .verify();
 
       const domainContext = auth.getContext();

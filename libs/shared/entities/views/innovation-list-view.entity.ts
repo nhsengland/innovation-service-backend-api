@@ -93,6 +93,9 @@ export class InnovationListView {
   @Column({ name: 'engaging_units', type: 'simple-json' })
   engagingUnits: { unitId: string; name: string; acronym: string; assignedAccessors: string[] | null }[] | null;
 
+  @Column({ name: 'has_been_assessed' })
+  hasBeenAssessed: boolean;
+
   @OneToOne(() => InnovationAssessmentEntity)
   @JoinColumn({ name: 'current_assessment_id' })
   currentAssessment: InnovationAssessmentEntity | null;
