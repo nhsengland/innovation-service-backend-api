@@ -3,7 +3,7 @@ import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { BaseEntity } from '../base.entity';
 
 import type { ServiceRoleEnum } from '../../enums/user.enums';
-import { AnnouncementTemplateType, AnnouncementTypeEnum } from '../../enums/announcement.enums';
+import { AnnouncementParamsType, AnnouncementTypeEnum } from '../../enums/announcement.enums';
 
 import { AnnouncementUserEntity } from './announcement-user.entity';
 
@@ -15,9 +15,6 @@ export class AnnouncementEntity extends BaseEntity {
   @Column({ name: 'title', type: 'nvarchar', length: 100 })
   title: string;
 
-  @Column({ name: 'template', type: 'simple-enum', length: 100, enum: AnnouncementTemplateType })
-  template: AnnouncementTemplateType;
-
   @Column({ name: 'user_roles', type: 'simple-array' })
   userRoles: ServiceRoleEnum[];
 
@@ -28,7 +25,7 @@ export class AnnouncementEntity extends BaseEntity {
   expiresAt: null | Date;
 
   @Column({ name: 'params', type: 'simple-json', nullable: true })
-  params: null | Record<string, unknown>;
+  params: null | AnnouncementParamsType;
 
   @Column({ name: 'type', type: 'simple-enum', enum: AnnouncementTypeEnum })
   type: AnnouncementTypeEnum;

@@ -2,7 +2,7 @@ import { injectable } from 'inversify';
 import type { EntityManager } from 'typeorm';
 
 import { AnnouncementEntity, AnnouncementUserEntity, UserEntity, UserRoleEntity } from '@users/shared/entities';
-import type { AnnouncementTypeEnum, AnnouncementTemplateType } from '@users/shared/enums';
+import type { AnnouncementTypeEnum } from '@users/shared/enums';
 import type { DomainContextType } from '@users/shared/types';
 
 import { BaseService } from './base.service';
@@ -24,7 +24,6 @@ export class AnnouncementsService extends BaseService {
     {
       id: string;
       title: string;
-      template: AnnouncementTemplateType;
       startsAt: Date;
       expiresAt: null | Date;
       params: null | Record<string, unknown>;
@@ -48,7 +47,6 @@ export class AnnouncementsService extends BaseService {
       .select([
         'announcement.id',
         'announcement.title',
-        'announcement.template',
         'announcement.startsAt',
         'announcement.expiresAt',
         'announcement.params'
@@ -73,7 +71,6 @@ export class AnnouncementsService extends BaseService {
     return announcements.map(announcement => ({
       id: announcement.id,
       title: announcement.title,
-      template: announcement.template,
       params: announcement.params,
       startsAt: announcement.startsAt,
       expiresAt: announcement.expiresAt

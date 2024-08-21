@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@users/shared/decorators';
-import { AnnouncementTemplateType, ServiceRoleEnum } from '@users/shared/enums';
+import { ServiceRoleEnum } from '@users/shared/enums';
 import { JoiHelper, ResponseHelper, SwaggerHelper } from '@users/shared/helpers';
 import type { AuthorizationService } from '@users/shared/services';
 import SHARED_SYMBOLS from '@users/shared/services/symbols';
@@ -41,7 +41,6 @@ class V1MeAnnouncements {
         announcements.map(announcement => ({
           id: announcement.id,
           title: announcement.title,
-          template: announcement.template,
           startsAt: announcement.startsAt,
           expiresAt: announcement.expiresAt,
           params: announcement.params
@@ -73,7 +72,6 @@ export default openApi(V1MeAnnouncements.httpTrigger as AzureFunction, '/v1/me/a
                 properties: {
                   id: { type: 'string', format: 'uuid' },
                   title: { type: 'string' },
-                  template: { type: 'string', enum: [...AnnouncementTemplateType] },
                   userRoles: { type: 'array', items: { type: 'string', enum: Object.keys(ServiceRoleEnum) } },
                   createdAt: { type: 'string', format: 'date-time' },
                   params: { type: 'object' }
