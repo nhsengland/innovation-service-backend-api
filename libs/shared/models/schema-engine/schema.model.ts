@@ -5,7 +5,6 @@ import type { Question } from './question.types';
 import { QuestionValidatorFactory } from './question.validator';
 import { SchemaValidation } from './schema.validations';
 import { translateEvidences } from '../../schemas/innovation-record/translation.helper';
-import type { AnnouncementFilterPayload } from '@admin/shared/enums';
 
 export type IRSchemaType = {
   sections: {
@@ -33,6 +32,12 @@ type Condition = { id: string; options: string[] };
 export type SchemaValidationError = {
   message: string;
   context: any;
+};
+
+export type FilterPayload = {
+  section: string;
+  question: string;
+  answers: string[];
 };
 
 export class SchemaModel {
@@ -407,7 +412,7 @@ export class SchemaModel {
    * Function that checks if item has a reference to other question. If it does it returns the items from
    * the referenced question.
    */
-  private checkItemsFromAnswer(question: Question) {
+  private checkItemsFromAnswer(question: Question): any {
     let itemsFromAnswer: any = null;
     if ('items' in question && question.items[0] && 'itemsFromAnswer' in question.items[0]) {
       const referencedQuestion = this.questions.get(question.items[0].itemsFromAnswer);
@@ -418,20 +423,22 @@ export class SchemaModel {
     return itemsFromAnswer;
   }
 
-  public getAnnouncementFilterPayloadValidation(payload: { [key: string]: any }): Joi.ObjectSchema<any> {
-    const filters: AnnouncementFilterPayload[] = payload['filters'];
-    const validation: Joi.PartialSchemaMap = {};
+  public getFilterSchemaValidation(filters: FilterPayload[]): Joi.ArraySchema {
+    const items: Joi.ObjectSchema[] = [];
 
     for (const filter of filters) {
-      const questionsFromSchema = this.getSubsectionQuestions(filter.section);
-      const question = questionsFromSchema.find(q => q.id === filter.question);
+      const question = this.questions.get(filter.question);
       if (!question) continue;
 
-      validation[filter.section + filter.question] = Joi.object({
-        [filter.question]: QuestionValidatorFactory.validate(question)
-      });
+      items.push(
+        Joi.object({
+          section: Joi.string().required(),
+          question: Joi.string().required(),
+          answers: QuestionValidatorFactory.validate(question, true)
+        })
+      );
     }
 
-    return Joi.object(validation).required();
+    return Joi.array().items(...items);
   }
 }

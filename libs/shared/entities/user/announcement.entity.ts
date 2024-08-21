@@ -3,13 +3,10 @@ import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { BaseEntity } from '../base.entity';
 
 import type { ServiceRoleEnum } from '../../enums/user.enums';
-import {
-  AnnouncementFilterPayload,
-  AnnouncementTemplateType,
-  AnnouncementTypeEnum
-} from '../../enums/announcement.enums';
+import { AnnouncementTemplateType, AnnouncementTypeEnum } from '../../enums/announcement.enums';
 
 import { AnnouncementUserEntity } from './announcement-user.entity';
+import { FilterPayload } from '../../models/schema-engine/schema.model';
 
 @Entity('announcement')
 export class AnnouncementEntity extends BaseEntity {
@@ -38,7 +35,7 @@ export class AnnouncementEntity extends BaseEntity {
   type: AnnouncementTypeEnum;
 
   @Column({ name: 'filters', type: 'simple-json', nullable: true })
-  filters: null | AnnouncementFilterPayload[];
+  filters: null | FilterPayload[];
 
   @OneToMany(() => AnnouncementUserEntity, record => record.announcement, { cascade: ['insert', 'update'] })
   announcementUsers: AnnouncementUserEntity[];

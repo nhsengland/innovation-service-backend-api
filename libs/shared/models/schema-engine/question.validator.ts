@@ -61,6 +61,25 @@ export class RadioGroupValidator implements QuestionTypeValidator<RadioGroup> {
   }
 }
 
+export class RadioGroupMultipleAnswersValidator implements QuestionTypeValidator<RadioGroup> {
+  validate(question: RadioGroup): Joi.Schema {
+    let validation = JoiHelper.AppCustomJoi().stringArray();
+    const validItems = [];
+    for (const item of question.items) {
+      if ('id' in item) {
+        validItems.push(item.id);
+      }
+    }
+    if (validItems.length) {
+      validation = validation.items(Joi.string().valid(...validItems));
+    }
+    if (question.validations?.isRequired) {
+      validation = validation.required();
+    }
+    return validation;
+  }
+}
+
 export class AutocompleteArrayValidator implements QuestionTypeValidator<AutocompleteArray> {
   validate(question: AutocompleteArray): Joi.Schema {
     let validation = JoiHelper.AppCustomJoi().stringArray();
@@ -152,13 +171,16 @@ export class FieldGroupValidator implements QuestionTypeValidator<FieldsGroup> {
 }
 
 export class QuestionValidatorFactory {
-  static validate(question: Question) {
+  static validate(question: Question, multipleAnswers = false): Joi.Schema {
     switch (question.dataType) {
       case 'text':
         return new TextValidator().validate(question);
       case 'textarea':
         return new TextareaValidator().validate(question);
       case 'radio-group':
+        if (multipleAnswers) {
+          return Joi.array().items(new RadioGroupMultipleAnswersValidator().validate(question));
+        }
         return new RadioGroupValidator().validate(question);
       case 'checkbox-array':
         return new CheckboxArrayValidator().validate(question);

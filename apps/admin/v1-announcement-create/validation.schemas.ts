@@ -1,11 +1,7 @@
 import Joi from 'joi';
 
-import {
-  AnnouncementFilterPayload,
-  AnnouncementParamsType,
-  AnnouncementTypeEnum,
-  ServiceRoleEnum
-} from '@admin/shared/enums';
+import { AnnouncementParamsType, AnnouncementTypeEnum, ServiceRoleEnum } from '@admin/shared/enums';
+import { FilterPayload } from '@admin/shared/models/schema-engine/schema.model';
 
 export type BodyType = {
   title: string;
@@ -14,7 +10,7 @@ export type BodyType = {
   startsAt: Date;
   expiresAt?: Date;
   type?: AnnouncementTypeEnum;
-  filters?: AnnouncementFilterPayload[];
+  filters?: FilterPayload[];
 };
 
 export const BodySchema = Joi.object<BodyType>({
@@ -50,7 +46,7 @@ export const BodySchema = Joi.object<BodyType>({
   type: Joi.string().optional(),
   filters: Joi.array()
     .items(
-      Joi.object<AnnouncementFilterPayload>({
+      Joi.object<FilterPayload>({
         section: Joi.string().required(),
         question: Joi.string().required(),
         answers: Joi.array().items(Joi.string()).min(1).required()

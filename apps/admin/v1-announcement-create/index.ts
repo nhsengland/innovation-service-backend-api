@@ -13,6 +13,7 @@ import SYMBOLS from '../_services/symbols';
 import SHARED_SYMBOLS from '@admin/shared/services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType } from './validation.schemas';
+import type { FilterPayload } from '@admin/shared/models/schema-engine/schema.model';
 
 class V1AnnouncementsCreate {
   @JwtDecoder()
@@ -25,9 +26,9 @@ class V1AnnouncementsCreate {
 
       const irSchemaService = container.get<IRSchemaService>(SHARED_SYMBOLS.IRSchemaService);
       const schema = await irSchemaService.getSchema();
-      const validation = schema.model.getAnnouncementFilterPayloadValidation(requestBody);
+      const validation = schema.model.getFilterSchemaValidation(requestBody.filters || []);
 
-      const body = JoiHelper.Validate<BodyType>(validation, requestBody);
+      const body = { ...requestBody, ...JoiHelper.Validate<FilterPayload>(validation, requestBody.filters) };
 
       const auth = await authorizationService.validate(context).checkAdminType().verify();
 

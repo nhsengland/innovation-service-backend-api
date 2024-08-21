@@ -3,7 +3,6 @@ import { EntityManager, In } from 'typeorm';
 
 import { AnnouncementEntity, AnnouncementUserEntity, UserEntity } from '@admin/shared/entities';
 import {
-  AnnouncementFilterPayload,
   AnnouncementParamsType,
   AnnouncementStatusEnum,
   AnnouncementTypeEnum,
@@ -20,6 +19,7 @@ import {
   AnnouncementScheduledBodyType
 } from './announcements.schemas';
 import { BaseService } from './base.service';
+import { FilterPayload } from '@admin/shared/models/schema-engine/schema.model';
 
 @injectable()
 export class AnnouncementsService extends BaseService {
@@ -41,7 +41,7 @@ export class AnnouncementsService extends BaseService {
       expiresAt: null | Date;
       status: AnnouncementStatusEnum;
       type: AnnouncementTypeEnum;
-      filters: null | AnnouncementFilterPayload[];
+      filters: null | FilterPayload[];
     }[];
   }> {
     const em = entityManager ?? this.sqlConnection.manager;
@@ -133,7 +133,8 @@ export class AnnouncementsService extends BaseService {
       params: AnnouncementParamsType['GENERIC']; // For now, only the generic template is possible to create.
       startsAt: Date;
       expiresAt?: Date;
-      filters?: AnnouncementFilterPayload[];
+      type?: AnnouncementTypeEnum;
+      filters?: FilterPayload[];
     },
     config?: { usersToExclude?: string[] },
     entityManager?: EntityManager
@@ -154,6 +155,7 @@ export class AnnouncementsService extends BaseService {
         expiresAt: data.expiresAt ?? null,
         createdBy: requestContext.id,
         updatedBy: requestContext.id,
+        type: data.type ?? AnnouncementTypeEnum.LOG_IN,
         filters: data.filters ?? null
       });
 
