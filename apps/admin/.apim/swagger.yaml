@@ -967,42 +967,25 @@ paths:
                     description: User roles that will see the announcement.
                   minItems: 1
                 params:
-                  anyOf:
-                    - type: object
+                  type: object
+                  properties:
+                    content:
+                      type: string
+                    link:
+                      type: object
                       properties:
-                        content:
+                        label:
                           type: string
-                        link:
-                          type: object
-                          properties:
-                            label:
-                              type: string
-                            url:
-                              type: string
-                          additionalProperties: false
-                      required:
-                        - content
-                      additionalProperties: false
-                    - type: object
-                      properties:
-                        content:
+                        url:
                           type: string
-                        link:
-                          type: object
-                          properties:
-                            label:
-                              type: string
-                            url:
-                              type: string
-                          additionalProperties: false
-                        filters:
-                          type: object
-                          properties: {}
-                          additionalProperties: false
-                      required:
-                        - content
-                        - filters
                       additionalProperties: false
+                    filters:
+                      type: object
+                      properties: {}
+                      additionalProperties: false
+                  required:
+                    - content
+                  additionalProperties: false
                 startsAt:
                   type: string
                   format: date-time
@@ -1076,12 +1059,6 @@ paths:
                     id:
                       type: string
                       format: uuid
-                    template:
-                      type: string
-                      enum:
-                        - GENERIC
-                        - FILTERED
-                        - DEPRECATED
                     userRoles:
                       type: array
                       items:
@@ -1141,12 +1118,6 @@ paths:
                   id:
                     type: string
                     format: uuid
-                  template:
-                    type: string
-                    enum:
-                      - GENERIC
-                      - FILTERED
-                      - DEPRECATED
                   userRoles:
                     type: array
                     items:
@@ -1195,37 +1166,23 @@ paths:
                   type: array
                   items: {}
                 params:
-                  anyOf:
-                    - type: object
+                  type: object
+                  properties:
+                    content:
+                      type: string
+                    link:
+                      type: object
                       properties:
-                        content:
+                        label:
                           type: string
-                        link:
-                          type: object
-                          properties:
-                            label:
-                              type: string
-                            url:
-                              type: string
-                          additionalProperties: false
-                      additionalProperties: false
-                    - type: object
-                      properties:
-                        content:
+                        url:
                           type: string
-                        link:
-                          type: object
-                          properties:
-                            label:
-                              type: string
-                            url:
-                              type: string
-                          additionalProperties: false
-                        filters:
-                          type: object
-                          properties: {}
-                          additionalProperties: false
                       additionalProperties: false
+                    filters:
+                      type: object
+                      properties: {}
+                      additionalProperties: false
+                  additionalProperties: false
                 startsAt:
                   type: string
                   format: date-time

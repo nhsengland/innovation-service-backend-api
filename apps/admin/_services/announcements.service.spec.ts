@@ -5,12 +5,7 @@ import SYMBOLS from './symbols';
 import type { AnnouncementsService } from './announcements.service';
 import { AnnouncementEntity, AnnouncementUserEntity } from '@admin/shared/entities';
 import { randFutureDate, randPastDate, randText, randUuid } from '@ngneat/falso';
-import {
-  AnnouncementStatusEnum,
-  AnnouncementTemplateType,
-  AnnouncementTypeEnum,
-  ServiceRoleEnum
-} from '@admin/shared/enums';
+import { AnnouncementStatusEnum, AnnouncementTypeEnum, ServiceRoleEnum } from '@admin/shared/enums';
 import { AnnouncementErrorsEnum, BadRequestError, NotFoundError, UnprocessableEntityError } from '@admin/shared/errors';
 import { DTOsHelper } from '@admin/shared/tests/helpers/dtos.helper';
 import type { EntityManager } from 'typeorm';
@@ -41,7 +36,6 @@ describe('Admin / _services / announcements service suite', () => {
     it('should get the list of announcements', async () => {
       const activeAnnouncement = await em.getRepository(AnnouncementEntity).save({
         title: randText({ charCount: 10 }),
-        template: AnnouncementTemplateType[0],
         userRoles: [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR],
         params: { content: randText() },
         startsAt: new Date('01/01/2023'),
@@ -50,7 +44,6 @@ describe('Admin / _services / announcements service suite', () => {
 
       const scheduledAnnouncement = await em.getRepository(AnnouncementEntity).save({
         title: randText({ charCount: 10 }),
-        template: AnnouncementTemplateType[0],
         userRoles: [ServiceRoleEnum.INNOVATOR],
         params: { content: randText() },
         startsAt: randFutureDate(),
@@ -59,7 +52,6 @@ describe('Admin / _services / announcements service suite', () => {
 
       const doneAnnouncement = await em.getRepository(AnnouncementEntity).save({
         title: randText({ charCount: 10 }),
-        template: AnnouncementTemplateType[0],
         userRoles: [ServiceRoleEnum.INNOVATOR],
         params: { content: randText() },
         startsAt: new Date('01/01/2022'),
@@ -109,7 +101,6 @@ describe('Admin / _services / announcements service suite', () => {
     it('should get the announcement info', async () => {
       const announcement = await em.getRepository(AnnouncementEntity).save({
         title: randText({ charCount: 10 }),
-        template: AnnouncementTemplateType[0],
         userRoles: [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR],
         params: { content: randText() },
         startsAt: randPastDate(),
@@ -209,7 +200,6 @@ describe('Admin / _services / announcements service suite', () => {
     it('should update an announcement', async () => {
       const announcement = await em.getRepository(AnnouncementEntity).save({
         title: randText({ charCount: 10 }),
-        template: AnnouncementTemplateType[0],
         userRoles: [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR],
         params: { content: randText() },
         startsAt: randFutureDate(),
@@ -245,7 +235,6 @@ describe('Admin / _services / announcements service suite', () => {
     it('should throw an error if the announcement is in DONE status', async () => {
       const announcement = await em.getRepository(AnnouncementEntity).save({
         title: randText({ charCount: 10 }),
-        template: AnnouncementTemplateType[0],
         userRoles: [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR],
         params: { content: randText() },
         startsAt: randPastDate(),
@@ -271,7 +260,6 @@ describe('Admin / _services / announcements service suite', () => {
     it('should throw an error if the announcement is in SCHEDULEDED status and new expiration date is before activation date', async () => {
       const announcement = await em.getRepository(AnnouncementEntity).save({
         title: randText({ charCount: 10 }),
-        template: AnnouncementTemplateType[0],
         userRoles: [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR],
         params: { content: randText() },
         startsAt: randFutureDate(),
@@ -297,7 +285,6 @@ describe('Admin / _services / announcements service suite', () => {
     it('should throw an error if the announcement is in ACTIVE status and arguments other than expiration date are passed', async () => {
       const announcement = await em.getRepository(AnnouncementEntity).save({
         title: randText({ charCount: 10 }),
-        template: AnnouncementTemplateType[0],
         userRoles: [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR],
         params: { content: randText() },
         startsAt: randPastDate(),
@@ -323,7 +310,6 @@ describe('Admin / _services / announcements service suite', () => {
     it('should throw an error if the announcement is in ACTIVE status and new expiration date is before activation date', async () => {
       const announcement = await em.getRepository(AnnouncementEntity).save({
         title: randText({ charCount: 10 }),
-        template: AnnouncementTemplateType[0],
         userRoles: [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR],
         params: { content: randText() },
         startsAt: randPastDate(),
@@ -357,7 +343,6 @@ describe('Admin / _services / announcements service suite', () => {
     it('should delete an announcement', async () => {
       const announcement = await em.getRepository(AnnouncementEntity).save({
         title: randText({ charCount: 10 }),
-        template: AnnouncementTemplateType[0],
         userRoles: [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR],
         params: { content: randText() },
         startsAt: randPastDate(),
@@ -386,7 +371,6 @@ describe('Admin / _services / announcements service suite', () => {
     it('should throw an error if the announcement is in DONE status', async () => {
       const announcement = await em.getRepository(AnnouncementEntity).save({
         title: randText({ charCount: 10 }),
-        template: AnnouncementTemplateType[0],
         userRoles: [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR],
         params: { content: randText() },
         startsAt: randPastDate(),

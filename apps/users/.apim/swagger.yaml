@@ -271,12 +271,6 @@ paths:
                       format: uuid
                     title:
                       type: string
-                    template:
-                      type: string
-                      enum:
-                        - GENERIC
-                        - FILTERED
-                        - DEPRECATED
                     userRoles:
                       type: array
                       items:

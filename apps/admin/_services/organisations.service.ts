@@ -12,7 +12,6 @@ import {
   UserRoleEntity
 } from '@admin/shared/entities';
 import {
-  AnnouncementTypeEnum,
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
   InnovationTaskStatusEnum,
@@ -23,23 +22,19 @@ import {
 } from '@admin/shared/enums';
 import { NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@admin/shared/errors';
 import { DatesHelper } from '@admin/shared/helpers';
-import { UrlModel } from '@admin/shared/models';
 import type { DomainService, IdentityProviderService, NotifierService } from '@admin/shared/services';
 import type { DomainContextType } from '@admin/shared/types';
 
 import SHARED_SYMBOLS from '@admin/shared/services/symbols';
-import { ENV } from '../_config';
-import type { AnnouncementsService } from './announcements.service';
 import { BaseService } from './base.service';
-import SYMBOLS from './symbols';
 
 @injectable()
 export class OrganisationsService extends BaseService {
   constructor(
     @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
     @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
-    @inject(SHARED_SYMBOLS.IdentityProviderService) private identityProviderService: IdentityProviderService,
-    @inject(SYMBOLS.AnnouncementsService) private announcementsService: AnnouncementsService
+    @inject(SHARED_SYMBOLS.IdentityProviderService) private identityProviderService: IdentityProviderService
+    // @inject(SYMBOLS.AnnouncementsService) private announcementsService: AnnouncementsService
   ) {
     super();
   }
@@ -293,12 +288,13 @@ export class OrganisationsService extends BaseService {
 
         // Just send the announcement if this is the first time the organization has been activated.
         if (DatesHelper.isDateEqual(unit.organisation.createdAt, unit.organisation.inactivatedAt)) {
-          await this.createOrganisationAnnouncement(
-            domainContext,
-            unit.organisation.id,
-            unit.organisation.name,
-            transaction
-          );
+          // TODO: Change this when new copy arrives.
+          // await this.createOrganisationAnnouncement(
+          //   domainContext,
+          //   unit.organisation.id,
+          //   unit.organisation.name,
+          //   transaction
+          // );
         }
       }
 
@@ -569,6 +565,7 @@ export class OrganisationsService extends BaseService {
     return savedUnit;
   }
 
+  /**
   private async createOrganisationAnnouncement(
     requestUser: DomainContextType,
     _organisationId: string,
@@ -642,5 +639,5 @@ export class OrganisationsService extends BaseService {
       {},
       transaction
     );
-  }
+  } */
 }

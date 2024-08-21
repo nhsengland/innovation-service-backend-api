@@ -23,17 +23,11 @@ export const BodySchema = Joi.object<BodyType>({
 
   userRoles: Joi.array().optional(),
 
-  params: Joi.alternatives([
-    Joi.object<AnnouncementParamsType['GENERIC']>({
-      content: Joi.string().optional(),
-      link: AnnouncementJoiLinkValidation.optional(),
-    }),
-    Joi.object<AnnouncementParamsType['FILTERED']>({
-      content: Joi.string().optional(),
-      link: AnnouncementJoiLinkValidation.optional(),
-      filters: Joi.object().optional()
-    })
-  ]),
+  params: Joi.object<BodyType['params']>({
+    content: Joi.string().optional(),
+    link: AnnouncementJoiLinkValidation.optional(),
+    filters: Joi.object().optional()
+  }),
 
   startsAt: Joi.date().optional(),
   expiresAt: Joi.date().optional(),

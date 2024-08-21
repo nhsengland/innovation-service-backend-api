@@ -28,7 +28,6 @@ const expected = [
   {
     id: randUuid(),
     title: randText(),
-    template: 'GENERIC' as const,
     startsAt: randPastDate(),
     expiresAt: randFutureDate(),
     params: {}
@@ -36,7 +35,6 @@ const expected = [
   {
     id: randUuid(),
     title: randText(),
-    template: 'GENERIC' as const,
     startsAt: randPastDate(),
     expiresAt: null,
     params: {}

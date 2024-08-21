@@ -10,7 +10,7 @@ export const AnnouncementJoiLinkValidation = Joi.object({
 export type AnnouncementScheduledBodyType = {
   title: string;
   userRoles: ServiceRoleEnum[];
-  params: AnnouncementParamsType[keyof AnnouncementParamsType];
+  params: AnnouncementParamsType;
   startsAt: Date;
   expiresAt?: Date;
   type: AnnouncementTypeEnum;
@@ -26,17 +26,11 @@ export const AnnouncementScheduledBodySchema = Joi.object<AnnouncementScheduledB
     )
     .min(1),
 
-  params: Joi.alternatives([
-    Joi.object<AnnouncementParamsType['GENERIC']>({
-      content: Joi.string().required(),
-      link: AnnouncementJoiLinkValidation.optional()
-    }),
-    Joi.object<AnnouncementParamsType['FILTERED']>({
-      content: Joi.string().required(),
-      link: AnnouncementJoiLinkValidation.optional(),
-      filters: Joi.object().required()
-    })
-  ]),
+  params: Joi.object<AnnouncementScheduledBodyType['params']>({
+    content: Joi.string().required(),
+    link: AnnouncementJoiLinkValidation.optional(),
+    filters: Joi.object().optional()
+  }),
 
   startsAt: Joi.date().required(),
   expiresAt: Joi.date().greater(Joi.ref('startsAt')).optional(),

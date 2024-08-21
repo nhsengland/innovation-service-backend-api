@@ -6,7 +6,7 @@ import type { EntityManager } from 'typeorm';
 import type { AnnouncementsService } from './announcements.service';
 import { AnnouncementEntity, AnnouncementUserEntity } from '@users/shared/entities';
 import { randBetweenDate, randText, randUuid } from '@ngneat/falso';
-import { AnnouncementTemplateType, ServiceRoleEnum } from '@users/shared/enums';
+import { ServiceRoleEnum } from '@users/shared/enums';
 import { DTOsHelper } from '@users/shared/tests/helpers/dtos.helper';
 import { AnnouncementErrorsEnum, NotFoundError } from '@users/shared/errors';
 
@@ -36,7 +36,6 @@ describe('Users / _services / announcements service suite', () => {
       // create announcements
       const announcement = {
         title: randText({ charCount: 10 }),
-        template: AnnouncementTemplateType[0],
         userRoles: [ServiceRoleEnum.ACCESSOR],
         startsAt: randBetweenDate({
           from: new Date(scenario.users.samAccessor.createdAt),
@@ -50,7 +49,6 @@ describe('Users / _services / announcements service suite', () => {
       // save other announcement for other role
       await em.getRepository(AnnouncementEntity).save({
         title: randText({ charCount: 10 }),
-        template: AnnouncementTemplateType[0],
         userRoles: [ServiceRoleEnum.INNOVATOR],
         startsAt: randBetweenDate({
           from: new Date(scenario.users.samAccessor.createdAt),
@@ -66,7 +64,6 @@ describe('Users / _services / announcements service suite', () => {
         {
           id: savedAnnouncement.id,
           title: savedAnnouncement.title,
-          template: savedAnnouncement.template,
           params: savedAnnouncement.params,
           startsAt: savedAnnouncement.startsAt,
           expiresAt: savedAnnouncement.expiresAt
@@ -86,7 +83,6 @@ describe('Users / _services / announcements service suite', () => {
       // create announcement
       const announcement = {
         title: randText({ charCount: 10 }),
-        template: AnnouncementTemplateType[0],
         userRoles: [ServiceRoleEnum.ACCESSOR],
         startsAt: randBetweenDate({
           from: new Date(scenario.users.samAccessor.createdAt),

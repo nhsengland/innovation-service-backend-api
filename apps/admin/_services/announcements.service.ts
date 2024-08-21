@@ -129,7 +129,7 @@ export class AnnouncementsService extends BaseService {
     data: {
       title: string;
       userRoles: ServiceRoleEnum[];
-      params: AnnouncementParamsType[keyof AnnouncementParamsType];
+      params: AnnouncementParamsType;
       startsAt: Date;
       expiresAt?: Date;
       type: AnnouncementTypeEnum;
@@ -147,7 +147,6 @@ export class AnnouncementsService extends BaseService {
     return await em.transaction(async transaction => {
       const savedAnnouncement = await transaction.save(AnnouncementEntity, {
         title: data.title,
-        template: 'filters' in data.params ? 'FILTERED' : 'GENERIC',
         userRoles: data.userRoles,
         params: data.params ?? null,
         startsAt: data.startsAt,
@@ -184,7 +183,7 @@ export class AnnouncementsService extends BaseService {
     data: {
       title?: string;
       userRoles?: ServiceRoleEnum[];
-      params?: AnnouncementParamsType[keyof AnnouncementParamsType];
+      params?: AnnouncementParamsType;
       startsAt?: Date;
       expiresAt?: Date;
       type?: AnnouncementTypeEnum;
