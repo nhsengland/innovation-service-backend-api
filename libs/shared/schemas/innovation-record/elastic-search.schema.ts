@@ -40,6 +40,8 @@ export type ElasticSearchDocumentType = {
   }[];
   assessment?: {
     id: string;
+    majorVersion: number;
+    minorVersion: number;
     assignedToId: string | null;
     updatedAt: Date;
     isExempt: boolean;
@@ -143,6 +145,8 @@ export const ElasticSearchSchema: CreateIndexParams = {
       assessment: {
         properties: {
           id: { type: 'keyword' },
+          majorVersion: { type: 'keyword' },
+          minorVersion: { type: 'keyword' },
           assignedToId: { type: 'keyword' },
           assignedToIdentityId: { type: 'keyword' },
           updatedAt: { type: 'date' },
