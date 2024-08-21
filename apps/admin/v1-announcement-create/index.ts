@@ -26,9 +26,9 @@ class V1AnnouncementsCreate {
 
       const irSchemaService = container.get<IRSchemaService>(SHARED_SYMBOLS.IRSchemaService);
       const schema = await irSchemaService.getSchema();
-      const validation = schema.model.getFilterSchemaValidation(requestBody.filters || []);
+      const validation = schema.model.getFilterSchemaValidation(requestBody.params.filters || []);
 
-      const body = { ...requestBody, ...JoiHelper.Validate<FilterPayload>(validation, requestBody.filters) };
+      const body = { ...requestBody, ...JoiHelper.Validate<FilterPayload>(validation, requestBody.params.filters) };
 
       const auth = await authorizationService.validate(context).checkAdminType().verify();
 

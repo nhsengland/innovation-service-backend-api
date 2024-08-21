@@ -40,7 +40,7 @@ describe('v1-admin-announcement-update Suite', () => {
           title: randText(),
           startsAt: randFutureDate(),
           userRoles: [ServiceRoleEnum.ACCESSOR],
-          params: {},
+          params: { content: randText() },
           type: AnnouncementTypeEnum.LOG_IN
         })
         .call<never>(azureFunction);
@@ -66,7 +66,7 @@ describe('v1-admin-announcement-update Suite', () => {
           title: randText(),
           startsAt: randFutureDate(),
           userRoles: [ServiceRoleEnum.ACCESSOR],
-          params: {},
+          params: { content: randText() },
           type: AnnouncementTypeEnum.LOG_IN
         })
         .call<ErrorResponseType>(azureFunction);

@@ -13,7 +13,7 @@ export const ParamsSchema = Joi.object<ParamsType>({
 export type BodyType = {
   title: string;
   userRoles: ServiceRoleEnum[];
-  params: AnnouncementParamsType[keyof AnnouncementParamsType];
+  params: AnnouncementParamsType;
   startsAt: Date;
   expiresAt?: Date;
   type: AnnouncementTypeEnum;

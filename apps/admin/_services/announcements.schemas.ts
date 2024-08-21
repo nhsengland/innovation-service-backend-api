@@ -1,4 +1,5 @@
 import { AnnouncementParamsType, AnnouncementTypeEnum, ServiceRoleEnum } from '@admin/shared/enums';
+import type { FilterPayload } from '@admin/shared/models/schema-engine/schema.model';
 import Joi from 'joi';
 
 export const AnnouncementJoiLinkValidation = Joi.object({
@@ -29,9 +30,16 @@ export const AnnouncementScheduledBodySchema = Joi.object<AnnouncementScheduledB
   params: Joi.object<AnnouncementScheduledBodyType['params']>({
     content: Joi.string().required(),
     link: AnnouncementJoiLinkValidation.optional(),
-    filters: Joi.object().optional()
+    filters: Joi.array()
+      .items(
+        Joi.object<FilterPayload>({
+          section: Joi.string().required(),
+          question: Joi.string().required(),
+          answers: Joi.array().items(Joi.string()).min(1).required()
+        })
+      )
+      .optional()
   }),
-
   startsAt: Joi.date().required(),
   expiresAt: Joi.date().greater(Joi.ref('startsAt')).optional(),
   type: Joi.string()

@@ -54,27 +54,30 @@ describe('v1-admin-announcement-create Suite', () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.allMighty)
         .setBody<BodyType>({
-          params: {},
+          params: {
+            content: randText(),
+            filters: [
+              {
+                section: 'INNOVATION_DESCRIPTION',
+                question: 'officeLocation',
+                answers: ['England', 'Scotland', 'Wales', 'Northern Ireland']
+              },
+              {
+                section: 'INNOVATION_DESCRIPTION',
+                question: 'categories',
+                answers: ['MEDICAL_DEVICE', 'MODELS_CARE', 'DATA_MONITORING']
+              },
+              {
+                section: 'CURRENT_CARE_PATHWAY',
+                question: 'hasMarketResearch',
+                answers: ['YES']
+              }
+            ]
+          },
           startsAt: randFutureDate(),
           title: randText(),
           userRoles: [ServiceRoleEnum.ASSESSMENT],
-          filters: [
-            {
-              section: 'INNOVATION_DESCRIPTION',
-              question: 'officeLocation',
-              answers: ['England', 'Scotland', 'Wales', 'Northern Ireland']
-            },
-            {
-              section: 'INNOVATION_DESCRIPTION',
-              question: 'categories',
-              answers: ['MEDICAL_DEVICE', 'MODELS_CARE', 'DATA_MONITORING']
-            },
-            {
-              section: 'CURRENT_CARE_PATHWAY',
-              question: 'hasMarketResearch',
-              answers: ['YES']
-            }
-          ]
+          type: AnnouncementTypeEnum.LOG_IN
         })
         .call<never>(azureFunction);
 

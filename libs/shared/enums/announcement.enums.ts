@@ -1,7 +1,9 @@
+import type { FilterPayload } from '../models/schema-engine/schema.model';
+
 export type AnnouncementParamsType = {
   content: string;
   link?: { label: string; url: string };
-  filters?: any; // TODO: put the right type afterwards.
+  filters?: FilterPayload[];
 };
 
 export enum AnnouncementStatusEnum {

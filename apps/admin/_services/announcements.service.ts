@@ -19,7 +19,7 @@ import {
   AnnouncementScheduledBodyType
 } from './announcements.schemas';
 import { BaseService } from './base.service';
-import { FilterPayload } from '@admin/shared/models/schema-engine/schema.model';
+import type { FilterPayload } from '@admin/shared/models/schema-engine/schema.model';
 
 @injectable()
 export class AnnouncementsService extends BaseService {
@@ -154,7 +154,6 @@ export class AnnouncementsService extends BaseService {
         type: data.type,
         createdBy: requestContext.id,
         updatedBy: requestContext.id,
-        type: data.type ?? AnnouncementTypeEnum.LOG_IN,
         filters: data.filters ?? null
       });
 
