@@ -15,8 +15,8 @@ import type { DomainContextType } from '@admin/shared/types';
 import {
   AnnouncementActiveBodySchema,
   AnnouncementActiveBodyType,
-  AnnouncementScheduledBodySchema,
-  AnnouncementScheduledBodyType
+  AnnouncementBodySchema,
+  AnnouncementBodyType
 } from './announcements.schemas';
 import { BaseService } from './base.service';
 import type { FilterPayload } from '@admin/shared/models/schema-engine/schema.model';
@@ -255,10 +255,10 @@ export class AnnouncementsService extends BaseService {
     status: AnnouncementStatusEnum,
     body: unknown,
     curAnnouncement: { startsAt: Date }
-  ): AnnouncementActiveBodyType | AnnouncementScheduledBodyType {
+  ): AnnouncementActiveBodyType | AnnouncementBodyType {
     try {
       if (status === AnnouncementStatusEnum.SCHEDULED) {
-        return JoiHelper.Validate<AnnouncementScheduledBodyType>(AnnouncementScheduledBodySchema, body);
+        return JoiHelper.Validate<AnnouncementBodyType>(AnnouncementBodySchema, body);
       }
 
       if (status === AnnouncementStatusEnum.ACTIVE) {

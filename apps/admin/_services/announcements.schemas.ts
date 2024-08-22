@@ -7,8 +7,8 @@ export const AnnouncementJoiLinkValidation = Joi.object({
   url: Joi.string()
 });
 
-// Announcement Schema for scheduled status
-export type AnnouncementScheduledBodyType = {
+// Announcement Schema for regular announcements and scheduled status
+export type AnnouncementBodyType = {
   title: string;
   userRoles: ServiceRoleEnum[];
   params: AnnouncementParamsType;
@@ -16,7 +16,7 @@ export type AnnouncementScheduledBodyType = {
   expiresAt?: Date;
   type: AnnouncementTypeEnum;
 };
-export const AnnouncementScheduledBodySchema = Joi.object<AnnouncementScheduledBodyType>({
+export const AnnouncementBodySchema = Joi.object<AnnouncementBodyType>({
   title: Joi.string().max(100).required().description('Title of the announcement'),
   userRoles: Joi.array()
     .items(
@@ -27,7 +27,7 @@ export const AnnouncementScheduledBodySchema = Joi.object<AnnouncementScheduledB
     )
     .min(1),
 
-  params: Joi.object<AnnouncementScheduledBodyType['params']>({
+  params: Joi.object<AnnouncementBodyType['params']>({
     content: Joi.string().required(),
     link: AnnouncementJoiLinkValidation.optional(),
     filters: Joi.array()

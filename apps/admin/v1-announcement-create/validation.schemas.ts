@@ -1,4 +1,4 @@
-import { AnnouncementScheduledBodySchema, AnnouncementScheduledBodyType } from '../_services/announcements.schemas';
+import { AnnouncementBodySchema, AnnouncementBodyType } from '../_services/announcements.schemas';
 
-export type BodyType = AnnouncementScheduledBodyType;
-export const BodySchema = AnnouncementScheduledBodySchema;
+export type BodyType = AnnouncementBodyType;
+export const BodySchema = AnnouncementBodySchema;
