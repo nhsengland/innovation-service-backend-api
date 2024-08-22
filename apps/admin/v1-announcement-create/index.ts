@@ -22,13 +22,15 @@ class V1AnnouncementsCreate {
     const announcementsService = container.get<AnnouncementsService>(SYMBOLS.AnnouncementsService);
 
     try {
-      const requestBody = JoiHelper.Validate<BodyType>(BodySchema, request.body);
+      let body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
-      const irSchemaService = container.get<IRSchemaService>(SHARED_SYMBOLS.IRSchemaService);
-      const schema = await irSchemaService.getSchema();
-      const validation = schema.model.getFilterSchemaValidation(requestBody.params.filters || []);
+      if (body.params.filters) {
+        const irSchemaService = container.get<IRSchemaService>(SHARED_SYMBOLS.IRSchemaService);
+        const schema = await irSchemaService.getSchema();
+        const validation = schema.model.getFilterSchemaValidation(body.params.filters || []);
 
-      const body = { ...requestBody, ...JoiHelper.Validate<FilterPayload>(validation, requestBody.params.filters) };
+        body = { ...body, ...JoiHelper.Validate<FilterPayload>(validation, body.params.filters) };
+      }
 
       const auth = await authorizationService.validate(context).checkAdminType().verify();
 
