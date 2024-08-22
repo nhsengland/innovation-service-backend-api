@@ -4,7 +4,7 @@ import Joi from 'joi';
 
 export const AnnouncementJoiLinkValidation = Joi.object({
   label: Joi.string(),
-  url: Joi.string()
+  url: Joi.string().uri()
 });
 
 // Announcement Schema for regular announcements and scheduled status
