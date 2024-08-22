@@ -18,6 +18,7 @@ export type BodyType = {
   startsAt: Date;
   expiresAt?: Date;
   type: AnnouncementTypeEnum;
+  sendEmail?: boolean;
 };
 export const BodySchema = Joi.object<BodyType>({
   title: Joi.string().max(100).optional(),
@@ -42,5 +43,6 @@ export const BodySchema = Joi.object<BodyType>({
   expiresAt: Joi.date().optional(),
   type: Joi.string()
     .valid(...Object.values(AnnouncementTypeEnum))
-    .optional()
+    .optional(),
+  sendEmail: Joi.boolean().optional()
 }).required();
