@@ -447,6 +447,16 @@ export class UsersService extends BaseService {
     return { id: role.id };
   }
 
+  async getUserMfaInfo(id: string): ReturnType<IdentityProviderService['getMfaInfo']> {
+    const identityId = await this.domainService.users.getUserIdentityId(id);
+    return this.identityProviderService.getMfaInfo(identityId);
+  }
+
+  async upsertUserMfa(id: string, data: Parameters<IdentityProviderService['upsertUserMfa']>[1]): Promise<void> {
+    const identityId = await this.domainService.users.getUserIdentityId(id);
+    return this.identityProviderService.upsertUserMfa(identityId, data);
+  }
+
   /**
    * converts the CreateRolesType into an array of roles to be saved in the database
    * @param data the create roles type

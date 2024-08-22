@@ -644,6 +644,21 @@ export class DomainUsersService {
     });
   }
 
+  async getUserIdentityId(id: string): Promise<string> {
+    const user = await this.sqlConnection
+      .createQueryBuilder(UserEntity, 'user')
+      .select('user.identityId')
+      .where('id = :id', { id })
+      .andWhere('status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED })
+      .getOne();
+
+    if (!user) {
+      throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND);
+    }
+
+    return user.identityId;
+  }
+
   private async getUserIdentityIdByEmail(email: string): Promise<string> {
     const user = await this.identityProviderService.getUserInfoByEmail(email);
     if (!user) {
