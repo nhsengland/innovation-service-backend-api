@@ -2,11 +2,11 @@ import axios, { AxiosResponse } from 'axios';
 import { inject, injectable } from 'inversify';
 
 import {
+  BadRequestError,
   ConflictError,
   GenericErrorsEnum,
   InternalServerError,
   NotFoundError,
-  BadRequestError,
   ServiceUnavailableError,
   UserErrorsEnum
 } from '../../errors';
@@ -408,32 +408,17 @@ export class IdentityProviderService {
     await this.cache.delete(identityId);
   }
 
-  async getMfaExtensionType(identityId: string): Promise<'none' | 'email' | 'phone'> {
-    await this.verifyAccessToken();
+  async getMfaInfo(
+    identityId: string
+  ): Promise<{ type: 'none' } | { type: 'email' } | { type: 'phone'; phoneNumber?: string }> {
+    const type = await this.getMfaExtensionType(identityId);
 
-    const response = await axios
-      .get<any>(`https://graph.microsoft.com/v1.0/users/${identityId}?$select=${this.constants.mfa_extension_key}`, {
-        headers: { Authorization: `Bearer ${this.sessionData.token}` }
-      })
-      .catch(error => {
-        throw this.getError(error.response.status, error.response.data.message);
-      });
+    if (type === 'phone') {
+      const phoneNumber = await this.getMfaPhoneNumber(identityId);
+      return { type, phoneNumber: phoneNumber ?? undefined };
+    }
 
-    return response.data[this.constants.mfa_extension_key] ?? 'none';
-  }
-
-  async updateMfaExtensionType(identityId: string, type: 'none' | 'email' | 'phone'): Promise<void> {
-    await this.verifyAccessToken();
-
-    await axios
-      .patch<any>(
-        `https://graph.microsoft.com/v1.0/users/${identityId}`,
-        { [this.constants.mfa_extension_key]: type },
-        { headers: { Authorization: `Bearer ${this.sessionData.token}` } }
-      )
-      .catch(error => {
-        throw this.getError(error.response.status, error.response.data.message);
-      });
+    return { type };
   }
 
   async getMfaPhoneNumber(identityId: string): Promise<string | null> {
@@ -454,7 +439,49 @@ export class IdentityProviderService {
     }
   }
 
-  async upsertMfaPhoneNumber(identityId: string, phoneNumber: string): Promise<void> {
+  async upsertUserMfa(
+    identityId: string,
+    data: { type: 'none' } | { type: 'email' } | { type: 'phone'; phoneNumber: string }
+  ): Promise<void> {
+    const type = await this.getMfaExtensionType(identityId);
+
+    if (data.type === 'phone') {
+      await this.upsertMfaPhoneNumber(identityId, data.phoneNumber);
+    } else if (data.type === type) {
+      return;
+    }
+
+    await this.updateMfaExtensionType(identityId, data.type);
+  }
+
+  private async getMfaExtensionType(identityId: string): Promise<'none' | 'email' | 'phone'> {
+    await this.verifyAccessToken();
+
+    const response = await axios
+      .get<any>(`https://graph.microsoft.com/v1.0/users/${identityId}?$select=${this.constants.mfa_extension_key}`, {
+        headers: { Authorization: `Bearer ${this.sessionData.token}` }
+      })
+      .catch(error => {
+        throw this.getError(error.response.status, error.response.data.message);
+      });
+
+    return response.data[this.constants.mfa_extension_key] ?? 'none';
+  }
+
+  private async updateMfaExtensionType(identityId: string, type: 'none' | 'email' | 'phone'): Promise<void> {
+    await this.verifyAccessToken();
+
+    await axios
+      .patch<any>(
+        `https://graph.microsoft.com/v1.0/users/${identityId}`,
+        { [this.constants.mfa_extension_key]: type },
+        { headers: { Authorization: `Bearer ${this.sessionData.token}` } }
+      )
+      .catch(error => {
+        throw this.getError(error.response.status, error.response.data.message);
+      });
+  }
+  private async upsertMfaPhoneNumber(identityId: string, phoneNumber: string): Promise<void> {
     const curPhoneNumber = await this.getMfaPhoneNumber(identityId);
 
     // No need to hit B2C if the user is trying to update to the same phone.

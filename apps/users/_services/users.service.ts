@@ -469,31 +469,14 @@ export class UsersService extends BaseService {
     await this.domainService.users.deleteUser(domainContext, domainContext.id, data, entityManager);
   }
 
-  async getUserMfaInfo(
-    domainContext: DomainContextType
-  ): Promise<{ type: 'none' } | { type: 'email' } | { type: 'phone'; phoneNumber?: string }> {
-    const type = await this.identityProviderService.getMfaExtensionType(domainContext.identityId);
-
-    if (type === 'phone') {
-      const phoneNumber = await this.identityProviderService.getMfaPhoneNumber(domainContext.identityId);
-      return { type, phoneNumber: phoneNumber ?? undefined };
-    }
-
-    return { type };
+  async getUserMfaInfo(domainContext: DomainContextType): ReturnType<IdentityProviderService['getMfaInfo']> {
+    return this.identityProviderService.getMfaInfo(domainContext.identityId);
   }
 
   async upsertUserMfa(
     domainContext: DomainContextType,
-    data: { type: 'none' } | { type: 'email' } | { type: 'phone'; phoneNumber: string }
+    data: Parameters<IdentityProviderService['upsertUserMfa']>[1]
   ): Promise<void> {
-    const type = await this.identityProviderService.getMfaExtensionType(domainContext.identityId);
-
-    if (data.type === 'phone') {
-      await this.identityProviderService.upsertMfaPhoneNumber(domainContext.identityId, data.phoneNumber);
-    } else if (data.type === type) {
-      return;
-    }
-
-    await this.identityProviderService.updateMfaExtensionType(domainContext.identityId, data.type);
+    return this.identityProviderService.upsertUserMfa(domainContext.identityId, data);
   }
 }
