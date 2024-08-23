@@ -18,6 +18,7 @@ export type BodyType = {
   startsAt: Date;
   expiresAt?: Date;
   type: AnnouncementTypeEnum;
+  filters?: FilterPayload[];
   sendEmail?: boolean;
 };
 export const BodySchema = Joi.object<BodyType>({
@@ -27,16 +28,7 @@ export const BodySchema = Joi.object<BodyType>({
 
   params: Joi.object<BodyType['params']>({
     content: Joi.string().optional(),
-    link: AnnouncementJoiLinkValidation.optional(),
-    filters: Joi.array()
-      .items(
-        Joi.object<FilterPayload>({
-          section: Joi.string().required(),
-          question: Joi.string().required(),
-          answers: Joi.array().items(Joi.string()).min(1).required()
-        })
-      )
-      .optional()
+    link: AnnouncementJoiLinkValidation.optional()
   }),
 
   startsAt: Joi.date().optional(),
@@ -44,5 +36,13 @@ export const BodySchema = Joi.object<BodyType>({
   type: Joi.string()
     .valid(...Object.values(AnnouncementTypeEnum))
     .optional(),
-  sendEmail: Joi.boolean().optional()
+  filters: Joi.array()
+    .items(
+      Joi.object<FilterPayload>({
+        section: Joi.string().required(),
+        question: Joi.string().required(),
+        answers: Joi.array().items(Joi.string()).min(1).required()
+      })
+    )
+    .optional()
 }).required();
