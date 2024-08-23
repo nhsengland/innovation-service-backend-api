@@ -91,6 +91,7 @@ export class AnnouncementsService extends BaseService {
     startsAt: Date;
     expiresAt: null | Date;
     status: AnnouncementStatusEnum;
+    filters: null | FilterPayload[];
   }> {
     const em = entityManager ?? this.sqlConnection.manager;
 
@@ -120,7 +121,8 @@ export class AnnouncementsService extends BaseService {
       params: announcement.params,
       startsAt: announcement.startsAt,
       expiresAt: announcement.expiresAt,
-      status: this.getAnnouncementStatus(announcement.startsAt, announcement.expiresAt, announcement.deletedAt)
+      status: this.getAnnouncementStatus(announcement.startsAt, announcement.expiresAt, announcement.deletedAt),
+      filters: announcement.filters
     };
   }
 
@@ -186,6 +188,7 @@ export class AnnouncementsService extends BaseService {
       startsAt?: Date;
       expiresAt?: Date;
       type?: AnnouncementTypeEnum;
+      filters?: FilterPayload[];
     },
     entityManager?: EntityManager
   ): Promise<void> {
@@ -199,7 +202,8 @@ export class AnnouncementsService extends BaseService {
         'announcement.params',
         'announcement.startsAt',
         'announcement.expiresAt',
-        'announcement.deletedAt'
+        'announcement.deletedAt',
+        'announcement.type'
       ])
       .where('announcement.id = :announcementId', { announcementId })
       .getOne();

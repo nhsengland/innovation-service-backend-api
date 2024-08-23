@@ -24,12 +24,12 @@ class V1AnnouncementsCreate {
     try {
       let body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
-      if (body.params.filters) {
+      if (body.filters) {
         const irSchemaService = container.get<IRSchemaService>(SHARED_SYMBOLS.IRSchemaService);
         const schema = await irSchemaService.getSchema();
-        const validation = schema.model.getFilterSchemaValidation(body.params.filters || []);
+        const validation = schema.model.getFilterSchemaValidation(body.filters || []);
 
-        body = { ...body, ...JoiHelper.Validate<FilterPayload>(validation, body.params.filters) };
+        body = { ...body, ...JoiHelper.Validate<FilterPayload>(validation, body.filters) };
       }
 
       const auth = await authorizationService.validate(context).checkAdminType().verify();

@@ -55,29 +55,29 @@ describe('v1-admin-announcement-create Suite', () => {
         .setAuth(scenario.users.allMighty)
         .setBody<BodyType>({
           params: {
-            content: randText(),
-            filters: [
-              {
-                section: 'INNOVATION_DESCRIPTION',
-                question: 'officeLocation',
-                answers: ['England', 'Scotland', 'Wales', 'Northern Ireland']
-              },
-              {
-                section: 'INNOVATION_DESCRIPTION',
-                question: 'categories',
-                answers: ['MEDICAL_DEVICE', 'MODELS_CARE', 'DATA_MONITORING']
-              },
-              {
-                section: 'CURRENT_CARE_PATHWAY',
-                question: 'hasMarketResearch',
-                answers: ['YES']
-              }
-            ]
+            content: randText()
           },
           startsAt: randFutureDate(),
           title: randText(),
           userRoles: [ServiceRoleEnum.ASSESSMENT],
-          type: AnnouncementTypeEnum.LOG_IN
+          type: AnnouncementTypeEnum.LOG_IN,
+          filters: [
+            {
+              section: 'INNOVATION_DESCRIPTION',
+              question: 'officeLocation',
+              answers: ['England', 'Scotland', 'Wales', 'Northern Ireland']
+            },
+            {
+              section: 'INNOVATION_DESCRIPTION',
+              question: 'categories',
+              answers: ['MEDICAL_DEVICE', 'MODELS_CARE', 'DATA_MONITORING']
+            },
+            {
+              section: 'CURRENT_CARE_PATHWAY',
+              question: 'hasMarketResearch',
+              answers: ['YES']
+            }
+          ]
         })
         .call<never>(azureFunction);
 
