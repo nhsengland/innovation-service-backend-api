@@ -1,0 +1,61 @@
+WITH x AS (
+  SELECT id,document FROM innovation_document
+) SELECT 
+IIF(
+  JSON_VALUE(document, '$.DEPLOYMENT.isDeployed') = 'YES', 
+  (SELECT COUNT(*) FROM OPENJSON(document, '$.DEPLOYMENT.deploymentPlans')),
+  NULL) as deploymentCount,
+(
+  SELECT TOP 1 'YES'
+  FROM OPENJSON(document, '$.REGULATIONS_AND_STANDARDS.standards')
+  WITH (
+    type varchar(250),
+	hasMet varchar(10)
+  )
+  WHERE type IN ('CE_UKCA_NON_MEDICAL', 'CE_UKCA_CLASS_I', 'CE_UKCA_CLASS_II_A', 'CE_UKCA_CLASS_II_B', 'CE_UKCA_CLASS_III') AND hasMet='YES'
+) as ukcace_certification,
+(
+  SELECT TOP 1 'YES'
+  FROM OPENJSON(document, '$.REGULATIONS_AND_STANDARDS.standards')
+  WITH (
+    type varchar(250),
+	hasMet varchar(10)
+  )
+  WHERE type='DTAC' AND hasMet='YES'
+) as dtac_certification,
+(
+  SELECT TOP 1 'YES'
+  FROM OPENJSON(document, '$.evidences')
+  WITH (
+    evidenceSubmitType varchar(100)
+  )
+  WHERE evidenceSubmitType = 'CLINICAL_OR_CARE'
+) as evidence_clinical_or_care,
+(
+  SELECT TOP 1 'YES'
+  FROM OPENJSON(document, '$.evidences')
+  WITH (
+    evidenceSubmitType varchar(100)
+  )
+  WHERE evidenceSubmitType = 'REAL_WORLD'
+) as evidence_clinical_or_care,
+'todo' as assessment_real_world,
+IIF(JSON_VALUE(document, '$.EVIDENCE_OF_EFFECTIVENESS.hasEvidence') = 'YES', 'YES', NULL) as evidence_of_impact,
+'todo' as assessment_evidence_prove_efficacy,
+(
+  SELECT TOP 1 'YES'
+  FROM OPENJSON(document, '$.evidences')
+  WITH (
+    evidenceSubmitType varchar(100)
+  )
+  WHERE evidenceSubmitType = 'COST_IMPACT_OR_ECONOMIC'
+) as evidence_cost_impact,
+IIF(JSON_VALUE(document, '$.UNDERSTANDING_OF_NEEDS.hasProductServiceOrPrototype') = 'YES' , 'YES' , NULL) as working_product,
+IIF(JSON_VALUE(document, '$.UNDERSTANDING_OF_NEEDS.carbonReductionPlan') = 'YES', 'YES', NULL) as carbon_reduction_plan,
+'todo' as htw_ter_complete,
+'todo' as nice_guidance_complete,
+'todo' as sc_procurement_route_identified
+
+FROM x
+where id = 'E2D4241C-CC49-EF11-991C-6045BDC1BFFD';
+
