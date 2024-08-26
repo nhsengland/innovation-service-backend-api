@@ -943,8 +943,8 @@ export class DomainInnovationsService {
               case 'checkbox-array':
                 qb.orWhere(
                   `
-                  EXISTS(
-                    SELECT *
+                  EXISTS (
+                    SELECT TOP 1 *
                     FROM OPENJSON(JSON_QUERY(document.document, :${id}_key))
                     WHERE value IN (:...${id}_values)
                   )
