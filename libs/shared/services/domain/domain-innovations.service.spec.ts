@@ -48,7 +48,7 @@ describe('Shared / services / innovations suite', () => {
         archivedStatus: null,
         statusUpdatedAt: expect.any(Date),
         groupedStatus: InnovationGroupedStatusEnum.RECEIVING_SUPPORT,
-        submittedAt: null, // I believe this shouldn't be null but it's the current seed
+        submittedAt: expect.any(Date),
         updatedAt: expect.any(Date),
         lastAssessmentRequestAt: null, // I believe this shouldn't be null but it's the current seed
         document: expect.anything(), // TODO
