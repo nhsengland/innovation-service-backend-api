@@ -133,7 +133,7 @@ describe('Notifications / _services / recipients service suite', () => {
     });
 
     it('Should fail to get non-existent innovation info', async () => {
-      await expect(() => sut.innovationInfo(randUuid())).rejects.toThrowError(
+      await expect(() => sut.innovationInfo(randUuid())).rejects.toThrow(
         new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND)
       );
     });
@@ -142,7 +142,7 @@ describe('Notifications / _services / recipients service suite', () => {
       const dbInnovation = scenario.users.johnInnovator.innovations.johnInnovation;
       await em.getRepository(InnovationEntity).softRemove({ id: dbInnovation.id });
 
-      await expect(() => sut.innovationInfo(dbInnovation.id, false, em)).rejects.toThrowError(
+      await expect(() => sut.innovationInfo(dbInnovation.id, false, em)).rejects.toThrow(
         new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND)
       );
     });
@@ -311,7 +311,7 @@ describe('Notifications / _services / recipients service suite', () => {
 
   describe('innovationSharedOrganisationsWithUnits', () => {
     it('Should return not found if innovation not found', async () => {
-      await expect(() => sut.innovationSharedOrganisationsWithUnits(randUuid())).rejects.toThrowError(
+      await expect(() => sut.innovationSharedOrganisationsWithUnits(randUuid())).rejects.toThrow(
         new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND)
       );
     });
@@ -516,7 +516,7 @@ describe('Notifications / _services / recipients service suite', () => {
     });
 
     it('Should fail to get non-existent task info', async () => {
-      await expect(() => sut.taskInfoWithOwner(randUuid())).rejects.toThrowError(
+      await expect(() => sut.taskInfoWithOwner(randUuid())).rejects.toThrow(
         new NotFoundError(InnovationErrorsEnum.INNOVATION_TASK_NOT_FOUND)
       );
     });
@@ -534,7 +534,7 @@ describe('Notifications / _services / recipients service suite', () => {
     });
 
     it('Throws error not found if thread not found', async () => {
-      await expect(() => sut.threadInfo(randUuid())).rejects.toThrowError(
+      await expect(() => sut.threadInfo(randUuid())).rejects.toThrow(
         new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND)
       );
     });
@@ -642,7 +642,7 @@ describe('Notifications / _services / recipients service suite', () => {
     it('Throws an error if thread not found', async () => {
       mock.mockRejectedValueOnce(new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND));
 
-      await expect(sut.threadFollowerRecipients(thread.id)).rejects.toThrowError(
+      await expect(sut.threadFollowerRecipients(thread.id)).rejects.toThrow(
         new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND)
       );
     });
@@ -661,7 +661,7 @@ describe('Notifications / _services / recipients service suite', () => {
     });
 
     it('Throws an error if transfer not found', async () => {
-      await expect(() => sut.innovationTransferInfoWithOwner(randUuid())).rejects.toThrowError(
+      await expect(() => sut.innovationTransferInfoWithOwner(randUuid())).rejects.toThrow(
         new NotFoundError(InnovationErrorsEnum.INNOVATION_TRANSFER_NOT_FOUND)
       );
     });
@@ -692,7 +692,7 @@ describe('Notifications / _services / recipients service suite', () => {
     });
 
     it('Throws an error if collaboration not found', async () => {
-      await expect(() => sut.innovationCollaborationInfo(randUuid())).rejects.toThrowError(
+      await expect(() => sut.innovationCollaborationInfo(randUuid())).rejects.toThrow(
         new NotFoundError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_NOT_FOUND)
       );
     });
@@ -799,7 +799,7 @@ describe('Notifications / _services / recipients service suite', () => {
     });
 
     it('throws an error if organisation unit not found', async () => {
-      await expect(sut.organisationUnitInfo(randUuid())).rejects.toThrowError(
+      await expect(sut.organisationUnitInfo(randUuid())).rejects.toThrow(
         new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND)
       );
     });
@@ -928,7 +928,7 @@ describe('Notifications / _services / recipients service suite', () => {
     });
 
     it('throws error if array is empty', async () => {
-      await expect(sut.innovationsWithoutSupportForNDays([], em)).rejects.toThrowError(
+      await expect(sut.innovationsWithoutSupportForNDays([], em)).rejects.toThrow(
         new UnprocessableEntityError(GenericErrorsEnum.INVALID_PAYLOAD)
       );
     });
@@ -1073,7 +1073,7 @@ describe('Notifications / _services / recipients service suite', () => {
     });
 
     it('throws an error if export request not found', async () => {
-      await expect(sut.getExportRequestInfo(randUuid())).rejects.toThrowError(
+      await expect(sut.getExportRequestInfo(randUuid())).rejects.toThrow(
         new NotFoundError(InnovationErrorsEnum.INNOVATION_EXPORT_REQUEST_NOT_FOUND)
       );
     });

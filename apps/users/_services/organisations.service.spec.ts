@@ -218,7 +218,7 @@ describe('Users / _services / organisations service suite', () => {
     });
 
     it(`should throw an error if the organisation doesn't exist`, async () => {
-      await expect(() => sut.getOrganisationInfo(randUuid(), 'full')).rejects.toThrowError(
+      await expect(() => sut.getOrganisationInfo(randUuid(), 'full')).rejects.toThrow(
         new NotFoundError(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND)
       );
     });
@@ -254,7 +254,7 @@ describe('Users / _services / organisations service suite', () => {
     });
 
     it(`should throw an error if the organisation unit doesn't exist`, async () => {
-      await expect(() => sut.getOrganisationUnitInfo(randUuid())).rejects.toThrowError(
+      await expect(() => sut.getOrganisationUnitInfo(randUuid())).rejects.toThrow(
         new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND)
       );
     });

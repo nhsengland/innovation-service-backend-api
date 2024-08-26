@@ -118,7 +118,7 @@ describe('Users / _services / announcements service suite', () => {
     it(`should throw an error if the announcement doesn't exist`, async () => {
       await expect(() =>
         sut.readUserAnnouncement(DTOsHelper.getUserRequestContext(scenario.users.adamInnovator), randUuid(), em)
-      ).rejects.toThrowError(new NotFoundError(AnnouncementErrorsEnum.ANNOUNCEMENT_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundError(AnnouncementErrorsEnum.ANNOUNCEMENT_NOT_FOUND));
     });
   });
 });
