@@ -46,7 +46,8 @@ export const AnnouncementBodySchema = Joi.object<AnnouncementBodyType>({
         answers: Joi.array().items(Joi.string()).min(1).required()
       })
     )
-    .optional()
+    .optional(),
+  sendEmail: Joi.boolean().default(false).optional()
 }).required();
 
 // Announcement Schema for active status

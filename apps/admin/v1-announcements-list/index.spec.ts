@@ -36,7 +36,7 @@ const expected = {
       title: randText(),
       userRoles: [ServiceRoleEnum.ASSESSMENT],
       type: AnnouncementTypeEnum.LOG_IN,
-      filters: null
+      sendEmail: true
     }
   ]
 };

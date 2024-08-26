@@ -41,7 +41,8 @@ describe('v1-admin-announcement-create Suite', () => {
           startsAt: randFutureDate(),
           title: randText(),
           userRoles: [ServiceRoleEnum.ASSESSMENT],
-          type: AnnouncementTypeEnum.LOG_IN
+          type: AnnouncementTypeEnum.LOG_IN,
+          sendEmail: true
         })
         .call<never>(azureFunction);
 
@@ -77,7 +78,8 @@ describe('v1-admin-announcement-create Suite', () => {
               question: 'hasMarketResearch',
               answers: ['YES']
             }
-          ]
+          ],
+          sendEmail: false
         })
         .call<never>(azureFunction);
 

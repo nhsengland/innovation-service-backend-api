@@ -34,7 +34,9 @@ class V1AnnouncementsInfo {
         params: result.params,
         startsAt: result.startsAt,
         expiresAt: result.expiresAt,
-        status: result.status
+        status: result.status,
+        filters: result.filters,
+        sendEmail: result.sendEmail
       });
 
       return;

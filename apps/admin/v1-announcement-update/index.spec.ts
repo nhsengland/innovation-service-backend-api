@@ -41,7 +41,8 @@ describe('v1-admin-announcement-update Suite', () => {
           startsAt: randFutureDate(),
           userRoles: [ServiceRoleEnum.ACCESSOR],
           params: { content: randText() },
-          type: AnnouncementTypeEnum.LOG_IN
+          type: AnnouncementTypeEnum.LOG_IN,
+          sendEmail: true
         })
         .call<never>(azureFunction);
 

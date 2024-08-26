@@ -44,5 +44,6 @@ export const BodySchema = Joi.object<BodyType>({
         answers: Joi.array().items(Joi.string()).min(1).required()
       })
     )
-    .optional()
+    .optional(),
+  sendEmail: Joi.boolean().optional()
 }).required();

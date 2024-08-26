@@ -31,7 +31,9 @@ const expected = {
   startsAt: randFutureDate(),
   status: AnnouncementStatusEnum.SCHEDULED,
   title: randText(),
-  userRoles: [ServiceRoleEnum.ASSESSMENT]
+  userRoles: [ServiceRoleEnum.ASSESSMENT],
+  filters: null,
+  sendEmail: false
 };
 const mock = jest.spyOn(AnnouncementsService.prototype, 'getAnnouncementInfo').mockResolvedValue(expected);
 
