@@ -54,7 +54,7 @@ export default openApi(V1AnnouncementsInfo.httpTrigger as AzureFunction, '/v1/an
     parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     responses: {
       '200': {
-        description: 'Announcement created.',
+        description: 'Announcement info retrieved.',
         content: {
           'application/json': {
             schema: {
@@ -64,7 +64,20 @@ export default openApi(V1AnnouncementsInfo.httpTrigger as AzureFunction, '/v1/an
                 userRoles: { type: 'array', items: { type: 'string', enum: Object.keys(ServiceRoleEnum) } },
                 params: { type: 'object' },
                 createdAt: { type: 'string', format: 'date-time' },
-                expiresAt: { type: 'string', format: 'date-time' }
+                expiresAt: { type: 'string', format: 'date-time' },
+                status: { type: 'string' },
+                filters: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      section: { type: 'string' },
+                      question: { type: 'string' },
+                      answers: { type: 'array', items: { type: 'string' } }
+                    }
+                  }
+                },
+                sendEmail: { type: 'boolean' }
               }
             }
           }
