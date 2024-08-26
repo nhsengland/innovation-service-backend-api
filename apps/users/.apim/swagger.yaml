@@ -55,11 +55,17 @@ paths:
                           enum:
                             - YES
                             - NO
+                        ANNOUNCEMENTS:
+                          type: string
+                          enum:
+                            - YES
+                            - NO
                       required:
                         - NEEDS_ASSESSMENT
                         - TASK
                         - MESSAGES
                         - INNOVATION_MANAGEMENT
+                        - ANNOUNCEMENTS
                       additionalProperties: false
                       x-required: true
                     - type: object
@@ -140,6 +146,11 @@ paths:
                           enum:
                             - YES
                             - NO
+                        ANNOUNCEMENTS:
+                          type: string
+                          enum:
+                            - YES
+                            - NO
                       required:
                         - ORGANISATION_SUGGESTIONS
                         - SUPPORT
@@ -148,6 +159,7 @@ paths:
                         - INNOVATION_MANAGEMENT
                         - AUTOMATIC
                         - NOTIFY_ME
+                        - ANNOUNCEMENTS
                       additionalProperties: false
                       x-required: true
                     - type: object
@@ -182,6 +194,11 @@ paths:
                           enum:
                             - YES
                             - NO
+                        ANNOUNCEMENTS:
+                          type: string
+                          enum:
+                            - YES
+                            - NO
                       required:
                         - SUPPORT
                         - MESSAGES
@@ -189,6 +206,7 @@ paths:
                         - DOCUMENTS
                         - AUTOMATIC
                         - USER_RESEARCH_SURVEYS
+                        - ANNOUNCEMENTS
                       additionalProperties: false
                       x-required: true
               additionalProperties: false
@@ -679,6 +697,7 @@ paths:
                       - ACCOUNT
                       - AUTOMATIC
                       - NOTIFY_ME
+                      - ANNOUNCEMENTS
                   default: []
                 contextDetails:
                   type: array
@@ -760,6 +779,7 @@ paths:
                       - INNOVATION_RECORD_UPDATED
                       - REMINDER
                       - SUGGESTED_SUPPORT_UPDATED
+                      - AN01_NEW_ANNOUNCEMENT
                   default: []
                 dismissAll:
                   type: boolean
@@ -829,6 +849,7 @@ paths:
                 - ACCOUNT
                 - AUTOMATIC
                 - NOTIFY_ME
+                - ANNOUNCEMENTS
             description: The context types to filter by
             default: []
         - name: unreadOnly
@@ -892,6 +913,7 @@ paths:
                             - ACCOUNT
                             - AUTOMATIC
                             - NOTIFY_ME
+                            - ANNOUNCEMENTS
                           description: The notification context category
                         contextDetail:
                           type: string
@@ -971,6 +993,7 @@ paths:
                             - INNOVATION_RECORD_UPDATED
                             - REMINDER
                             - SUGGESTED_SUPPORT_UPDATED
+                            - AN01_NEW_ANNOUNCEMENT
                           description: The notification context detail
                         contextId:
                           type: string
