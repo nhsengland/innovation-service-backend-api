@@ -27,6 +27,7 @@ class CreateInnovationTransfer {
         .validate(context)
         .setInnovation(body.innovationId)
         .checkInnovatorType()
+        .checkAdminType()
         .checkInnovation({ isOwner: true })
         .verify();
       const requestUser = auth.getUserInfo();
