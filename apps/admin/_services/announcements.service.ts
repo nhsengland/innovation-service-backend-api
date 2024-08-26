@@ -41,7 +41,6 @@ export class AnnouncementsService extends BaseService {
       expiresAt: null | Date;
       status: AnnouncementStatusEnum;
       type: AnnouncementTypeEnum;
-      sendEmail: boolean;
     }[];
   }> {
     const em = entityManager ?? this.sqlConnection.manager;
@@ -57,8 +56,7 @@ export class AnnouncementsService extends BaseService {
         'announcement.startsAt',
         'announcement.expiresAt',
         'announcement.type',
-        'announcement.deletedAt',
-        'announcement.sendEmail'
+        'announcement.deletedAt'
       ])
       .skip(pagination.skip)
       .take(pagination.take)
@@ -75,8 +73,7 @@ export class AnnouncementsService extends BaseService {
         startsAt: announcement.startsAt,
         expiresAt: announcement.expiresAt,
         status: this.getAnnouncementStatus(announcement.startsAt, announcement.expiresAt, announcement.deletedAt),
-        type: announcement.type,
-        sendEmail: announcement.sendEmail
+        type: announcement.type
       }))
     };
   }

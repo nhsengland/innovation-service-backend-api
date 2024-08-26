@@ -104,7 +104,8 @@ describe('v1-admin-announcement-create Suite', () => {
           startsAt: randFutureDate(),
           title: randText(),
           userRoles: [ServiceRoleEnum.ASSESSMENT],
-          type: AnnouncementTypeEnum.LOG_IN
+          type: AnnouncementTypeEnum.LOG_IN,
+          sendEmail: true
         })
         .call<ErrorResponseType>(azureFunction);
 

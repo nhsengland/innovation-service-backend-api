@@ -16,7 +16,7 @@ export type AnnouncementBodyType = {
   expiresAt?: Date;
   type: AnnouncementTypeEnum;
   filters?: FilterPayload[];
-  sendEmail?: boolean;
+  sendEmail: boolean;
 };
 export const AnnouncementBodySchema = Joi.object<AnnouncementBodyType>({
   title: Joi.string().max(100).required().description('Title of the announcement'),
@@ -47,7 +47,7 @@ export const AnnouncementBodySchema = Joi.object<AnnouncementBodyType>({
       })
     )
     .optional(),
-  sendEmail: Joi.boolean().default(false).optional()
+  sendEmail: Joi.boolean().default(false)
 }).required();
 
 // Announcement Schema for active status
