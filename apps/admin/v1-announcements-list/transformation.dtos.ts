@@ -1,4 +1,5 @@
-import type { FilterPayload, AnnouncementStatusEnum, AnnouncementTypeEnum } from '@admin/shared/enums';
+import type { AnnouncementStatusEnum, AnnouncementTypeEnum } from '@admin/shared/enums';
+import type { FilterPayload } from '@admin/shared/models/schema-engine/schema.model';
 
 export type ResponseDTO = {
   count: number;
