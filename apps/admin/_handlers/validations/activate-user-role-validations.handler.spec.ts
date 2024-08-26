@@ -109,6 +109,6 @@ describe('Admin / _handlers / validations / add-role suite', () => {
       userId: scenario.users.aliceQualifyingAccessor.id,
       userRoleId: randUuid()
     });
-    await expect(() => handler.run()).rejects.toThrowError(new NotFoundError(UserErrorsEnum.USER_ROLE_NOT_FOUND));
+    await expect(() => handler.run()).rejects.toThrow(new NotFoundError(UserErrorsEnum.USER_ROLE_NOT_FOUND));
   });
 });

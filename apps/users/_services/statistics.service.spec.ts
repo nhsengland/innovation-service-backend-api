@@ -124,7 +124,7 @@ describe('Users / _services / statistics service suite', () => {
       [ServiceRoleEnum.ASSESSMENT, scenario.users.paulNeedsAssessor],
       [ServiceRoleEnum.INNOVATOR, scenario.users.adamInnovator]
     ])('should throw an error if the request user is %s', async (_userType, user) => {
-      await expect(() => sut.innovationsAssignedToMe(DTOsHelper.getUserRequestContext(user))).rejects.toThrowError(
+      await expect(() => sut.innovationsAssignedToMe(DTOsHelper.getUserRequestContext(user))).rejects.toThrow(
         new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND)
       );
     });
@@ -167,7 +167,7 @@ describe('Users / _services / statistics service suite', () => {
     it('should throw bad request if status missing', async () => {
       await expect(() =>
         sut.getTasksCounter(DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor), [])
-      ).rejects.toThrowError(new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD));
+      ).rejects.toThrow(new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD));
     });
   });
 
@@ -242,7 +242,7 @@ describe('Users / _services / statistics service suite', () => {
       [ServiceRoleEnum.ASSESSMENT, scenario.users.paulNeedsAssessor],
       [ServiceRoleEnum.INNOVATOR, scenario.users.adamInnovator]
     ])('should throw an error if the request user is %s', async (_userType, user) => {
-      await expect(() => sut.innovationsToReview(DTOsHelper.getUserRequestContext(user), em)).rejects.toThrowError(
+      await expect(() => sut.innovationsToReview(DTOsHelper.getUserRequestContext(user), em)).rejects.toThrow(
         new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND)
       );
     });

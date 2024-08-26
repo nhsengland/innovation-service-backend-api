@@ -250,7 +250,7 @@ describe('Admin / _services / organisations service suite', () => {
     );
 
     it(`should throw an error if the unit doesn't exist`, async () => {
-      await expect(() => sut.inactivateUnit(domainContext, randUuid(), em)).rejects.toThrowError(
+      await expect(() => sut.inactivateUnit(domainContext, randUuid(), em)).rejects.toThrow(
         new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND)
       );
     });
@@ -331,13 +331,13 @@ describe('Admin / _services / organisations service suite', () => {
     it(`should throw an error if the unit doesn't exist`, async () => {
       await expect(() =>
         sut.activateUnit(domainContext, organisation.id, randUuid(), [scenario.users.bartQualifyingAccessor.id], em)
-      ).rejects.toThrowError(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND));
     });
 
     it('should throw an error if the unit has no active QA', async () => {
       await expect(() =>
         sut.activateUnit(domainContext, organisation.id, unit.id, [scenario.users.adamInnovator.id], em)
-      ).rejects.toThrowError(new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_ACTIVATE_NO_QA));
+      ).rejects.toThrow(new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_ACTIVATE_NO_QA));
     });
   });
 
@@ -366,7 +366,7 @@ describe('Admin / _services / organisations service suite', () => {
     it(`should throw an error if the unit doesn't exist`, async () => {
       await expect(() =>
         sut.updateUnit(randUuid(), randCompanyName(), randAlpha({ length: 5 }).join('.'), em)
-      ).rejects.toThrowError(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND));
     });
 
     it('should throw an error if the unit name already exists', async () => {
@@ -377,7 +377,7 @@ describe('Admin / _services / organisations service suite', () => {
           randAlpha({ length: 5 }).join('.'),
           em
         )
-      ).rejects.toThrowError(new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_ALREADY_EXISTS));
+      ).rejects.toThrow(new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_ALREADY_EXISTS));
     });
 
     it('should throw an error if the unit acronym already exists', async () => {
@@ -388,7 +388,7 @@ describe('Admin / _services / organisations service suite', () => {
           scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.acronym,
           em
         )
-      ).rejects.toThrowError(new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_ALREADY_EXISTS));
+      ).rejects.toThrow(new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_ALREADY_EXISTS));
     });
   });
 
@@ -441,7 +441,7 @@ describe('Admin / _services / organisations service suite', () => {
     it(`should throw an error if the organisation doesn't exist`, async () => {
       await expect(() =>
         sut.updateOrganisation(randUuid(), randCompanyName(), randAlpha({ length: 5 }).join('.'), em)
-      ).rejects.toThrowError(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND));
     });
 
     it('should throw an error if the organisation name already exists', async () => {
@@ -452,7 +452,7 @@ describe('Admin / _services / organisations service suite', () => {
           randAlpha({ length: 5 }).join('.'),
           em
         )
-      ).rejects.toThrowError(new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_ALREADY_EXISTS));
+      ).rejects.toThrow(new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_ALREADY_EXISTS));
     });
 
     it('should throw an error if the organisation acronym already exists', async () => {
@@ -463,7 +463,7 @@ describe('Admin / _services / organisations service suite', () => {
           scenario.organisations.innovTechOrg.acronym || '',
           em
         )
-      ).rejects.toThrowError(new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_ALREADY_EXISTS));
+      ).rejects.toThrow(new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_ALREADY_EXISTS));
     });
   });
 
@@ -559,7 +559,7 @@ describe('Admin / _services / organisations service suite', () => {
           acronym: randAlpha({ length: 5 }).join('.'),
           units: []
         })
-      ).rejects.toThrowError(new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_ALREADY_EXISTS));
+      ).rejects.toThrow(new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_ALREADY_EXISTS));
     });
 
     it('should throw an error if the organisation acronym already exists', async () => {
@@ -569,7 +569,7 @@ describe('Admin / _services / organisations service suite', () => {
           acronym: scenario.organisations.medTechOrg.acronym || '',
           units: []
         })
-      ).rejects.toThrowError(new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_ALREADY_EXISTS));
+      ).rejects.toThrow(new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_ALREADY_EXISTS));
     });
   });
 
@@ -594,7 +594,7 @@ describe('Admin / _services / organisations service suite', () => {
     });
 
     it(`should throw an error if the organisation doesn't exist`, async () => {
-      await expect(() => sut.createUnit(randUuid(), data.name, data.acronym, em)).rejects.toThrowError(
+      await expect(() => sut.createUnit(randUuid(), data.name, data.acronym, em)).rejects.toThrow(
         new NotFoundError(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND)
       );
     });
@@ -607,7 +607,7 @@ describe('Admin / _services / organisations service suite', () => {
           data.acronym,
           em
         )
-      ).rejects.toThrowError(new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_ALREADY_EXISTS));
+      ).rejects.toThrow(new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_ALREADY_EXISTS));
     });
 
     it('should throw an error if the unit acronym already exists', async () => {
@@ -618,7 +618,7 @@ describe('Admin / _services / organisations service suite', () => {
           scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.acronym,
           em
         )
-      ).rejects.toThrowError(new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_ALREADY_EXISTS));
+      ).rejects.toThrow(new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_ALREADY_EXISTS));
     });
   });
 });

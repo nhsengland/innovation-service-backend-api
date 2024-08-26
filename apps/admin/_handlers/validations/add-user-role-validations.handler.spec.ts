@@ -119,7 +119,7 @@ describe('Admin / _handlers / validations / add-user-role suite', () => {
           role: roleType
         });
 
-        await expect(() => handler.run()).rejects.toThrowError(new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD));
+        await expect(() => handler.run()).rejects.toThrow(new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD));
       }
     );
   });

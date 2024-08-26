@@ -213,7 +213,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
     });
 
     it(`should throw a not found error when the innovation doesn't exist`, async () => {
-      await expect(() => sut.getInnovationSupportsList(randUuid(), { fields: [] }, em)).rejects.toThrowError(
+      await expect(() => sut.getInnovationSupportsList(randUuid(), { fields: [] }, em)).rejects.toThrow(
         new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND)
       );
     });
@@ -243,7 +243,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
     });
 
     it(`should throw a not found error if the support doesn't exist`, async () => {
-      await expect(() => sut.getInnovationSupportInfo(randUuid(), em)).rejects.toThrowError(
+      await expect(() => sut.getInnovationSupportInfo(randUuid(), em)).rejects.toThrow(
         new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND)
       );
     });
@@ -336,7 +336,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           },
           em
         )
-      ).rejects.toThrowError(
+      ).rejects.toThrow(
         new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_WITH_UNPROCESSABLE_ORGANISATION_UNIT)
       );
     });
@@ -357,7 +357,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           },
           em
         )
-      ).rejects.toThrowError(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND));
     });
 
     it('should throw an unprocessable entity error if the support already exists', async () => {
@@ -371,7 +371,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           },
           em
         )
-      ).rejects.toThrowError(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_ALREADY_EXISTS));
+      ).rejects.toThrow(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_ALREADY_EXISTS));
     });
 
     it('should throw an unprocessable entity error if the accessors argument exists and the status is not ENGAGING', async () => {
@@ -391,7 +391,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           },
           em
         )
-      ).rejects.toThrowError(
+      ).rejects.toThrow(
         new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_CANNOT_HAVE_ASSIGNED_ASSESSORS)
       );
     });
@@ -717,7 +717,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id,
           em
         )
-      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND));
     });
   });
 
@@ -923,7 +923,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           },
           em
         )
-      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND));
     });
 
     it(`should throw a not found error if the thread creation fails`, async () => {
@@ -950,7 +950,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           },
           em
         )
-      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_MESSAGE_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_MESSAGE_NOT_FOUND));
     });
 
     it(`should throw a UnprocessableEntityError when trying to update to UNASSIGNED`, async () => {
@@ -962,7 +962,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           { status: InnovationSupportStatusEnum.UNASSIGNED, message: randText({ charCount: 10 }) },
           em
         )
-      ).rejects.toThrowError(
+      ).rejects.toThrow(
         new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UPDATE_WITH_UNPROCESSABLE_STATUS)
       );
     });
@@ -1068,7 +1068,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           { accessors: newAccessors, message },
           em
         )
-      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND));
     });
 
     it('should fail with unprocessable if innovation status not engaging', async () => {
@@ -1081,7 +1081,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           { accessors: newAccessors, message },
           em
         )
-      ).rejects.toThrowError(
+      ).rejects.toThrow(
         new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UPDATE_WITH_UNPROCESSABLE_STATUS)
       );
     });
@@ -1089,7 +1089,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
     it('should fail with unprocessable if accessors is empty', async () => {
       await expect(
         sut.updateInnovationSupportAccessors(context, innovation.id, support.id, { accessors: [], message })
-      ).rejects.toThrowError(new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD));
+      ).rejects.toThrow(new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD));
     });
   });
 
@@ -1195,7 +1195,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           { description: randText(), title: randText() },
           em
         )
-      ).rejects.toThrowError(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND));
     });
 
     it("should throw a NotFoundError when the support doesn't exist", async () => {
@@ -1206,7 +1206,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           { description: randText(), title: randText() },
           em
         )
-      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND));
     });
 
     it('should throw an UnprocessableEntityError when the unit is not currently engaging', async () => {
@@ -1223,7 +1223,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           { description: randText(), title: randText() },
           em
         )
-      ).rejects.toThrowError(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UNIT_NOT_ENGAGING));
+      ).rejects.toThrow(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UNIT_NOT_ENGAGING));
     });
 
     describe('create past progress update', () => {
@@ -1313,7 +1313,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           randUuid(),
           em
         )
-      ).rejects.toThrowError(
+      ).rejects.toThrow(
         new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_SUMMARY_PROGRESS_UPDATE_NOT_FOUND)
       );
     });
@@ -1326,7 +1326,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           innovation.progressUpdates.progressUpdateByAlice.id,
           em
         )
-      ).rejects.toThrowError(
+      ).rejects.toThrow(
         new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_SUMMARY_PROGRESS_DELETE_MUST_BE_FROM_UNIT)
       );
     });
