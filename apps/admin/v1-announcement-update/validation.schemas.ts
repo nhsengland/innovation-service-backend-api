@@ -19,6 +19,7 @@ export type BodyType = {
   expiresAt?: Date;
   type: AnnouncementTypeEnum;
   filters?: FilterPayload[];
+  sendEmail?: boolean;
 };
 export const BodySchema = Joi.object<BodyType>({
   title: Joi.string().max(100).optional(),
@@ -43,5 +44,6 @@ export const BodySchema = Joi.object<BodyType>({
         answers: Joi.array().items(Joi.string()).min(1).required()
       })
     )
-    .optional()
+    .optional(),
+  sendEmail: Joi.boolean().optional()
 }).required();

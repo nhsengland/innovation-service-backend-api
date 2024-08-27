@@ -41,7 +41,6 @@ export class AnnouncementsService extends BaseService {
       expiresAt: null | Date;
       status: AnnouncementStatusEnum;
       type: AnnouncementTypeEnum;
-      filters: null | FilterPayload[];
     }[];
   }> {
     const em = entityManager ?? this.sqlConnection.manager;
@@ -74,8 +73,7 @@ export class AnnouncementsService extends BaseService {
         startsAt: announcement.startsAt,
         expiresAt: announcement.expiresAt,
         status: this.getAnnouncementStatus(announcement.startsAt, announcement.expiresAt, announcement.deletedAt),
-        type: announcement.type,
-        filters: announcement.filters
+        type: announcement.type
       }))
     };
   }
@@ -92,6 +90,7 @@ export class AnnouncementsService extends BaseService {
     expiresAt: null | Date;
     status: AnnouncementStatusEnum;
     filters: null | FilterPayload[];
+    sendEmail: boolean;
   }> {
     const em = entityManager ?? this.sqlConnection.manager;
 
@@ -105,7 +104,9 @@ export class AnnouncementsService extends BaseService {
         'announcement.params',
         'announcement.startsAt',
         'announcement.expiresAt',
-        'announcement.deletedAt'
+        'announcement.deletedAt',
+        'announcement.filters',
+        'announcement.sendEmail'
       ])
       .where('announcement.id = :announcementId', { announcementId })
       .getOne();
@@ -122,7 +123,8 @@ export class AnnouncementsService extends BaseService {
       startsAt: announcement.startsAt,
       expiresAt: announcement.expiresAt,
       status: this.getAnnouncementStatus(announcement.startsAt, announcement.expiresAt, announcement.deletedAt),
-      filters: announcement.filters
+      filters: announcement.filters,
+      sendEmail: announcement.sendEmail
     };
   }
 
@@ -136,6 +138,7 @@ export class AnnouncementsService extends BaseService {
       expiresAt?: Date;
       type: AnnouncementTypeEnum;
       filters?: FilterPayload[];
+      sendEmail?: boolean;
     },
     config?: { usersToExclude?: string[] },
     entityManager?: EntityManager
@@ -156,7 +159,8 @@ export class AnnouncementsService extends BaseService {
         type: data.type,
         createdBy: requestContext.id,
         updatedBy: requestContext.id,
-        filters: data.filters ?? null
+        filters: data.filters ?? null,
+        sendEmail: data.sendEmail ?? false
       });
 
       if (config?.usersToExclude && config.usersToExclude.length > 0) {
@@ -189,6 +193,7 @@ export class AnnouncementsService extends BaseService {
       expiresAt?: Date;
       type?: AnnouncementTypeEnum;
       filters?: FilterPayload[];
+      sendEmail?: boolean;
     },
     entityManager?: EntityManager
   ): Promise<void> {
@@ -203,7 +208,8 @@ export class AnnouncementsService extends BaseService {
         'announcement.startsAt',
         'announcement.expiresAt',
         'announcement.deletedAt',
-        'announcement.type'
+        'announcement.type',
+        'announcement.sendEmail'
       ])
       .where('announcement.id = :announcementId', { announcementId })
       .getOne();

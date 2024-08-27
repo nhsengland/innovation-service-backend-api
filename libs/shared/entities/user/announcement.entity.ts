@@ -34,6 +34,9 @@ export class AnnouncementEntity extends BaseEntity {
   @Column({ name: 'filters', type: 'simple-json', nullable: true })
   filters: null | FilterPayload[];
 
+  @Column({ name: 'send_email', type: 'bit', default: false })
+  sendEmail: boolean;
+
   @OneToMany(() => AnnouncementUserEntity, record => record.announcement, { cascade: ['insert', 'update'] })
   announcementUsers: AnnouncementUserEntity[];
 
