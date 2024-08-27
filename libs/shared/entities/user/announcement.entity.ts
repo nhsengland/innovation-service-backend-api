@@ -37,7 +37,7 @@ export class AnnouncementEntity extends BaseEntity {
   @OneToMany(() => AnnouncementUserEntity, record => record.announcement, { cascade: ['insert', 'update'] })
   announcementUsers: AnnouncementUserEntity[];
 
-  @ManyToMany(() => InnovationEntity, record => record.announcements)
+  @ManyToMany(() => InnovationEntity)
   @JoinTable({
     name: 'announcement_innovation',
     joinColumn: {

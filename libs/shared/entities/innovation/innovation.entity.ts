@@ -27,7 +27,6 @@ import { InnovationTransferEntity } from './innovation-transfer.entity';
 
 import { InnovationStatusEnum } from '../../enums/innovation.enums';
 import { InnovationSuggestedUnitsView } from '../views/innovation-suggested-units.view.entity';
-import { AnnouncementEntity } from '../user/announcement.entity';
 
 @Entity('innovation')
 export class InnovationEntity extends BaseEntity {
@@ -142,8 +141,9 @@ export class InnovationEntity extends BaseEntity {
   @OneToMany(() => InnovationSuggestedUnitsView, record => record.innovationInfo)
   suggestions: InnovationSuggestedUnitsView[];
 
-  @ManyToMany(() => AnnouncementEntity, record => record.innovations)
-  announcements: AnnouncementEntity[];
+  // NOTE: This relationg is commented out since it gives unknown errors. Most probably related with DeepPartials +Arrays.
+  // @ManyToMany(() => AnnouncementEntity, record => record.innovations)
+  // announcements: AnnouncementEntity[];
 
   static new(data: Partial<InnovationEntity>): InnovationEntity {
     const instance = new InnovationEntity();
