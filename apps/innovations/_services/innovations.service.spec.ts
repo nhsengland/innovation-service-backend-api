@@ -1,10 +1,10 @@
 import {
+  InnovationAssessmentEntity,
   InnovationEntity,
   InnovationExportRequestEntity,
   InnovationSupportEntity,
   InnovationTaskEntity,
-  NotificationUserEntity,
-  InnovationAssessmentEntity
+  NotificationUserEntity
 } from '@innovations/shared/entities';
 import { ActivityEnum, ActivityTypeEnum } from '@innovations/shared/enums';
 import {
@@ -849,6 +849,32 @@ describe('Innovations / _services / innovations suite', () => {
 
     it(`should throw an error if the innovation doesn't exist`, async () => {
       await expect(() => sut.getInnovationSubmissionsState(randUuid(), em)).rejects.toThrowError(
+        new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND)
+      );
+    });
+  });
+
+  describe('getInnovationProgress', () => {
+    // Not testing the progress update part as the units don't exist in scenario nor the payloads as they are all randomly generated
+    // and the result is actually dependent on sql view logic
+    it('should get the innovation progress info', async () => {
+      const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+      const result = await sut.getInnovationProgress(innovation.id, em);
+
+      expect(result).toMatchObject({
+        innovationId: expect.any(String)
+      });
+    });
+
+    it("shouldn't include falsy/null values in the response", async () => {
+      const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+      const result = await sut.getInnovationProgress(innovation.id, em);
+
+      expect(Object.values(result).filter(v => !v)).toHaveLength(0);
+    });
+
+    it(`should throw an error if the innovation doesn't exist`, async () => {
+      await expect(() => sut.getInnovationProgress(randUuid())).rejects.toThrowError(
         new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND)
       );
     });
