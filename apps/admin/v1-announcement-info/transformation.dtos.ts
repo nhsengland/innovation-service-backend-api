@@ -1,5 +1,5 @@
-import type { AnnouncementStatusEnum, ServiceRoleEnum } from '@admin/shared/enums';
-import { FilterPayload } from '@admin/shared/models/schema-engine/schema.model';
+import type { AnnouncementStatusEnum, AnnouncementTypeEnum, ServiceRoleEnum } from '@admin/shared/enums';
+import type { FilterPayload } from '@admin/shared/models/schema-engine/schema.model';
 
 export type ResponseDTO = {
   id: string;
@@ -11,4 +11,5 @@ export type ResponseDTO = {
   status: AnnouncementStatusEnum;
   filters: null | FilterPayload[];
   sendEmail: boolean;
+  type: AnnouncementTypeEnum;
 };

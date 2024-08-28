@@ -104,7 +104,8 @@ describe('Admin / _services / announcements service suite', () => {
         userRoles: [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR],
         params: { content: randText() },
         startsAt: randPastDate(),
-        expiresAt: null
+        expiresAt: null,
+        type: AnnouncementTypeEnum.LOG_IN
       });
 
       const result = await sut.getAnnouncementInfo(announcement.id, em);
@@ -116,7 +117,8 @@ describe('Admin / _services / announcements service suite', () => {
         params: announcement.params,
         startsAt: announcement.startsAt,
         expiresAt: announcement.expiresAt,
-        status: AnnouncementStatusEnum.ACTIVE
+        status: AnnouncementStatusEnum.ACTIVE,
+        type: AnnouncementTypeEnum.LOG_IN
       });
     });
 
