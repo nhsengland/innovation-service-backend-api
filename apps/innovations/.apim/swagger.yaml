@@ -2183,6 +2183,24 @@ paths:
           description: Ok.
         "400":
           description: Bad request.
+  /v1/{innovationId}/progress:
+    get:
+      operationId: v1-innovation-progress-info
+      description: Get innovation progress information.
+      tags:
+        - "[v1] Innovation"
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Success
+        "400":
+          description: Invalid innovation payload
   /v1/{innovationId}/reassessments:
     post:
       operationId: v1-innovation-reassessment-request-create

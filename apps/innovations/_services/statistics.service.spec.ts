@@ -1,4 +1,4 @@
-import { randUuid } from '@ngneat/falso';
+import { randPastDate, randUuid } from '@ngneat/falso';
 import { In, type EntityManager } from 'typeorm';
 
 import {
@@ -246,6 +246,7 @@ describe('Innovations / _services / innovation statistics suite', () => {
         .setInnovation(innovation.id)
         .setSection('INNOVATION_DESCRIPTION')
         .setStatus(InnovationSectionStatusEnum.SUBMITTED)
+        .setUpdatedAt(randPastDate())
         .save();
 
       //start assessment

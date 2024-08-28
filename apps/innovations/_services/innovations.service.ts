@@ -58,6 +58,10 @@ import { InnovationLocationEnum } from '../_enums/innovation.enums';
 import type { InnovationSectionModel } from '../_types/innovation.types';
 
 import { createDocumentFromInnovation } from '@innovations/shared/entities/innovation/innovation-document.entity';
+import {
+  InnovationListViewWithoutNull,
+  InnovationProgressView
+} from '@innovations/shared/entities/views/innovation-progress.view.entity';
 import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import { ActionEnum } from '@innovations/shared/services/integrations/audit.service';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
@@ -1995,6 +1999,29 @@ export class InnovationsService extends BaseService {
     }
 
     return innovationSections.some(x => x.status !== InnovationSectionStatusEnum.SUBMITTED);
+  }
+
+  // fetches the innovation progress filtering out the null values
+  async getInnovationProgress(
+    innovationId: string,
+    entityManager?: EntityManager
+  ): Promise<InnovationListViewWithoutNull> {
+    const em = entityManager ?? this.sqlConnection.manager;
+    const data = await em
+      .createQueryBuilder(InnovationProgressView, 'innovationProgress')
+      .where('innovationProgress.innovationId = :innovationId', { innovationId })
+      .getOne();
+
+    if (!data) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
+    }
+
+    return (Object.entries(data) as [keyof InnovationListViewWithoutNull, any][])
+      .filter(([_key, value]) => !!value)
+      .reduce((acc, [key, value]) => {
+        acc[key] = value;
+        return acc;
+      }, {} as InnovationListViewWithoutNull);
   }
 
   // view recipients service innovationsWithoutSupportForNDays to maintain consistency
