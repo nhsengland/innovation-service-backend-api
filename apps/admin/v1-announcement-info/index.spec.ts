@@ -27,7 +27,10 @@ beforeAll(async () => {
 const expected = {
   id: randUuid(),
   expiresAt: null,
-  params: {},
+  params: {
+    content: randText(),
+    link: { label: randText(), url: randText() }
+  },
   startsAt: randFutureDate(),
   status: AnnouncementStatusEnum.SCHEDULED,
   title: randText(),

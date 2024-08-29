@@ -172,18 +172,16 @@ export class RecipientsService extends BaseService {
     return new Map(innovations.map(i => [i.id, { id: i.id, name: i.name, ownerId: i.owner?.id }]));
   }
 
-  async getAnnouncementUsersWithoutInnovation(
-    announcementId: string,
-    entityManager?: EntityManager
-  ): Promise<string[]> {
+  async getAnnouncementUsers(announcementId: string, entityManager?: EntityManager): Promise<string[]> {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const query = em
       .createQueryBuilder(AnnouncementUserEntity, 'au')
-      .leftJoinAndSelect('au.user', 'user')
-      .select('au.userId')
-      .where('au.announcementId = :announcementId', { announcementId })
-      .andWhere('au.innovationId IS NULL');
+      .leftJoin('au.user', 'user')
+      .select('user.id')
+      .where('au.announcement = :announcementId', { announcementId })
+      .andWhere('au.innovation IS NULL')
+      .andWhere('user.status <> :userLocked', { userLocked: UserStatusEnum.LOCKED });
 
     const users = await query.getMany();
 
@@ -193,7 +191,7 @@ export class RecipientsService extends BaseService {
   async getAnnouncementUsersWithInnovationsNames(
     announcementId: string,
     entityManager?: EntityManager
-  ): Promise<{ [userId: string]: string[] }> {
+  ): Promise<Map<string, string[]>> {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const query = em
@@ -201,21 +199,22 @@ export class RecipientsService extends BaseService {
       .innerJoin('au.user', 'user')
       .innerJoin('au.innovation', 'innovation')
       .select(['au.id', 'user.id', 'innovation.name'])
-      .where('au.announcementId = :announcementId', { announcementId });
+      .where('au.announcement = :announcementId', { announcementId })
+      .andWhere('user.status <> :userLocked', { userLocked: UserStatusEnum.LOCKED });
 
     const records = await query.getMany();
 
     // Group innovations by userId
-    const result: { [userId: string]: string[] } = {};
+    const result = new Map<string, string[]>();
     records.forEach(record => {
       const userId = record.user.id;
       const innovationName = record.innovation.name;
 
       if (userId && innovationName) {
-        if (!result[userId]) {
-          result[userId] = [];
+        if (!result.has(userId)) {
+          result.set(userId, []);
         }
-        result[userId]?.push(innovationName);
+        result.get(userId)?.push(innovationName);
       }
     });
 
@@ -234,7 +233,6 @@ export class RecipientsService extends BaseService {
 
     const announcement = await em
       .createQueryBuilder(AnnouncementEntity, 'announcement')
-      .withDeleted()
       .select(['announcement.id', 'announcement.title', 'announcement.params'])
       .where('announcement.id = :announcementId', { announcementId })
       .getOne();
