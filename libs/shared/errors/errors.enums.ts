@@ -159,7 +159,9 @@ export enum EmailErrorsEnum {
 }
 
 export enum AdminErrorsEnum {
-  ADMIN_TERMS_OF_USE_NOT_FOUND = 'AT.0001'
+  ADMIN_TERMS_OF_USE_NOT_FOUND = 'AT.0001',
+
+  ADMIN_ANNOUNCEMENT_NOT_FOUND = 'AN.0001'
 }
 
 export enum AnnouncementErrorsEnum {

@@ -1,4 +1,4 @@
-import { injectable } from 'inversify';
+import { inject, injectable } from 'inversify';
 import { EntityManager, In } from 'typeorm';
 
 import { AnnouncementEntity, AnnouncementUserEntity, UserEntity } from '@admin/shared/entities';
@@ -6,7 +6,9 @@ import {
   AnnouncementParamsType,
   AnnouncementStatusEnum,
   AnnouncementTypeEnum,
-  ServiceRoleEnum
+  InnovationCollaboratorStatusEnum,
+  ServiceRoleEnum,
+  UserStatusEnum
 } from '@admin/shared/enums';
 import { AnnouncementErrorsEnum, BadRequestError, NotFoundError, UnprocessableEntityError } from '@admin/shared/errors';
 import { JoiHelper, PaginationQueryParamsType } from '@admin/shared/helpers';
@@ -20,10 +22,14 @@ import {
 } from './announcements.schemas';
 import { BaseService } from './base.service';
 import type { FilterPayload } from '@admin/shared/models/schema-engine/schema.model';
+import { AdminErrorsEnum } from '@admin/shared/errors/errors.enums';
+import { InnovationEntity } from '@admin/shared/entities';
+import SHARED_SYMBOLS from '@admin/shared/services/symbols';
+import type { DomainService } from '@admin/shared/services';
 
 @injectable()
 export class AnnouncementsService extends BaseService {
-  constructor() {
+  constructor(@inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService) {
     super();
   }
 
@@ -163,19 +169,12 @@ export class AnnouncementsService extends BaseService {
         sendEmail: data.sendEmail ?? false
       });
 
-      if (config?.usersToExclude && config.usersToExclude.length > 0) {
-        await em.save(
-          AnnouncementUserEntity,
-          config.usersToExclude.map(userId =>
-            AnnouncementUserEntity.new({
-              announcement: savedAnnouncement,
-              user: UserEntity.new({ id: userId }),
-              readAt: new Date(),
-              createdBy: requestContext.id,
-              updatedBy: requestContext.id
-            })
-          )
-        );
+      const today = new Date();
+      if (data.startsAt.toDateString() === today.toDateString()) {
+        await this.addAnnouncementUsers(savedAnnouncement, { usersToExclude: config?.usersToExclude }, transaction);
+        // TODO: Add notification call.
+        if (data.sendEmail) {
+        }
       }
 
       return { id: savedAnnouncement.id };
@@ -259,6 +258,103 @@ export class AnnouncementsService extends BaseService {
         await transaction.softDelete(AnnouncementUserEntity, { id: In(announcementUsers.map(u => u.id)) });
       }
     });
+  }
+
+  async addAnnouncementUsers(
+    announcement: string | AnnouncementEntity,
+    options: { usersToExclude?: string[] },
+    transaction: EntityManager
+  ): Promise<void> {
+    // Get announcement info
+    let announcementInfo: AnnouncementEntity;
+    if (typeof announcement === 'string') {
+      const dbAnnouncement = await transaction
+        .createQueryBuilder(AnnouncementEntity, 'announcement')
+        .where('announcement.id = :announcementId', { announcementId: announcement })
+        .getOne();
+      if (!dbAnnouncement) {
+        throw new NotFoundError(AdminErrorsEnum.ADMIN_ANNOUNCEMENT_NOT_FOUND);
+      }
+      announcementInfo = dbAnnouncement;
+    } else {
+      announcementInfo = announcement;
+    }
+
+    // userId::innovationId
+    const targetedInnovators = new Set<string>(); // Saves the userIds from the Innovators and their associated innovations
+    const targetRolesUserIds = new Set<string>(); // Saves the userIds that are not bound to a innovation
+    const targetRoles = new Set(announcementInfo.userRoles);
+
+    // If its type innovation filtered get all the collaborators + owners for all the targetted innovations.
+    if (announcementInfo.filters && targetRoles.has(ServiceRoleEnum.INNOVATOR)) {
+      targetRoles.delete(ServiceRoleEnum.INNOVATOR);
+
+      const innovations = await this.domainService.innovations.getInnovationsFiltered(
+        announcementInfo.filters,
+        { onlySubmitted: true },
+        transaction
+      );
+
+      if (innovations.length) {
+        const ownerAndCollaboratorInfo = await transaction
+          .createQueryBuilder(InnovationEntity, 'innovation')
+          .select(['innovation.id', 'owner.id', 'collaborator.id', 'collaboratorUser.id'])
+          .leftJoin('innovation.owner', 'owner', 'owner.status <> :deleted ', { deleted: UserStatusEnum.DELETED })
+          .leftJoin('innovation.collaborators', 'collaborator', 'collaborator.status = :active', {
+            active: InnovationCollaboratorStatusEnum.ACTIVE
+          })
+          .leftJoin('collaborator.user', 'collaboratorUser', 'collaboratorUser.status <> :deleted', {
+            deleted: UserStatusEnum.DELETED
+          })
+          .where('innovation.id IN (:...innovationIds)', { innovationIds: innovations.map(i => i.id) })
+          .getMany();
+        ownerAndCollaboratorInfo.forEach(i => {
+          if (i.owner) {
+            targetedInnovators.add(`${i.owner.id}::${i.id}`);
+          }
+          i.collaborators.forEach(c => c.user && targetedInnovators.add(`${c.user.id}::${i.id}`));
+        });
+      }
+    }
+
+    // This filter is needed since if its of type INNOVATOR + filtered we already got the Innovators in the query before.
+    if (targetRoles.size) {
+      const users = await transaction
+        .createQueryBuilder(UserEntity, 'user')
+        .select(['user.id'])
+        .innerJoin('user.serviceRoles', 'role')
+        .where('role.role IN (:...targetRoles)', { targetRoles: Array.from(targetRoles) })
+        .andWhere('role.isActive = 1')
+        .getMany();
+      users.forEach(u => targetRolesUserIds.add(u.id));
+    }
+
+    // Add users to the announcementUsers table.
+    const targetedUsers: { id: string; innovationId?: string }[] = [];
+    targetRolesUserIds.forEach(id => targetedUsers.push({ id }));
+    targetRolesUserIds.clear();
+    targetedInnovators.forEach(value => {
+      const [userId, innovationId] = value.split('::');
+      if (userId && innovationId) {
+        targetedUsers.push({ id: userId, innovationId });
+      }
+    });
+    targetedInnovators.clear();
+
+    await transaction.save(
+      AnnouncementUserEntity,
+      targetedUsers.map(u =>
+        AnnouncementUserEntity.new({
+          announcement: announcementInfo,
+          user: UserEntity.new({ id: u.id }),
+          ...(u.innovationId && { innovation: InnovationEntity.new({ id: u.innovationId }) }),
+          createdBy: announcementInfo.createdBy,
+          updatedBy: announcementInfo.createdBy,
+          ...(options.usersToExclude && options.usersToExclude.includes(u.id) && { readAt: new Date() })
+        })
+      ),
+      { chunk: 500 }
+    );
   }
 
   private validateAnnouncementBody(
