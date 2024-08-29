@@ -85,6 +85,7 @@ import { SupportKPIViewEntity } from './views/support-kpi.view.entity';
 import { SupportLastActivityUpdateView } from './views/support-last-activity-update.view.entity';
 import { DocumentsStatisticsViewEntity } from './views/documents-statistics.view.entity';
 import { InnovationSuggestedUnitsView } from './views/innovation-suggested-units.view.entity';
+import { InnovationProgressView } from './views/innovation-progress.view.entity';
 export { InnovationGroupedStatusViewEntity } from './views/innovation-grouped-status.view.entity';
 export { LastSupportStatusViewEntity } from './views/last-support-status.view.entity';
 export { InnovationListView } from './views/innovation-list-view.entity';
@@ -139,5 +140,6 @@ export const VIEW_ENTITIES = [
   SupportLastActivityUpdateView,
   DocumentsStatisticsViewEntity,
   InnovationSuggestedUnitsView,
-  InnovationListView
+  InnovationListView,
+  InnovationProgressView
 ];

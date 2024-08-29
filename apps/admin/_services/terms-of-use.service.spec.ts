@@ -181,7 +181,7 @@ describe('Admin / _services / terms-of-use service suite', () => {
     });
 
     it(`should throw an error if the terms of use don't exist`, async () => {
-      await expect(() => sut.getTermsOfUse(randUuid(), em)).rejects.toThrowError(
+      await expect(() => sut.getTermsOfUse(randUuid(), em)).rejects.toThrow(
         new NotFoundError(AdminErrorsEnum.ADMIN_TERMS_OF_USE_NOT_FOUND)
       );
     });

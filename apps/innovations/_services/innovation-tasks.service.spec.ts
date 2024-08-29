@@ -192,7 +192,7 @@ describe('Innovation Tasks Suite', () => {
           },
           em
         )
-      ).rejects.toThrowError(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND));
+      ).rejects.toThrow(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND));
     });
 
     it('as assessment should create a task without concern for support', async () => {
@@ -223,7 +223,7 @@ describe('Innovation Tasks Suite', () => {
           },
           em
         )
-      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND));
     });
 
     it(`should not create a task for a section that doesn't exist`, async () => {
@@ -237,7 +237,7 @@ describe('Innovation Tasks Suite', () => {
           },
           em
         )
-      ).rejects.toThrowError(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SECTION_NOT_FOUND));
+      ).rejects.toThrow(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SECTION_NOT_FOUND));
     });
   });
 
@@ -764,7 +764,7 @@ describe('Innovation Tasks Suite', () => {
     it("should return error when taskId doesn't exist", async () => {
       await expect(() =>
         sut.getTaskInfo(DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor), randUuid())
-      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_TASK_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_TASK_NOT_FOUND));
     });
   });
 
@@ -833,7 +833,7 @@ describe('Innovation Tasks Suite', () => {
           status: InnovationTaskStatusEnum.OPEN,
           message: randText()
         })
-      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_TASK_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_TASK_NOT_FOUND));
     });
 
     it('should update if the task is created by someone on his organisation unit', async () => {
@@ -863,7 +863,7 @@ describe('Innovation Tasks Suite', () => {
           },
           em
         )
-      ).rejects.toThrowError(new ForbiddenError(InnovationErrorsEnum.INNOVATION_TASK_FROM_DIFFERENT_UNIT));
+      ).rejects.toThrow(new ForbiddenError(InnovationErrorsEnum.INNOVATION_TASK_FROM_DIFFERENT_UNIT));
     });
   });
 
@@ -957,7 +957,7 @@ describe('Innovation Tasks Suite', () => {
           status: InnovationTaskStatusEnum.OPEN,
           message: randText()
         })
-      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_TASK_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_TASK_NOT_FOUND));
     });
 
     it('should not be updated if the task is in DONE status and the status that is being updated is not OPEN', async () => {
@@ -974,7 +974,7 @@ describe('Innovation Tasks Suite', () => {
           },
           em
         )
-      ).rejects.toThrowError(
+      ).rejects.toThrow(
         new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_TASK_WITH_UNPROCESSABLE_STATUS)
       );
     });
@@ -990,7 +990,7 @@ describe('Innovation Tasks Suite', () => {
             message: randText()
           }
         )
-      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_TASK_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_TASK_NOT_FOUND));
     });
   });
 
@@ -1062,7 +1062,7 @@ describe('Innovation Tasks Suite', () => {
           status: InnovationTaskStatusEnum.OPEN,
           message: randText()
         })
-      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_TASK_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_TASK_NOT_FOUND));
     });
 
     it('should not be updated if the task is not in the DONE status', async () => {
@@ -1078,7 +1078,7 @@ describe('Innovation Tasks Suite', () => {
           },
           em
         )
-      ).rejects.toThrowError(
+      ).rejects.toThrow(
         new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_TASK_WITH_UNPROCESSABLE_STATUS)
       );
     });

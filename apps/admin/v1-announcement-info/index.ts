@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@admin/shared/decorators';
-import { ServiceRoleEnum } from '@admin/shared/enums';
+import { AnnouncementTypeEnum, ServiceRoleEnum } from '@admin/shared/enums';
 import { JoiHelper, ResponseHelper, SwaggerHelper } from '@admin/shared/helpers';
 import type { AuthorizationService } from '@admin/shared/services';
 import type { CustomContextType } from '@admin/shared/types';
@@ -36,7 +36,8 @@ class V1AnnouncementsInfo {
         expiresAt: result.expiresAt,
         status: result.status,
         filters: result.filters,
-        sendEmail: result.sendEmail
+        sendEmail: result.sendEmail,
+        type: result.type
       });
 
       return;
@@ -77,7 +78,8 @@ export default openApi(V1AnnouncementsInfo.httpTrigger as AzureFunction, '/v1/an
                     }
                   }
                 },
-                sendEmail: { type: 'boolean' }
+                sendEmail: { type: 'boolean' },
+                type: { type: 'string', enum: Object.keys(AnnouncementTypeEnum) }
               }
             }
           }

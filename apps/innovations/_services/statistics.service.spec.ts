@@ -1,4 +1,4 @@
-import { randUuid } from '@ngneat/falso';
+import { randPastDate, randUuid } from '@ngneat/falso';
 import { In, type EntityManager } from 'typeorm';
 
 import {
@@ -104,7 +104,7 @@ describe('Innovations / _services / innovation statistics suite', () => {
     it('should throw bad request if status missing', async () => {
       await expect(() =>
         sut.getTasksCounter(DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor), randUuid(), [])
-      ).rejects.toThrowError(new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD));
+      ).rejects.toThrow(new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD));
     });
   });
 
@@ -233,7 +233,7 @@ describe('Innovations / _services / innovation statistics suite', () => {
           scenario.users.johnInnovator.innovations.johnInnovation.id,
           DTOsHelper.getUserRequestContext(scenario.users.allMighty)
         )
-      ).rejects.toThrowError(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND));
     });
   });
 
@@ -246,6 +246,7 @@ describe('Innovations / _services / innovation statistics suite', () => {
         .setInnovation(innovation.id)
         .setSection('INNOVATION_DESCRIPTION')
         .setStatus(InnovationSectionStatusEnum.SUBMITTED)
+        .setUpdatedAt(randPastDate())
         .save();
 
       //start assessment

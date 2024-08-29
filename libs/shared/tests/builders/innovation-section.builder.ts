@@ -1,9 +1,9 @@
-import { InnovationEntity } from '../../entities/innovation/innovation.entity';
+import type { EntityManager } from 'typeorm';
 import { InnovationSectionEntity } from '../../entities/innovation/innovation-section.entity';
-import { BaseBuilder } from './base.builder';
+import { InnovationEntity } from '../../entities/innovation/innovation.entity';
 import { InnovationSectionStatusEnum } from '../../enums/innovation.enums';
 import { CurrentCatalogTypes } from '../../schemas/innovation-record';
-import type { EntityManager } from 'typeorm';
+import { BaseBuilder } from './base.builder';
 
 export type TestInnovationSectionType = {
   id: string;
@@ -34,6 +34,11 @@ export class InnovationSectionBuilder extends BaseBuilder {
 
   setSection(section: CurrentCatalogTypes.InnovationSections): this {
     this.section.section = section;
+    return this;
+  }
+
+  setUpdatedAt(updatedAt: Date): this {
+    this.section.updatedAt = updatedAt;
     return this;
   }
 

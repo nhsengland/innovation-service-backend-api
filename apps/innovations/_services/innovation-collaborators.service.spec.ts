@@ -141,7 +141,7 @@ describe('Innovation Collaborators Suite', () => {
           email: innovation.collaborators.elisaPendingCollaborator.email,
           role: 'my role'
         })
-      ).rejects.toThrowError(new ConflictError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_WITH_VALID_REQUEST));
+      ).rejects.toThrow(new ConflictError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_WITH_VALID_REQUEST));
     });
 
     it('return a error if the owner is trying to create a invite for himself', async () => {
@@ -150,7 +150,7 @@ describe('Innovation Collaborators Suite', () => {
           email: scenario.users.johnInnovator.email,
           role: 'my role'
         })
-      ).rejects.toThrowError(new ConflictError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_CANT_BE_OWNER));
+      ).rejects.toThrow(new ConflictError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_CANT_BE_OWNER));
     });
 
     it.each([
@@ -162,7 +162,7 @@ describe('Innovation Collaborators Suite', () => {
           email: user.email,
           role: 'my role'
         })
-      ).rejects.toThrowError(
+      ).rejects.toThrow(
         new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_MUST_BE_INNOVATOR)
       );
     });
@@ -309,7 +309,7 @@ describe('Innovation Collaborators Suite', () => {
             innovation.collaborators.elisaPendingCollaborator.id,
             em
           )
-        ).rejects.toThrowError(new ForbiddenError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_NO_ACCESS));
+        ).rejects.toThrow(new ForbiddenError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_NO_ACCESS));
       });
 
       it("should return error if collaborator doesn't exist", async () => {
@@ -320,7 +320,7 @@ describe('Innovation Collaborators Suite', () => {
             randUuid(),
             em
           )
-        ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_NOT_FOUND));
+        ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_NOT_FOUND));
       });
     });
   });
@@ -381,7 +381,7 @@ describe('Innovation Collaborators Suite', () => {
             { status: InnovationCollaboratorStatusEnum.REMOVED },
             em
           )
-        ).rejects.toThrowError(
+        ).rejects.toThrow(
           new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_WITH_UNPROCESSABLE_STATUS)
         );
       });
@@ -396,7 +396,7 @@ describe('Innovation Collaborators Suite', () => {
             { status: InnovationCollaboratorStatusEnum.CANCELLED },
             em
           )
-        ).rejects.toThrowError(
+        ).rejects.toThrow(
           new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_WITH_UNPROCESSABLE_STATUS)
         );
       });
@@ -500,7 +500,7 @@ describe('Innovation Collaborators Suite', () => {
             { status: InnovationCollaboratorStatusEnum.ACTIVE },
             em
           )
-        ).rejects.toThrowError(
+        ).rejects.toThrow(
           new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_WITH_UNPROCESSABLE_STATUS)
         );
       });
@@ -515,7 +515,7 @@ describe('Innovation Collaborators Suite', () => {
             { status: InnovationCollaboratorStatusEnum.DECLINED },
             em
           )
-        ).rejects.toThrowError(
+        ).rejects.toThrow(
           new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_WITH_UNPROCESSABLE_STATUS)
         );
       });
@@ -530,7 +530,7 @@ describe('Innovation Collaborators Suite', () => {
             { status: InnovationCollaboratorStatusEnum.LEFT },
             em
           )
-        ).rejects.toThrowError(
+        ).rejects.toThrow(
           new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_WITH_UNPROCESSABLE_STATUS)
         );
       });
@@ -545,7 +545,7 @@ describe('Innovation Collaborators Suite', () => {
             { role: 'randomRole' },
             em
           )
-        ).rejects.toThrowError(
+        ).rejects.toThrow(
           new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_WITH_UNPROCESSABLE_STATUS)
         );
       });

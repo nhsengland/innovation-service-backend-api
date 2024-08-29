@@ -1152,6 +1152,11 @@ paths:
                             type: string
                   sendEmail:
                     type: boolean
+                  type:
+                    type: string
+                    enum:
+                      - LOG_IN
+                      - HOMEPAGE
         "400":
           description: Bad request
         "401":

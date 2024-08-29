@@ -129,7 +129,7 @@ describe('Innovations / _services / innovation transfer suite', () => {
     });
 
     it('should throw a not found error when the transfer is not found', async () => {
-      await expect(() => sut.getPendingInnovationTransferInfo(randUuid(), em)).rejects.toThrowError(
+      await expect(() => sut.getPendingInnovationTransferInfo(randUuid(), em)).rejects.toThrow(
         new NotFoundError(InnovationErrorsEnum.INNOVATION_TRANSFER_NOT_FOUND)
       );
     });
@@ -152,7 +152,7 @@ describe('Innovations / _services / innovation transfer suite', () => {
     });
 
     it('should throw a not found error when the transfer is not found', async () => {
-      await expect(() => sut.getInnovationTransferInfo(randUuid(), em)).rejects.toThrowError(
+      await expect(() => sut.getInnovationTransferInfo(randUuid(), em)).rejects.toThrow(
         new NotFoundError(InnovationErrorsEnum.INNOVATION_TRANSFER_NOT_FOUND)
       );
     });
@@ -190,7 +190,7 @@ describe('Innovations / _services / innovation transfer suite', () => {
           false,
           em
         )
-      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND));
     });
 
     it('should throw an unprocessable entity error when the innovation already has a pending transfer', async () => {
@@ -203,7 +203,7 @@ describe('Innovations / _services / innovation transfer suite', () => {
           false,
           em
         )
-      ).rejects.toThrowError(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_TRANSFER_ALREADY_EXISTS));
+      ).rejects.toThrow(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_TRANSFER_ALREADY_EXISTS));
     });
 
     it('should throw an unprocessable entity error when the transfer is to the current owner', async () => {
@@ -216,7 +216,7 @@ describe('Innovations / _services / innovation transfer suite', () => {
           false,
           em
         )
-      ).rejects.toThrowError(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_TRANSFER_REQUESTED_FOR_SELF));
+      ).rejects.toThrow(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_TRANSFER_REQUESTED_FOR_SELF));
     });
 
     it('should throw an unprocessable entity error when the transfer target is not an innovator', async () => {
@@ -229,7 +229,7 @@ describe('Innovations / _services / innovation transfer suite', () => {
           false,
           em
         )
-      ).rejects.toThrowError(
+      ).rejects.toThrow(
         new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_TRANSFER_TARGET_USER_MUST_BE_INNOVATOR)
       );
     });
@@ -363,7 +363,7 @@ describe('Innovations / _services / innovation transfer suite', () => {
           InnovationTransferStatusEnum.COMPLETED,
           em
         )
-      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_TRANSFER_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_TRANSFER_NOT_FOUND));
     });
   });
 });

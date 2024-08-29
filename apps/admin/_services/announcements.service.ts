@@ -97,6 +97,7 @@ export class AnnouncementsService extends BaseService {
     status: AnnouncementStatusEnum;
     filters: null | FilterPayload[];
     sendEmail: boolean;
+    type: AnnouncementTypeEnum;
   }> {
     const em = entityManager ?? this.sqlConnection.manager;
 
@@ -112,7 +113,8 @@ export class AnnouncementsService extends BaseService {
         'announcement.expiresAt',
         'announcement.deletedAt',
         'announcement.filters',
-        'announcement.sendEmail'
+        'announcement.sendEmail',
+        'announcement.type'
       ])
       .where('announcement.id = :announcementId', { announcementId })
       .getOne();
@@ -130,7 +132,8 @@ export class AnnouncementsService extends BaseService {
       expiresAt: announcement.expiresAt,
       status: this.getAnnouncementStatus(announcement.startsAt, announcement.expiresAt, announcement.deletedAt),
       filters: announcement.filters,
-      sendEmail: announcement.sendEmail
+      sendEmail: announcement.sendEmail,
+      type: announcement.type
     };
   }
 
