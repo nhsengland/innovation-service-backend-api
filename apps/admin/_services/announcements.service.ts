@@ -58,7 +58,6 @@ export class AnnouncementsService extends BaseService {
 
     const [dbAnnouncements, dbCount] = await em
       .createQueryBuilder(AnnouncementEntity, 'announcement')
-      .withDeleted()
       .select([
         'announcement.id',
         'announcement.status',
@@ -109,7 +108,6 @@ export class AnnouncementsService extends BaseService {
 
     const announcement = await em
       .createQueryBuilder(AnnouncementEntity, 'announcement')
-      .withDeleted()
       .select([
         'announcement.id',
         'announcement.status',
