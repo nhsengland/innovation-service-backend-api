@@ -286,7 +286,7 @@ export class AnnouncementsService extends BaseService {
     const targetRoles = new Set(announcementInfo.userRoles);
 
     // If its type innovation filtered get all the collaborators + owners for all the targetted innovations.
-    if (announcementInfo.filters) {
+    if (announcementInfo.filters && targetRoles.has(ServiceRoleEnum.INNOVATOR)) {
       targetRoles.delete(ServiceRoleEnum.INNOVATOR);
 
       const innovations = await this.domainService.innovations.getInnovationsFiltered(
