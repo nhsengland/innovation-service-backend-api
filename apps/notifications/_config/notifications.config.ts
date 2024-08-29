@@ -368,6 +368,13 @@ export const NOTIFICATIONS_CONFIG = {
     }).required()
   },
 
+  [NotifierTypeEnum.NEW_ANNOUNCEMENT]: {
+    handler: NewAccountHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.NEW_ANNOUNCEMENT]>({
+      announcementId: Joi.string().guid().required()
+    }).required()
+  },
+
   // Recurrent notifications.
   [NotifierTypeEnum.INCOMPLETE_INNOVATION_RECORD]: {
     handler: IncompleteRecordHandler,
