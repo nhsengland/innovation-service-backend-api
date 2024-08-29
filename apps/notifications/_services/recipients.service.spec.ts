@@ -1318,7 +1318,7 @@ describe('Notifications / _services / recipients service suite', () => {
       AUTOMATIC: NotificationPreferenceEnum.NO,
       SUPPORT: NotificationPreferenceEnum.NO,
       USER_RESEARCH_SURVEYS: NotificationPreferenceEnum.NO,
-      ANNOUNCEMENTS: NotificationPreferenceEnum.NO
+      ANNOUNCEMENTS: NotificationPreferenceEnum.YES
     };
     const adamPreferences: Role2PreferencesType<ServiceRoleEnum.INNOVATOR> = {
       DOCUMENTS: NotificationPreferenceEnum.YES,
@@ -1327,7 +1327,7 @@ describe('Notifications / _services / recipients service suite', () => {
       AUTOMATIC: NotificationPreferenceEnum.NO,
       SUPPORT: NotificationPreferenceEnum.NO,
       USER_RESEARCH_SURVEYS: NotificationPreferenceEnum.NO,
-      ANNOUNCEMENTS: NotificationPreferenceEnum.NO
+      ANNOUNCEMENTS: NotificationPreferenceEnum.YES
     };
 
     // This is too specific to include in the scenario, don't think it will be used elsewhere

@@ -979,10 +979,6 @@ paths:
                         url:
                           type: string
                       additionalProperties: false
-                    filters:
-                      type: object
-                      properties: {}
-                      additionalProperties: false
                   required:
                     - content
                   additionalProperties: false
@@ -1016,6 +1012,9 @@ paths:
                       - question
                       - answers
                     additionalProperties: false
+                sendEmail:
+                  type: boolean
+                  default: false
               required:
                 - title
                 - startsAt
@@ -1109,7 +1108,7 @@ paths:
             format: uuid
       responses:
         "200":
-          description: Announcement created.
+          description: Announcement info retrieved.
           content:
             application/json:
               schema:
@@ -1136,6 +1135,28 @@ paths:
                   expiresAt:
                     type: string
                     format: date-time
+                  status:
+                    type: string
+                  filters:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        section:
+                          type: string
+                        question:
+                          type: string
+                        answers:
+                          type: array
+                          items:
+                            type: string
+                  sendEmail:
+                    type: boolean
+                  type:
+                    type: string
+                    enum:
+                      - LOG_IN
+                      - HOMEPAGE
         "400":
           description: Bad request
         "401":
@@ -1178,10 +1199,6 @@ paths:
                         url:
                           type: string
                       additionalProperties: false
-                    filters:
-                      type: object
-                      properties: {}
-                      additionalProperties: false
                   additionalProperties: false
                 startsAt:
                   type: string
@@ -1194,6 +1211,27 @@ paths:
                   enum:
                     - LOG_IN
                     - HOMEPAGE
+                filters:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      section:
+                        type: string
+                      question:
+                        type: string
+                      answers:
+                        type: array
+                        items:
+                          type: string
+                        minItems: 1
+                    required:
+                      - section
+                      - question
+                      - answers
+                    additionalProperties: false
+                sendEmail:
+                  type: boolean
               additionalProperties: false
       responses:
         "200":
