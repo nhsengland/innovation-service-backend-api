@@ -173,7 +173,8 @@ export class AnnouncementsService extends BaseService {
       if (data.startsAt.toDateString() === today.toDateString()) {
         await this.addAnnouncementUsers(savedAnnouncement, { usersToExclude: config?.usersToExclude }, transaction);
         // TODO: Add notification call.
-        if (data.sendEmail) {}
+        if (data.sendEmail) {
+        }
       }
 
       return { id: savedAnnouncement.id };
@@ -282,9 +283,12 @@ export class AnnouncementsService extends BaseService {
     // userId::innovationId
     const targetedInnovators = new Set<string>(); // Saves the userIds from the Innovators and their associated innovations
     const targetRolesUserIds = new Set<string>(); // Saves the userIds that are not bound to a innovation
+    const targetRoles = new Set(announcementInfo.userRoles);
 
     // If its type innovation filtered get all the collaborators + owners for all the targetted innovations.
     if (announcementInfo.filters) {
+      targetRoles.delete(ServiceRoleEnum.INNOVATOR);
+
       const innovations = await this.domainService.innovations.getInnovationsFiltered(
         announcementInfo.filters,
         { onlySubmitted: true },
@@ -299,7 +303,9 @@ export class AnnouncementsService extends BaseService {
           .leftJoin('innovation.collaborators', 'collaborator', 'collaborator.status = :active', {
             active: InnovationCollaboratorStatusEnum.ACTIVE
           })
-          .leftJoin('collaborator.user', 'collaboratorUser', 'collaboratorUser.status <> :deleted', { deleted: UserStatusEnum.DELETED })
+          .leftJoin('collaborator.user', 'collaboratorUser', 'collaboratorUser.status <> :deleted', {
+            deleted: UserStatusEnum.DELETED
+          })
           .where('innovation.id IN (:...innovationIds)', { innovationIds: innovations.map(i => i.id) })
           .getMany();
         ownerAndCollaboratorInfo.forEach(i => {
@@ -312,15 +318,12 @@ export class AnnouncementsService extends BaseService {
     }
 
     // This filter is needed since if its of type INNOVATOR + filtered we already got the Innovators in the query before.
-    const targetRoles = announcementInfo.userRoles.filter(
-      r => r !== ServiceRoleEnum.INNOVATOR || (r === ServiceRoleEnum.INNOVATOR && !announcementInfo.filters)
-    );
-    if (targetRoles.length) {
+    if (targetRoles.size) {
       const users = await transaction
         .createQueryBuilder(UserEntity, 'user')
         .select(['user.id'])
         .innerJoin('user.serviceRoles', 'role')
-        .where('role.role IN (:...targetRoles)', { targetRoles })
+        .where('role.role IN (:...targetRoles)', { targetRoles: Array.from(targetRoles) })
         .andWhere('role.isActive = 1')
         .getMany();
       users.forEach(u => targetRolesUserIds.add(u.id));
@@ -349,7 +352,8 @@ export class AnnouncementsService extends BaseService {
           updatedBy: announcementInfo.createdBy,
           ...(options.usersToExclude && options.usersToExclude.includes(u.id) && { readAt: new Date() })
         })
-      ), { chunk: 500 }
+      ),
+      { chunk: 500 }
     );
   }
 
