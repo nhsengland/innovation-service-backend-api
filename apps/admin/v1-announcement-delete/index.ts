@@ -22,9 +22,9 @@ class V1AnnouncementDelete {
     try {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
-      await authorizationService.validate(context).checkAdminType().verify();
+      const auth = await authorizationService.validate(context).checkAdminType().verify();
 
-      await announcementsService.deleteAnnouncement(params.announcementId);
+      await announcementsService.deleteAnnouncement(auth.getContext(), params.announcementId);
 
       context.res = ResponseHelper.NoContent();
       return;
