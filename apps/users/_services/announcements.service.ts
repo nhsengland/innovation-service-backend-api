@@ -2,7 +2,7 @@ import { injectable } from 'inversify';
 import type { EntityManager } from 'typeorm';
 
 import { AnnouncementEntity, AnnouncementUserEntity, UserEntity, UserRoleEntity } from '@users/shared/entities';
-import type { AnnouncementTemplateType } from '@users/shared/enums';
+import type { AnnouncementTypeEnum } from '@users/shared/enums';
 import type { DomainContextType } from '@users/shared/types';
 
 import { BaseService } from './base.service';
@@ -16,12 +16,14 @@ export class AnnouncementsService extends BaseService {
 
   async getUserRoleAnnouncements(
     userRoleId: string,
+    filters: {
+      type?: AnnouncementTypeEnum[];
+    },
     entityManager?: EntityManager
   ): Promise<
     {
       id: string;
       title: string;
-      template: AnnouncementTemplateType;
       startsAt: Date;
       expiresAt: null | Date;
       params: null | Record<string, unknown>;
@@ -40,12 +42,11 @@ export class AnnouncementsService extends BaseService {
       return [];
     }
 
-    const announcements = await connection
+    const query = connection
       .createQueryBuilder(AnnouncementEntity, 'announcement')
       .select([
         'announcement.id',
         'announcement.title',
-        'announcement.template',
         'announcement.startsAt',
         'announcement.expiresAt',
         'announcement.params'
@@ -59,13 +60,17 @@ export class AnnouncementsService extends BaseService {
       .andWhere('announcement.starts_at > :createdAtUserRole', { createdAtUserRole: dbUserRole.createdAt })
       .andWhere('GETDATE() > announcement.starts_at')
       .andWhere('(announcement.expires_at IS NULL OR GETDATE() < announcement.expires_at)')
-      .andWhere('announcementUsers.read_at IS NULL')
-      .getMany();
+      .andWhere('announcementUsers.read_at IS NULL');
+
+    if (filters.type) {
+      query.andWhere('announcement.type IN (:...type) ', { type: filters.type });
+    }
+
+    const announcements = await query.getMany();
 
     return announcements.map(announcement => ({
       id: announcement.id,
       title: announcement.title,
-      template: announcement.template,
       params: announcement.params,
       startsAt: announcement.startsAt,
       expiresAt: announcement.expiresAt

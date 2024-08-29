@@ -3,7 +3,7 @@ import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@admin/shared/decorators';
 import { JoiHelper, ResponseHelper, SwaggerHelper } from '@admin/shared/helpers';
-import type { AuthorizationService } from '@admin/shared/services';
+import type { AuthorizationService, IRSchemaService } from '@admin/shared/services';
 import type { CustomContextType } from '@admin/shared/types';
 
 import { container } from '../_config';
@@ -13,6 +13,7 @@ import SYMBOLS from '../_services/symbols';
 import SHARED_SYMBOLS from '@admin/shared/services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType } from './validation.schemas';
+import type { FilterPayload } from '@admin/shared/models/schema-engine/schema.model';
 
 class V1AnnouncementsCreate {
   @JwtDecoder()
@@ -21,7 +22,15 @@ class V1AnnouncementsCreate {
     const announcementsService = container.get<AnnouncementsService>(SYMBOLS.AnnouncementsService);
 
     try {
-      const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
+      let body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
+
+      if (body.filters) {
+        const irSchemaService = container.get<IRSchemaService>(SHARED_SYMBOLS.IRSchemaService);
+        const schema = await irSchemaService.getSchema();
+        const validation = schema.model.getFilterSchemaValidation(body.filters || []);
+
+        body = { ...body, ...JoiHelper.Validate<FilterPayload>(validation, body.filters) };
+      }
 
       const auth = await authorizationService.validate(context).checkAdminType().verify();
 
@@ -54,9 +63,11 @@ export default openApi(V1AnnouncementsCreate.httpTrigger as AzureFunction, '/v1/
           }
         }
       },
-      '400': { description: 'Bad request' },
-      '401': { description: 'Not authorized' },
-      '500': { description: 'An error occurred' }
+      '400': { description: 'Bad Request' },
+      '401': { description: 'Unauthorized' },
+      '403': { description: 'Forbidden' },
+      '404': { description: 'Not Found' },
+      '500': { description: 'Internal Server Error' }
     }
   }
 });

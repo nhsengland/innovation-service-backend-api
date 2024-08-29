@@ -34,6 +34,12 @@ export type SchemaValidationError = {
   context: any;
 };
 
+export type FilterPayload = {
+  section: string;
+  question: string;
+  answers: string[];
+};
+
 export class SchemaModel {
   public schema: IRSchemaType;
   private errorList: SchemaValidationError[];
@@ -98,7 +104,7 @@ export class SchemaModel {
   }
 
   // Translates the document passed, it mutates the passed input.
-  translateDocument(document: { [key: string]: any }) {
+  translateDocument(document: { [key: string]: any }): { [key: string]: any } {
     for (const [subSection, questions] of Object.entries(document)) {
       if (subSection === 'version') continue;
       if (subSection === 'evidences' && questions && Array.isArray(questions)) {
@@ -165,7 +171,7 @@ export class SchemaModel {
   /**
    * Calculated fields
    */
-  getCalculatedFields(subSectionId: string, payload: { [key: string]: any }) {
+  getCalculatedFields(subSectionId: string, payload: { [key: string]: any }): { [key: string]: string } {
     const out: { [key: string]: string } = {};
     const conditionalFields = this.conditions.get(subSectionId);
     if (!conditionalFields) return out;
@@ -185,7 +191,7 @@ export class SchemaModel {
   /**
    * Validations
    */
-  public getSubSectionPayloadValidation(subSectionId: string, payload: { [key: string]: any }) {
+  public getSubSectionPayloadValidation(subSectionId: string, payload: { [key: string]: any }): Joi.ObjectSchema<any> {
     const questions = this.getSubsectionQuestions(subSectionId);
 
     const validation: Joi.PartialSchemaMap = {};
@@ -205,7 +211,7 @@ export class SchemaModel {
     return Joi.object(validation).required();
   }
 
-  private validateIdNotRepeated(context: any, path: string, idList: { [key: string]: any }) {
+  private validateIdNotRepeated(context: any, path: string, idList: { [key: string]: any }): void {
     if (idList[context.id]) {
       this.errorList.push({ message: `${path}.id is repeated`, context: context });
     } else {
@@ -217,7 +223,7 @@ export class SchemaModel {
     step: InnovationRecordStepType | { condition: Condition },
     path: string,
     idList: { [key: string]: any }
-  ) {
+  ): void {
     const condition = step.condition;
     if (condition) {
       if (idList[condition.id]) {
@@ -258,7 +264,7 @@ export class SchemaModel {
     step: InnovationRecordStepType,
     path: string,
     idList: { [key: string]: any }
-  ) {
+  ): void {
     step.questions?.forEach((question: Question, i: number) => {
       this.validateQuestion(subSectionId, question, `${path}.questions[${i}]`, idList);
     });
@@ -269,8 +275,13 @@ export class SchemaModel {
     }
   }
 
-  private validateQuestion(subSectionId: string, question: Question, path: string, idList: { [key: string]: any }) {
-    // Done here to make sure since we questions inside questions (e.g., conditional)
+  private validateQuestion(
+    subSectionId: string,
+    question: Question,
+    path: string,
+    idList: { [key: string]: any }
+  ): void {
+    // Done here to make sure since we have questions inside questions (e.g., conditional)
     this.addToSubSections(subSectionId, question.id);
     this.questions.set(question.id, question);
 
@@ -317,7 +328,7 @@ export class SchemaModel {
     }
   }
 
-  private validateRequiredFields() {
+  private validateRequiredFields(): void {
     for (const [subSectionId, questions] of requiredSectionsAndQuestions.entries()) {
       const curSchemaQuestions = this.subSections.get(subSectionId);
       if (!curSchemaQuestions) {
@@ -401,7 +412,7 @@ export class SchemaModel {
    * Function that checks if item has a reference to other question. If it does it returns the items from
    * the referenced question.
    */
-  private checkItemsFromAnswer(question: Question) {
+  private checkItemsFromAnswer(question: Question): any {
     let itemsFromAnswer: any = null;
     if ('items' in question && question.items[0] && 'itemsFromAnswer' in question.items[0]) {
       const referencedQuestion = this.questions.get(question.items[0].itemsFromAnswer);
@@ -410,5 +421,24 @@ export class SchemaModel {
       }
     }
     return itemsFromAnswer;
+  }
+
+  public getFilterSchemaValidation(filters: FilterPayload[]): Joi.ArraySchema {
+    const items: Joi.ObjectSchema[] = [];
+
+    for (const filter of filters) {
+      const question = this.questions.get(filter.question);
+      if (!question) continue;
+
+      items.push(
+        Joi.object({
+          section: Joi.string().required(),
+          question: Joi.string().required(),
+          answers: QuestionValidatorFactory.validate(question, true)
+        })
+      );
+    }
+
+    return Joi.array().items(...items);
   }
 }

@@ -1,6 +1,6 @@
 import azureFunction from '.';
 
-import { ServiceRoleEnum } from '@admin/shared/enums';
+import { AnnouncementTypeEnum, ServiceRoleEnum } from '@admin/shared/enums';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@admin/shared/tests';
 import type { TestUserType } from '@admin/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@admin/shared/types';
@@ -40,7 +40,44 @@ describe('v1-admin-announcement-update Suite', () => {
           title: randText(),
           startsAt: randFutureDate(),
           userRoles: [ServiceRoleEnum.ACCESSOR],
-          params: {}
+          params: { content: randText() },
+          type: AnnouncementTypeEnum.LOG_IN,
+          sendEmail: true
+        })
+        .call<never>(azureFunction);
+
+      expect(result.body).toBeUndefined();
+      expect(result.status).toBe(204);
+      expect(mock).toHaveBeenCalledTimes(1);
+    });
+
+    it('should update the announcement with filters', async () => {
+      const result = await new AzureHttpTriggerBuilder()
+        .setAuth(scenario.users.allMighty)
+        .setParams<ParamsType>({ announcementId: randUuid() })
+        .setBody<BodyType>({
+          title: randText(),
+          startsAt: randFutureDate(),
+          userRoles: [ServiceRoleEnum.ACCESSOR],
+          params: { content: randText() },
+          type: AnnouncementTypeEnum.LOG_IN,
+          filters: [
+            {
+              section: 'INNOVATION_DESCRIPTION',
+              question: 'officeLocation',
+              answers: ['England', 'Scotland']
+            },
+            {
+              section: 'INNOVATION_DESCRIPTION',
+              question: 'categories',
+              answers: ['MEDICAL_DEVICE']
+            },
+            {
+              section: 'CURRENT_CARE_PATHWAY',
+              question: 'hasMarketResearch',
+              answers: ['YES']
+            }
+          ]
         })
         .call<never>(azureFunction);
 
@@ -65,7 +102,8 @@ describe('v1-admin-announcement-update Suite', () => {
           title: randText(),
           startsAt: randFutureDate(),
           userRoles: [ServiceRoleEnum.ACCESSOR],
-          params: {}
+          params: { content: randText() },
+          type: AnnouncementTypeEnum.LOG_IN
         })
         .call<ErrorResponseType>(azureFunction);
 

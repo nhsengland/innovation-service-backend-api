@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@admin/shared/decorators';
-import { AnnouncementTemplateType, ServiceRoleEnum } from '@admin/shared/enums';
+import { ServiceRoleEnum } from '@admin/shared/enums';
 import { JoiHelper, ResponseHelper } from '@admin/shared/helpers';
 import type { AuthorizationService } from '@admin/shared/services';
 import type { CustomContextType } from '@admin/shared/types';
@@ -62,7 +62,6 @@ export default openApi(V1AnnouncementsList.httpTrigger as AzureFunction, '/v1/an
                 type: 'object',
                 properties: {
                   id: { type: 'string', format: 'uuid' },
-                  template: { type: 'string', enum: Object.keys(AnnouncementTemplateType) },
                   userRoles: { type: 'array', items: { type: 'string', enum: Object.keys(ServiceRoleEnum) } },
                   params: { type: 'object' },
                   createdAt: { type: 'string', format: 'date-time' },

@@ -2102,6 +2102,7 @@ paths:
                         - ACCOUNT
                         - AUTOMATIC
                         - NOTIFY_ME
+                        - ANNOUNCEMENTS
       responses:
         "204":
           description: Success

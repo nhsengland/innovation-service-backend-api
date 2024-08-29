@@ -1,15 +1,24 @@
-import { AnnouncementParamsType, ServiceRoleEnum } from '@admin/shared/enums';
+import { AnnouncementParamsType, AnnouncementTypeEnum, ServiceRoleEnum } from '@admin/shared/enums';
+import type { FilterPayload } from '@admin/shared/models/schema-engine/schema.model';
 import Joi from 'joi';
 
-// Announcement Schema for scheduled status
-export type AnnouncementScheduledBodyType = {
+export const AnnouncementJoiLinkValidation = Joi.object({
+  label: Joi.string(),
+  url: Joi.string().uri()
+});
+
+// Announcement Schema for regular announcements and scheduled status
+export type AnnouncementBodyType = {
   title: string;
   userRoles: ServiceRoleEnum[];
-  params: AnnouncementParamsType['GENERIC'];
+  params: AnnouncementParamsType;
   startsAt: Date;
   expiresAt?: Date;
+  type: AnnouncementTypeEnum;
+  filters?: FilterPayload[];
+  sendEmail: boolean;
 };
-export const AnnouncementScheduledBodySchema = Joi.object<AnnouncementScheduledBodyType>({
+export const AnnouncementBodySchema = Joi.object<AnnouncementBodyType>({
   title: Joi.string().max(100).required().description('Title of the announcement'),
   userRoles: Joi.array()
     .items(
@@ -20,24 +29,25 @@ export const AnnouncementScheduledBodySchema = Joi.object<AnnouncementScheduledB
     )
     .min(1),
 
-  params: Joi.object<AnnouncementScheduledBodyType['params']>({
-    inset: Joi.object<AnnouncementScheduledBodyType['params']['inset']>({
-      title: Joi.string().optional(),
-      content: Joi.string().optional(),
-      link: Joi.object({
-        label: Joi.string(),
-        url: Joi.string()
-      }).optional()
-    }).optional(),
-    content: Joi.string().optional(),
-    actionLink: Joi.object<AnnouncementScheduledBodyType['params']['actionLink']>({
-      label: Joi.string(),
-      url: Joi.string()
-    }).optional()
+  params: Joi.object<AnnouncementBodyType['params']>({
+    content: Joi.string().required(),
+    link: AnnouncementJoiLinkValidation.optional()
   }),
-
   startsAt: Joi.date().required(),
-  expiresAt: Joi.date().greater(Joi.ref('startsAt')).optional()
+  expiresAt: Joi.date().greater(Joi.ref('startsAt')).optional(),
+  type: Joi.string()
+    .valid(...Object.values(AnnouncementTypeEnum))
+    .required(),
+  filters: Joi.array()
+    .items(
+      Joi.object<FilterPayload>({
+        section: Joi.string().required(),
+        question: Joi.string().required(),
+        answers: Joi.array().items(Joi.string()).min(1).required()
+      })
+    )
+    .optional(),
+  sendEmail: Joi.boolean().default(false)
 }).required();
 
 // Announcement Schema for active status

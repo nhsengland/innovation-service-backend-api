@@ -1,6 +1,6 @@
 import azureFunction from '.';
 
-import { ServiceRoleEnum } from '@admin/shared/enums';
+import { AnnouncementTypeEnum, ServiceRoleEnum } from '@admin/shared/enums';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@admin/shared/tests';
 import type { TestUserType } from '@admin/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@admin/shared/types';
@@ -37,10 +37,49 @@ describe('v1-admin-announcement-create Suite', () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.allMighty)
         .setBody<BodyType>({
-          params: {},
+          params: { content: randText() },
           startsAt: randFutureDate(),
           title: randText(),
-          userRoles: [ServiceRoleEnum.ASSESSMENT]
+          userRoles: [ServiceRoleEnum.ASSESSMENT],
+          type: AnnouncementTypeEnum.LOG_IN,
+          sendEmail: true
+        })
+        .call<never>(azureFunction);
+
+      expect(result.body).toStrictEqual(expected);
+      expect(result.status).toBe(200);
+      expect(mock).toHaveBeenCalledTimes(1);
+    });
+
+    it('should create a announcement with filters', async () => {
+      const result = await new AzureHttpTriggerBuilder()
+        .setAuth(scenario.users.allMighty)
+        .setBody<BodyType>({
+          params: {
+            content: randText()
+          },
+          startsAt: randFutureDate(),
+          title: randText(),
+          userRoles: [ServiceRoleEnum.ASSESSMENT],
+          type: AnnouncementTypeEnum.LOG_IN,
+          filters: [
+            {
+              section: 'INNOVATION_DESCRIPTION',
+              question: 'officeLocation',
+              answers: ['England', 'Scotland', 'Wales', 'Northern Ireland']
+            },
+            {
+              section: 'INNOVATION_DESCRIPTION',
+              question: 'categories',
+              answers: ['MEDICAL_DEVICE', 'MODELS_CARE', 'DATA_MONITORING']
+            },
+            {
+              section: 'CURRENT_CARE_PATHWAY',
+              question: 'hasMarketResearch',
+              answers: ['YES']
+            }
+          ],
+          sendEmail: false
         })
         .call<never>(azureFunction);
 
@@ -61,10 +100,12 @@ describe('v1-admin-announcement-create Suite', () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(user)
         .setBody<BodyType>({
-          params: {},
+          params: { content: randText() },
           startsAt: randFutureDate(),
           title: randText(),
-          userRoles: [ServiceRoleEnum.ASSESSMENT]
+          userRoles: [ServiceRoleEnum.ASSESSMENT],
+          type: AnnouncementTypeEnum.LOG_IN,
+          sendEmail: true
         })
         .call<ErrorResponseType>(azureFunction);
 

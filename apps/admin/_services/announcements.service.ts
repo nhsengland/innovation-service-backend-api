@@ -15,10 +15,11 @@ import type { DomainContextType } from '@admin/shared/types';
 import {
   AnnouncementActiveBodySchema,
   AnnouncementActiveBodyType,
-  AnnouncementScheduledBodySchema,
-  AnnouncementScheduledBodyType
+  AnnouncementBodySchema,
+  AnnouncementBodyType
 } from './announcements.schemas';
 import { BaseService } from './base.service';
+import type { FilterPayload } from '@admin/shared/models/schema-engine/schema.model';
 
 @injectable()
 export class AnnouncementsService extends BaseService {
@@ -88,6 +89,9 @@ export class AnnouncementsService extends BaseService {
     startsAt: Date;
     expiresAt: null | Date;
     status: AnnouncementStatusEnum;
+    filters: null | FilterPayload[];
+    sendEmail: boolean;
+    type: AnnouncementTypeEnum;
   }> {
     const em = entityManager ?? this.sqlConnection.manager;
 
@@ -101,7 +105,10 @@ export class AnnouncementsService extends BaseService {
         'announcement.params',
         'announcement.startsAt',
         'announcement.expiresAt',
-        'announcement.deletedAt'
+        'announcement.deletedAt',
+        'announcement.filters',
+        'announcement.sendEmail',
+        'announcement.type'
       ])
       .where('announcement.id = :announcementId', { announcementId })
       .getOne();
@@ -117,7 +124,10 @@ export class AnnouncementsService extends BaseService {
       params: announcement.params,
       startsAt: announcement.startsAt,
       expiresAt: announcement.expiresAt,
-      status: this.getAnnouncementStatus(announcement.startsAt, announcement.expiresAt, announcement.deletedAt)
+      status: this.getAnnouncementStatus(announcement.startsAt, announcement.expiresAt, announcement.deletedAt),
+      filters: announcement.filters,
+      sendEmail: announcement.sendEmail,
+      type: announcement.type
     };
   }
 
@@ -126,10 +136,12 @@ export class AnnouncementsService extends BaseService {
     data: {
       title: string;
       userRoles: ServiceRoleEnum[];
-      // template: T;
-      params: AnnouncementParamsType['GENERIC']; // For now, only the generic template is possible to create.
+      params: AnnouncementParamsType;
       startsAt: Date;
       expiresAt?: Date;
+      type: AnnouncementTypeEnum;
+      filters?: FilterPayload[];
+      sendEmail?: boolean;
     },
     config?: { usersToExclude?: string[] },
     entityManager?: EntityManager
@@ -143,13 +155,15 @@ export class AnnouncementsService extends BaseService {
     return await em.transaction(async transaction => {
       const savedAnnouncement = await transaction.save(AnnouncementEntity, {
         title: data.title,
-        template: 'GENERIC',
         userRoles: data.userRoles,
         params: data.params ?? null,
         startsAt: data.startsAt,
         expiresAt: data.expiresAt ?? null,
+        type: data.type,
         createdBy: requestContext.id,
-        updatedBy: requestContext.id
+        updatedBy: requestContext.id,
+        filters: data.filters ?? null,
+        sendEmail: data.sendEmail ?? false
       });
 
       if (config?.usersToExclude && config.usersToExclude.length > 0) {
@@ -177,10 +191,12 @@ export class AnnouncementsService extends BaseService {
     data: {
       title?: string;
       userRoles?: ServiceRoleEnum[];
-      // template: T;
-      params?: AnnouncementParamsType['GENERIC']; // For now, only the generic template is possible to create.
+      params?: AnnouncementParamsType;
       startsAt?: Date;
       expiresAt?: Date;
+      type?: AnnouncementTypeEnum;
+      filters?: FilterPayload[];
+      sendEmail?: boolean;
     },
     entityManager?: EntityManager
   ): Promise<void> {
@@ -194,7 +210,9 @@ export class AnnouncementsService extends BaseService {
         'announcement.params',
         'announcement.startsAt',
         'announcement.expiresAt',
-        'announcement.deletedAt'
+        'announcement.deletedAt',
+        'announcement.type',
+        'announcement.sendEmail'
       ])
       .where('announcement.id = :announcementId', { announcementId })
       .getOne();
@@ -250,10 +268,10 @@ export class AnnouncementsService extends BaseService {
     status: AnnouncementStatusEnum,
     body: unknown,
     curAnnouncement: { startsAt: Date }
-  ): AnnouncementActiveBodyType | AnnouncementScheduledBodyType {
+  ): AnnouncementActiveBodyType | AnnouncementBodyType {
     try {
       if (status === AnnouncementStatusEnum.SCHEDULED) {
-        return JoiHelper.Validate<AnnouncementScheduledBodyType>(AnnouncementScheduledBodySchema, body);
+        return JoiHelper.Validate<AnnouncementBodyType>(AnnouncementBodySchema, body);
       }
 
       if (status === AnnouncementStatusEnum.ACTIVE) {

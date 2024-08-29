@@ -1,12 +1,8 @@
 import Joi from 'joi';
 
-import type { AnnouncementParamsType, ServiceRoleEnum } from '@admin/shared/enums';
-
-// Helpers
-const JoiLinkValidation = Joi.object({
-  label: Joi.string(),
-  url: Joi.string()
-});
+import { AnnouncementParamsType, AnnouncementTypeEnum, ServiceRoleEnum } from '@admin/shared/enums';
+import { AnnouncementJoiLinkValidation } from '../_services/announcements.schemas';
+import type { FilterPayload } from '@admin/shared/models/schema-engine/schema.model';
 
 export type ParamsType = {
   announcementId: string;
@@ -18,9 +14,12 @@ export const ParamsSchema = Joi.object<ParamsType>({
 export type BodyType = {
   title: string;
   userRoles: ServiceRoleEnum[];
-  params: AnnouncementParamsType['GENERIC'];
+  params: AnnouncementParamsType;
   startsAt: Date;
   expiresAt?: Date;
+  type: AnnouncementTypeEnum;
+  filters?: FilterPayload[];
+  sendEmail?: boolean;
 };
 export const BodySchema = Joi.object<BodyType>({
   title: Joi.string().max(100).optional(),
@@ -28,15 +27,23 @@ export const BodySchema = Joi.object<BodyType>({
   userRoles: Joi.array().optional(),
 
   params: Joi.object<BodyType['params']>({
-    inset: Joi.object<BodyType['params']['inset']>({
-      title: Joi.string().optional(),
-      content: Joi.string().optional(),
-      link: JoiLinkValidation.optional()
-    }).optional(),
     content: Joi.string().optional(),
-    actionLink: JoiLinkValidation.optional()
+    link: AnnouncementJoiLinkValidation.optional()
   }),
 
   startsAt: Joi.date().optional(),
-  expiresAt: Joi.date().optional()
+  expiresAt: Joi.date().optional(),
+  type: Joi.string()
+    .valid(...Object.values(AnnouncementTypeEnum))
+    .optional(),
+  filters: Joi.array()
+    .items(
+      Joi.object<FilterPayload>({
+        section: Joi.string().required(),
+        question: Joi.string().required(),
+        answers: Joi.array().items(Joi.string()).min(1).required()
+      })
+    )
+    .optional(),
+  sendEmail: Joi.boolean().optional()
 }).required();

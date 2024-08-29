@@ -969,25 +969,9 @@ paths:
                 params:
                   type: object
                   properties:
-                    inset:
-                      type: object
-                      properties:
-                        title:
-                          type: string
-                        content:
-                          type: string
-                        link:
-                          type: object
-                          properties:
-                            label:
-                              type: string
-                            url:
-                              type: string
-                          additionalProperties: false
-                      additionalProperties: false
                     content:
                       type: string
-                    actionLink:
+                    link:
                       type: object
                       properties:
                         label:
@@ -995,6 +979,8 @@ paths:
                         url:
                           type: string
                       additionalProperties: false
+                  required:
+                    - content
                   additionalProperties: false
                 startsAt:
                   type: string
@@ -1002,9 +988,37 @@ paths:
                 expiresAt:
                   type: string
                   format: date-time
+                type:
+                  type: string
+                  enum:
+                    - LOG_IN
+                    - HOMEPAGE
+                filters:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      section:
+                        type: string
+                      question:
+                        type: string
+                      answers:
+                        type: array
+                        items:
+                          type: string
+                        minItems: 1
+                    required:
+                      - section
+                      - question
+                      - answers
+                    additionalProperties: false
+                sendEmail:
+                  type: boolean
+                  default: false
               required:
                 - title
                 - startsAt
+                - type
               additionalProperties: false
       responses:
         "200":
@@ -1017,11 +1031,15 @@ paths:
                   id:
                     type: string
         "400":
-          description: Bad request
+          description: Bad Request
         "401":
-          description: Not authorized
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
         "500":
-          description: An error occurred
+          description: Internal Server Error
     get:
       description: Returns announcements list
       operationId: v1-announcements-list
@@ -1040,10 +1058,6 @@ paths:
                     id:
                       type: string
                       format: uuid
-                    template:
-                      type: string
-                      enum:
-                        - "0"
                     userRoles:
                       type: array
                       items:
@@ -1094,7 +1108,7 @@ paths:
             format: uuid
       responses:
         "200":
-          description: Announcement created.
+          description: Announcement info retrieved.
           content:
             application/json:
               schema:
@@ -1103,10 +1117,6 @@ paths:
                   id:
                     type: string
                     format: uuid
-                  template:
-                    type: string
-                    enum:
-                      - "0"
                   userRoles:
                     type: array
                     items:
@@ -1125,6 +1135,28 @@ paths:
                   expiresAt:
                     type: string
                     format: date-time
+                  status:
+                    type: string
+                  filters:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        section:
+                          type: string
+                        question:
+                          type: string
+                        answers:
+                          type: array
+                          items:
+                            type: string
+                  sendEmail:
+                    type: boolean
+                  type:
+                    type: string
+                    enum:
+                      - LOG_IN
+                      - HOMEPAGE
         "400":
           description: Bad request
         "401":
@@ -1157,25 +1189,9 @@ paths:
                 params:
                   type: object
                   properties:
-                    inset:
-                      type: object
-                      properties:
-                        title:
-                          type: string
-                        content:
-                          type: string
-                        link:
-                          type: object
-                          properties:
-                            label:
-                              type: string
-                            url:
-                              type: string
-                          additionalProperties: false
-                      additionalProperties: false
                     content:
                       type: string
-                    actionLink:
+                    link:
                       type: object
                       properties:
                         label:
@@ -1190,6 +1206,32 @@ paths:
                 expiresAt:
                   type: string
                   format: date-time
+                type:
+                  type: string
+                  enum:
+                    - LOG_IN
+                    - HOMEPAGE
+                filters:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      section:
+                        type: string
+                      question:
+                        type: string
+                      answers:
+                        type: array
+                        items:
+                          type: string
+                        minItems: 1
+                    required:
+                      - section
+                      - question
+                      - answers
+                    additionalProperties: false
+                sendEmail:
+                  type: boolean
               additionalProperties: false
       responses:
         "200":

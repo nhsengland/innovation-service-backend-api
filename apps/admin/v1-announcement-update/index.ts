@@ -3,7 +3,7 @@ import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@admin/shared/decorators';
 import { JoiHelper, ResponseHelper, SwaggerHelper } from '@admin/shared/helpers';
-import type { AuthorizationService } from '@admin/shared/services';
+import type { AuthorizationService, IRSchemaService } from '@admin/shared/services';
 import type { CustomContextType } from '@admin/shared/types';
 
 import { container } from '../_config';
@@ -12,6 +12,7 @@ import SYMBOLS from '../_services/symbols';
 
 import SHARED_SYMBOLS from '@admin/shared/services/symbols';
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
+import type { FilterPayload } from '@admin/shared/models/schema-engine/schema.model';
 
 class V1AnnouncementsUpdate {
   @JwtDecoder()
@@ -21,7 +22,16 @@ class V1AnnouncementsUpdate {
 
     try {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
-      const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
+
+      let body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
+
+      if (body.filters) {
+        const irSchemaService = container.get<IRSchemaService>(SHARED_SYMBOLS.IRSchemaService);
+        const schema = await irSchemaService.getSchema();
+        const validation = schema.model.getFilterSchemaValidation(body.filters || []);
+
+        body = { ...body, ...JoiHelper.Validate<FilterPayload>(validation, body.filters) };
+      }
 
       const auth = await authorizationService.validate(context).checkAdminType().verify();
 
