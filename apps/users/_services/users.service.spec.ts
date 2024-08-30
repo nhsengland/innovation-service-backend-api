@@ -127,7 +127,7 @@ describe('Users / _services / users service suite', () => {
     it('should throw an error if the user already exists', async () => {
       await expect(() =>
         sut.createUserInnovator({ identityId: scenario.users.adamInnovator.identityId })
-      ).rejects.toThrowError(new UnprocessableEntityError(UserErrorsEnum.USER_ALREADY_EXISTS));
+      ).rejects.toThrow(new UnprocessableEntityError(UserErrorsEnum.USER_ALREADY_EXISTS));
     });
   });
 

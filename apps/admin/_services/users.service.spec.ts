@@ -176,12 +176,12 @@ describe('Admin / _services / users service suite', () => {
             },
             em
           )
-        ).rejects.toThrowError(new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND));
+        ).rejects.toThrow(new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND));
       });
     });
 
     it(`should throw an error if the user doesn't exist`, async () => {
-      await expect(() => sut.updateUser(userAdminContext, randUuid(), {}, em)).rejects.toThrowError(
+      await expect(() => sut.updateUser(userAdminContext, randUuid(), {}, em)).rejects.toThrow(
         new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND)
       );
     });
@@ -289,7 +289,7 @@ describe('Admin / _services / users service suite', () => {
           },
           em
         )
-      ).rejects.toThrowError(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND));
     });
 
     it(`should throw an error if the organisation units is empty and role A/QA`, async () => {
@@ -305,7 +305,7 @@ describe('Admin / _services / users service suite', () => {
           },
           em
         )
-      ).rejects.toThrowError(new BadRequestError(UserErrorsEnum.USER_INVALID_ACCESSOR_PARAMETERS));
+      ).rejects.toThrow(new BadRequestError(UserErrorsEnum.USER_INVALID_ACCESSOR_PARAMETERS));
     });
 
     it.each([[[randUuid()]], [[scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id, randUuid()]]])(
@@ -323,7 +323,7 @@ describe('Admin / _services / users service suite', () => {
             },
             em
           )
-        ).rejects.toThrowError(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND));
+        ).rejects.toThrow(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND));
       }
     );
 
@@ -338,7 +338,7 @@ describe('Admin / _services / users service suite', () => {
           },
           em
         )
-      ).rejects.toThrowError(new UnprocessableEntityError(UserErrorsEnum.USER_ALREADY_EXISTS));
+      ).rejects.toThrow(new UnprocessableEntityError(UserErrorsEnum.USER_ALREADY_EXISTS));
     });
   });
 
@@ -494,7 +494,7 @@ describe('Admin / _services / users service suite', () => {
           },
           em
         )
-      ).rejects.toThrowError(new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD));
+      ).rejects.toThrow(new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD));
     });
   });
 
@@ -591,7 +591,7 @@ describe('Admin / _services / users service suite', () => {
           { role: ServiceRoleEnum.ACCESSOR, orgId: randUuid(), unitId: randUuid() },
           em
         )
-      ).rejects.toThrowError(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND));
     });
   });
 

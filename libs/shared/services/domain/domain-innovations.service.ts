@@ -49,6 +49,7 @@ import type { IdentityProviderService } from '../integrations/identity-provider.
 import type { NotifierService } from '../integrations/notifier.service';
 import type { IRSchemaService } from '../storage/ir-schema.service';
 import type { DomainUsersService } from './domain-users.service';
+import type { FilterPayload } from '../../models/schema-engine/schema.model';
 
 export class DomainInnovationsService {
   innovationRepository: Repository<InnovationEntity>;
@@ -908,7 +909,7 @@ export class DomainInnovationsService {
    * * (filter1 === 'A' AND filter2 === 'B') OR filter2 === 'C'
    */
   async getInnovationsFiltered(
-    filters: any[], // TODO: Change this to FilterPayload when "feature" PR is merged
+    filters: FilterPayload[],
     options: { onlySubmitted?: boolean },
     entityManager?: EntityManager
   ): Promise<{ id: string; name: string }[]> {

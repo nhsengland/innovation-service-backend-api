@@ -145,7 +145,7 @@ describe('Innovations / _services / innovation export request suite', () => {
           randUuid(),
           em
         )
-      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_EXPORT_REQUEST_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_EXPORT_REQUEST_NOT_FOUND));
     });
 
     it.each([
@@ -155,7 +155,7 @@ describe('Innovations / _services / innovation export request suite', () => {
     ])(
       'should return NotFoundError if the export request is from a different team',
       async (domainContext: DomainContextType, requestId: string) => {
-        await expect(() => sut.getExportRequestInfo(domainContext, requestId, em)).rejects.toThrowError(
+        await expect(() => sut.getExportRequestInfo(domainContext, requestId, em)).rejects.toThrow(
           new NotFoundError(InnovationErrorsEnum.INNOVATION_EXPORT_REQUEST_NOT_FOUND)
         );
       }
@@ -312,7 +312,7 @@ describe('Innovations / _services / innovation export request suite', () => {
     it("should return NotFoundError when request doesn't exist", async () => {
       await expect(() =>
         sut.updateExportRequest(johnContext, randUuid(), { status: InnovationExportRequestStatusEnum.APPROVED }, em)
-      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_EXPORT_REQUEST_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_EXPORT_REQUEST_NOT_FOUND));
     });
 
     it("should return UnprocessableEntityError when request current status isn't PENDING", async () => {
@@ -323,7 +323,7 @@ describe('Innovations / _services / innovation export request suite', () => {
           { status: InnovationExportRequestStatusEnum.APPROVED },
           em
         )
-      ).rejects.toThrowError(
+      ).rejects.toThrow(
         new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_RECORD_EXPORT_REQUEST_WITH_UNPROCESSABLE_STATUS)
       );
     });
@@ -336,7 +336,7 @@ describe('Innovations / _services / innovation export request suite', () => {
       async (_: string, __: string, domainContext: DomainContextType, requestId: string) => {
         await expect(() =>
           sut.updateExportRequest(domainContext, requestId, { status: InnovationExportRequestStatusEnum.CANCELLED }, em)
-        ).rejects.toThrowError(
+        ).rejects.toThrow(
           new ForbiddenError(InnovationErrorsEnum.INNOVATION_RECORD_EXPORT_REQUEST_NO_PERMISSION_TO_UPDATE)
         );
       }

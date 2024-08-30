@@ -123,7 +123,7 @@ describe('Admin / _services / announcements service suite', () => {
     });
 
     it(`should throw an error if the announcement doesn't exist`, async () => {
-      await expect(() => sut.getAnnouncementInfo(randUuid())).rejects.toThrowError(
+      await expect(() => sut.getAnnouncementInfo(randUuid())).rejects.toThrow(
         new NotFoundError(AnnouncementErrorsEnum.ANNOUNCEMENT_NOT_FOUND)
       );
     });
@@ -194,7 +194,7 @@ describe('Admin / _services / announcements service suite', () => {
           undefined,
           em
         )
-      ).rejects.toThrowError(new BadRequestError(AnnouncementErrorsEnum.ANNOUNCEMENT_NO_TARGET_ROLES));
+      ).rejects.toThrow(new BadRequestError(AnnouncementErrorsEnum.ANNOUNCEMENT_NO_TARGET_ROLES));
     });
   });
 
@@ -254,7 +254,7 @@ describe('Admin / _services / announcements service suite', () => {
           updatedAnnouncementParams,
           em
         )
-      ).rejects.toThrowError(
+      ).rejects.toThrow(
         new UnprocessableEntityError(AnnouncementErrorsEnum.ANNOUNCEMENT_CANT_BE_UPDATED_IN_DONE_STATUS)
       );
     });
@@ -279,7 +279,7 @@ describe('Admin / _services / announcements service suite', () => {
           updatedAnnouncementParams,
           em
         )
-      ).rejects.toThrowError(
+      ).rejects.toThrow(
         new UnprocessableEntityError(AnnouncementErrorsEnum.ANNOUNCEMENT_INVALID_PAYLOAD_FOR_THE_CUR_STATUS)
       );
     });
@@ -304,7 +304,7 @@ describe('Admin / _services / announcements service suite', () => {
           updatedAnnouncementParams,
           em
         )
-      ).rejects.toThrowError(
+      ).rejects.toThrow(
         new UnprocessableEntityError(AnnouncementErrorsEnum.ANNOUNCEMENT_INVALID_PAYLOAD_FOR_THE_CUR_STATUS)
       );
     });
@@ -329,7 +329,7 @@ describe('Admin / _services / announcements service suite', () => {
           updatedAnnouncementParams,
           em
         )
-      ).rejects.toThrowError(
+      ).rejects.toThrow(
         new UnprocessableEntityError(AnnouncementErrorsEnum.ANNOUNCEMENT_INVALID_PAYLOAD_FOR_THE_CUR_STATUS)
       );
     });
@@ -337,7 +337,7 @@ describe('Admin / _services / announcements service suite', () => {
     it(`should throw an error if the announcement doesn't exist`, async () => {
       await expect(() =>
         sut.updateAnnouncement(DTOsHelper.getUserRequestContext(scenario.users.allMighty), randUuid(), {}, em)
-      ).rejects.toThrowError(new NotFoundError(AnnouncementErrorsEnum.ANNOUNCEMENT_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundError(AnnouncementErrorsEnum.ANNOUNCEMENT_NOT_FOUND));
     });
   });
 
@@ -379,13 +379,13 @@ describe('Admin / _services / announcements service suite', () => {
         expiresAt: randPastDate()
       });
 
-      await expect(() => sut.deleteAnnouncement(announcement.id, em)).rejects.toThrowError(
+      await expect(() => sut.deleteAnnouncement(announcement.id, em)).rejects.toThrow(
         new UnprocessableEntityError(AnnouncementErrorsEnum.ANNOUNCEMENT_CANT_BE_DELETED_IN_DONE_STATUS)
       );
     });
 
     it(`should throw an error if the announcement doesn't exist`, async () => {
-      await expect(() => sut.deleteAnnouncement(randUuid(), em)).rejects.toThrowError(
+      await expect(() => sut.deleteAnnouncement(randUuid(), em)).rejects.toThrow(
         new NotFoundError(AnnouncementErrorsEnum.ANNOUNCEMENT_NOT_FOUND)
       );
     });

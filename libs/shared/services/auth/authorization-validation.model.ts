@@ -8,7 +8,7 @@ import {
   ServiceRoleEnum
 } from '../../enums';
 import { ConflictError, ForbiddenError, UnprocessableEntityError } from '../../errors';
-import type { DomainContextType, DomainUserInfoType } from '../../types';
+import { isInnovatorDomainContextType, type DomainContextType, type DomainUserInfoType } from '../../types';
 import type { DomainService } from '../domain/domain.service';
 
 export enum AuthErrorsEnum {
@@ -223,11 +223,16 @@ export class AuthorizationValidationModel {
       return AuthErrorsEnum.AUTH_INNOVATION_UNAUTHORIZED;
     }
 
-    if (data?.isOwner && this.innovation.data.owner !== this.user.data?.id) {
+    const domainContext = this.getContext();
+
+    if (
+      data?.isOwner &&
+      isInnovatorDomainContextType(domainContext) &&
+      this.innovation.data.owner !== this.user.data?.id
+    ) {
       return AuthErrorsEnum.AUTH_INNOVATION_NOT_OWNER;
     }
 
-    const domainContext = this.getContext();
     if (data?.status && domainContext.currentRole) {
       const status = Array.isArray(data.status) ? data.status : data.status[domainContext.currentRole.role];
 

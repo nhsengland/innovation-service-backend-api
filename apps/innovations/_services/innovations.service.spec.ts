@@ -1,10 +1,10 @@
 import {
+  InnovationAssessmentEntity,
   InnovationEntity,
   InnovationExportRequestEntity,
   InnovationSupportEntity,
   InnovationTaskEntity,
-  NotificationUserEntity,
-  InnovationAssessmentEntity
+  NotificationUserEntity
 } from '@innovations/shared/entities';
 import { ActivityEnum, ActivityTypeEnum } from '@innovations/shared/enums';
 import {
@@ -184,7 +184,7 @@ describe('Innovations / _services / innovations suite', () => {
           },
           em
         )
-      ).rejects.toThrowError(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ALREADY_EXISTS));
+      ).rejects.toThrow(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ALREADY_EXISTS));
     });
   });
 
@@ -211,7 +211,7 @@ describe('Innovations / _services / innovations suite', () => {
     });
 
     it(`should throw an error if the innovation doesn't exist`, async () => {
-      await expect(() => sut.getInnovationShares(randUuid(), em)).rejects.toThrowError(
+      await expect(() => sut.getInnovationShares(randUuid(), em)).rejects.toThrow(
         new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND)
       );
     });
@@ -342,7 +342,7 @@ describe('Innovations / _services / innovations suite', () => {
           scenario.organisations.innovTechOrg.id,
           randUuid()
         ])
-      ).rejects.toThrowError(new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATIONS_NOT_FOUND));
+      ).rejects.toThrow(new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATIONS_NOT_FOUND));
     });
 
     it(`should throw an error if the innovation doesn't exist`, async () => {
@@ -350,7 +350,7 @@ describe('Innovations / _services / innovations suite', () => {
         sut.updateInnovationShares(DTOsHelper.getUserRequestContext(scenario.users.johnInnovator), randUuid(), [
           scenario.organisations.innovTechOrg.id
         ])
-      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND));
     });
   });
 
@@ -383,7 +383,7 @@ describe('Innovations / _services / innovations suite', () => {
     it(`should throw an error if the innovation doesn't exist`, async () => {
       await expect(() =>
         sut.submitInnovation(DTOsHelper.getUserRequestContext(scenario.users.johnInnovator), randUuid(), em)
-      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND));
     });
 
     it(`should throw an error if the innovation has no submitted sections`, async () => {
@@ -392,7 +392,7 @@ describe('Innovations / _services / innovations suite', () => {
 
       await expect(() =>
         sut.submitInnovation(DTOsHelper.getUserRequestContext(scenario.users.johnInnovator), innovation.id, em)
-      ).rejects.toThrowError(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_NO_SECTIONS));
+      ).rejects.toThrow(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_NO_SECTIONS));
     });
 
     it(`should throw an error if the innovation has no submitted sections`, async () => {
@@ -407,7 +407,7 @@ describe('Innovations / _services / innovations suite', () => {
 
       await expect(() =>
         sut.submitInnovation(DTOsHelper.getUserRequestContext(scenario.users.johnInnovator), innovation.id, em)
-      ).rejects.toThrowError(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SECTIONS_INCOMPLETE));
+      ).rejects.toThrow(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SECTIONS_INCOMPLETE));
     });
   });
 
@@ -848,7 +848,33 @@ describe('Innovations / _services / innovations suite', () => {
     });
 
     it(`should throw an error if the innovation doesn't exist`, async () => {
-      await expect(() => sut.getInnovationSubmissionsState(randUuid(), em)).rejects.toThrowError(
+      await expect(() => sut.getInnovationSubmissionsState(randUuid(), em)).rejects.toThrow(
+        new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND)
+      );
+    });
+  });
+
+  describe('getInnovationProgress', () => {
+    // Not testing the progress update part as the units don't exist in scenario nor the payloads as they are all randomly generated
+    // and the result is actually dependent on sql view logic
+    it('should get the innovation progress info', async () => {
+      const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+      const result = await sut.getInnovationProgress(innovation.id, em);
+
+      expect(result).toMatchObject({
+        innovationId: expect.any(String)
+      });
+    });
+
+    it("shouldn't include falsy/null values in the response", async () => {
+      const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+      const result = await sut.getInnovationProgress(innovation.id, em);
+
+      expect(Object.values(result).filter(v => !v)).toHaveLength(0);
+    });
+
+    it(`should throw an error if the innovation doesn't exist`, async () => {
+      await expect(() => sut.getInnovationProgress(randUuid())).rejects.toThrowError(
         new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND)
       );
     });

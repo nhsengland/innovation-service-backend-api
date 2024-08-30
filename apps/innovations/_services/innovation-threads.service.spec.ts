@@ -70,7 +70,7 @@ describe('Innovations / _services / innovation-threads suite', () => {
           false,
           em
         )
-      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND));
     });
   });
 
@@ -98,13 +98,13 @@ describe('Innovations / _services / innovation-threads suite', () => {
     it('should throw an error if the user is not a follower', async () => {
       await expect(
         sut.unfollowThread(thread.id, scenario.users.sarahQualifyingAccessor.roles.qaRole.id, em)
-      ).rejects.toThrowError(new BadRequestError(InnovationErrorsEnum.INNOVATION_THREAD_USER_IS_NOT_FOLLOWER));
+      ).rejects.toThrow(new BadRequestError(InnovationErrorsEnum.INNOVATION_THREAD_USER_IS_NOT_FOLLOWER));
     });
 
     it(`should throw an error if the thread doesn't exist`, async () => {
       await expect(
         sut.unfollowThread(randUuid(), scenario.users.sarahQualifyingAccessor.roles.qaRole.id, em)
-      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND));
     });
   });
 
