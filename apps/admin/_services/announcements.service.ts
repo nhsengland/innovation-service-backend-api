@@ -383,7 +383,7 @@ export class AnnouncementsService extends BaseService {
 
     const announcements = await em
       .createQueryBuilder(AnnouncementEntity, 'announcement')
-      .select('announcement.id', 'announcement.status')
+      .select(['announcement.id'])
       .where('GETDATE() >= announcement.expires_at')
       .andWhere('announcement.status = :active', { active: AnnouncementStatusEnum.ACTIVE })
       .getMany();
