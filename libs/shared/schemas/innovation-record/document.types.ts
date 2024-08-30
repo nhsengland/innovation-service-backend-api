@@ -1,10 +1,10 @@
 import type {
   InnovationSections,
-  catalogEvidenceSubmitType,
-  catalogEvidenceType,
-  catalogCategory,
   catalogAreas,
   catalogCareSettings,
+  catalogCategory,
+  catalogEvidenceSubmitType,
+  catalogEvidenceType,
   catalogInvolvedAACProgrammes,
   catalogKeyHealthInequalities,
   catalogNeedsSupportAnyArea,
@@ -84,7 +84,10 @@ export const requiredSectionsAndQuestions = new Map<InnovationSections, string[]
       'website'
     ]
   ],
-  ['UNDERSTANDING_OF_NEEDS', ['diseasesConditionsImpact', 'keyHealthInequalities']],
+  [
+    'UNDERSTANDING_OF_NEEDS',
+    ['diseasesConditionsImpact', 'keyHealthInequalities', 'hasProductServiceOrPrototype', 'carbonReductionPlan']
+  ],
   [
     'EVIDENCE_OF_EFFECTIVENESS',
     ['hasEvidence', 'currentlyCollectingEvidence', 'summaryOngoingEvidenceGathering', 'needsSupportAnyArea']
@@ -96,5 +99,5 @@ export const requiredSectionsAndQuestions = new Map<InnovationSections, string[]
   ['INTELLECTUAL_PROPERTY', []],
   ['REVENUE_MODEL', []],
   ['COST_OF_INNOVATION', []],
-  ['DEPLOYMENT', []]
+  ['DEPLOYMENT', ['isDeployed', 'deploymentPlans']]
 ]);

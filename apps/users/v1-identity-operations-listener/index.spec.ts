@@ -42,11 +42,11 @@ describe('v1-identity-operations-listener', () => {
           identityId: randUuid()
         }
       })
-    ).rejects.toThrowError(new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND));
+    ).rejects.toThrow(new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND));
   });
 
   it('should throw error on invalid payload', async () => {
-    await expect(azureFunction(context, {} as any)).rejects.toThrowError(
+    await expect(azureFunction(context, {} as any)).rejects.toThrow(
       new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD)
     );
   });

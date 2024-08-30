@@ -72,13 +72,13 @@ describe('Users / _services / terms-of-use service suite', () => {
     it('should throw an error when the user role is ADMIN', async () => {
       await expect(() =>
         sut.getActiveTermsOfUseInfo({ id: scenario.users.allMighty.id }, ServiceRoleEnum.ADMIN, em)
-      ).rejects.toThrowError(new BadRequestError(UserErrorsEnum.USER_TYPE_INVALID));
+      ).rejects.toThrow(new BadRequestError(UserErrorsEnum.USER_TYPE_INVALID));
     });
 
     it(`should throw an error when the terms of use don't exist`, async () => {
       await expect(() =>
         sut.getActiveTermsOfUseInfo({ id: scenario.users.adamInnovator.id }, ServiceRoleEnum.INNOVATOR, em)
-      ).rejects.toThrowError(new NotFoundError(UserErrorsEnum.USER_TERMS_OF_USE_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundError(UserErrorsEnum.USER_TERMS_OF_USE_NOT_FOUND));
     });
   });
 
@@ -115,7 +115,7 @@ describe('Users / _services / terms-of-use service suite', () => {
 
       await expect(() =>
         sut.acceptActiveTermsOfUse({ id: scenario.users.adamInnovator.id }, ServiceRoleEnum.INNOVATOR, em)
-      ).rejects.toThrowError(new NotFoundError(UserErrorsEnum.USER_TERMS_OF_USE_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundError(UserErrorsEnum.USER_TERMS_OF_USE_NOT_FOUND));
     });
 
     it('should throw an error if the terms of use already been accepted', async () => {
@@ -137,7 +137,7 @@ describe('Users / _services / terms-of-use service suite', () => {
 
       await expect(() =>
         sut.acceptActiveTermsOfUse({ id: scenario.users.adamInnovator.id }, ServiceRoleEnum.INNOVATOR, em)
-      ).rejects.toThrowError(
+      ).rejects.toThrow(
         new UnprocessableEntityError(UserErrorsEnum.USER_TERMS_OF_USE_INVALID, {
           message: 'Already accepted'
         })
