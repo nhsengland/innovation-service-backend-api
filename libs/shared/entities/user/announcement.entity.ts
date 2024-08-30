@@ -3,7 +3,7 @@ import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { BaseEntity } from '../base.entity';
 
 import type { ServiceRoleEnum } from '../../enums/user.enums';
-import { AnnouncementParamsType, AnnouncementTypeEnum } from '../../enums/announcement.enums';
+import { AnnouncementParamsType, AnnouncementStatusEnum, AnnouncementTypeEnum } from '../../enums/announcement.enums';
 
 import { AnnouncementUserEntity } from './announcement-user.entity';
 import type { FilterPayload } from '../../models/schema-engine/schema.model';
@@ -12,6 +12,9 @@ import type { FilterPayload } from '../../models/schema-engine/schema.model';
 export class AnnouncementEntity extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
+
+  @Column({ name: 'status', type: 'simple-enum', enum: AnnouncementStatusEnum })
+  status: AnnouncementStatusEnum;
 
   @Column({ name: 'title', type: 'nvarchar', length: 100 })
   title: string;

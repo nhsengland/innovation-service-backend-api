@@ -342,6 +342,7 @@ describe('Admin / _services / announcements service suite', () => {
   });
 
   describe('deleteAnnouncement', () => {
+    const adminContext = DTOsHelper.getUserRequestContext(scenario.users.allMighty);
     it('should delete an announcement', async () => {
       const announcement = await em.getRepository(AnnouncementEntity).save({
         title: randText({ charCount: 10 }),
@@ -351,23 +352,23 @@ describe('Admin / _services / announcements service suite', () => {
         expiresAt: null
       });
 
-      await sut.deleteAnnouncement(announcement.id, em);
+      await sut.deleteAnnouncement(adminContext, announcement.id, em);
 
       const dbAnnouncement = await em
         .createQueryBuilder(AnnouncementEntity, 'announcement')
         .where('announcement.id = :announcementId', { announcementId: announcement.id })
         .withDeleted()
-        .getOne();
+        .getOneOrFail();
 
       const dbAnnouncementUsers = await em
         .createQueryBuilder(AnnouncementUserEntity, 'announcement_user')
-        .innerJoin('announcement_user.announcement', 'announcement')
-        .where('announcement.id = :announcementId', { announcementId: announcement.id })
+        .where('announcement_user.announcement_id = :announcementId', { announcementId: announcement.id })
+        .andWhere('announcement.readAt IS NULL')
         .withDeleted()
-        .getMany();
+        .getCount();
 
-      expect(dbAnnouncement?.deletedAt).toBeTruthy();
-      dbAnnouncementUsers.forEach(announcementUser => expect(announcementUser.deletedAt).toBeTruthy());
+      expect(dbAnnouncement.status).toBe(AnnouncementStatusEnum.DELETED);
+      expect(dbAnnouncementUsers).toHaveLength(0);
     });
 
     it('should throw an error if the announcement is in DONE status', async () => {
@@ -379,13 +380,13 @@ describe('Admin / _services / announcements service suite', () => {
         expiresAt: randPastDate()
       });
 
-      await expect(() => sut.deleteAnnouncement(announcement.id, em)).rejects.toThrow(
-        new UnprocessableEntityError(AnnouncementErrorsEnum.ANNOUNCEMENT_CANT_BE_DELETED_IN_DONE_STATUS)
+      await expect(() => sut.deleteAnnouncement(adminContext, announcement.id, em)).rejects.toThrow(
+        new UnprocessableEntityError(AnnouncementErrorsEnum.ANNOUNCEMENT_INVALID_UPDATE_STATUS)
       );
     });
 
     it(`should throw an error if the announcement doesn't exist`, async () => {
-      await expect(() => sut.deleteAnnouncement(randUuid(), em)).rejects.toThrow(
+      await expect(() => sut.deleteAnnouncement(adminContext, randUuid(), em)).rejects.toThrow(
         new NotFoundError(AnnouncementErrorsEnum.ANNOUNCEMENT_NOT_FOUND)
       );
     });
