@@ -85,7 +85,7 @@ export class AnnouncementsService extends BaseService {
     id: string;
     title: string;
     userRoles: ServiceRoleEnum[];
-    params: null | AnnouncementParamsType;
+    params: AnnouncementParamsType;
     startsAt: Date;
     expiresAt: null | Date;
     status: AnnouncementStatusEnum;

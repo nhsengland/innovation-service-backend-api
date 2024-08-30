@@ -5,7 +5,7 @@ export type AnnouncementParamsType = {
 export type SimpleAnnouncementType = {
   id: string;
   title: string;
-  params: null | AnnouncementParamsType;
+  params: AnnouncementParamsType;
 };
 
 export enum AnnouncementStatusEnum {

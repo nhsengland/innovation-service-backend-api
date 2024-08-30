@@ -40,6 +40,8 @@ import { NotifyMeSubscriptionBuilder } from '../builders/notify-me-subscription.
 import { OrganisationUnitBuilder } from '../builders/organisation-unit.builder';
 import { OrganisationBuilder } from '../builders/organisation.builder';
 import { TestUserType, UserBuilder } from '../builders/user.builder';
+import { AnnouncementBuilder } from '../builders/announcement.builder';
+import { AnnouncementUserBuilder } from '../builders/announcement-users.builder';
 
 export type CompleteScenarioType = Awaited<ReturnType<CompleteScenarioBuilder['createScenario']>>;
 
@@ -951,6 +953,21 @@ export class CompleteScenarioBuilder {
         .setUpdateStatus(false)
         .save();
 
+      const announcementForQAs = await new AnnouncementBuilder(entityManager)
+        .setTitle('Announcement for QAs')
+        .setUserRoles([ServiceRoleEnum.QUALIFYING_ACCESSOR])
+        .save();
+
+      const announcementForSpecificInnovatons = await new AnnouncementBuilder(entityManager)
+        .setTitle('Announcement for Specific Innovations')
+        .setUserRoles([ServiceRoleEnum.INNOVATOR])
+        .save();
+
+      const announcementUsersWithSpecificInnovations = await new AnnouncementUserBuilder(entityManager)
+        .setAnnouncement(announcementForQAs.id)
+        .setUserAndInnovation(johnInnovator.id, johnInnovation.id)
+        .save();
+
       return {
         users: {
           // Innovators
@@ -1304,6 +1321,15 @@ export class CompleteScenarioBuilder {
             ...inactiveEmptyOrg,
             organisationUnits: {
               inactiveEmptyOrgUnit: inactiveEmptyOrgUnit
+            }
+          }
+        },
+        announcements: {
+          announcementForQAs: announcementForQAs,
+          announcementForSpecificInnovatons: {
+            ...announcementForSpecificInnovatons,
+            announcementUsers: {
+              announcementUsersWithSpecificInnovations: announcementUsersWithSpecificInnovations
             }
           }
         }

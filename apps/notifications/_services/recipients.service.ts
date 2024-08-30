@@ -227,7 +227,7 @@ export class RecipientsService extends BaseService {
   ): Promise<{
     id: string;
     title: string;
-    params: null | AnnouncementParamsType;
+    params: AnnouncementParamsType;
   }> {
     const em = entityManager ?? this.sqlConnection.manager;
 
