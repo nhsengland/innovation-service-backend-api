@@ -106,27 +106,23 @@ export class AnnouncementsService extends BaseService {
   }> {
     const em = entityManager ?? this.sqlConnection.manager;
 
-    const announcement = await em
-      .createQueryBuilder(AnnouncementEntity, 'announcement')
-      .select([
-        'announcement.id',
-        'announcement.status',
-        'announcement.title',
-        'announcement.userRoles',
-        'announcement.params',
-        'announcement.startsAt',
-        'announcement.expiresAt',
-        'announcement.deletedAt',
-        'announcement.filters',
-        'announcement.sendEmail',
-        'announcement.type'
-      ])
-      .where('announcement.id = :announcementId', { announcementId })
-      .getOne();
-
-    if (!announcement) {
-      throw new NotFoundError(AnnouncementErrorsEnum.ANNOUNCEMENT_NOT_FOUND);
-    }
+    const announcement = await this.getAnnouncementPartialInfo(
+      announcementId,
+      [
+        'id',
+        'status',
+        'title',
+        'userRoles',
+        'params',
+        'startsAt',
+        'expiresAt',
+        'deletedAt',
+        'filters',
+        'sendEmail',
+        'type'
+      ],
+      em
+    );
 
     return {
       id: announcement.id,
@@ -208,25 +204,11 @@ export class AnnouncementsService extends BaseService {
   ): Promise<void> {
     const em = entityManager ?? this.sqlConnection.manager;
 
-    const dbAnnouncement = await em
-      .createQueryBuilder(AnnouncementEntity, 'announcement')
-      .select([
-        'announcement.id',
-        'announcement.status',
-        'announcement.userRoles',
-        'announcement.params',
-        'announcement.startsAt',
-        'announcement.expiresAt',
-        'announcement.deletedAt',
-        'announcement.type',
-        'announcement.sendEmail'
-      ])
-      .where('announcement.id = :announcementId', { announcementId })
-      .getOne();
-
-    if (!dbAnnouncement) {
-      throw new NotFoundError(AnnouncementErrorsEnum.ANNOUNCEMENT_NOT_FOUND);
-    }
+    const dbAnnouncement = await this.getAnnouncementPartialInfo(
+      announcementId,
+      ['id', 'status', 'userRoles', 'params', 'startsAt', 'expiresAt', 'deletedAt', 'type', 'sendEmail'],
+      em
+    );
 
     const announcementStatus = this.getAnnouncementStatus(dbAnnouncement.startsAt, dbAnnouncement.expiresAt);
 
@@ -360,39 +342,11 @@ export class AnnouncementsService extends BaseService {
   ): Promise<void> {
     const em = entityManager ?? this.sqlConnection.manager;
 
-    let announcementInfo: Pick<
-      AnnouncementEntity,
-      'id' | 'status' | 'sendEmail' | 'userRoles' | 'filters' | 'createdBy'
-    >;
-    if (
-      typeof announcement === 'string' ||
-      !(
-        'id' in announcement &&
-        'status' in announcement &&
-        'sendEmail' in announcement &&
-        'userRoles' in announcement &&
-        'createdBy' in announcement
-      )
-    ) {
-      const dbAnnouncement = await em
-        .createQueryBuilder(AnnouncementEntity, 'announcement')
-        .select([
-          'announcement.id',
-          'announcement.status',
-          'announcement.userRoles',
-          'announcement.filters',
-          'announcement.createdBy',
-          'announcement.sendEmail'
-        ])
-        .where('announcement.id = :announcementId', { announcementId: announcement })
-        .getOne();
-      if (!dbAnnouncement) {
-        throw new NotFoundError(AnnouncementErrorsEnum.ANNOUNCEMENT_NOT_FOUND);
-      }
-      announcementInfo = dbAnnouncement;
-    } else {
-      announcementInfo = announcement;
-    }
+    const announcementInfo = await this.getAnnouncementPartialInfo(
+      announcement,
+      ['id', 'status', 'userRoles', 'filters', 'createdBy', 'sendEmail'],
+      em
+    );
 
     await em.transaction(async transaction => {
       await this.addAnnouncementUsers(announcementInfo, options, transaction);
@@ -428,14 +382,7 @@ export class AnnouncementsService extends BaseService {
   ): Promise<void> {
     const em = entityManager ?? this.sqlConnection.manager;
 
-    const announcement = await em
-      .createQueryBuilder(AnnouncementEntity, 'announcement')
-      .select(['announcement.id', 'announcement.status'])
-      .where('announcement.id = :announcementId', { announcementId })
-      .getOne();
-    if (!announcement) {
-      throw new NotFoundError(AnnouncementErrorsEnum.ANNOUNCEMENT_NOT_FOUND);
-    }
+    const announcement = await this.getAnnouncementPartialInfo(announcementId, ['id', 'status'], em);
 
     if (
       (status === AnnouncementStatusEnum.ACTIVE && announcement.status !== AnnouncementStatusEnum.SCHEDULED) ||
@@ -489,5 +436,34 @@ export class AnnouncementsService extends BaseService {
     }
 
     return AnnouncementStatusEnum.ACTIVE;
+  }
+
+  /**
+   * Function that either makes sure that all the needed fields exist on the entity or refetches it.
+   */
+  private async getAnnouncementPartialInfo<T extends Exclude<keyof AnnouncementEntity, 'announcementUsers'>>(
+    announcement: string | AnnouncementEntity,
+    fields: T[],
+    entityManager?: EntityManager
+  ): Promise<Pick<AnnouncementEntity, T>> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    // If the announcement already has all the fields needed to need to refetch it.
+    if (
+      typeof announcement !== 'string' &&
+      fields.filter(f => !['filters', 'expiresAt'].includes(f)).every(f => !(f in announcement))
+    ) {
+      return announcement;
+    }
+
+    const dbAnnouncement = await em
+      .createQueryBuilder(AnnouncementEntity, 'announcement')
+      .select(fields.map(f => `announcement.${f}`))
+      .where('announcement.id = :announcementId', { announcementId: announcement })
+      .getOne();
+    if (!dbAnnouncement) {
+      throw new NotFoundError(AnnouncementErrorsEnum.ANNOUNCEMENT_NOT_FOUND);
+    }
+    return dbAnnouncement;
   }
 }
