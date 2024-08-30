@@ -6,7 +6,7 @@ import SHARED_SYMBOLS from '@admin/shared/services/symbols';
 import SYMBOLS from '../_services/symbols';
 import type { AnnouncementsService } from '../_services/announcements.service';
 
-// Runs every day at 2AM.
+// Runs every day at 1AM and 6AM.
 class V1AnnouncementSchedulerCron {
   static async cronTrigger(): Promise<void> {
     const logger = container.get<LoggerService>(SHARED_SYMBOLS.LoggerService);
