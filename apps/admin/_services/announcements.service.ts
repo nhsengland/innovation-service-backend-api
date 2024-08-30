@@ -1,5 +1,5 @@
 import { inject, injectable } from 'inversify';
-import { EntityManager, IsNull } from 'typeorm';
+import { EntityManager, In, IsNull } from 'typeorm';
 
 import { AnnouncementEntity, AnnouncementUserEntity, UserEntity } from '@admin/shared/entities';
 import {
@@ -31,6 +31,7 @@ import type { FilterPayload } from '@admin/shared/models/schema-engine/schema.mo
 import { InnovationEntity } from '@admin/shared/entities';
 import SHARED_SYMBOLS from '@admin/shared/services/symbols';
 import type { DomainService } from '@admin/shared/services';
+import { ADMIN_CRON_ID } from '@admin/shared/constants';
 
 @injectable()
 export class AnnouncementsService extends BaseService {
@@ -372,6 +373,40 @@ export class AnnouncementsService extends BaseService {
       .getMany();
 
     return announcements;
+  }
+
+  /**
+   * Function that expires the announcements, only used on the cron so the updatedBy is hardcoded.
+   */
+  async expireAnnouncements(entityManager?: EntityManager): Promise<number> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const announcements = await em
+      .createQueryBuilder(AnnouncementEntity, 'announcement')
+      .select('announcement.id', 'announcement.status')
+      .where('GETDATE() >= announcement.expires_at')
+      .andWhere('announcement.status = :active', { active: AnnouncementStatusEnum.ACTIVE })
+      .getMany();
+
+    if (announcements.length) {
+      const announcementIds = announcements.map(a => a.id);
+      await em.transaction(async transaction => {
+        await transaction.update(
+          AnnouncementEntity,
+          { id: In(announcementIds) },
+          { status: AnnouncementStatusEnum.DONE, updatedAt: new Date(), updatedBy: ADMIN_CRON_ID }
+        );
+
+        await transaction
+          .createQueryBuilder()
+          .delete()
+          .from(AnnouncementUserEntity)
+          .where('announcement_id IN (:...announcementIds)', { announcementIds })
+          .andWhere('read_at IS NULL')
+          .execute();
+      });
+    }
+    return announcements.length;
   }
 
   private async updateAnnouncementStatus(
