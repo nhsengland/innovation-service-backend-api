@@ -7,6 +7,7 @@ import {
   AnnouncementStatusEnum,
   AnnouncementTypeEnum,
   InnovationCollaboratorStatusEnum,
+  NotifierTypeEnum,
   ServiceRoleEnum,
   UserStatusEnum
 } from '@admin/shared/enums';
@@ -30,12 +31,15 @@ import { BaseService } from './base.service';
 import type { FilterPayload } from '@admin/shared/models/schema-engine/schema.model';
 import { InnovationEntity } from '@admin/shared/entities';
 import SHARED_SYMBOLS from '@admin/shared/services/symbols';
-import type { DomainService } from '@admin/shared/services';
+import type { DomainService, NotifierService } from '@admin/shared/services';
 import { ADMIN_CRON_ID } from '@admin/shared/constants';
 
 @injectable()
 export class AnnouncementsService extends BaseService {
-  constructor(@inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService) {
+  constructor(
+    @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
+    @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService
+  ) {
     super();
   }
 
@@ -97,7 +101,7 @@ export class AnnouncementsService extends BaseService {
     id: string;
     title: string;
     userRoles: ServiceRoleEnum[];
-    params: null | Record<string, unknown>;
+    params: AnnouncementParamsType;
     startsAt: Date;
     expiresAt: null | Date;
     status: AnnouncementStatusEnum;
@@ -331,7 +335,7 @@ export class AnnouncementsService extends BaseService {
           ...(options.usersToExclude && options.usersToExclude.includes(u.id) && { readAt: new Date() })
         })
       ),
-      { chunk: 500 }
+      { chunk: 250 }
     );
   }
 
@@ -357,8 +361,10 @@ export class AnnouncementsService extends BaseService {
       }
     });
 
-    // TODO: Send notification.
     if (announcementInfo.sendEmail) {
+      await this.notifierService.sendSystemNotification(NotifierTypeEnum.NEW_ANNOUNCEMENT, {
+        announcementId: announcementInfo.id
+      });
     }
   }
 
@@ -494,7 +500,9 @@ export class AnnouncementsService extends BaseService {
     const dbAnnouncement = await em
       .createQueryBuilder(AnnouncementEntity, 'announcement')
       .select(fields.map(f => `announcement.${f}`))
-      .where('announcement.id = :announcementId', { announcementId: announcement })
+      .where('announcement.id = :announcementId', {
+        announcementId: typeof announcement === 'string' ? announcement : announcement.id
+      })
       .getOne();
     if (!dbAnnouncement) {
       throw new NotFoundError(AnnouncementErrorsEnum.ANNOUNCEMENT_NOT_FOUND);

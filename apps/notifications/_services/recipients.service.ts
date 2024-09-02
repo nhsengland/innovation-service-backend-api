@@ -10,9 +10,12 @@ import {
   OrganisationEntity,
   SupportKPIViewEntity,
   UserEntity,
-  UserRoleEntity
+  UserRoleEntity,
+  AnnouncementUserEntity,
+  AnnouncementEntity
 } from '@notifications/shared/entities';
 import {
+  AnnouncementParamsType,
   InnovationCollaboratorStatusEnum,
   InnovationExportRequestStatusEnum,
   InnovationStatusEnum,
@@ -25,6 +28,7 @@ import {
   UserStatusEnum
 } from '@notifications/shared/enums';
 import {
+  AnnouncementErrorsEnum,
   GenericErrorsEnum,
   InnovationErrorsEnum,
   NotFoundError,
@@ -154,7 +158,6 @@ export class RecipientsService extends BaseService {
       return new Map();
     }
     const em = entityManager ?? this.sqlConnection.manager;
-
     const query = em
       .createQueryBuilder(InnovationEntity, 'innovation')
       .select(['innovation.id', 'innovation.name', 'owner.id'])
@@ -167,6 +170,82 @@ export class RecipientsService extends BaseService {
     const innovations = await query.getMany();
 
     return new Map(innovations.map(i => [i.id, { id: i.id, name: i.name, ownerId: i.owner?.id }]));
+  }
+
+  async getAnnouncementUsers(announcementId: string, entityManager?: EntityManager): Promise<string[]> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const query = em
+      .createQueryBuilder(AnnouncementUserEntity, 'au')
+      .innerJoin('au.user', 'user')
+      .select(['au.id', 'user.id'])
+      .where('au.announcement = :announcementId', { announcementId })
+      .andWhere('au.innovation_id IS null')
+      .andWhere('user.status <> :userLocked', { userLocked: UserStatusEnum.LOCKED });
+
+    const users = await query.getMany();
+
+    return users.map(u => u.user.id);
+  }
+
+  async getAnnouncementUsersWithInnovationsNames(
+    announcementId: string,
+    entityManager?: EntityManager
+  ): Promise<Map<string, string[]>> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const query = em
+      .createQueryBuilder(AnnouncementUserEntity, 'au')
+      .innerJoin('au.user', 'user')
+      .innerJoin('au.innovation', 'innovation')
+      .select(['au.id', 'user.id', 'innovation.name'])
+      .where('au.announcement = :announcementId', { announcementId })
+      .andWhere('user.status <> :userLocked', { userLocked: UserStatusEnum.LOCKED });
+
+    const records = await query.getMany();
+
+    // Group innovations by userId
+    const result = new Map<string, string[]>();
+    records.forEach(record => {
+      const userId = record.user.id;
+      const innovationName = record.innovation?.name;
+
+      if (userId && innovationName) {
+        if (!result.has(userId)) {
+          result.set(userId, []);
+        }
+        result.get(userId)?.push(innovationName);
+      }
+    });
+
+    return result;
+  }
+
+  async getAnnouncementInfo(
+    announcementId: string,
+    entityManager?: EntityManager
+  ): Promise<{
+    id: string;
+    title: string;
+    params: AnnouncementParamsType;
+  }> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const announcement = await em
+      .createQueryBuilder(AnnouncementEntity, 'announcement')
+      .select(['announcement.id', 'announcement.title', 'announcement.params'])
+      .where('announcement.id = :announcementId', { announcementId })
+      .getOne();
+
+    if (!announcement) {
+      throw new NotFoundError(AnnouncementErrorsEnum.ANNOUNCEMENT_NOT_FOUND);
+    }
+
+    return {
+      id: announcement.id,
+      title: announcement.title,
+      params: announcement.params
+    };
   }
 
   /**

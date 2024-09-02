@@ -28,8 +28,8 @@ export class AnnouncementEntity extends BaseEntity {
   @Column({ name: 'expires_at', type: 'datetime2', nullable: true })
   expiresAt: null | Date;
 
-  @Column({ name: 'params', type: 'simple-json', nullable: true })
-  params: null | AnnouncementParamsType;
+  @Column({ name: 'params', type: 'simple-json', nullable: false })
+  params: AnnouncementParamsType;
 
   @Column({ name: 'type', type: 'simple-enum', enum: AnnouncementTypeEnum })
   type: AnnouncementTypeEnum;
