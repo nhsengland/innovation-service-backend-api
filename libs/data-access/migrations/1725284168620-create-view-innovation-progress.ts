@@ -2,7 +2,7 @@ import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 // This view is used to calculate the KPI for the support team, this can be improved once we don't need to query the
 // activity log
-export class createViewInnovationProgress1724842021547 implements MigrationInterface {
+export class createViewInnovationProgress1725284168620 implements MigrationInterface {
   async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
     CREATE OR ALTER VIEW [innovation_progress_view] AS
@@ -69,6 +69,7 @@ export class createViewInnovationProgress1724842021547 implements MigrationInter
         WHERE 
         sl.type = 'PROGRESS_UPDATE'
         AND sl.innovation_id = d.id
+        AND sl.deleted_at IS NULL
         AND EXISTS(SELECT TOP 1 1 FROM OPENJSON(params, '$.subCategories') WHERE value = 'Topic Exploration Report (TER) completed')
         AND ou.acronym = 'HTW'
       ) as htw_ter_complete,
@@ -78,6 +79,7 @@ export class createViewInnovationProgress1724842021547 implements MigrationInter
         WHERE 
         sl.type = 'PROGRESS_UPDATE'
         AND sl.innovation_id = d.id
+        AND sl.deleted_at IS NULL
         AND EXISTS(SELECT TOP 1 1 FROM OPENJSON(params, '$.categories') WHERE value = 'Selected for NICE guidance output')
         AND ou.acronym = 'NICE'
       ) as nice_guidance_complete,
@@ -87,6 +89,7 @@ export class createViewInnovationProgress1724842021547 implements MigrationInter
         WHERE 
         sl.type = 'PROGRESS_UPDATE'
         AND sl.innovation_id = d.id
+        AND sl.deleted_at IS NULL
         AND EXISTS(SELECT TOP 1 1 FROM OPENJSON(params, '$.categories') WHERE value IN ('Business as usual (BAU) procurement route identified', 'Innovation procurement route identified'))
         AND ou.acronym = 'NHS-SC'
       ) as sc_procurement_route_identified 
