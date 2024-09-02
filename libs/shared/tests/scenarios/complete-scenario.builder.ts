@@ -955,6 +955,7 @@ export class CompleteScenarioBuilder {
 
       const announcementForQAs = await new AnnouncementBuilder(entityManager)
         .setTitle('Announcement for QAs')
+        .setStartsAt(randPastDate())
         .setUserRoles([ServiceRoleEnum.QUALIFYING_ACCESSOR])
         .save();
 

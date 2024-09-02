@@ -252,7 +252,7 @@ export class AnnouncementsService extends BaseService {
         AnnouncementStatusEnum.DELETED,
         transaction
       );
-      await transaction.delete(AnnouncementUserEntity, { announcementId, readAt: IsNull() });
+      await transaction.delete(AnnouncementUserEntity, { announcement: { id: announcementId }, readAt: IsNull() });
     });
   }
 
@@ -393,7 +393,7 @@ export class AnnouncementsService extends BaseService {
     if (
       (status === AnnouncementStatusEnum.ACTIVE && announcement.status !== AnnouncementStatusEnum.SCHEDULED) ||
       (status === AnnouncementStatusEnum.DONE && announcement.status !== AnnouncementStatusEnum.ACTIVE) ||
-      (status === AnnouncementStatusEnum.DELETED && announcement.status !== AnnouncementStatusEnum.DONE)
+      (status === AnnouncementStatusEnum.DELETED && announcement.status === AnnouncementStatusEnum.DONE)
     ) {
       throw new ConflictError(AnnouncementErrorsEnum.ANNOUNCEMENT_INVALID_UPDATE_STATUS);
     }
