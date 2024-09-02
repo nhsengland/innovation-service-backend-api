@@ -19,6 +19,11 @@ class V1AnnouncementSchedulerCron {
       for (const announcement of announcements) {
         await announcementsService.activateAnnouncement(ADMIN_CRON_ID, announcement, {});
       }
+
+      const announcementsExpired = await announcementsService.expireAnnouncements();
+      if (announcementsExpired) {
+        logger.log(`V1AnnouncementSchedulerCron: ${announcementsExpired} announcements were expired.`);
+      }
     } catch (err) {
       logger.error('Error running cron job: V1AnnouncementSchedulerCron', err);
       throw err;

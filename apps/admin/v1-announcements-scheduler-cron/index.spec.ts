@@ -11,11 +11,11 @@ beforeAll(async () => {
   await testsHelper.init();
 });
 
-const getAnnouncementsToActiveMock = jest.spyOn(AnnouncementsService.prototype, 'getAnnouncementsToActivate').mockResolvedValue([
-  AnnouncementEntity.new({ id: randUuid()}),
-  AnnouncementEntity.new({ id: randUuid()}),
-]);
+const getAnnouncementsToActiveMock = jest
+  .spyOn(AnnouncementsService.prototype, 'getAnnouncementsToActivate')
+  .mockResolvedValue([AnnouncementEntity.new({ id: randUuid() }), AnnouncementEntity.new({ id: randUuid() })]);
 const activateAnnouncementMock = jest.spyOn(AnnouncementsService.prototype, 'activateAnnouncement').mockResolvedValue();
+const expireAnnouncements = jest.spyOn(AnnouncementsService.prototype, 'expireAnnouncements').mockResolvedValue(0);
 
 afterEach(() => {
   jest.clearAllMocks();
@@ -26,5 +26,6 @@ describe('v1-announcements-scheduler-cron', () => {
     await azureFunction();
     expect(getAnnouncementsToActiveMock).toHaveBeenCalledTimes(1);
     expect(activateAnnouncementMock).toHaveBeenCalledTimes(2);
+    expect(expireAnnouncements).toHaveBeenCalledTimes(1);
   });
 });
