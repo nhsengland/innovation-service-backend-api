@@ -87,7 +87,7 @@ export const NotificationTypes = {
     'REMINDER',
     'SUGGESTED_SUPPORT_UPDATED'
   ] as const,
-  ANNOUNCEMENTS: ['AN01_NEW_ANNOUNCEMENT'] as const
+  ANNOUNCEMENTS: ['AP10_NEW_ANNOUNCEMENT', 'AP11_NEW_ANNOUNCEMENT_WITH_INNOVATIONS_NAME'] as const
 };
 export type NotificationTypes = typeof NotificationTypes;
 export const NotificationCategoryType = Object.keys(NotificationTypes).map(v => v);

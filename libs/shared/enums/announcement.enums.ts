@@ -2,6 +2,11 @@ export type AnnouncementParamsType = {
   content: string;
   link?: { label: string; url: string };
 };
+export type SimpleAnnouncementType = {
+  id: string;
+  title: string;
+  params: AnnouncementParamsType;
+};
 
 export enum AnnouncementStatusEnum {
   SCHEDULED = 'SCHEDULED',

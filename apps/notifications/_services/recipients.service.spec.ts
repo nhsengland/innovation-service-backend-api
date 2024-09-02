@@ -1382,4 +1382,23 @@ describe('Notifications / _services / recipients service suite', () => {
       expect(res.size).toBe(0);
     });
   });
+
+  describe('announcementUsers', () => {
+    it('Should get a list of announcement recipients', async () => {
+      const res = await sut.getAnnouncementUsers(scenario.announcements.announcementForQAs.id, em);
+      expect(res).toHaveLength(2);
+      expect(res).toContainEqual(scenario.users.aliceQualifyingAccessor.id);
+      expect(res).toContainEqual(scenario.users.bartQualifyingAccessor.id);
+    });
+
+    it('Should get a list of announcement recipients with specific innovations', async () => {
+      const res = await sut.getAnnouncementUsersWithInnovationsNames(
+        scenario.announcements.announcementForSpecificInnovations.id,
+        em
+      );
+      expect(res).toMatchObject(
+        new Map([[scenario.users.johnInnovator.id, [scenario.users.johnInnovator.innovations.johnInnovation.name]]])
+      );
+    });
+  });
 });
