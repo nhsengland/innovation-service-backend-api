@@ -29,7 +29,7 @@ class V1AnnouncementsCreate {
         const schema = await irSchemaService.getSchema();
         const validation = schema.model.getFilterSchemaValidation(body.filters || []);
 
-        body = { ...body, ...JoiHelper.Validate<FilterPayload>(validation, body.filters) };
+        body = { ...body, filters: JoiHelper.Validate<FilterPayload[]>(validation, body.filters) };
       }
 
       const auth = await authorizationService.validate(context).checkAdminType().verify();

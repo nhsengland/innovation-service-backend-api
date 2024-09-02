@@ -179,7 +179,7 @@ export class QuestionValidatorFactory {
         return new TextareaValidator().validate(question);
       case 'radio-group':
         if (multipleAnswers) {
-          return Joi.array().items(new RadioGroupMultipleAnswersValidator().validate(question));
+          return new RadioGroupMultipleAnswersValidator().validate(question);
         }
         return new RadioGroupValidator().validate(question);
       case 'checkbox-array':
