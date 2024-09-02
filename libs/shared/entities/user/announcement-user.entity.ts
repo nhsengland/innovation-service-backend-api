@@ -24,7 +24,7 @@ export class AnnouncementUserEntity extends BaseEntity {
 
   @ManyToOne(() => InnovationEntity)
   @JoinColumn({ name: 'innovation_id' })
-  innovation: InnovationEntity;
+  innovation: null | InnovationEntity;
 
   static new(data: Partial<AnnouncementUserEntity>): AnnouncementUserEntity {
     const instance = new AnnouncementUserEntity();

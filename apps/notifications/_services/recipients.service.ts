@@ -177,10 +177,9 @@ export class RecipientsService extends BaseService {
 
     const query = em
       .createQueryBuilder(AnnouncementUserEntity, 'au')
-      .leftJoin('au.user', 'user')
-      .select('user.id')
+      .innerJoin('au.user', 'user')
+      .select(['au.id', 'user.id'])
       .where('au.announcement = :announcementId', { announcementId })
-      .andWhere('au.innovation IS NULL')
       .andWhere('user.status <> :userLocked', { userLocked: UserStatusEnum.LOCKED });
 
     const users = await query.getMany();
@@ -208,7 +207,7 @@ export class RecipientsService extends BaseService {
     const result = new Map<string, string[]>();
     records.forEach(record => {
       const userId = record.user.id;
-      const innovationName = record.innovation.name;
+      const innovationName = record.innovation?.name;
 
       if (userId && innovationName) {
         if (!result.has(userId)) {

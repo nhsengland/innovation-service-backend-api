@@ -45,7 +45,9 @@ export class NewAnnouncementHandler extends BaseHandler<
       params: {
         announcement_title: announcement.title,
         announcement_body: announcement.params?.content ?? '',
-        announcement_url: `[${announcement.params?.link?.label}](${announcement.params?.link?.url})`
+        announcement_url: announcement.params.link
+          ? `[${announcement.params?.link?.label}](${announcement.params?.link?.url})`
+          : ''
       }
     });
   }
@@ -62,7 +64,9 @@ export class NewAnnouncementHandler extends BaseHandler<
           announcement_title: announcement.title,
           innovations_name: HandlersHelper.formatStringArray(innovationNames),
           announcement_body: announcement.params?.content ?? '',
-          announcement_url: `[${announcement.params?.link?.label}](${announcement.params?.link?.url})`
+          announcement_url: announcement.params.link
+            ? `[${announcement.params?.link?.label}](${announcement.params?.link?.url})`
+            : ''
         }
       });
     }

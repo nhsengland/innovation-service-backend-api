@@ -1,9 +1,9 @@
-import { EntityManager } from 'typeorm';
+import type { EntityManager } from 'typeorm';
 import { AnnouncementEntity, AnnouncementUserEntity } from '../../entities';
 import { randFutureDate, randPastDate, randText, randUrl } from '@ngneat/falso';
 import { AnnouncementParamsType, AnnouncementTypeEnum, ServiceRoleEnum } from '../../enums';
 import { BaseBuilder } from './base.builder';
-import { AnnouncementUserBuilder } from './announcement-users.builder';
+import type { AnnouncementUserBuilder } from './announcement-users.builder';
 
 export type TestAnnouncementType = {
   id: string;

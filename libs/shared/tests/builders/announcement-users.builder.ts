@@ -1,11 +1,11 @@
-import { EntityManager } from 'typeorm';
 import { AnnouncementEntity, AnnouncementUserEntity, InnovationEntity, UserEntity } from '../../entities/';
+import type { EntityManager } from 'typeorm';
 import { BaseBuilder } from './base.builder';
 
 export type TestAnnouncementUserType = {
   id: string;
   userId: UserEntity;
-  innovationId: InnovationEntity;
+  innovationId: null | InnovationEntity;
 };
 
 export class AnnouncementUserBuilder extends BaseBuilder {
@@ -17,9 +17,9 @@ export class AnnouncementUserBuilder extends BaseBuilder {
     this.announcementUser = new AnnouncementUserEntity();
   }
 
-  setUserAndInnovation(user: string, innovation: string): this {
+  setUserAndInnovation(user: string, innovation: null | string): this {
     this.announcementUser.user = UserEntity.new({ id: user });
-    this.announcementUser.innovation = InnovationEntity.new({ id: innovation });
+    this.announcementUser.innovation = innovation ? InnovationEntity.new({ id: innovation }) : null;
     return this;
   }
 
@@ -31,20 +31,25 @@ export class AnnouncementUserBuilder extends BaseBuilder {
     return this;
   }
 
-  async save(): Promise<TestAnnouncementUserType[]> {
+  async save(): Promise<TestAnnouncementUserType> {
+    if (!this.announcementUser.user || !this.announcementUser.announcement) {
+      throw new Error('User needs to be associated to an announcement and a user');
+    }
     const savedAnnouncementUser = await this.getEntityManager()
       .getRepository(AnnouncementUserEntity)
       .save(this.announcementUser);
 
     const result = await this.getEntityManager()
       .createQueryBuilder(AnnouncementUserEntity, 'announcementUser')
-      .where('announcementUser.id = :id)', { id: savedAnnouncementUser.id })
+      .innerJoinAndSelect('announcementUser.user', 'user')
+      .leftJoinAndSelect('announcementUser.innovation', 'innovation')
+      .where('announcementUser.id = :id', { id: savedAnnouncementUser.id })
       .getOne();
 
     if (!result) {
       throw new Error('Error saving/retrieving announcement users information.');
     }
 
-    return [{ id: result.id, userId: result.user, innovationId: result.innovation }];
+    return { id: result.id, userId: result.user, innovationId: result.innovation };
   }
 }

@@ -958,13 +958,23 @@ export class CompleteScenarioBuilder {
         .setUserRoles([ServiceRoleEnum.QUALIFYING_ACCESSOR])
         .save();
 
-      const announcementForSpecificInnovatons = await new AnnouncementBuilder(entityManager)
+      const announcementUserAliceQA = await new AnnouncementUserBuilder(entityManager)
+        .setAnnouncement(announcementForQAs.id)
+        .setUserAndInnovation(aliceQualifyingAccessor.id, null)
+        .save();
+
+      const announcementUserBartQA = await new AnnouncementUserBuilder(entityManager)
+        .setAnnouncement(announcementForQAs.id)
+        .setUserAndInnovation(bartQualifyingAccessor.id, null)
+        .save();
+
+      const announcementForSpecificInnovations = await new AnnouncementBuilder(entityManager)
         .setTitle('Announcement for Specific Innovations')
         .setUserRoles([ServiceRoleEnum.INNOVATOR])
         .save();
 
       const announcementUsersWithSpecificInnovations = await new AnnouncementUserBuilder(entityManager)
-        .setAnnouncement(announcementForQAs.id)
+        .setAnnouncement(announcementForSpecificInnovations.id)
         .setUserAndInnovation(johnInnovator.id, johnInnovation.id)
         .save();
 
@@ -1325,12 +1335,16 @@ export class CompleteScenarioBuilder {
           }
         },
         announcements: {
-          announcementForQAs: announcementForQAs,
-          announcementForSpecificInnovatons: {
-            ...announcementForSpecificInnovatons,
+          announcementForQAs: {
+            ...announcementForQAs,
             announcementUsers: {
-              announcementUsersWithSpecificInnovations: announcementUsersWithSpecificInnovations
+              announcementUserAliceQA: announcementUserAliceQA,
+              announcementUserBartQA: announcementUserBartQA
             }
+          },
+          announcementForSpecificInnovations: {
+            ...announcementForSpecificInnovations,
+            announcementUsers: announcementUsersWithSpecificInnovations
           }
         }
       };
