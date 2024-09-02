@@ -36,6 +36,7 @@ import {
   NeedsAssessmentCompleteHandler,
   NeedsAssessmentStartedHandler,
   NewAccountHandler,
+  NewAnnouncementHandler,
   OrganisationUnitsSuggestionHandler,
   SupportNewAssignedAccessorsHandler,
   SupportStatusChangeRequestHandler,
@@ -369,7 +370,7 @@ export const NOTIFICATIONS_CONFIG = {
   },
 
   [NotifierTypeEnum.NEW_ANNOUNCEMENT]: {
-    handler: NewAccountHandler,
+    handler: NewAnnouncementHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.NEW_ANNOUNCEMENT]>({
       announcementId: Joi.string().guid().required()
     }).required()
