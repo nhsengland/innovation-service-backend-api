@@ -207,4 +207,8 @@ export type NotifierTemplatesType = {
   [NotifierTypeEnum.NEW_SUPPORTING_ACCOUNT]: {
     recipientEmail: string;
   };
+
+  [NotifierTypeEnum.NEW_ANNOUNCEMENT]: {
+    announcementId: string;
+  };
 };

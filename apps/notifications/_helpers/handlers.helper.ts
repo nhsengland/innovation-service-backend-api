@@ -70,4 +70,15 @@ export class HandlersHelper {
   ): boolean {
     return !data || !data[type] || data[type] === NotificationPreferenceEnum.YES;
   }
+
+  static formatStringArray(arr: string[]): string {
+    if (arr.length === 0) {
+      return '';
+    } else if (arr.length === 1) {
+      return `Re: ${arr[0]}.`;
+    } else {
+      const lastItem = arr.pop();
+      return `Re: ${arr.join(', ')} and ${lastItem}.`;
+    }
+  }
 }

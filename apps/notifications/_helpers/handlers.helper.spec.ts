@@ -19,4 +19,26 @@ describe('notification handlers helper spec', () => {
       expect(HandlersHelper.shouldSendEmail('INNOVATION_MANAGEMENT')).toBe(true);
     });
   });
+
+  describe('formatStringArray with the correct format', () => {
+    test('should return "Re: One" for a single item array', () => {
+      const result = HandlersHelper.formatStringArray(['One']);
+      expect(result).toBe('Re: One.');
+    });
+
+    test('should return "One and Two" for a two-item array', () => {
+      const result = HandlersHelper.formatStringArray(['One', 'Two']);
+      expect(result).toBe('Re: One and Two.');
+    });
+
+    test('should return "One, Two and Three" for a three-item array', () => {
+      const result = HandlersHelper.formatStringArray(['One', 'Two', 'Three']);
+      expect(result).toBe('Re: One, Two and Three.');
+    });
+
+    test('should return "One, Two, Three and Four" for a four-item array', () => {
+      const result = HandlersHelper.formatStringArray(['One', 'Two', 'Three', 'Four']);
+      expect(result).toBe('Re: One, Two, Three and Four.');
+    });
+  });
 });

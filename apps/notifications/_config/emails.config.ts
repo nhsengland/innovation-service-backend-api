@@ -87,6 +87,8 @@ export const EmailTemplates = {
   AP07_UNIT_INACTIVATED_TO_ENGAGING_INNOVATIONS: '9e18194c-99fd-408e-89a6-47616e647c27',
   AP08_USER_EMAIL_ADDRESS_UPDATED: '170a57ee-718d-44f5-b836-ba9c77de89f4',
   AP09_NEW_SUPPORTING_ACCOUNT: 'a126c3e1-d2df-44ee-9313-d71bcd16d510',
+  AP10_NEW_ANNOUNCEMENT: 'c5957b7d-6baa-49b8-96b6-882b2528ae29',
+  AP11_NEW_ANNOUNCEMENT_WITH_INNOVATIONS_NAME: '9c9caf67-b1f7-4713-b30a-7144735c7c7e',
 
   // ACCOUNT
   CA01_ACCOUNT_CREATION_OF_INNOVATOR: 'd4bd42fa-a3a2-4eb3-ab71-844caba26044',
@@ -443,6 +445,19 @@ export type EmailTemplatesType = {
   };
   AP09_NEW_SUPPORTING_ACCOUNT: {
     nhs_innovation_service_url: string;
+  };
+
+  AP10_NEW_ANNOUNCEMENT: {
+    announcement_title: string;
+    announcement_body: string;
+    announcement_url: string;
+  };
+
+  AP11_NEW_ANNOUNCEMENT_WITH_INNOVATIONS_NAME: {
+    announcement_title: string;
+    innovations_name: string;
+    announcement_body: string;
+    announcement_url: string;
   };
 
   // Account
