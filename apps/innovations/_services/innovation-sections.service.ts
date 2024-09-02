@@ -37,9 +37,9 @@ import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { DomainContextType } from '@innovations/shared/types';
 import { randomUUID } from 'crypto';
 import type { EntityManager } from 'typeorm';
+import type { InnovationDocumentService } from './innovation-document.service';
 import type { InnovationFileService } from './innovation-file.service';
 import SYMBOLS from './symbols';
-import type { InnovationDocumentService } from './innovation-document.service';
 
 type SectionInfoType = {
   section: CurrentCatalogTypes.InnovationSections;
@@ -704,18 +704,16 @@ export class InnovationSectionsService extends BaseService {
   } {
     let evidenceData;
 
-    // Special case for evidence data
-    if ('EVIDENCE_OF_EFFECTIVENESS' in document) {
-      evidenceData =
-        sectionKey !== 'EVIDENCE_OF_EFFECTIVENESS'
-          ? undefined
-          : document.evidences?.map(evidence => ({
-              id: evidence.id,
-              name: this.getEvidenceName(evidence.evidenceSubmitType, evidence.description),
-              summary: evidence.summary
-            }));
-    }
     const sectionData = document[sectionKey];
+
+    // Special case for evidence data
+    if (sectionKey === 'EVIDENCE_OF_EFFECTIVENESS' && document.EVIDENCE_OF_EFFECTIVENESS.hasEvidence === 'YES') {
+      evidenceData = document.evidences?.map(evidence => ({
+        id: evidence.id,
+        name: this.getEvidenceName(evidence.evidenceSubmitType, evidence.description),
+        summary: evidence.summary
+      }));
+    }
 
     return {
       ...sectionData,
@@ -752,9 +750,9 @@ export class InnovationSectionsService extends BaseService {
   ): Promise<void> {
     const document = await this.innovationDocumentService.getInnovationDocument(innovationId, { type: 'DRAFT' });
 
-    const { evidences, ...draftSection } = this.getSectionData(document, sectionKey);
+    const draftSection = this.getSectionData(document, sectionKey);
     const entriesToUpdate: { key: string; data: unknown }[] = [{ key: sectionKey, data: draftSection }];
-    if (evidences) {
+    if (sectionKey === 'EVIDENCE_OF_EFFECTIVENESS') {
       // Get the evidences raw since the ones returned by the getSectionData transforms some fields
       entriesToUpdate.push({ key: 'evidences', data: document.evidences });
     }

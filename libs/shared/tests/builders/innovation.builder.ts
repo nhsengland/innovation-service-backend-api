@@ -71,7 +71,7 @@ export class InnovationBuilder extends BaseBuilder {
       hasProductServiceOrPrototype: randBoolean() ? 'YES' : 'NO'
     },
     EVIDENCE_OF_EFFECTIVENESS: {
-      hasEvidence: randBoolean() ? 'YES' : 'NOT_YET',
+      hasEvidence: 'YES',
       currentlyCollectingEvidence: randBoolean() ? 'YES' : 'NO',
       needsSupportAnyArea: ['CONFIDENTIAL_PATIENT_DATA'],
       summaryOngoingEvidenceGathering: randText()
