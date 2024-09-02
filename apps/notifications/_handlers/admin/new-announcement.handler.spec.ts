@@ -18,23 +18,21 @@ describe('Notifications / _handlers / new announcement suite', () => {
 
   const requestUser = scenario.users.allMighty;
 
-  let announcementInfo: SimpleAnnouncementType;
+  const announcementInfo: SimpleAnnouncementType = {
+    id: randUuid(),
+    title: randText({ charCount: 10 }),
+    params: {
+      content: randText(),
+      link: { label: randText(), url: randUrl() }
+    }
+  };
+  jest.spyOn(RecipientsService.prototype, 'getAnnouncementInfo').mockResolvedValue(announcementInfo);
 
   beforeAll(async () => {
     await testsHelper.init();
   });
 
-  beforeEach(async () => {
-    announcementInfo = {
-      id: randUuid(),
-      title: randText({ charCount: 10 }),
-      params: {
-        content: randText(),
-        link: { label: randText(), url: randUrl() }
-      }
-    };
-    jest.spyOn(RecipientsService.prototype, 'getAnnouncementInfo').mockResolvedValue(announcementInfo);
-  });
+  beforeEach(async () => {});
 
   describe('AP10_NEW_ANNOUNCEMENT', () => {
     beforeEach(async () => {
@@ -51,7 +49,9 @@ describe('Notifications / _handlers / new announcement suite', () => {
         outputData: {
           announcement_title: announcementInfo.title,
           announcement_body: announcementInfo.params?.content || '',
-          announcement_url: `[${announcementInfo.params?.link?.label}](${announcementInfo.params?.link?.url})`
+          announcement_url: announcementInfo.params.link
+            ? `[${announcementInfo.params.link.label}](${announcementInfo.params.link.url})`
+            : ''
         }
       });
     });
@@ -79,7 +79,9 @@ describe('Notifications / _handlers / new announcement suite', () => {
           innovations_name: HandlersHelper.formatStringArray([
             scenario.users.johnInnovator.innovations.johnInnovation.name
           ]),
-          announcement_url: `[${announcementInfo.params?.link?.label}](${announcementInfo.params?.link?.url})`
+          announcement_url: announcementInfo.params.link
+            ? `[${announcementInfo.params.link.label}](${announcementInfo.params.link.url})`
+            : ''
         }
       });
     });

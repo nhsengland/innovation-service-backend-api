@@ -46,7 +46,7 @@ export class NewAnnouncementHandler extends BaseHandler<
         announcement_title: announcement.title,
         announcement_body: announcement.params?.content ?? '',
         announcement_url: announcement.params.link
-          ? `[${announcement.params?.link?.label}](${announcement.params?.link?.url})`
+          ? `[${announcement.params.link.label}](${announcement.params.link.url})`
           : ''
       }
     });
@@ -56,8 +56,12 @@ export class NewAnnouncementHandler extends BaseHandler<
     usersAndInnovationNames: Map<string, string[]>,
     announcement: SimpleAnnouncementType
   ): Promise<void> {
+    const allRecipients = await this.recipientsService.getUsersRecipient(
+      Array.from(usersAndInnovationNames.keys()),
+      ServiceRoleEnum.INNOVATOR
+    );
     for (const [userId, innovationNames] of usersAndInnovationNames.entries()) {
-      const recipients = await this.recipientsService.getUsersRecipient([userId], ServiceRoleEnum.INNOVATOR);
+      const recipients = allRecipients.filter(r => r.userId === userId);
       this.addEmails('AP11_NEW_ANNOUNCEMENT_WITH_INNOVATIONS_NAME', recipients, {
         notificationPreferenceType: 'ANNOUNCEMENTS',
         params: {
@@ -65,7 +69,7 @@ export class NewAnnouncementHandler extends BaseHandler<
           innovations_name: HandlersHelper.formatStringArray(innovationNames),
           announcement_body: announcement.params?.content ?? '',
           announcement_url: announcement.params.link
-            ? `[${announcement.params?.link?.label}](${announcement.params?.link?.url})`
+            ? `[${announcement.params.link.label}](${announcement.params.link.url})`
             : ''
         }
       });

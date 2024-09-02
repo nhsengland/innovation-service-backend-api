@@ -180,6 +180,7 @@ export class RecipientsService extends BaseService {
       .innerJoin('au.user', 'user')
       .select(['au.id', 'user.id'])
       .where('au.announcement = :announcementId', { announcementId })
+      .andWhere('au.innovation_id IS null')
       .andWhere('user.status <> :userLocked', { userLocked: UserStatusEnum.LOCKED });
 
     const users = await query.getMany();
