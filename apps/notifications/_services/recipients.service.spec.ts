@@ -1397,7 +1397,10 @@ describe('Notifications / _services / recipients service suite', () => {
         em
       );
       expect(res).toMatchObject(
-        new Map([[scenario.users.johnInnovator.id, [scenario.users.johnInnovator.innovations.johnInnovation.name]]])
+        new Map([
+          [scenario.users.johnInnovator.id, [scenario.users.johnInnovator.innovations.johnInnovation.name]],
+          [scenario.users.adamInnovator.id, [scenario.users.adamInnovator.innovations.adamInnovation.name]]
+        ])
       );
     });
   });
