@@ -1,8 +1,8 @@
 import { injectable } from 'inversify';
 import type { EntityManager } from 'typeorm';
 
-import { AnnouncementEntity, AnnouncementUserEntity, UserRoleEntity } from '@users/shared/entities';
-import { AnnouncementStatusEnum, AnnouncementTypeEnum } from '@users/shared/enums';
+import { AnnouncementEntity, AnnouncementUserEntity } from '@users/shared/entities';
+import { AnnouncementParamsType, AnnouncementStatusEnum, AnnouncementTypeEnum } from '@users/shared/enums';
 import type { DomainContextType } from '@users/shared/types';
 
 import { BaseService } from './base.service';
@@ -15,10 +15,8 @@ export class AnnouncementsService extends BaseService {
   }
 
   async getUserRoleAnnouncements(
-    userRoleId: string,
-    filters: {
-      type?: AnnouncementTypeEnum[];
-    },
+    userId: string,
+    filters: { type?: AnnouncementTypeEnum[]; innovationId?: string },
     entityManager?: EntityManager
   ): Promise<
     {
@@ -26,55 +24,42 @@ export class AnnouncementsService extends BaseService {
       title: string;
       startsAt: Date;
       expiresAt: null | Date;
-      params: null | Record<string, unknown>;
+      params: null | AnnouncementParamsType;
+      innovations?: string[];
     }[]
   > {
     const connection = entityManager ?? this.sqlConnection.manager;
 
-    const dbUserRole = await connection
-      .createQueryBuilder(UserRoleEntity, 'userRole')
-      .select(['userRole.id', 'userRole.role', 'userRole.createdAt', 'user.id'])
-      .innerJoin('userRole.user', 'user')
-      .where('userRole.id = :roleId', { roleId: userRoleId })
-      .getOne();
+    const query = connection
+      .createQueryBuilder(AnnouncementEntity, 'a')
+      .select(['a.id', 'a.title', 'a.startsAt', 'a.expiresAt', 'a.params', 'au.id', 'i.name'])
+      .innerJoin('a.announcementUsers', 'au', 'au.user_id = :userId AND au.read_at IS NULL', { userId })
+      .leftJoin('au.innovation', 'i')
+      .where('a.status = :activeStatus', { activeStatus: AnnouncementStatusEnum.ACTIVE });
 
-    if (!dbUserRole) {
-      return [];
+    if (filters.type?.length) {
+      query.andWhere('a.type IN (:...types)', { types: filters.type });
     }
 
-    const query = connection
-      .createQueryBuilder(AnnouncementEntity, 'announcement')
-      .select([
-        'announcement.id',
-        'announcement.title',
-        'announcement.startsAt',
-        'announcement.expiresAt',
-        'announcement.params'
-      ])
-      .leftJoin('announcement.announcementUsers', 'announcementUsers', 'announcementUsers.user_id = :userId', {
-        userId: dbUserRole.user.id
-      })
-      .where("CONCAT(',', announcement.user_roles, ',') LIKE :userRole", {
-        userRole: `%,${dbUserRole.role},%`
-      })
-      .andWhere('announcement.starts_at > :createdAtUserRole', { createdAtUserRole: dbUserRole.createdAt })
-      .andWhere('GETDATE() > announcement.starts_at')
-      .andWhere('(announcement.expires_at IS NULL OR GETDATE() < announcement.expires_at)')
-      .andWhere('announcementUsers.read_at IS NULL');
-
-    if (filters.type) {
-      query.andWhere('announcement.type IN (:...type) ', { type: filters.type });
+    if (filters.innovationId) {
+      query.andWhere('au.innovation_id = :innovationId', { innovationId: filters.innovationId });
     }
 
     const announcements = await query.getMany();
 
-    return announcements.map(announcement => ({
-      id: announcement.id,
-      title: announcement.title,
-      params: announcement.params,
-      startsAt: announcement.startsAt,
-      expiresAt: announcement.expiresAt
-    }));
+    return announcements.map(announcement => {
+      const innovations = new Set(
+        (announcement.announcementUsers ?? []).filter(au => au.innovation?.name).map(au => au.innovation!.name)
+      );
+      return {
+        id: announcement.id,
+        title: announcement.title,
+        params: announcement.params,
+        startsAt: announcement.startsAt,
+        expiresAt: announcement.expiresAt,
+        ...(!filters.innovationId && innovations.size && { innovations: Array.from(innovations) })
+      };
+    });
   }
 
   async readUserAnnouncement(
