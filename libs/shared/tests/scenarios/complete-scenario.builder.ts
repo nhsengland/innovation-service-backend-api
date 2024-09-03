@@ -23,6 +23,7 @@ import {
   ThreadContextTypeEnum
 } from '../../enums/innovation.enums';
 import { ServiceRoleEnum, UserStatusEnum } from '../../enums/user.enums';
+import { AnnouncementStatusEnum } from '../../enums/announcement.enums';
 import type { Reminder, SupportUpdated } from '../../types';
 import { InnovationAssessmentBuilder } from '../builders/innovation-assessment.builder';
 import { InnovationCollaboratorBuilder } from '../builders/innovation-collaborator.builder';
@@ -957,6 +958,7 @@ export class CompleteScenarioBuilder {
         .setTitle('Announcement for QAs')
         .setStartsAt(randPastDate())
         .setUserRoles([ServiceRoleEnum.QUALIFYING_ACCESSOR])
+        .setStatus(AnnouncementStatusEnum.ACTIVE)
         .save();
 
       const announcementUserAliceQA = await new AnnouncementUserBuilder(entityManager)
@@ -972,11 +974,17 @@ export class CompleteScenarioBuilder {
       const announcementForSpecificInnovations = await new AnnouncementBuilder(entityManager)
         .setTitle('Announcement for Specific Innovations')
         .setUserRoles([ServiceRoleEnum.INNOVATOR])
+        .setStatus(AnnouncementStatusEnum.ACTIVE)
         .save();
 
-      const announcementUsersWithSpecificInnovations = await new AnnouncementUserBuilder(entityManager)
+      const announcementUserForSpecificInnovationsJohnInnovation = await new AnnouncementUserBuilder(entityManager)
         .setAnnouncement(announcementForSpecificInnovations.id)
         .setUserAndInnovation(johnInnovator.id, johnInnovation.id)
+        .save();
+
+      const announcementUserForSpecificInnovationsAdamInnovation = await new AnnouncementUserBuilder(entityManager)
+        .setAnnouncement(announcementForSpecificInnovations.id)
+        .setUserAndInnovation(adamInnovator.id, adamInnovation.id)
         .save();
 
       return {
@@ -1345,7 +1353,10 @@ export class CompleteScenarioBuilder {
           },
           announcementForSpecificInnovations: {
             ...announcementForSpecificInnovations,
-            announcementUsers: announcementUsersWithSpecificInnovations
+            announcementUsers: {
+              announcementUserJohnInnovation: announcementUserForSpecificInnovationsJohnInnovation,
+              announcementUserAdamInnovation: announcementUserForSpecificInnovationsAdamInnovation
+            }
           }
         }
       };

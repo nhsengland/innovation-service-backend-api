@@ -1,8 +1,8 @@
 import { injectable } from 'inversify';
 import type { EntityManager } from 'typeorm';
 
-import { AnnouncementEntity, AnnouncementUserEntity, UserEntity, UserRoleEntity } from '@users/shared/entities';
-import type { AnnouncementTypeEnum } from '@users/shared/enums';
+import { AnnouncementEntity, AnnouncementUserEntity, UserRoleEntity } from '@users/shared/entities';
+import { AnnouncementStatusEnum, AnnouncementTypeEnum } from '@users/shared/enums';
 import type { DomainContextType } from '@users/shared/types';
 
 import { BaseService } from './base.service';
@@ -78,40 +78,31 @@ export class AnnouncementsService extends BaseService {
   }
 
   async readUserAnnouncement(
-    requestUser: DomainContextType,
+    domainContext: DomainContextType,
     announcementId: string,
+    innovationId?: string,
     entityManager?: EntityManager
   ): Promise<void> {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const announcement = await em
       .createQueryBuilder(AnnouncementEntity, 'announcement')
+      .select(['announcement.id'])
       .where('announcement.id = :announcementId', { announcementId })
+      .andWhere('announcement.status = :announcementActive', { announcementActive: AnnouncementStatusEnum.ACTIVE })
       .getOne();
-
     if (!announcement) {
       throw new NotFoundError(AnnouncementErrorsEnum.ANNOUNCEMENT_NOT_FOUND);
     }
 
-    const announcementUser = await em
-      .createQueryBuilder(AnnouncementUserEntity, 'announcementUser')
-      .select(['announcementUser.id'])
-      .where('announcementUser.announcement_id = :announcementId', { announcementId })
-      .andWhere('announcementUser.user_id = :userId', { userId: requestUser.id })
-      .andWhere('announcementUser.read_at IS NOT NULL') // This is not needed, but just making sure
-      .getOne();
-
-    if (!announcementUser) {
-      await em.save(
-        AnnouncementUserEntity,
-        AnnouncementUserEntity.new({
-          announcement: AnnouncementEntity.new({ id: announcementId }),
-          user: UserEntity.new({ id: requestUser.id }),
-          readAt: new Date(),
-          createdBy: requestUser.id,
-          updatedBy: requestUser.id
-        })
-      );
-    }
+    await em.update(
+      AnnouncementUserEntity,
+      {
+        announcement: { id: announcementId },
+        user: { id: domainContext.id },
+        ...(innovationId && { innovation: { id: innovationId } })
+      },
+      { readAt: new Date(), updatedBy: domainContext.id, updatedAt: new Date() }
+    );
   }
 }

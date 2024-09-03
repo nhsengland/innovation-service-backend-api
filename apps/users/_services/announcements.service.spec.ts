@@ -60,6 +60,7 @@ describe('Users / _services / announcements service suite', () => {
       await sut.readUserAnnouncement(
         DTOsHelper.getUserRequestContext(scenario.users.bartQualifyingAccessor),
         announcement.id,
+        undefined,
         em
       );
 
@@ -73,9 +74,39 @@ describe('Users / _services / announcements service suite', () => {
       expect(dbAnnouncementUser?.readAt).toBeTruthy();
     });
 
+    it('should read an announcement specific to an innovation', async () => {
+      const announcement = scenario.announcements.announcementForSpecificInnovations;
+      const johnInnovation = scenario.users.johnInnovator.innovations.johnInnovation;
+      const adamInnovation = scenario.users.adamInnovator.innovations.adamInnovation;
+
+      await sut.readUserAnnouncement(
+        DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
+        announcement.id,
+        johnInnovation.id,
+        em
+      );
+
+      const dbAnnouncementUsers = await em
+        .createQueryBuilder(AnnouncementUserEntity, 'au')
+        .select(['au.id', 'au.readAt', 'innovation.id'])
+        .innerJoin('au.innovation', 'innovation')
+        .where('au.announcement_id = :announcementId', { announcementId: announcement.id })
+        .getMany();
+
+      expect(dbAnnouncementUsers.map(u => ({ readAt: u.readAt, innovationId: u.innovation!.id }))).toStrictEqual([
+        { readAt: expect.any(Date), innovationId: johnInnovation.id },
+        { readAt: null, innovationId: adamInnovation.id }
+      ]);
+    });
+
     it(`should throw an error if the announcement doesn't exist`, async () => {
       await expect(() =>
-        sut.readUserAnnouncement(DTOsHelper.getUserRequestContext(scenario.users.adamInnovator), randUuid(), em)
+        sut.readUserAnnouncement(
+          DTOsHelper.getUserRequestContext(scenario.users.adamInnovator),
+          randUuid(),
+          undefined,
+          em
+        )
       ).rejects.toThrow(new NotFoundError(AnnouncementErrorsEnum.ANNOUNCEMENT_NOT_FOUND));
     });
   });
