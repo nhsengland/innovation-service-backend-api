@@ -248,6 +248,12 @@ paths:
           schema:
             type: string
             format: uuid
+        - name: innovationId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
       responses:
         "204":
           description: Success
@@ -779,7 +785,8 @@ paths:
                       - INNOVATION_RECORD_UPDATED
                       - REMINDER
                       - SUGGESTED_SUPPORT_UPDATED
-                      - AN01_NEW_ANNOUNCEMENT
+                      - AP10_NEW_ANNOUNCEMENT
+                      - AP11_NEW_ANNOUNCEMENT_WITH_INNOVATIONS_NAME
                   default: []
                 dismissAll:
                   type: boolean
@@ -993,7 +1000,8 @@ paths:
                             - INNOVATION_RECORD_UPDATED
                             - REMINDER
                             - SUGGESTED_SUPPORT_UPDATED
-                            - AN01_NEW_ANNOUNCEMENT
+                            - AP10_NEW_ANNOUNCEMENT
+                            - AP11_NEW_ANNOUNCEMENT_WITH_INNOVATIONS_NAME
                           description: The notification context detail
                         contextId:
                           type: string
