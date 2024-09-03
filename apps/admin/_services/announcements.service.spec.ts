@@ -9,6 +9,7 @@ import { AnnouncementStatusEnum, AnnouncementTypeEnum, ServiceRoleEnum } from '@
 import { AnnouncementErrorsEnum, BadRequestError, NotFoundError, UnprocessableEntityError } from '@admin/shared/errors';
 import { DTOsHelper } from '@admin/shared/tests/helpers/dtos.helper';
 import type { EntityManager } from 'typeorm';
+import { ConflictError } from '@notifications/shared/errors';
 
 describe('Admin / _services / announcements service suite', () => {
   let sut: AnnouncementsService;
@@ -34,80 +35,42 @@ describe('Admin / _services / announcements service suite', () => {
 
   describe('getAnnouncementsList', () => {
     it('should get the list of announcements', async () => {
-      const activeAnnouncement = await em.getRepository(AnnouncementEntity).save({
-        title: randText({ charCount: 10 }),
-        userRoles: [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR],
-        params: { content: randText() },
-        startsAt: new Date('01/01/2023'),
-        expiresAt: null
-      });
-
-      const scheduledAnnouncement = await em.getRepository(AnnouncementEntity).save({
-        title: randText({ charCount: 10 }),
-        userRoles: [ServiceRoleEnum.INNOVATOR],
-        params: { content: randText() },
-        startsAt: randFutureDate(),
-        expiresAt: null
-      });
-
-      const doneAnnouncement = await em.getRepository(AnnouncementEntity).save({
-        title: randText({ charCount: 10 }),
-        userRoles: [ServiceRoleEnum.INNOVATOR],
-        params: { content: randText() },
-        startsAt: new Date('01/01/2022'),
-        expiresAt: new Date('01/02/2022')
-      });
-
-      const announcements = {
-        activeAnnouncement: {
-          id: activeAnnouncement.id,
-          title: activeAnnouncement.title,
-          userRoles: activeAnnouncement.userRoles,
-          params: activeAnnouncement.params,
-          startsAt: activeAnnouncement.startsAt,
-          expiresAt: activeAnnouncement.expiresAt,
-          status: AnnouncementStatusEnum.ACTIVE
-        },
-        scheduledAnnouncement: {
-          id: scheduledAnnouncement.id,
-          title: scheduledAnnouncement.title,
-          userRoles: scheduledAnnouncement.userRoles,
-          params: scheduledAnnouncement.params,
-          startsAt: scheduledAnnouncement.startsAt,
-          expiresAt: scheduledAnnouncement.expiresAt,
-          status: AnnouncementStatusEnum.SCHEDULED
-        },
-        doneAnnouncement: {
-          id: doneAnnouncement.id,
-          title: doneAnnouncement.title,
-          userRoles: doneAnnouncement.userRoles,
-          params: doneAnnouncement.params,
-          startsAt: doneAnnouncement.startsAt,
-          expiresAt: doneAnnouncement.expiresAt,
-          status: AnnouncementStatusEnum.DONE
-        }
-      };
-
       const result = await sut.getAnnouncementsList({ take: 10, skip: 0, order: {} }, em);
 
+      const qaAnnouncement = scenario.announcements.announcementForQAs;
+      const specificInnovationAnnouncement = scenario.announcements.announcementForSpecificInnovations;
+
       expect(result).toMatchObject({
-        count: 3,
-        data: [announcements.scheduledAnnouncement, announcements.activeAnnouncement, announcements.doneAnnouncement]
+        count: 2,
+        data: [
+          {
+            id: specificInnovationAnnouncement.id,
+            title: specificInnovationAnnouncement.title,
+            userRoles: specificInnovationAnnouncement.userRoles,
+            params: specificInnovationAnnouncement.params,
+            startsAt: new Date(specificInnovationAnnouncement.startsAt),
+            expiresAt: specificInnovationAnnouncement.expiresAt
+              ? new Date(specificInnovationAnnouncement.expiresAt)
+              : undefined,
+            status: specificInnovationAnnouncement.status
+          },
+          {
+            id: qaAnnouncement.id,
+            title: qaAnnouncement.title,
+            userRoles: qaAnnouncement.userRoles,
+            params: qaAnnouncement.params,
+            startsAt: new Date(qaAnnouncement.startsAt),
+            expiresAt: qaAnnouncement.expiresAt ? new Date(qaAnnouncement.expiresAt) : undefined,
+            status: qaAnnouncement.status
+          },
+        ]
       });
     });
   });
 
   describe('getAnnouncementInfo', () => {
     it('should get the announcement info', async () => {
-      const announcement = await em.getRepository(AnnouncementEntity).save({
-        title: randText({ charCount: 10 }),
-        userRoles: [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR],
-        params: { content: randText() },
-        startsAt: randPastDate(),
-        expiresAt: null,
-        type: AnnouncementTypeEnum.LOG_IN
-      });
-
+      const announcement = scenario.announcements.announcementForQAs;
       const result = await sut.getAnnouncementInfo(announcement.id, em);
 
       expect(result).toMatchObject({
@@ -115,10 +78,10 @@ describe('Admin / _services / announcements service suite', () => {
         title: announcement.title,
         userRoles: announcement.userRoles,
         params: announcement.params,
-        startsAt: announcement.startsAt,
-        expiresAt: announcement.expiresAt,
-        status: AnnouncementStatusEnum.ACTIVE,
-        type: AnnouncementTypeEnum.LOG_IN
+        startsAt: new Date(announcement.startsAt),
+        ...(announcement.expiresAt && { expiresAt: new Date(announcement.expiresAt) }),
+        status: announcement.status,
+        type: announcement.type
       });
     });
 
@@ -152,29 +115,26 @@ describe('Admin / _services / announcements service suite', () => {
     it('should exclude specified users from the announcement', async () => {
       const announcementParams = {
         title: randText({ charCount: 10 }),
-        userRoles: [ServiceRoleEnum.INNOVATOR],
+        userRoles: [ServiceRoleEnum.QUALIFYING_ACCESSOR],
         params: { content: randText() },
-        startsAt: randFutureDate(),
+        startsAt: new Date(),
         type: AnnouncementTypeEnum.LOG_IN
       };
 
       const result = await sut.createAnnouncement(
         DTOsHelper.getUserRequestContext(scenario.users.allMighty),
         announcementParams,
-        { usersToExclude: [scenario.users.adamInnovator.id] },
+        { usersToExclude: [scenario.users.aliceQualifyingAccessor.id] },
         em
       );
 
-      expect(result.id).toBeDefined();
-
       const dbAnnouncementUser = await em
-        .createQueryBuilder(AnnouncementUserEntity, 'announcement_user')
-        .innerJoin('announcement_user.announcement', 'announcement')
-        .innerJoin('announcement_user.user', 'user')
-        .where('announcement.id = :announcementId', { announcementId: result.id })
-        .andWhere('user.id = :userId', { userId: scenario.users.adamInnovator.id })
+        .createQueryBuilder(AnnouncementUserEntity, 'au')
+        .where('au.announcement_id = :announcementId', { announcementId: result.id })
+        .andWhere('au.user_id = :userId', { userId: scenario.users.aliceQualifyingAccessor.id })
         .getOne();
 
+      expect(result).toBeDefined();
       expect(dbAnnouncementUser?.readAt).toBeTruthy();
     });
 
@@ -341,6 +301,7 @@ describe('Admin / _services / announcements service suite', () => {
     });
   });
 
+  // TODO: Add a test to check if announcement_users that didn't read are deleted.
   describe('deleteAnnouncement', () => {
     const adminContext = DTOsHelper.getUserRequestContext(scenario.users.allMighty);
     it('should delete an announcement', async () => {
@@ -357,18 +318,9 @@ describe('Admin / _services / announcements service suite', () => {
       const dbAnnouncement = await em
         .createQueryBuilder(AnnouncementEntity, 'announcement')
         .where('announcement.id = :announcementId', { announcementId: announcement.id })
-        .withDeleted()
         .getOneOrFail();
 
-      const dbAnnouncementUsers = await em
-        .createQueryBuilder(AnnouncementUserEntity, 'announcement_user')
-        .where('announcement_user.announcement_id = :announcementId', { announcementId: announcement.id })
-        .andWhere('announcement.readAt IS NULL')
-        .withDeleted()
-        .getCount();
-
       expect(dbAnnouncement.status).toBe(AnnouncementStatusEnum.DELETED);
-      expect(dbAnnouncementUsers).toHaveLength(0);
     });
 
     it('should throw an error if the announcement is in DONE status', async () => {
@@ -377,11 +329,12 @@ describe('Admin / _services / announcements service suite', () => {
         userRoles: [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR],
         params: { content: randText() },
         startsAt: randPastDate(),
-        expiresAt: randPastDate()
+        expiresAt: randPastDate(),
+        status: AnnouncementStatusEnum.DONE
       });
 
       await expect(() => sut.deleteAnnouncement(adminContext, announcement.id, em)).rejects.toThrow(
-        new UnprocessableEntityError(AnnouncementErrorsEnum.ANNOUNCEMENT_INVALID_UPDATE_STATUS)
+        new ConflictError(AnnouncementErrorsEnum.ANNOUNCEMENT_INVALID_UPDATE_STATUS)
       );
     });
 

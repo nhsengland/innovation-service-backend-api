@@ -1,7 +1,7 @@
 import type { EntityManager } from 'typeorm';
 import { AnnouncementEntity, AnnouncementUserEntity } from '../../entities';
-import { randFutureDate, randPastDate, randText, randUrl } from '@ngneat/falso';
-import { AnnouncementParamsType, AnnouncementTypeEnum, ServiceRoleEnum } from '../../enums';
+import { randFutureDate, randText, randUrl } from '@ngneat/falso';
+import { AnnouncementParamsType, AnnouncementStatusEnum, AnnouncementTypeEnum, ServiceRoleEnum } from '../../enums';
 import { BaseBuilder } from './base.builder';
 import type { AnnouncementUserBuilder } from './announcement-users.builder';
 
@@ -14,6 +14,7 @@ export type TestAnnouncementType = {
   expiresAt: null | Date;
   type: AnnouncementTypeEnum;
   sendEmail: boolean;
+  status: AnnouncementStatusEnum;
   announcementUsers: { [key: string]: AnnouncementUserBuilder };
 };
 
@@ -30,7 +31,7 @@ export class AnnouncementBuilder extends BaseBuilder {
         content: randText(),
         link: { label: randText(), url: randUrl() }
       },
-      startsAt: randPastDate(),
+      startsAt: new Date(),
       expiresAt: randFutureDate(),
       type: AnnouncementTypeEnum.HOMEPAGE,
       sendEmail: true
@@ -77,6 +78,11 @@ export class AnnouncementBuilder extends BaseBuilder {
     return this;
   }
 
+  setStatus(status: AnnouncementStatusEnum): this {
+    this.announcement.status = status;
+    return this;
+  }
+
   setAnnouncementUsers(announcementUsers: AnnouncementUserEntity[]): this {
     this.announcement.announcementUsers = announcementUsers;
     return this;
@@ -106,6 +112,7 @@ export class AnnouncementBuilder extends BaseBuilder {
       expiresAt: result.expiresAt,
       type: result.type,
       sendEmail: result.sendEmail,
+      status: result.status,
       announcementUsers: {}
     };
   }
