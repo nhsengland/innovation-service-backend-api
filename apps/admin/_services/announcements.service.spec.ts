@@ -6,10 +6,15 @@ import type { AnnouncementsService } from './announcements.service';
 import { AnnouncementEntity, AnnouncementUserEntity } from '@admin/shared/entities';
 import { randFutureDate, randPastDate, randText, randUuid } from '@ngneat/falso';
 import { AnnouncementStatusEnum, AnnouncementTypeEnum, ServiceRoleEnum } from '@admin/shared/enums';
-import { AnnouncementErrorsEnum, BadRequestError, NotFoundError, UnprocessableEntityError } from '@admin/shared/errors';
+import {
+  AnnouncementErrorsEnum,
+  BadRequestError,
+  NotFoundError,
+  UnprocessableEntityError,
+  ConflictError
+} from '@admin/shared/errors';
 import { DTOsHelper } from '@admin/shared/tests/helpers/dtos.helper';
 import type { EntityManager } from 'typeorm';
-import { ConflictError } from '@notifications/shared/errors';
 
 describe('Admin / _services / announcements service suite', () => {
   let sut: AnnouncementsService;
@@ -62,7 +67,7 @@ describe('Admin / _services / announcements service suite', () => {
             startsAt: new Date(qaAnnouncement.startsAt),
             expiresAt: qaAnnouncement.expiresAt ? new Date(qaAnnouncement.expiresAt) : undefined,
             status: qaAnnouncement.status
-          },
+          }
         ]
       });
     });
