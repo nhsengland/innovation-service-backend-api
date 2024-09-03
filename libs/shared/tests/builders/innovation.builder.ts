@@ -49,7 +49,7 @@ export class InnovationBuilder extends BaseBuilder {
       countryName: randCountry(),
       postcode: undefined,
 
-      areas: ['COVID_19'],
+      areas: randBoolean() ? ['COVID_19'] : ['OPERATIONAL_EXCELLENCE'],
       careSettings: ['INDUSTRY'],
       categories: ['MEDICAL_DEVICE', 'AI'],
       mainCategory: 'MEDICAL_DEVICE',
@@ -136,7 +136,9 @@ export class InnovationBuilder extends BaseBuilder {
     if (status === InnovationStatusEnum.ARCHIVED) {
       this.innovation.archivedStatus = InnovationStatusEnum.IN_PROGRESS;
     }
-    this.innovation.hasBeenAssessed = status !== InnovationStatusEnum.CREATED;
+    this.innovation.hasBeenAssessed =
+      status !== InnovationStatusEnum.CREATED && status !== InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT;
+    this.innovation.submittedAt = this.innovation.hasBeenAssessed ? new Date() : null;
     return this;
   }
 

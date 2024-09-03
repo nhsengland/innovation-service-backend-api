@@ -88,6 +88,17 @@ export class SchemaModel {
   }
 
   /**
+   * Questions
+   */
+  isQuestionValid(questionId: string): boolean {
+    return this.questions.has(questionId);
+  }
+
+  getQuestionType(questionId: string): Question['dataType'] | null {
+    return this.questions.get(questionId)?.dataType ?? null;
+  }
+
+  /**
    * Method to remove fields that may exist on the document and are not anymore defined on the current schema version.
    */
   cleanUpDocument(document: { [key: string]: any }): CurrentDocumentType {

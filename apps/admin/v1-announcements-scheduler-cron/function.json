@@ -1,0 +1,10 @@
+{
+  "bindings": [
+    {
+      "schedule": "0 0 1,6 * * *",
+      "name": "myTimerAnnouncementScheduler",
+      "type": "timerTrigger",
+      "direction": "in"
+    }
+  ]
+}

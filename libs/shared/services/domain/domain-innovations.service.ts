@@ -1,4 +1,4 @@
-import { DataSource, EntityManager, In, Repository } from 'typeorm';
+import { Brackets, DataSource, EntityManager, In, Repository } from 'typeorm';
 
 import { cloneDeep } from 'lodash';
 import { EXPIRATION_DATES } from '../../constants';
@@ -49,6 +49,7 @@ import type { IdentityProviderService } from '../integrations/identity-provider.
 import type { NotifierService } from '../integrations/notifier.service';
 import type { IRSchemaService } from '../storage/ir-schema.service';
 import type { DomainUsersService } from './domain-users.service';
+import type { FilterPayload } from '../../models/schema-engine/schema.model';
 
 export class DomainInnovationsService {
   innovationRepository: Repository<InnovationEntity>;
@@ -896,6 +897,80 @@ export class DomainInnovationsService {
     });
 
     return res;
+  }
+
+  /**
+   * Filters innovations based on the filters passed
+   *
+   * Business rules:
+   * If some filters have been removed from the schema, will be filtered based on the remaining filters.
+   * If all filters have been removed from the schema, will not filter and throw an error.
+   * All individual filters are ORs and inside them the answers are ANDs:
+   * * (filter1 === 'A' AND filter2 === 'B') OR filter2 === 'C'
+   */
+  async getInnovationsFiltered(
+    filters: FilterPayload[],
+    options: { onlySubmitted?: boolean },
+    entityManager?: EntityManager
+  ): Promise<{ id: string; name: string }[]> {
+    if (!filters.length) {
+      throw new BadRequestError(InnovationErrorsEnum.INNOVATION_FILTERS_EMPTY);
+    }
+
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const schema = await this.irSchemaService.getSchema();
+    const validFilters = filters.filter(
+      f => schema.model.isSubsectionValid(f.section) && schema.model.isQuestionValid(f.question)
+    );
+    if (validFilters.length === 0) {
+      throw new BadRequestError(InnovationErrorsEnum.INNOVATION_FILTERS_ALL_INVALID);
+    }
+
+    const query = em
+      .createQueryBuilder(InnovationEntity, 'innovation')
+      // TODO: probably more fields need to be added.
+      .select(['innovation.id', 'innovation.name'])
+      .innerJoin('innovation.document', 'document')
+      .andWhere(
+        new Brackets(qb => {
+          for (const [index, filter] of filters.entries()) {
+            const id = `${filter.section}_${filter.question}_${index}`;
+            const params = {
+              [`${id}_key`]: `$.${filter.section}.${filter.question}`,
+              [`${id}_values`]: filter.answers
+            };
+            switch (schema.model.getQuestionType(filter.question)) {
+              case 'checkbox-array':
+                qb.orWhere(
+                  `
+                  EXISTS (
+                    SELECT TOP 1 *
+                    FROM OPENJSON(JSON_QUERY(document.document, :${id}_key))
+                    WHERE value IN (:...${id}_values)
+                  )
+                `,
+                  params
+                );
+                break;
+              case 'radio-group':
+                qb.orWhere(`JSON_VALUE(document.document, :${id}_key) IN (:...${id}_values)`, params);
+                break;
+            }
+          }
+        })
+      );
+
+    // By default make filter only by submitted.
+    if (options.onlySubmitted !== false) {
+      query.andWhere('innovation.submitted_at IS NOT NULL');
+    }
+
+    const innovations = await query.getMany();
+    return innovations.map(i => ({
+      id: i.id,
+      name: i.name
+    }));
   }
 
   /**
