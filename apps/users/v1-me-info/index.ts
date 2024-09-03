@@ -58,7 +58,7 @@ class V1MeInfo {
           .isAccepted;
         // TO DO: Maybe update variable name
         hasAnnouncements =
-          (await announcementsService.getUserRoleAnnouncements(userRole.id, { type: [AnnouncementTypeEnum.LOG_IN] }))
+          (await announcementsService.getUserRoleAnnouncements(requestUser.id, { type: [AnnouncementTypeEnum.LOG_IN] }))
             .length > 0;
 
         if (userRole.role === ServiceRoleEnum.INNOVATOR) {

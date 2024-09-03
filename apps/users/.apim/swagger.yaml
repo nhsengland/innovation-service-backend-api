@@ -266,20 +266,22 @@ paths:
       tags:
         - "[v1] Announcements"
       parameters:
-        - name: filters
+        - name: type
           in: query
-          required: true
+          required: false
           schema:
-            type: object
-            properties:
-              type:
-                type: array
-                items:
-                  type: string
-                  enum:
-                    - LOG_IN
-                    - HOMEPAGE
-            additionalProperties: false
+            type: array
+            items:
+              type: string
+              enum:
+                - LOG_IN
+                - HOMEPAGE
+        - name: innovationId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
       responses:
         "200":
           description: Success
