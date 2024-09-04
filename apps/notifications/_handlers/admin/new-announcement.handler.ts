@@ -4,6 +4,7 @@ import type { DomainContextType, NotifierTemplatesType } from '@notifications/sh
 import { BaseHandler } from '../base.handler';
 
 import { HandlersHelper } from '../../_helpers/handlers.helper';
+import type { RecipientType } from 'apps/notifications/_services/recipients.service';
 
 export class NewAnnouncementHandler extends BaseHandler<
   NotifierTypeEnum.NEW_ANNOUNCEMENT,
@@ -70,13 +71,23 @@ export class NewAnnouncementHandler extends BaseHandler<
     usersAndInnovationNames: Map<string, string[]>,
     announcement: SimpleAnnouncementType
   ): Promise<void> {
-    const allRecipients = await this.recipientsService.getUsersRecipient(
+    const allRecipientsArray = await this.recipientsService.getUsersRecipient(
       Array.from(usersAndInnovationNames.keys()),
       ServiceRoleEnum.INNOVATOR
     );
+
+    // Convert allRecipientsArray to a Map with userId as the key for O(1) lookup
+    const allRecipientsMap = new Map<string, RecipientType[]>();
+    for (const recipient of allRecipientsArray) {
+      if (!allRecipientsMap.has(recipient.userId)) {
+        allRecipientsMap.set(recipient.userId, []);
+      }
+      allRecipientsMap.get(recipient.userId)?.push(recipient);
+    }
+
+    // Iterate over usersAndInnovationNames and use the Map for O(1) lookup
     for (const [userId, innovationNames] of usersAndInnovationNames.entries()) {
-      //TODO: Change this to a get to make sure this run at O(1) time complexity
-      const recipients = allRecipients.filter(r => r.userId === userId);
+      const recipients = allRecipientsMap.get(userId) || [];
       this.addEmails('AP11_NEW_ANNOUNCEMENT_WITH_INNOVATIONS_NAME', recipients, {
         notificationPreferenceType: 'ANNOUNCEMENTS',
         params: {
