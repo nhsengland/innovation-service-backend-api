@@ -8,6 +8,7 @@ import { AnnouncementUserEntity } from '@users/shared/entities';
 import { randUuid } from '@ngneat/falso';
 import { DTOsHelper } from '@users/shared/tests/helpers/dtos.helper';
 import { AnnouncementErrorsEnum, NotFoundError } from '@users/shared/errors';
+import { AnnouncementTypeEnum } from '@users/shared/enums';
 
 describe('Users / _services / announcements service suite', () => {
   let sut: AnnouncementsService;
@@ -49,6 +50,11 @@ describe('Users / _services / announcements service suite', () => {
           innovations: [johnInnovator.innovations.johnInnovation.name]
         }
       ]);
+    });
+
+    it('should list only the announcements of type LOGIN for a given roleId', async () => {
+      const result = await sut.getUserRoleAnnouncements(johnInnovator.id, { type: [AnnouncementTypeEnum.LOG_IN]}, em);
+      expect(result).toHaveLength(0);
     });
 
     it('should only get the announcements for a given innovation', async () => {
