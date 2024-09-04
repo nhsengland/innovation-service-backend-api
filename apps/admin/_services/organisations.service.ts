@@ -12,6 +12,7 @@ import {
   UserRoleEntity
 } from '@admin/shared/entities';
 import {
+  AnnouncementTypeEnum,
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
   InnovationTaskStatusEnum,
@@ -26,15 +27,19 @@ import type { DomainService, IdentityProviderService, NotifierService } from '@a
 import type { DomainContextType } from '@admin/shared/types';
 
 import SHARED_SYMBOLS from '@admin/shared/services/symbols';
+import { UrlModel } from '@notifications/shared/models';
+import { ENV } from '../_config';
+import { AnnouncementsService } from './announcements.service';
 import { BaseService } from './base.service';
+import SYMBOLS from './symbols';
 
 @injectable()
 export class OrganisationsService extends BaseService {
   constructor(
     @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
     @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
-    @inject(SHARED_SYMBOLS.IdentityProviderService) private identityProviderService: IdentityProviderService
-    // @inject(SYMBOLS.AnnouncementsService) private announcementsService: AnnouncementsService
+    @inject(SHARED_SYMBOLS.IdentityProviderService) private identityProviderService: IdentityProviderService,
+    @inject(SYMBOLS.AnnouncementsService) private announcementsService: AnnouncementsService
   ) {
     super();
   }
@@ -288,13 +293,7 @@ export class OrganisationsService extends BaseService {
 
         // Just send the announcement if this is the first time the organization has been activated.
         if (DatesHelper.isDateEqual(unit.organisation.createdAt, unit.organisation.inactivatedAt)) {
-          // TODO: Change this when new copy arrives.
-          // await this.createOrganisationAnnouncement(
-          //   domainContext,
-          //   unit.organisation.id,
-          //   unit.organisation.name,
-          //   transaction
-          // );
+          await this.createOrganisationAnnouncement(domainContext, unit.organisation.name, transaction);
         }
       }
 
@@ -565,40 +564,25 @@ export class OrganisationsService extends BaseService {
     return savedUnit;
   }
 
-  /**
   private async createOrganisationAnnouncement(
     requestUser: DomainContextType,
-    _organisationId: string,
     orgName: string,
     transaction: EntityManager
   ): Promise<void> {
-    // If we need to exclude users again
-    // const orgUsers = await transaction
-    //   .createQueryBuilder(UserRoleEntity, 'userRole')
-    //   .where('userRole.organisation_id = :organisationId', { organisationId })
-    //   .getMany();
-    // const usersToExclude = orgUsers.map(u => u.userId);
-
-    const reusableAnnouncementInfo = {
-      title: 'A new support organisation has been added',
-      inset: {
-        title: `${orgName} has been added to the Innovation Service`,
-        link: {
-          label: 'What does this organisation do? (open in a new window)',
-          url: new UrlModel(ENV.webBaseUrl).addPath('about-the-service/who-we-are').buildUrl()
-        }
-      },
-      startsAt: new Date()
-    };
+    const title = `${orgName} has been added to the Innovation Service`;
+    const startsAt = new Date();
 
     await this.announcementsService.createAnnouncement(
       requestUser,
       {
         userRoles: [ServiceRoleEnum.INNOVATOR],
-        title: reusableAnnouncementInfo.title,
-        startsAt: reusableAnnouncementInfo.startsAt,
+        title: title,
+        startsAt: startsAt,
         params: {
-          inset: reusableAnnouncementInfo.inset,
+          link: {
+            label: 'What does this organisation do?',
+            url: new UrlModel(ENV.webBaseUrl).addPath('about-the-service/who-we-are').buildUrl()
+          },
           content:
             'If you think this organisation will be able to support you, you can share your innovation with them in your data sharing preferences.'
         },
@@ -612,10 +596,13 @@ export class OrganisationsService extends BaseService {
       requestUser,
       {
         userRoles: [ServiceRoleEnum.QUALIFYING_ACCESSOR],
-        title: reusableAnnouncementInfo.title,
-        startsAt: reusableAnnouncementInfo.startsAt,
+        title: title,
+        startsAt: startsAt,
         params: {
-          inset: reusableAnnouncementInfo.inset,
+          link: {
+            label: 'What does this organisation do?',
+            url: new UrlModel(ENV.webBaseUrl).addPath('about-the-service/who-we-are').buildUrl()
+          },
           content:
             'If you think this organisation could offer suitable support to an innovation, you can suggest it to them.'
         },
@@ -625,19 +612,29 @@ export class OrganisationsService extends BaseService {
       transaction
     );
 
+    /*
+     * Commented out the announcement to accessor as the title/link would say it all and the content is mandatory for
+     * the new announcements. Also there came doubts of how relevant this announcement would be when they don't have
+     * anything actionable to do.
+     * 
     await this.announcementsService.createAnnouncement(
       requestUser,
       {
         userRoles: [ServiceRoleEnum.ACCESSOR],
-        title: reusableAnnouncementInfo.title,
-        startsAt: reusableAnnouncementInfo.startsAt,
+        title: title,
+        startsAt: startsAt,
         params: {
-          inset: reusableAnnouncementInfo.inset
+          content: 'FYI',
+          link: {
+            label: 'What does this organisation do?',
+            url: new UrlModel(ENV.webBaseUrl).addPath('about-the-service/who-we-are').buildUrl()
+          },
         },
         type: AnnouncementTypeEnum.LOG_IN
       },
       {},
       transaction
     );
-  } */
+    */
+  }
 }
