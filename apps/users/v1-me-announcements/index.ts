@@ -30,12 +30,8 @@ class V1MeAnnouncements {
         .checkAssessmentType()
         .checkInnovatorType()
         .verify();
-      const requestContext = auth.getContext();
 
-      const announcements = await announcementsService.getUserRoleAnnouncements(
-        requestContext.currentRole.id,
-        queryParams.filters
-      );
+      const announcements = await announcementsService.getUserRoleAnnouncements(auth.getContext().id, queryParams);
 
       context.res = ResponseHelper.Ok<ResponseDTO>(
         announcements.map(announcement => ({
@@ -43,7 +39,8 @@ class V1MeAnnouncements {
           title: announcement.title,
           startsAt: announcement.startsAt,
           expiresAt: announcement.expiresAt,
-          params: announcement.params
+          params: announcement.params,
+          ...(announcement.innovations && { innovations: announcement.innovations })
         }))
       );
       return;

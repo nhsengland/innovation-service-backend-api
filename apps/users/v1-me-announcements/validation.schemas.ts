@@ -1,16 +1,15 @@
-import { AnnouncementTypeEnum } from './../.symlinks/shared/enums/announcement.enums';
+import { AnnouncementTypeEnum } from '@users/shared/enums';
+import { JoiHelper } from '@users/shared/helpers';
 import Joi from 'joi';
 
 export type QueryParamsType = {
-  filters: {
-    type?: AnnouncementTypeEnum[];
-  };
+  type?: AnnouncementTypeEnum[];
+  innovationId?: string;
 };
-
 export const QueryParamsSchema = Joi.object<QueryParamsType>({
-  filters: Joi.object({
-    type: Joi.array()
-      .items(Joi.string().valid(...Object.values(AnnouncementTypeEnum)))
-      .optional()
-  }).required()
-}).required();
+  type: JoiHelper.AppCustomJoi()
+    .stringArray()
+    .items(Joi.string().valid(...Object.values(AnnouncementTypeEnum)))
+    .optional(),
+  innovationId: Joi.string().guid().optional()
+});
