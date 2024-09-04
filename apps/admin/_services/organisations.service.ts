@@ -26,8 +26,8 @@ import { DatesHelper } from '@admin/shared/helpers';
 import type { DomainService, IdentityProviderService, NotifierService } from '@admin/shared/services';
 import type { DomainContextType } from '@admin/shared/types';
 
+import { UrlModel } from '@admin/shared/models';
 import SHARED_SYMBOLS from '@admin/shared/services/symbols';
-import { UrlModel } from '@notifications/shared/models';
 import { ENV } from '../_config';
 import { AnnouncementsService } from './announcements.service';
 import { BaseService } from './base.service';
