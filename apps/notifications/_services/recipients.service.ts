@@ -1331,12 +1331,22 @@ export class RecipientsService extends BaseService {
       return new Map();
     }
 
-    const preferences = await em
-      .createQueryBuilder(NotificationPreferenceEntity, 'preference')
-      .where('preference.user_role_id IN (:...roleIds)', { roleIds })
-      .getMany();
+    const batchSize = 1000;
+    const batchedPreferences: NotificationPreferenceEntity[] = [];
 
-    return new Map(preferences.map(p => [p.userRoleId, p.preferences]));
+    for (let i = 0; i < roleIds.length; i += batchSize) {
+      const batch = roleIds.slice(i, i + batchSize);
+
+      const preferencesBatch = await em
+        .createQueryBuilder(NotificationPreferenceEntity, 'preference')
+        .where('preference.user_role_id IN (:...batch)', { batch })
+        .getMany();
+
+      batchedPreferences.push(...preferencesBatch);
+    }
+
+    // Convert the result into a Map
+    return new Map(batchedPreferences.map(p => [p.userRoleId, p.preferences]));
   }
 
   /**

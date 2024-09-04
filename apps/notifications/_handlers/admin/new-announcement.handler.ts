@@ -34,22 +34,36 @@ export class NewAnnouncementHandler extends BaseHandler<
   }
 
   private async AP10_NEW_ANNOUNCEMENT(users: string[], announcement: SimpleAnnouncementType): Promise<void> {
-    const recipients = await this.recipientsService.getUsersRecipient(users, [
-      ServiceRoleEnum.ACCESSOR,
-      ServiceRoleEnum.QUALIFYING_ACCESSOR,
-      ServiceRoleEnum.ASSESSMENT,
-      ServiceRoleEnum.INNOVATOR
-    ]);
-    this.addEmails('AP10_NEW_ANNOUNCEMENT', recipients, {
-      notificationPreferenceType: 'ANNOUNCEMENTS',
-      params: {
-        announcement_title: announcement.title,
-        announcement_body: announcement.params?.content ?? '',
-        announcement_url: announcement.params.link
-          ? `[${announcement.params.link.label}](${announcement.params.link.url})`
-          : ''
+    const batchSize = 1000;
+    const chunkArray = (arr: string[], size: number): string[][] => {
+      const chunks = [];
+      for (let i = 0; i < arr.length; i += size) {
+        chunks.push(arr.slice(i, i + size));
       }
-    });
+      return chunks;
+    };
+
+    const userChunks = chunkArray(users, batchSize);
+
+    for (const userChunk of userChunks) {
+      const recipients = await this.recipientsService.getUsersRecipient(userChunk, [
+        ServiceRoleEnum.ACCESSOR,
+        ServiceRoleEnum.QUALIFYING_ACCESSOR,
+        ServiceRoleEnum.ASSESSMENT,
+        ServiceRoleEnum.INNOVATOR
+      ]);
+
+      this.addEmails('AP10_NEW_ANNOUNCEMENT', recipients, {
+        notificationPreferenceType: 'ANNOUNCEMENTS',
+        params: {
+          announcement_title: announcement.title,
+          announcement_body: announcement.params?.content ?? '',
+          announcement_url: announcement.params.link
+            ? `[${announcement.params.link.label}](${announcement.params.link.url})`
+            : ''
+        }
+      });
+    }
   }
 
   private async AP11_NEW_ANNOUNCEMENT_WITH_INNOVATIONS_NAME(
@@ -61,6 +75,7 @@ export class NewAnnouncementHandler extends BaseHandler<
       ServiceRoleEnum.INNOVATOR
     );
     for (const [userId, innovationNames] of usersAndInnovationNames.entries()) {
+      //TODO: Change this to a get to make sure this run at O(1) time complexity
       const recipients = allRecipients.filter(r => r.userId === userId);
       this.addEmails('AP11_NEW_ANNOUNCEMENT_WITH_INNOVATIONS_NAME', recipients, {
         notificationPreferenceType: 'ANNOUNCEMENTS',
