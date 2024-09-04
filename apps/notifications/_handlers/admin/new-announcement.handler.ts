@@ -4,7 +4,6 @@ import type { DomainContextType, NotifierTemplatesType } from '@notifications/sh
 import { BaseHandler } from '../base.handler';
 
 import { HandlersHelper } from '../../_helpers/handlers.helper';
-import type { RecipientType } from 'apps/notifications/_services/recipients.service';
 
 export class NewAnnouncementHandler extends BaseHandler<
   NotifierTypeEnum.NEW_ANNOUNCEMENT,
@@ -77,28 +76,24 @@ export class NewAnnouncementHandler extends BaseHandler<
     );
 
     // Convert allRecipientsArray to a Map with userId as the key for O(1) lookup
-    const allRecipientsMap = new Map<string, RecipientType[]>();
-    for (const recipient of allRecipientsArray) {
-      if (!allRecipientsMap.has(recipient.userId)) {
-        allRecipientsMap.set(recipient.userId, []);
-      }
-      allRecipientsMap.get(recipient.userId)?.push(recipient);
-    }
+    const allRecipientsMap = new Map(allRecipientsArray.map(r => [r.userId, r]));
 
     // Iterate over usersAndInnovationNames and use the Map for O(1) lookup
     for (const [userId, innovationNames] of usersAndInnovationNames.entries()) {
-      const recipients = allRecipientsMap.get(userId) || [];
-      this.addEmails('AP11_NEW_ANNOUNCEMENT_WITH_INNOVATIONS_NAME', recipients, {
-        notificationPreferenceType: 'ANNOUNCEMENTS',
-        params: {
-          announcement_title: announcement.title,
-          innovations_name: HandlersHelper.formatStringArray(innovationNames),
-          announcement_body: announcement.params?.content ?? '',
-          announcement_url: announcement.params.link
-            ? `[${announcement.params.link.label}](${announcement.params.link.url})`
-            : ''
-        }
-      });
+      const recipient = allRecipientsMap.get(userId);
+      if (recipient) {
+        this.addEmails('AP11_NEW_ANNOUNCEMENT_WITH_INNOVATIONS_NAME', [recipient], {
+          notificationPreferenceType: 'ANNOUNCEMENTS',
+          params: {
+            announcement_title: announcement.title,
+            innovations_name: HandlersHelper.formatStringArray(innovationNames),
+            announcement_body: announcement.params?.content ?? '',
+            announcement_url: announcement.params.link
+              ? `[${announcement.params.link.label}](${announcement.params.link.url})`
+              : ''
+          }
+        });
+      }
     }
   }
 }
