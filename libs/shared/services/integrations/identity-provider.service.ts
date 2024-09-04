@@ -184,7 +184,6 @@ export class IdentityProviderService {
       phone: response.data.value[0]?.mobilePhone ?? null
     };
   }
-
   /**
    * this function checks the cache for the users and if they are not found it will fetch them from the identity provider
    *
@@ -197,7 +196,8 @@ export class IdentityProviderService {
     const res = await this.cache.getMany(uniqueUserIds);
     if (res.length !== uniqueUserIds.length) {
       const cachedUserIds = new Set(res.map(user => user.identityId));
-      const nonCachedUsers = await this.getUsersListFromB2C(uniqueUserIds.filter(id => !cachedUserIds.has(id)));
+      const tempUsers = uniqueUserIds.filter(id => !cachedUserIds.has(id));
+      const nonCachedUsers = await this.getUsersListFromB2C(tempUsers);
       // Add new users to cache.
       await this.cache.setMany(nonCachedUsers.map(user => ({ key: user.identityId, value: user })));
       res.push(...nonCachedUsers);
@@ -233,6 +233,7 @@ export class IdentityProviderService {
 
     const uniqueUserIds = [...new Set(entityIds)]; // Remove duplicated entries.
     const chunkSize = 15; // B2C has a maximum limit of users that can be requested in 1 call.
+    const maxConcurrentRequests = 3; // More than 3 and we start getting 429 errors.
 
     // Prepare array with arrays containing (chunkSize) ids.
     const userIdsChunks = uniqueUserIds.reduce((acc: string[][], item, index) => {
@@ -249,30 +250,32 @@ export class IdentityProviderService {
 
     const usersList: IdentityUserInfo[] = [];
 
-    // Make sequential requests.
-    for (const userIdChunk of userIdsChunks) {
-      const userIds = userIdChunk.map(item => `"${item}"`).join(',');
-      const odataFilter = `$filter=id in (${userIds})`;
+    // Split the chunks into batches based on maxConcurrentRequests
+    for (let i = 0; i < userIdsChunks.length; i += maxConcurrentRequests) {
+      const currentBatch = userIdsChunks.slice(i, i + maxConcurrentRequests);
 
-      const fields = [
-        'displayName',
-        'identities',
-        'email',
-        'mobilePhone',
-        'accountEnabled',
-        'lastPasswordChangeDateTime',
-        'signInActivity'
-      ];
+      // Create promises for the current batch
+      const promises = currentBatch.map(async userIdChunk => {
+        const userIds = userIdChunk.map(id => `'${id}'`).join(','); // Wrap each ID in single quotes
+        const odataFilter = `$filter=id in (${userIds})`;
 
-      const url = `https://graph.microsoft.com/beta/users?${odataFilter}&$select=${fields.join(',')}`;
+        const fields = [
+          'displayName',
+          'identities',
+          'email',
+          'mobilePhone',
+          'accountEnabled',
+          'lastPasswordChangeDateTime',
+          'signInActivity'
+        ];
 
-      const response = await axios.get<b2cGetUsersListDTO>(url, {
-        headers: { Authorization: `Bearer ${this.sessionData.token}` }
-      });
+        const url = `https://graph.microsoft.com/beta/users?${odataFilter}&$select=${fields.join(',')}`;
 
-      // Merge results into usersList
-      usersList.push(
-        ...response.data.value.map(u => ({
+        const response = await axios.get<b2cGetUsersListDTO>(url, {
+          headers: { Authorization: `Bearer ${this.sessionData.token}` }
+        });
+
+        return response.data.value.map(u => ({
           identityId: u.id,
           displayName: u.displayName,
           email: u.identities.find(identity => identity.signInType === 'emailAddress')?.issuerAssignedId || '',
@@ -283,8 +286,12 @@ export class IdentityProviderService {
               ? new Date(u.signInActivity.lastSignInDateTime)
               : null,
           passwordResetAt: u.lastPasswordChangeDateTime ? new Date(u.lastPasswordChangeDateTime) : null
-        }))
-      );
+        }));
+      });
+
+      // Execute the batch of promises and wait for them to resolve
+      const results = await Promise.all(promises);
+      usersList.push(...results.flat());
     }
 
     return usersList;
