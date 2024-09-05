@@ -816,7 +816,6 @@ export class InnovationsService extends BaseService {
     if (hasAccessThrough.length) {
       query.andWhere(
         new Brackets(qb => {
-          qb.where('1 <> 1'); // ugly shortcut to not worry about the first OR
           if (hasAccessThrough.includes('owner')) {
             qb.orWhere('innovation.ownerId = :userId', { userId: domainContext.id });
           }
@@ -861,7 +860,6 @@ export class InnovationsService extends BaseService {
     if (locations.length) {
       query.andWhere(
         new Brackets(qb => {
-          qb.where('1 <> 1'); // ugly shortcut to not worry about the first OR
           if (locations.includes(InnovationLocationEnum['Based outside UK'])) {
             qb.orWhere('innovation.countryName NOT IN (:...ukLocations)', {
               ukLocations: [
