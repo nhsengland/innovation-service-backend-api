@@ -1,6 +1,6 @@
 import { randUuid } from '@ngneat/falso';
 import { BadRequestError, InnovationErrorsEnum } from '../../errors';
-import { type EntityManager, Brackets } from 'typeorm';
+import type { EntityManager } from 'typeorm';
 import { container } from '../../config/inversify.config';
 import { InnovationDocumentEntity, InnovationEntity } from '../../entities';
 import { InnovationGroupedStatusEnum, InnovationStatusEnum, UserStatusEnum } from '../../enums';
@@ -143,12 +143,11 @@ describe('Shared / services / innovations suite', () => {
         em
       );
 
-      const dbFilteredQuery = em.createQueryBuilder(InnovationDocumentEntity, 'document').where(
-        new Brackets(qb => {
-          qb.orWhere(`JSON_QUERY(document.document, '$.INNOVATION_DESCRIPTION.areas') LIKE '%COVID_19%'`);
-          qb.orWhere(`JSON_VALUE(document.document, '$.UNDERSTANDING_OF_NEEDS.hasProductServiceOrPrototype') = 'NO'`);
-        })
-      );
+      const dbFilteredQuery = em
+        .createQueryBuilder(InnovationDocumentEntity, 'document')
+        .where(`JSON_QUERY(document.document, '$.INNOVATION_DESCRIPTION.areas') LIKE '%COVID_19%'`)
+        .andWhere(`JSON_VALUE(document.document, '$.UNDERSTANDING_OF_NEEDS.hasProductServiceOrPrototype') = 'NO'`);
+
       if (onlySubmitted) {
         dbFilteredQuery.innerJoin('document.innovation', 'innovation').andWhere('innovation.submittedAt IS NOT NULL');
       }
@@ -170,11 +169,7 @@ describe('Shared / services / innovations suite', () => {
 
       const dbFilteredCount = await em
         .createQueryBuilder(InnovationDocumentEntity, 'document')
-        .where(
-          new Brackets(qb => {
-            qb.orWhere(`JSON_VALUE(document.document, '$.UNDERSTANDING_OF_NEEDS.hasProductServiceOrPrototype') = 'NO'`);
-          })
-        )
+        .where(`JSON_VALUE(document.document, '$.UNDERSTANDING_OF_NEEDS.hasProductServiceOrPrototype') = 'NO'`)
         .getCount();
 
       expect(innovations.length).toBe(dbFilteredCount);

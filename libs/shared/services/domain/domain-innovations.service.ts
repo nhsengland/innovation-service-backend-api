@@ -1,4 +1,4 @@
-import { Brackets, DataSource, EntityManager, In, Repository } from 'typeorm';
+import { DataSource, EntityManager, In, Repository } from 'typeorm';
 
 import { cloneDeep } from 'lodash';
 import { EXPIRATION_DATES } from '../../constants';
@@ -905,14 +905,14 @@ export class DomainInnovationsService {
    * Business rules:
    * If some filters have been removed from the schema, will be filtered based on the remaining filters.
    * If all filters have been removed from the schema, will not filter and throw an error.
-   * All individual filters are ORs and inside them the answers are ANDs:
-   * * (filter1 === 'A' AND filter2 === 'B') OR filter2 === 'C'
+   * Filters work as "OR" within the same question and as "AND" between questions:
+   * * (filter1 === 'A' OR filter1 === 'B') AND filter2 === 'C'
    */
   async getInnovationsFiltered(
     filters: FilterPayload[],
     options: { onlySubmitted?: boolean },
     entityManager?: EntityManager
-  ): Promise<{ id: string; name: string }[]> {
+  ): Promise<{ id: string }[]> {
     if (!filters.length) {
       throw new BadRequestError(InnovationErrorsEnum.INNOVATION_FILTERS_EMPTY);
     }
@@ -929,37 +929,33 @@ export class DomainInnovationsService {
 
     const query = em
       .createQueryBuilder(InnovationEntity, 'innovation')
-      // TODO: probably more fields need to be added.
-      .select(['innovation.id', 'innovation.name'])
-      .innerJoin('innovation.document', 'document')
-      .andWhere(
-        new Brackets(qb => {
-          for (const [index, filter] of filters.entries()) {
-            const id = `${filter.section}_${filter.question}_${index}`;
-            const params = {
-              [`${id}_key`]: `$.${filter.section}.${filter.question}`,
-              [`${id}_values`]: filter.answers
-            };
-            switch (schema.model.getQuestionType(filter.question)) {
-              case 'checkbox-array':
-                qb.orWhere(
-                  `
+      .select(['innovation.id'])
+      .innerJoin('innovation.document', 'document');
+
+    for (const [index, filter] of validFilters.entries()) {
+      const id = `${filter.section}_${filter.question}_${index}`;
+      const params = {
+        [`${id}_key`]: `$.${filter.section}.${filter.question}`,
+        [`${id}_values`]: filter.answers
+      };
+      switch (schema.model.getQuestionType(filter.question)) {
+        case 'checkbox-array':
+          query.andWhere(
+            `
                   EXISTS (
                     SELECT TOP 1 *
                     FROM OPENJSON(JSON_QUERY(document.document, :${id}_key))
                     WHERE value IN (:...${id}_values)
                   )
                 `,
-                  params
-                );
-                break;
-              case 'radio-group':
-                qb.orWhere(`JSON_VALUE(document.document, :${id}_key) IN (:...${id}_values)`, params);
-                break;
-            }
-          }
-        })
-      );
+            params
+          );
+          break;
+        case 'radio-group':
+          query.andWhere(`JSON_VALUE(document.document, :${id}_key) IN (:...${id}_values)`, params);
+          break;
+      }
+    }
 
     // By default make filter only by submitted.
     if (options.onlySubmitted !== false) {
