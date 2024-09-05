@@ -15,7 +15,8 @@ export const ANotificationCategories = [
   'MESSAGES',
   'INNOVATION_MANAGEMENT',
   'AUTOMATIC',
-  'NOTIFY_ME'
+  'NOTIFY_ME',
+  'ANNOUNCEMENTS'
 ] as const;
 type ANotificationCategories = (typeof ANotificationCategories)[number];
 

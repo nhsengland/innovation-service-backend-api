@@ -75,10 +75,10 @@ export class HandlersHelper {
     if (arr.length === 0) {
       return '';
     } else if (arr.length === 1) {
-      return `Re: ${arr[0]}.`;
+      return `${arr[0]}`;
     } else {
       const lastItem = arr.pop();
-      return `Re: ${arr.join(', ')} and ${lastItem}.`;
+      return `${arr.join(', ')} and ${lastItem}`;
     }
   }
 }

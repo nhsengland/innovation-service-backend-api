@@ -34,45 +34,66 @@ export class NewAnnouncementHandler extends BaseHandler<
   }
 
   private async AP10_NEW_ANNOUNCEMENT(users: string[], announcement: SimpleAnnouncementType): Promise<void> {
-    const recipients = await this.recipientsService.getUsersRecipient(users, [
-      ServiceRoleEnum.ACCESSOR,
-      ServiceRoleEnum.QUALIFYING_ACCESSOR,
-      ServiceRoleEnum.ASSESSMENT,
-      ServiceRoleEnum.INNOVATOR
-    ]);
-    this.addEmails('AP10_NEW_ANNOUNCEMENT', recipients, {
-      notificationPreferenceType: 'ANNOUNCEMENTS',
-      params: {
-        announcement_title: announcement.title,
-        announcement_body: announcement.params?.content ?? '',
-        announcement_url: announcement.params.link
-          ? `[${announcement.params.link.label}](${announcement.params.link.url})`
-          : ''
+    const batchSize = 1000;
+    const chunkArray = (arr: string[], size: number): string[][] => {
+      const chunks = [];
+      for (let i = 0; i < arr.length; i += size) {
+        chunks.push(arr.slice(i, i + size));
       }
-    });
-  }
+      return chunks;
+    };
 
-  private async AP11_NEW_ANNOUNCEMENT_WITH_INNOVATIONS_NAME(
-    usersAndInnovationNames: Map<string, string[]>,
-    announcement: SimpleAnnouncementType
-  ): Promise<void> {
-    const allRecipients = await this.recipientsService.getUsersRecipient(
-      Array.from(usersAndInnovationNames.keys()),
-      ServiceRoleEnum.INNOVATOR
-    );
-    for (const [userId, innovationNames] of usersAndInnovationNames.entries()) {
-      const recipients = allRecipients.filter(r => r.userId === userId);
-      this.addEmails('AP11_NEW_ANNOUNCEMENT_WITH_INNOVATIONS_NAME', recipients, {
+    const userChunks = chunkArray(users, batchSize);
+
+    for (const userChunk of userChunks) {
+      const recipients = await this.recipientsService.getUsersRecipient(userChunk, [
+        ServiceRoleEnum.ACCESSOR,
+        ServiceRoleEnum.QUALIFYING_ACCESSOR,
+        ServiceRoleEnum.ASSESSMENT,
+        ServiceRoleEnum.INNOVATOR
+      ]);
+
+      this.addEmails('AP10_NEW_ANNOUNCEMENT', recipients, {
         notificationPreferenceType: 'ANNOUNCEMENTS',
         params: {
           announcement_title: announcement.title,
-          innovations_name: HandlersHelper.formatStringArray(innovationNames),
           announcement_body: announcement.params?.content ?? '',
           announcement_url: announcement.params.link
             ? `[${announcement.params.link.label}](${announcement.params.link.url})`
             : ''
         }
       });
+    }
+  }
+
+  private async AP11_NEW_ANNOUNCEMENT_WITH_INNOVATIONS_NAME(
+    usersAndInnovationNames: Map<string, string[]>,
+    announcement: SimpleAnnouncementType
+  ): Promise<void> {
+    const allRecipientsArray = await this.recipientsService.getUsersRecipient(
+      Array.from(usersAndInnovationNames.keys()),
+      ServiceRoleEnum.INNOVATOR
+    );
+
+    // Convert allRecipientsArray to a Map with userId as the key for O(1) lookup
+    const allRecipientsMap = new Map(allRecipientsArray.map(r => [r.userId, r]));
+
+    // Iterate over usersAndInnovationNames and use the Map for O(1) lookup
+    for (const [userId, innovationNames] of usersAndInnovationNames.entries()) {
+      const recipient = allRecipientsMap.get(userId);
+      if (recipient) {
+        this.addEmails('AP11_NEW_ANNOUNCEMENT_WITH_INNOVATIONS_NAME', [recipient], {
+          notificationPreferenceType: 'ANNOUNCEMENTS',
+          params: {
+            announcement_title: announcement.title,
+            innovations_name: HandlersHelper.formatStringArray(innovationNames),
+            announcement_body: announcement.params?.content ?? '',
+            announcement_url: announcement.params.link
+              ? `[${announcement.params.link.label}](${announcement.params.link.url})`
+              : ''
+          }
+        });
+      }
     }
   }
 }

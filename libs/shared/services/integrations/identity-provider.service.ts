@@ -1,4 +1,4 @@
-import axios, { AxiosResponse } from 'axios';
+import axios from 'axios';
 import { inject, injectable } from 'inversify';
 
 import {
@@ -184,7 +184,6 @@ export class IdentityProviderService {
       phone: response.data.value[0]?.mobilePhone ?? null
     };
   }
-
   /**
    * this function checks the cache for the users and if they are not found it will fetch them from the identity provider
    *
@@ -197,7 +196,8 @@ export class IdentityProviderService {
     const res = await this.cache.getMany(uniqueUserIds);
     if (res.length !== uniqueUserIds.length) {
       const cachedUserIds = new Set(res.map(user => user.identityId));
-      const nonCachedUsers = await this.getUsersListFromB2C(uniqueUserIds.filter(id => !cachedUserIds.has(id)));
+      const tempUsers = uniqueUserIds.filter(id => !cachedUserIds.has(id));
+      const nonCachedUsers = await this.getUsersListFromB2C(tempUsers);
       // Add new users to cache.
       await this.cache.setMany(nonCachedUsers.map(user => ({ key: user.identityId, value: user })));
       res.push(...nonCachedUsers);
@@ -232,10 +232,10 @@ export class IdentityProviderService {
     await this.verifyAccessToken();
 
     const uniqueUserIds = [...new Set(entityIds)]; // Remove duplicated entries.
-    const chunkSize = 10; // B2C have a maximum limit of users that can be requested in 1 call.
-    const promises: Promise<AxiosResponse<b2cGetUsersListDTO>>[] = [];
+    const chunkSize = 15; // B2C has a maximum limit of users that can be requested in 1 call.
+    const maxConcurrentRequests = 3; // More than 3 and we start getting 429 errors.
 
-    // Prepare array, with array having (chuckSize) ids.
+    // Prepare array with arrays containing (chunkSize) ids.
     const userIdsChunks = uniqueUserIds.reduce((acc: string[][], item, index) => {
       const chunkIndex = Math.floor(index / chunkSize);
 
@@ -248,45 +248,53 @@ export class IdentityProviderService {
       return acc;
     }, []);
 
-    // Prepare necessary requests.
-    for (const userId of userIdsChunks) {
-      const userIds = userId.map(item => `"${item}"`).join(',');
-      const odataFilter = `$filter=id in (${userIds})`;
+    const usersList: IdentityUserInfo[] = [];
 
-      const fields = [
-        'displayName',
-        'identities',
-        'email',
-        'mobilePhone',
-        'accountEnabled',
-        'lastPasswordChangeDateTime',
-        'signInActivity'
-      ];
+    // Split the chunks into batches based on maxConcurrentRequests
+    for (let i = 0; i < userIdsChunks.length; i += maxConcurrentRequests) {
+      const currentBatch = userIdsChunks.slice(i, i + maxConcurrentRequests);
 
-      const url = `https://graph.microsoft.com/beta/users?${odataFilter}&$select=${fields.join(',')}`;
+      // Create promises for the current batch
+      const promises = currentBatch.map(async userIdChunk => {
+        const userIds = userIdChunk.map(id => `'${id}'`).join(','); // Wrap each ID in single quotes
+        const odataFilter = `$filter=id in (${userIds})`;
 
-      promises.push(
-        axios.get<b2cGetUsersListDTO>(url, {
+        const fields = [
+          'displayName',
+          'identities',
+          'email',
+          'mobilePhone',
+          'accountEnabled',
+          'lastPasswordChangeDateTime',
+          'signInActivity'
+        ];
+
+        const url = `https://graph.microsoft.com/beta/users?${odataFilter}&$select=${fields.join(',')}`;
+
+        const response = await axios.get<b2cGetUsersListDTO>(url, {
           headers: { Authorization: `Bearer ${this.sessionData.token}` }
-        })
-      );
+        });
+
+        return response.data.value.map(u => ({
+          identityId: u.id,
+          displayName: u.displayName,
+          email: u.identities.find(identity => identity.signInType === 'emailAddress')?.issuerAssignedId || '',
+          mobilePhone: u.mobilePhone,
+          isActive: u.accountEnabled,
+          lastLoginAt:
+            u.signInActivity && u.signInActivity.lastSignInDateTime
+              ? new Date(u.signInActivity.lastSignInDateTime)
+              : null,
+          passwordResetAt: u.lastPasswordChangeDateTime ? new Date(u.lastPasswordChangeDateTime) : null
+        }));
+      });
+
+      // Execute the batch of promises and wait for them to resolve
+      const results = await Promise.all(promises);
+      usersList.push(...results.flat());
     }
 
-    // Make all calls and merge results.
-    return (await Promise.all(promises)).flatMap(response =>
-      response.data.value.map(u => ({
-        identityId: u.id,
-        displayName: u.displayName,
-        email: u.identities.find(identity => identity.signInType === 'emailAddress')?.issuerAssignedId || '',
-        mobilePhone: u.mobilePhone,
-        isActive: u.accountEnabled,
-        lastLoginAt:
-          u.signInActivity && u.signInActivity.lastSignInDateTime
-            ? new Date(u.signInActivity.lastSignInDateTime)
-            : null,
-        passwordResetAt: u.lastPasswordChangeDateTime ? new Date(u.lastPasswordChangeDateTime) : null
-      }))
-    );
+    return usersList;
   }
 
   async createUser(data: { name: string; email: string; password: string }): Promise<string> {
