@@ -33,13 +33,7 @@ const userInfo = {
   identityId: randUuid(),
   email: randEmail(),
   displayName: randFullName(),
-  roles: [
-    {
-      id: randUuid(),
-      role: ServiceRoleEnum.INNOVATOR,
-      isActive: true
-    }
-  ],
+  roles: [{ id: randUuid(), role: ServiceRoleEnum.INNOVATOR, isActive: true }],
   phone: null,
   isActive: true,
   lockedAt: null,
@@ -79,8 +73,8 @@ const pendingCollaborationsMock = jest
   .spyOn(UsersService.prototype, 'getCollaborationsInvitesList')
   .mockResolvedValue([1] as any);
 const announcementsMock = jest
-  .spyOn(AnnouncementsService.prototype, 'getUserRoleAnnouncements')
-  .mockResolvedValue([1] as any);
+  .spyOn(AnnouncementsService.prototype, 'hasAnnouncementsToReadByRole')
+  .mockResolvedValue({});
 const preferences = {
   contactByEmail: true,
   contactByPhone: true,
@@ -104,7 +98,7 @@ describe('v1-me-info Suite', () => {
       expect(result.body).toStrictEqual({
         ...omit(userInfo, ['identityId', 'lockedAt', 'isActive']),
         ...preferences,
-        hasAnnouncements: true,
+        hasLoginAnnouncements: {},
         hasInnovationCollaborations: true,
         hasInnovationTransfers: true,
         termsOfUseAccepted: terms.isAccepted
@@ -137,13 +131,7 @@ describe('v1-me-info Suite', () => {
     ])("shouldn't return preferences, collaborations and transfers for %s", async (role: ServiceRoleEnum) => {
       mock.mockResolvedValueOnce({
         ...userInfo,
-        roles: [
-          {
-            id: randUuid(),
-            role,
-            isActive: true
-          }
-        ]
+        roles: [{ id: randUuid(), role, isActive: true }]
       });
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.johnInnovator)
@@ -164,13 +152,7 @@ describe('v1-me-info Suite', () => {
     it("shouldn't check announcements and termsOfUse for admin", async () => {
       mock.mockResolvedValueOnce({
         ...userInfo,
-        roles: [
-          {
-            id: randUuid(),
-            role: ServiceRoleEnum.ADMIN,
-            isActive: true
-          }
-        ]
+        roles: [{ id: randUuid(), role: ServiceRoleEnum.ADMIN, isActive: true }]
       });
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.johnInnovator)
@@ -178,7 +160,7 @@ describe('v1-me-info Suite', () => {
       expect(termsOfUseAcceptedMock).toHaveBeenCalledTimes(0);
       expect(announcementsMock).toHaveBeenCalledTimes(0);
       expect(result.body).toMatchObject({
-        hasAnnouncements: false,
+        hasLoginAnnouncements: {},
         termsOfUseAccepted: true
       });
     });
@@ -191,13 +173,7 @@ describe('v1-me-info Suite', () => {
     ])('should check annoucements and termsOfUse for %s', async role => {
       mock.mockResolvedValueOnce({
         ...userInfo,
-        roles: [
-          {
-            id: randUuid(),
-            role,
-            isActive: true
-          }
-        ]
+        roles: [{ id: randUuid(), role, isActive: true }]
       });
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.johnInnovator)
@@ -205,7 +181,7 @@ describe('v1-me-info Suite', () => {
       expect(termsOfUseAcceptedMock).toHaveBeenCalledTimes(1);
       expect(announcementsMock).toHaveBeenCalledTimes(1);
       expect(result.body).toMatchObject({
-        hasAnnouncements: true,
+        hasLoginAnnouncements: {},
         termsOfUseAccepted: terms.isAccepted
       });
     });
@@ -225,7 +201,7 @@ describe('v1-me-info Suite', () => {
       expect(pendingTransfersMock).toHaveBeenCalledTimes(0);
       expect(pendingCollaborationsMock).toHaveBeenCalledTimes(0);
       expect(termsOfUseAcceptedMock).toHaveBeenCalledTimes(0);
-      expect(announcementsMock).toHaveBeenCalledTimes(0);
+      expect(announcementsMock).toHaveBeenCalledTimes(1);
       expect(result.body).toMatchObject({
         contactByEmail: false,
         contactByPhone: false,
@@ -233,7 +209,7 @@ describe('v1-me-info Suite', () => {
         contactDetails: null,
         hasInnovationCollaborations: false,
         hasInnovationTransfers: false,
-        hasAnnouncements: false,
+        hasLoginAnnouncements: {},
         termsOfUseAccepted: true
       });
     });
@@ -250,7 +226,7 @@ describe('v1-me-info Suite', () => {
       expect(result.body).toStrictEqual({
         ...omit(userInfo, ['identityId', 'lockedAt', 'isActive']),
         ...preferences,
-        hasAnnouncements: true,
+        hasLoginAnnouncements: {},
         hasInnovationCollaborations: true,
         hasInnovationTransfers: true,
         termsOfUseAccepted: terms.isAccepted

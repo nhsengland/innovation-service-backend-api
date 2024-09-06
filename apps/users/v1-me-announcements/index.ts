@@ -31,7 +31,7 @@ class V1MeAnnouncements {
         .checkInnovatorType()
         .verify();
 
-      const announcements = await announcementsService.getUserRoleAnnouncements(auth.getContext().id, queryParams);
+      const announcements = await announcementsService.getUserRoleAnnouncements(auth.getContext(), queryParams);
 
       context.res = ResponseHelper.Ok<ResponseDTO>(
         announcements.map(announcement => ({

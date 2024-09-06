@@ -2,7 +2,12 @@ import { injectable } from 'inversify';
 import type { EntityManager } from 'typeorm';
 
 import { AnnouncementEntity, AnnouncementUserEntity } from '@users/shared/entities';
-import { AnnouncementParamsType, AnnouncementStatusEnum, AnnouncementTypeEnum } from '@users/shared/enums';
+import {
+  AnnouncementParamsType,
+  AnnouncementStatusEnum,
+  AnnouncementTypeEnum,
+  ServiceRoleEnum
+} from '@users/shared/enums';
 import type { DomainContextType } from '@users/shared/types';
 
 import { BaseService } from './base.service';
@@ -15,7 +20,7 @@ export class AnnouncementsService extends BaseService {
   }
 
   async getUserRoleAnnouncements(
-    userId: string,
+    domainContext: DomainContextType,
     filters: { type?: AnnouncementTypeEnum[]; innovationId?: string },
     entityManager?: EntityManager
   ): Promise<
@@ -33,9 +38,14 @@ export class AnnouncementsService extends BaseService {
     const query = connection
       .createQueryBuilder(AnnouncementEntity, 'a')
       .select(['a.id', 'a.title', 'a.startsAt', 'a.expiresAt', 'a.params', 'au.id', 'i.name'])
-      .innerJoin('a.announcementUsers', 'au', 'au.user_id = :userId AND au.read_at IS NULL', { userId })
+      .innerJoin('a.announcementUsers', 'au', 'au.user_id = :userId AND au.read_at IS NULL', {
+        userId: domainContext.id
+      })
       .leftJoin('au.innovation', 'i')
-      .where('a.status = :activeStatus', { activeStatus: AnnouncementStatusEnum.ACTIVE });
+      .where('a.status = :activeStatus', { activeStatus: AnnouncementStatusEnum.ACTIVE })
+      .andWhere("CONCAT(',', a.user_roles, ',') LIKE :userRole", {
+        userRole: `%,${domainContext.currentRole.role},%`
+      });
 
     if (filters.type?.length) {
       query.andWhere('a.type IN (:...types)', { types: filters.type });
@@ -60,6 +70,31 @@ export class AnnouncementsService extends BaseService {
         ...(!filters.innovationId && innovations.size && { innovations: Array.from(innovations) })
       };
     });
+  }
+
+  async hasAnnouncementsToReadByRole(
+    userId: string,
+    type: AnnouncementTypeEnum[],
+    entityManager?: EntityManager
+  ): Promise<{ [k: string]: boolean }> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const announcements = await em
+      .createQueryBuilder(AnnouncementEntity, 'a')
+      .select(['a.id', 'a.userRoles'])
+      .innerJoin('a.announcementUsers', 'au', 'au.user_id = :userId AND au.read_at IS NULL', { userId })
+      .where('a.status = :activeStatus', { activeStatus: AnnouncementStatusEnum.ACTIVE })
+      .andWhere('a.type IN (:...type)', { type })
+      .getMany();
+
+    const out = new Map<ServiceRoleEnum, boolean>();
+    for (const announcement of announcements) {
+      for (const role of announcement.userRoles) {
+        out.set(role, true);
+      }
+    }
+
+    return Object.fromEntries(out.entries());
   }
 
   async readUserAnnouncement(
