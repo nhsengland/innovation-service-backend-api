@@ -10,6 +10,7 @@ import type {
   Textarea,
   Text
 } from './question.types';
+import { cloneDeep } from 'lodash';
 
 interface QuestionTypeValidator<T extends Question> {
   validate: (question: T) => Joi.Schema;
@@ -183,6 +184,12 @@ export class QuestionValidatorFactory {
         }
         return new RadioGroupValidator().validate(question);
       case 'checkbox-array':
+        // If it's true we just care about the answer so we remove the addQuestion from here
+        if (multipleAnswers && question.addQuestion) {
+          const clonedQuestion = cloneDeep(question);
+          delete clonedQuestion.addQuestion;
+          return new CheckboxArrayValidator().validate(clonedQuestion);
+        }
         return new CheckboxArrayValidator().validate(question);
       case 'autocomplete-array':
         return new AutocompleteArrayValidator().validate(question);
