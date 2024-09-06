@@ -569,8 +569,12 @@ export class OrganisationsService extends BaseService {
     orgName: string,
     transaction: EntityManager
   ): Promise<void> {
-    const title = `${orgName} has been added to the Innovation Service`;
+    const title = 'A new support organisation has been added';
     const startsAt = new Date();
+    const link = {
+      label: 'What does this organisation do?',
+      url: new UrlModel(ENV.webBaseUrl).addPath('about-the-service/who-we-are').buildUrl()
+    };
 
     await this.announcementsService.createAnnouncement(
       requestUser,
@@ -579,12 +583,9 @@ export class OrganisationsService extends BaseService {
         title: title,
         startsAt: startsAt,
         params: {
-          link: {
-            label: 'What does this organisation do?',
-            url: new UrlModel(ENV.webBaseUrl).addPath('about-the-service/who-we-are').buildUrl()
-          },
-          content:
-            'If you think this organisation will be able to support you, you can share your innovation with them in your data sharing preferences.'
+          link,
+          content: `${orgName} has been added to the Innovation Service
+            If you think this organisation will be able to support you, you can share your innovation with them in your data sharing preferences.`
         },
         type: AnnouncementTypeEnum.LOG_IN
       },
@@ -599,12 +600,9 @@ export class OrganisationsService extends BaseService {
         title: title,
         startsAt: startsAt,
         params: {
-          link: {
-            label: 'What does this organisation do?',
-            url: new UrlModel(ENV.webBaseUrl).addPath('about-the-service/who-we-are').buildUrl()
-          },
-          content:
-            'If you think this organisation could offer suitable support to an innovation, you can suggest it to them.'
+          link,
+          content: `${orgName} has been added to the Innovation Service
+            If you think this organisation could offer suitable support to an innovation, you can suggest it to them.`
         },
         type: AnnouncementTypeEnum.LOG_IN
       },
@@ -612,11 +610,6 @@ export class OrganisationsService extends BaseService {
       transaction
     );
 
-    /*
-     * Commented out the announcement to accessor as the title/link would say it all and the content is mandatory for
-     * the new announcements. Also there came doubts of how relevant this announcement would be when they don't have
-     * anything actionable to do.
-     * 
     await this.announcementsService.createAnnouncement(
       requestUser,
       {
@@ -624,17 +617,13 @@ export class OrganisationsService extends BaseService {
         title: title,
         startsAt: startsAt,
         params: {
-          content: 'FYI',
-          link: {
-            label: 'What does this organisation do?',
-            url: new UrlModel(ENV.webBaseUrl).addPath('about-the-service/who-we-are').buildUrl()
-          },
+          link,
+          content: `${orgName} has been added to the Innovation Service`
         },
         type: AnnouncementTypeEnum.LOG_IN
       },
       {},
       transaction
     );
-    */
   }
 }
