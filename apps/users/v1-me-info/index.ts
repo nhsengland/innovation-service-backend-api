@@ -36,7 +36,7 @@ class V1MeInfo {
       let termsOfUseAccepted = true;
       let hasInnovationTransfers = false;
       let hasInnovationCollaborations = false;
-      let hasAnnouncements = false;
+      let hasLoginAnnouncements = {};
       let userPreferences: {
         contactByPhone: boolean;
         contactByEmail: boolean;
@@ -56,16 +56,18 @@ class V1MeInfo {
 
         termsOfUseAccepted = (await termsOfUseService.getActiveTermsOfUseInfo({ id: requestUser.id }, userRole.role))
           .isAccepted;
-        // TO DO: Maybe update variable name
-        hasAnnouncements =
-          (await announcementsService.getUserRoleAnnouncements(requestUser.id, { type: [AnnouncementTypeEnum.LOG_IN] }))
-            .length > 0;
 
         if (userRole.role === ServiceRoleEnum.INNOVATOR) {
           userPreferences = await domainService.users.getUserPreferences(requestUser.id);
           hasInnovationTransfers = (await usersService.getUserPendingInnovationTransfers(requestUser.email)).length > 0;
           hasInnovationCollaborations = (await usersService.getCollaborationsInvitesList(requestUser.email)).length > 0;
         }
+      }
+
+      if (userRoles.length > 0 && userRoles[0]!.role !== ServiceRoleEnum.ADMIN) {
+        hasLoginAnnouncements = await announcementsService.hasAnnouncementsToReadByRole(requestUser.id, [
+          AnnouncementTypeEnum.LOG_IN
+        ]);
       }
 
       context.res = ResponseHelper.Ok<ResponseDTO>({
@@ -83,7 +85,7 @@ class V1MeInfo {
         termsOfUseAccepted,
         hasInnovationTransfers,
         hasInnovationCollaborations,
-        hasAnnouncements,
+        hasLoginAnnouncements,
         organisations: requestUser.organisations! // will exist since we call the userInfo with organisation flag
       });
       return;

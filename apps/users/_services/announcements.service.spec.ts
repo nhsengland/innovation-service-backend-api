@@ -8,6 +8,7 @@ import { AnnouncementUserEntity } from '@users/shared/entities';
 import { randUuid } from '@ngneat/falso';
 import { DTOsHelper } from '@users/shared/tests/helpers/dtos.helper';
 import { AnnouncementErrorsEnum, NotFoundError } from '@users/shared/errors';
+import { AnnouncementTypeEnum, ServiceRoleEnum } from '@users/shared/enums';
 
 describe('Users / _services / announcements service suite', () => {
   let sut: AnnouncementsService;
@@ -42,7 +43,7 @@ describe('Users / _services / announcements service suite', () => {
     };
 
     it('should list all announcements for the given roleId with affected innovations', async () => {
-      const result = await sut.getUserRoleAnnouncements(johnInnovator.id, {}, em);
+      const result = await sut.getUserRoleAnnouncements(DTOsHelper.getUserRequestContext(johnInnovator), {}, em);
       expect(result).toMatchObject([
         {
           ...announcementReturn,
@@ -53,7 +54,7 @@ describe('Users / _services / announcements service suite', () => {
 
     it('should only get the announcements for a given innovation', async () => {
       const result = await sut.getUserRoleAnnouncements(
-        johnInnovator.id,
+        DTOsHelper.getUserRequestContext(johnInnovator),
         { innovationId: johnInnovator.innovations.johnInnovation.id },
         em
       );
@@ -62,7 +63,7 @@ describe('Users / _services / announcements service suite', () => {
 
     it('should return an empty array when there are no announcements for the given innovation', async () => {
       const result = await sut.getUserRoleAnnouncements(
-        johnInnovator.id,
+        DTOsHelper.getUserRequestContext(johnInnovator),
         { innovationId: johnInnovator.innovations.johnInnovationEmpty.id },
         em
       );
@@ -70,7 +71,11 @@ describe('Users / _services / announcements service suite', () => {
     });
 
     it('should return an empty array when there are no announcements for the given user', async () => {
-      const result = await sut.getUserRoleAnnouncements(scenario.users.tristanInnovator.id, {}, em);
+      const result = await sut.getUserRoleAnnouncements(
+        DTOsHelper.getUserRequestContext(scenario.users.tristanInnovator),
+        {},
+        em
+      );
       expect(result).toHaveLength(0);
     });
   });
@@ -131,6 +136,17 @@ describe('Users / _services / announcements service suite', () => {
           em
         )
       ).rejects.toThrow(new NotFoundError(AnnouncementErrorsEnum.ANNOUNCEMENT_NOT_FOUND));
+    });
+  });
+
+  describe('hasAnnouncementsToReadByRole', () => {
+    it('should return if the user as announcements for certain role', async () => {
+      const result = await sut.hasAnnouncementsToReadByRole(
+        scenario.users.johnInnovator.id,
+        [AnnouncementTypeEnum.HOMEPAGE],
+        em
+      );
+      expect(result).toStrictEqual({ [ServiceRoleEnum.INNOVATOR]: true });
     });
   });
 });
