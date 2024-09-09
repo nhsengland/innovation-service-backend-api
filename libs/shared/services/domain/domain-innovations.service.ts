@@ -43,13 +43,13 @@ import {
   UnprocessableEntityError
 } from '../../errors';
 import { TranslationHelper } from '../../helpers';
+import type { FilterPayload } from '../../models/schema-engine/schema.model';
 import type { CurrentElasticSearchDocumentType } from '../../schemas/innovation-record/index';
 import type { ActivitiesParamsType, DomainContextType, IdentityUserInfo, SupportLogParams } from '../../types';
 import type { IdentityProviderService } from '../integrations/identity-provider.service';
 import type { NotifierService } from '../integrations/notifier.service';
 import type { IRSchemaService } from '../storage/ir-schema.service';
 import type { DomainUsersService } from './domain-users.service';
-import type { FilterPayload } from '../../models/schema-engine/schema.model';
 
 export class DomainInnovationsService {
   innovationRepository: Repository<InnovationEntity>;
@@ -481,16 +481,21 @@ export class DomainInnovationsService {
           innovation.id
         );
 
-        // Delete unopened notifications
-        const unopenedNotificationsIds = await transaction
+        const subquery = transaction
           .createQueryBuilder(NotificationUserEntity, 'userNotification')
           .select(['userNotification.id'])
           .innerJoin('userNotification.notification', 'notification')
           .innerJoin('notification.innovation', 'innovation')
-          .where('innovation.id = :innovationId', { innovationId: innovation.id })
+          .where('innovation.id = :innovationId')
           .andWhere('userNotification.read_at IS NULL')
-          .getMany();
-        await em.softDelete(NotificationUserEntity, { id: In(unopenedNotificationsIds.map(c => c.id)) });
+          .getQuery();
+        await em
+          .createQueryBuilder()
+          .softDelete()
+          .from(NotificationUserEntity)
+          .where(`id IN (${subquery})`)
+          .setParameters({ innovationId: innovation.id })
+          .execute();
       }
 
       return archivedInnovations;
