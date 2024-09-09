@@ -280,7 +280,7 @@ export class AnnouncementsService extends BaseService {
           transaction
         );
       } catch (error) {
-        if (error instanceof BadRequestError && error.name === InnovationErrorsEnum.INNOVATION_FILTERS_ALL_INVALID) {
+        if (error instanceof BadRequestError && error.name === InnovationErrorsEnum.INNOVATION_FILTERS_ALL_INVALID && targetRoles.size === 0) {
           await this.updateAnnouncementStatus(ADMIN_CRON_ID, announcement.id, AnnouncementStatusEnum.DELETED);
         }
       }
