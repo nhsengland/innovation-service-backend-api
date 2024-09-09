@@ -15,6 +15,7 @@ import {
   AnnouncementErrorsEnum,
   BadRequestError,
   ConflictError,
+  InnovationErrorsEnum,
   NotFoundError,
   UnprocessableEntityError
 } from '@admin/shared/errors';
@@ -271,11 +272,18 @@ export class AnnouncementsService extends BaseService {
     if (announcement.filters && targetRoles.has(ServiceRoleEnum.INNOVATOR)) {
       targetRoles.delete(ServiceRoleEnum.INNOVATOR);
 
-      const innovations = await this.domainService.innovations.getInnovationsFiltered(
-        announcement.filters,
-        { onlySubmitted: true },
-        transaction
-      );
+      let innovations: { id: string }[] = [];
+      try {
+        innovations = await this.domainService.innovations.getInnovationsFiltered(
+          announcement.filters,
+          { onlySubmitted: true },
+          transaction
+        );
+      } catch (error) {
+        if (error instanceof BadRequestError && error.name === InnovationErrorsEnum.INNOVATION_FILTERS_ALL_INVALID) {
+          await this.updateAnnouncementStatus(ADMIN_CRON_ID, announcement.id, AnnouncementStatusEnum.DELETED);
+        }
+      }
 
       if (innovations.length) {
         const ownerAndCollaboratorInfo = await transaction
