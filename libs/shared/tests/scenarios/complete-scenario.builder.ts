@@ -975,6 +975,7 @@ export class CompleteScenarioBuilder {
         .setTitle('Announcement for Specific Innovations')
         .setUserRoles([ServiceRoleEnum.INNOVATOR])
         .setStatus(AnnouncementStatusEnum.ACTIVE)
+        .setFilters([{ section: 'INNOVATION_DESCRIPTION', question: 'areas', answers: ['COVID_19'] }])
         .save();
 
       const announcementUserForSpecificInnovationsJohnInnovation = await new AnnouncementUserBuilder(entityManager)
@@ -985,6 +986,14 @@ export class CompleteScenarioBuilder {
       const announcementUserForSpecificInnovationsAdamInnovation = await new AnnouncementUserBuilder(entityManager)
         .setAnnouncement(announcementForSpecificInnovations.id)
         .setUserAndInnovation(adamInnovator.id, adamInnovation.id)
+        .save();
+
+      const announcementForNAScheduled = await new AnnouncementBuilder(entityManager)
+        .setTitle('Announcement for NAs scheduled')
+        .setUserRoles([ServiceRoleEnum.ASSESSMENT])
+        .setStatus(AnnouncementStatusEnum.SCHEDULED)
+        .setStartsAt(new Date())
+        .setExpiresAt(null)
         .save();
 
       return {
@@ -1357,7 +1366,8 @@ export class CompleteScenarioBuilder {
               announcementUserJohnInnovation: announcementUserForSpecificInnovationsJohnInnovation,
               announcementUserAdamInnovation: announcementUserForSpecificInnovationsAdamInnovation
             }
-          }
+          },
+          announcementForNAScheduled
         }
       };
     });
