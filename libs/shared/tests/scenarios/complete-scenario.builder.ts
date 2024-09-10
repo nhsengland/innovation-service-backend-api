@@ -23,7 +23,7 @@ import {
   ThreadContextTypeEnum
 } from '../../enums/innovation.enums';
 import { ServiceRoleEnum, UserStatusEnum } from '../../enums/user.enums';
-import { AnnouncementStatusEnum } from '../../enums/announcement.enums';
+import { AnnouncementStatusEnum, AnnouncementTypeEnum } from '../../enums/announcement.enums';
 import type { Reminder, SupportUpdated } from '../../types';
 import { InnovationAssessmentBuilder } from '../builders/innovation-assessment.builder';
 import { InnovationCollaboratorBuilder } from '../builders/innovation-collaborator.builder';
@@ -959,6 +959,7 @@ export class CompleteScenarioBuilder {
         .setStartsAt(randPastDate())
         .setUserRoles([ServiceRoleEnum.QUALIFYING_ACCESSOR])
         .setStatus(AnnouncementStatusEnum.ACTIVE)
+        .setType(AnnouncementTypeEnum.LOG_IN)
         .save();
 
       const announcementUserAliceQA = await new AnnouncementUserBuilder(entityManager)

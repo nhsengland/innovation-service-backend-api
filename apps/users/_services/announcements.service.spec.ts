@@ -52,6 +52,11 @@ describe('Users / _services / announcements service suite', () => {
       ]);
     });
 
+    it('should list only the announcements of type LOGIN for a given roleId', async () => {
+      const result = await sut.getUserRoleAnnouncements(DTOsHelper.getUserRequestContext(johnInnovator), { type: [AnnouncementTypeEnum.LOG_IN]}, em);
+      expect(result).toHaveLength(0);
+    });
+
     it('should only get the announcements for a given innovation', async () => {
       const result = await sut.getUserRoleAnnouncements(
         DTOsHelper.getUserRequestContext(johnInnovator),
