@@ -51,7 +51,7 @@ describe('v1-innovation-transfer-create Suite', () => {
 
   describe('Access', () => {
     it.each([
-      ['Admin', 403, scenario.users.allMighty],
+      ['Admin', 200, scenario.users.allMighty],
       ['QA', 403, scenario.users.aliceQualifyingAccessor],
       ['A', 403, scenario.users.ingridAccessor],
       ['NA', 403, scenario.users.paulNeedsAssessor],

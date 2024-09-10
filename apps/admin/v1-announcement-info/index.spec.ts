@@ -1,6 +1,6 @@
 import azureFunction from '.';
 
-import { AnnouncementStatusEnum, ServiceRoleEnum } from '@admin/shared/enums';
+import { AnnouncementStatusEnum, AnnouncementTypeEnum, ServiceRoleEnum } from '@admin/shared/enums';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@admin/shared/tests';
 import type { TestUserType } from '@admin/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@admin/shared/types';
@@ -27,11 +27,17 @@ beforeAll(async () => {
 const expected = {
   id: randUuid(),
   expiresAt: null,
-  params: {},
+  params: {
+    content: randText(),
+    link: { label: randText(), url: randText() }
+  },
   startsAt: randFutureDate(),
   status: AnnouncementStatusEnum.SCHEDULED,
   title: randText(),
-  userRoles: [ServiceRoleEnum.ASSESSMENT]
+  userRoles: [ServiceRoleEnum.ASSESSMENT],
+  filters: null,
+  sendEmail: false,
+  type: AnnouncementTypeEnum.LOG_IN
 };
 const mock = jest.spyOn(AnnouncementsService.prototype, 'getAnnouncementInfo').mockResolvedValue(expected);
 

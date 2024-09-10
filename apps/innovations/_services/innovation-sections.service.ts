@@ -19,6 +19,7 @@ import { InnovationErrorsEnum, InternalServerError, NotFoundError } from '@innov
 import type {
   DomainService,
   IdentityProviderService,
+  IRSchemaService,
   NotifierService,
   RedisService
 } from '@innovations/shared/services';
@@ -29,7 +30,6 @@ import { TranslationHelper } from '@innovations/shared/helpers';
 import type { DocumentType } from '@innovations/shared/schemas/innovation-record';
 import {
   CurrentCatalogTypes,
-  CurrentDocumentConfig,
   CurrentDocumentType,
   CurrentEvidenceType
 } from '@innovations/shared/schemas/innovation-record';
@@ -55,6 +55,7 @@ export class InnovationSectionsService extends BaseService {
     @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
     @inject(SHARED_SYMBOLS.IdentityProviderService) private identityService: IdentityProviderService,
     @inject(SHARED_SYMBOLS.RedisService) private redisService: RedisService,
+    @inject(SHARED_SYMBOLS.IRSchemaService) private irSchemaService: IRSchemaService,
     @inject(SYMBOLS.InnovationFileService) private innovationFileService: InnovationFileService,
     @inject(SYMBOLS.InnovationDocumentService) private innovationDocumentService: InnovationDocumentService,
     @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService
@@ -204,8 +205,7 @@ export class InnovationSectionsService extends BaseService {
 
     const document = await this.innovationDocumentService.getInnovationDocument(
       innovationId,
-      CurrentDocumentConfig.version,
-      this.innovationDocumentService.getDocumentTypeAccordingWithRole(domainContext.currentRole.role),
+      { type: this.innovationDocumentService.getDocumentTypeAccordingWithRole(domainContext.currentRole.role) },
       connection
     );
 
@@ -470,8 +470,10 @@ export class InnovationSectionsService extends BaseService {
 
     const document = await this.innovationDocumentService.getInnovationDocument(
       innovationId,
-      version ?? CurrentDocumentConfig.version,
-      this.innovationDocumentService.getDocumentTypeAccordingWithRole(domainContext.currentRole.role),
+      {
+        version,
+        type: this.innovationDocumentService.getDocumentTypeAccordingWithRole(domainContext.currentRole.role)
+      },
       em
     );
     const innovationSections = this.getDocumentSections(document).map(section => ({
@@ -519,12 +521,7 @@ export class InnovationSectionsService extends BaseService {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     // Check if innovation exists and is of current version (throws error if it doesn't)
-    await this.innovationDocumentService.getInnovationDocument(
-      innovationId,
-      CurrentDocumentConfig.version,
-      'DRAFT',
-      connection
-    );
+    await this.innovationDocumentService.getInnovationDocument(innovationId, { type: 'DRAFT' }, connection);
 
     const section = await connection
       .createQueryBuilder(InnovationSectionEntity, 'section')
@@ -571,11 +568,7 @@ export class InnovationSectionsService extends BaseService {
     evidenceId: string,
     evidenceData: Omit<CurrentEvidenceType, 'id'>
   ): Promise<void> {
-    const document = await this.innovationDocumentService.getInnovationDocument(
-      innovationId,
-      CurrentDocumentConfig.version,
-      'DRAFT'
-    );
+    const document = await this.innovationDocumentService.getInnovationDocument(innovationId, { type: 'DRAFT' });
 
     const evidenceIndex = document.evidences?.findIndex(e => e.id === evidenceId) ?? -1;
     const evidence = document.evidences?.[evidenceIndex];
@@ -629,11 +622,7 @@ export class InnovationSectionsService extends BaseService {
     innovationId: string,
     evidenceId: string
   ): Promise<void> {
-    const document = await this.innovationDocumentService.getInnovationDocument(
-      innovationId,
-      CurrentDocumentConfig.version,
-      'DRAFT'
-    );
+    const document = await this.innovationDocumentService.getInnovationDocument(innovationId, { type: 'DRAFT' });
 
     let evidences = document.evidences;
     const evidence = evidences?.find(e => e.id === evidenceId);
@@ -678,11 +667,9 @@ export class InnovationSectionsService extends BaseService {
     innovationId: string,
     evidenceId: string
   ): Promise<CurrentEvidenceType> {
-    const document = await this.innovationDocumentService.getInnovationDocument(
-      innovationId,
-      CurrentDocumentConfig.version,
-      this.innovationDocumentService.getDocumentTypeAccordingWithRole(domainContext.currentRole.role)
-    );
+    const document = await this.innovationDocumentService.getInnovationDocument(innovationId, {
+      type: this.innovationDocumentService.getDocumentTypeAccordingWithRole(domainContext.currentRole.role)
+    });
 
     const evidence = document.evidences?.find(e => e.id === evidenceId);
     if (!evidence) {
@@ -717,18 +704,16 @@ export class InnovationSectionsService extends BaseService {
   } {
     let evidenceData;
 
-    // Special case for evidence data
-    if (document.version === '202304') {
-      evidenceData =
-        sectionKey !== 'EVIDENCE_OF_EFFECTIVENESS'
-          ? undefined
-          : document.evidences?.map(evidence => ({
-              id: evidence.id,
-              name: this.getEvidenceName(evidence.evidenceSubmitType, evidence.description),
-              summary: evidence.summary
-            }));
-    }
     const sectionData = document[sectionKey];
+
+    // Special case for evidence data
+    if (sectionKey === 'EVIDENCE_OF_EFFECTIVENESS' && document.EVIDENCE_OF_EFFECTIVENESS.hasEvidence === 'YES') {
+      evidenceData = document.evidences?.map(evidence => ({
+        id: evidence.id,
+        name: this.getEvidenceName(evidence.evidenceSubmitType, evidence.description),
+        summary: evidence.summary
+      }));
+    }
 
     return {
       ...sectionData,
@@ -742,10 +727,18 @@ export class InnovationSectionsService extends BaseService {
     data: { dataToUpdate: { [key: string]: any } | { [key: string]: any }[]; updatedBy: string; updatedAt?: Date },
     em: EntityManager
   ): Promise<void> {
+    const { version } = await this.irSchemaService.getSchema();
     await em.query(
       `UPDATE innovation_document_draft
-      SET document = JSON_MODIFY(document, @0, JSON_QUERY(@1)), updated_by=@2, updated_at=@3 WHERE id = @4`,
-      [`$.${sectionKey}`, JSON.stringify(data.dataToUpdate), data.updatedBy, data.updatedAt ?? new Date(), innovationId]
+      SET document = JSON_MODIFY(JSON_MODIFY(document, @0, JSON_QUERY(@1)), '$.version', @2), updated_by=@3, updated_at=@4 WHERE id = @5`,
+      [
+        `$.${sectionKey}`,
+        JSON.stringify(data.dataToUpdate),
+        JSON.stringify(version),
+        data.updatedBy,
+        data.updatedAt ?? new Date(),
+        innovationId
+      ]
     );
   }
 
@@ -755,15 +748,11 @@ export class InnovationSectionsService extends BaseService {
     data: { updatedBy: string; updatedAt?: Date; description?: string },
     em: EntityManager
   ): Promise<void> {
-    const document = await this.innovationDocumentService.getInnovationDocument(
-      innovationId,
-      CurrentDocumentConfig.version,
-      'DRAFT'
-    );
+    const document = await this.innovationDocumentService.getInnovationDocument(innovationId, { type: 'DRAFT' });
 
-    const { evidences, ...draftSection } = this.getSectionData(document, sectionKey);
+    const draftSection = this.getSectionData(document, sectionKey);
     const entriesToUpdate: { key: string; data: unknown }[] = [{ key: sectionKey, data: draftSection }];
-    if (evidences) {
+    if (sectionKey === 'EVIDENCE_OF_EFFECTIVENESS') {
       // Get the evidences raw since the ones returned by the getSectionData transforms some fields
       entriesToUpdate.push({ key: 'evidences', data: document.evidences });
     }

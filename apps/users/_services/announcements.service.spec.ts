@@ -4,11 +4,11 @@ import { TestsHelper } from '@users/shared/tests';
 import SYMBOLS from './symbols';
 import type { EntityManager } from 'typeorm';
 import type { AnnouncementsService } from './announcements.service';
-import { AnnouncementEntity, AnnouncementUserEntity } from '@users/shared/entities';
-import { randBetweenDate, randText, randUuid } from '@ngneat/falso';
-import { AnnouncementTemplateType, ServiceRoleEnum } from '@users/shared/enums';
+import { AnnouncementUserEntity } from '@users/shared/entities';
+import { randUuid } from '@ngneat/falso';
 import { DTOsHelper } from '@users/shared/tests/helpers/dtos.helper';
 import { AnnouncementErrorsEnum, NotFoundError } from '@users/shared/errors';
+import { AnnouncementTypeEnum, ServiceRoleEnum } from '@users/shared/enums';
 
 describe('Users / _services / announcements service suite', () => {
   let sut: AnnouncementsService;
@@ -32,51 +32,50 @@ describe('Users / _services / announcements service suite', () => {
   });
 
   describe('getUserRoleAnnouncements', () => {
-    it('should list all announcements for the given roleId', async () => {
-      // create announcements
-      const announcement = {
-        title: randText({ charCount: 10 }),
-        template: AnnouncementTemplateType[0],
-        userRoles: [ServiceRoleEnum.ACCESSOR],
-        startsAt: randBetweenDate({
-          from: new Date(scenario.users.samAccessor.createdAt),
-          to: new Date()
-        }),
-        expiresAt: null,
-        params: null
-      };
-      const savedAnnouncement = await em.getRepository(AnnouncementEntity).save(announcement);
+    const johnInnovator = scenario.users.johnInnovator;
+    const announcement = scenario.announcements.announcementForSpecificInnovations;
+    const announcementReturn = {
+      id: announcement.id,
+      title: announcement.title,
+      params: announcement.params,
+      startsAt: new Date(announcement.startsAt),
+      ...(announcement.expiresAt && { expiresAt: new Date(announcement.expiresAt) })
+    };
 
-      // save other announcement for other role
-      await em.getRepository(AnnouncementEntity).save({
-        title: randText({ charCount: 10 }),
-        template: AnnouncementTemplateType[0],
-        userRoles: [ServiceRoleEnum.INNOVATOR],
-        startsAt: randBetweenDate({
-          from: new Date(scenario.users.samAccessor.createdAt),
-          to: new Date()
-        }),
-        expiresAt: null,
-        params: null
-      });
-
-      const result = await sut.getUserRoleAnnouncements(scenario.users.samAccessor.roles.accessorRole.id, em);
-
+    it('should list all announcements for the given roleId with affected innovations', async () => {
+      const result = await sut.getUserRoleAnnouncements(DTOsHelper.getUserRequestContext(johnInnovator), {}, em);
       expect(result).toMatchObject([
         {
-          id: savedAnnouncement.id,
-          title: savedAnnouncement.title,
-          template: savedAnnouncement.template,
-          params: savedAnnouncement.params,
-          startsAt: savedAnnouncement.startsAt,
-          expiresAt: savedAnnouncement.expiresAt
+          ...announcementReturn,
+          innovations: [johnInnovator.innovations.johnInnovation.name]
         }
       ]);
     });
 
-    it('should return an empty array when there are no announcements for the given roleId', async () => {
-      const result = await sut.getUserRoleAnnouncements(randUuid(), em);
+    it('should only get the announcements for a given innovation', async () => {
+      const result = await sut.getUserRoleAnnouncements(
+        DTOsHelper.getUserRequestContext(johnInnovator),
+        { innovationId: johnInnovator.innovations.johnInnovation.id },
+        em
+      );
+      expect(result).toMatchObject([announcementReturn]);
+    });
 
+    it('should return an empty array when there are no announcements for the given innovation', async () => {
+      const result = await sut.getUserRoleAnnouncements(
+        DTOsHelper.getUserRequestContext(johnInnovator),
+        { innovationId: johnInnovator.innovations.johnInnovationEmpty.id },
+        em
+      );
+      expect(result).toHaveLength(0);
+    });
+
+    it('should return an empty array when there are no announcements for the given user', async () => {
+      const result = await sut.getUserRoleAnnouncements(
+        DTOsHelper.getUserRequestContext(scenario.users.tristanInnovator),
+        {},
+        em
+      );
       expect(result).toHaveLength(0);
     });
   });
@@ -84,41 +83,70 @@ describe('Users / _services / announcements service suite', () => {
   describe('readUserAnnouncement', () => {
     it('should read the announcement', async () => {
       // create announcement
-      const announcement = {
-        title: randText({ charCount: 10 }),
-        template: AnnouncementTemplateType[0],
-        userRoles: [ServiceRoleEnum.ACCESSOR],
-        startsAt: randBetweenDate({
-          from: new Date(scenario.users.samAccessor.createdAt),
-          to: new Date()
-        }),
-        expiresAt: null,
-        params: null
-      };
-      const savedAnnouncement = await em.getRepository(AnnouncementEntity).save(announcement);
+      const announcement = scenario.announcements.announcementForQAs;
 
       await sut.readUserAnnouncement(
-        DTOsHelper.getUserRequestContext(scenario.users.samAccessor),
-        savedAnnouncement.id,
+        DTOsHelper.getUserRequestContext(scenario.users.bartQualifyingAccessor),
+        announcement.id,
+        undefined,
         em
       );
 
       const dbAnnouncementUser = await em
-        .createQueryBuilder(AnnouncementUserEntity, 'announcement_user')
-        .select(['announcement_user.readAt'])
-        .innerJoin('announcement_user.user', 'user')
-        .innerJoin('announcement_user.announcement', 'announcement')
-        .where('announcement.id = :announcementId', { announcementId: savedAnnouncement.id })
-        .andWhere('user.id = :userId', { userId: scenario.users.samAccessor.id })
+        .createQueryBuilder(AnnouncementUserEntity, 'au')
+        .select(['au.readAt'])
+        .where('au.announcement_id = :announcementId', { announcementId: announcement.id })
+        .andWhere('au.user_id = :userId', { userId: scenario.users.bartQualifyingAccessor.id })
         .getOne();
 
       expect(dbAnnouncementUser?.readAt).toBeTruthy();
     });
 
+    it('should read an announcement specific to an innovation', async () => {
+      const announcement = scenario.announcements.announcementForSpecificInnovations;
+      const johnInnovation = scenario.users.johnInnovator.innovations.johnInnovation;
+      const adamInnovation = scenario.users.adamInnovator.innovations.adamInnovation;
+
+      await sut.readUserAnnouncement(
+        DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
+        announcement.id,
+        johnInnovation.id,
+        em
+      );
+
+      const dbAnnouncementUsers = await em
+        .createQueryBuilder(AnnouncementUserEntity, 'au')
+        .select(['au.id', 'au.readAt', 'innovation.id'])
+        .innerJoin('au.innovation', 'innovation')
+        .where('au.announcement_id = :announcementId', { announcementId: announcement.id })
+        .getMany();
+
+      expect(dbAnnouncementUsers.map(u => ({ readAt: u.readAt, innovationId: u.innovation!.id }))).toStrictEqual([
+        { readAt: expect.any(Date), innovationId: johnInnovation.id },
+        { readAt: null, innovationId: adamInnovation.id }
+      ]);
+    });
+
     it(`should throw an error if the announcement doesn't exist`, async () => {
       await expect(() =>
-        sut.readUserAnnouncement(DTOsHelper.getUserRequestContext(scenario.users.adamInnovator), randUuid(), em)
-      ).rejects.toThrowError(new NotFoundError(AnnouncementErrorsEnum.ANNOUNCEMENT_NOT_FOUND));
+        sut.readUserAnnouncement(
+          DTOsHelper.getUserRequestContext(scenario.users.adamInnovator),
+          randUuid(),
+          undefined,
+          em
+        )
+      ).rejects.toThrow(new NotFoundError(AnnouncementErrorsEnum.ANNOUNCEMENT_NOT_FOUND));
+    });
+  });
+
+  describe('hasAnnouncementsToReadByRole', () => {
+    it('should return if the user as announcements for certain role', async () => {
+      const result = await sut.hasAnnouncementsToReadByRole(
+        scenario.users.johnInnovator.id,
+        [AnnouncementTypeEnum.HOMEPAGE],
+        em
+      );
+      expect(result).toStrictEqual({ [ServiceRoleEnum.INNOVATOR]: true });
     });
   });
 });

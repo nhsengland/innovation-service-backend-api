@@ -7,7 +7,7 @@ import { UserRoleEntity } from '../user/user-role.entity';
 import { InnovationEntity } from './innovation.entity';
 
 import { InnovationSupportLogTypeEnum, InnovationSupportStatusEnum } from '../../enums/innovation.enums';
-import type { SupportLogProgressUpdate } from '../../types/domain.types';
+import type { SupportLogAssessmentSuggestion, SupportLogProgressUpdate } from '../../types/domain.types';
 
 @Entity('innovation_support_log')
 export class InnovationSupportLogEntity extends BaseEntity {
@@ -24,7 +24,7 @@ export class InnovationSupportLogEntity extends BaseEntity {
   description: string;
 
   @Column({ name: 'params', type: 'simple-json', nullable: true })
-  params: null | SupportLogProgressUpdate['params'];
+  params: null | SupportLogProgressUpdate['params'] | SupportLogAssessmentSuggestion['params'];
 
   @ManyToOne(() => InnovationEntity, { nullable: false })
   @JoinColumn({ name: 'innovation_id' })

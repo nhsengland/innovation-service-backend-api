@@ -3,10 +3,12 @@ import azureFunction from '.';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@innovations/shared/tests';
 import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@innovations/shared/types';
-import { randCountry, randProductDescription, randProductName, randUuid } from '@ngneat/falso';
+import { randProductDescription, randProductName, randUuid } from '@ngneat/falso';
 import { InnovationsService } from '../_services/innovations.service';
 import type { ResponseDTO } from './transformation.dtos';
 import type { BodyType } from './validation.schemas';
+import Joi from 'joi';
+import { SchemaModel } from '@innovations/shared/models';
 
 jest.mock('@innovations/shared/decorators', () => ({
   JwtDecoder: jest.fn().mockImplementation(() => (_: any, __: string, descriptor: PropertyDescriptor) => {
@@ -25,9 +27,20 @@ beforeAll(async () => {
   await testsHelper.init();
 });
 
-const sampleBody = { name: randProductName(), description: randProductDescription(), countryName: randCountry() };
+const sampleBody = {
+  name: randProductName(),
+  description: randProductDescription(),
+  officeLocation: 'England',
+  hasWebsite: 'YES'
+};
 const expected = { id: randUuid() };
 const mock = jest.spyOn(InnovationsService.prototype, 'createInnovation').mockResolvedValue(expected);
+const calculatedFieldsMock = jest
+  .spyOn(SchemaModel.prototype, 'getCalculatedFields')
+  .mockReturnValue({ countryName: 'England' });
+const payloadValidationMock = jest
+  .spyOn(SchemaModel.prototype, 'getSubSectionPayloadValidation')
+  .mockReturnValue(Joi.object());
 
 afterEach(() => {
   jest.clearAllMocks();
@@ -44,6 +57,8 @@ describe('v1-innovation-create Suite', () => {
       expect(result.body).toMatchObject(expected);
       expect(result.status).toBe(200);
       expect(mock).toHaveBeenCalledTimes(1);
+      expect(calculatedFieldsMock).toHaveBeenCalledTimes(1);
+      expect(payloadValidationMock).toHaveBeenCalledTimes(1);
     });
   });
 

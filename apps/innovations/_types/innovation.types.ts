@@ -21,11 +21,34 @@ export interface InnovationSectionModel {
   submittedAt: Date | null;
 }
 
+export type ReassessmentType = {
+  reassessmentReason: ReassessmentReasonsType[] | null;
+  otherReassessmentReason?: string;
+  description: string;
+  whatSupportDoYouNeed: string | null;
+};
+
+export const ReassessmentReasons = ['NO_SUPPORT', 'PREVIOUSLY_ARCHIVED', 'HAS_PROGRESSED_SIGNIFICANTLY', 'OTHER'];
+export type ReassessmentReasonsType = (typeof ReassessmentReasons)[number];
+
 export type InnovationAssessmentType = {
   id: string;
-  reassessment?: { updatedInnovationRecord: CurrentCatalogTypes.catalogYesNo; description: string };
+  majorVersion: number;
+  minorVersion: number;
+  editReason: null | string;
+  previousAssessment?: {
+    id: string;
+    majorVersion: number;
+    minorVersion: number;
+  };
+  reassessment?: ReassessmentType & {
+    sectionsUpdatedSinceLastAssessment: string[];
+    createdAt: Date;
+    previousCreatedAt?: Date;
+  };
   summary: null | string;
   description: null | string;
+  startedAt: null | Date;
   finishedAt: null | Date;
   assignTo?: { id: string; name: string };
   maturityLevel: null | MaturityLevelCatalogueType;
@@ -47,6 +70,7 @@ export type InnovationAssessmentType = {
   suggestedOrganisations: OrganisationWithUnitsType[];
   updatedAt: null | Date;
   updatedBy: { id: string; name: string };
+  isLatest: boolean;
 };
 
 export type ThreadListModel = {
@@ -127,17 +151,19 @@ export type InnovationUnitSuggestionsType = {
 export type InnovationSuggestionsType = {
   accessors: InnovationSuggestionAccessor[];
   assessment: {
-    suggestedOrganisations: {
-      id: string;
-      name: string;
-      acronym: string | null;
-      organisationUnits: {
-        id: string;
-        name: string;
-        acronym: string | null;
-      }[];
-    }[];
+    suggestedOrganisations: SuggestedOrganisationInfo[];
   };
+};
+
+export type SuggestedOrganisationInfo = {
+  id: string;
+  name: string;
+  acronym: string | null;
+  organisationUnits: {
+    id: string;
+    name: string;
+    acronym: string | null;
+  }[];
 };
 
 export type InnovationSuggestionAccessor = {
@@ -146,16 +172,7 @@ export type InnovationSuggestionAccessor = {
     name: string;
     acronym: string | null;
   };
-  suggestedOrganisations: {
-    id: string;
-    name: string;
-    acronym: string | null;
-    organisationUnits: {
-      id: string;
-      name: string;
-      acronym: string | null;
-    }[];
-  }[];
+  suggestedOrganisations: SuggestedOrganisationInfo[];
 };
 
 export type InnovationFileType = {

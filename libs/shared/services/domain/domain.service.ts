@@ -4,6 +4,7 @@ import type { DataSource } from 'typeorm';
 import { GenericErrorsEnum, ServiceUnavailableError } from '../../errors';
 import type { IdentityProviderService } from '../integrations/identity-provider.service';
 import type { NotifierService } from '../integrations/notifier.service';
+import type { IRSchemaService } from '../storage/ir-schema.service';
 import type { SqlProvider } from '../storage/sql-connection.provider';
 import SHARED_SYMBOLS from '../symbols';
 import { DomainInnovationsService } from './domain-innovations.service';
@@ -34,17 +35,23 @@ export class DomainService {
     @inject(SHARED_SYMBOLS.IdentityProviderService)
     private identityProviderService: IdentityProviderService,
     @inject(SHARED_SYMBOLS.SqlProvider) public sqlProvider: SqlProvider,
-    @inject(SHARED_SYMBOLS.NotifierService)
-    private notifierService: NotifierService
+    @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
+    @inject(SHARED_SYMBOLS.IRSchemaService) private irSchemaService: IRSchemaService
   ) {}
 
   setConnection(connection: DataSource): void {
-    this._users = new DomainUsersService(connection, this.identityProviderService);
     this._innovations = new DomainInnovationsService(
       connection,
       this.identityProviderService,
       this.notifierService,
-      this._users
+      this._users,
+      this.irSchemaService
+    );
+    this._users = new DomainUsersService(
+      this.innovations,
+      this.identityProviderService,
+      this.notifierService,
+      connection
     );
   }
 }

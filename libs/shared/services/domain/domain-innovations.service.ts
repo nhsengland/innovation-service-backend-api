@@ -1,5 +1,6 @@
 import { DataSource, EntityManager, In, Repository } from 'typeorm';
 
+import { cloneDeep } from 'lodash';
 import { EXPIRATION_DATES } from '../../constants';
 import type { UserEntity } from '../../entities';
 import { ActivityLogEntity } from '../../entities/innovation/activity-log.entity';
@@ -42,11 +43,12 @@ import {
   UnprocessableEntityError
 } from '../../errors';
 import { TranslationHelper } from '../../helpers';
-import { cleanup, translate } from '../../schemas/innovation-record/202304/translation.helper';
+import type { FilterPayload } from '../../models/schema-engine/schema.model';
 import type { CurrentElasticSearchDocumentType } from '../../schemas/innovation-record/index';
 import type { ActivitiesParamsType, DomainContextType, IdentityUserInfo, SupportLogParams } from '../../types';
 import type { IdentityProviderService } from '../integrations/identity-provider.service';
 import type { NotifierService } from '../integrations/notifier.service';
+import type { IRSchemaService } from '../storage/ir-schema.service';
 import type { DomainUsersService } from './domain-users.service';
 
 export class DomainInnovationsService {
@@ -58,7 +60,8 @@ export class DomainInnovationsService {
     private sqlConnection: DataSource,
     private identityProviderService: IdentityProviderService,
     private notifierService: NotifierService,
-    private domainUsersService: DomainUsersService
+    private domainUsersService: DomainUsersService,
+    private irSchemaService: IRSchemaService
   ) {
     this.innovationRepository = this.sqlConnection.getRepository(InnovationEntity);
     this.innovationSupportRepository = this.sqlConnection.getRepository(InnovationSupportEntity);
@@ -217,7 +220,8 @@ export class DomainInnovationsService {
 
     const dbInnovations = await em
       .createQueryBuilder(InnovationEntity, 'innovation')
-      .select(['innovation.id', 'innovation.status'])
+      .select(['innovation.id', 'innovation.status', 'assessment.id'])
+      .leftJoin('innovation.currentAssessment', 'assessment')
       .where('innovation.id IN (:...innovationIds)', { innovationIds: innovations.map(i => i.id) })
       .getMany();
 
@@ -230,7 +234,8 @@ export class DomainInnovationsService {
         reason: innovation.reason,
         prevStatus: dbInno.status,
         affectedUsers: [] as { userId: string; userType: ServiceRoleEnum; unitId?: string }[],
-        isReassessment: !!(await dbInno.reassessmentRequests).length
+        isReassessment: !!(await dbInno.reassessmentRequests).length,
+        currentAssessmentId: dbInno.currentAssessment?.id
       };
     });
 
@@ -240,6 +245,7 @@ export class DomainInnovationsService {
 
     return await em.transaction(async transaction => {
       for (const innovation of archivedInnovationsInfo) {
+        let newAssessmentId: string | null = null;
         if (
           innovation.prevStatus === InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT ||
           innovation.prevStatus === InnovationStatusEnum.NEEDS_ASSESSMENT
@@ -250,7 +256,7 @@ export class DomainInnovationsService {
             .leftJoin('assessment.assignTo', 'assignedUser', 'assignedUser.status <> :userDeleted', {
               userDeleted: UserStatusEnum.DELETED
             })
-            .where('assessment.innovation_id = :innovationId', { innovationId: innovation.id })
+            .where('assessment.id = :currentAssessmentId', { currentAssessmentId: innovation.currentAssessmentId })
             .getOne();
 
           if (assessment) {
@@ -266,7 +272,7 @@ export class DomainInnovationsService {
             }
           } else {
             // This innovation never had an assessment so we need to create and complete one
-            await transaction.save(
+            const newAssessment = await transaction.save(
               InnovationAssessmentEntity,
               InnovationAssessmentEntity.new({
                 description: '',
@@ -274,9 +280,14 @@ export class DomainInnovationsService {
                 assignTo: null,
                 createdBy: domainContext.id,
                 updatedBy: domainContext.id,
-                finishedAt: archivedAt
+                startedAt: archivedAt,
+                finishedAt: archivedAt,
+                majorVersion: 1,
+                minorVersion: 0
               })
             );
+
+            newAssessmentId = newAssessment.id;
           }
         }
 
@@ -365,7 +376,8 @@ export class DomainInnovationsService {
             archiveReason: innovation.reason,
             statusUpdatedAt: archivedAt,
             updatedBy: domainContext.id,
-            expires_at: null
+            expires_at: null,
+            ...(newAssessmentId && { currentAssessment: { id: newAssessmentId } })
           }
         );
 
@@ -469,16 +481,21 @@ export class DomainInnovationsService {
           innovation.id
         );
 
-        // Delete unopened notifications
-        const unopenedNotificationsIds = await transaction
+        const subquery = transaction
           .createQueryBuilder(NotificationUserEntity, 'userNotification')
           .select(['userNotification.id'])
           .innerJoin('userNotification.notification', 'notification')
           .innerJoin('notification.innovation', 'innovation')
-          .where('innovation.id = :innovationId', { innovationId: innovation.id })
+          .where('innovation.id = :innovationId')
           .andWhere('userNotification.read_at IS NULL')
-          .getMany();
-        await em.softDelete(NotificationUserEntity, { id: In(unopenedNotificationsIds.map(c => c.id)) });
+          .getQuery();
+        await em
+          .createQueryBuilder()
+          .softDelete()
+          .from(NotificationUserEntity)
+          .where(`id IN (${subquery})`)
+          .setParameters({ innovationId: innovation.id })
+          .execute();
       }
 
       return archivedInnovations;
@@ -532,7 +549,8 @@ export class DomainInnovationsService {
         params.type === InnovationSupportLogTypeEnum.ASSESSMENT_SUGGESTION) && {
         suggestedOrganisationUnits: params.suggestedOrganisationUnits.map(id => OrganisationUnitEntity.new({ id }))
       }),
-      ...(params.type === InnovationSupportLogTypeEnum.PROGRESS_UPDATE && { params: params.params })
+      ...((params.type === InnovationSupportLogTypeEnum.PROGRESS_UPDATE ||
+        params.type === InnovationSupportLogTypeEnum.ASSESSMENT_SUGGESTION) && { params: params.params })
     });
 
     try {
@@ -887,6 +905,76 @@ export class DomainInnovationsService {
   }
 
   /**
+   * Filters innovations based on the filters passed
+   *
+   * Business rules:
+   * If some filters have been removed from the schema, will be filtered based on the remaining filters.
+   * If all filters have been removed from the schema, will not filter and throw an error.
+   * Filters work as "OR" within the same question and as "AND" between questions:
+   * * (filter1 === 'A' OR filter1 === 'B') AND filter2 === 'C'
+   */
+  async getInnovationsFiltered(
+    filters: FilterPayload[],
+    options: { onlySubmitted?: boolean },
+    entityManager?: EntityManager
+  ): Promise<{ id: string }[]> {
+    if (!filters.length) {
+      throw new BadRequestError(InnovationErrorsEnum.INNOVATION_FILTERS_EMPTY);
+    }
+
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const schema = await this.irSchemaService.getSchema();
+    const validFilters = filters.filter(
+      f => schema.model.isSubsectionValid(f.section) && schema.model.isQuestionValid(f.question)
+    );
+    if (validFilters.length === 0) {
+      throw new BadRequestError(InnovationErrorsEnum.INNOVATION_FILTERS_ALL_INVALID);
+    }
+
+    const query = em
+      .createQueryBuilder(InnovationEntity, 'innovation')
+      .select(['innovation.id'])
+      .innerJoin('innovation.document', 'document');
+
+    for (const [index, filter] of validFilters.entries()) {
+      const id = `${filter.section}_${filter.question}_${index}`;
+      const params = {
+        [`${id}_key`]: `$.${filter.section}.${filter.question}`,
+        [`${id}_values`]: filter.answers
+      };
+      switch (schema.model.getQuestionType(filter.question)) {
+        case 'checkbox-array':
+          query.andWhere(
+            `
+                  EXISTS (
+                    SELECT TOP 1 *
+                    FROM OPENJSON(JSON_QUERY(document.document, :${id}_key))
+                    WHERE value IN (:...${id}_values)
+                  )
+                `,
+            params
+          );
+          break;
+        case 'radio-group':
+          query.andWhere(`JSON_VALUE(document.document, :${id}_key) IN (:...${id}_values)`, params);
+          break;
+      }
+    }
+
+    // By default make filter only by submitted.
+    if (options.onlySubmitted !== false) {
+      query.andWhere('innovation.submitted_at IS NOT NULL');
+    }
+
+    const innovations = await query.getMany();
+    return innovations.map(i => ({
+      id: i.id,
+      name: i.name
+    }));
+  }
+
+  /**
    * Fetches all the information needed for the document type.
    * If innovationIds are passed it will only return the information for those ids,
    * if not returns all the documents information.
@@ -899,8 +987,9 @@ export class DomainInnovationsService {
   ): Promise<CurrentElasticSearchDocumentType | undefined | CurrentElasticSearchDocumentType[]> {
     let sql = `WITH
       innovations AS (
-        SELECT i.id, i.status, archived_status, status_updated_at, submitted_at, i.updated_at, last_assessment_request_at, grouped_status,
-          u.id AS owner_id, u.external_id AS owner_external_id, u.status AS owner_status, o.name AS owner_company
+        SELECT i.id, i.status, archived_status, status_updated_at, submitted_at, i.updated_at, i.current_assessment_id,
+        i.has_been_assessed, last_assessment_request_at, grouped_status, u.id AS owner_id,
+        u.external_id AS owner_external_id, u.status AS owner_status, o.name AS owner_company
         FROM innovation i
           INNER JOIN innovation_grouped_status_view_entity g ON i.id = g.id
           LEFT JOIN [user] u on i.owner_id = u.id AND u.status !='DELETED'
@@ -932,6 +1021,7 @@ export class DomainInnovationsService {
       IIF(i.status = 'ARCHIVED', i.archived_status, i.status) AS rawStatus,
       i.status_updated_at AS statusUpdatedAt,
       i.grouped_status AS groupedStatus,
+      i.has_been_assessed AS hasBeenAssessed,
       i.submitted_at AS submittedAt,
       i.updated_at AS updatedAt,
       i.last_assessment_request_at AS lastAssessmentRequestAt,
@@ -973,7 +1063,7 @@ export class DomainInnovationsService {
       IIF(
         a.id IS NULL,
         NULL,
-        JSON_OBJECT('id': a.id, 'updatedAt': a.updated_at, 'isExempt': CONVERT(BIT, IIF(a.exempted_at IS NULL, 0, 1)), 'assignedToId': a.assign_to_id ABSENT ON NULL)
+        JSON_OBJECT('id': a.id, 'majorVersion': a.major_version, 'minorVersion': a.minor_version, 'updatedAt': a.updated_at, 'isExempt': CONVERT(BIT, IIF(a.exempted_at IS NULL, 0, 1)), 'assignedToId': a.assign_to_id ABSENT ON NULL)
       ) AS assessment,
       (
         SELECT suggested_unit_id as suggestedUnitId, suggested_by_units_acronyms AS suggestedBy
@@ -983,7 +1073,7 @@ export class DomainInnovationsService {
       ) AS suggestions
     FROM innovations i
       INNER JOIN innovation_document d ON i.id = d.id
-      LEFT JOIN innovation_assessment a ON i.id = a.innovation_id AND a.deleted_at IS NULL`;
+      LEFT JOIN innovation_assessment a ON i.id = a.innovation_id AND i.current_assessment_id = a.id AND a.deleted_at IS NULL`;
 
     if (innovationId) {
       sql += ` WHERE i.id = @0`;
@@ -991,8 +1081,10 @@ export class DomainInnovationsService {
 
     const innovations = await this.sqlConnection.query(sql, innovationId ? [innovationId] : []);
 
+    const schema = await this.irSchemaService.getSchema();
+
     const parsed: CurrentElasticSearchDocumentType[] = innovations.map((innovation: any) => {
-      const document = cleanup(JSON.parse(innovation.document ?? {}));
+      const document = schema.model.cleanUpDocument(JSON.parse(innovation.document ?? {}));
       return {
         id: innovation.id,
         status: innovation.status,
@@ -1000,10 +1092,11 @@ export class DomainInnovationsService {
         rawStatus: innovation.rawStatus,
         statusUpdatedAt: innovation.statusUpdatedAt,
         groupedStatus: innovation.groupedStatus,
+        hasBeenAssessed: !!innovation.hasBeenAssessed,
         submittedAt: innovation.submittedAt,
         updatedAt: innovation.updatedAt,
         lastAssessmentRequestAt: innovation.lastAssessmentRequestAt,
-        document: translate(document),
+        document: schema.model.translateDocument(cloneDeep(document)),
         ...(innovation.owner && { owner: JSON.parse(innovation.owner) }),
         ...(innovation.engagingOrganisations && {
           engagingOrganisations: JSON.parse(innovation.engagingOrganisations)
@@ -1042,6 +1135,7 @@ export class DomainInnovationsService {
 
       case ActivityEnum.INNOVATION_SUBMISSION:
       case ActivityEnum.NEEDS_ASSESSMENT_START:
+      case ActivityEnum.NEEDS_ASSESSMENT_START_EDIT:
       case ActivityEnum.NEEDS_ASSESSMENT_COMPLETED:
       case ActivityEnum.NEEDS_ASSESSMENT_EDITED:
       case ActivityEnum.NEEDS_ASSESSMENT_REASSESSMENT_REQUESTED:

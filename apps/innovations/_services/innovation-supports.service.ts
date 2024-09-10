@@ -2,8 +2,8 @@ import { inject, injectable } from 'inversify';
 import { Brackets, EntityManager, In } from 'typeorm';
 
 import {
-  InnovationAssessmentEntity,
   InnovationEntity,
+  InnovationSuggestedUnitsView,
   InnovationSupportEntity,
   InnovationSupportLogEntity,
   InnovationTaskEntity,
@@ -44,7 +44,8 @@ import type {
   InnovationFileType,
   InnovationSuggestionAccessor,
   InnovationSuggestionsType,
-  InnovationUnitSuggestionsType
+  InnovationUnitSuggestionsType,
+  SuggestedOrganisationInfo
 } from '../_types/innovation.types';
 
 import { DatesHelper } from '@innovations/shared/helpers';
@@ -77,6 +78,18 @@ type SuggestedUnitType = {
     id: string;
     acronym: string;
   };
+};
+
+type SupportLogSuggestion = {
+  whom_id: null | string;
+  whom_name: null | string;
+  whom_acronym: null | string;
+  suggested_org_id: string;
+  suggested_org_name: string;
+  suggested_org_acronym: string;
+  suggested_unit_id: string;
+  suggested_unit_name: string;
+  suggested_unit_acronym: string;
 };
 
 @injectable()
@@ -249,68 +262,120 @@ export class InnovationSupportsService extends BaseService {
    * @param innovationId the innovation id
    * @returns suggested organisations by both assessors and accessors
    */
-  async getInnovationSuggestions(innovationId: string): Promise<InnovationSuggestionsType> {
-    const supportLogs = await this.fetchAccessorsSuggestedOrganisationUnits(innovationId);
+  async getInnovationSuggestions(
+    innovationId: string,
+    entityManager?: EntityManager
+  ): Promise<InnovationSuggestionsType> {
+    const em = entityManager ?? this.sqlConnection.manager;
 
-    const assessmentQuery = this.sqlConnection
-      .createQueryBuilder(InnovationAssessmentEntity, 'assessments')
+    const query = em
+      .createQueryBuilder()
+      .from(InnovationSupportLogEntity, 'sl')
+      .distinct()
       .select([
-        'assessments.id',
-        'organisation.id',
-        'organisation.name',
-        'organisation.acronym',
-        'organisationUnit.id',
-        'organisationUnit.name',
-        'organisationUnit.acronym'
+        'whom.id',
+        'whom.name',
+        'whom.acronym',
+        'suggested_org.id',
+        'suggested_org.name',
+        'suggested_org.acronym',
+        'suggested_unit.id',
+        'suggested_unit.name',
+        'suggested_unit.acronym'
       ])
-      .leftJoin('assessments.organisationUnits', 'organisationUnit')
-      .leftJoin('organisationUnit.organisation', 'organisation')
-      .where('assessments.innovation_id = :innovationId', { innovationId })
-      .andWhere('organisationUnit.inactivated_at IS NULL');
+      .innerJoin('innovation_support_log_organisation_unit', 'slou', 'slou.innovation_support_log_id = sl.id')
+      .leftJoin('organisation_unit', 'whom_unit', 'whom_unit.id = sl.organisation_unit_id')
+      .leftJoin('organisation', 'whom', 'whom.id = whom_unit.organisation_id')
+      .innerJoin('organisation_unit', 'suggested_unit', 'suggested_unit.id = slou.organisation_unit_id')
+      .innerJoin('organisation', 'suggested_org', 'suggested_org.id = suggested_unit.organisation_id')
+      .where('sl.innovation_id = :innovationId', { innovationId })
+      .andWhere('sl.type IN (:...types)', {
+        types: [InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION, InnovationSupportLogTypeEnum.ASSESSMENT_SUGGESTION]
+      })
+      .groupBy('whom.id')
+      .addGroupBy('whom.name')
+      .addGroupBy('whom.acronym')
+      .addGroupBy('suggested_org.id')
+      .addGroupBy('suggested_org.name')
+      .addGroupBy('suggested_org.acronym')
+      .addGroupBy('suggested_unit.id')
+      .addGroupBy('suggested_unit.name')
+      .addGroupBy('suggested_unit.acronym')
+      .orderBy('whom.name', 'ASC')
+      .addOrderBy('suggested_org.name', 'ASC')
+      .addOrderBy('suggested_unit.name', 'ASC');
+    const rows = await query.getRawMany<SupportLogSuggestion>();
 
-    const innovationAssessment = await assessmentQuery.getOne();
+    const assessmentSuggestions = new Map<string, SuggestedOrganisationInfo>();
+    const accessorSuggestions = new Map<string, InnovationSuggestionAccessor>();
 
-    const result: InnovationSuggestionsType = {
-      accessors: [],
-      assessment: { suggestedOrganisations: [] }
+    for (const suggestion of rows) {
+      // Means is a suggestion from Assessment team.
+      if (!suggestion.whom_id) {
+        this.addToAssessmentSuggestions(assessmentSuggestions, suggestion);
+      } else {
+        this.addToAccessorSuggestions(accessorSuggestions, suggestion);
+      }
+    }
+    return {
+      assessment: { suggestedOrganisations: Array.from(assessmentSuggestions.values()) },
+      accessors: Array.from(accessorSuggestions.values())
+    };
+  }
+
+  private addToAssessmentSuggestions(
+    assessmentSuggestions: Map<string, SuggestedOrganisationInfo>,
+    suggestion: SupportLogSuggestion
+  ): void {
+    const suggestedOrganisation = assessmentSuggestions.get(suggestion.suggested_org_id);
+    const organisationUnit = {
+      id: suggestion.suggested_unit_id,
+      name: suggestion.suggested_unit_name,
+      acronym: suggestion.suggested_unit_acronym
     };
 
-    if (innovationAssessment) {
-      innovationAssessment.organisationUnits.forEach(ou => {
-        // try to find suggested organisation
-        const suggestedOrganisation = result.assessment.suggestedOrganisations.find(so => so.id === ou.organisation.id);
+    if (!suggestedOrganisation) {
+      assessmentSuggestions.set(suggestion.suggested_org_id, {
+        id: suggestion.suggested_org_id,
+        name: suggestion.suggested_org_name,
+        acronym: suggestion.suggested_org_acronym,
+        organisationUnits: [organisationUnit]
+      });
+    } else {
+      suggestedOrganisation.organisationUnits.push(organisationUnit);
+    }
+  }
 
-        // if suggested organisation exists in suggestedOrganisations, append unit to it
-        if (suggestedOrganisation) {
-          suggestedOrganisation.organisationUnits.push({
-            id: ou.id,
-            name: ou.name,
-            acronym: ou.acronym
-          });
-
-          // otherwise, create and append organisation to suggestedOrganisations
-        } else {
-          result.assessment.suggestedOrganisations.push({
-            id: ou.organisation.id,
-            name: ou.organisation.name,
-            acronym: ou.organisation.acronym,
-            organisationUnits: [
-              {
-                id: ou.id,
-                name: ou.name,
-                acronym: ou.acronym
-              }
-            ]
-          });
-        }
+  private addToAccessorSuggestions(
+    accessorSuggestions: Map<string, InnovationSuggestionAccessor>,
+    suggestion: SupportLogSuggestion
+  ): void {
+    if (!suggestion.whom_id || !suggestion.whom_name || !suggestion.whom_acronym) return;
+    if (!accessorSuggestions.has(suggestion.whom_id)) {
+      accessorSuggestions.set(suggestion.whom_id, {
+        organisation: { id: suggestion.whom_id, name: suggestion.whom_name, acronym: suggestion.whom_acronym },
+        suggestedOrganisations: []
       });
     }
 
-    if (supportLogs.length) {
-      result.accessors = supportLogs;
-    }
+    const accessor = accessorSuggestions.get(suggestion.whom_id);
+    const suggestedOrganisation = accessor?.suggestedOrganisations.find(org => org.id === suggestion.suggested_org_id);
+    const organisationUnit = {
+      id: suggestion.suggested_unit_id,
+      name: suggestion.suggested_unit_name,
+      acronym: suggestion.suggested_unit_acronym
+    };
 
-    return result;
+    if (suggestedOrganisation) {
+      suggestedOrganisation.organisationUnits.push(organisationUnit);
+    } else {
+      accessor?.suggestedOrganisations.push({
+        id: suggestion.suggested_org_id,
+        name: suggestion.suggested_org_name,
+        acronym: suggestion.suggested_org_acronym,
+        organisationUnits: [organisationUnit]
+      });
+    }
   }
 
   async getInnovationSupportInfo(
@@ -365,6 +430,7 @@ export class InnovationSupportsService extends BaseService {
     data: {
       status: InnovationSupportStatusEnum;
       message: string;
+      file?: InnovationFileType;
       accessors?: { id: string; userRoleId: string }[];
     },
     entityManager?: EntityManager
@@ -451,6 +517,24 @@ export class InnovationSupportsService extends BaseService {
       );
 
       await this.assignAccessors(domainContext, savedSupport, accessors, thread.thread.id, transaction);
+
+      if (data.file) {
+        await this.innovationFileService.createFile(
+          domainContext,
+          innovationId,
+          {
+            name: data.file.name,
+            description: data.file.description,
+            file: data.file.file,
+            context: {
+              id: thread.message.id,
+              type: InnovationFileContextTypeEnum.INNOVATION_MESSAGE
+            }
+          },
+          undefined,
+          entityManager
+        );
+      }
 
       return { id: savedSupport.id, threadId: thread.thread.id };
     });
@@ -1101,7 +1185,7 @@ export class InnovationSupportsService extends BaseService {
           {
             const file = await this.getProgressUpdateFile(domainContext, innovationId, supportLog.id);
 
-            if (supportLog.params) {
+            if (supportLog.params && !('assessmentId' in supportLog.params)) {
               summary.push({
                 ...defaultSummary,
                 type: 'PROGRESS_UPDATE',
@@ -1350,91 +1434,6 @@ export class InnovationSupportsService extends BaseService {
     }
   }
 
-  private async fetchAccessorsSuggestedOrganisationUnits(
-    innovationId: string,
-    entityManager?: EntityManager
-  ): Promise<InnovationSuggestionAccessor[]> {
-    const res = new Map<string, InnovationSuggestionAccessor>();
-    const em = entityManager ?? this.sqlConnection.manager;
-
-    const query = em
-      .createQueryBuilder()
-      .from(InnovationSupportLogEntity, 'sl')
-      .select([
-        'whom.id',
-        'whom.name',
-        'whom.acronym',
-        'suggested_org.id',
-        'suggested_org.name',
-        'suggested_org.acronym',
-        'suggested_unit.id',
-        'suggested_unit.name',
-        'suggested_unit.acronym'
-      ])
-      .innerJoin('innovation_support_log_organisation_unit', 'slou', 'slou.innovation_support_log_id = sl.id')
-      .innerJoin('organisation_unit', 'whom_unit', 'whom_unit.id = sl.organisation_unit_id')
-      .innerJoin('organisation', 'whom', 'whom.id = whom_unit.organisation_id')
-      .innerJoin('organisation_unit', 'suggested_unit', 'suggested_unit.id = slou.organisation_unit_id')
-      .innerJoin('organisation', 'suggested_org', 'suggested_org.id = suggested_unit.organisation_id')
-      .where('sl.innovation_id = :innovationId', { innovationId })
-      .andWhere('sl.type = :type', { type: InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION })
-      .groupBy('whom.id')
-      .addGroupBy('whom.name')
-      .addGroupBy('whom.acronym')
-      .addGroupBy('suggested_org.id')
-      .addGroupBy('suggested_org.name')
-      .addGroupBy('suggested_org.acronym')
-      .addGroupBy('suggested_unit.id')
-      .addGroupBy('suggested_unit.name')
-      .addGroupBy('suggested_unit.acronym')
-      .orderBy('whom.name', 'ASC')
-      .addOrderBy('suggested_org.name', 'ASC')
-      .addOrderBy('suggested_unit.name', 'ASC');
-
-    const rows = await query.getRawMany();
-
-    rows.forEach(row => {
-      // if suggestor organisation (whom) doesn't exist in res, set in res
-      if (!res.has(row.whom_id)) {
-        res.set(row.whom_id, {
-          organisation: { id: row.whom_id, name: row.whom_name, acronym: row.whom_acronym },
-          suggestedOrganisations: []
-        });
-      }
-
-      // try to find suggested organisation
-      const suggestedOrganisation = res
-        .get(row.whom_id)
-        ?.suggestedOrganisations.find(so => so.id === row.suggested_org_id);
-
-      // if suggested organisation exists in res, append unit to it
-      if (suggestedOrganisation) {
-        suggestedOrganisation.organisationUnits.push({
-          id: row.suggested_unit_id,
-          name: row.suggested_unit_name,
-          acronym: row.suggested_unit_acronym
-        });
-
-        // otherwise, create and append organisation to suggestedOrganisations
-      } else {
-        res.get(row.whom_id)?.suggestedOrganisations.push({
-          id: row.suggested_org_id,
-          name: row.suggested_org_name,
-          acronym: row.suggested_org_acronym,
-          organisationUnits: [
-            {
-              id: row.suggested_unit_id,
-              name: row.suggested_unit_name,
-              acronym: row.suggested_unit_acronym
-            }
-          ]
-        });
-      }
-    });
-
-    return [...res.values()];
-  }
-
   private async getProgressUpdateFile(
     domainContext: DomainContextType,
     innovationId: string,
@@ -1466,95 +1465,36 @@ export class InnovationSupportsService extends BaseService {
     innovationId: string,
     em: EntityManager
   ): Promise<Map<string, { id: string; name: string; orgId: string; orgAcronym: string }>> {
-    const suggestedUnitsInfo: { id: string; name: string; orgId: string; orgAcronym: string }[] = [
-      ...(await this.getSuggestedUnitsByNA(innovationId, em)).map(u => ({
-        id: u.id,
-        name: u.name,
-        orgId: u.orgId,
-        orgAcronym: u.orgAcronym
-      })),
-      ...(await this.getSuggestedUnitsByQA(innovationId, em))
-    ];
-
-    return new Map(suggestedUnitsInfo.map(u => [u.id, u]));
+    const suggestedUnits = await this.getSuggestedUnits(innovationId, em);
+    return new Map(suggestedUnits.map(u => [u.id, u]));
   }
 
-  /**
-   * This function returns the suggestions from NA assessment
-   * If unitId = undefined -> will return all the suggestions
-   * If unit != undefined -> will return an array with just the unit if it was suggested by the NA or an empty array
-   */
-  private async getSuggestedUnitsByNA(
-    innovationId: string,
-    em: EntityManager
-  ): Promise<
-    {
-      id: string;
-      name: string;
-      assessmentId: string;
-      updatedAt: Date;
-      assignTo?: string;
-      orgId: string;
-      orgAcronym: string;
-    }[]
-  > {
-    const suggestedByNA = await em
-      .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
-      .select([
-        'assessment.id',
-        'assessment.updatedAt',
-        'assignedTo.id',
-        'units.id',
-        'units.name',
-        'org.id',
-        'org.acronym'
-      ])
-      .leftJoin('assessment.assignTo', 'assignedTo')
-      .innerJoin('assessment.organisationUnits', 'units')
-      .innerJoin('units.organisation', 'org')
-      .where('assessment.innovation_id = :innovationId', { innovationId })
-      .getOne();
-
-    if (!suggestedByNA) {
-      return [];
-    }
-
-    return suggestedByNA.organisationUnits.map(u => ({
-      id: u.id,
-      name: u.name,
-      assessmentId: suggestedByNA.id,
-      updatedAt: suggestedByNA.updatedAt,
-      assignTo: suggestedByNA.assignTo?.id,
-      orgId: u.organisation.id,
-      orgAcronym: u.organisation.acronym || ''
-    }));
-  }
-
-  private async getSuggestedUnitsByQA(
+  private async getSuggestedUnits(
     innovationId: string,
     em: EntityManager
   ): Promise<{ id: string; name: string; orgId: string; orgAcronym: string }[]> {
-    const suggestedByQA = await em
-      .createQueryBuilder(InnovationSupportLogEntity, 'log')
-      .select(['log.id', 'suggestedUnits.id', 'suggestedUnits.name', 'suggestedUnits.acronym', 'org.id', 'org.acronym'])
-      .leftJoin('log.suggestedOrganisationUnits', 'suggestedUnits')
-      .innerJoin('suggestedUnits.organisation', 'org')
-      .where('log.innovation_id = :innovationId', { innovationId })
-      .andWhere('log.type = :suggestionStatus', {
-        suggestionStatus: InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION
-      })
+    const suggestions = await em
+      .createQueryBuilder(InnovationSuggestedUnitsView, 'suggestion')
+      .select([
+        'suggestion.suggestedBy',
+        'suggestion.suggestedUnitId',
+        'unit.id',
+        'unit.name',
+        'unit.acronym',
+        'org.id',
+        'org.acronym'
+      ])
+      .leftJoin('suggestion.suggestedUnit', 'unit')
+      .leftJoin('unit.organisation', 'org')
+      .where('suggestion.innovation_id = :innovationId', { innovationId })
       .getMany();
 
-    return suggestedByQA
-      .map(log =>
-        (log.suggestedOrganisationUnits ?? []).map(u => ({
-          id: u.id,
-          name: u.name,
-          orgId: u.organisation.id,
-          orgAcronym: u.organisation.acronym || ''
-        }))
-      )
-      .flat();
+    return suggestions.map(s => ({
+      id: s.suggestedUnit.id,
+      name: s.suggestedUnit.name,
+      orgId: s.suggestedUnit.organisation.id,
+      orgAcronym: s.suggestedUnit.organisation.acronym ?? ''
+    }));
   }
 
   private async getSuggestedUnitsSupportInfoMap(

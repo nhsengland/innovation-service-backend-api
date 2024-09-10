@@ -26,6 +26,7 @@ import { InnovationThreadEntity } from './innovation/innovation-thread.entity';
 import { InnovationTransferEntity } from './innovation/innovation-transfer.entity';
 import { InnovationUserTestEntity } from './innovation/innovation-user-test.entity';
 import { InnovationEntity } from './innovation/innovation.entity';
+import { InnovationRecordSchemaEntity } from './innovation/innovation-record-schema.entity';
 export { ActivityLogEntity } from './innovation/activity-log.entity';
 export { InnovationTaskEntity } from './innovation/innovation-task.entity';
 export { InnovationAssessmentEntity } from './innovation/innovation-assessment.entity';
@@ -45,6 +46,7 @@ export { InnovationThreadEntity } from './innovation/innovation-thread.entity';
 export { InnovationTransferEntity } from './innovation/innovation-transfer.entity';
 export { InnovationUserTestEntity } from './innovation/innovation-user-test.entity';
 export { InnovationEntity } from './innovation/innovation.entity';
+export { InnovationRecordSchemaEntity } from './innovation/innovation-record-schema.entity';
 
 // Organisation.
 import { OrganisationUnitEntity } from './organisation/organisation-unit.entity';
@@ -83,6 +85,7 @@ import { SupportKPIViewEntity } from './views/support-kpi.view.entity';
 import { SupportLastActivityUpdateView } from './views/support-last-activity-update.view.entity';
 import { DocumentsStatisticsViewEntity } from './views/documents-statistics.view.entity';
 import { InnovationSuggestedUnitsView } from './views/innovation-suggested-units.view.entity';
+import { InnovationProgressView } from './views/innovation-progress.view.entity';
 export { InnovationGroupedStatusViewEntity } from './views/innovation-grouped-status.view.entity';
 export { LastSupportStatusViewEntity } from './views/last-support-status.view.entity';
 export { InnovationListView } from './views/innovation-list-view.entity';
@@ -113,7 +116,8 @@ export const INNOVATION_ENTITIES = [
   InnovationThreadEntity,
   InnovationTransferEntity,
   InnovationUserTestEntity,
-  InnovationEntity
+  InnovationEntity,
+  InnovationRecordSchemaEntity
 ];
 export const ORGANISATION_ENTITIES = [OrganisationUnitEntity, OrganisationEntity];
 export const USER_ENTITIES = [
@@ -136,5 +140,6 @@ export const VIEW_ENTITIES = [
   SupportLastActivityUpdateView,
   DocumentsStatisticsViewEntity,
   InnovationSuggestedUnitsView,
-  InnovationListView
+  InnovationListView,
+  InnovationProgressView
 ];

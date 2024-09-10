@@ -3,7 +3,7 @@ import azureFunction from '.';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@innovations/shared/tests';
 import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@innovations/shared/types';
-import { randBoolean, randText, randUuid } from '@ngneat/falso';
+import { randText, randUuid } from '@ngneat/falso';
 import { InnovationAssessmentsService } from '../_services/innovation-assessments.service';
 import type { ResponseDTO } from './transformation.dtos';
 import type { BodyType, ParamsType } from './validation.schemas';
@@ -36,7 +36,7 @@ afterEach(() => {
 
 describe('v1-innovation-reassessment-request-create Suite', () => {
   describe('200', () => {
-    it('should create a new reassessment request', async () => {
+    it('should create a new reassessment request from an innnovator', async () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.johnInnovator)
         .setParams<ParamsType>({
@@ -44,7 +44,8 @@ describe('v1-innovation-reassessment-request-create Suite', () => {
         })
         .setBody<BodyType>({
           description: randText(),
-          updatedInnovationRecord: randBoolean() ? 'YES' : 'NO'
+          whatSupportDoYouNeed: randText(),
+          reassessmentReason: ['NO_SUPPORT']
         })
         .call<ResponseDTO>(azureFunction);
 
@@ -70,7 +71,8 @@ describe('v1-innovation-reassessment-request-create Suite', () => {
         })
         .setBody<BodyType>({
           description: randText(),
-          updatedInnovationRecord: randBoolean() ? 'YES' : 'NO'
+          reassessmentReason: ['NO_SUPPORT'],
+          whatSupportDoYouNeed: randText()
         })
         .call<ErrorResponseType>(azureFunction);
 

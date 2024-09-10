@@ -24,6 +24,15 @@ export class InnovationAssessmentEntity extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Column({ name: 'major_version', type: 'smallint' })
+  majorVersion: number;
+
+  @Column({ name: 'minor_version', type: 'smallint' })
+  minorVersion: number;
+
+  @Column({ name: 'edit_reason', type: 'nvarchar', nullable: true })
+  editReason: null | string;
+
   @Column({ name: 'description', type: 'nvarchar', nullable: true })
   description: null | string;
 
@@ -35,6 +44,9 @@ export class InnovationAssessmentEntity extends BaseEntity {
 
   @Column({ name: 'maturity_level_comment', type: 'nvarchar', nullable: true, length: 200 })
   maturityLevelComment: null | string;
+
+  @Column({ name: 'started_at', type: 'datetime2', nullable: true })
+  startedAt: null | Date;
 
   @Column({ name: 'finished_at', type: 'datetime2', nullable: true })
   finishedAt: null | Date;
@@ -133,6 +145,12 @@ export class InnovationAssessmentEntity extends BaseEntity {
     }
   })
   organisationUnits: OrganisationUnitEntity[];
+
+  @OneToOne(() => InnovationAssessmentEntity, record => record.previousAssessment, {
+    nullable: true
+  })
+  @JoinColumn({ name: 'previous_assessment_id' })
+  previousAssessment: InnovationAssessmentEntity | null;
 
   static new(data: Partial<InnovationAssessmentEntity>): InnovationAssessmentEntity {
     const instance = new InnovationAssessmentEntity();

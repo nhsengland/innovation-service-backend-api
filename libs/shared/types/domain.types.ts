@@ -276,6 +276,9 @@ export type ActivityLogTemplatesType = {
   [ActivityEnum.NEEDS_ASSESSMENT_START]: {
     params: { comment: { id: string; value: string } };
   };
+  [ActivityEnum.NEEDS_ASSESSMENT_START_EDIT]: {
+    params: { assessmentId: string };
+  };
   [ActivityEnum.NEEDS_ASSESSMENT_COMPLETED]: {
     params: { assessmentId: string };
   };
@@ -379,6 +382,7 @@ type TwoLevelProgressUpdateParams = { category: string; subCategories: string[] 
 export type SupportLogAssessmentSuggestion = {
   type: InnovationSupportLogTypeEnum.ASSESSMENT_SUGGESTION;
   suggestedOrganisationUnits: string[];
+  params: { assessmentId: string };
 };
 
 export type SupportLogInnovationArchive = {

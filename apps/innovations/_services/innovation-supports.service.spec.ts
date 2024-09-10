@@ -26,7 +26,6 @@ import {
   UnprocessableEntityError
 } from '@innovations/shared/errors';
 import { TranslationHelper } from '@innovations/shared/helpers';
-import { sleep } from '@innovations/shared/helpers/misc.helper';
 import { DomainInnovationsService, NotifierService } from '@innovations/shared/services';
 import { TestsHelper } from '@innovations/shared/tests';
 import { InnovationSupportLogBuilder } from '@innovations/shared/tests/builders/innovation-support-log.builder';
@@ -214,7 +213,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
     });
 
     it(`should throw a not found error when the innovation doesn't exist`, async () => {
-      await expect(() => sut.getInnovationSupportsList(randUuid(), { fields: [] }, em)).rejects.toThrowError(
+      await expect(() => sut.getInnovationSupportsList(randUuid(), { fields: [] }, em)).rejects.toThrow(
         new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND)
       );
     });
@@ -244,7 +243,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
     });
 
     it(`should throw a not found error if the support doesn't exist`, async () => {
-      await expect(() => sut.getInnovationSupportInfo(randUuid(), em)).rejects.toThrowError(
+      await expect(() => sut.getInnovationSupportInfo(randUuid(), em)).rejects.toThrow(
         new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND)
       );
     });
@@ -337,7 +336,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           },
           em
         )
-      ).rejects.toThrowError(
+      ).rejects.toThrow(
         new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_WITH_UNPROCESSABLE_ORGANISATION_UNIT)
       );
     });
@@ -358,7 +357,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           },
           em
         )
-      ).rejects.toThrowError(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND));
     });
 
     it('should throw an unprocessable entity error if the support already exists', async () => {
@@ -372,7 +371,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           },
           em
         )
-      ).rejects.toThrowError(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_ALREADY_EXISTS));
+      ).rejects.toThrow(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_ALREADY_EXISTS));
     });
 
     it('should throw an unprocessable entity error if the accessors argument exists and the status is not ENGAGING', async () => {
@@ -392,7 +391,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           },
           em
         )
-      ).rejects.toThrowError(
+      ).rejects.toThrow(
         new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_CANNOT_HAVE_ASSIGNED_ASSESSORS)
       );
     });
@@ -585,9 +584,6 @@ describe('Innovations / _services / innovation-supports suite', () => {
         .setSuggestedUnits([scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id])
         .save();
 
-      // Using sleeps because tests randomly fail and I suspect it's related with the created sort
-      await sleep(10);
-
       // Suggested by QA
       const qaSuggestion = await new InnovationSupportLogBuilder(em)
         .setInnovation(innovation.id)
@@ -597,8 +593,6 @@ describe('Innovations / _services / innovation-supports suite', () => {
         .setSuggestedUnits([scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id])
         .save();
 
-      await sleep(10);
-
       // Update status
       const statusUpdate = await new InnovationSupportLogBuilder(em)
         .setInnovation(innovation.id)
@@ -606,8 +600,6 @@ describe('Innovations / _services / innovation-supports suite', () => {
         .setCreatedBy(jamieMadrox, jamieMadrox.roles.aiRole)
         .setSupportStatus(InnovationSupportStatusEnum.ENGAGING)
         .save();
-
-      await sleep(10);
 
       // Create Progress Update
       const progressUpdate = await new InnovationSupportLogBuilder(em)
@@ -618,8 +610,6 @@ describe('Innovations / _services / innovation-supports suite', () => {
         .setParams({ title: randText() })
         .save();
 
-      await sleep(10);
-
       // Archive Innovation
       const archiveInnovationUpdate = await new InnovationSupportLogBuilder(em)
         .setInnovation(innovation.id)
@@ -628,8 +618,6 @@ describe('Innovations / _services / innovation-supports suite', () => {
         .setCreatedBy(johnInnovator, johnInnovator.roles.innovatorRole)
         .setOrganisationUnit(jamieMadrox.roles.aiRole.organisationUnit!.id)
         .save();
-
-      await sleep(10);
 
       // Innovator stop share Innovation
       const stopShareUpdate = await new InnovationSupportLogBuilder(em)
@@ -640,8 +628,6 @@ describe('Innovations / _services / innovation-supports suite', () => {
         .setOrganisationUnit(jamieMadrox.roles.aiRole.organisationUnit!.id)
         .save();
 
-      await sleep(10);
-
       const unitInfo = await sut.getSupportSummaryUnitInfo(
         DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
         innovation.id,
@@ -649,75 +635,77 @@ describe('Innovations / _services / innovation-supports suite', () => {
         em
       );
 
-      expect(unitInfo).toMatchObject([
-        {
-          id: stopShareUpdate.id,
-          createdAt: stopShareUpdate.createdAt,
-          createdBy: { id: johnInnovator.id, name: johnInnovator.name, displayRole: 'Owner' },
-          type: 'STOP_SHARE',
-          params: { supportStatus: InnovationSupportStatusEnum.CLOSED }
-        },
-        {
-          id: archiveInnovationUpdate.id,
-          createdAt: archiveInnovationUpdate.createdAt,
-          createdBy: { id: johnInnovator.id, name: johnInnovator.name, displayRole: 'Owner' },
-          type: 'INNOVATION_ARCHIVED',
-          params: {
-            supportStatus: InnovationSupportStatusEnum.CLOSED,
-            message: archiveInnovationUpdate.description
+      expect(unitInfo).toMatchObject(
+        [
+          {
+            id: stopShareUpdate.id,
+            createdAt: stopShareUpdate.createdAt,
+            createdBy: { id: johnInnovator.id, name: johnInnovator.name, displayRole: 'Owner' },
+            type: 'STOP_SHARE',
+            params: { supportStatus: InnovationSupportStatusEnum.CLOSED }
+          },
+          {
+            id: archiveInnovationUpdate.id,
+            createdAt: archiveInnovationUpdate.createdAt,
+            createdBy: { id: johnInnovator.id, name: johnInnovator.name, displayRole: 'Owner' },
+            type: 'INNOVATION_ARCHIVED',
+            params: {
+              supportStatus: InnovationSupportStatusEnum.CLOSED,
+              message: archiveInnovationUpdate.description
+            }
+          },
+          {
+            id: progressUpdate.id,
+            createdAt: progressUpdate.createdAt,
+            createdBy: {
+              id: jamieMadrox.id,
+              name: jamieMadrox.name,
+              displayRole: TranslationHelper.translate(`SERVICE_ROLES.${jamieMadrox.roles.aiRole.role}`)
+            },
+            type: 'PROGRESS_UPDATE',
+            params: {
+              title: progressUpdate.params && 'title' in progressUpdate.params ? progressUpdate.params.title : '',
+              message: progressUpdate.description
+            }
+          },
+          {
+            id: statusUpdate.id,
+            createdAt: statusUpdate.createdAt,
+            createdBy: {
+              id: jamieMadrox.id,
+              name: jamieMadrox.name,
+              displayRole: TranslationHelper.translate(`SERVICE_ROLES.${jamieMadrox.roles.aiRole.role}`)
+            },
+            type: 'SUPPORT_UPDATE',
+            params: { supportStatus: statusUpdate.innovationSupportStatus, message: statusUpdate.description }
+          },
+          {
+            id: qaSuggestion.id,
+            createdAt: qaSuggestion.createdAt,
+            createdBy: {
+              id: alice.id,
+              name: alice.name,
+              displayRole: TranslationHelper.translate(`SERVICE_ROLES.${alice.roles.qaRole.role}`)
+            },
+            type: 'SUGGESTED_ORGANISATION',
+            params: {
+              suggestedByName: alice.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
+              message: qaSuggestion.description
+            }
+          },
+          {
+            id: naSuggestion.id,
+            createdAt: naSuggestion.createdAt,
+            createdBy: {
+              id: paul.id,
+              name: paul.name,
+              displayRole: TranslationHelper.translate(`SERVICE_ROLES.${paul.roles.assessmentRole.role}`)
+            },
+            type: 'SUGGESTED_ORGANISATION',
+            params: {}
           }
-        },
-        {
-          id: progressUpdate.id,
-          createdAt: progressUpdate.createdAt,
-          createdBy: {
-            id: jamieMadrox.id,
-            name: jamieMadrox.name,
-            displayRole: TranslationHelper.translate(`SERVICE_ROLES.${jamieMadrox.roles.aiRole.role}`)
-          },
-          type: 'PROGRESS_UPDATE',
-          params: {
-            title: progressUpdate.params && 'title' in progressUpdate.params ? progressUpdate.params.title : '',
-            message: progressUpdate.description
-          }
-        },
-        {
-          id: statusUpdate.id,
-          createdAt: statusUpdate.createdAt,
-          createdBy: {
-            id: jamieMadrox.id,
-            name: jamieMadrox.name,
-            displayRole: TranslationHelper.translate(`SERVICE_ROLES.${jamieMadrox.roles.aiRole.role}`)
-          },
-          type: 'SUPPORT_UPDATE',
-          params: { supportStatus: statusUpdate.innovationSupportStatus, message: statusUpdate.description }
-        },
-        {
-          id: qaSuggestion.id,
-          createdAt: qaSuggestion.createdAt,
-          createdBy: {
-            id: alice.id,
-            name: alice.name,
-            displayRole: TranslationHelper.translate(`SERVICE_ROLES.${alice.roles.qaRole.role}`)
-          },
-          type: 'SUGGESTED_ORGANISATION',
-          params: {
-            suggestedByName: alice.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
-            message: qaSuggestion.description
-          }
-        },
-        {
-          id: naSuggestion.id,
-          createdAt: naSuggestion.createdAt,
-          createdBy: {
-            id: paul.id,
-            name: paul.name,
-            displayRole: TranslationHelper.translate(`SERVICE_ROLES.${paul.roles.assessmentRole.role}`)
-          },
-          type: 'SUGGESTED_ORGANISATION',
-          params: {}
-        }
-      ]);
+        ].sort((a, b) => b.createdAt!.getTime() - a.createdAt!.getTime())
+      );
       expect(unitInfo.every((s, i) => i === 0 || s.createdAt! <= unitInfo[i - 1]!.createdAt!)).toBeTruthy();
     });
 
@@ -729,7 +717,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id,
           em
         )
-      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND));
     });
   });
 
@@ -935,7 +923,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           },
           em
         )
-      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND));
     });
 
     it(`should throw a not found error if the thread creation fails`, async () => {
@@ -962,7 +950,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           },
           em
         )
-      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_MESSAGE_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_MESSAGE_NOT_FOUND));
     });
 
     it(`should throw a UnprocessableEntityError when trying to update to UNASSIGNED`, async () => {
@@ -974,7 +962,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           { status: InnovationSupportStatusEnum.UNASSIGNED, message: randText({ charCount: 10 }) },
           em
         )
-      ).rejects.toThrowError(
+      ).rejects.toThrow(
         new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UPDATE_WITH_UNPROCESSABLE_STATUS)
       );
     });
@@ -1080,7 +1068,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           { accessors: newAccessors, message },
           em
         )
-      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND));
     });
 
     it('should fail with unprocessable if innovation status not engaging', async () => {
@@ -1093,7 +1081,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           { accessors: newAccessors, message },
           em
         )
-      ).rejects.toThrowError(
+      ).rejects.toThrow(
         new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UPDATE_WITH_UNPROCESSABLE_STATUS)
       );
     });
@@ -1101,7 +1089,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
     it('should fail with unprocessable if accessors is empty', async () => {
       await expect(
         sut.updateInnovationSupportAccessors(context, innovation.id, support.id, { accessors: [], message })
-      ).rejects.toThrowError(new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD));
+      ).rejects.toThrow(new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD));
     });
   });
 
@@ -1207,7 +1195,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           { description: randText(), title: randText() },
           em
         )
-      ).rejects.toThrowError(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND));
     });
 
     it("should throw a NotFoundError when the support doesn't exist", async () => {
@@ -1218,7 +1206,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           { description: randText(), title: randText() },
           em
         )
-      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND));
     });
 
     it('should throw an UnprocessableEntityError when the unit is not currently engaging', async () => {
@@ -1235,7 +1223,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           { description: randText(), title: randText() },
           em
         )
-      ).rejects.toThrowError(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UNIT_NOT_ENGAGING));
+      ).rejects.toThrow(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UNIT_NOT_ENGAGING));
     });
 
     describe('create past progress update', () => {
@@ -1325,7 +1313,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           randUuid(),
           em
         )
-      ).rejects.toThrowError(
+      ).rejects.toThrow(
         new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_SUMMARY_PROGRESS_UPDATE_NOT_FOUND)
       );
     });
@@ -1338,7 +1326,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           innovation.progressUpdates.progressUpdateByAlice.id,
           em
         )
-      ).rejects.toThrowError(
+      ).rejects.toThrow(
         new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_SUMMARY_PROGRESS_DELETE_MUST_BE_FROM_UNIT)
       );
     });

@@ -1,10 +1,15 @@
-import type { YesOrNoCatalogueType } from '@innovations/shared/enums';
+import type { ReassessmentType } from '../_types/innovation.types';
 
 export type ResponseDTO = {
   id: string;
-  reassessment?: { updatedInnovationRecord: YesOrNoCatalogueType; description: string };
+  majorVersion: number;
+  minorVersion: number;
+  editReason: null | string;
+  previousAssessment?: { id: string; majorVersion: number; minorVersion: number };
+  reassessment?: ReassessmentType & { sectionsUpdatedSinceLastAssessment: string[] };
   summary: null | string;
   description: null | string;
+  startedAt: null | Date;
   finishedAt: null | Date;
   assignTo?: { id: string; name: string };
   maturityLevel: null | string;
@@ -31,4 +36,5 @@ export type ResponseDTO = {
   }[];
   updatedAt: null | Date;
   updatedBy: { id: string; name: string };
+  isLatest: boolean;
 };

@@ -41,7 +41,7 @@ describe('v1-innovation-section-update Suite', () => {
           innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
           sectionKey: 'INNOVATION_DESCRIPTION'
         })
-        .setBody({ description: randText() })
+        .setBody({ version: 1, data: { description: randText() } })
         .call<ResponseDTO>(azureFunction);
 
       expect(result.body).toStrictEqual(expected);
@@ -65,7 +65,7 @@ describe('v1-innovation-section-update Suite', () => {
           innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
           sectionKey: 'INNOVATION_DESCRIPTION'
         })
-        .setBody({ description: randText() })
+        .setBody({ version: 1, data: { description: randText() } })
         .call<ErrorResponseType>(azureFunction);
 
       expect(result.status).toBe(status);

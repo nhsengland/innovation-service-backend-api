@@ -32,7 +32,7 @@ import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import type { DomainService, IdentityProviderService, NotifierService } from '@innovations/shared/services';
 import { DomainContextType, isAccessorDomainContextType } from '@innovations/shared/types';
 
-import { CurrentCatalogTypes, CurrentDocumentConfig } from '@innovations/shared/schemas/innovation-record';
+import { CurrentCatalogTypes, InnovationSectionAliasEnum } from '@innovations/shared/schemas/innovation-record';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import { Brackets, EntityManager } from 'typeorm';
 import { BaseService } from './base.service';
@@ -156,13 +156,7 @@ export class InnovationTasksService extends BaseService {
           'accessorSupports.organisation_unit_id = :accessorSupportsOrganisationUnitId',
           { accessorSupportsOrganisationUnitId: domainContext.organisation.organisationUnit.id }
         )
-        .andWhere(
-          '(innovation.status IN (:...innovationStatus) OR (innovation.status = :innovationArchivedStatus AND innovation.archivedStatus IN (:...innovationStatus)))',
-          {
-            innovationStatus: [InnovationStatusEnum.IN_PROGRESS],
-            innovationArchivedStatus: InnovationStatusEnum.ARCHIVED
-          }
-        )
+        .andWhere('innovation.hasBeenAssessed = 1')
         .andWhere('shares.id = :accessorOrganisationId', {
           accessorOrganisationId: domainContext.organisation.id
         });
@@ -484,9 +478,7 @@ export class InnovationTasksService extends BaseService {
     );
 
     let taskCounter = innovationSection.tasks.length;
-    const displayId =
-      CurrentDocumentConfig.InnovationSectionAliasEnum[data.section] +
-      (++taskCounter).toString().slice(-2).padStart(2, '0');
+    const displayId = InnovationSectionAliasEnum[data.section] + (++taskCounter).toString().slice(-2).padStart(2, '0');
 
     const taskObj = InnovationTaskEntity.new({
       displayId: displayId,

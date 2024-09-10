@@ -26,6 +26,7 @@ import { InnovationSupportEntity } from './innovation-support.entity';
 import { InnovationTransferEntity } from './innovation-transfer.entity';
 
 import { InnovationStatusEnum } from '../../enums/innovation.enums';
+import { InnovationSuggestedUnitsView } from '../views/innovation-suggested-units.view.entity';
 
 @Entity('innovation')
 export class InnovationEntity extends BaseEntity {
@@ -56,6 +57,9 @@ export class InnovationEntity extends BaseEntity {
   @Column({ name: 'archive_reason', type: 'nvarchar', nullable: true })
   archiveReason: null | string;
 
+  @Column({ name: 'has_been_assessed', type: 'bit', default: false })
+  hasBeenAssessed: boolean;
+
   @ManyToOne(() => UserEntity, { nullable: true })
   @JoinColumn({ name: 'owner_id' })
   owner: null | UserEntity;
@@ -76,6 +80,10 @@ export class InnovationEntity extends BaseEntity {
     }
   })
   organisationShares: OrganisationEntity[];
+
+  @ManyToOne(() => InnovationAssessmentEntity, { nullable: true })
+  @JoinColumn({ name: 'current_assessment_id' })
+  currentAssessment: InnovationAssessmentEntity | null;
 
   @OneToMany(() => InnovationAssessmentEntity, record => record.innovation, {
     cascade: ['insert', 'update']
@@ -129,6 +137,9 @@ export class InnovationEntity extends BaseEntity {
     cascade: ['insert', 'update']
   })
   transfers: InnovationTransferEntity[];
+
+  @OneToMany(() => InnovationSuggestedUnitsView, record => record.innovationInfo)
+  suggestions: InnovationSuggestedUnitsView[];
 
   static new(data: Partial<InnovationEntity>): InnovationEntity {
     const instance = new InnovationEntity();

@@ -41,11 +41,11 @@ export class TestsHelper {
     await query.query(`
       EXEC sp_MSForEachTable 'IF OBJECTPROPERTY(OBJECT_ID(''?''), ''TableTemporalType'') = 2 ALTER TABLE ? SET (SYSTEM_VERSIONING = OFF)';
       EXEC sp_MSForEachTable 'ALTER TABLE ? NOCHECK CONSTRAINT all'
-      EXEC sp_MSForEachTable 'SET QUOTED_IDENTIFIER ON; IF OBJECT_ID(''?'') NOT IN (ISNULL(OBJECT_ID(''[dbo].[Migrations]''),0)) DELETE FROM ?'
+      EXEC sp_MSForEachTable 'SET QUOTED_IDENTIFIER ON; IF OBJECT_ID(''?'') NOT IN (ISNULL(OBJECT_ID(''[dbo].[Migrations]''),0), ISNULL(OBJECT_ID(''[dbo].[innovation_record_schema]''),0)) DELETE FROM ?'
       EXEC sp_MSForEachTable 'ALTER TABLE ? WITH CHECK CHECK CONSTRAINT all'
       EXEC sp_MSForEachTable @COMMAND1 = 'DECLARE @Original nvarchar(max)
         DECLARE @TableName nvarchar(max)
-        DECLARE @SQLString NVARCHAR(max);  
+        DECLARE @SQLString NVARCHAR(max);
         SET @Original = ''?''
         SET @TableName = REPLACE(''?'',''_history'','''')
         SET @SQLString = ''ALTER TABLE '' + @TableName + '' SET ( SYSTEM_VERSIONING = ON (HISTORY_TABLE = '' +  @Original +'', History_retention_period = 7 YEAR))''

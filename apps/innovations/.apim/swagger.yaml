@@ -534,6 +534,80 @@ paths:
           description: The innovation does not exist.
         "500":
           description: An error occurred while creating the innovation assessment.
+    get:
+      description: Get all completed assessments from an innovation
+      operationId: v1-innovation-assessments-list
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Returns the complete assessments
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+  /v1/{innovationId}/assessments/edit:
+    post:
+      summary: Create a new assessment when editing an assessment
+      description: Create a new assessment as a minor version of a previous assessment.
+      operationId: v1-innovation-assessment-edit
+      tags:
+        - Innovation Assessment
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  maxLength: 2000
+              required:
+                - reason
+              additionalProperties: false
+      responses:
+        "200":
+          description: The minor assessment version has been created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                    description: The innovation assessment id.
+                required:
+                  - id
+        "400":
+          description: The minor assessment version has not been created.
+        "401":
+          description: The user is not authenticated.
+        "403":
+          description: The user is not authorized to create a minor assessment version.
+        "404":
+          description: The innovation does not exist.
+        "500":
+          description: An error occurred while creating the minor assessment version.
   /v1/{innovationId}/assessments/{assessmentId}/exemption:
     get:
       description: Get an assessment kpi exemption.
@@ -912,25 +986,18 @@ paths:
             schema:
               type: object
               properties:
-                name:
-                  type: string
-                  maxLength: 100
-                description:
-                  type: string
-                  maxLength: 500
-                countryName:
-                  type: string
-                  maxLength: 100
-                postcode:
-                  type: string
-                  maxLength: 8
-                website:
-                  type: string
-                  maxLength: 100
+                name: {}
+                description: {}
+                officeLocation: {}
+                countryLocation: {}
+                postcode: {}
+                hasWebsite: {}
+                website: {}
               required:
                 - name
                 - description
-                - countryName
+                - officeLocation
+                - hasWebsite
               additionalProperties: false
       responses:
         "200":
@@ -1094,9 +1161,12 @@ paths:
                 - otherCategoryDescription
                 - postcode
                 - assessment.id
+                - assessment.majorVersion
+                - assessment.minorVersion
                 - assessment.isExempt
                 - assessment.assignedTo
                 - assessment.updatedAt
+                - assessment.finishedAt
                 - engagingOrganisations
                 - engagingUnits
                 - suggestion.suggestedBy
@@ -2032,6 +2102,7 @@ paths:
                         - ACCOUNT
                         - AUTOMATIC
                         - NOTIFY_ME
+                        - ANNOUNCEMENTS
       responses:
         "204":
           description: Success
@@ -2113,6 +2184,24 @@ paths:
           description: Ok.
         "400":
           description: Bad request.
+  /v1/{innovationId}/progress:
+    get:
+      operationId: v1-innovation-progress-info
+      description: Get innovation progress information.
+      tags:
+        - "[v1] Innovation"
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Success
+        "400":
+          description: Invalid innovation payload
   /v1/{innovationId}/reassessments:
     post:
       operationId: v1-innovation-reassessment-request-create
@@ -2135,17 +2224,29 @@ paths:
             schema:
               type: object
               properties:
-                updatedInnovationRecord:
+                reassessmentReason:
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                      - NO_SUPPORT
+                      - PREVIOUSLY_ARCHIVED
+                      - HAS_PROGRESSED_SIGNIFICANTLY
+                      - OTHER
+                  minItems: 1
+                otherReassessmentReason:
                   type: string
-                  enum:
-                    - YES
-                    - NO
+                  maxLength: 200
                 description:
                   type: string
-                  maxLength: 500
+                  maxLength: 1500
+                whatSupportDoYouNeed:
+                  type: string
+                  maxLength: 1500
               required:
-                - updatedInnovationRecord
+                - reassessmentReason
                 - description
+                - whatSupportDoYouNeed
               additionalProperties: false
       responses:
         "200":
@@ -2263,16 +2364,29 @@ paths:
       summary: Update an innovation section info.
       operationId: v1-innovation-section-update
       parameters:
-        - in: path
-          name: innovationId
+        - name: innovationId
+          in: path
           required: true
           schema:
             type: string
-        - in: path
-          name: sectionKey
+            format: uuid
+        - name: sectionKey
+          in: path
           required: true
           schema:
             type: string
+            enum:
+              - INNOVATION_DESCRIPTION
+              - UNDERSTANDING_OF_NEEDS
+              - EVIDENCE_OF_EFFECTIVENESS
+              - MARKET_RESEARCH
+              - CURRENT_CARE_PATHWAY
+              - TESTING_WITH_USERS
+              - REGULATIONS_AND_STANDARDS
+              - INTELLECTUAL_PROPERTY
+              - REVENUE_MODEL
+              - COST_OF_INNOVATION
+              - DEPLOYMENT
       requestBody:
         description: Innovation section info update request body.
         content:
@@ -4782,9 +4896,12 @@ paths:
                 - otherCategoryDescription
                 - postcode
                 - assessment.id
+                - assessment.majorVersion
+                - assessment.minorVersion
                 - assessment.isExempt
                 - assessment.assignedTo
                 - assessment.updatedAt
+                - assessment.finishedAt
                 - engagingOrganisations
                 - engagingUnits
                 - suggestion.suggestedBy
@@ -4914,3 +5031,25 @@ paths:
           description: The user is not authorized to access validation data.
         "500":
           description: An error occurred while fetching the validation data.
+  /v1/ir-schema:
+    get:
+      operationId: v1-ir-schema-info
+      description: Get current ir schema
+      tags:
+        - "[v1] IR Schema"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+        "400":
+          description: Bad request
+        "401":
+          description: Not authorized
+        "403":
+          description: Forbidden
+        "500":
+          description: An error occurred

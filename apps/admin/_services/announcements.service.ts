@@ -1,23 +1,46 @@
-import { injectable } from 'inversify';
-import { EntityManager, In } from 'typeorm';
+import { inject, injectable } from 'inversify';
+import { EntityManager, In, IsNull } from 'typeorm';
 
 import { AnnouncementEntity, AnnouncementUserEntity, UserEntity } from '@admin/shared/entities';
-import { AnnouncementParamsType, AnnouncementStatusEnum, ServiceRoleEnum } from '@admin/shared/enums';
-import { AnnouncementErrorsEnum, BadRequestError, NotFoundError, UnprocessableEntityError } from '@admin/shared/errors';
+import {
+  AnnouncementParamsType,
+  AnnouncementStatusEnum,
+  AnnouncementTypeEnum,
+  InnovationCollaboratorStatusEnum,
+  NotifierTypeEnum,
+  ServiceRoleEnum,
+  UserStatusEnum
+} from '@admin/shared/enums';
+import {
+  AnnouncementErrorsEnum,
+  BadRequestError,
+  ConflictError,
+  InnovationErrorsEnum,
+  NotFoundError,
+  UnprocessableEntityError
+} from '@admin/shared/errors';
 import { JoiHelper, PaginationQueryParamsType } from '@admin/shared/helpers';
 import type { DomainContextType } from '@admin/shared/types';
 
 import {
   AnnouncementActiveBodySchema,
   AnnouncementActiveBodyType,
-  AnnouncementScheduledBodySchema,
-  AnnouncementScheduledBodyType
+  AnnouncementBodySchema,
+  AnnouncementBodyType
 } from './announcements.schemas';
 import { BaseService } from './base.service';
+import type { FilterPayload } from '@admin/shared/models/schema-engine/schema.model';
+import { InnovationEntity } from '@admin/shared/entities';
+import SHARED_SYMBOLS from '@admin/shared/services/symbols';
+import type { DomainService, NotifierService } from '@admin/shared/services';
+import { ADMIN_CRON_ID } from '@admin/shared/constants';
 
 @injectable()
 export class AnnouncementsService extends BaseService {
-  constructor() {
+  constructor(
+    @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
+    @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService
+  ) {
     super();
   }
 
@@ -34,6 +57,7 @@ export class AnnouncementsService extends BaseService {
       startsAt: Date;
       expiresAt: null | Date;
       status: AnnouncementStatusEnum;
+      type: AnnouncementTypeEnum;
     }[];
   }> {
     const em = entityManager ?? this.sqlConnection.manager;
@@ -42,11 +66,14 @@ export class AnnouncementsService extends BaseService {
       .createQueryBuilder(AnnouncementEntity, 'announcement')
       .select([
         'announcement.id',
+        'announcement.status',
         'announcement.title',
         'announcement.userRoles',
         'announcement.params',
         'announcement.startsAt',
-        'announcement.expiresAt'
+        'announcement.expiresAt',
+        'announcement.type',
+        'announcement.deletedAt'
       ])
       .skip(pagination.skip)
       .take(pagination.take)
@@ -62,7 +89,8 @@ export class AnnouncementsService extends BaseService {
         params: announcement.params,
         startsAt: announcement.startsAt,
         expiresAt: announcement.expiresAt,
-        status: this.getAnnouncementStatus(announcement.startsAt, announcement.expiresAt)
+        status: announcement.status,
+        type: announcement.type
       }))
     };
   }
@@ -74,29 +102,33 @@ export class AnnouncementsService extends BaseService {
     id: string;
     title: string;
     userRoles: ServiceRoleEnum[];
-    params: null | Record<string, unknown>;
+    params: AnnouncementParamsType;
     startsAt: Date;
     expiresAt: null | Date;
     status: AnnouncementStatusEnum;
+    filters: null | FilterPayload[];
+    sendEmail: boolean;
+    type: AnnouncementTypeEnum;
   }> {
     const em = entityManager ?? this.sqlConnection.manager;
 
-    const announcement = await em
-      .createQueryBuilder(AnnouncementEntity, 'announcement')
-      .select([
-        'announcement.id',
-        'announcement.title',
-        'announcement.userRoles',
-        'announcement.params',
-        'announcement.startsAt',
-        'announcement.expiresAt'
-      ])
-      .where('announcement.id = :announcementId', { announcementId })
-      .getOne();
-
-    if (!announcement) {
-      throw new NotFoundError(AnnouncementErrorsEnum.ANNOUNCEMENT_NOT_FOUND);
-    }
+    const announcement = await this.getAnnouncementPartialInfo(
+      announcementId,
+      [
+        'id',
+        'status',
+        'title',
+        'userRoles',
+        'params',
+        'startsAt',
+        'expiresAt',
+        'deletedAt',
+        'filters',
+        'sendEmail',
+        'type'
+      ],
+      em
+    );
 
     return {
       id: announcement.id,
@@ -105,7 +137,10 @@ export class AnnouncementsService extends BaseService {
       params: announcement.params,
       startsAt: announcement.startsAt,
       expiresAt: announcement.expiresAt,
-      status: this.getAnnouncementStatus(announcement.startsAt, announcement.expiresAt)
+      status: announcement.status,
+      filters: announcement.filters,
+      sendEmail: announcement.sendEmail,
+      type: announcement.type
     };
   }
 
@@ -114,10 +149,12 @@ export class AnnouncementsService extends BaseService {
     data: {
       title: string;
       userRoles: ServiceRoleEnum[];
-      // template: T;
-      params: AnnouncementParamsType['GENERIC']; // For now, only the generic template is possible to create.
+      params: AnnouncementParamsType;
       startsAt: Date;
       expiresAt?: Date;
+      type: AnnouncementTypeEnum;
+      filters?: FilterPayload[];
+      sendEmail?: boolean;
     },
     config?: { usersToExclude?: string[] },
     entityManager?: EntityManager
@@ -131,27 +168,24 @@ export class AnnouncementsService extends BaseService {
     return await em.transaction(async transaction => {
       const savedAnnouncement = await transaction.save(AnnouncementEntity, {
         title: data.title,
-        template: 'GENERIC',
         userRoles: data.userRoles,
         params: data.params ?? null,
         startsAt: data.startsAt,
         expiresAt: data.expiresAt ?? null,
+        type: data.type,
         createdBy: requestContext.id,
-        updatedBy: requestContext.id
+        updatedBy: requestContext.id,
+        filters: data.filters ?? null,
+        sendEmail: data.sendEmail ?? false,
+        status: this.getAnnouncementStatus(data.startsAt, data.expiresAt)
       });
 
-      if (config?.usersToExclude && config.usersToExclude.length > 0) {
-        await em.save(
-          AnnouncementUserEntity,
-          config.usersToExclude.map(userId =>
-            AnnouncementUserEntity.new({
-              announcement: savedAnnouncement,
-              user: UserEntity.new({ id: userId }),
-              readAt: new Date(),
-              createdBy: requestContext.id,
-              updatedBy: requestContext.id
-            })
-          )
+      if (savedAnnouncement.status === AnnouncementStatusEnum.ACTIVE) {
+        await this.activateAnnouncement(
+          requestContext.id,
+          savedAnnouncement,
+          { usersToExclude: config?.usersToExclude },
+          transaction
         );
       }
 
@@ -165,78 +199,259 @@ export class AnnouncementsService extends BaseService {
     data: {
       title?: string;
       userRoles?: ServiceRoleEnum[];
-      // template: T;
-      params?: AnnouncementParamsType['GENERIC']; // For now, only the generic template is possible to create.
+      params?: AnnouncementParamsType;
       startsAt?: Date;
       expiresAt?: Date;
+      type?: AnnouncementTypeEnum;
+      filters?: FilterPayload[];
+      sendEmail?: boolean;
     },
     entityManager?: EntityManager
   ): Promise<void> {
     const em = entityManager ?? this.sqlConnection.manager;
 
-    const dbAnnouncement = await em
-      .createQueryBuilder(AnnouncementEntity, 'announcement')
-      .select([
-        'announcement.id',
-        'announcement.userRoles',
-        'announcement.params',
-        'announcement.startsAt',
-        'announcement.expiresAt'
-      ])
-      .where('announcement.id = :announcementId', { announcementId })
-      .getOne();
-
-    if (!dbAnnouncement) {
-      throw new NotFoundError(AnnouncementErrorsEnum.ANNOUNCEMENT_NOT_FOUND);
-    }
+    const dbAnnouncement = await this.getAnnouncementPartialInfo(
+      announcementId,
+      ['id', 'status', 'userRoles', 'params', 'startsAt', 'expiresAt', 'deletedAt', 'type', 'sendEmail'],
+      em
+    );
 
     const announcementStatus = this.getAnnouncementStatus(dbAnnouncement.startsAt, dbAnnouncement.expiresAt);
 
     const body = this.validateAnnouncementBody(announcementStatus, data, { startsAt: dbAnnouncement.startsAt });
 
-    await em.update(
-      AnnouncementEntity,
-      { id: announcementId },
-      {
-        ...body,
-        updatedBy: requestContext.id,
-        updatedAt: new Date()
+    await em.transaction(async transaction => {
+      await em.update(
+        AnnouncementEntity,
+        { id: announcementId },
+        {
+          ...body,
+          updatedBy: requestContext.id,
+          updatedAt: new Date()
+        }
+      );
+
+      if (
+        announcementStatus === AnnouncementStatusEnum.ACTIVE &&
+        dbAnnouncement.status === AnnouncementStatusEnum.SCHEDULED
+      ) {
+        await this.activateAnnouncement(requestContext.id, announcementId, {}, transaction);
       }
+    });
+  }
+
+  async deleteAnnouncement(
+    domainContext: DomainContextType,
+    announcementId: string,
+    entityManager?: EntityManager
+  ): Promise<void> {
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    return await connection.transaction(async transaction => {
+      await this.updateAnnouncementStatus(
+        domainContext.id,
+        announcementId,
+        AnnouncementStatusEnum.DELETED,
+        transaction
+      );
+      await transaction.delete(AnnouncementUserEntity, { announcement: { id: announcementId }, readAt: IsNull() });
+    });
+  }
+
+  private async addAnnouncementUsers(
+    announcement: Pick<AnnouncementEntity, 'id' | 'status' | 'sendEmail' | 'userRoles' | 'filters' | 'createdBy'>,
+    options: { usersToExclude?: string[] },
+    transaction: EntityManager
+  ): Promise<void> {
+    // userId::innovationId
+    const targetedInnovators = new Set<string>(); // Saves the userIds from the Innovators and their associated innovations
+    const targetRolesUserIds = new Set<string>(); // Saves the userIds that are not bound to a innovation
+    const targetRoles = new Set(announcement.userRoles);
+
+    // If its type innovation filtered get all the collaborators + owners for all the targetted innovations.
+    if (announcement.filters && targetRoles.has(ServiceRoleEnum.INNOVATOR)) {
+      targetRoles.delete(ServiceRoleEnum.INNOVATOR);
+
+      let innovations: { id: string }[] = [];
+      try {
+        innovations = await this.domainService.innovations.getInnovationsFiltered(
+          announcement.filters,
+          { onlySubmitted: true },
+          transaction
+        );
+      } catch (error) {
+        if (error instanceof BadRequestError && error.name === InnovationErrorsEnum.INNOVATION_FILTERS_ALL_INVALID && targetRoles.size === 0) {
+          await this.updateAnnouncementStatus(ADMIN_CRON_ID, announcement.id, AnnouncementStatusEnum.DELETED);
+        }
+      }
+
+      if (innovations.length) {
+        const ownerAndCollaboratorInfo = await transaction
+          .createQueryBuilder(InnovationEntity, 'innovation')
+          .select(['innovation.id', 'owner.id', 'collaborator.id', 'collaboratorUser.id'])
+          .leftJoin('innovation.owner', 'owner', 'owner.status <> :deleted ', { deleted: UserStatusEnum.DELETED })
+          .leftJoin('innovation.collaborators', 'collaborator', 'collaborator.status = :active', {
+            active: InnovationCollaboratorStatusEnum.ACTIVE
+          })
+          .leftJoin('collaborator.user', 'collaboratorUser', 'collaboratorUser.status <> :deleted', {
+            deleted: UserStatusEnum.DELETED
+          })
+          .where('innovation.id IN (:...innovationIds)', { innovationIds: innovations.map(i => i.id) })
+          .getMany();
+        ownerAndCollaboratorInfo.forEach(i => {
+          if (i.owner) {
+            targetedInnovators.add(`${i.owner.id}::${i.id}`);
+          }
+          i.collaborators.forEach(c => c.user && targetedInnovators.add(`${c.user.id}::${i.id}`));
+        });
+      }
+    }
+
+    // This filter is needed since if its of type INNOVATOR + filtered we already got the Innovators in the query before.
+    if (targetRoles.size) {
+      const users = await transaction
+        .createQueryBuilder(UserEntity, 'user')
+        .select(['user.id'])
+        .innerJoin('user.serviceRoles', 'role')
+        .where('role.role IN (:...targetRoles)', { targetRoles: Array.from(targetRoles) })
+        .andWhere('role.isActive = 1')
+        .getMany();
+      users.forEach(u => targetRolesUserIds.add(u.id));
+    }
+
+    // Add users to the announcementUsers table.
+    const targetedUsers: { id: string; innovationId?: string }[] = [];
+    targetRolesUserIds.forEach(id => targetedUsers.push({ id }));
+    targetRolesUserIds.clear();
+    targetedInnovators.forEach(value => {
+      const [userId, innovationId] = value.split('::');
+      if (userId && innovationId) {
+        targetedUsers.push({ id: userId, innovationId });
+      }
+    });
+    targetedInnovators.clear();
+
+    await transaction.save(
+      AnnouncementUserEntity,
+      targetedUsers.map(u =>
+        AnnouncementUserEntity.new({
+          announcement: AnnouncementEntity.new({ id: announcement.id }),
+          user: UserEntity.new({ id: u.id }),
+          ...(u.innovationId && { innovation: InnovationEntity.new({ id: u.innovationId }) }),
+          createdBy: announcement.createdBy,
+          updatedBy: announcement.createdBy,
+          ...(options.usersToExclude && options.usersToExclude.includes(u.id) && { readAt: new Date() })
+        })
+      ),
+      { chunk: 250 }
     );
   }
 
-  async deleteAnnouncement(announcementId: string, entityManager?: EntityManager): Promise<void> {
-    const connection = entityManager ?? this.sqlConnection.manager;
+  async activateAnnouncement(
+    activatedBy: string,
+    announcement: string | AnnouncementEntity,
+    options: { usersToExclude?: string[] },
+    entityManager?: EntityManager
+  ): Promise<void> {
+    const em = entityManager ?? this.sqlConnection.manager;
 
-    const announcement = await this.getAnnouncementInfo(announcementId, connection);
+    const announcementInfo = await this.getAnnouncementPartialInfo(
+      announcement,
+      ['id', 'status', 'userRoles', 'filters', 'createdBy', 'sendEmail'],
+      em
+    );
 
-    if (announcement.status === AnnouncementStatusEnum.DONE) {
-      throw new UnprocessableEntityError(AnnouncementErrorsEnum.ANNOUNCEMENT_CANT_BE_DELETED_IN_DONE_STATUS);
-    }
-
-    const announcementUsers = await connection
-      .createQueryBuilder(AnnouncementUserEntity, 'announcementUser')
-      .select(['announcementUser.id'])
-      .where('announcementUser.announcement_id = :announcementId', { announcementId })
-      .getMany();
-
-    return await connection.transaction(async transaction => {
-      await transaction.softDelete(AnnouncementEntity, { id: announcementId });
-
-      if (announcementUsers.length > 0) {
-        await transaction.softDelete(AnnouncementUserEntity, { id: In(announcementUsers.map(u => u.id)) });
+    await em.transaction(async transaction => {
+      await this.addAnnouncementUsers(announcementInfo, options, transaction);
+      // On the create we previously change the status, this check is to prevent double updates.
+      if (announcementInfo.status === AnnouncementStatusEnum.SCHEDULED) {
+        await this.updateAnnouncementStatus(activatedBy, announcementInfo.id, AnnouncementStatusEnum.ACTIVE);
       }
     });
+
+    if (announcementInfo.sendEmail) {
+      await this.notifierService.sendSystemNotification(NotifierTypeEnum.NEW_ANNOUNCEMENT, {
+        announcementId: announcementInfo.id
+      });
+    }
+  }
+
+  async getAnnouncementsToActivate(entityManager?: EntityManager): Promise<AnnouncementEntity[]> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const announcements = await em
+      .createQueryBuilder(AnnouncementEntity, 'announcement')
+      .where('GETDATE() > announcement.starts_at')
+      .andWhere('(announcement.expires_at IS NULL OR GETDATE() < announcement.expires_at)')
+      .andWhere('announcement.status = :scheduledStatus', { scheduledStatus: AnnouncementStatusEnum.SCHEDULED })
+      .getMany();
+
+    return announcements;
+  }
+
+  /**
+   * Function that expires the announcements, only used on the cron so the updatedBy is hardcoded.
+   */
+  async expireAnnouncements(entityManager?: EntityManager): Promise<number> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const announcements = await em
+      .createQueryBuilder(AnnouncementEntity, 'announcement')
+      .select(['announcement.id'])
+      .where('GETDATE() >= announcement.expires_at')
+      .andWhere('announcement.status = :active', { active: AnnouncementStatusEnum.ACTIVE })
+      .getMany();
+
+    if (announcements.length) {
+      const announcementIds = announcements.map(a => a.id);
+      await em.transaction(async transaction => {
+        await transaction.update(
+          AnnouncementEntity,
+          { id: In(announcementIds) },
+          { status: AnnouncementStatusEnum.DONE, updatedAt: new Date(), updatedBy: ADMIN_CRON_ID }
+        );
+
+        await transaction
+          .createQueryBuilder()
+          .delete()
+          .from(AnnouncementUserEntity)
+          .where('announcement_id IN (:...announcementIds)', { announcementIds })
+          .andWhere('read_at IS NULL')
+          .execute();
+      });
+    }
+    return announcements.length;
+  }
+
+  private async updateAnnouncementStatus(
+    updatedBy: string,
+    announcementId: string,
+    status: AnnouncementStatusEnum,
+    entityManager?: EntityManager
+  ): Promise<void> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const announcement = await this.getAnnouncementPartialInfo(announcementId, ['id', 'status'], em);
+
+    if (
+      (status === AnnouncementStatusEnum.ACTIVE && announcement.status !== AnnouncementStatusEnum.SCHEDULED) ||
+      (status === AnnouncementStatusEnum.DONE && announcement.status !== AnnouncementStatusEnum.ACTIVE) ||
+      (status === AnnouncementStatusEnum.DELETED && announcement.status === AnnouncementStatusEnum.DONE)
+    ) {
+      throw new ConflictError(AnnouncementErrorsEnum.ANNOUNCEMENT_INVALID_UPDATE_STATUS);
+    }
+
+    await em.update(AnnouncementEntity, { id: announcementId }, { status, updatedBy, updatedAt: new Date() });
   }
 
   private validateAnnouncementBody(
     status: AnnouncementStatusEnum,
     body: unknown,
     curAnnouncement: { startsAt: Date }
-  ): AnnouncementActiveBodyType | AnnouncementScheduledBodyType {
+  ): AnnouncementActiveBodyType | AnnouncementBodyType {
     try {
       if (status === AnnouncementStatusEnum.SCHEDULED) {
-        return JoiHelper.Validate<AnnouncementScheduledBodyType>(AnnouncementScheduledBodySchema, body);
+        return JoiHelper.Validate<AnnouncementBodyType>(AnnouncementBodySchema, body);
       }
 
       if (status === AnnouncementStatusEnum.ACTIVE) {
@@ -250,11 +465,15 @@ export class AnnouncementsService extends BaseService {
       });
     }
 
+    if (status === AnnouncementStatusEnum.DELETED) {
+      throw new UnprocessableEntityError(AnnouncementErrorsEnum.ANNOUNCEMENT_CANT_BE_UPDATED_IN_DELETED_STATUS);
+    }
+
     // Means that is in DONE status
     throw new UnprocessableEntityError(AnnouncementErrorsEnum.ANNOUNCEMENT_CANT_BE_UPDATED_IN_DONE_STATUS);
   }
 
-  private getAnnouncementStatus(startsAt: Date, expiresAt: null | Date): AnnouncementStatusEnum {
+  private getAnnouncementStatus(startsAt: Date, expiresAt?: null | Date): AnnouncementStatusEnum {
     const now = new Date();
 
     if (now <= startsAt) {
@@ -266,5 +485,36 @@ export class AnnouncementsService extends BaseService {
     }
 
     return AnnouncementStatusEnum.ACTIVE;
+  }
+
+  /**
+   * Function that either makes sure that all the needed fields exist on the entity or refetches it.
+   */
+  private async getAnnouncementPartialInfo<T extends Exclude<keyof AnnouncementEntity, 'announcementUsers'>>(
+    announcement: string | AnnouncementEntity,
+    fields: T[],
+    entityManager?: EntityManager
+  ): Promise<Pick<AnnouncementEntity, T>> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    // If the announcement already has all the fields needed to need to refetch it.
+    if (
+      typeof announcement !== 'string' &&
+      fields.filter(f => !['filters', 'expiresAt'].includes(f)).every(f => !(f in announcement))
+    ) {
+      return announcement;
+    }
+
+    const dbAnnouncement = await em
+      .createQueryBuilder(AnnouncementEntity, 'announcement')
+      .select(fields.map(f => `announcement.${f}`))
+      .where('announcement.id = :announcementId', {
+        announcementId: typeof announcement === 'string' ? announcement : announcement.id
+      })
+      .getOne();
+    if (!dbAnnouncement) {
+      throw new NotFoundError(AnnouncementErrorsEnum.ANNOUNCEMENT_NOT_FOUND);
+    }
+    return dbAnnouncement;
   }
 }

@@ -2,7 +2,6 @@ import { container } from '../_config';
 
 import { InnovationDocumentEntity } from '@innovations/shared/entities';
 import { ServiceRoleEnum } from '@innovations/shared/enums';
-import { CurrentDocumentConfig } from '@innovations/shared/schemas/innovation-record';
 import { TestsHelper } from '@innovations/shared/tests';
 import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
 import type { EntityManager } from 'typeorm';
@@ -47,12 +46,12 @@ describe('Innovation Document suite', () => {
 
   describe('getInnovationDocument', () => {
     it('should return the version in draft', async () => {
-      const document = await sut.getInnovationDocument(innovation.id, CurrentDocumentConfig.version, 'DRAFT', em);
+      const document = await sut.getInnovationDocument(innovation.id, { type: 'DRAFT' }, em);
       expect(document.INNOVATION_DESCRIPTION.description).toBe(draftDescription);
     });
 
     it('should return the version that was latest submitted', async () => {
-      const document = await sut.getInnovationDocument(innovation.id, CurrentDocumentConfig.version, 'SUBMITTED', em);
+      const document = await sut.getInnovationDocument(innovation.id, { type: 'SUBMITTED' }, em);
       expect(document.INNOVATION_DESCRIPTION.description).not.toBe(draftDescription);
     });
   });

@@ -6,6 +6,8 @@ import type { TestUserType } from '@users/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@users/shared/types';
 import { AnnouncementsService } from '../_services/announcements.service';
 import type { ResponseDTO } from './transformation.dtos';
+import type { QueryParamsType } from './validation.schemas';
+import { AnnouncementTypeEnum } from '@users/shared/enums';
 
 jest.mock('@users/shared/decorators', () => ({
   JwtDecoder: jest.fn().mockImplementation(() => (_: any, __: string, descriptor: PropertyDescriptor) => {
@@ -27,18 +29,16 @@ const expected = [
   {
     id: randUuid(),
     title: randText(),
-    template: 'GENERIC' as const,
     startsAt: randPastDate(),
     expiresAt: randFutureDate(),
-    params: {}
+    params: null
   },
   {
     id: randUuid(),
     title: randText(),
-    template: 'GENERIC' as const,
     startsAt: randPastDate(),
     expiresAt: null,
-    params: {}
+    params: null
   }
 ];
 const mock = jest.spyOn(AnnouncementsService.prototype, 'getUserRoleAnnouncements').mockResolvedValue(expected);
@@ -52,6 +52,7 @@ describe('v1-me-announcements Suite', () => {
     it('should return the announcements', async () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.johnInnovator)
+        .setQuery<QueryParamsType>({ type: [AnnouncementTypeEnum.LOG_IN] })
         .call<ResponseDTO>(azureFunction);
 
       expect(result.body).toStrictEqual(expected);
@@ -68,7 +69,10 @@ describe('v1-me-announcements Suite', () => {
       ['NA', 200, scenario.users.paulNeedsAssessor],
       ['Innovator', 200, scenario.users.johnInnovator]
     ])('access with user %s should give %i', async (_role: string, status: number, user: TestUserType) => {
-      const result = await new AzureHttpTriggerBuilder().setAuth(user).call<ErrorResponseType>(azureFunction);
+      const result = await new AzureHttpTriggerBuilder()
+        .setAuth(user)
+        .setQuery<QueryParamsType>({ type: [AnnouncementTypeEnum.LOG_IN] })
+        .call<ErrorResponseType>(azureFunction);
 
       expect(result.status).toBe(status);
     });

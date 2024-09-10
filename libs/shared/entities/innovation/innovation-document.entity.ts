@@ -2,7 +2,7 @@ import { Column, Entity, JoinColumn, OneToOne, PrimaryColumn } from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
 
-import { CurrentDocumentConfig, CurrentDocumentType, DocumentType } from '../../schemas/innovation-record/index';
+import type { CurrentDocumentType, DocumentType } from '../../schemas/innovation-record/index';
 import { InnovationEntity } from './innovation.entity';
 
 @Entity('innovation_document')
@@ -34,21 +34,28 @@ export class InnovationDocumentEntity extends BaseEntity {
  */
 export const createDocumentFromInnovation = (
   innovation: InnovationEntity,
+  version: number,
   fields: {
     name: string;
-    description?: string;
+    description: string;
     countryName: string;
+    officeLocation: string;
+    countryLocation?: string;
     postcode?: string;
+    hasWebsite: string;
     website?: string;
   }
 ): InnovationDocumentEntity => {
   const document: CurrentDocumentType = {
-    version: CurrentDocumentConfig.version,
+    version,
     INNOVATION_DESCRIPTION: {
       name: fields.name,
       description: fields.description,
       countryName: fields.countryName,
       postcode: fields.postcode,
+      officeLocation: fields.officeLocation,
+      countryLocation: fields.countryLocation,
+      hasWebsite: fields.hasWebsite,
       website: fields.website
     },
     UNDERSTANDING_OF_NEEDS: {},
@@ -65,7 +72,7 @@ export const createDocumentFromInnovation = (
 
   return {
     id: innovation.id,
-    version: CurrentDocumentConfig.version,
+    version,
     document: document,
     isSnapshot: true,
     description: 'Initial document',

@@ -191,24 +191,22 @@ export class StatisticsService extends BaseService {
 
   async getSubmittedSectionsSinceAssessmentStart(
     innovationId: string,
-    domainContext: DomainContextType,
     entityManager?: EntityManager
   ): Promise<{ section: CurrentCatalogTypes.InnovationSections; updatedAt: Date }[]> {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const assessment = await connection
-      .createQueryBuilder(InnovationAssessmentEntity, 'assessments')
-      .innerJoin('assessments.assignTo', 'assignTo')
-      .innerJoin('assessments.innovation', 'innovation')
+      .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
+      .innerJoin('assessment.innovation', 'innovation')
       .where('innovation.id = :innovationId', { innovationId })
-      .andWhere('assignTo.id = :userId', { userId: domainContext.id })
+      .andWhere('assessment.id = innovation.current_assessment_id')
       .getOne();
 
-    const assessmentStartedAt = assessment?.updatedAt;
+    const assessmentStartedAt = assessment?.startedAt;
 
     const sections = await connection
       .createQueryBuilder(InnovationSectionEntity, 'section')
-      .innerJoinAndSelect('section.innovation', 'innovation')
+      .innerJoin('section.innovation', 'innovation')
       .select('section.section', 'section_section')
       .addSelect('section.updatedAt', 'section_updated_at')
       .where('innovation.id = :innovationId', { innovationId })

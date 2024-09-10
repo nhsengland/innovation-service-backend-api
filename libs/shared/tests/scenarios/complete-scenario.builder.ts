@@ -1,7 +1,15 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { DataSource } from 'typeorm';
 
-import { randEmail, randFutureDate, randProductDescription, randSoonDate, randText, randUuid } from '@ngneat/falso';
+import {
+  randEmail,
+  randFutureDate,
+  randPastDate,
+  randProductDescription,
+  randSoonDate,
+  randText,
+  randUuid
+} from '@ngneat/falso';
 import {
   InnovationCollaboratorStatusEnum,
   InnovationExportRequestStatusEnum,
@@ -15,11 +23,13 @@ import {
   ThreadContextTypeEnum
 } from '../../enums/innovation.enums';
 import { ServiceRoleEnum, UserStatusEnum } from '../../enums/user.enums';
+import { AnnouncementStatusEnum } from '../../enums/announcement.enums';
 import type { Reminder, SupportUpdated } from '../../types';
 import { InnovationAssessmentBuilder } from '../builders/innovation-assessment.builder';
 import { InnovationCollaboratorBuilder } from '../builders/innovation-collaborator.builder';
 import { InnovationExportRequestBuilder } from '../builders/innovation-export-request.builder';
 import { InnovationFileBuilder } from '../builders/innovation-file.builder';
+import { InnovationReassessmentRequestBuilder } from '../builders/innovation-reassessment-request.builder';
 import { InnovationSupportLogBuilder } from '../builders/innovation-support-log.builder';
 import { InnovationSupportBuilder } from '../builders/innovation-support.builder';
 import { InnovationTaskBuilder } from '../builders/innovation-task.builder';
@@ -31,6 +41,8 @@ import { NotifyMeSubscriptionBuilder } from '../builders/notify-me-subscription.
 import { OrganisationUnitBuilder } from '../builders/organisation-unit.builder';
 import { OrganisationBuilder } from '../builders/organisation.builder';
 import { TestUserType, UserBuilder } from '../builders/user.builder';
+import { AnnouncementBuilder } from '../builders/announcement.builder';
+import { AnnouncementUserBuilder } from '../builders/announcement-users.builder';
 
 export type CompleteScenarioType = Awaited<ReturnType<CompleteScenarioBuilder['createScenario']>>;
 
@@ -50,7 +62,6 @@ export class CompleteScenarioBuilder {
   async createScenario(sqlConnection: DataSource) {
     const res = await sqlConnection.transaction(async entityManager => {
       // Needs assessors
-
       const paulNeedsAssessor = await new UserBuilder(entityManager)
         .setName('Paul Needs Assessor')
         .addRole(ServiceRoleEnum.ASSESSMENT, 'assessmentRole')
@@ -189,6 +200,7 @@ export class CompleteScenarioBuilder {
       // Left collaborator sebastiao
       // This innovation is shared with medtechOrg and healthOrg
       const johnInnovation = await new InnovationBuilder(entityManager)
+        .setName('John Innovation')
         .setOwner(johnInnovator.id)
         .setStatus(InnovationStatusEnum.IN_PROGRESS)
         .shareWith([healthOrg, medTechOrg])
@@ -207,12 +219,14 @@ export class CompleteScenarioBuilder {
 
       // Innovation owner by johnInnovator with nothing
       const johnInnovationEmpty = await new InnovationBuilder(entityManager)
+        .setName('John Innovation Empty')
         .setOwner(johnInnovator.id)
         .setStatus(InnovationStatusEnum.IN_PROGRESS)
         .save();
 
       // Archived Innovation owned by johnInnovator with janeCollaboratorArchive as ACTIVE collaborator
       const johnInnovationArchived = await new InnovationBuilder(entityManager)
+        .setName('John Innovation Archived')
         .setOwner(johnInnovator.id)
         .setStatus(InnovationStatusEnum.ARCHIVED)
         .shareWith([healthOrg, medTechOrg])
@@ -264,6 +278,13 @@ export class CompleteScenarioBuilder {
         .setUpdatedBy(paulNeedsAssessor.id)
         .setFinishedAt()
         .suggestOrganisationUnits(healthOrgUnit, innovTechOrgUnit)
+        .save();
+      await new InnovationSupportLogBuilder(entityManager)
+        .setInnovation(johnInnovation.id)
+        .setCreatedBy(paulNeedsAssessor, paulNeedsAssessor.roles['assessmentRole']!)
+        .setLogType(InnovationSupportLogTypeEnum.ASSESSMENT_SUGGESTION)
+        .setSuggestedUnits([healthOrgUnit.id, innovTechOrgUnit.id])
+        .setParams({ assessmentId: johnInnovationAssessmentByPaul.id })
         .save();
 
       // support on johnInnovation by HealthOrgUnit accessors (alice and jamie)
@@ -723,6 +744,7 @@ export class CompleteScenarioBuilder {
         .save();
 
       const adamInnovation = await new InnovationBuilder(entityManager)
+        .setName('Adam Innovation')
         .setOwner(adamInnovator.id)
         .setStatus(InnovationStatusEnum.IN_PROGRESS)
         .addSection('INNOVATION_DESCRIPTION')
@@ -731,6 +753,7 @@ export class CompleteScenarioBuilder {
         .save();
 
       const adamInnovationEmpty = await new InnovationBuilder(entityManager)
+        .setName('Adam Innovation Empty')
         .setOwner(adamInnovator.id)
         .setStatus(InnovationStatusEnum.IN_PROGRESS)
         .save();
@@ -815,6 +838,7 @@ export class CompleteScenarioBuilder {
         .save();
 
       const chestHarnessInnovation = await new InnovationBuilder(entityManager)
+        .setName('Chest Harness')
         .setOwner(ottoOctaviusInnovator.id)
         .save();
 
@@ -825,7 +849,10 @@ export class CompleteScenarioBuilder {
         .setAccessors([aliceQualifyingAccessor, jamieMadroxAccessor])
         .save();
 
-      const tentaclesInnovation = await new InnovationBuilder(entityManager).setOwner(ottoOctaviusInnovator.id).save();
+      const tentaclesInnovation = await new InnovationBuilder(entityManager)
+        .setOwner(ottoOctaviusInnovator.id)
+        .setName('Tentacles')
+        .save();
 
       const tentaclesInnovationSupport = await new InnovationSupportBuilder(entityManager)
         .setStatus(InnovationSupportStatusEnum.ENGAGING)
@@ -835,6 +862,7 @@ export class CompleteScenarioBuilder {
         .save();
 
       const brainComputerInterfaceInnovation = await new InnovationBuilder(entityManager)
+        .setName('Brain Computer Interface')
         .setOwner(ottoOctaviusInnovator.id)
         .setStatus(InnovationStatusEnum.NEEDS_ASSESSMENT)
         .addSection('INNOVATION_DESCRIPTION')
@@ -847,6 +875,7 @@ export class CompleteScenarioBuilder {
         .save();
 
       const powerSourceInnovation = await new InnovationBuilder(entityManager)
+        .setName('Power Source')
         .setOwner(ottoOctaviusInnovator.id)
         .setStatus(InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT)
         .addSection('INNOVATION_DESCRIPTION')
@@ -874,6 +903,88 @@ export class CompleteScenarioBuilder {
           'suggestionMessage',
           aliceSuggestsMedTechOrgUnitForChestHarnessInnovation.description
         )
+        .save();
+
+      // Tristan is an innovator with a innovation with multiple assessments
+      const tristanInnovator = await new UserBuilder(entityManager)
+        .setName('Tristan Innovator')
+        .addRole(ServiceRoleEnum.INNOVATOR, 'innovatorRole')
+        .save();
+
+      const innovationMultipleAssessments = await new InnovationBuilder(entityManager)
+        .setName('Innovation Multiple Assessments')
+        .setOwner(tristanInnovator.id)
+        .setStatus(InnovationStatusEnum.IN_PROGRESS)
+        .addSection('INNOVATION_DESCRIPTION')
+        .addSection('COST_OF_INNOVATION')
+        .shareWith([healthOrg])
+        .save();
+
+      const innovationMultipleAssessmentsAssessmentByPaul = await new InnovationAssessmentBuilder(entityManager)
+        .setInnovation(innovationMultipleAssessments.id)
+        .setVersion(1, 0)
+        .setNeedsAssessor(paulNeedsAssessor.id)
+        .setUpdatedBy(paulNeedsAssessor.id)
+        .setFinishedAt(randPastDate())
+        .suggestOrganisationUnits(healthOrgUnit, innovTechOrgUnit)
+        .save();
+      await new InnovationSupportLogBuilder(entityManager)
+        .setInnovation(innovationMultipleAssessments.id)
+        .setCreatedBy(paulNeedsAssessor, paulNeedsAssessor.roles['assessmentRole']!)
+        .setLogType(InnovationSupportLogTypeEnum.ASSESSMENT_SUGGESTION)
+        .setSuggestedUnits([healthOrgUnit.id, innovTechOrgUnit.id])
+        .setParams({ assessmentId: innovationMultipleAssessmentsAssessmentByPaul.id })
+        .save();
+
+      const innovationMultipleAssessmentsAssessmentByPaulLatest = await new InnovationAssessmentBuilder(entityManager)
+        .setInnovation(innovationMultipleAssessments.id)
+        .setVersion(1, 1)
+        .setPreviousAssessment(innovationMultipleAssessmentsAssessmentByPaul.id)
+        .setNeedsAssessor(paulNeedsAssessor.id)
+        .setUpdatedBy(paulNeedsAssessor.id)
+        .setFinishedAt()
+        .suggestOrganisationUnits(healthOrgUnit, innovTechOrgUnit)
+        .save();
+
+      const innovationMultipleAssessmentsReassessmentRequest = await new InnovationReassessmentRequestBuilder(
+        entityManager
+      )
+        .setAssessment(innovationMultipleAssessmentsAssessmentByPaulLatest)
+        .setInnovation(innovationMultipleAssessments)
+        .setUpdateStatus(false)
+        .save();
+
+      const announcementForQAs = await new AnnouncementBuilder(entityManager)
+        .setTitle('Announcement for QAs')
+        .setStartsAt(randPastDate())
+        .setUserRoles([ServiceRoleEnum.QUALIFYING_ACCESSOR])
+        .setStatus(AnnouncementStatusEnum.ACTIVE)
+        .save();
+
+      const announcementUserAliceQA = await new AnnouncementUserBuilder(entityManager)
+        .setAnnouncement(announcementForQAs.id)
+        .setUserAndInnovation(aliceQualifyingAccessor.id, null)
+        .save();
+
+      const announcementUserBartQA = await new AnnouncementUserBuilder(entityManager)
+        .setAnnouncement(announcementForQAs.id)
+        .setUserAndInnovation(bartQualifyingAccessor.id, null)
+        .save();
+
+      const announcementForSpecificInnovations = await new AnnouncementBuilder(entityManager)
+        .setTitle('Announcement for Specific Innovations')
+        .setUserRoles([ServiceRoleEnum.INNOVATOR])
+        .setStatus(AnnouncementStatusEnum.ACTIVE)
+        .save();
+
+      const announcementUserForSpecificInnovationsJohnInnovation = await new AnnouncementUserBuilder(entityManager)
+        .setAnnouncement(announcementForSpecificInnovations.id)
+        .setUserAndInnovation(johnInnovator.id, johnInnovation.id)
+        .save();
+
+      const announcementUserForSpecificInnovationsAdamInnovation = await new AnnouncementUserBuilder(entityManager)
+        .setAnnouncement(announcementForSpecificInnovations.id)
+        .setUserAndInnovation(adamInnovator.id, adamInnovation.id)
         .save();
 
       return {
@@ -1063,6 +1174,18 @@ export class CompleteScenarioBuilder {
               powerSourceInnovation: powerSourceInnovation
             }
           },
+          tristanInnovator: {
+            ...tristanInnovator,
+            roles: { innovatorRole: tristanInnovator.roles['innovatorRole']! },
+            innovations: {
+              innovationMultipleAssessments: {
+                ...innovationMultipleAssessments,
+                assessment: innovationMultipleAssessmentsAssessmentByPaulLatest,
+                previousAssessment: innovationMultipleAssessmentsAssessmentByPaul,
+                reassessmentRequest: innovationMultipleAssessmentsReassessmentRequest
+              }
+            }
+          },
           // Accessors
           aliceQualifyingAccessor: {
             ...aliceQualifyingAccessor,
@@ -1217,6 +1340,22 @@ export class CompleteScenarioBuilder {
             ...inactiveEmptyOrg,
             organisationUnits: {
               inactiveEmptyOrgUnit: inactiveEmptyOrgUnit
+            }
+          }
+        },
+        announcements: {
+          announcementForQAs: {
+            ...announcementForQAs,
+            announcementUsers: {
+              announcementUserAliceQA: announcementUserAliceQA,
+              announcementUserBartQA: announcementUserBartQA
+            }
+          },
+          announcementForSpecificInnovations: {
+            ...announcementForSpecificInnovations,
+            announcementUsers: {
+              announcementUserJohnInnovation: announcementUserForSpecificInnovationsJohnInnovation,
+              announcementUserAdamInnovation: announcementUserForSpecificInnovationsAdamInnovation
             }
           }
         }

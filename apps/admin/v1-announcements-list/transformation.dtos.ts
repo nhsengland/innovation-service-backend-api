@@ -1,4 +1,4 @@
-import type { AnnouncementStatusEnum } from '@admin/shared/enums';
+import type { AnnouncementStatusEnum, AnnouncementTypeEnum } from '@admin/shared/enums';
 
 export type ResponseDTO = {
   count: number;
@@ -8,5 +8,6 @@ export type ResponseDTO = {
     startsAt: Date;
     expiresAt: null | Date;
     status: AnnouncementStatusEnum;
+    type: AnnouncementTypeEnum;
   }[];
 };

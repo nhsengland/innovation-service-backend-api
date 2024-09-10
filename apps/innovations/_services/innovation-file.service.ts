@@ -21,10 +21,12 @@ import {
   UnprocessableEntityError
 } from '@innovations/shared/errors';
 import { TranslationHelper, type PaginationQueryParamsType } from '@innovations/shared/helpers';
-import { CurrentDocumentConfig } from '@innovations/shared/schemas/innovation-record';
-import { allowFileUploads } from '@innovations/shared/schemas/innovation-record/202304/document.config';
-import type { DocumentType202304 } from '@innovations/shared/schemas/innovation-record/202304/document.types';
-import type { FileStorageService, IdentityProviderService, NotifierService } from '@innovations/shared/services';
+import type {
+  FileStorageService,
+  IdentityProviderService,
+  IRSchemaService,
+  NotifierService
+} from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import {
   isAccessorDomainContextType,
@@ -49,6 +51,7 @@ export class InnovationFileService extends BaseService {
     @inject(SHARED_SYMBOLS.FileStorageService) private fileStorageService: FileStorageService,
     @inject(SHARED_SYMBOLS.IdentityProviderService) private identityProviderService: IdentityProviderService,
     @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
+    @inject(SHARED_SYMBOLS.IRSchemaService) private irSchemaService: IRSchemaService,
     @inject(SYMBOLS.InnovationDocumentService) private innovationDocumentService: InnovationDocumentService
   ) {
     super();
@@ -363,10 +366,11 @@ export class InnovationFileService extends BaseService {
   ): Promise<{ id: string }> {
     const connection = entityManager ?? this.sqlConnection.manager;
 
+    const schema = await this.irSchemaService.getSchema();
     if (
       innovationStatus === InnovationStatusEnum.CREATED &&
       data.context.type === InnovationFileContextTypeEnum.INNOVATION_SECTION &&
-      !allowFileUploads.has(data.context.id as keyof DocumentType202304)
+      !schema.model.canUploadFiles(data.context.id)
     ) {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_FILE_FORBIDDEN_SECTION);
     }
@@ -614,8 +618,7 @@ export class InnovationFileService extends BaseService {
   ) => {
     const document = await this.innovationDocumentService.getInnovationDocument(
       innovationId,
-      CurrentDocumentConfig.version,
-      this.innovationDocumentService.getDocumentTypeAccordingWithRole(role),
+      { type: this.innovationDocumentService.getDocumentTypeAccordingWithRole(role) },
       entityManager
     );
 

@@ -14,6 +14,7 @@ export type ResponseDTO = {
   status: InnovationStatusEnum;
   archivedStatus?: InnovationStatusEnum;
   groupedStatus: InnovationGroupedStatusEnum;
+  hasBeenAssessed: boolean;
   statusUpdatedAt: Date;
   submittedAt: null | Date;
   countryName: null | string;

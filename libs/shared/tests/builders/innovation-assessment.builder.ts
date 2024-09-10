@@ -1,16 +1,20 @@
 import { randProductDescription, randText } from '@ngneat/falso';
 import type { DeepPartial, EntityManager } from 'typeorm';
-import { InnovationAssessmentEntity } from '../../entities/innovation/innovation-assessment.entity';
+import { InnovationAssessmentEntity, InnovationEntity } from '../../entities';
 import type { MaturityLevelCatalogueType, YesPartiallyNoCatalogueType } from '../../enums/index';
 import { BaseBuilder } from './base.builder';
 import type { TestOrganisationUnitType } from './organisation-unit.builder';
 
 export type TestInnovationAssessmentType = {
   id: string;
+  majorVersion: number;
+  minorVersion: number;
+  editReason: string | null;
   description: string | null;
   summary: string | null;
   maturityLevel: MaturityLevelCatalogueType | null;
   maturityLevelComment: string | null;
+  startedAt: Date | null;
   finishedAt: Date | null;
   hasRegulatoryApprovals: YesPartiallyNoCatalogueType | null;
   hasRegulatoryApprovalsComment: string | null;
@@ -30,7 +34,10 @@ export type TestInnovationAssessmentType = {
 
 export class InnovationAssessmentBuilder extends BaseBuilder {
   private assessment: DeepPartial<InnovationAssessmentEntity> = {
+    majorVersion: 1,
+    minorVersion: 1,
     description: randProductDescription(),
+    startedAt: new Date(),
     summary: randText(),
     maturityLevel: 'READY',
     maturityLevelComment: randText(),
@@ -58,6 +65,17 @@ export class InnovationAssessmentBuilder extends BaseBuilder {
 
   setInnovation(innovationId: string): this {
     this.assessment.innovation = { id: innovationId };
+    return this;
+  }
+
+  setVersion(major: number, minor: number): this {
+    this.assessment.majorVersion = major;
+    this.assessment.minorVersion = minor;
+    return this;
+  }
+
+  setPreviousAssessment(assessmentId: string): this {
+    this.assessment.previousAssessment = { id: assessmentId };
     return this;
   }
 
@@ -94,16 +112,26 @@ export class InnovationAssessmentBuilder extends BaseBuilder {
       .where('assessment.id = :id', { id: savedAssessment.id })
       .getOne();
 
+    await this.getEntityManager().update(
+      InnovationEntity,
+      { id: this.assessment.innovation?.id },
+      { currentAssessment: { id: savedAssessment.id }, hasBeenAssessed: !!this.assessment.finishedAt }
+    );
+
     if (!result) {
       throw new Error('Error saving/retriving assessment information.');
     }
 
     return {
       id: result.id,
+      majorVersion: result.majorVersion,
+      minorVersion: result.minorVersion,
+      editReason: result.editReason,
       description: result.description,
       summary: result.summary,
       maturityLevel: result.maturityLevel,
       maturityLevelComment: result.maturityLevelComment,
+      startedAt: result.startedAt,
       finishedAt: result.finishedAt,
       hasRegulatoryApprovals: result.hasRegulatoryApprovals,
       hasRegulatoryApprovalsComment: result.hasRegulatoryApprovalsComment,

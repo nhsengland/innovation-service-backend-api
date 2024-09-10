@@ -45,9 +45,14 @@ class V1InnovationAssessmentInfo {
       const result = await innovationAssessmentsService.getInnovationAssessmentInfo(domainContext, params.assessmentId);
       context.res = ResponseHelper.Ok<ResponseDTO>({
         id: result.id,
+        majorVersion: result.majorVersion,
+        minorVersion: result.minorVersion,
+        editReason: result.editReason,
+        ...(result.previousAssessment && { previousAssessment: result.previousAssessment }),
         ...(result.reassessment === undefined ? {} : { reassessment: result.reassessment }),
         summary: result.summary,
         description: result.description,
+        startedAt: result.startedAt,
         finishedAt: result.finishedAt,
         ...(result.assignTo && { assignTo: { id: result.assignTo.id, name: result.assignTo.name } }),
         maturityLevel: result.maturityLevel,
@@ -73,7 +78,8 @@ class V1InnovationAssessmentInfo {
           units: item.units
         })),
         updatedAt: result.updatedAt,
-        updatedBy: result.updatedBy
+        updatedBy: result.updatedBy,
+        isLatest: result.isLatest
       });
       return;
     } catch (error) {

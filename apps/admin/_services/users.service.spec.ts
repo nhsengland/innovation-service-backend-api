@@ -7,6 +7,7 @@ import { UserEntity, UserRoleEntity } from '@admin/shared/entities';
 import { NotifierTypeEnum, ServiceRoleEnum, UserStatusEnum } from '@admin/shared/enums';
 import {
   BadRequestError,
+  ForbiddenError,
   GenericErrorsEnum,
   NotFoundError,
   OrganisationErrorsEnum,
@@ -175,12 +176,12 @@ describe('Admin / _services / users service suite', () => {
             },
             em
           )
-        ).rejects.toThrowError(new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND));
+        ).rejects.toThrow(new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND));
       });
     });
 
     it(`should throw an error if the user doesn't exist`, async () => {
-      await expect(() => sut.updateUser(userAdminContext, randUuid(), {}, em)).rejects.toThrowError(
+      await expect(() => sut.updateUser(userAdminContext, randUuid(), {}, em)).rejects.toThrow(
         new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND)
       );
     });
@@ -288,7 +289,7 @@ describe('Admin / _services / users service suite', () => {
           },
           em
         )
-      ).rejects.toThrowError(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND));
     });
 
     it(`should throw an error if the organisation units is empty and role A/QA`, async () => {
@@ -304,7 +305,7 @@ describe('Admin / _services / users service suite', () => {
           },
           em
         )
-      ).rejects.toThrowError(new BadRequestError(UserErrorsEnum.USER_INVALID_ACCESSOR_PARAMETERS));
+      ).rejects.toThrow(new BadRequestError(UserErrorsEnum.USER_INVALID_ACCESSOR_PARAMETERS));
     });
 
     it.each([[[randUuid()]], [[scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id, randUuid()]]])(
@@ -322,7 +323,7 @@ describe('Admin / _services / users service suite', () => {
             },
             em
           )
-        ).rejects.toThrowError(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND));
+        ).rejects.toThrow(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND));
       }
     );
 
@@ -337,7 +338,52 @@ describe('Admin / _services / users service suite', () => {
           },
           em
         )
-      ).rejects.toThrowError(new UnprocessableEntityError(UserErrorsEnum.USER_ALREADY_EXISTS));
+      ).rejects.toThrow(new UnprocessableEntityError(UserErrorsEnum.USER_ALREADY_EXISTS));
+    });
+  });
+
+  describe('deleteUser', () => {
+    const validationMock = jest.spyOn(AdminOperationsConfig, 'validationsHelper').mockResolvedValue([]);
+
+    beforeEach(() => {
+      validationMock.mockClear();
+    });
+
+    afterAll(() => {
+      validationMock.mockRestore();
+    });
+
+    it('should delete a innovator user', async () => {
+      const user = scenario.users.johnInnovator;
+
+      await sut.deleteUser(userAdminContext, user.id, em);
+
+      const deletedUser = await em
+        .createQueryBuilder(UserEntity, 'user')
+        .where('user.id = :userId', { userId: user.id })
+        .getOne();
+
+      expect(deletedUser?.status).toBe(UserStatusEnum.DELETED);
+    });
+
+    it('should throw an error if the user does not exist', async () => {
+      await expect(sut.deleteUser(userAdminContext, randUuid(), em)).rejects.toThrow(
+        new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND)
+      );
+    });
+
+    it("should throw an error if user can't be deleted", async () => {
+      validationMock.mockResolvedValueOnce([{ valid: false, rule: 'test' as any }]);
+
+      await expect(sut.deleteUser(userAdminContext, scenario.users.aliceQualifyingAccessor.id, em)).rejects.toThrow(
+        new BadRequestError(UserErrorsEnum.USER_CANNOT_BE_DELETED)
+      );
+    });
+
+    it('should throw an error if the request user is not admin', async () => {
+      await expect(
+        sut.deleteUser(DTOsHelper.getUserRequestContext(scenario.users.johnInnovator), randUuid(), em)
+      ).rejects.toThrow(new ForbiddenError(GenericErrorsEnum.FORBIDDEN_ERROR));
     });
   });
 
@@ -381,7 +427,7 @@ describe('Admin / _services / users service suite', () => {
   describe('addRoles', () => {
     const validationMock = jest.spyOn(AdminOperationsConfig, 'validationsHelper').mockResolvedValue([]);
 
-    afterEach(() => {
+    beforeEach(() => {
       validationMock.mockClear();
     });
 
@@ -448,7 +494,7 @@ describe('Admin / _services / users service suite', () => {
           },
           em
         )
-      ).rejects.toThrowError(new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD));
+      ).rejects.toThrow(new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD));
     });
   });
 
@@ -545,7 +591,7 @@ describe('Admin / _services / users service suite', () => {
           { role: ServiceRoleEnum.ACCESSOR, orgId: randUuid(), unitId: randUuid() },
           em
         )
-      ).rejects.toThrowError(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND));
     });
   });
 

@@ -3,7 +3,6 @@ import { inject, injectable } from 'inversify';
 import { InnovationEntity, InnovationSupportEntity } from '@users/shared/entities';
 import {
   InnovationStatusEnum,
-  InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
   InnovationTaskStatusEnum,
   UserStatusEnum
@@ -27,7 +26,7 @@ export class StatisticsService extends BaseService {
 
     const query = await em
       .createQueryBuilder(InnovationEntity, 'innovation')
-      .leftJoinAndSelect('innovation.assessments', 'assessments')
+      .leftJoin('innovation.currentAssessment', 'currentAssessment')
       .where('innovation.status IN (:...assessmentInnovationStatus)', {
         assessmentInnovationStatus: [InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT]
       })
@@ -35,11 +34,11 @@ export class StatisticsService extends BaseService {
 
     const overdueCount = await em
       .createQueryBuilder(InnovationEntity, 'innovation')
-      .leftJoinAndSelect('innovation.assessments', 'assessments')
+      .leftJoin('innovation.currentAssessment', 'currentAssessment')
       .where('innovation.status IN (:...assessmentInnovationStatus)', {
         assessmentInnovationStatus: [InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT]
       })
-      .andWhere(`DATEDIFF(day, innovation.submitted_at, GETDATE()) > 7 AND assessments.finished_at IS NULL`)
+      .andWhere(`DATEDIFF(day, innovation.submitted_at, GETDATE()) > 7 AND currentAssessment.finished_at IS NULL`)
       .getCount();
 
     return {
@@ -56,8 +55,8 @@ export class StatisticsService extends BaseService {
 
     const count = await em
       .createQueryBuilder(InnovationEntity, 'innovation')
-      .leftJoinAndSelect('innovation.assessments', 'assessments')
-      .leftJoinAndSelect('assessments.assignTo', 'assignTo')
+      .leftJoin('innovation.currentAssessment', 'currentAssessment')
+      .leftJoin('currentAssessment.assignTo', 'assignTo')
       .where('innovation.status IN (:...assessmentInnovationStatus)', {
         assessmentInnovationStatus: [InnovationStatusEnum.NEEDS_ASSESSMENT]
       })
@@ -66,22 +65,21 @@ export class StatisticsService extends BaseService {
 
     const total = await em
       .createQueryBuilder(InnovationEntity, 'innovation')
-      .leftJoinAndSelect('innovation.assessments', 'assessments')
-      .leftJoinAndSelect('assessments.assignTo', 'assignTo')
+      .leftJoin('innovation.currentAssessment', 'currentAssessment')
+      .leftJoin('currentAssessment.assignTo', 'assignTo')
       .where('innovation.status IN (:...assessmentInnovationStatus)', {
         assessmentInnovationStatus: [InnovationStatusEnum.NEEDS_ASSESSMENT]
       })
-
       .getCount();
 
     const overdueCount = await em
       .createQueryBuilder(InnovationEntity, 'innovation')
-      .leftJoinAndSelect('innovation.assessments', 'assessments')
-      .leftJoinAndSelect('assessments.assignTo', 'assignTo')
+      .leftJoin('innovation.currentAssessment', 'currentAssessment')
+      .leftJoin('currentAssessment.assignTo', 'assignTo')
       .where('innovation.status IN (:...assessmentInnovationStatus)', {
         assessmentInnovationStatus: [InnovationStatusEnum.NEEDS_ASSESSMENT]
       })
-      .andWhere(`DATEDIFF(day, innovation.submitted_at, GETDATE()) > 7 AND assessments.finished_at IS NULL`)
+      .andWhere(`DATEDIFF(day, innovation.submitted_at, GETDATE()) > 7 AND currentAssessment.finished_at IS NULL`)
       .andWhere('assignTo.id = :userId', { userId })
       .getCount();
 
@@ -167,26 +165,18 @@ export class StatisticsService extends BaseService {
             .addSelect('MAX(innovations.submitted_at)', 'lastSubmittedAt')
             .innerJoin('innovations.organisationShares', 'organisationShares')
             .innerJoin('organisationShares.organisationUnits', 'organisationUnits')
+            .leftJoin( 'innovations.suggestions', 'suggestions')
             .leftJoin(
               'innovations.innovationSupports',
               'innovationSupports',
               'innovationSupports.innovation_id = innovations.id AND innovationSupports.organisation_unit_id = :organisationUnit',
               { organisationUnit }
             )
-            .leftJoin('innovations.assessments', 'assessments')
-            .leftJoin('assessments.organisationUnits', 'assessmentOrganisationUnits')
-            .leftJoin('innovations.innovationSupportLogs', 'supportLogs', 'supportLogs.type = :supportLogType', {
-              supportLogType: InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION
-            })
-            .leftJoin('supportLogs.suggestedOrganisationUnits', 'supportLogOrgUnit')
             .andWhere('(innovationSupports.id IS NULL OR innovationSupports.status = :supportStatus)', {
               supportStatus: InnovationSupportStatusEnum.UNASSIGNED
             })
             .andWhere('innovations.status = :status', { status: InnovationStatusEnum.IN_PROGRESS })
-            .andWhere(
-              `(assessmentOrganisationUnits.id = :suggestedOrganisationUnitId OR supportLogOrgUnit.id =:suggestedOrganisationUnitId)`,
-              { suggestedOrganisationUnitId: organisationUnit }
-            )
+            .andWhere('suggestions.suggestedUnitId = :organisationUnit', { organisationUnit })
             .andWhere('organisationUnits.id = :organisationUnit', { organisationUnit })
             .groupBy('innovations.id'),
         'innovations'

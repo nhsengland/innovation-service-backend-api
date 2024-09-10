@@ -1,6 +1,12 @@
 import type { DataSource, EntityManager, Repository } from 'typeorm';
 
-import { PhoneUserPreferenceEnum, ServiceRoleEnum, UserStatusEnum } from '../../enums';
+import {
+  InnovationCollaboratorStatusEnum,
+  NotifierTypeEnum,
+  PhoneUserPreferenceEnum,
+  ServiceRoleEnum,
+  UserStatusEnum
+} from '../../enums';
 import {
   GenericErrorsEnum,
   InternalServerError,
@@ -11,18 +17,23 @@ import {
 import { TranslationHelper } from '../../helpers';
 import type { DomainContextType, InnovatorDomainContextType, RoleType } from '../../types';
 
+import { InnovationEntity } from '../../entities/innovation/innovation.entity';
 import { UserPreferenceEntity } from '../../entities/user/user-preference.entity';
 import { UserRoleEntity, roleEntity2RoleType } from '../../entities/user/user-role.entity';
 import { UserEntity } from '../../entities/user/user.entity';
 import { AuthErrorsEnum } from '../auth/authorization-validation.model';
 import type { IdentityProviderService } from '../integrations/identity-provider.service';
+import type { NotifierService } from '../integrations/notifier.service';
+import type { DomainInnovationsService } from './domain-innovations.service';
 
 export class DomainUsersService {
   private userRepository: Repository<UserEntity>;
 
   constructor(
-    private sqlConnection: DataSource,
-    private identityProviderService: IdentityProviderService
+    private domainInnovationService: DomainInnovationsService,
+    private identityProviderService: IdentityProviderService,
+    private notifierService: NotifierService,
+    private sqlConnection: DataSource
   ) {
     this.userRepository = this.sqlConnection.getRepository(UserEntity);
   }
@@ -541,6 +552,111 @@ export class DomainUsersService {
       },
       currentRole: { id: role.id, role: ServiceRoleEnum.INNOVATOR }
     };
+  }
+
+  // For now this is getting tested in the callers as no spec exists yet and to keep previous tests
+  async deleteUser(
+    domainContext: DomainContextType,
+    userId: string,
+    data: { reason: string },
+    entityManager?: EntityManager
+  ): Promise<void> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const dbUser = await em
+      .createQueryBuilder(UserEntity, 'user')
+      .innerJoinAndSelect('user.serviceRoles', 'roles')
+      .where('user.id = :userId', { userId })
+      .getOne();
+    if (!dbUser) {
+      throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND);
+    }
+
+    const user = await this.identityProviderService.getUserInfo(dbUser.identityId);
+    if (!user) {
+      throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
+    }
+
+    const innovationsWithPendingTransfer: { id: string; transferExpireDate: string }[] = [];
+
+    return em.transaction(async transaction => {
+      // If user has innovator role, deals with it's innovations.
+      const userInnovatorRole = dbUser.serviceRoles.find(item => item.role === ServiceRoleEnum.INNOVATOR);
+
+      if (userInnovatorRole) {
+        const dbInnovations = await this.domainInnovationService.getInnovationsByOwnerId(dbUser.id, transaction);
+
+        await this.domainInnovationService.bulkUpdateCollaboratorStatusByEmail(
+          transaction,
+          { id: dbUser.id, email: user.email },
+          { current: InnovationCollaboratorStatusEnum.PENDING, next: InnovationCollaboratorStatusEnum.DECLINED }
+        );
+        await this.domainInnovationService.bulkUpdateCollaboratorStatusByEmail(
+          transaction,
+          { id: dbUser.id, email: user.email },
+          { current: InnovationCollaboratorStatusEnum.ACTIVE, next: InnovationCollaboratorStatusEnum.LEFT }
+        );
+
+        const archiveResponse = await this.domainInnovationService.archiveInnovationsWithDeleteSideffects(
+          domainContext,
+          dbInnovations.filter(i => i.expirationTransferDate === null).map(i => ({ id: i.id, reason: data.reason })),
+          transaction
+        );
+
+        for (const dbInnovation of dbInnovations.filter(i => i.expirationTransferDate !== null)) {
+          innovationsWithPendingTransfer.push({
+            id: dbInnovation.id,
+            transferExpireDate: dbInnovation.expirationTransferDate
+              ? dbInnovation.expirationTransferDate.toDateString()
+              : ''
+          });
+
+          await transaction
+            .getRepository(InnovationEntity)
+            .update(
+              { id: dbInnovation.id },
+              { updatedBy: dbUser.id, owner: null, expires_at: dbInnovation.expirationTransferDate }
+            );
+        }
+
+        // Send notification to collaborators if there are innovations with pending transfer
+        await this.notifierService.send(domainContext, NotifierTypeEnum.ACCOUNT_DELETION, {
+          innovations: [
+            ...innovationsWithPendingTransfer,
+            ...archiveResponse.map(item => ({
+              id: item.id,
+              affectedUsers: item.affectedUsers.filter(user => user.userType === ServiceRoleEnum.INNOVATOR)
+            }))
+          ]
+        });
+      }
+
+      await transaction.update(UserRoleEntity, { user: { id: dbUser.id } }, { isActive: false });
+
+      await transaction.update(
+        UserEntity,
+        { id: dbUser.id },
+        { deleteReason: data.reason, status: UserStatusEnum.DELETED }
+      );
+
+      // If all went well, deleted from B2C.
+      await this.identityProviderService.deleteUser(dbUser.identityId);
+    });
+  }
+
+  async getUserIdentityId(id: string): Promise<string> {
+    const user = await this.sqlConnection
+      .createQueryBuilder(UserEntity, 'user')
+      .select('user.identityId')
+      .where('id = :id', { id })
+      .andWhere('status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED })
+      .getOne();
+
+    if (!user) {
+      throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND);
+    }
+
+    return user.identityId;
   }
 
   private async getUserIdentityIdByEmail(email: string): Promise<string> {

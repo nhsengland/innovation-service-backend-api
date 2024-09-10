@@ -1,7 +1,7 @@
 import Joi from 'joi';
 
 import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
-import { YesOrNoCatalogueType } from '@innovations/shared/enums';
+import { ReassessmentReasons, type ReassessmentReasonsType } from '../_types/innovation.types';
 
 export type ParamsType = {
   innovationId: string;
@@ -11,12 +11,18 @@ export const ParamsSchema = Joi.object<ParamsType>({
 }).required();
 
 export type BodyType = {
-  updatedInnovationRecord: YesOrNoCatalogueType;
+  reassessmentReason: ReassessmentReasonsType[];
+  otherReassessmentReason?: string;
   description: string;
+  whatSupportDoYouNeed: string;
 };
+
 export const BodySchema = Joi.object<BodyType>({
-  updatedInnovationRecord: Joi.string()
-    .valid(...Object.values(YesOrNoCatalogueType))
+  reassessmentReason: Joi.array()
+    .items(Joi.string().valid(...ReassessmentReasons))
+    .min(1)
     .required(),
-  description: Joi.string().max(TEXTAREA_LENGTH_LIMIT.s).required()
-}).required();
+  otherReassessmentReason: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xs).optional(),
+  description: Joi.string().max(TEXTAREA_LENGTH_LIMIT.l).required(),
+  whatSupportDoYouNeed: Joi.string().max(TEXTAREA_LENGTH_LIMIT.l).required()
+});

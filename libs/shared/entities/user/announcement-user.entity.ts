@@ -1,6 +1,7 @@
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
+import { InnovationEntity } from '../innovation/innovation.entity';
 
 import { AnnouncementEntity } from './announcement.entity';
 import { UserEntity } from './user.entity';
@@ -20,6 +21,10 @@ export class AnnouncementUserEntity extends BaseEntity {
   @ManyToOne(() => UserEntity)
   @JoinColumn({ name: 'user_id' })
   user: UserEntity;
+
+  @ManyToOne(() => InnovationEntity)
+  @JoinColumn({ name: 'innovation_id' })
+  innovation: null | InnovationEntity;
 
   static new(data: Partial<AnnouncementUserEntity>): AnnouncementUserEntity {
     const instance = new AnnouncementUserEntity();

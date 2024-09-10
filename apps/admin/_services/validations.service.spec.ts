@@ -126,7 +126,7 @@ describe('Admin / _services / validations service suite', () => {
     });
 
     it(`should throw an error if the user role doesn't exist`, async () => {
-      await expect(() => sut.checkIfLastQualifyingAccessorUserOnOrganisationUnit(randUuid(), em)).rejects.toThrowError(
+      await expect(() => sut.checkIfLastQualifyingAccessorUserOnOrganisationUnit(randUuid(), em)).rejects.toThrow(
         new NotFoundError(UserErrorsEnum.USER_ROLE_NOT_FOUND)
       );
     });
@@ -173,7 +173,7 @@ describe('Admin / _services / validations service suite', () => {
     });
 
     it(`should throw an error if the user role doesn't exist`, async () => {
-      await expect(() => sut.checkIfNoInnovationsSupportedOnlyByThisUser(randUuid(), em)).rejects.toThrowError(
+      await expect(() => sut.checkIfNoInnovationsSupportedOnlyByThisUser(randUuid(), em)).rejects.toThrow(
         new NotFoundError(UserErrorsEnum.USER_ROLE_NOT_FOUND)
       );
     });
@@ -322,7 +322,7 @@ describe('Admin / _services / validations service suite', () => {
     it(`should throw an error if the unit doesn't exist`, async () => {
       await expect(() =>
         sut.checkIfUserHasAnyAccessorRoleInOtherOrganisation(scenario.users.adamInnovator.id, [randUuid()])
-      ).rejects.toThrowError(new NotFoundError(UserErrorsEnum.USER_ROLE_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundError(UserErrorsEnum.USER_ROLE_NOT_FOUND));
     });
   });
 
@@ -354,7 +354,7 @@ describe('Admin / _services / validations service suite', () => {
     });
 
     it(`should throw an error if the role doesn't exist`, async () => {
-      await expect(() => sut.checkIfUnitIsActive(randUuid())).rejects.toThrowError(
+      await expect(() => sut.checkIfUnitIsActive(randUuid())).rejects.toThrow(
         new NotFoundError(UserErrorsEnum.USER_ROLE_NOT_FOUND)
       );
     });

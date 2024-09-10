@@ -12,6 +12,7 @@ export const SHARED_SYMBOLS = {
   SQLConnectionService: Symbol.for('SQLConnectionService'),
   ElasticSearchService: Symbol.for('ElasticSearchService'),
   RedisService: Symbol.for('RedisService'),
+  IRSchemaService: Symbol.for('IRSchemaService'),
   SqlProvider: Symbol.for('SqlProvider')
 };
 

@@ -25,9 +25,22 @@ beforeAll(async () => {
 
 const expected = {
   id: randUuid(),
-  //   reassessment?: { updatedInnovationRecord: CurrentCatalogTypes.catalogYesNo; description: string },
+  majorVersion: 1,
+  minorVersion: 0,
+  editReason: null,
+  previousAssessment: { id: '', majorVersion: 0, minorVersion: 0 },
+  reassessment: {
+    description: randText(),
+    reassessmentReason: ['NO_SUPPORT'],
+    otherReassessmentReason: randText(),
+    whatSupportDoYouNeed: randText(),
+    sectionsUpdatedSinceLastAssessment: [],
+    createdAt: new Date(),
+    previousCreatedAt: new Date()
+  },
   summary: randText(),
   description: randText(),
+  startedAt: randPastDate(),
   finishedAt: randPastDate(),
   assignTo: { id: randUuid(), name: randUserName() },
   maturityLevel: 'READY' as const,
@@ -55,7 +68,8 @@ const expected = {
     }
   ],
   updatedAt: randPastDate(),
-  updatedBy: { id: randUuid(), name: randUserName() }
+  updatedBy: { id: randUuid(), name: randUserName() },
+  isLatest: true
 };
 const mock = jest
   .spyOn(InnovationAssessmentsService.prototype, 'getInnovationAssessmentInfo')
@@ -84,7 +98,15 @@ describe('v1-innovation-assessment-info', () => {
     it('should return success with reassessment', async () => {
       const expectedWithReassessment = {
         ...expected,
-        reassessment: { updatedInnovationRecord: 'YES' as const, description: randText() }
+        reassessment: {
+          reassessmentReason: ['NO_SUPPORT'],
+          createdAt: new Date(),
+          previousCreatedAt: new Date(),
+          description: randText(),
+          whatSupportDoYouNeed: randText(),
+          previousAssessmentId: randUuid(),
+          sectionsUpdatedSinceLastAssessment: []
+        }
       };
       mock.mockResolvedValueOnce(expectedWithReassessment);
       const result = await new AzureHttpTriggerBuilder()

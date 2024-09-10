@@ -1,7 +1,8 @@
 import { randUuid } from '@ngneat/falso';
+import { BadRequestError, InnovationErrorsEnum } from '../../errors';
 import type { EntityManager } from 'typeorm';
 import { container } from '../../config/inversify.config';
-import { InnovationEntity } from '../../entities';
+import { InnovationDocumentEntity, InnovationEntity } from '../../entities';
 import { InnovationGroupedStatusEnum, InnovationStatusEnum, UserStatusEnum } from '../../enums';
 import { TestsHelper } from '../../tests';
 import SHARED_SYMBOLS from '../symbols';
@@ -47,7 +48,7 @@ describe('Shared / services / innovations suite', () => {
         archivedStatus: null,
         statusUpdatedAt: expect.any(Date),
         groupedStatus: InnovationGroupedStatusEnum.RECEIVING_SUPPORT,
-        submittedAt: null, // I believe this shouldn't be null but it's the current seed
+        submittedAt: expect.any(Date),
         updatedAt: expect.any(Date),
         lastAssessmentRequestAt: null, // I believe this shouldn't be null but it's the current seed
         document: expect.anything(), // TODO
@@ -125,6 +126,72 @@ describe('Shared / services / innovations suite', () => {
     it('should handle single innovation request for non existing', async () => {
       const result = await sut.getESDocumentsInformation(randUuid());
       expect(result).toBe(undefined);
+    });
+  });
+
+  describe('getInnovationsFiltered', () => {
+    it.each([
+      ['all', false],
+      ['submitted', true]
+    ])('should filter %s innovations', async (_type: string, onlySubmitted: boolean) => {
+      const innovations = await sut.getInnovationsFiltered(
+        [
+          { section: 'INNOVATION_DESCRIPTION', question: 'areas', answers: ['COVID_19'] },
+          { section: 'UNDERSTANDING_OF_NEEDS', question: 'hasProductServiceOrPrototype', answers: ['NO'] }
+        ],
+        { onlySubmitted },
+        em
+      );
+
+      const dbFilteredQuery = em
+        .createQueryBuilder(InnovationDocumentEntity, 'document')
+        .where(`JSON_QUERY(document.document, '$.INNOVATION_DESCRIPTION.areas') LIKE '%COVID_19%'`)
+        .andWhere(`JSON_VALUE(document.document, '$.UNDERSTANDING_OF_NEEDS.hasProductServiceOrPrototype') = 'NO'`);
+
+      if (onlySubmitted) {
+        dbFilteredQuery.innerJoin('document.innovation', 'innovation').andWhere('innovation.submittedAt IS NOT NULL');
+      }
+      const dbFilteredCount = await dbFilteredQuery.getCount();
+
+      expect(innovations.length).toBe(dbFilteredCount);
+    });
+
+    it('should filter all innovations even if some of the filters are invalid', async () => {
+      const innovations = await sut.getInnovationsFiltered(
+        [
+          { section: 'INNOVATION_DESCRIPTION', question: 'INVALID_QUESTION', answers: ['COVID_19'] },
+          { section: 'INVALID_SECTION', question: 'hasProductServiceOrPrototype', answers: ['NO'] },
+          { section: 'UNDERSTANDING_OF_NEEDS', question: 'hasProductServiceOrPrototype', answers: ['NO'] }
+        ],
+        { onlySubmitted: false },
+        em
+      );
+
+      const dbFilteredCount = await em
+        .createQueryBuilder(InnovationDocumentEntity, 'document')
+        .where(`JSON_VALUE(document.document, '$.UNDERSTANDING_OF_NEEDS.hasProductServiceOrPrototype') = 'NO'`)
+        .getCount();
+
+      expect(innovations.length).toBe(dbFilteredCount);
+    });
+
+    it('should throw error when no valid filters are available', async () => {
+      await expect(() =>
+        sut.getInnovationsFiltered(
+          [
+            { section: 'INNOVATION_DESCRIPTION', question: 'INVALID_QUESTION', answers: ['COVID_19'] },
+            { section: 'INVALID_SECTION', question: 'hasProductServiceOrPrototype', answers: ['NO'] }
+          ],
+          {},
+          em
+        )
+      ).rejects.toThrow(new BadRequestError(InnovationErrorsEnum.INNOVATION_FILTERS_ALL_INVALID));
+    });
+
+    it('should throw error when no filters were defined', async () => {
+      await expect(() => sut.getInnovationsFiltered([], {}, em)).rejects.toThrow(
+        new BadRequestError(InnovationErrorsEnum.INNOVATION_FILTERS_EMPTY)
+      );
     });
   });
 });

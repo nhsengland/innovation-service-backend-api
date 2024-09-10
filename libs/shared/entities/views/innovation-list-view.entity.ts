@@ -1,11 +1,21 @@
-import { Column, JoinTable, ManyToMany, OneToMany, OneToOne, PrimaryColumn, ViewColumn, ViewEntity } from 'typeorm';
+import {
+  Column,
+  JoinColumn,
+  JoinTable,
+  ManyToMany,
+  OneToMany,
+  OneToOne,
+  PrimaryColumn,
+  ViewColumn,
+  ViewEntity
+} from 'typeorm';
 import type { InnovationGroupedStatusEnum, InnovationStatusEnum } from '../../enums';
 import type {
   catalogCareSettings,
   catalogCategory,
   catalogInvolvedAACProgrammes,
   catalogKeyHealthInequalities
-} from '../../schemas/innovation-record/202304/catalog.types';
+} from '../../schemas/innovation-record/catalog.types';
 import { InnovationAssessmentEntity } from '../innovation/innovation-assessment.entity';
 import { InnovationSupportEntity } from '../innovation/innovation-support.entity';
 import { OrganisationEntity } from '../organisation/organisation.entity';
@@ -83,8 +93,12 @@ export class InnovationListView {
   @Column({ name: 'engaging_units', type: 'simple-json' })
   engagingUnits: { unitId: string; name: string; acronym: string; assignedAccessors: string[] | null }[] | null;
 
-  @OneToOne(() => InnovationAssessmentEntity, record => record.innovation)
-  assessment: InnovationAssessmentEntity | null;
+  @Column({ name: 'has_been_assessed' })
+  hasBeenAssessed: boolean;
+
+  @OneToOne(() => InnovationAssessmentEntity)
+  @JoinColumn({ name: 'current_assessment_id' })
+  currentAssessment: InnovationAssessmentEntity | null;
 
   @OneToMany(() => InnovationSupportEntity, record => record.innovation)
   supports: InnovationSupportEntity[] | null;

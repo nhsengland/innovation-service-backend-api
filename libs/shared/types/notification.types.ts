@@ -1,6 +1,12 @@
 import { NotificationCategoryType, NotificationPreferenceEnum, ServiceRoleEnum } from '../enums';
 
-export const NaNotificationCategories = ['NEEDS_ASSESSMENT', 'TASK', 'MESSAGES', 'INNOVATION_MANAGEMENT'] as const;
+export const NaNotificationCategories = [
+  'NEEDS_ASSESSMENT',
+  'TASK',
+  'MESSAGES',
+  'INNOVATION_MANAGEMENT',
+  'ANNOUNCEMENTS'
+] as const;
 type NaNotificationCategories = (typeof NaNotificationCategories)[number];
 
 export const ANotificationCategories = [
@@ -9,7 +15,8 @@ export const ANotificationCategories = [
   'MESSAGES',
   'INNOVATION_MANAGEMENT',
   'AUTOMATIC',
-  'NOTIFY_ME'
+  'NOTIFY_ME',
+  'ANNOUNCEMENTS'
 ] as const;
 type ANotificationCategories = (typeof ANotificationCategories)[number];
 
@@ -20,7 +27,8 @@ export const QANotificationCategories = [
   'MESSAGES',
   'INNOVATION_MANAGEMENT',
   'AUTOMATIC',
-  'NOTIFY_ME'
+  'NOTIFY_ME',
+  'ANNOUNCEMENTS'
 ] as const;
 type QANotificationCategories = (typeof QANotificationCategories)[number];
 
@@ -30,7 +38,8 @@ export const INotificationCategories = [
   'TASK',
   'DOCUMENTS',
   'AUTOMATIC',
-  'USER_RESEARCH_SURVEYS'
+  'USER_RESEARCH_SURVEYS',
+  'ANNOUNCEMENTS'
 ] as const;
 type INotificationCategories = (typeof INotificationCategories)[number];
 

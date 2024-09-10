@@ -1,8 +1,8 @@
 import { randBoolean, randCountry, randProduct, randText } from '@ngneat/falso';
 import type { DeepPartial, EntityManager } from 'typeorm';
 
-import { InnovationDocumentEntity } from '../../entities/innovation/innovation-document.entity';
 import { InnovationDocumentDraftEntity } from '../../entities/innovation/innovation-document-draft.entity';
+import { InnovationDocumentEntity } from '../../entities/innovation/innovation-document.entity';
 import { InnovationEntity } from '../../entities/innovation/innovation.entity';
 import { InnovationSectionStatusEnum, InnovationStatusEnum } from '../../enums/innovation.enums';
 import { NotFoundError } from '../../errors/errors.config';
@@ -42,14 +42,14 @@ export class InnovationBuilder extends BaseBuilder {
   };
 
   private document: CurrentDocumentType = {
-    version: '202304',
+    version: 202304,
     INNOVATION_DESCRIPTION: {
       name: this.innovation.name!,
       description: randProduct().description,
       countryName: randCountry(),
       postcode: undefined,
 
-      areas: ['COVID_19'],
+      areas: randBoolean() ? ['COVID_19'] : ['OPERATIONAL_EXCELLENCE'],
       careSettings: ['INDUSTRY'],
       categories: ['MEDICAL_DEVICE', 'AI'],
       mainCategory: 'MEDICAL_DEVICE',
@@ -71,7 +71,7 @@ export class InnovationBuilder extends BaseBuilder {
       hasProductServiceOrPrototype: randBoolean() ? 'YES' : 'NO'
     },
     EVIDENCE_OF_EFFECTIVENESS: {
-      hasEvidence: randBoolean() ? 'YES' : 'NOT_YET',
+      hasEvidence: 'YES',
       currentlyCollectingEvidence: randBoolean() ? 'YES' : 'NO',
       needsSupportAnyArea: ['CONFIDENTIAL_PATIENT_DATA'],
       summaryOngoingEvidenceGathering: randText()
@@ -136,6 +136,15 @@ export class InnovationBuilder extends BaseBuilder {
     if (status === InnovationStatusEnum.ARCHIVED) {
       this.innovation.archivedStatus = InnovationStatusEnum.IN_PROGRESS;
     }
+    this.innovation.hasBeenAssessed =
+      status !== InnovationStatusEnum.CREATED && status !== InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT;
+    this.innovation.submittedAt = this.innovation.hasBeenAssessed ? new Date() : null;
+    return this;
+  }
+
+  setName(name: string): this {
+    this.innovation.name = name;
+    this.document.INNOVATION_DESCRIPTION.name = name;
     return this;
   }
 

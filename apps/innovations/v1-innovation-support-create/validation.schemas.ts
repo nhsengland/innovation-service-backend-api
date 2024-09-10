@@ -2,6 +2,7 @@ import Joi from 'joi';
 
 import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
 import { InnovationSupportStatusEnum } from '@innovations/shared/enums';
+import { InnovationFileSchema, type InnovationFileType } from '../_types/innovation.types';
 
 export type ParamsType = {
   innovationId: string;
@@ -13,6 +14,7 @@ export const ParamsSchema = Joi.object<ParamsType>({
 export type BodyType = {
   status: Exclude<InnovationSupportStatusEnum, 'UNASSIGNED'>;
   message: string;
+  file?: InnovationFileType;
   accessors?: { id: string; userRoleId: string }[];
 };
 export const BodySchema = Joi.object<BodyType>({
@@ -23,7 +25,8 @@ export const BodySchema = Joi.object<BodyType>({
       InnovationSupportStatusEnum.UNSUITABLE
     )
     .required(),
-  message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).trim().required(),
+  message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xxl).trim().required(),
+  file: InnovationFileSchema,
   accessors: Joi.when('status', {
     is: InnovationSupportStatusEnum.ENGAGING,
     then: Joi.array()

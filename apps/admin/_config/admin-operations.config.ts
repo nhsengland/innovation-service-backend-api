@@ -2,15 +2,17 @@ import { ServiceRoleEnum } from '@admin/shared/enums';
 import Joi, { Schema } from 'joi';
 import {
   ActivateUserRoleValidationsHandler,
+  AddAnyUserRoleValidationsHandler,
   AddUserRoleValidationsHandler,
   InactivateUserRoleValidationsHandler,
   LockUserValidationsHandler,
-  AddAnyUserRoleValidationsHandler,
   type ValidationsHandler
 } from '../_handlers/validations';
+import { DeleteUserValidationsHandler } from '../_handlers/validations/delete-user-validations.handler';
 import type { AdminValidationsTemplatesType, ValidationResult } from '../types/validation.types';
 
 export enum AdminOperationEnum {
+  DELETE_USER = 'DELETE_USER',
   LOCK_USER = 'LOCK_USER',
   INACTIVATE_USER_ROLE = 'INACTIVATE_USER_ROLE',
   ACTIVATE_USER_ROLE = 'ACTIVATE_USER_ROLE',
@@ -42,6 +44,13 @@ export const ADMIN_OPERATIONS_CONFIG: {
     joiDefinition: Schema;
   };
 } = {
+  [AdminOperationEnum.DELETE_USER]: {
+    handler: DeleteUserValidationsHandler,
+    joiDefinition: Joi.object<AdminValidationsTemplatesType[AdminOperationEnum.LOCK_USER]>({
+      userId: Joi.string().guid().required()
+    }).required()
+  },
+
   [AdminOperationEnum.LOCK_USER]: {
     handler: LockUserValidationsHandler,
     joiDefinition: Joi.object<AdminValidationsTemplatesType[AdminOperationEnum.LOCK_USER]>({

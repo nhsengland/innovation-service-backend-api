@@ -8,7 +8,7 @@ import {
   ServiceRoleEnum
 } from '../../enums';
 import { ConflictError, ForbiddenError, UnprocessableEntityError } from '../../errors';
-import type { DomainContextType, DomainUserInfoType } from '../../types';
+import { isInnovatorDomainContextType, type DomainContextType, type DomainUserInfoType } from '../../types';
 import type { DomainService } from '../domain/domain.service';
 
 export enum AuthErrorsEnum {
@@ -223,15 +223,20 @@ export class AuthorizationValidationModel {
       return AuthErrorsEnum.AUTH_INNOVATION_UNAUTHORIZED;
     }
 
-    if (data?.isOwner && this.innovation.data.owner !== this.user.data?.id) {
+    const domainContext = this.getContext();
+
+    if (
+      data?.isOwner &&
+      isInnovatorDomainContextType(domainContext) &&
+      this.innovation.data.owner !== this.user.data?.id
+    ) {
       return AuthErrorsEnum.AUTH_INNOVATION_NOT_OWNER;
     }
 
-    const domainContext = this.getContext();
     if (data?.status && domainContext.currentRole) {
       const status = Array.isArray(data.status) ? data.status : data.status[domainContext.currentRole.role];
 
-      if (!(status ?? []).some(status => status === this.innovation.data?.status)) {
+      if (status && !status.some(status => status === this.innovation.data?.status)) {
         return AuthErrorsEnum.AUTH_INNOVATION_STATUS_NOT_ALLOWED;
       }
     }
@@ -472,18 +477,8 @@ export class AuthorizationValidationModel {
 
       query
         .innerJoin('innovation.organisationShares', 'innovationShares')
-        .andWhere(
-          new Brackets(qb => {
-            qb.where('innovation.status IN (:...accessorInnovationStatus)', {
-              accessorInnovationStatus: [InnovationStatusEnum.IN_PROGRESS]
-            }).orWhere(
-              'innovation.status = :archivedStatus AND innovation.archivedStatus IN (:...accessorInnovationStatus)',
-              {
-                archivedStatus: InnovationStatusEnum.ARCHIVED
-              }
-            );
-          })
-        )
+        // this changed from previous implementation where innovation need to be in progress
+        .andWhere('innovation.hasBeenAssessed = :hasBeenAssessed', { hasBeenAssessed: true })
         .andWhere('innovationShares.id = :accessorOrganisationId', {
           accessorOrganisationId: context.organisation.id
         });
