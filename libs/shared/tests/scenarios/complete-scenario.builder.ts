@@ -23,7 +23,7 @@ import {
   ThreadContextTypeEnum
 } from '../../enums/innovation.enums';
 import { ServiceRoleEnum, UserStatusEnum } from '../../enums/user.enums';
-import { AnnouncementStatusEnum } from '../../enums/announcement.enums';
+import { AnnouncementStatusEnum, AnnouncementTypeEnum } from '../../enums/announcement.enums';
 import type { Reminder, SupportUpdated } from '../../types';
 import { InnovationAssessmentBuilder } from '../builders/innovation-assessment.builder';
 import { InnovationCollaboratorBuilder } from '../builders/innovation-collaborator.builder';
@@ -959,6 +959,7 @@ export class CompleteScenarioBuilder {
         .setStartsAt(randPastDate())
         .setUserRoles([ServiceRoleEnum.QUALIFYING_ACCESSOR])
         .setStatus(AnnouncementStatusEnum.ACTIVE)
+        .setType(AnnouncementTypeEnum.LOG_IN)
         .save();
 
       const announcementUserAliceQA = await new AnnouncementUserBuilder(entityManager)
@@ -975,6 +976,7 @@ export class CompleteScenarioBuilder {
         .setTitle('Announcement for Specific Innovations')
         .setUserRoles([ServiceRoleEnum.INNOVATOR])
         .setStatus(AnnouncementStatusEnum.ACTIVE)
+        .setFilters([{ section: 'INNOVATION_DESCRIPTION', question: 'areas', answers: ['COVID_19'] }])
         .save();
 
       const announcementUserForSpecificInnovationsJohnInnovation = await new AnnouncementUserBuilder(entityManager)
@@ -985,6 +987,14 @@ export class CompleteScenarioBuilder {
       const announcementUserForSpecificInnovationsAdamInnovation = await new AnnouncementUserBuilder(entityManager)
         .setAnnouncement(announcementForSpecificInnovations.id)
         .setUserAndInnovation(adamInnovator.id, adamInnovation.id)
+        .save();
+
+      const announcementForNAScheduled = await new AnnouncementBuilder(entityManager)
+        .setTitle('Announcement for NAs scheduled')
+        .setUserRoles([ServiceRoleEnum.ASSESSMENT])
+        .setStatus(AnnouncementStatusEnum.SCHEDULED)
+        .setStartsAt(new Date())
+        .setExpiresAt(null)
         .save();
 
       return {
@@ -1357,7 +1367,8 @@ export class CompleteScenarioBuilder {
               announcementUserJohnInnovation: announcementUserForSpecificInnovationsJohnInnovation,
               announcementUserAdamInnovation: announcementUserForSpecificInnovationsAdamInnovation
             }
-          }
+          },
+          announcementForNAScheduled
         }
       };
     });
