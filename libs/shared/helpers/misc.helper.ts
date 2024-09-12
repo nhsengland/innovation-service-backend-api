@@ -81,3 +81,14 @@ export const toArray = <T>(value: T | T[] | undefined): T[] => {
 };
 
 export const sleep = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
+
+/**
+ * Helper to add to an array value in a Map.
+ * It mutates the map passed as a param.
+ */
+export const addToArrayValueInMap = <T>(map: Map<string, T[]>, key: string, value: T) => {
+  if (!map.has(key)) {
+    map.set(key, []);
+  }
+  map.get(key)?.push(value);
+};

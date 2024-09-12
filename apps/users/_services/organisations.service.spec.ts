@@ -3,10 +3,11 @@ import { container } from '../_config';
 import { randUuid } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 
-import { NotFoundError, OrganisationErrorsEnum } from '@users/shared/errors';
+import { ForbiddenError, NotFoundError, OrganisationErrorsEnum } from '@users/shared/errors';
 import { TestsHelper } from '@users/shared/tests';
 import type { OrganisationsService } from './organisations.service';
 import SYMBOLS from './symbols';
+import { DTOsHelper } from '@users/shared/tests/helpers/dtos.helper';
 
 describe('Users / _services / organisations service suite', () => {
   let sut: OrganisationsService;
@@ -256,6 +257,57 @@ describe('Users / _services / organisations service suite', () => {
     it(`should throw an error if the organisation unit doesn't exist`, async () => {
       await expect(() => sut.getOrganisationUnitInfo(randUuid())).rejects.toThrow(
         new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND)
+      );
+    });
+  });
+
+  describe('getAccessorAndInnovations', () => {
+    const alice = scenario.users.aliceQualifyingAccessor;
+
+    it('should return the accessors and their assigned innovations', async () => {
+      const jamie = scenario.users.jamieMadroxAccessor;
+      const ingrid = scenario.users.ingridAccessor;
+
+      const result = await sut.getAccessorAndInnovations(
+        DTOsHelper.getUserRequestContext(alice),
+        alice.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
+        em
+      );
+
+      const johnInnovation = scenario.users.johnInnovator.innovations.johnInnovation;
+      const adamInnovation = scenario.users.adamInnovator.innovations.adamInnovation;
+      const ottoChestInnovation = scenario.users.ottoOctaviusInnovator.innovations.chestHarnessInnovation;
+      const ottoTentaclesInnovation = scenario.users.ottoOctaviusInnovator.innovations.tentaclesInnovation;
+
+      expect(result.count).toBe(3);
+      expect(result.data).toStrictEqual([
+        {
+          accessor: { name: alice.name, role: alice.roles.qaRole.role },
+          innovations: [
+            { id: johnInnovation.id, name: johnInnovation.name },
+            { id: adamInnovation.id, name: adamInnovation.name },
+            { id: ottoChestInnovation.id, name: ottoChestInnovation.name }
+          ]
+        },
+        {
+          accessor: { name: ingrid.name, role: ingrid.roles.accessorRole.role },
+          innovations: []
+        },
+        {
+          accessor: { name: jamie.name, role: jamie.roles.healthAccessorRole.role },
+          innovations: [
+            { id: johnInnovation.id, name: johnInnovation.name },
+            { id: adamInnovation.id, name: adamInnovation.name },
+            { id: ottoChestInnovation.id, name: ottoChestInnovation.name },
+            { id: ottoTentaclesInnovation.id, name: ottoTentaclesInnovation.name }
+          ]
+        }
+      ]);
+    });
+
+    it("it should give an error if the unitId doesn't match his", async ()=> {
+      await expect(() => sut.getAccessorAndInnovations(DTOsHelper.getUserRequestContext(alice), randUuid(), em)).rejects.toThrow(
+        new ForbiddenError(OrganisationErrorsEnum.ORGANISATION_USER_FROM_OTHER_ORG)
       );
     });
   });

@@ -217,6 +217,7 @@ export class DomainUsersService {
     }
 
     const dbUsers = await query.getMany();
+    // TODO: This can be changed for the Map method.
     const identityUsers = await this.identityProviderService.getUsersList(dbUsers.map(items => items.identityId));
 
     return dbUsers.map(dbUser => {
