@@ -7,6 +7,6 @@ export type ResponseDTO = {
     isLocked: boolean;
     isOwner?: boolean;
     role: { id: string; role: ServiceRoleEnum };
-    organisationUnit: { id: string; acronym: string } | null;
+    organisationUnit: { id: string; name: string; acronym: string } | null;
   }[];
 };

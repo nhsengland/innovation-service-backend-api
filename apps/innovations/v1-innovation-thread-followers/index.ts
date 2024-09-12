@@ -46,6 +46,7 @@ class V1InnovationThreadFollowers {
           organisationUnit: follower.organisationUnit
             ? {
                 id: follower.organisationUnit.id,
+                name: follower.organisationUnit.name,
                 acronym: follower.organisationUnit.acronym
               }
             : null
