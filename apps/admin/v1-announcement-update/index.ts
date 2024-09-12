@@ -25,10 +25,10 @@ class V1AnnouncementsUpdate {
 
       let body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
-      if (body.filters) {
+      if (body.filters?.length) {
         const irSchemaService = container.get<IRSchemaService>(SHARED_SYMBOLS.IRSchemaService);
         const schema = await irSchemaService.getSchema();
-        const validation = schema.model.getFilterSchemaValidation(body.filters || []);
+        const validation = schema.model.getFilterSchemaValidation(body.filters);
 
         body = { ...body, filters: JoiHelper.Validate<FilterPayload[]>(validation, body.filters) };
       }
