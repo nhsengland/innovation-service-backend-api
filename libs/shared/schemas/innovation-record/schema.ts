@@ -915,8 +915,7 @@ export const IR_SCHEMA = {
                         label: 'Website',
                         validations: {
                           isRequired: 'Website url is required',
-                          maxLength: 100,
-                          urlFormat: true
+                          urlFormat: { maxLength: 100 }
                         }
                       }
                     },

@@ -90,7 +90,10 @@ export class InnovationBuilder extends BaseBuilder {
     REGULATIONS_AND_STANDARDS: {
       hasRegulationKnowledge: randBoolean() ? 'YES_ALL' : 'NO',
       otherRegulationDescription: randText(),
-      standards: [{ type: 'CE_UKCA_CLASS_I', hasMet: 'IN_PROGRESS' }]
+      standards: [
+        { type: 'CE_UKCA_CLASS_I', hasMet: 'IN_PROGRESS' },
+        { type: 'IVD_GENERAL', hasMet: 'IN_PROGRESS' }
+      ]
     },
     INTELLECTUAL_PROPERTY: {
       hasOtherIntellectual: randBoolean() ? 'YES' : 'NO',
