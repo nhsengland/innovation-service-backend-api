@@ -943,18 +943,36 @@ export class DomainInnovationsService {
         [`${id}_key`]: `$.${filter.section}.${filter.question}`,
         [`${id}_values`]: filter.answers
       };
-      switch (schema.model.getQuestionType(filter.question)) {
+      const question = schema.model.getQuestion(filter.question);
+      if (!question) continue;
+
+      switch (question.dataType) {
         case 'checkbox-array':
-          query.andWhere(
-            `
+          // This validation is needed since the checkbox array can be an array of objects when `addQuestion` is defined.
+          // And in this cases we need to do an aditional JSON_VALUE to get the value from inside the object.
+          if (question.addQuestion) {
+            query.andWhere(
+              `
+                  EXISTS (
+                    SELECT TOP 1 *
+                    FROM OPENJSON(JSON_QUERY(document.document, :${id}_key))
+                    WHERE JSON_VALUE(value, :${id}_obj_key) IN (:...${id}_values)
+                  )
+                `,
+              { ...params, [`${id}_obj_key`]: `$.${question.checkboxAnswerId ?? question.id}` }
+            );
+          } else {
+            query.andWhere(
+              `
                   EXISTS (
                     SELECT TOP 1 *
                     FROM OPENJSON(JSON_QUERY(document.document, :${id}_key))
                     WHERE value IN (:...${id}_values)
                   )
                 `,
-            params
-          );
+              params
+            );
+          }
           break;
         case 'radio-group':
           query.andWhere(`JSON_VALUE(document.document, :${id}_key) IN (:...${id}_values)`, params);

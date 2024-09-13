@@ -156,6 +156,55 @@ describe('Shared / services / innovations suite', () => {
       expect(innovations.length).toBe(dbFilteredCount);
     });
 
+    it('should filter the same question twice, question1 === A AND question1 === B', async () => {
+      const innovations = await sut.getInnovationsFiltered(
+        [
+          { section: 'INNOVATION_DESCRIPTION', question: 'categories', answers: ['MEDICAL_DEVICE'] },
+          { section: 'INNOVATION_DESCRIPTION', question: 'categories', answers: ['INVALID'] }
+        ],
+        { onlySubmitted: false },
+        em
+      );
+
+      // Since it's a AND and INVALID doesn't exist it should return 0 results.
+      expect(innovations.length).toBe(0);
+    });
+
+    it('should filter correctly when the question is of type checkbox-array + addQuestion', async () => {
+      const innovations = await sut.getInnovationsFiltered(
+        [
+          { section: 'REGULATIONS_AND_STANDARDS', question: 'standards', answers: ['CE_UKCA_CLASS_I'] },
+          { section: 'REGULATIONS_AND_STANDARDS', question: 'standards', answers: ['IVD_GENERAL'] }
+        ],
+        { onlySubmitted: false },
+        em
+      );
+
+      const dbFilteredQuery = await em
+        .createQueryBuilder(InnovationDocumentEntity, 'document')
+        .where(
+          `
+                  EXISTS (
+                    SELECT TOP 1 *
+                    FROM OPENJSON(JSON_QUERY(document.document, '$.REGULATIONS_AND_STANDARDS.standards'))
+                    WHERE JSON_VALUE(value, '$.type') IN ('CE_UKCA_CLASS_I')
+                  )
+                `
+        )
+        .andWhere(
+          `
+                  EXISTS (
+                    SELECT TOP 1 *
+                    FROM OPENJSON(JSON_QUERY(document.document, '$.REGULATIONS_AND_STANDARDS.standards'))
+                    WHERE JSON_VALUE(value, '$.type') IN ('IVD_GENERAL')
+                  )
+                `
+        )
+        .getCount();
+
+      expect(innovations.length).toBe(dbFilteredQuery);
+    });
+
     it('should filter all innovations even if some of the filters are invalid', async () => {
       const innovations = await sut.getInnovationsFiltered(
         [
