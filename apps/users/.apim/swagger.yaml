@@ -100,6 +100,11 @@ paths:
                           enum:
                             - YES
                             - NO
+                        ANNOUNCEMENTS:
+                          type: string
+                          enum:
+                            - YES
+                            - NO
                       required:
                         - SUPPORT
                         - TASK
@@ -107,6 +112,7 @@ paths:
                         - INNOVATION_MANAGEMENT
                         - AUTOMATIC
                         - NOTIFY_ME
+                        - ANNOUNCEMENTS
                       additionalProperties: false
                       x-required: true
                     - type: object

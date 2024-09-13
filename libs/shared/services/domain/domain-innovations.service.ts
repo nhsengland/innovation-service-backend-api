@@ -646,7 +646,7 @@ export class DomainInnovationsService {
       locked: boolean;
       isOwner?: boolean;
       userRole: { id: string; role: ServiceRoleEnum };
-      organisationUnit: { id: string; acronym: string } | null;
+      organisationUnit: { id: string; name: string; acronym: string } | null;
     }[]
   > {
     const em = entityManager ?? this.sqlConnection.manager;
@@ -673,6 +673,7 @@ export class DomainInnovationsService {
         'followerUserRole.role',
         'followerUserRole.isActive',
         'followerOrganisationUnit.id',
+        'followerOrganisationUnit.name',
         'followerOrganisationUnit.acronym'
       ])
       .innerJoin('thread.innovation', 'innovation')
@@ -749,7 +750,11 @@ export class DomainInnovationsService {
           role: followerRole.role
         },
         organisationUnit: followerRole.organisationUnit
-          ? { id: followerRole.organisationUnit.id, acronym: followerRole.organisationUnit.acronym }
+          ? {
+              id: followerRole.organisationUnit.id,
+              name: followerRole.organisationUnit.name,
+              acronym: followerRole.organisationUnit.acronym
+            }
           : null
       }))
     );
