@@ -98,6 +98,10 @@ export class SchemaModel {
     return this.questions.get(questionId)?.dataType ?? null;
   }
 
+  getQuestion(questionId: string): Question | null {
+    return this.questions.get(questionId) ?? null;
+  }
+
   /**
    * Method to remove fields that may exist on the document and are not anymore defined on the current schema version.
    */
