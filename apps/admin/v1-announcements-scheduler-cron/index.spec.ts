@@ -15,7 +15,7 @@ const getAnnouncementsToActiveMock = jest
   .spyOn(AnnouncementsService.prototype, 'getAnnouncementsToActivate')
   .mockResolvedValue([AnnouncementEntity.new({ id: randUuid() }), AnnouncementEntity.new({ id: randUuid() })]);
 const activateAnnouncementMock = jest.spyOn(AnnouncementsService.prototype, 'activateAnnouncement').mockResolvedValue();
-const expireAnnouncements = jest.spyOn(AnnouncementsService.prototype, 'expireAnnouncements').mockResolvedValue(0);
+const expireAnnouncements = jest.spyOn(AnnouncementsService.prototype, 'expireAnnouncements').mockResolvedValue(1);
 
 afterEach(() => {
   jest.clearAllMocks();

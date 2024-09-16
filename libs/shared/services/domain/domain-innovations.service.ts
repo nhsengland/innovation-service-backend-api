@@ -43,13 +43,13 @@ import {
   UnprocessableEntityError
 } from '../../errors';
 import { TranslationHelper } from '../../helpers';
+import type { FilterPayload } from '../../models/schema-engine/schema.model';
 import type { CurrentElasticSearchDocumentType } from '../../schemas/innovation-record/index';
 import type { ActivitiesParamsType, DomainContextType, IdentityUserInfo, SupportLogParams } from '../../types';
 import type { IdentityProviderService } from '../integrations/identity-provider.service';
 import type { NotifierService } from '../integrations/notifier.service';
 import type { IRSchemaService } from '../storage/ir-schema.service';
 import type { DomainUsersService } from './domain-users.service';
-import type { FilterPayload } from '../../models/schema-engine/schema.model';
 
 export class DomainInnovationsService {
   innovationRepository: Repository<InnovationEntity>;
@@ -481,16 +481,21 @@ export class DomainInnovationsService {
           innovation.id
         );
 
-        // Delete unopened notifications
-        const unopenedNotificationsIds = await transaction
+        const subquery = transaction
           .createQueryBuilder(NotificationUserEntity, 'userNotification')
           .select(['userNotification.id'])
           .innerJoin('userNotification.notification', 'notification')
           .innerJoin('notification.innovation', 'innovation')
-          .where('innovation.id = :innovationId', { innovationId: innovation.id })
+          .where('innovation.id = :innovationId')
           .andWhere('userNotification.read_at IS NULL')
-          .getMany();
-        await em.softDelete(NotificationUserEntity, { id: In(unopenedNotificationsIds.map(c => c.id)) });
+          .getQuery();
+        await em
+          .createQueryBuilder()
+          .softDelete()
+          .from(NotificationUserEntity)
+          .where(`id IN (${subquery})`)
+          .setParameters({ innovationId: innovation.id })
+          .execute();
       }
 
       return archivedInnovations;
@@ -641,7 +646,7 @@ export class DomainInnovationsService {
       locked: boolean;
       isOwner?: boolean;
       userRole: { id: string; role: ServiceRoleEnum };
-      organisationUnit: { id: string; acronym: string } | null;
+      organisationUnit: { id: string; name: string; acronym: string } | null;
     }[]
   > {
     const em = entityManager ?? this.sqlConnection.manager;
@@ -668,6 +673,7 @@ export class DomainInnovationsService {
         'followerUserRole.role',
         'followerUserRole.isActive',
         'followerOrganisationUnit.id',
+        'followerOrganisationUnit.name',
         'followerOrganisationUnit.acronym'
       ])
       .innerJoin('thread.innovation', 'innovation')
@@ -744,7 +750,11 @@ export class DomainInnovationsService {
           role: followerRole.role
         },
         organisationUnit: followerRole.organisationUnit
-          ? { id: followerRole.organisationUnit.id, acronym: followerRole.organisationUnit.acronym }
+          ? {
+              id: followerRole.organisationUnit.id,
+              name: followerRole.organisationUnit.name,
+              acronym: followerRole.organisationUnit.acronym
+            }
           : null
       }))
     );
@@ -938,18 +948,36 @@ export class DomainInnovationsService {
         [`${id}_key`]: `$.${filter.section}.${filter.question}`,
         [`${id}_values`]: filter.answers
       };
-      switch (schema.model.getQuestionType(filter.question)) {
+      const question = schema.model.getQuestion(filter.question);
+      if (!question) continue;
+
+      switch (question.dataType) {
         case 'checkbox-array':
-          query.andWhere(
-            `
+          // This validation is needed since the checkbox array can be an array of objects when `addQuestion` is defined.
+          // And in this cases we need to do an aditional JSON_VALUE to get the value from inside the object.
+          if (question.addQuestion) {
+            query.andWhere(
+              `
+                  EXISTS (
+                    SELECT TOP 1 *
+                    FROM OPENJSON(JSON_QUERY(document.document, :${id}_key))
+                    WHERE JSON_VALUE(value, :${id}_obj_key) IN (:...${id}_values)
+                  )
+                `,
+              { ...params, [`${id}_obj_key`]: `$.${question.checkboxAnswerId ?? question.id}` }
+            );
+          } else {
+            query.andWhere(
+              `
                   EXISTS (
                     SELECT TOP 1 *
                     FROM OPENJSON(JSON_QUERY(document.document, :${id}_key))
                     WHERE value IN (:...${id}_values)
                   )
                 `,
-            params
-          );
+              params
+            );
+          }
           break;
         case 'radio-group':
           query.andWhere(`JSON_VALUE(document.document, :${id}_key) IN (:...${id}_values)`, params);

@@ -4,6 +4,7 @@ import { randFutureDate, randText, randUrl } from '@ngneat/falso';
 import { AnnouncementParamsType, AnnouncementStatusEnum, AnnouncementTypeEnum, ServiceRoleEnum } from '../../enums';
 import { BaseBuilder } from './base.builder';
 import type { AnnouncementUserBuilder } from './announcement-users.builder';
+import type { FilterPayload } from '../../models/schema-engine/schema.model';
 
 export type TestAnnouncementType = {
   id: string;
@@ -16,6 +17,7 @@ export type TestAnnouncementType = {
   sendEmail: boolean;
   status: AnnouncementStatusEnum;
   announcementUsers: { [key: string]: AnnouncementUserBuilder };
+  filters: null | FilterPayload[];
 };
 
 export class AnnouncementBuilder extends BaseBuilder {
@@ -63,7 +65,7 @@ export class AnnouncementBuilder extends BaseBuilder {
     return this;
   }
 
-  setExpiresAt(date: Date): this {
+  setExpiresAt(date: null | Date): this {
     this.announcement.expiresAt = date;
     return this;
   }
@@ -85,6 +87,11 @@ export class AnnouncementBuilder extends BaseBuilder {
 
   setAnnouncementUsers(announcementUsers: AnnouncementUserEntity[]): this {
     this.announcement.announcementUsers = announcementUsers;
+    return this;
+  }
+
+  setFilters(filters: FilterPayload[]): this {
+    this.announcement.filters = filters;
     return this;
   }
 
@@ -113,7 +120,8 @@ export class AnnouncementBuilder extends BaseBuilder {
       type: result.type,
       sendEmail: result.sendEmail,
       status: result.status,
-      announcementUsers: {}
+      announcementUsers: {},
+      filters: result.filters
     };
   }
 }

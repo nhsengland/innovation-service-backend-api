@@ -15,6 +15,7 @@ import {
   AnnouncementErrorsEnum,
   BadRequestError,
   ConflictError,
+  InnovationErrorsEnum,
   NotFoundError,
   UnprocessableEntityError
 } from '@admin/shared/errors';
@@ -219,6 +220,11 @@ export class AnnouncementsService extends BaseService {
 
     const body = this.validateAnnouncementBody(announcementStatus, data, { startsAt: dbAnnouncement.startsAt });
 
+    const updatedAnnouncementStatus = this.getAnnouncementStatus(
+      data.startsAt ?? dbAnnouncement.startsAt,
+      data.expiresAt ?? dbAnnouncement.expiresAt
+    );
+
     await em.transaction(async transaction => {
       await em.update(
         AnnouncementEntity,
@@ -226,12 +232,13 @@ export class AnnouncementsService extends BaseService {
         {
           ...body,
           updatedBy: requestContext.id,
-          updatedAt: new Date()
+          updatedAt: new Date(),
+          ...(updatedAnnouncementStatus !== dbAnnouncement.status && { status: updatedAnnouncementStatus })
         }
       );
 
       if (
-        announcementStatus === AnnouncementStatusEnum.ACTIVE &&
+        updatedAnnouncementStatus === AnnouncementStatusEnum.ACTIVE &&
         dbAnnouncement.status === AnnouncementStatusEnum.SCHEDULED
       ) {
         await this.activateAnnouncement(requestContext.id, announcementId, {}, transaction);
@@ -271,11 +278,28 @@ export class AnnouncementsService extends BaseService {
     if (announcement.filters && targetRoles.has(ServiceRoleEnum.INNOVATOR)) {
       targetRoles.delete(ServiceRoleEnum.INNOVATOR);
 
-      const innovations = await this.domainService.innovations.getInnovationsFiltered(
-        announcement.filters,
-        { onlySubmitted: true },
-        transaction
-      );
+      let innovations: { id: string }[] = [];
+      try {
+        innovations = await this.domainService.innovations.getInnovationsFiltered(
+          announcement.filters,
+          { onlySubmitted: true },
+          transaction
+        );
+      } catch (error) {
+        if (
+          error instanceof BadRequestError &&
+          error.name === InnovationErrorsEnum.INNOVATION_FILTERS_ALL_INVALID &&
+          targetRoles.size === 0
+        ) {
+          await this.updateAnnouncementStatus(
+            ADMIN_CRON_ID,
+            announcement.id,
+            AnnouncementStatusEnum.DELETED,
+            transaction
+          );
+          return;
+        }
+      }
 
       if (innovations.length) {
         const ownerAndCollaboratorInfo = await transaction
@@ -357,7 +381,12 @@ export class AnnouncementsService extends BaseService {
       await this.addAnnouncementUsers(announcementInfo, options, transaction);
       // On the create we previously change the status, this check is to prevent double updates.
       if (announcementInfo.status === AnnouncementStatusEnum.SCHEDULED) {
-        await this.updateAnnouncementStatus(activatedBy, announcementInfo.id, AnnouncementStatusEnum.ACTIVE);
+        await this.updateAnnouncementStatus(
+          activatedBy,
+          announcementInfo.id,
+          AnnouncementStatusEnum.ACTIVE,
+          transaction
+        );
       }
     });
 

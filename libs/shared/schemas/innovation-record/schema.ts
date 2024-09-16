@@ -915,8 +915,7 @@ export const IR_SCHEMA = {
                         label: 'Website',
                         validations: {
                           isRequired: 'Website url is required',
-                          maxLength: 100,
-                          urlFormat: true
+                          urlFormat: { maxLength: 100 }
                         }
                       }
                     },
@@ -1326,7 +1325,7 @@ export const IR_SCHEMA = {
             countryName: [
               {
                 id: 'officeLocation',
-                options: ['England', 'Scotland', 'Wales']
+                options: ['England', 'Scotland', 'Wales', 'Northern Ireland']
               },
               {
                 id: 'countryLocation',

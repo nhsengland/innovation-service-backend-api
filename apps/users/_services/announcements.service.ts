@@ -59,7 +59,7 @@ export class AnnouncementsService extends BaseService {
 
     return announcements.map(announcement => {
       const innovations = new Set(
-        (announcement.announcementUsers ?? []).filter(au => au.innovation?.name).map(au => au.innovation!.name)
+        announcement.announcementUsers.filter(au => au.innovation?.name).map(au => au.innovation!.name)
       );
       return {
         id: announcement.id,

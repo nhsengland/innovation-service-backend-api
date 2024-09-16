@@ -2,10 +2,21 @@ import { TestsHelper } from '@admin/shared/tests';
 
 import { container } from '../_config';
 import SYMBOLS from './symbols';
-import type { AnnouncementsService } from './announcements.service';
-import { AnnouncementEntity, AnnouncementUserEntity } from '@admin/shared/entities';
+import { AnnouncementsService } from './announcements.service';
+import {
+  AnnouncementEntity,
+  AnnouncementUserEntity,
+  InnovationDocumentEntity,
+  UserEntity,
+  InnovationCollaboratorEntity
+} from '@admin/shared/entities';
 import { randFutureDate, randPastDate, randText, randUuid } from '@ngneat/falso';
-import { AnnouncementStatusEnum, AnnouncementTypeEnum, ServiceRoleEnum } from '@admin/shared/enums';
+import {
+  AnnouncementStatusEnum,
+  AnnouncementTypeEnum,
+  InnovationCollaboratorStatusEnum,
+  ServiceRoleEnum
+} from '@admin/shared/enums';
 import {
   AnnouncementErrorsEnum,
   BadRequestError,
@@ -15,12 +26,16 @@ import {
 } from '@admin/shared/errors';
 import { DTOsHelper } from '@admin/shared/tests/helpers/dtos.helper';
 import type { EntityManager } from 'typeorm';
+import { NotifierService } from '@admin/shared/services';
 
 describe('Admin / _services / announcements service suite', () => {
   let sut: AnnouncementsService;
 
   const testsHelper = new TestsHelper();
   const scenario = testsHelper.getCompleteScenario();
+
+  const updateStatusMock = jest.spyOn(AnnouncementsService.prototype as any, 'updateAnnouncementStatus');
+  const notifierSendSpy = jest.spyOn(NotifierService.prototype, 'sendSystemNotification').mockResolvedValue(true);
 
   let em: EntityManager;
 
@@ -36,18 +51,29 @@ describe('Admin / _services / announcements service suite', () => {
 
   afterEach(async () => {
     await testsHelper.releaseQueryRunnerEntityManager();
+    jest.clearAllMocks();
   });
 
   describe('getAnnouncementsList', () => {
     it('should get the list of announcements', async () => {
-      const result = await sut.getAnnouncementsList({ take: 10, skip: 0, order: {} }, em);
+      const result = await sut.getAnnouncementsList({ take: 3, skip: 0, order: {} }, em);
 
       const qaAnnouncement = scenario.announcements.announcementForQAs;
       const specificInnovationAnnouncement = scenario.announcements.announcementForSpecificInnovations;
+      const naScheduledAnnouncement = scenario.announcements.announcementForNAScheduled;
 
       expect(result).toMatchObject({
-        count: 2,
+        count: 3,
         data: [
+          {
+            id: naScheduledAnnouncement.id,
+            title: naScheduledAnnouncement.title,
+            userRoles: naScheduledAnnouncement.userRoles,
+            params: naScheduledAnnouncement.params,
+            startsAt: new Date(naScheduledAnnouncement.startsAt),
+            expiresAt: null,
+            status: naScheduledAnnouncement.status
+          },
           {
             id: specificInnovationAnnouncement.id,
             title: specificInnovationAnnouncement.title,
@@ -56,7 +82,7 @@ describe('Admin / _services / announcements service suite', () => {
             startsAt: new Date(specificInnovationAnnouncement.startsAt),
             expiresAt: specificInnovationAnnouncement.expiresAt
               ? new Date(specificInnovationAnnouncement.expiresAt)
-              : undefined,
+              : null,
             status: specificInnovationAnnouncement.status
           },
           {
@@ -65,7 +91,7 @@ describe('Admin / _services / announcements service suite', () => {
             userRoles: qaAnnouncement.userRoles,
             params: qaAnnouncement.params,
             startsAt: new Date(qaAnnouncement.startsAt),
-            expiresAt: qaAnnouncement.expiresAt ? new Date(qaAnnouncement.expiresAt) : undefined,
+            expiresAt: qaAnnouncement.expiresAt ? new Date(qaAnnouncement.expiresAt) : null,
             status: qaAnnouncement.status
           }
         ]
@@ -178,7 +204,7 @@ describe('Admin / _services / announcements service suite', () => {
         title: randText({ charCount: 10 }),
         userRoles: [ServiceRoleEnum.INNOVATOR],
         params: { content: randText() },
-        startsAt: randFutureDate(),
+        startsAt: new Date(),
         type: AnnouncementTypeEnum.LOG_IN
       };
 
@@ -347,6 +373,119 @@ describe('Admin / _services / announcements service suite', () => {
       await expect(() => sut.deleteAnnouncement(adminContext, randUuid(), em)).rejects.toThrow(
         new NotFoundError(AnnouncementErrorsEnum.ANNOUNCEMENT_NOT_FOUND)
       );
+    });
+  });
+
+  describe('activateAnnouncement', () => {
+    const admin = scenario.users.allMighty;
+
+    it('should activate a non filtered announcement and send email', async () => {
+      const announcement = scenario.announcements.announcementForQAs;
+
+      await em.delete(AnnouncementUserEntity, { announcement: { id: announcement.id } });
+
+      await sut.activateAnnouncement(admin.id, announcement.id, {}, em);
+
+      const affectedUsersCount = await em
+        .createQueryBuilder(AnnouncementUserEntity, 'au')
+        .where('au.announcement = :announcementId', { announcementId: announcement.id })
+        .andWhere('au.readAt IS NULL')
+        .getCount();
+
+      const qasCount = await em
+        .createQueryBuilder(UserEntity, 'u')
+        .innerJoin('u.serviceRoles', 'r', 'r.role = :qaRole AND r.isActive = 1', {
+          qaRole: ServiceRoleEnum.QUALIFYING_ACCESSOR
+        })
+        .getCount();
+
+      expect(affectedUsersCount).toBe(qasCount);
+      expect(updateStatusMock).toHaveBeenCalledTimes(0);
+      expect(notifierSendSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should activate a filtered announcement', async () => {
+      const announcement = scenario.announcements.announcementForSpecificInnovations;
+      await em.delete(AnnouncementUserEntity, { announcement: { id: announcement.id } });
+
+      await sut.activateAnnouncement(admin.id, announcement.id, {}, em);
+
+      const affectedUsersCount = await em
+        .createQueryBuilder(AnnouncementUserEntity, 'au')
+        .where('au.announcement = :announcementId', { announcementId: announcement.id })
+        .andWhere('au.readAt IS NULL')
+        .getCount();
+
+      const documents = await em
+        .createQueryBuilder(InnovationDocumentEntity, 'document')
+        .select(['document.id', 'innovation.id'])
+        .innerJoin('document.innovation', 'innovation')
+        .where(`JSON_QUERY(document.document, '$.INNOVATION_DESCRIPTION.areas') LIKE '%COVID_19%'`)
+        .andWhere('innovation.submittedAt IS NOT NULL')
+        .getMany();
+
+      const collaboratorsCount = await em
+        .createQueryBuilder(InnovationCollaboratorEntity, 'c')
+        .where('c.innovation_id IN (:...innovations)', { innovations: documents.map(d => d.innovation.id) })
+        .andWhere('c.status = :active', { active: InnovationCollaboratorStatusEnum.ACTIVE })
+        .getCount();
+
+      expect(affectedUsersCount).toBe(documents.length + collaboratorsCount);
+      expect(updateStatusMock).toHaveBeenCalledTimes(0);
+    });
+
+    it('should update the status is not ACTIVE yet', async () => {
+      const announcement = scenario.announcements.announcementForQAs;
+      await em.update(AnnouncementEntity, { id: announcement.id }, { status: AnnouncementStatusEnum.SCHEDULED });
+
+      await sut.activateAnnouncement(admin.id, announcement.id, {}, em);
+
+      expect(updateStatusMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('should delete announcement when all the filters are invalid', async () => {
+      const announcement = scenario.announcements.announcementForSpecificInnovations;
+
+      await em.update(
+        AnnouncementEntity,
+        { id: announcement.id },
+        { filters: [{ section: 'INNOVATION_DESCRIPTION', question: 'INVALID_QUESTION', answers: ['COVID_19'] }] }
+      );
+
+      await sut.activateAnnouncement(admin.id, announcement.id, {}, em);
+
+      const dbAnnouncement = await em
+        .createQueryBuilder(AnnouncementEntity, 'a')
+        .select(['a.id', 'a.status'])
+        .where('a.id = :announcementId', { announcementId: announcement.id })
+        .getOneOrFail();
+
+      expect(updateStatusMock).toHaveBeenCalledTimes(1);
+      expect(dbAnnouncement.status).toBe(AnnouncementStatusEnum.DELETED);
+    });
+  });
+
+  describe('getAnnouncementsToActivate', () => {
+    it('should return the announcements to be activated today', async () => {
+      const announcements = await sut.getAnnouncementsToActivate(em);
+      expect(announcements.map(a => a.id)).toStrictEqual([scenario.announcements.announcementForNAScheduled.id]);
+    });
+  });
+
+  describe('expireAnnouncements', () => {
+    it('should change the announcement to done when it expires', async () => {
+      const announcement = scenario.announcements.announcementForQAs;
+      await em.update(AnnouncementEntity, { id: announcement.id }, { expiresAt: randPastDate() });
+      const expired = await sut.expireAnnouncements(em);
+
+      const dbAnnouncement = await em
+        .createQueryBuilder(AnnouncementEntity, 'a')
+        .select(['a.id', 'a.status'])
+        .where('a.id = :announcementId', { announcementId: announcement.id })
+        .getOneOrFail();
+
+      expect(expired).toBe(1);
+      expect(dbAnnouncement.status).toBe(AnnouncementStatusEnum.DONE);
     });
   });
 });

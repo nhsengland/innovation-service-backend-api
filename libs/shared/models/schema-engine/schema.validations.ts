@@ -8,7 +8,7 @@ const StringSchema = Joi.string().max(100);
 const id = Joi.string().max(250).required();
 const isRequired = Joi.alternatives(Joi.boolean().valid(true), StringSchema);
 const postcodeFormat = Joi.alternatives(Joi.boolean().valid(true), StringSchema);
-const urlFormat = Joi.alternatives(Joi.boolean().valid(true), StringSchema);
+const urlFormat = Joi.object({ message: StringSchema, maxLength: Joi.number().integer() });
 const max = Joi.object({ length: Joi.number().integer().min(1), errorMessage: StringSchema });
 const min = Joi.object({ length: Joi.number().integer().min(1), errorMessage: StringSchema });
 const maxLength = Joi.number().integer().min(1);
@@ -89,7 +89,7 @@ const checkboxArray = Joi.object({
       })
     )
     .required(),
-  addQuestion: Joi.alternatives(text, textArea, radioGroup),
+  addQuestion: Joi.alternatives(text, textArea, radioGroup)
 });
 
 const fieldsGroup = Joi.object({
