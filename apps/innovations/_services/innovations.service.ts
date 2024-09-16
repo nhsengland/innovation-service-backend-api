@@ -53,7 +53,10 @@ import {
   type DomainContextType
 } from '@innovations/shared/types';
 
-import { InnovationSupportLogTypeEnum } from '@innovations/shared/enums';
+import {
+  InnovationSupportLogTypeEnum,
+  type InnovationRelevantOrganisationsStatusEnum
+} from '@innovations/shared/enums';
 import { InnovationLocationEnum } from '../_enums/innovation.enums';
 import type { InnovationSectionModel } from '../_types/innovation.types';
 
@@ -69,8 +72,7 @@ import { groupBy, isString, mapValues, omit, pick, snakeCase } from 'lodash';
 import { BaseService } from './base.service';
 import type { InnovationDocumentService } from './innovation-document.service';
 import SYMBOLS from './symbols';
-import { InnovationRelevantOrganisationsStatusView } from '@innovations/shared/entities/views/innovation_relevant_organisations_status_view.entity';
-import type { InnovationRelevantOrganisationsStatusEnum } from 'libs/shared/enums';
+import { InnovationRelevantOrganisationsStatusView } from '@innovations/shared/entities';
 
 // TODO move types
 export const InnovationListSelectType = [

@@ -95,6 +95,7 @@ export { SupportKPIViewEntity } from './views/support-kpi.view.entity';
 export { SupportLastActivityUpdateView } from './views/support-last-activity-update.view.entity';
 export { DocumentsStatisticsViewEntity } from './views/documents-statistics.view.entity';
 export { InnovationSuggestedUnitsView } from './views/innovation-suggested-units.view.entity';
+export { InnovationRelevantOrganisationsStatusView } from './views/innovation_relevant_organisations_status_view.entity';
 
 // Entities lists.
 export const GENERAL_ENTITIES = [AuditEntity, TermsOfUseEntity, TermsOfUseUserEntity];
