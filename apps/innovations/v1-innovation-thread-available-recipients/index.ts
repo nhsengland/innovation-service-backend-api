@@ -48,7 +48,7 @@ class V1InnovationThreadAvailableRecipients {
               acronym: item.organisation.unit.acronym!
             }
           },
-          ...(item.recipients === undefined ? {} : { engagingAccessors: item.recipients })
+          ...(item.recipients === undefined ? {} : { recipients: item.recipients })
         }))
       );
       return;
