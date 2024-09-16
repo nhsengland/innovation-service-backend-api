@@ -1325,7 +1325,7 @@ export const IR_SCHEMA = {
             countryName: [
               {
                 id: 'officeLocation',
-                options: ['England', 'Scotland', 'Wales']
+                options: ['England', 'Scotland', 'Wales', 'Northern Ireland']
               },
               {
                 id: 'countryLocation',
