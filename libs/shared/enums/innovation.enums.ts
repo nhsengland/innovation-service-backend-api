@@ -95,3 +95,10 @@ export enum InnovationSupportSummaryTypeEnum {
   BEEN_ENGAGED = 'BEEN_ENGAGED',
   SUGGESTED = 'SUGGESTED'
 }
+
+export enum InnovationRelevantOrganisationsStatusEnum {
+  ENGAGING = 'ENGAGING',
+  WAITING = 'WAITING',
+  SUGGESTED = 'SUGGESTED',
+  PREVIOUS_ENGAGEMENT = 'PREVIOUS_ENGAGED'
+}
