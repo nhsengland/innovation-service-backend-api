@@ -1,4 +1,4 @@
-import { InnovationRelevantOrganisationsStatusEnum } from 'libs/shared/enums';
+import { InnovationRelevantOrganisationsStatusEnum } from '../../enums';
 import { Column, ViewColumn, ViewEntity } from 'typeorm';
 
 /**

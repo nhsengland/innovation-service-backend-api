@@ -86,7 +86,7 @@ import { SupportLastActivityUpdateView } from './views/support-last-activity-upd
 import { DocumentsStatisticsViewEntity } from './views/documents-statistics.view.entity';
 import { InnovationSuggestedUnitsView } from './views/innovation-suggested-units.view.entity';
 import { InnovationProgressView } from './views/innovation-progress.view.entity';
-import { InnovationRelevantOrganisationsStatusView } from '@innovations/shared/entities/views/innovation_relevant_organisations_status_view.entity';
+import { InnovationRelevantOrganisationsStatusView } from './views/innovation_relevant_organisations_status_view.entity';
 export { InnovationGroupedStatusViewEntity } from './views/innovation-grouped-status.view.entity';
 export { LastSupportStatusViewEntity } from './views/last-support-status.view.entity';
 export { InnovationListView } from './views/innovation-list-view.entity';
