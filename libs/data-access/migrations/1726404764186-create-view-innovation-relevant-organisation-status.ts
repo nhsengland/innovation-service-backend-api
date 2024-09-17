@@ -43,9 +43,9 @@ JSON_OBJECT('id': ou.id, 'name': ou.name, 'acronym': ou.acronym) AS organisation
 IIF(
   s.support_id IS NULL,
   -- if not support I want all the QAs
-  (SELECT id as roleId, user_id as userId FROM user_role WHERE organisation_unit_id = ou.id AND role='QUALIFYING_ACCESSOR' AND is_active = 1 FOR JSON AUTO),
+  (SELECT DISTINCT id as roleId, user_id as userId FROM user_role WHERE organisation_unit_id = ou.id AND role='QUALIFYING_ACCESSOR' AND is_active = 1 FOR JSON AUTO),
   -- if support I want the assigned
-  (SELECT id as roleId, user_id as userId FROM innovation_support_user su
+  (SELECT DISTINCT id as roleId, user_id as userId FROM innovation_support_user su
    INNER JOIN user_role r ON su.user_role_id=r.id AND r.is_active = 1 FOR JSON AUTO)
 ) as user_data
 FROM all_supports s
