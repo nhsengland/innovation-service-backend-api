@@ -61,7 +61,7 @@ class V1InnovationThreadAvailableRecipients {
 
 export default openApi(
   V1InnovationThreadAvailableRecipients.httpTrigger as AzureFunction,
-  '/v1/{innovationId}/threads/available/recipients',
+  '/v1/{innovationId}/threads/available-recipients',
   {
     get: {
       description: `Get a list with a list of thread recipients for a respective innovation.`,
