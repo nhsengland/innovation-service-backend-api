@@ -2121,20 +2121,21 @@ export class InnovationsService extends BaseService {
       item => item.userData !== null && item.userData.length > 0
     );
 
-    const result = organisationsAndUsersFiltered.map(async item => {
+    const usersInfo = await this.domainService.users.getUsersMap({
+      userIds: organisationsAndUsersFiltered.flatMap(item => item.userData?.map(user => user.userId) ?? [])
+    });
+
+    const result = organisationsAndUsersFiltered.map(item => {
       const organisation = item.organisationData;
       const unit = item.organisationUnitData;
 
       let recipients: { id: string; roleId: string; name: string }[] | undefined = undefined;
 
       if (retrieveRecipients && item.userData) {
-        const users = item.userData.map(user => user.userId);
-
-        const usersInfo = await this.domainService.users.getUsersMap({ userIds: users });
         recipients = item.userData.map(user => ({
           id: user.userId,
           roleId: user.roleId,
-          name: usersInfo.get(user.userId)?.displayName ?? '[deleted account]'
+          name: usersInfo.get(user.userId)?.displayName ?? '[unavailable account]'
         }));
       }
 
@@ -2154,6 +2155,6 @@ export class InnovationsService extends BaseService {
         ...(recipients ? { recipients } : {})
       };
     });
-    return Promise.all(result);
+    return result;
   }
 }
