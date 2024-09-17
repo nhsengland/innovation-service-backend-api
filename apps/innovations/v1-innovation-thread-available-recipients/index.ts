@@ -34,8 +34,10 @@ class V1InnovationThreadAvailableRecipients {
         .verify();
 
       const result = await innovationService.getInnovationRelavantOrganisationsStatusList(params.innovationId, true);
+      const filteredResult = result.filter(item => item.recipients !== undefined && item.recipients.length > 0);
+
       context.res = ResponseHelper.Ok<ResponseDTO>(
-        result.map(item => ({
+        filteredResult.map(item => ({
           id: item.id,
           status: item.status,
           organisation: {
@@ -48,7 +50,8 @@ class V1InnovationThreadAvailableRecipients {
               acronym: item.organisation.unit.acronym!
             }
           },
-          ...(item.recipients === undefined ? {} : { recipients: item.recipients })
+          //This is needed for typescript < 5.5
+          recipients: item.recipients ? item.recipients : []
         }))
       );
       return;

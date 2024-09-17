@@ -9,5 +9,5 @@ export type ResponseDTO = {
     acronym: string;
     unit: { id: string; name: string; acronym: string };
   };
-  recipients?: { id: string; roleId: string; name: string }[];
+  recipients: { id: string; roleId: string; name: string }[];
 }[];
