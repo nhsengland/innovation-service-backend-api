@@ -3706,6 +3706,23 @@ paths:
           description: The user is not authorized to access this resource.
         "500":
           description: An error occurred while processing the request.
+  /v1/{innovationId}/threads/available-recipients:
+    get:
+      description: Get a list with a list of thread recipients for a respective innovation.
+      operationId: v1-innovations-threads-available-recipients
+      tags:
+        - "[v1] Innovation Threads Available Recipients"
+      parameters:
+        - in: path
+          name: innovationId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+        "404":
+          description: Not found
   /v1/{innovationId}/threads:
     post:
       summary: Create a new editable thread
