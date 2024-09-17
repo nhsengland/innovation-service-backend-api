@@ -2114,18 +2114,18 @@ export class InnovationsService extends BaseService {
       .createQueryBuilder(InnovationRelevantOrganisationsStatusView, 'relevantOrganisationsStatus')
       .where('relevantOrganisationsStatus.innovationId = :innovationId', { innovationId });
 
-    const organisationsAndUsers = await query.getMany();
-    //We are filtering organisations that do not have users to support innovations
+    let organisationsAndUsers = await query.getMany();
 
-    const organisationsAndUsersFiltered = organisationsAndUsers.filter(
-      item => item.userData !== null && item.userData.length > 0
-    );
+    if (retrieveRecipients) {
+      //We are filtering organisations that do not have users to support innovations
+      organisationsAndUsers = organisationsAndUsers.filter(item => item.userData !== null && item.userData.length > 0);
+    }
 
     const usersInfo = await this.domainService.users.getUsersMap({
-      userIds: organisationsAndUsersFiltered.flatMap(item => item.userData?.map(user => user.userId) ?? [])
+      userIds: organisationsAndUsers.flatMap(item => item.userData?.map(user => user.userId) ?? [])
     });
 
-    const result = organisationsAndUsersFiltered.map(item => {
+    const result = organisationsAndUsers.map(item => {
       const organisation = item.organisationData;
       const unit = item.organisationUnitData;
 

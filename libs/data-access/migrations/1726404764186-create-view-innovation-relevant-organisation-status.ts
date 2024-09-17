@@ -14,8 +14,8 @@ export class createViewInnovationRelevantOrganisationsStatus1726404764186 implem
   SELECT s.innovation_id, s.organisation_unit_id, s.status, s.id as support_id
   FROM innovation_support s
   WHERE s.status IN ('ENGAGING','WAITING')
-), previous_engaging AS (
-  SELECT s.innovation_id, s.organisation_unit_id, 'PREVIOUS_ENGAGING' as status, null as support_id
+), previous_engaged AS (
+  SELECT s.innovation_id, s.organisation_unit_id, 'PREVIOUS_ENGANGED' as status, null as support_id
   FROM innovation_support FOR SYSTEM_TIME ALL s
   WHERE s.status = 'ENGAGING'
   AND s.organisation_unit_id NOT IN (SELECT organisation_unit_id FROM engaging_waiting WHERE innovation_id = s.innovation_id)
@@ -25,12 +25,12 @@ export class createViewInnovationRelevantOrganisationsStatus1726404764186 implem
   FROM innovation_support_log sl
   INNER JOIN innovation_support_log_organisation_unit slou ON sl.id = slou.innovation_support_log_id
   WHERE sl.type IN ('ASSESSMENT_SUGGESTION','ACCESSOR_SUGGESTION')
-  AND slou.organisation_unit_id NOT IN (SELECT organisation_unit_id FROM engaging_waiting WHERE innovation_id = sl.innovation_id UNION ALL SELECT organisation_unit_id FROM previous_engaging WHERE innovation_id = sl.innovation_id)
+  AND slou.organisation_unit_id NOT IN (SELECT organisation_unit_id FROM engaging_waiting WHERE innovation_id = sl.innovation_id UNION ALL SELECT organisation_unit_id FROM previous_engaged WHERE innovation_id = sl.innovation_id)
   GROUP BY sl.innovation_id, slou.organisation_unit_id
 ), all_supports AS (
   SELECT * FROM engaging_waiting
   UNION ALL
-  SELECT * FROM previous_engaging
+  SELECT * FROM previous_engaged
   UNION ALL
   SELECT * FROM suggested
 )
