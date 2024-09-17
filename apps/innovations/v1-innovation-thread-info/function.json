@@ -6,7 +6,7 @@
       "direction": "in",
       "name": "req",
       "methods": ["get"],
-      "route": "v1/{innovationId}/threads/{threadId}"
+      "route": "v1/{innovationId}/threads/{threadId:guid}"
     },
     {
       "type": "http",
