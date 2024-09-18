@@ -879,4 +879,123 @@ describe('Innovations / _services / innovations suite', () => {
       );
     });
   });
+
+  describe('getInnovationRelavantOrganisationsStatusList', () => {
+    const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+
+    it('should return organisations with relevant status and its users', async () => {
+      const relevantStatusOrganisationList = await sut.getInnovationRelavantOrganisationsStatusList(
+        innovation.id,
+        true,
+        em
+      );
+
+      expect(relevantStatusOrganisationList).toMatchObject([
+        {
+          status: innovation.supports.supportByHealthOrgUnit.relevantStatus,
+          organisation: {
+            id: scenario.organisations.healthOrg.id,
+            name: scenario.organisations.healthOrg.name,
+            acronym: scenario.organisations.healthOrg.acronym,
+            unit: {
+              id: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
+              name: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
+              acronym: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.acronym
+            }
+          },
+          recipients: [
+            {
+              id: scenario.users.aliceQualifyingAccessor.id,
+              roleId: scenario.users.aliceQualifyingAccessor.roles.qaRole.id,
+              name: scenario.users.aliceQualifyingAccessor.name
+            },
+            {
+              id: scenario.users.jamieMadroxAccessor.id,
+              roleId: scenario.users.jamieMadroxAccessor.roles.healthAccessorRole.id,
+              name: scenario.users.jamieMadroxAccessor.name
+            }
+          ]
+        },
+        {
+          status: innovation.supports.supportByHealthOrgUnit.relevantStatus,
+          organisation: {
+            id: scenario.organisations.medTechOrg.id,
+            name: scenario.organisations.medTechOrg.name,
+            acronym: scenario.organisations.medTechOrg.acronym,
+            unit: {
+              id: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id,
+              name: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.name,
+              acronym: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.acronym
+            }
+          },
+          recipients: [
+            {
+              id: scenario.users.samAccessor.id,
+              roleId: scenario.users.samAccessor.roles.accessorRole.id,
+              name: scenario.users.samAccessor.name
+            }
+          ]
+        }
+      ]);
+    });
+
+    it('should return organisations with relevant status', async () => {
+      const relevantStatusOrganisationList = await sut.getInnovationRelavantOrganisationsStatusList(
+        innovation.id,
+        false,
+        em
+      );
+
+      expect(relevantStatusOrganisationList).toMatchObject([
+        {
+          status: innovation.supports.supportByHealthOrgUnit.relevantStatus,
+          organisation: {
+            id: scenario.organisations.healthOrg.id,
+            name: scenario.organisations.healthOrg.name,
+            acronym: scenario.organisations.healthOrg.acronym,
+            unit: {
+              id: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
+              name: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
+              acronym: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.acronym
+            }
+          }
+        },
+        {
+          status: innovation.supports.supportByHealthOrgAiUnit.relevantStatus,
+          organisation: {
+            id: scenario.organisations.healthOrg.id,
+            name: scenario.organisations.healthOrg.name,
+            acronym: scenario.organisations.healthOrg.acronym,
+            unit: {
+              id: scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id,
+              name: scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.name,
+              acronym: scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.acronym
+            }
+          }
+        },
+        {
+          status: innovation.supports.supportByHealthOrgUnit.relevantStatus,
+          organisation: {
+            id: scenario.organisations.medTechOrg.id,
+            name: scenario.organisations.medTechOrg.name,
+            acronym: scenario.organisations.medTechOrg.acronym,
+            unit: {
+              id: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id,
+              name: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.name,
+              acronym: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.acronym
+            }
+          }
+        }
+      ]);
+    });
+
+    it(`should return an empty list`, async () => {
+      const relevantStatusOrganisationList = await sut.getInnovationRelavantOrganisationsStatusList(
+        randUuid(),
+        false,
+        em
+      );
+      expect(relevantStatusOrganisationList).toHaveLength(0);
+    });
+  });
 });
