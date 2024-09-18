@@ -14,6 +14,7 @@ import {
   InnovationCollaboratorStatusEnum,
   InnovationExportRequestStatusEnum,
   InnovationFileContextTypeEnum,
+  InnovationRelevantOrganisationsStatusEnum,
   InnovationSectionStatusEnum,
   InnovationStatusEnum,
   InnovationSupportLogTypeEnum,
@@ -1016,10 +1017,18 @@ export class CompleteScenarioBuilder {
                 supports: {
                   supportByHealthOrgUnit: {
                     ...johnInnovationSupportByHealthOrgUnit,
+                    relevantStatus: InnovationRelevantOrganisationsStatusEnum.ENGAGING,
                     accessors: [aliceQualifyingAccessor, jamieMadroxAccessor]
                   },
-                  supportByHealthOrgAiUnit: { ...johnInnovationSupportByHealthOrgAIUnit },
-                  supportByMedTechOrgUnit: { ...johnInnovationSupportByMedTechOrgUnit, accessors: [samAccessor] },
+                  supportByHealthOrgAiUnit: {
+                    ...johnInnovationSupportByHealthOrgAIUnit,
+                    relevantStatus: InnovationRelevantOrganisationsStatusEnum.WAITING
+                  },
+                  supportByMedTechOrgUnit: {
+                    ...johnInnovationSupportByMedTechOrgUnit,
+                    relevantStatus: InnovationRelevantOrganisationsStatusEnum.ENGAGING,
+                    accessors: [samAccessor]
+                  },
                   supportLog: johnInnovationSupportLog
                 },
                 assessment: {

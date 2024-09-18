@@ -2116,6 +2116,10 @@ export class InnovationsService extends BaseService {
 
     let organisationsAndUsers = await query.getMany();
 
+    if (!organisationsAndUsers) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
+    }
+
     if (retrieveRecipients) {
       //We are filtering organisations that do not have users to support innovations
       organisationsAndUsers = organisationsAndUsers.filter(item => item.userData !== null && item.userData.length > 0);
