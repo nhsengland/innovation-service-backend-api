@@ -6,7 +6,7 @@ import type { MigrationInterface, QueryRunner } from 'typeorm';
 // - SUGGESTED
 // - PREVIOUS_ENGAGED
 //
-export class createViewInnovationRelevantOrganisationsStatus1726404764186 implements MigrationInterface {
+export class createViewInnovationRelevantOrganisationsStatus1726668369380 implements MigrationInterface {
   async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
     CREATE OR ALTER VIEW [innovation_relevant_organisations_status_view] AS
@@ -46,7 +46,7 @@ IIF(
   (SELECT DISTINCT id as roleId, user_id as userId FROM user_role WHERE organisation_unit_id = ou.id AND role='QUALIFYING_ACCESSOR' AND is_active = 1 FOR JSON AUTO),
   -- if support I want the assigned
   (SELECT DISTINCT id as roleId, user_id as userId FROM innovation_support_user su
-   INNER JOIN user_role r ON su.user_role_id=r.id AND r.is_active = 1 FOR JSON AUTO)
+   INNER JOIN user_role r ON su.user_role_id=r.id AND r.is_active = 1 WHERE su.innovation_support_id = s.support_id FOR JSON AUTO)
 ) as user_data
 FROM all_supports s
 INNER JOIN organisation_unit ou on s.organisation_unit_id = ou.id

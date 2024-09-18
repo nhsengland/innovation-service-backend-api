@@ -883,7 +883,7 @@ describe('Innovations / _services / innovations suite', () => {
   describe('getInnovationRelavantOrganisationsStatusList', () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
 
-    it('should return currently engaging units and users', async () => {
+    it('should return organisations with relevant status and its users', async () => {
       const relevantStatusOrganisationList = await sut.getInnovationRelavantOrganisationsStatusList(
         innovation.id,
         true,
@@ -913,41 +913,6 @@ describe('Innovations / _services / innovations suite', () => {
               id: scenario.users.jamieMadroxAccessor.id,
               roleId: scenario.users.jamieMadroxAccessor.roles.healthAccessorRole.id,
               name: scenario.users.jamieMadroxAccessor.name
-            },
-            {
-              id: scenario.users.samAccessor.id,
-              roleId: scenario.users.samAccessor.roles.accessorRole.id,
-              name: scenario.users.samAccessor.name
-            }
-          ]
-        },
-        {
-          status: innovation.supports.supportByHealthOrgAiUnit.relevantStatus,
-          organisation: {
-            id: scenario.organisations.healthOrg.id,
-            name: scenario.organisations.healthOrg.name,
-            acronym: scenario.organisations.healthOrg.acronym,
-            unit: {
-              id: scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id,
-              name: scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.name,
-              acronym: scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.acronym
-            }
-          },
-          recipients: [
-            {
-              id: scenario.users.aliceQualifyingAccessor.id,
-              roleId: scenario.users.aliceQualifyingAccessor.roles.qaRole.id,
-              name: scenario.users.aliceQualifyingAccessor.name
-            },
-            {
-              id: scenario.users.jamieMadroxAccessor.id,
-              roleId: scenario.users.jamieMadroxAccessor.roles.healthAccessorRole.id,
-              name: scenario.users.jamieMadroxAccessor.name
-            },
-            {
-              id: scenario.users.samAccessor.id,
-              roleId: scenario.users.samAccessor.roles.accessorRole.id,
-              name: scenario.users.samAccessor.name
             }
           ]
         },
@@ -965,16 +930,6 @@ describe('Innovations / _services / innovations suite', () => {
           },
           recipients: [
             {
-              id: scenario.users.aliceQualifyingAccessor.id,
-              roleId: scenario.users.aliceQualifyingAccessor.roles.qaRole.id,
-              name: scenario.users.aliceQualifyingAccessor.name
-            },
-            {
-              id: scenario.users.jamieMadroxAccessor.id,
-              roleId: scenario.users.jamieMadroxAccessor.roles.healthAccessorRole.id,
-              name: scenario.users.jamieMadroxAccessor.name
-            },
-            {
               id: scenario.users.samAccessor.id,
               roleId: scenario.users.samAccessor.roles.accessorRole.id,
               name: scenario.users.samAccessor.name
@@ -984,10 +939,10 @@ describe('Innovations / _services / innovations suite', () => {
       ]);
     });
 
-    it('should return currently engaging units and users', async () => {
+    it('should return organisations with relevant status', async () => {
       const relevantStatusOrganisationList = await sut.getInnovationRelavantOrganisationsStatusList(
         innovation.id,
-        true,
+        false,
         em
       );
 
@@ -1034,10 +989,13 @@ describe('Innovations / _services / innovations suite', () => {
       ]);
     });
 
-    it(`should throw a not found error when the innovation doesn't exist`, async () => {
-      await expect(() => sut.getInnovationRelavantOrganisationsStatusList(randUuid(), false, em)).rejects.toThrow(
-        new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND)
+    it(`should return an empty list`, async () => {
+      const relevantStatusOrganisationList = await sut.getInnovationRelavantOrganisationsStatusList(
+        randUuid(),
+        false,
+        em
       );
+      expect(relevantStatusOrganisationList).toHaveLength(0);
     });
   });
 });
