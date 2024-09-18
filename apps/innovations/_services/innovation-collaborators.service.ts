@@ -265,6 +265,7 @@ export class InnovationCollaboratorsService extends BaseService {
     innovation: {
       id: string;
       name: string;
+      description?: string;
       owner?: { id: string; name?: string };
     };
     invitedAt: Date;
@@ -275,11 +276,13 @@ export class InnovationCollaboratorsService extends BaseService {
       .createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
       .withDeleted()
       .innerJoin('collaborator.innovation', 'innovation')
+      .innerJoin('innovation.documentDraft', 'documentDraft')
       .leftJoin('collaborator.user', 'collaboratorUser')
       .leftJoin('innovation.owner', 'innovationOwner')
       .select([
-        'innovation.name',
         'innovation.id',
+        'innovation.name',
+        'documentDraft.document',
         'innovationOwner.identityId',
         'innovationOwner.id',
         'innovationOwner.status',
@@ -326,6 +329,7 @@ export class InnovationCollaboratorsService extends BaseService {
       innovation: {
         id: collaborator.innovation.id,
         name: collaborator.innovation.name,
+        description: collaborator.innovation.documentDraft.document.INNOVATION_DESCRIPTION.description,
         ...(collaborator.innovation.owner && {
           owner: {
             id: collaborator.innovation.owner.id,

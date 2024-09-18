@@ -892,6 +892,8 @@ paths:
                         format: uuid
                       name:
                         type: string
+                      description:
+                        type: string
                       owner:
                         type: object
                         properties:

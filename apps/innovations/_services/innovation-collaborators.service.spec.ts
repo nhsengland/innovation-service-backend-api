@@ -162,9 +162,7 @@ describe('Innovation Collaborators Suite', () => {
           email: user.email,
           role: 'my role'
         })
-      ).rejects.toThrow(
-        new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_MUST_BE_INNOVATOR)
-      );
+      ).rejects.toThrow(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_MUST_BE_INNOVATOR));
     });
   });
 
@@ -248,6 +246,7 @@ describe('Innovation Collaborators Suite', () => {
           innovation: {
             id: innovation.id,
             name: innovation.name,
+            description: collaborator.innovation.description,
             owner: { id: scenario.users.johnInnovator.id, name: scenario.users.johnInnovator.name }
           },
           invitedAt: expect.any(Date)
@@ -271,6 +270,7 @@ describe('Innovation Collaborators Suite', () => {
           innovation: {
             id: innovation.id,
             name: innovation.name,
+            description: collaborator.innovation.description,
             owner: { id: scenario.users.johnInnovator.id, name: scenario.users.johnInnovator.name }
           },
           invitedAt: expect.any(Date)
@@ -295,6 +295,7 @@ describe('Innovation Collaborators Suite', () => {
           innovation: {
             id: innovation.id,
             name: innovation.name,
+            description: collaborator.innovation.description,
             owner: { id: scenario.users.johnInnovator.id, name: scenario.users.johnInnovator.name }
           },
           invitedAt: expect.any(Date)
