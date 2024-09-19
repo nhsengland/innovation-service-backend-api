@@ -663,7 +663,7 @@ export class InnovationThreadsService extends BaseService {
               : '[deleted user]',
           role: tm.authorUserRole?.role,
           ...(tm.authorUserRole?.role === ServiceRoleEnum.INNOVATOR && {
-            isOwner: tm.author.id === tm.thread.innovation.owner?.id ?? false
+            isOwner: tm.author.id === tm.thread.innovation.owner?.id
           }),
           organisation,
           organisationUnit

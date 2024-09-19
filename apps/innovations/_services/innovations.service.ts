@@ -1,9 +1,10 @@
 import { inject, injectable } from 'inversify';
-import { Brackets, EntityManager, In, SelectQueryBuilder } from 'typeorm';
+import type { EntityManager, SelectQueryBuilder } from 'typeorm';
+import { Brackets, In } from 'typeorm';
 
+import type { InnovationAssessmentEntity } from '@innovations/shared/entities';
 import {
   ActivityLogEntity,
-  InnovationAssessmentEntity,
   InnovationDocumentDraftEntity,
   InnovationDocumentEntity,
   InnovationEntity,
@@ -21,16 +22,16 @@ import {
 } from '@innovations/shared/entities';
 import {
   ActivityEnum,
-  ActivityTypeEnum,
+  type ActivityTypeEnum,
   InnovationCollaboratorStatusEnum,
   InnovationExportRequestStatusEnum,
-  InnovationGroupedStatusEnum,
+  type InnovationGroupedStatusEnum,
   InnovationSectionStatusEnum,
   InnovationStatusEnum,
   InnovationSupportStatusEnum,
   InnovationTaskStatusEnum,
   NotifierTypeEnum,
-  PhoneUserPreferenceEnum,
+  type PhoneUserPreferenceEnum,
   ServiceRoleEnum,
   UserStatusEnum
 } from '@innovations/shared/enums';
@@ -43,8 +44,10 @@ import {
   OrganisationErrorsEnum,
   UnprocessableEntityError
 } from '@innovations/shared/errors';
-import { PaginationQueryParamsType, TranslationHelper } from '@innovations/shared/helpers';
-import type { DomainService, DomainUsersService, IRSchemaService, NotifierService } from '@innovations/shared/services';
+import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
+import { TranslationHelper } from '@innovations/shared/helpers';
+import { DomainService, IRSchemaService, NotifierService } from '@innovations/shared/services';
+import type { DomainUsersService } from '@innovations/shared/services';
 import {
   isAccessorDomainContextType,
   isAdminDomainContextType,
@@ -61,16 +64,14 @@ import { InnovationLocationEnum } from '../_enums/innovation.enums';
 import type { InnovationSectionModel } from '../_types/innovation.types';
 
 import { createDocumentFromInnovation } from '@innovations/shared/entities/innovation/innovation-document.entity';
-import {
-  InnovationListViewWithoutNull,
-  InnovationProgressView
-} from '@innovations/shared/entities/views/innovation-progress.view.entity';
+import type { InnovationListViewWithoutNull } from '@innovations/shared/entities/views/innovation-progress.view.entity';
+import { InnovationProgressView } from '@innovations/shared/entities/views/innovation-progress.view.entity';
 import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import { ActionEnum } from '@innovations/shared/services/integrations/audit.service';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import { groupBy, isString, mapValues, omit, pick, snakeCase } from 'lodash';
 import { BaseService } from './base.service';
-import type { InnovationDocumentService } from './innovation-document.service';
+import { InnovationDocumentService } from './innovation-document.service';
 import SYMBOLS from './symbols';
 import { InnovationRelevantOrganisationsStatusView } from '@innovations/shared/entities';
 
