@@ -8,7 +8,12 @@ import {
   UserRoleEntity,
   UserEntity
 } from '@users/shared/entities';
-import { OrganisationTypeEnum, ServiceRoleEnum, UserStatusEnum } from '@users/shared/enums';
+import {
+  InnovationSupportStatusEnum,
+  OrganisationTypeEnum,
+  ServiceRoleEnum,
+  UserStatusEnum
+} from '@users/shared/enums';
 import {
   BadRequestError,
   NotFoundError,
@@ -208,7 +213,8 @@ export class OrganisationsService extends BaseService {
     }[];
   }> {
     if (!isAccessorDomainContextType(domainContext)) throw new BadRequestError(UserErrorsEnum.USER_TYPE_INVALID);
-    if (domainContext.organisation.organisationUnit.id !== unitId) throw new ForbiddenError(OrganisationErrorsEnum.ORGANISATION_USER_FROM_OTHER_ORG);
+    if (domainContext.organisation.organisationUnit.id !== unitId)
+      throw new ForbiddenError(OrganisationErrorsEnum.ORGANISATION_USER_FROM_OTHER_ORG);
 
     const em = entityManager ?? this.sqlConnection.manager;
 
@@ -243,6 +249,9 @@ export class OrganisationsService extends BaseService {
       .innerJoin('support.userRoles', 'assignedRole')
       .innerJoin('assignedRole.user', 'assignedUser')
       .where('support.organisation_unit_id = :unitId', { unitId })
+      .andWhere('support.status IN (:...engagingStatus)', {
+        engagingStatus: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.WAITING]
+      })
       .getMany();
 
     const innovationInfo = new Map<string, { id: string; name: string }>();
