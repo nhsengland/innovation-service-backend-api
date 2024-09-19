@@ -1,5 +1,5 @@
 import { ServiceRoleEnum } from '@admin/shared/enums';
-import Joi, { Schema } from 'joi';
+import Joi, { type Schema } from 'joi';
 import {
   ActivateUserRoleValidationsHandler,
   AddAnyUserRoleValidationsHandler,
