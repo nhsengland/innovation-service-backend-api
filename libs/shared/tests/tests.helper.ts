@@ -13,7 +13,7 @@ import type { SQLConnectionService } from '../services/storage/sql-connection.se
 import SHARED_SYMBOLS from '../services/symbols';
 import type { TestUserType } from './builders/user.builder';
 import { DTOsHelper } from './helpers/dtos.helper';
-import { CompleteScenarioBuilder, CompleteScenarioType } from './scenarios/complete-scenario.builder';
+import { CompleteScenarioBuilder, type CompleteScenarioType } from './scenarios/complete-scenario.builder';
 
 export class TestsHelper {
   private sqlConnection: DataSource;

@@ -1,7 +1,12 @@
 import type { EntityManager } from 'typeorm';
-import { AnnouncementEntity, AnnouncementUserEntity } from '../../entities';
+import { AnnouncementEntity, type AnnouncementUserEntity } from '../../entities';
 import { randFutureDate, randText, randUrl } from '@ngneat/falso';
-import { AnnouncementParamsType, AnnouncementStatusEnum, AnnouncementTypeEnum, ServiceRoleEnum } from '../../enums';
+import {
+  type AnnouncementParamsType,
+  type AnnouncementStatusEnum,
+  AnnouncementTypeEnum,
+  ServiceRoleEnum
+} from '../../enums';
 import { BaseBuilder } from './base.builder';
 import type { AnnouncementUserBuilder } from './announcement-users.builder';
 import type { FilterPayload } from '../../models/schema-engine/schema.model';

@@ -47,6 +47,7 @@ export class migrateFilesFromEvidences1688052294220 implements MigrationInterfac
     // Now get the info from the files that are currently saved on legacy file entity
     const oldFiles = [];
     let start = 0;
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       const fileIdsSearch = fileIds.slice(start, start + 500);
       if (fileIdsSearch.length === 0) {

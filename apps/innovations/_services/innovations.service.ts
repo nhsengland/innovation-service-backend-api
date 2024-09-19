@@ -1051,7 +1051,6 @@ export class InnovationsService extends BaseService {
       switch (field) {
         case 'assignedTo':
           res[field] = extra.users.get(item.currentAssessment?.assignTo?.id ?? '')?.displayName ?? null;
-          item.currentAssessment?.assignTo ?? null;
           break;
         case 'isExempt':
           res[field] = !!item.currentAssessment?.exemptedAt;

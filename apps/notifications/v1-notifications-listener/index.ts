@@ -10,7 +10,8 @@ import type { DomainContextType } from '@notifications/shared/types';
 import { container } from '../_config';
 import { HandlersHelper } from '../_helpers/handlers.helper';
 
-import { MessageSchema, MessageType } from './validation.schemas';
+import type { MessageType } from './validation.schemas';
+import { MessageSchema } from './validation.schemas';
 
 import type { MessageType as EmailMessageType } from '../v1-emails-listener/validation.schemas';
 import type { MessageType as InAppMessageType } from '../v1-in-app-listener/validation.schemas';

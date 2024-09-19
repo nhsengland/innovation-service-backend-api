@@ -16,7 +16,8 @@ import { StorageQueueService } from '../services/integrations/storage-queue.serv
 import { CacheService } from '../services/storage/cache.service';
 import { FileStorageService } from '../services/storage/file-storage.service';
 import { RedisService } from '../services/storage/redis.service';
-import { SqlProvider, sqlProvider } from '../services/storage/sql-connection.provider';
+import type { SqlProvider} from '../services/storage/sql-connection.provider';
+import { sqlProvider } from '../services/storage/sql-connection.provider';
 import { SQLConnectionService } from '../services/storage/sql-connection.service';
 import SHARED_SYMBOLS from '../services/symbols';
 import { IRSchemaService } from '../services/storage/ir-schema.service';

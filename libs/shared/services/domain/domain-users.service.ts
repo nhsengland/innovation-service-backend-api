@@ -1,12 +1,7 @@
 import type { DataSource, EntityManager, Repository } from 'typeorm';
 
-import {
-  InnovationCollaboratorStatusEnum,
-  NotifierTypeEnum,
-  PhoneUserPreferenceEnum,
-  ServiceRoleEnum,
-  UserStatusEnum
-} from '../../enums';
+import type { PhoneUserPreferenceEnum } from '../../enums';
+import { InnovationCollaboratorStatusEnum, NotifierTypeEnum, ServiceRoleEnum, UserStatusEnum } from '../../enums';
 import {
   GenericErrorsEnum,
   InternalServerError,
@@ -298,7 +293,7 @@ export class DomainUsersService {
       } else {
         return [dbUser];
       }
-    } catch (error) {
+    } catch (_error) {
       // As this method mimics a search, on errors, we just return an empty array.
       return [];
     }

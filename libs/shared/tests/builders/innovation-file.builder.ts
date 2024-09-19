@@ -53,7 +53,7 @@ export class InnovationFileBuilder extends BaseBuilder {
     return this;
   }
 
-  setInnovation(innovationId: string) {
+  setInnovation(innovationId: string): this {
     this.file.innovation = { id: innovationId };
     return this;
   }

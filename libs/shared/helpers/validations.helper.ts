@@ -3,7 +3,11 @@ import { ServiceRoleEnum } from '../enums';
 import { ConflictError, OrganisationErrorsEnum } from '../errors';
 
 export class ValidationsHelper {
-  static canAddUserToUnit(roles: UserRoleEntity[], organisationId: string, organisationUnitId: string) {
+  static canAddUserToUnit(
+    roles: UserRoleEntity[],
+    organisationId: string,
+    organisationUnitId: string
+  ): { userId: string | undefined; userRole: ServiceRoleEnum | undefined } {
     let userId: string | undefined;
     let userRole: ServiceRoleEnum | undefined;
 

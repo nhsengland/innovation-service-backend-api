@@ -1,4 +1,5 @@
-import { DefaultNamingStrategy, Table, NamingStrategyInterface } from 'typeorm';
+import type { Table, NamingStrategyInterface } from 'typeorm';
+import { DefaultNamingStrategy } from 'typeorm';
 
 export class TypeORMCustomStrategy extends DefaultNamingStrategy implements NamingStrategyInterface {
   override foreignKeyName(tableOrName: Table | string, columnNames: string[], referencedTablePath?: string): string {

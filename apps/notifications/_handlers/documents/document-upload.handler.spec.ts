@@ -1,7 +1,8 @@
 import { DocumentUploadHandler } from './document-upload.handler';
 
 import { ServiceRoleEnum } from '@notifications/shared/enums';
-import { CompleteScenarioType, MocksHelper } from '@notifications/shared/tests';
+import type { CompleteScenarioType} from '@notifications/shared/tests';
+import { MocksHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 
 import { TranslationHelper } from '@notifications/shared/helpers';

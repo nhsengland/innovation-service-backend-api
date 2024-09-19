@@ -1,11 +1,13 @@
-import {
+import type {
   Connection,
   EntitySchema,
-  getConnection,
   MigrationInterface,
   ObjectType,
   QueryRunner,
   Repository
+} from 'typeorm';
+import {
+  getConnection
 } from 'typeorm';
 
 export abstract class BaseSeed implements MigrationInterface {

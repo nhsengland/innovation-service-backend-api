@@ -1,5 +1,4 @@
-// eslint-disable-next-line @typescript-eslint/ban-types
-export type ResolvedNestedPromise<T> = T extends Object
+export type ResolvedNestedPromise<T> = T extends object
   ? T extends Promise<infer InnerType>
     ? ResolvedNestedPromise<InnerType>
     : {
@@ -85,7 +84,7 @@ export const sleep = (ms: number): Promise<void> => new Promise(resolve => setTi
  * Helper to add to an array value in a Map.
  * It mutates the map passed as a param.
  */
-export const addToArrayValueInMap = <T>(map: Map<string, T[]>, key: string, value: T) => {
+export const addToArrayValueInMap = <T>(map: Map<string, T[]>, key: string, value: T): void => {
   if (!map.has(key)) {
     map.set(key, []);
   }

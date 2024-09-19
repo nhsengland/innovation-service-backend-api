@@ -1,12 +1,14 @@
 import type { Context } from '@azure/functions';
-import {
+import type {
   NotificationCategoryType,
   NotificationDetailType,
-  NotifierTypeEnum,
+  NotifierTypeEnum} from '@notifications/shared/enums';
+import {
   ServiceRoleEnum
 } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
-import { EmailTemplates, EmailTemplatesType, container } from '../_config';
+import type { EmailTemplates, EmailTemplatesType} from '../_config';
+import { container } from '../_config';
 import type { InAppTemplatesType } from '../_config/inapp.config';
 import { HandlersHelper } from '../_helpers/handlers.helper';
 import { unsubscribeUrl } from '../_helpers/url.helper';

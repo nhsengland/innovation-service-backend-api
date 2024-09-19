@@ -42,7 +42,7 @@ export function JwtDecoder() {
             ...(role && { roleId: role })
           }
         };
-      } catch (error) {
+      } catch (_error) {
         context.res = ResponseHelper.Error(context, new UnauthorizedError(UserErrorsEnum.REQUEST_USER_INVALID_TOKEN));
         return;
       }

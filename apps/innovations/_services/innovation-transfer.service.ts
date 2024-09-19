@@ -114,7 +114,7 @@ export class InnovationTransferService extends BaseService {
               owner: createdBy.displayName
             }
           };
-        } catch (_) {
+        } catch (_error) {
           return {
             id: transfer.id,
             email: transfer.email,
@@ -144,7 +144,7 @@ export class InnovationTransferService extends BaseService {
       const authUser = await this.identityProviderService.getUserInfoByEmail(dbTranfer.email);
 
       return { userExists: !!authUser?.identityId };
-    } catch (error) {
+    } catch (_error) {
       return { userExists: false };
     }
   }

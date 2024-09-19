@@ -1,6 +1,7 @@
 import Joi from 'joi';
 
-import { AnnouncementParamsType, AnnouncementTypeEnum, ServiceRoleEnum } from '@admin/shared/enums';
+import type { AnnouncementParamsType, ServiceRoleEnum } from '@admin/shared/enums';
+import { AnnouncementTypeEnum } from '@admin/shared/enums';
 import { AnnouncementJoiLinkValidation } from '../_services/announcements.schemas';
 import type { FilterPayload } from '@admin/shared/models/schema-engine/schema.model';
 

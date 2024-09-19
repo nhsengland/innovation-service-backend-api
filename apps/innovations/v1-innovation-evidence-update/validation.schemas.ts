@@ -1,6 +1,7 @@
 import Joi from 'joi';
 
-import { CurrentEvidenceSchema, CurrentEvidenceType } from '@innovations/shared/schemas/innovation-record';
+import type { CurrentEvidenceType } from '@innovations/shared/schemas/innovation-record';
+import { CurrentEvidenceSchema } from '@innovations/shared/schemas/innovation-record';
 
 export type ParamsType = {
   innovationId: string;

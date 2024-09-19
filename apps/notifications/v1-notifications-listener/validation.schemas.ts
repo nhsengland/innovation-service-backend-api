@@ -1,7 +1,8 @@
 import Joi from 'joi';
 
 import { NotifierTypeEnum } from '@notifications/shared/enums';
-import { DomainContextSchema, DomainContextType } from '@notifications/shared/types';
+import type { DomainContextType } from '@notifications/shared/types';
+import { DomainContextSchema } from '@notifications/shared/types';
 
 export type MessageType = {
   data: {

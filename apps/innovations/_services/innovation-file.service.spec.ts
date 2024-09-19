@@ -17,7 +17,8 @@ import {
 } from '@innovations/shared/errors';
 import { FileStorageService, NotifierService } from '@innovations/shared/services';
 import { AuthErrorsEnum } from '@innovations/shared/services/auth/authorization-validation.model';
-import { CompleteScenarioType, MocksHelper, TestsHelper } from '@innovations/shared/tests';
+import type { CompleteScenarioType } from '@innovations/shared/tests';
+import { MocksHelper, TestsHelper } from '@innovations/shared/tests';
 import { InnovationFileBuilder, type TestFileType } from '@innovations/shared/tests/builders/innovation-file.builder';
 import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
 import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
@@ -487,7 +488,6 @@ describe('Services / Innovation File service suite', () => {
         ['innovator', scenario.users.johnInnovator],
         ['admin', scenario.users.allMighty]
       ])('should return the list of all files for an archived innovation as %s', async (_label, user) => {
-        scenario.users.johnInnovator.innovations.johnInnovation;
         const files = await sut.getFilesList(
           DTOsHelper.getUserRequestContext(user),
           innovation.id,
@@ -503,7 +503,6 @@ describe('Services / Innovation File service suite', () => {
         ['accessor', scenario.users.samAccessor],
         ['needs assessment', scenario.users.paulNeedsAssessor]
       ])('should exclude files uploaded after archive for A/QA/NA roles', async (_label, user) => {
-        scenario.users.johnInnovator.innovations.johnInnovation;
         const files = await sut.getFilesList(
           DTOsHelper.getUserRequestContext(user),
           innovation.id,
@@ -957,9 +956,7 @@ describe('Services / Innovation File service suite', () => {
           }
         };
 
-        await expect(() =>
-          sut.createFile(naDomainContext, innovation.id, data, innovation.status, em)
-        ).rejects.toThrow(
+        await expect(() => sut.createFile(naDomainContext, innovation.id, data, innovation.status, em)).rejects.toThrow(
           new UnprocessableEntityError(
             InnovationErrorsEnum.INNOVATION_FILE_ON_INNOVATION_SECTION_MUST_BE_UPLOADED_BY_INNOVATOR
           )
@@ -978,9 +975,7 @@ describe('Services / Innovation File service suite', () => {
           }
         };
 
-        await expect(() =>
-          sut.createFile(naDomainContext, innovation.id, data, innovation.status, em)
-        ).rejects.toThrow(
+        await expect(() => sut.createFile(naDomainContext, innovation.id, data, innovation.status, em)).rejects.toThrow(
           new UnprocessableEntityError(
             InnovationErrorsEnum.INNOVATION_FILE_ON_INNOVATION_EVIDENCE_MUST_BE_UPLOADED_BY_INNOVATOR
           )
@@ -1044,9 +1039,7 @@ describe('Services / Innovation File service suite', () => {
           }
         };
 
-        await expect(() =>
-          sut.createFile(qaDomainContext, innovation.id, data, innovation.status, em)
-        ).rejects.toThrow(
+        await expect(() => sut.createFile(qaDomainContext, innovation.id, data, innovation.status, em)).rejects.toThrow(
           new UnprocessableEntityError(
             InnovationErrorsEnum.INNOVATION_FILE_ON_INNOVATION_SECTION_MUST_BE_UPLOADED_BY_INNOVATOR
           )
@@ -1065,9 +1058,7 @@ describe('Services / Innovation File service suite', () => {
           }
         };
 
-        await expect(() =>
-          sut.createFile(qaDomainContext, innovation.id, data, innovation.status, em)
-        ).rejects.toThrow(
+        await expect(() => sut.createFile(qaDomainContext, innovation.id, data, innovation.status, em)).rejects.toThrow(
           new UnprocessableEntityError(
             InnovationErrorsEnum.INNOVATION_FILE_ON_INNOVATION_EVIDENCE_MUST_BE_UPLOADED_BY_INNOVATOR
           )
@@ -1332,7 +1323,20 @@ describe('Services / Innovation File service suite', () => {
     file: TestFileType,
     url: string,
     createdBy: { name: string; role: ServiceRoleEnum; isOwner?: boolean; orgUnitName?: string }
-  ) => {
+  ): {
+    id: string;
+    storageId: string;
+    context: { id: string; type: InnovationFileContextTypeEnum };
+    name: string;
+    createdAt: Date;
+    createdBy: { name: string; role: ServiceRoleEnum; isOwner?: boolean; orgUnitName?: string };
+    file: {
+      name: string;
+      size?: number;
+      extension: string;
+      url: string;
+    };
+  } => {
     return {
       id: file.id,
       storageId: file.storageId,

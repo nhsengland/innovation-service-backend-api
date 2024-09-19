@@ -1,6 +1,7 @@
 import Joi from 'joi';
 import { pick } from 'lodash';
-import { CurrentDocumentType, requiredSectionsAndQuestions } from '../../schemas/innovation-record';
+import type { CurrentDocumentType} from '../../schemas/innovation-record';
+import { requiredSectionsAndQuestions } from '../../schemas/innovation-record';
 import type { Question } from './question.types';
 import { QuestionValidatorFactory } from './question.validator';
 import { SchemaValidation } from './schema.validations';

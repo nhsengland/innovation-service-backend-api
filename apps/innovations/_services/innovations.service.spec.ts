@@ -24,7 +24,8 @@ import {
 import { TranslationHelper } from '@innovations/shared/helpers';
 import { DomainInnovationsService, NotifierService } from '@innovations/shared/services';
 import { TestsHelper } from '@innovations/shared/tests';
-import { ActivityLogBuilder, TestActivityLogType } from '@innovations/shared/tests/builders/activity-log.builder';
+import type { TestActivityLogType } from '@innovations/shared/tests/builders/activity-log.builder';
+import { ActivityLogBuilder } from '@innovations/shared/tests/builders/activity-log.builder';
 import { InnovationAssessmentBuilder } from '@innovations/shared/tests/builders/innovation-assessment.builder';
 import { InnovationSectionBuilder } from '@innovations/shared/tests/builders/innovation-section.builder';
 import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
