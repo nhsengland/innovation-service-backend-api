@@ -27,6 +27,7 @@ import { InnovationTransferEntity } from './innovation-transfer.entity';
 
 import { InnovationStatusEnum } from '../../enums/innovation.enums';
 import { InnovationSuggestedUnitsView } from '../views/innovation-suggested-units.view.entity';
+import { InnovationDocumentDraftEntity } from './innovation-document-draft.entity';
 
 @Entity('innovation')
 export class InnovationEntity extends BaseEntity {
@@ -132,6 +133,10 @@ export class InnovationEntity extends BaseEntity {
   @OneToOne(() => InnovationDocumentEntity)
   @JoinColumn({ name: 'id' })
   document: InnovationDocumentEntity;
+
+  @OneToOne(() => InnovationDocumentDraftEntity)
+  @JoinColumn({ name: 'id' })
+  documentDraft: InnovationDocumentDraftEntity;
 
   @OneToMany(() => InnovationTransferEntity, record => record.innovation, {
     cascade: ['insert', 'update']
