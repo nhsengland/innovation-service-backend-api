@@ -23,7 +23,9 @@ export const resolveNestedPromises = async <T extends Record<string, any>>(
   for (const key of Object.keys(entity)) {
     let value = (entity as any)[key];
     // Typeorm adds __ to the keys of the entities for unresolved promises. Simplified the replace assuming there's no __ in the key.
-    const myKey: keyof ResolvedNestedPromise<T> = typeOrm ? key.replace(/__/g, '') : key;
+    const myKey = typeOrm
+      ? (key.replace(/__/g, '') as keyof ResolvedNestedPromise<T>)
+      : (key as keyof ResolvedNestedPromise<T>);
 
     if (value instanceof Promise) {
       value = await value;

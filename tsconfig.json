@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-
     "rootDir": "./",
     "baseUrl": ".",
     "paths": {
@@ -23,7 +22,7 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "forceConsistentCasingInFileNames": true,
-    "importsNotUsedAsValues": "error",
+    "verbatimModuleSyntax": false,
     "noFallthroughCasesInSwitch": true,
     "noImplicitAny": true,
     "noImplicitOverride": true,
@@ -39,7 +38,7 @@
     "moduleResolution": "node",
     "target": "es2020",
     "module": "commonjs",
-    "lib": ["es2020", "dom"],
+    "lib": ["es2020", "dom"]
     // "types": [
     //   "reflect-metadata",
     //   "node"
@@ -49,7 +48,5 @@
   //   "innovations/**/*",
   //   "__tests__/**/*"
   // ],
-  "exclude": [
-    "node_modules"
-  ]
+  "exclude": ["node_modules"]
 }
