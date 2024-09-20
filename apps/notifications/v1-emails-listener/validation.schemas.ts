@@ -1,6 +1,7 @@
 import Joi from 'joi';
 
-import { EmailTemplates, EmailTemplatesType } from '../_config/emails.config';
+import type { EmailTemplatesType } from '../_config/emails.config';
+import { EmailTemplates } from '../_config/emails.config';
 
 export type MessageType = {
   data: {

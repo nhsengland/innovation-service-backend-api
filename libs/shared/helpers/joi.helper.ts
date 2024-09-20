@@ -1,5 +1,5 @@
-import type { Root, Schema } from 'joi';
-import Joi, { Context } from 'joi';
+import type { Root, Schema, Context } from 'joi';
+import Joi from 'joi';
 
 import { BadRequestError, GenericErrorsEnum } from '../errors';
 
@@ -66,7 +66,7 @@ export class JoiHelper {
         coerce(value) {
           try {
             return { value: JSON.parse(value) };
-          } catch (err) {
+          } catch (_error) {
             return { value };
           }
         }

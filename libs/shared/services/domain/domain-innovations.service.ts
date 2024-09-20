@@ -1,4 +1,5 @@
-import { DataSource, EntityManager, In, Repository } from 'typeorm';
+import type { DataSource, EntityManager, Repository } from 'typeorm';
+import { In } from 'typeorm';
 
 import { cloneDeep } from 'lodash';
 import { EXPIRATION_DATES } from '../../constants';
@@ -19,18 +20,17 @@ import { NotificationUserEntity } from '../../entities/user/notification-user.en
 import { NotificationEntity } from '../../entities/user/notification.entity';
 import { UserRoleEntity } from '../../entities/user/user-role.entity';
 import { InnovationGroupedStatusViewEntity } from '../../entities/views/innovation-grouped-status.view.entity';
+import type { InnovationGroupedStatusEnum, NotificationCategoryType } from '../../enums';
 import {
   ActivityEnum,
   ActivityTypeEnum,
   InnovationCollaboratorStatusEnum,
   InnovationExportRequestStatusEnum,
-  InnovationGroupedStatusEnum,
   InnovationStatusEnum,
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
   InnovationTaskStatusEnum,
   InnovationTransferStatusEnum,
-  NotificationCategoryType,
   NotifierTypeEnum,
   ServiceRoleEnum,
   UserStatusEnum
@@ -556,7 +556,7 @@ export class DomainInnovationsService {
     try {
       const savedSupportLog = await transactionManager.save(InnovationSupportLogEntity, supportLogData);
       return { id: savedSupportLog.id };
-    } catch (error) {
+    } catch (_error) {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_LOG_ERROR);
     }
   }
@@ -580,7 +580,7 @@ export class DomainInnovationsService {
 
     try {
       await transactionManager.save(ActivityLogEntity, activityLog);
-    } catch (error) {
+    } catch (_error) {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ACTIVITY_LOG_ERROR);
     }
   }

@@ -1,7 +1,8 @@
 import Joi from 'joi';
 
 import { InnovationCollaboratorStatusEnum } from '@innovations/shared/enums';
-import { JoiHelper, PaginationQueryParamsType } from '@innovations/shared/helpers';
+import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
+import { JoiHelper } from '@innovations/shared/helpers';
 
 enum orderFields {
   createdAt = 'createdAt',

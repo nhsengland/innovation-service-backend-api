@@ -41,7 +41,7 @@ export class IRSchemaService {
    * Orchestrate the update of a schema, this includes validating the schema,
    * creating a new schema in the DB, and lastly update the in-memory schema and model.
    */
-  async updateSchema(newSchema: IRSchemaType, updatedBy: string) {
+  async updateSchema(newSchema: IRSchemaType, updatedBy: string): Promise<void> {
     this.model = this.createModelAndValidate(newSchema);
     if (this.model.schema) {
       const { version } = await this.sqlConnectionService
@@ -50,7 +50,7 @@ export class IRSchemaService {
           InnovationRecordSchemaEntity,
           InnovationRecordSchemaEntity.new({ schema: this.model.schema, createdBy: updatedBy, updatedBy })
         );
-      this.cache.set(LATEST_VERSION, version);
+      await this.cache.set(LATEST_VERSION, version);
     }
   }
 
@@ -59,7 +59,7 @@ export class IRSchemaService {
     if (!dbSchema) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_RECORD_SCHEMA_NOT_FOUND);
     }
-    this.cache.set(LATEST_VERSION, dbSchema.version);
+    await this.cache.set(LATEST_VERSION, dbSchema.version);
     this.model = this.createModelAndValidate(dbSchema.schema);
     this.version = dbSchema.version;
   }

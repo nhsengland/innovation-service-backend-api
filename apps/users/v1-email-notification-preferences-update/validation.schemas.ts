@@ -1,4 +1,5 @@
-import { NotificationCategoryType, NotificationPreferenceEnum, ServiceRoleEnum } from '@users/shared/enums';
+import type { NotificationCategoryType} from '@users/shared/enums';
+import { NotificationPreferenceEnum, ServiceRoleEnum } from '@users/shared/enums';
 import {
   ANotificationCategories,
   INotificationCategories,

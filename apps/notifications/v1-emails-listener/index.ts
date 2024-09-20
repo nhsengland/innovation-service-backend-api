@@ -2,11 +2,13 @@ import type { Context } from '@azure/functions';
 
 import { JoiHelper } from '@notifications/shared/helpers';
 
-import { container, EmailTemplates } from '../_config';
+import type { EmailTemplates } from '../_config';
+import { container } from '../_config';
 
 import type { DispatchService } from '../_services/dispatch.service';
 import SYMBOLS from '../_services/symbols';
-import { MessageSchema, MessageType } from './validation.schemas';
+import type { MessageType } from './validation.schemas';
+import { MessageSchema } from './validation.schemas';
 
 class V1SendEmailListener {
   static async queueTrigger(

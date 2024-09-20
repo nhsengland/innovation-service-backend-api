@@ -2,7 +2,8 @@ import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
 import { JoiHelper } from '@innovations/shared/helpers';
 import type { SupportLogProgressUpdate } from '@innovations/shared/types';
 import Joi from 'joi';
-import { InnovationFileSchema, InnovationFileType } from '../_types/innovation.types';
+import type { InnovationFileType } from '../_types/innovation.types';
+import { InnovationFileSchema } from '../_types/innovation.types';
 
 export type ParamsType = {
   innovationId: string;

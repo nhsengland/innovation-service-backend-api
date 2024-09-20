@@ -7,7 +7,8 @@ import SHARED_SYMBOLS from '@notifications/shared/services/symbols';
 
 import { container } from '../_config';
 
-import { EventParamsSchema, MessageSchema, MessageType } from './validation.schemas';
+import type { MessageType } from './validation.schemas';
+import { EventParamsSchema, MessageSchema } from './validation.schemas';
 
 import { NotifyMeHandler } from '../_notify-me/notify-me.handler';
 import type { NotifyMeService } from '../_services/notify-me.service';

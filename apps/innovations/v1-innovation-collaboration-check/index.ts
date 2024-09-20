@@ -8,7 +8,8 @@ import type { ResponseDTO } from './transformation.dtos';
 
 import type { InnovationCollaboratorsService } from '../_services/innovation-collaborators.service';
 import SYMBOLS from '../_services/symbols';
-import { ParamsSchema, ParamsType } from './validation.schemas';
+import type { ParamsType } from './validation.schemas';
+import { ParamsSchema } from './validation.schemas';
 
 class V1InnovationCollaboratorCheck {
   static async httpTrigger(context: Context, request: HttpRequest): Promise<void> {

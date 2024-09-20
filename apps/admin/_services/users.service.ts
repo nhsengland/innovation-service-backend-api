@@ -474,7 +474,7 @@ export class UsersService extends BaseService {
     try {
       Joi.attempt(idOrEmail, Joi.string().guid());
       return true;
-    } catch (_e) {
+    } catch (_error) {
       return false;
     }
   }

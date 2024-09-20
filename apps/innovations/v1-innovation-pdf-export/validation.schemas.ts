@@ -1,5 +1,6 @@
 import Joi from 'joi';
-import { DocumentExportBodySchema, DocumentExportInboundDataType } from '../_services/export-file-service';
+import type { DocumentExportInboundDataType } from '../_services/export-file-service';
+import { DocumentExportBodySchema } from '../_services/export-file-service';
 
 export type ParamsType = {
   innovationId: string;

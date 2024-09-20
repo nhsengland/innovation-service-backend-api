@@ -41,7 +41,7 @@ import { NotificationBuilder } from '../builders/notification.builder';
 import { NotifyMeSubscriptionBuilder } from '../builders/notify-me-subscription.builder';
 import { OrganisationUnitBuilder } from '../builders/organisation-unit.builder';
 import { OrganisationBuilder } from '../builders/organisation.builder';
-import { TestUserType, UserBuilder } from '../builders/user.builder';
+import { type TestUserType, UserBuilder } from '../builders/user.builder';
 import { AnnouncementBuilder } from '../builders/announcement.builder';
 import { AnnouncementUserBuilder } from '../builders/announcement-users.builder';
 

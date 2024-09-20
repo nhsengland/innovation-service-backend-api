@@ -1,14 +1,16 @@
 import Joi from 'joi';
 
 import { InnovationGroupedStatusEnum, InnovationSupportStatusEnum, ServiceRoleEnum } from '@innovations/shared/enums';
-import { JoiHelper, PaginationQueryParamsType } from '@innovations/shared/helpers';
+import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
+import { JoiHelper } from '@innovations/shared/helpers';
 
 import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
 import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import { InnovationLocationEnum } from '../_enums/innovation.enums';
+import type {
+  InnovationListFilters} from '../_services/innovations.service';
 import {
   DateFilterFieldsType,
-  InnovationListFilters,
   InnovationListSelectType
 } from '../_services/innovations.service';
 

@@ -1,4 +1,5 @@
-import { AnnouncementParamsType, AnnouncementTypeEnum, ServiceRoleEnum } from '@admin/shared/enums';
+import type { AnnouncementParamsType} from '@admin/shared/enums';
+import { AnnouncementTypeEnum, ServiceRoleEnum } from '@admin/shared/enums';
 import type { FilterPayload } from '@admin/shared/models/schema-engine/schema.model';
 import Joi from 'joi';
 

@@ -1,6 +1,6 @@
 import { inject, injectable } from 'inversify';
 import { createClient } from 'redis';
-import type { LoggerService } from '../integrations/logger.service';
+import { LoggerService } from '../integrations/logger.service';
 import { REDIS_DEFAULT_CONNECTION } from '../../config/redis.config';
 import SHARED_SYMBOLS from '../symbols';
 import { isArray } from 'lodash';
@@ -10,7 +10,7 @@ type Sets = 'elasticsearch';
 @injectable()
 export class RedisService {
   private redis: ReturnType<typeof createClient>;
-  get client() {
+  get client(): ReturnType<typeof createClient> {
     return this.redis;
   }
 

@@ -2,9 +2,9 @@ import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class alterTableInnovationToRemoveOwnerNotNullConstraint1685442088807 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
-    queryRunner.query(`ALTER TABLE innovation ALTER COLUMN owner_id uniqueidentifier`);
+    await queryRunner.query(`ALTER TABLE innovation ALTER COLUMN owner_id uniqueidentifier`);
 
-    queryRunner.query(`
+    await queryRunner.query(`
       UPDATE innovation
       SET innovation.owner_id = NULL
       WHERE innovation.owner_id IN (

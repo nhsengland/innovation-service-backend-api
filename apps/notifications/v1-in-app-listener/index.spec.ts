@@ -2,7 +2,8 @@ import { randUuid } from '@ngneat/falso';
 
 import V1SendInAppListener from '.'; // Must be imported first to start inversify configurations.
 
-import { AzureQueueTriggerBuilder, CompleteScenarioType, TestsHelper } from '@notifications/shared/tests';
+import type { CompleteScenarioType} from '@notifications/shared/tests';
+import { AzureQueueTriggerBuilder, TestsHelper } from '@notifications/shared/tests';
 
 import { DispatchService } from '../_services/dispatch.service';
 

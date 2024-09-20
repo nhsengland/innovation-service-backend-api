@@ -1,5 +1,6 @@
 import { InnovationFileContextTypeEnum, ServiceRoleEnum } from '@innovations/shared/enums';
-import { JoiHelper, PaginationQueryParamsType } from '@innovations/shared/helpers';
+import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
+import { JoiHelper } from '@innovations/shared/helpers';
 import Joi from 'joi';
 
 enum OrderFields {

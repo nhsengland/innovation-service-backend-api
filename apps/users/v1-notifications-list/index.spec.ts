@@ -1,7 +1,8 @@
 import azureFunction from '.';
 
 import { randFullName, randNumber, randPastDate, randProductName, randUuid } from '@ngneat/falso';
-import { InnovationStatusEnum, NotificationCategoryType, NotificationDetailType } from '@users/shared/enums';
+import type { NotificationCategoryType, NotificationDetailType } from '@users/shared/enums';
+import { InnovationStatusEnum } from '@users/shared/enums';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@users/shared/tests';
 import type { TestUserType } from '@users/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@users/shared/types';

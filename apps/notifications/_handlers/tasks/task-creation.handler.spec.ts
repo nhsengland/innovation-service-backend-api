@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { TranslationHelper } from '@notifications/shared/helpers';
 import { UrlModel } from '@notifications/shared/models';
-import { CompleteScenarioType, MocksHelper, TestsHelper } from '@notifications/shared/tests';
+import type { CompleteScenarioType} from '@notifications/shared/tests';
+import { MocksHelper, TestsHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { ENV } from '../../_config';
 import { TaskCreationHandler } from './task-creation.handler';
