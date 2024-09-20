@@ -268,7 +268,12 @@ export class OrganisationsService extends BaseService {
 
     for (const [identityId, accessor] of identityInfoMap.entries()) {
       const innovations = assigned2InnovationsMap.get(identityId) ?? [];
-      data.push({ accessor, innovations: innovations.map(i => innovationInfo.get(i)!) });
+
+      // Business rule: If a user is locked but as innovations assigned to him we return it.
+      const isActive = usersInfoMap.get(identityId)?.isActive ?? false;
+      if (isActive || (!isActive && innovations.length > 0)) {
+        data.push({ accessor, innovations: innovations.map(i => innovationInfo.get(i)!) });
+      }
     }
 
     return { count: data.length, data: data.sort((a, b) => a.accessor.name.localeCompare(b.accessor.name)) };
