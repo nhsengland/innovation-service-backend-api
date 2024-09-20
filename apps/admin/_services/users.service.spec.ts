@@ -7,6 +7,7 @@ import { UserEntity, UserRoleEntity } from '@admin/shared/entities';
 import { NotifierTypeEnum, ServiceRoleEnum, UserStatusEnum } from '@admin/shared/enums';
 import {
   BadRequestError,
+  ConflictError,
   ForbiddenError,
   GenericErrorsEnum,
   NotFoundError,
@@ -676,6 +677,78 @@ describe('Admin / _services / users service suite', () => {
       expect(role.isActive).toBe(false);
       expect(userDb.lockedAt).toBeDefined();
       expect(userDb.status).toBe(UserStatusEnum.LOCKED);
+    });
+  });
+
+  describe('getAssignedInnovations', () => {
+    it('should get the assigned innovations from a user', async () => {
+      const jamie = scenario.users.jamieMadroxAccessor;
+      const assigned = await sut.getAssignedInnovations(jamie.id, em);
+
+      const alice = scenario.users.aliceQualifyingAccessor;
+      const supportedByAlice = { id: alice.id, name: alice.name, role: alice.roles['qaRole'].role };
+      const supportedByJamie = { id: jamie.id, name: jamie.name, role: jamie.roles['healthAccessorRole'].role };
+      const adamInnovation = scenario.users.adamInnovator.innovations.adamInnovation;
+      const chestInnovation = scenario.users.ottoOctaviusInnovator.innovations.chestHarnessInnovation;
+      const tentaclesInnovation = scenario.users.ottoOctaviusInnovator.innovations.tentaclesInnovation;
+      const johnInnovation = scenario.users.johnInnovator.innovations.johnInnovation;
+
+      expect(assigned.count).toBe(assigned.data.length);
+      expect(assigned.data).toStrictEqual([
+        {
+          innovation: { id: adamInnovation.id, name: adamInnovation.name },
+          supportedBy: [supportedByAlice, supportedByJamie],
+          unit: 'Health Org Unit'
+        },
+        {
+          innovation: { id: chestInnovation.id, name: chestInnovation.name },
+          supportedBy: [supportedByAlice, supportedByJamie],
+          unit: 'Health Org Unit'
+        },
+        {
+          innovation: { id: johnInnovation.id, name: johnInnovation.name },
+          supportedBy: [supportedByAlice, supportedByJamie],
+          unit: 'Health Org Unit'
+        },
+        {
+          innovation: { id: tentaclesInnovation.id, name: tentaclesInnovation.name },
+          supportedBy: [supportedByJamie],
+          unit: 'Health Org Unit'
+        }
+      ]);
+    });
+
+    it('should give all the assessments that NA is current assessing', async () => {
+      const paul = scenario.users.paulNeedsAssessor;
+      const assigned = await sut.getAssignedInnovations(paul.id, em);
+
+      const supportedByPaul = { id: paul.id, name: paul.name, role: paul.roles['assessmentRole'].role };
+
+      expect(assigned.count).toBe(assigned.data.length);
+      expect(assigned.data).toStrictEqual([
+        {
+          innovation: {
+            id: scenario.users.ottoOctaviusInnovator.innovations.brainComputerInterfaceInnovation.id,
+            name: scenario.users.ottoOctaviusInnovator.innovations.brainComputerInterfaceInnovation.name
+          },
+          supportedBy: [supportedByPaul],
+          unit: 'Needs assessment team'
+        },
+        {
+          innovation: {
+            id: scenario.users.tristanInnovator.innovations.innovationMultipleAssessments.id,
+            name: scenario.users.tristanInnovator.innovations.innovationMultipleAssessments.name
+          },
+          supportedBy: [supportedByPaul],
+          unit: 'Needs assessment team'
+        }
+      ]);
+    });
+
+    it('should give error when the user is INNOVATOR', async () => {
+      await expect(sut.getAssignedInnovations(scenario.users.johnInnovator.id, em)).rejects.toThrow(
+        new ConflictError(UserErrorsEnum.USER_ROLE_NOT_ALLOWED)
+      );
     });
   });
 });
