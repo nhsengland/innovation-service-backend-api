@@ -61,7 +61,7 @@ describe('v1-organisation-unit-accessors Suite', () => {
     it.each([
       ['Admin', 403, scenario.users.allMighty],
       ['QA', 200, scenario.users.aliceQualifyingAccessor],
-      ['A', 200, scenario.users.ingridAccessor],
+      ['A', 403, scenario.users.ingridAccessor],
       ['NA', 403, scenario.users.paulNeedsAssessor],
       ['Innovator', 403, scenario.users.johnInnovator]
     ])('access with user %s should give %i', async (_role: string, status: number, user: TestUserType) => {
