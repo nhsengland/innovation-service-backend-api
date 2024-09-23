@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
+ 
 import type { DataSource, EntityManager } from 'typeorm';
 
 import { container } from '../config/inversify.config';

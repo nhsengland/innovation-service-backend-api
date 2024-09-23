@@ -293,7 +293,7 @@ export class DomainUsersService {
       } else {
         return [dbUser];
       }
-    } catch (_error) {
+    } catch {
       // As this method mimics a search, on errors, we just return an empty array.
       return [];
     }

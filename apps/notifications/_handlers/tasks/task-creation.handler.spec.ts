@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
+ 
 import { TranslationHelper } from '@notifications/shared/helpers';
 import { UrlModel } from '@notifications/shared/models';
 import type { CompleteScenarioType} from '@notifications/shared/tests';

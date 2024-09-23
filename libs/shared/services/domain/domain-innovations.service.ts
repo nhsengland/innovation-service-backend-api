@@ -556,7 +556,7 @@ export class DomainInnovationsService {
     try {
       const savedSupportLog = await transactionManager.save(InnovationSupportLogEntity, supportLogData);
       return { id: savedSupportLog.id };
-    } catch (_error) {
+    } catch {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_LOG_ERROR);
     }
   }
@@ -580,7 +580,7 @@ export class DomainInnovationsService {
 
     try {
       await transactionManager.save(ActivityLogEntity, activityLog);
-    } catch (_error) {
+    } catch {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ACTIVITY_LOG_ERROR);
     }
   }

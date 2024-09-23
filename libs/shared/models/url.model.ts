@@ -50,14 +50,14 @@ export class UrlModel {
           // If it is possibly an object
           try {
             this.queryParams[key] = JSON.parse(value) as { [key: string]: any };
-          } catch (_error) {
+          } catch {
             console.error('ERROR: UrlModel parsing QueryParams');
           }
         } else {
           this.queryParams[key] = value;
         }
       });
-    } catch (_error) {
+    } catch {
       console.error('ERROR: UrlModel parsing url');
     }
   }

@@ -19,6 +19,7 @@ export class JoiHelper {
           key: item.path.join('.'),
           type: item.type,
           message: item.message,
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           context: (({ key, label, child, ...params }) => params)(item.context || {}) // Removes some unneeded properties from context.
         }))
       });
@@ -66,7 +67,7 @@ export class JoiHelper {
         coerce(value) {
           try {
             return { value: JSON.parse(value) };
-          } catch (_error) {
+          } catch {
             return { value };
           }
         }

@@ -41,6 +41,7 @@ import { BaseService } from './base.service';
 import type { InnovationDocumentService } from './innovation-document.service';
 import type { InnovationThreadsService } from './innovation-threads.service';
 import SYMBOLS from './symbols';
+import { omit } from 'lodash';
 
 @injectable()
 export class InnovationAssessmentsService extends BaseService {
@@ -385,33 +386,29 @@ export class InnovationAssessmentsService extends BaseService {
     const now = new Date();
 
     return connection.transaction(async transaction => {
-      const assessmentClone = await transaction.save(
-        InnovationAssessmentEntity,
-        (({
-          id,
-          finishedAt,
-          startedAt,
-          createdAt,
-          createdBy,
-          updatedAt,
-          updatedBy,
-          deletedAt,
-          assignTo,
-          previousAssessment,
-          reassessmentRequest,
-          ...item
-        }) => ({
-          ...item,
-          startedAt: now,
-          createdBy: domainContext.id,
-          updatedBy: domainContext.id,
-          assignTo: UserEntity.new({ id: domainContext.id }),
-          majorVersion: latestAssessment.majorVersion,
-          minorVersion: latestAssessment.minorVersion + 1,
-          editReason: data.reason,
-          previousAssessment: { id: latestAssessment.id }
-        }))(latestAssessment) // Clones assessment variable, without some keys (id, finishedAt, ...).
-      );
+      const assessmentClone = await transaction.save(InnovationAssessmentEntity, {
+        ...omit(latestAssessment, [
+          'id',
+          'finishedAt',
+          'startedAt',
+          'createdAt',
+          'createdBy',
+          'updatedAt',
+          'updatedBy',
+          'deletedAt',
+          'assignTo',
+          'previousAssessment',
+          'reassessmentRequest'
+        ]),
+        startedAt: now,
+        createdBy: domainContext.id,
+        updatedBy: domainContext.id,
+        assignTo: UserEntity.new({ id: domainContext.id }),
+        majorVersion: latestAssessment.majorVersion,
+        minorVersion: latestAssessment.minorVersion + 1,
+        editReason: data.reason,
+        previousAssessment: { id: latestAssessment.id }
+      });
 
       await transaction.update(
         InnovationEntity,
