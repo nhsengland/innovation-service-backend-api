@@ -545,7 +545,7 @@ export class UsersService extends BaseService {
       const assessments = await em
         .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
         .select(['assessment.id', 'innovation.id', 'innovation.name'])
-        .innerJoin('assessment.innovation', 'innovation')
+        .innerJoin('assessment.innovation', 'innovation', 'innovation.current_assessment_id = assessment.id')
         .where('assessment.assignTo = :userId', { userId })
         .andWhere('assessment.finishedAt IS NULL')
         .getMany();
