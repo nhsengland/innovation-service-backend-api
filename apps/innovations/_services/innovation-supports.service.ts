@@ -461,14 +461,15 @@ export class InnovationSupportsService extends BaseService {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_ALREADY_EXISTS);
     }
 
-    if (data.status !== InnovationSupportStatusEnum.ENGAGING && data.accessors?.length) {
+    if (
+      data.status !== InnovationSupportStatusEnum.ENGAGING &&
+      data.status !== InnovationSupportStatusEnum.WAITING &&
+      data.accessors?.length
+    ) {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_CANNOT_HAVE_ASSIGNED_ASSESSORS);
     }
 
-    // If status is waiting assigned QA as accessor automatically
-    const accessors =
-      data.accessors?.map(item => item.userRoleId) ??
-      (data.status === InnovationSupportStatusEnum.WAITING ? [domainContext.currentRole.id] : []);
+    const accessors = data.accessors?.map(item => item.userRoleId) ?? [];
 
     const result = await connection.transaction(async transaction => {
       const newSupport = InnovationSupportEntity.new({
@@ -547,7 +548,9 @@ export class InnovationSupportsService extends BaseService {
         status: data.status,
         message: data.message,
         newAssignedAccessorsIds:
-          data.status === InnovationSupportStatusEnum.ENGAGING ? (data.accessors ?? []).map(item => item.id) : []
+          data.status === (InnovationSupportStatusEnum.ENGAGING || InnovationSupportStatusEnum.WAITING)
+            ? (data.accessors ?? []).map(item => item.id)
+            : []
       }
     });
 
