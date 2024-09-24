@@ -42,6 +42,7 @@ class V1InnovationCollaboratorInfo {
         innovation: {
           id: collaborator.innovation.id,
           name: collaborator.innovation.name,
+          description: collaborator.innovation.description,
           ...(collaborator.innovation.owner && {
             owner: {
               id: collaborator.innovation.owner.id,
@@ -105,6 +106,9 @@ export default openApi(
                         format: 'uuid'
                       },
                       name: {
+                        type: 'string'
+                      },
+                      description: {
                         type: 'string'
                       },
                       owner: {

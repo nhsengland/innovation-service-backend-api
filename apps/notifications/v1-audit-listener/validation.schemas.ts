@@ -1,4 +1,5 @@
-import { ActionEnum, AuditEntry, TargetEnum } from '@notifications/shared/services/integrations/audit.service';
+import type { AuditEntry} from '@notifications/shared/services/integrations/audit.service';
+import { ActionEnum, TargetEnum } from '@notifications/shared/services/integrations/audit.service';
 import Joi from 'joi';
 
 export type AuditMessageEntry = Omit<AuditEntry, 'date'> & { date: Date };

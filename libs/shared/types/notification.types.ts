@@ -1,4 +1,4 @@
-import { NotificationCategoryType, NotificationPreferenceEnum, ServiceRoleEnum } from '../enums';
+import { type NotificationCategoryType, NotificationPreferenceEnum, type ServiceRoleEnum } from '../enums';
 
 export const NaNotificationCategories = [
   'NEEDS_ASSESSMENT',

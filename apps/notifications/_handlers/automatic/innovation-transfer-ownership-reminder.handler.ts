@@ -1,5 +1,6 @@
 import type { Context } from '@azure/functions';
-import { NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import type { NotifierTypeEnum} from '@notifications/shared/enums';
+import { ServiceRoleEnum } from '@notifications/shared/enums';
 import type { IdentityProviderService } from '@notifications/shared/services';
 import SHARED_SYMBOLS from '@notifications/shared/services/symbols';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';

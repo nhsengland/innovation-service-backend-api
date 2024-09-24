@@ -14,6 +14,7 @@ import {
   InnovationCollaboratorStatusEnum,
   InnovationExportRequestStatusEnum,
   InnovationFileContextTypeEnum,
+  InnovationRelevantOrganisationsStatusEnum,
   InnovationSectionStatusEnum,
   InnovationStatusEnum,
   InnovationSupportLogTypeEnum,
@@ -40,7 +41,7 @@ import { NotificationBuilder } from '../builders/notification.builder';
 import { NotifyMeSubscriptionBuilder } from '../builders/notify-me-subscription.builder';
 import { OrganisationUnitBuilder } from '../builders/organisation-unit.builder';
 import { OrganisationBuilder } from '../builders/organisation.builder';
-import { TestUserType, UserBuilder } from '../builders/user.builder';
+import { type TestUserType, UserBuilder } from '../builders/user.builder';
 import { AnnouncementBuilder } from '../builders/announcement.builder';
 import { AnnouncementUserBuilder } from '../builders/announcement-users.builder';
 
@@ -1016,10 +1017,18 @@ export class CompleteScenarioBuilder {
                 supports: {
                   supportByHealthOrgUnit: {
                     ...johnInnovationSupportByHealthOrgUnit,
+                    relevantStatus: InnovationRelevantOrganisationsStatusEnum.ENGAGING,
                     accessors: [aliceQualifyingAccessor, jamieMadroxAccessor]
                   },
-                  supportByHealthOrgAiUnit: { ...johnInnovationSupportByHealthOrgAIUnit },
-                  supportByMedTechOrgUnit: { ...johnInnovationSupportByMedTechOrgUnit, accessors: [samAccessor] },
+                  supportByHealthOrgAiUnit: {
+                    ...johnInnovationSupportByHealthOrgAIUnit,
+                    relevantStatus: InnovationRelevantOrganisationsStatusEnum.WAITING
+                  },
+                  supportByMedTechOrgUnit: {
+                    ...johnInnovationSupportByMedTechOrgUnit,
+                    relevantStatus: InnovationRelevantOrganisationsStatusEnum.ENGAGING,
+                    accessors: [samAccessor]
+                  },
                   supportLog: johnInnovationSupportLog
                 },
                 assessment: {

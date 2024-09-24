@@ -1,9 +1,10 @@
 import { inject, injectable } from 'inversify';
-import { Brackets, EntityManager, In, SelectQueryBuilder } from 'typeorm';
+import type { EntityManager, SelectQueryBuilder } from 'typeorm';
+import { Brackets, In } from 'typeorm';
 
+import type { InnovationAssessmentEntity } from '@innovations/shared/entities';
 import {
   ActivityLogEntity,
-  InnovationAssessmentEntity,
   InnovationDocumentDraftEntity,
   InnovationDocumentEntity,
   InnovationEntity,
@@ -21,16 +22,16 @@ import {
 } from '@innovations/shared/entities';
 import {
   ActivityEnum,
-  ActivityTypeEnum,
+  type ActivityTypeEnum,
   InnovationCollaboratorStatusEnum,
   InnovationExportRequestStatusEnum,
-  InnovationGroupedStatusEnum,
+  type InnovationGroupedStatusEnum,
   InnovationSectionStatusEnum,
   InnovationStatusEnum,
   InnovationSupportStatusEnum,
   InnovationTaskStatusEnum,
   NotifierTypeEnum,
-  PhoneUserPreferenceEnum,
+  type PhoneUserPreferenceEnum,
   ServiceRoleEnum,
   UserStatusEnum
 } from '@innovations/shared/enums';
@@ -43,8 +44,10 @@ import {
   OrganisationErrorsEnum,
   UnprocessableEntityError
 } from '@innovations/shared/errors';
-import { PaginationQueryParamsType, TranslationHelper } from '@innovations/shared/helpers';
-import type { DomainService, DomainUsersService, IRSchemaService, NotifierService } from '@innovations/shared/services';
+import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
+import { TranslationHelper } from '@innovations/shared/helpers';
+import { DomainService, IRSchemaService, NotifierService } from '@innovations/shared/services';
+import type { DomainUsersService } from '@innovations/shared/services';
 import {
   isAccessorDomainContextType,
   isAdminDomainContextType,
@@ -53,22 +56,24 @@ import {
   type DomainContextType
 } from '@innovations/shared/types';
 
-import { InnovationSupportLogTypeEnum } from '@innovations/shared/enums';
+import {
+  InnovationSupportLogTypeEnum,
+  type InnovationRelevantOrganisationsStatusEnum
+} from '@innovations/shared/enums';
 import { InnovationLocationEnum } from '../_enums/innovation.enums';
 import type { InnovationSectionModel } from '../_types/innovation.types';
 
 import { createDocumentFromInnovation } from '@innovations/shared/entities/innovation/innovation-document.entity';
-import {
-  InnovationListViewWithoutNull,
-  InnovationProgressView
-} from '@innovations/shared/entities/views/innovation-progress.view.entity';
+import type { InnovationListViewWithoutNull } from '@innovations/shared/entities/views/innovation-progress.view.entity';
+import { InnovationProgressView } from '@innovations/shared/entities/views/innovation-progress.view.entity';
 import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import { ActionEnum } from '@innovations/shared/services/integrations/audit.service';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import { groupBy, isString, mapValues, omit, pick, snakeCase } from 'lodash';
 import { BaseService } from './base.service';
-import type { InnovationDocumentService } from './innovation-document.service';
+import { InnovationDocumentService } from './innovation-document.service';
 import SYMBOLS from './symbols';
+import { InnovationRelevantOrganisationsStatusView } from '@innovations/shared/entities';
 
 // TODO move types
 export const InnovationListSelectType = [
@@ -708,7 +713,7 @@ export class InnovationsService extends BaseService {
   };
 
   /**
-   * adds a filter that searches for a value in the json arrays of the innovation list view
+   * adds a filter that searches for a value in the json arrays of the innovation list
    * @param filterKey the filter key to use in the query
    * @param options optional options
    * - fieldSelector optional selector to use in the json search (defaults to undefined for simple arrays)
@@ -1046,7 +1051,6 @@ export class InnovationsService extends BaseService {
       switch (field) {
         case 'assignedTo':
           res[field] = extra.users.get(item.currentAssessment?.assignTo?.id ?? '')?.displayName ?? null;
-          item.currentAssessment?.assignTo ?? null;
           break;
         case 'isExempt':
           res[field] = !!item.currentAssessment?.exemptedAt;
@@ -1072,7 +1076,7 @@ export class InnovationsService extends BaseService {
       // distinguish if there's multiple roles for the same user
       updatedBy?.roles.some(r => r.role === ServiceRoleEnum.INNOVATOR)
         ? 'Innovator'
-        : (updatedBy?.displayName ?? null);
+        : updatedBy?.displayName ?? null;
 
     // support is handled differently to remove the nested array since it's only 1 element in this case
     return {
@@ -2085,5 +2089,72 @@ export class InnovationsService extends BaseService {
       'postCode',
       'support'
     ]);
+  }
+
+  async getInnovationRelavantOrganisationsStatusList(
+    innovationId: string,
+    retrieveRecipients: boolean,
+    entityManager?: EntityManager
+  ): Promise<
+    {
+      id: string;
+      status: InnovationRelevantOrganisationsStatusEnum;
+      organisation: {
+        id: string;
+        name: string;
+        acronym: string | null;
+        unit: { id: string; name: string; acronym: string | null };
+      };
+      recipients?: { id: string; roleId: string; name: string }[];
+    }[]
+  > {
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const query = connection
+      .createQueryBuilder(InnovationRelevantOrganisationsStatusView, 'relevantOrganisationsStatus')
+      .where('relevantOrganisationsStatus.innovationId = :innovationId', { innovationId });
+
+    let organisationsAndUsers = await query.getMany();
+
+    if (retrieveRecipients) {
+      //We are filtering organisations that do not have users to support innovations
+      organisationsAndUsers = organisationsAndUsers.filter(item => item.userData !== null && item.userData.length > 0);
+    }
+
+    const usersInfo = await this.domainService.users.getUsersMap({
+      userIds: organisationsAndUsers.flatMap(item => item.userData?.map(user => user.userId) ?? [])
+    });
+
+    const result = organisationsAndUsers.map(item => {
+      const organisation = item.organisationData;
+      const unit = item.organisationUnitData;
+
+      let recipients: { id: string; roleId: string; name: string }[] | undefined = undefined;
+
+      if (retrieveRecipients && item.userData) {
+        recipients = item.userData.map(user => ({
+          id: user.userId,
+          roleId: user.roleId,
+          name: usersInfo.get(user.userId)?.displayName ?? '[unavailable account]'
+        }));
+      }
+
+      return {
+        id: item.innovationId,
+        status: item.status,
+        organisation: {
+          id: organisation.id,
+          name: organisation.name,
+          acronym: organisation.acronym,
+          unit: {
+            id: unit.id,
+            name: unit.name,
+            acronym: unit.acronym
+          }
+        },
+        ...(recipients ? { recipients } : {})
+      };
+    });
+    return result;
   }
 }

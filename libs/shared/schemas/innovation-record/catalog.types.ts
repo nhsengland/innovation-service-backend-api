@@ -1,4 +1,5 @@
-import { InnovationRecordDocumentType, requiredSectionsAndQuestions } from './document.types';
+import type { InnovationRecordDocumentType} from './document.types';
+import { requiredSectionsAndQuestions } from './document.types';
 
 // Sections.
 export const InnovationSections = [...requiredSectionsAndQuestions.keys()];

@@ -1,5 +1,6 @@
 import type { Context } from '@azure/functions';
-import { ServiceRoleEnum, SimpleAnnouncementType, type NotifierTypeEnum } from '@notifications/shared/enums';
+import type { SimpleAnnouncementType} from '@notifications/shared/enums';
+import { ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { BaseHandler } from '../base.handler';
 

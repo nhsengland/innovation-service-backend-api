@@ -5,7 +5,7 @@ import { DomainInnovationsService } from '@innovations/shared/services';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@innovations/shared/tests';
 import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@innovations/shared/types';
-import { randAbbreviation, randBoolean, randFullName, randUuid } from '@ngneat/falso';
+import { randAbbreviation, randBoolean, randCompanyName, randFullName, randUuid } from '@ngneat/falso';
 import type { ResponseDTO } from './transformation.dtos';
 import type { ParamsType } from './validation.schemas';
 
@@ -41,7 +41,7 @@ const expected = [
     locked: randBoolean(),
     isOwner: false,
     userRole: { id: randUuid(), role: ServiceRoleEnum.ACCESSOR },
-    organisationUnit: { id: randUuid(), acronym: randAbbreviation() }
+    organisationUnit: { id: randUuid(), name: randCompanyName(), acronym: randAbbreviation() }
   }
 ];
 
@@ -72,6 +72,7 @@ describe('v1-innovation-thread-followers Suite', () => {
           organisationUnit: follower.organisationUnit
             ? {
                 id: follower.organisationUnit.id,
+                name: follower.organisationUnit.name,
                 acronym: follower.organisationUnit.acronym
               }
             : null

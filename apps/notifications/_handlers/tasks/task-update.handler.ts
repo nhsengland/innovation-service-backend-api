@@ -1,4 +1,5 @@
-import { InnovationTaskStatusEnum, NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import type { NotifierTypeEnum} from '@notifications/shared/enums';
+import { InnovationTaskStatusEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import {
   isInnovatorDomainContextType,
   type DomainContextType,

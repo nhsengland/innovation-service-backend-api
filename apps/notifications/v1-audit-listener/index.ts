@@ -7,7 +7,8 @@ import type { AuditService } from '@notifications/shared/services';
 import type { AuditEntry } from '@notifications/shared/services/integrations/audit.service';
 import SHARED_SYMBOLS from '@notifications/shared/services/symbols';
 
-import { AuditMessageEntry, MessageSchema } from './validation.schemas';
+import type { AuditMessageEntry} from './validation.schemas';
+import { MessageSchema } from './validation.schemas';
 
 // TODO since this is not really a notification migrate this to another function app (events) when such a thing exists
 class V1AuditListener {

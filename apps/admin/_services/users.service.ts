@@ -2,7 +2,13 @@ import { inject, injectable } from 'inversify';
 import Joi from 'joi';
 import type { EntityManager } from 'typeorm';
 
-import { OrganisationEntity, OrganisationUnitEntity, UserEntity, UserRoleEntity } from '@admin/shared/entities';
+import {
+  OrganisationEntity,
+  OrganisationUnitEntity,
+  UserEntity,
+  UserRoleEntity,
+  InnovationAssessmentEntity
+} from '@admin/shared/entities';
 import { NotifierTypeEnum, ServiceRoleEnum, UserStatusEnum } from '@admin/shared/enums';
 import {
   BadRequestError,
@@ -12,7 +18,8 @@ import {
   NotImplementedError,
   OrganisationErrorsEnum,
   UnprocessableEntityError,
-  UserErrorsEnum
+  UserErrorsEnum,
+  ConflictError
 } from '@admin/shared/errors';
 import {
   CacheConfigType,
@@ -457,6 +464,109 @@ export class UsersService extends BaseService {
     return this.identityProviderService.upsertUserMfa(identityId, data);
   }
 
+  async getAssignedInnovations(
+    userId: string,
+    entityManager?: EntityManager
+  ): Promise<{
+    count: number;
+    data: {
+      innovation: { id: string; name: string };
+      supportedBy: { id: string; name: string; role: ServiceRoleEnum }[];
+      unit: string;
+    }[];
+  }> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const user = await em
+      .createQueryBuilder(UserEntity, 'user')
+      .select(['role.id', 'role.role', 'user.id', 'user.identityId'])
+      .innerJoin('user.serviceRoles', 'role')
+      .where('user.id = :userId', { userId })
+      .getOne();
+    if (
+      !user ||
+      (user && user.serviceRoles.some(r => [ServiceRoleEnum.INNOVATOR, ServiceRoleEnum.ADMIN].includes(r.role)))
+    ) {
+      throw new ConflictError(UserErrorsEnum.USER_ROLE_NOT_ALLOWED);
+    }
+    const userIdsSet = new Set<string>([user.identityId]);
+
+    let roleAndSupports: UserRoleEntity[] = [];
+    if (user.serviceRoles.some(r => [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR].includes(r.role))) {
+      roleAndSupports = await em
+        .createQueryBuilder(UserRoleEntity, 'role')
+        .select([
+          'role.id',
+          'role.role',
+          'support.id',
+          'unit.name',
+          'innovation.id',
+          'innovation.name',
+          'assignedUserRole.id',
+          'assignedUserRole.role',
+          'assignedUser.id',
+          'assignedUser.identityId'
+        ])
+        .innerJoin('role.organisationUnit', 'unit')
+        .leftJoin('role.innovationSupports', 'support')
+        .innerJoin('support.innovation', 'innovation')
+        .innerJoin('support.userRoles', 'assignedUserRole')
+        .innerJoin('assignedUserRole.user', 'assignedUser')
+        .where('role.user_id = :userId', { userId })
+        .andWhere('role.role IN (:...accessorRoles)', {
+          accessorRoles: [ServiceRoleEnum.QUALIFYING_ACCESSOR, ServiceRoleEnum.ACCESSOR]
+        })
+        .getMany();
+    }
+
+    const data: Awaited<ReturnType<UsersService['getAssignedInnovations']>>['data'] = [];
+
+    roleAndSupports.forEach(r =>
+      r.innovationSupports.forEach(s => s.userRoles.forEach(r => userIdsSet.add(r.user.identityId)))
+    );
+
+    const usersInfoMap = await this.identityProviderService.getUsersMap(Array.from(userIdsSet));
+
+    for (const role of roleAndSupports) {
+      for (const support of role.innovationSupports) {
+        data.push({
+          innovation: { id: support.innovation.id, name: support.innovation.name },
+          supportedBy: support.userRoles.map(r => ({
+            id: r.user.id,
+            name: usersInfoMap.get(r.user.identityId)?.displayName ?? '[deleted user]',
+            role: r.role
+          })),
+          unit: this.domainService.users.getDisplayTag(role.role, { unitName: role.organisationUnit?.name })
+        });
+      }
+    }
+
+    if (user.serviceRoles.some(r => r.role === ServiceRoleEnum.ASSESSMENT)) {
+      const assessments = await em
+        .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
+        .select(['assessment.id', 'innovation.id', 'innovation.name'])
+        .innerJoin('assessment.innovation', 'innovation', 'innovation.current_assessment_id = assessment.id')
+        .where('assessment.assignTo = :userId', { userId })
+        .andWhere('assessment.finishedAt IS NULL')
+        .getMany();
+
+      const userInfo = {
+        id: user.id,
+        name: usersInfoMap.get(user.identityId)?.displayName ?? '[deleted user]',
+        role: ServiceRoleEnum.ASSESSMENT
+      };
+      for (const assessment of assessments) {
+        data.push({
+          innovation: { id: assessment.innovation.id, name: assessment.innovation.name },
+          supportedBy: [userInfo],
+          unit: this.domainService.users.getDisplayTag(ServiceRoleEnum.ASSESSMENT, {})
+        });
+      }
+    }
+
+    return { count: data.length, data: data.sort((a, b) => a.innovation.name.localeCompare(b.innovation.name)) };
+  }
+
   /**
    * converts the CreateRolesType into an array of roles to be saved in the database
    * @param data the create roles type
@@ -474,7 +584,7 @@ export class UsersService extends BaseService {
     try {
       Joi.attempt(idOrEmail, Joi.string().guid());
       return true;
-    } catch (_e) {
+    } catch (_error) {
       return false;
     }
   }

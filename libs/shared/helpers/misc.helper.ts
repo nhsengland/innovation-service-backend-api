@@ -1,5 +1,4 @@
-// eslint-disable-next-line @typescript-eslint/ban-types
-export type ResolvedNestedPromise<T> = T extends Object
+export type ResolvedNestedPromise<T> = T extends object
   ? T extends Promise<infer InnerType>
     ? ResolvedNestedPromise<InnerType>
     : {
@@ -23,7 +22,9 @@ export const resolveNestedPromises = async <T extends Record<string, any>>(
   for (const key of Object.keys(entity)) {
     let value = (entity as any)[key];
     // Typeorm adds __ to the keys of the entities for unresolved promises. Simplified the replace assuming there's no __ in the key.
-    const myKey: keyof ResolvedNestedPromise<T> = typeOrm ? key.replace(/__/g, '') : key;
+    const myKey = typeOrm
+      ? (key.replace(/__/g, '') as keyof ResolvedNestedPromise<T>)
+      : (key as keyof ResolvedNestedPromise<T>);
 
     if (value instanceof Promise) {
       value = await value;
@@ -57,10 +58,7 @@ export const resolveNestedPromises = async <T extends Record<string, any>>(
  */
 export const groupBy = <T, K extends keyof T>(array: T[], key: K): Map<T[K], T[]> => {
   return array.reduce((acc, item) => {
-    if (!acc.has(item[key])) {
-      acc.set(item[key], []);
-    }
-    acc.get(item[key])?.push(item);
+    addToArrayValueInMap(acc as any, item[key] as any, item);
     return acc;
   }, new Map<T[K], T[]>());
 };
@@ -81,3 +79,14 @@ export const toArray = <T>(value: T | T[] | undefined): T[] => {
 };
 
 export const sleep = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
+
+/**
+ * Helper to add to an array value in a Map.
+ * It mutates the map passed as a param.
+ */
+export const addToArrayValueInMap = <T>(map: Map<string, T[]>, key: string, value: T): void => {
+  if (!map.has(key)) {
+    map.set(key, []);
+  }
+  map.get(key)?.push(value);
+};

@@ -1,7 +1,8 @@
 import Joi from 'joi';
 
 import { NotificationCategoryType } from '@users/shared/enums';
-import { JoiHelper, PaginationQueryParamsType } from '@users/shared/helpers';
+import type { PaginationQueryParamsType } from '@users/shared/helpers';
+import { JoiHelper } from '@users/shared/helpers';
 
 enum orderFields {
   createdAt = 'createdAt'

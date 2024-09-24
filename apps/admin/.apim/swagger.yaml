@@ -548,6 +548,32 @@ paths:
           description: The organisation unit does not exist.
         "500":
           description: An error occurred while updating the organisation unit.
+  /v1/users/{userId}/assigned-innovations:
+    get:
+      description: Retrieves the user assigned innovations.
+      operationId: v1-admin-user-assigned-innovations
+      tags:
+        - "[v1] Innovations"
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: List of innovations assigned to the user
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+        "500":
+          description: Internal server error
   /v1/users:
     post:
       description: Create a user.

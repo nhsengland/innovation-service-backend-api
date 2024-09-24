@@ -1,7 +1,8 @@
 import Joi from 'joi';
 
 import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
-import { InnovationFileSchema, InnovationFileType } from '../_types/innovation.types';
+import type { InnovationFileType } from '../_types/innovation.types';
+import { InnovationFileSchema } from '../_types/innovation.types';
 
 export type BodyType = {
   message: string;

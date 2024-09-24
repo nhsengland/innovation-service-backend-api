@@ -618,6 +618,7 @@ describe('Notifications / _services / recipients service suite', () => {
         },
         organisationUnit: {
           id: scenario.users.aliceQualifyingAccessor.roles.qaRole.organisationUnit!.id,
+          name: scenario.users.aliceQualifyingAccessor.roles.qaRole.organisationUnit!.name,
           acronym: scenario.users.aliceQualifyingAccessor.roles.qaRole.organisationUnit!.acronym
         }
       }

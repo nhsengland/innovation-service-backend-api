@@ -46,6 +46,7 @@ import { InnovationCollaboratorEntity } from '@notifications/shared/entities/inn
 import { DatesHelper } from '@notifications/shared/helpers';
 import type { IdentityUserInfo, NotificationPreferences } from '@notifications/shared/types';
 import { Brackets, type EntityManager } from 'typeorm';
+import { addToArrayValueInMap } from '@notifications/shared/helpers/misc.helper';
 
 export type RecipientType = {
   roleId: string;
@@ -211,10 +212,7 @@ export class RecipientsService extends BaseService {
       const innovationName = record.innovation?.name;
 
       if (userId && innovationName) {
-        if (!result.has(userId)) {
-          result.set(userId, []);
-        }
-        result.get(userId)?.push(innovationName);
+        addToArrayValueInMap(result, userId, innovationName);
       }
     });
 
@@ -960,10 +958,7 @@ export class RecipientsService extends BaseService {
 
     const dbResult = await query.getMany();
     return dbResult.reduce((acc, item) => {
-      if (!acc.has(item.organisationUnitId)) {
-        acc.set(item.organisationUnitId, []);
-      }
-      acc.get(item.organisationUnitId)?.push({ id: item.innovationId, name: item.innovationName });
+      addToArrayValueInMap(acc, item.organisationUnitId, { id: item.innovationId, name: item.innovationName });
       return acc;
     }, new Map<string, { id: string; name: string }[]>());
   }
@@ -1300,9 +1295,7 @@ export class RecipientsService extends BaseService {
       if (!helperMap.has(user.userType)) helperMap.set(user.userType, new Map());
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const roleMap = helperMap.get(user.userType)!; // we know it exists this is a map get after set issue in typescript
-      if (!roleMap.has(user.organisationUnit ?? 'default')) roleMap.set(user.organisationUnit ?? 'default', []);
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      roleMap.get(user.organisationUnit ?? 'default')!.push(user.id); // we know it exists this is a map get after set issue in typescript
+      addToArrayValueInMap(roleMap, user.organisationUnit ?? 'default', user.id);
     }
 
     const result: RecipientType[] = [];

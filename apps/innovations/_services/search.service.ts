@@ -729,7 +729,7 @@ export class SearchService extends BaseService {
    * @param input the input to be cleaned
    * @returns cleanup the response to remove fields that are not shared
    */
-  private cleanupAccessorsNotSharedInnovation<T extends object & { highlights?: Object }>(input: T): Partial<T> {
+  private cleanupAccessorsNotSharedInnovation<T extends object & { highlights?: object }>(input: T): Partial<T> {
     const highlights = input.highlights && pick(input.highlights, 'document.INNOVATION_DESCRIPTION.name');
     return {
       ...pick(input, [

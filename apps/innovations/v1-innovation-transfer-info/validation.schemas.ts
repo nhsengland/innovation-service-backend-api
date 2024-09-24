@@ -1,4 +1,4 @@
-import Joi = require('joi');
+import Joi from 'joi';
 
 export type ParamsType = {
   transferId: string;

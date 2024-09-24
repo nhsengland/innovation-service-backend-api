@@ -1,9 +1,10 @@
 import type { Schema } from 'joi';
 
-import {
+import type {
   NotificationCategoryType,
+  NotifierTypeEnum} from '@notifications/shared/enums';
+import {
   NotificationPreferenceEnum,
-  NotifierTypeEnum,
   ServiceRoleEnum
 } from '@notifications/shared/enums';
 // import { GenericErrorsEnum, InternalServerError } from '@notifications/shared/errors';

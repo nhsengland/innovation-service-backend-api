@@ -1,5 +1,6 @@
 import type { Context } from '@azure/functions';
-import { NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import type { NotifierTypeEnum} from '@notifications/shared/enums';
+import { ServiceRoleEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { collaboratorInfoUrl, createAccountUrl } from '../../../_helpers/url.helper';
 import { BaseHandler } from '../../base.handler';

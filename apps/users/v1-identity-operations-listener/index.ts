@@ -6,7 +6,8 @@ import SHARED_SYMBOLS from '@users/shared/services/symbols';
 
 import { container } from '../_config';
 
-import { IdentityOperationSchema, IdentityOperationType } from './validation.schemas';
+import type { IdentityOperationType } from './validation.schemas';
+import { IdentityOperationSchema } from './validation.schemas';
 
 class V1IdentityOperationsQueueListener {
   static async queueTrigger(

@@ -1,4 +1,5 @@
-import { IRSchemaType, SchemaModel } from './schema.model';
+import type { IRSchemaType} from './schema.model';
+import { SchemaModel } from './schema.model';
 import { requiredSectionsAndQuestions } from '../../schemas/innovation-record';
 import { randCountry, randText } from '@ngneat/falso';
 import { IR_SCHEMA } from '../../schemas/innovation-record/schema';

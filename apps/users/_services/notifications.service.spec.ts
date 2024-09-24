@@ -1,7 +1,8 @@
 import { container } from '../_config';
 
 import { NotificationPreferenceEntity, NotificationUserEntity } from '@users/shared/entities';
-import { NotificationPreferenceEnum, ServiceRoleEnum } from '@users/shared/enums';
+import type { ServiceRoleEnum } from '@users/shared/enums';
+import { NotificationPreferenceEnum } from '@users/shared/enums';
 import { GenericErrorsEnum, UnprocessableEntityError } from '@users/shared/errors';
 import { TestsHelper } from '@users/shared/tests';
 import { DTOsHelper } from '@users/shared/tests/helpers/dtos.helper';

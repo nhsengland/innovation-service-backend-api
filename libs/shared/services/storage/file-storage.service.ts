@@ -1,6 +1,6 @@
 import {
   BlobClient,
-  BlobDeleteIfExistsResponse,
+  type BlobDeleteIfExistsResponse,
   BlobSASPermissions,
   BlobSASSignatureValues,
   generateBlobSASQueryParameters,
@@ -62,7 +62,7 @@ export class FileStorageService {
         '?' +
         query.toString()
       );
-    } catch (error) {
+    } catch (_error) {
       // TODO: Log this here!
       throw new ServiceUnavailableError(GenericErrorsEnum.SERVICE_FILE_STORAGE_ERROR);
     }
@@ -98,7 +98,7 @@ export class FileStorageService {
       }
 
       return response;
-    } catch (error) {
+    } catch (_error) {
       // TODO: Log this here!
       throw new ServiceUnavailableError(GenericErrorsEnum.SERVICE_FILE_STORAGE_ERROR);
     }
