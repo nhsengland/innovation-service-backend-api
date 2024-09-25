@@ -48,7 +48,7 @@ describe('Notifications / _handlers / support-new-assigned-accessors suite', () 
           threadId: threadId,
           supportId: support.id,
           message: message,
-          newAssignedAccessorsIds: assignedAccessorsRoleIds,
+          newAssignedAccessorsRoleIds: assignedAccessorsRoleIds,
           removedAssignedAccessorsRoleIds: []
         },
         recipients: innovatorRecipients,
@@ -72,7 +72,7 @@ describe('Notifications / _handlers / support-new-assigned-accessors suite', () 
           threadId: threadId,
           supportId: support.id,
           message: message,
-          newAssignedAccessorsIds: assignedAccessorsRoleIds,
+          newAssignedAccessorsRoleIds: assignedAccessorsRoleIds,
           removedAssignedAccessorsRoleIds: []
         },
         recipients: innovatorRecipients,
@@ -95,7 +95,7 @@ describe('Notifications / _handlers / support-new-assigned-accessors suite', () 
           threadId: threadId,
           supportId: support.id,
           message: message,
-          newAssignedAccessorsIds: assignedAccessorsRoleIds,
+          newAssignedAccessorsRoleIds: assignedAccessorsRoleIds,
           removedAssignedAccessorsRoleIds: []
         },
         recipients: assignedAccessorsRecipients,
@@ -117,7 +117,7 @@ describe('Notifications / _handlers / support-new-assigned-accessors suite', () 
           threadId: threadId,
           supportId: support.id,
           message: message,
-          newAssignedAccessorsIds: assignedAccessorsRoleIds,
+          newAssignedAccessorsRoleIds: assignedAccessorsRoleIds,
           removedAssignedAccessorsRoleIds: []
         },
         recipients: assignedAccessorsRecipients,
@@ -136,7 +136,7 @@ describe('Notifications / _handlers / support-new-assigned-accessors suite', () 
           threadId: threadId,
           supportId: support.id,
           message: message,
-          newAssignedAccessorsIds: [assignedAccessorsRoleIds[0]!],
+          newAssignedAccessorsRoleIds: [assignedAccessorsRoleIds[0]!],
           removedAssignedAccessorsRoleIds: [assignedAccessorsRoleIds[1]!]
         },
         recipients: assignedAccessorsRecipients.filter(r => r.userId === scenario.users.jamieMadroxAccessor.id),
@@ -154,7 +154,7 @@ describe('Notifications / _handlers / support-new-assigned-accessors suite', () 
           threadId: threadId,
           supportId: support.id,
           message: message,
-          newAssignedAccessorsIds: [assignedAccessorsRoleIds[0]!],
+          newAssignedAccessorsRoleIds: [assignedAccessorsRoleIds[0]!],
           removedAssignedAccessorsRoleIds: [assignedAccessorsRoleIds[1]!]
         },
         recipients: assignedAccessorsRecipients.filter(r => r.userId === scenario.users.jamieMadroxAccessor.id),
