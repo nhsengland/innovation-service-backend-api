@@ -19,7 +19,7 @@ class V1MeInnovationsInfo {
       const authInstance = await authorizationService.validate(context).checkInnovatorType().verify();
       const requestUser = authInstance.getUserInfo();
 
-      const result = await domainService.innovations.getInnovationsByOwnerId(requestUser.id);
+      const result = await domainService.innovations.getInnovationsByInnovatorId(requestUser.id);
       context.res = ResponseHelper.Ok<ResponseDTO>(result);
       return;
     } catch (error) {
