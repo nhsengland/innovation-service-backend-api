@@ -42,14 +42,15 @@ import {
   SupportStatusChangeRequestHandler,
   SupportStatusUpdateHandler,
   SupportSummaryUpdateHandler,
+  SupportNewAssignedWaitingInnovation,
   TaskCreationHandler,
   TaskUpdateHandler,
   ThreadAddFollowersHandler,
   ThreadCreationHandler,
   UnitInactivatedHandler,
-  UnitKPIHandler
+  UnitKPIHandler,
+  UserEmailAddressUpdatedHandler
 } from '../_handlers';
-import { UserEmailAddressUpdatedHandler } from '../_handlers/admin/user-email-address-updated.handler';
 
 export const NOTIFICATIONS_CONFIG = {
   // Account
@@ -147,6 +148,14 @@ export const NOTIFICATIONS_CONFIG = {
       message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).trim().required(),
       newAssignedAccessorsRoleIds: Joi.array().items(Joi.string().guid()),
       removedAssignedAccessorsRoleIds: Joi.array().items(Joi.string().guid())
+    }).required()
+  },
+  [NotifierTypeEnum.SUPPORT_NEW_ASSIGN_WAITING_INNOVATION]: {
+    handler: SupportNewAssignedWaitingInnovation,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.SUPPORT_NEW_ASSIGN_WAITING_INNOVATION]>({
+      innovationId: Joi.string().guid().required(),
+      supportId: Joi.string().guid().required(),
+      newAssignedAccessorsIds: Joi.array().items(Joi.string().guid()).required()
     }).required()
   },
   [NotifierTypeEnum.SUPPORT_STATUS_CHANGE_REQUEST]: {

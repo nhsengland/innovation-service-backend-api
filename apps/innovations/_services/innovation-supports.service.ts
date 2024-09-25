@@ -548,11 +548,17 @@ export class InnovationSupportsService extends BaseService {
         status: data.status,
         message: data.message,
         newAssignedAccessorsIds:
-          data.status === (InnovationSupportStatusEnum.ENGAGING || InnovationSupportStatusEnum.WAITING)
-            ? (data.accessors ?? []).map(item => item.id)
-            : []
+          data.status === InnovationSupportStatusEnum.ENGAGING ? (data.accessors ?? []).map(item => item.id) : []
       }
     });
+    //sends an email and inapp to QAs when a new support is created
+    if (data.status === InnovationSupportStatusEnum.WAITING && data.accessors?.length) {
+      await this.notifierService.send(domainContext, NotifierTypeEnum.SUPPORT_NEW_ASSIGN_WAITING_INNOVATION, {
+        innovationId,
+        newAssignedAccessorsIds: data.accessors.map(item => item.id),
+        supportId: result.id
+      });
+    }
 
     await this.notifierService.sendNotifyMe(domainContext, innovationId, 'SUPPORT_UPDATED', {
       status: data.status,
@@ -721,25 +727,20 @@ export class InnovationSupportsService extends BaseService {
 
     const result = await connection.transaction(async transaction => {
       let assignedAccessors: string[] = [];
-      if (data.status === InnovationSupportStatusEnum.ENGAGING) {
+      if (data.status === InnovationSupportStatusEnum.ENGAGING || data.status === InnovationSupportStatusEnum.WAITING) {
         assignedAccessors = data.accessors?.map(item => item.userRoleId) ?? [];
       } else {
         // Cleanup tasks if the status is not ENGAGING or WAITING
-        if (data.status !== InnovationSupportStatusEnum.WAITING) {
-          assignedAccessors = [];
-          await transaction
-            .createQueryBuilder()
-            .update(InnovationTaskEntity)
-            .set({ status: InnovationTaskStatusEnum.CANCELLED, updatedBy: domainContext.id })
-            .where({
-              innovationSupport: dbSupport.id,
-              status: In([InnovationTaskStatusEnum.OPEN])
-            })
-            .execute();
-        } else {
-          // In waiting status the QA is automatically assigned
-          assignedAccessors = [domainContext.currentRole.id];
-        }
+        assignedAccessors = [];
+        await transaction
+          .createQueryBuilder()
+          .update(InnovationTaskEntity)
+          .set({ status: InnovationTaskStatusEnum.CANCELLED, updatedBy: domainContext.id })
+          .where({
+            innovationSupport: dbSupport.id,
+            status: In([InnovationTaskStatusEnum.OPEN])
+          })
+          .execute();
       }
 
       dbSupport.status = data.status;
@@ -811,6 +812,15 @@ export class InnovationSupportsService extends BaseService {
       }
     });
 
+    //sends an email and inapp to QAs when a new support is created
+    if (data.status === InnovationSupportStatusEnum.WAITING && data.accessors?.length) {
+      await this.notifierService.send(domainContext, NotifierTypeEnum.SUPPORT_NEW_ASSIGN_WAITING_INNOVATION, {
+        innovationId,
+        newAssignedAccessorsIds: data.accessors.map(item => item.id),
+        supportId: result.id
+      });
+    }
+
     await this.notifierService.sendNotifyMe(domainContext, innovationId, 'SUPPORT_UPDATED', {
       status: data.status,
       units: dbSupport.organisationUnit.id,
@@ -862,7 +872,10 @@ export class InnovationSupportsService extends BaseService {
     if (!support) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
     }
-    if (support.status !== InnovationSupportStatusEnum.ENGAGING) {
+    if (
+      support.status !== InnovationSupportStatusEnum.ENGAGING &&
+      support.status !== InnovationSupportStatusEnum.WAITING
+    ) {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UPDATE_WITH_UNPROCESSABLE_STATUS);
     }
 
