@@ -37,6 +37,7 @@ class V1InnovationThreadCreate {
       const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query, {
         userType: domainContext.currentRole.role
       });
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { skip, take, order, ...filters } = queryParams;
 
       const result = await threadsService.getThreadList(domainContext, params.innovationId, filters, queryParams);

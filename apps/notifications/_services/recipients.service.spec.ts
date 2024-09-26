@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
+ 
 import { randUuid } from '@ngneat/falso';
 import { WEEK_IN_DAYS } from '@notifications/shared/constants';
 import {
