@@ -1,4 +1,4 @@
-import { ServiceRoleEnum } from '@notifications/shared/enums';
+import { InnovationSupportStatusEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { MocksHelper, type CompleteScenarioType } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { innovationOverviewUrl, supportStatusUrl, supportSummaryUrl, threadsUrl } from '../../_helpers/url.helper';
@@ -10,34 +10,36 @@ describe('Notifications / _handlers / idle support handler suite', () => {
   const testsHelper = new NotificationsTestsHelper();
   const scenario: CompleteScenarioType = testsHelper.getCompleteScenario();
 
+  const johnInnovation = scenario.users.johnInnovator.innovations.johnInnovation;
+
   beforeAll(async () => {
     await testsHelper.init();
   });
 
   jest.spyOn(RecipientsService.prototype, 'idleSupports').mockResolvedValue([
     {
-      supportId: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByHealthOrgUnit.id,
-      supportStatus: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByHealthOrgUnit.status,
-      innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
+      supportId: johnInnovation.supports.supportByHealthOrgUnit.id,
+      supportStatus: johnInnovation.supports.supportByHealthOrgUnit.status,
+      innovationId: johnInnovation.id,
       unitId: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id
     },
     {
-      supportId: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByMedTechOrgUnit.id,
-      supportStatus: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByMedTechOrgUnit.status,
-      innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
+      supportId: johnInnovation.supports.supportByMedTechOrgUnit.id,
+      supportStatus: InnovationSupportStatusEnum.WAITING, // This doesn't match the scenario but is to simplify this tests.
+      innovationId: johnInnovation.id,
       unitId: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id
     }
   ]);
 
   jest.spyOn(RecipientsService.prototype, 'idleWaitingSupports').mockResolvedValue([
     {
-      supportId: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByHealthOrgUnit.id,
-      innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
+      supportId: johnInnovation.supports.supportByHealthOrgUnit.id,
+      innovationId: johnInnovation.id,
       unitId: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id
     },
     {
-      supportId: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByMedTechOrgUnit.id,
-      innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
+      supportId: johnInnovation.supports.supportByMedTechOrgUnit.id,
+      innovationId: johnInnovation.id,
       unitId: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id
     }
   ]);
@@ -56,18 +58,18 @@ describe('Notifications / _handlers / idle support handler suite', () => {
           notificationPreferenceType: 'AUTOMATIC',
           to: DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor),
           params: {
-            innovation_name: scenario.users.johnInnovator.innovations.johnInnovation.name,
+            innovation_name: johnInnovation.name,
             support_status_url: supportStatusUrl(
               ServiceRoleEnum.ACCESSOR,
-              scenario.users.johnInnovator.innovations.johnInnovation.id,
-              scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByHealthOrgUnit.id
+              johnInnovation.id,
+              johnInnovation.supports.supportByHealthOrgUnit.id
             ),
             support_summary_url: supportSummaryUrl(
               ServiceRoleEnum.ACCESSOR,
-              scenario.users.johnInnovator.innovations.johnInnovation.id,
+              johnInnovation.id,
               scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id
             ),
-            thread_url: threadsUrl(ServiceRoleEnum.ACCESSOR, scenario.users.johnInnovator.innovations.johnInnovation.id)
+            thread_url: threadsUrl(ServiceRoleEnum.ACCESSOR, johnInnovation.id)
           }
         },
         {
@@ -75,18 +77,18 @@ describe('Notifications / _handlers / idle support handler suite', () => {
           notificationPreferenceType: 'AUTOMATIC',
           to: DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'healthAccessorRole'),
           params: {
-            innovation_name: scenario.users.johnInnovator.innovations.johnInnovation.name,
+            innovation_name: johnInnovation.name,
             support_status_url: supportStatusUrl(
               ServiceRoleEnum.ACCESSOR,
-              scenario.users.johnInnovator.innovations.johnInnovation.id,
-              scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByHealthOrgUnit.id
+              johnInnovation.id,
+              johnInnovation.supports.supportByHealthOrgUnit.id
             ),
             support_summary_url: supportSummaryUrl(
               ServiceRoleEnum.ACCESSOR,
-              scenario.users.johnInnovator.innovations.johnInnovation.id,
+              johnInnovation.id,
               scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id
             ),
-            thread_url: threadsUrl(ServiceRoleEnum.ACCESSOR, scenario.users.johnInnovator.innovations.johnInnovation.id)
+            thread_url: threadsUrl(ServiceRoleEnum.ACCESSOR, johnInnovation.id)
           }
         },
         {
@@ -94,18 +96,18 @@ describe('Notifications / _handlers / idle support handler suite', () => {
           notificationPreferenceType: 'AUTOMATIC',
           to: DTOsHelper.getRecipientUser(scenario.users.samAccessor),
           params: {
-            innovation_name: scenario.users.johnInnovator.innovations.johnInnovation.name,
+            innovation_name: johnInnovation.name,
             support_status_url: supportStatusUrl(
               ServiceRoleEnum.ACCESSOR,
-              scenario.users.johnInnovator.innovations.johnInnovation.id,
-              scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByMedTechOrgUnit.id
+              johnInnovation.id,
+              johnInnovation.supports.supportByMedTechOrgUnit.id
             ),
             support_summary_url: supportSummaryUrl(
               ServiceRoleEnum.ACCESSOR,
-              scenario.users.johnInnovator.innovations.johnInnovation.id,
+              johnInnovation.id,
               scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id
             ),
-            thread_url: threadsUrl(ServiceRoleEnum.ACCESSOR, scenario.users.johnInnovator.innovations.johnInnovation.id)
+            thread_url: threadsUrl(ServiceRoleEnum.ACCESSOR, johnInnovation.id)
           }
         }
       ]);
@@ -115,16 +117,16 @@ describe('Notifications / _handlers / idle support handler suite', () => {
           context: {
             detail: 'AU02_ACCESSOR_IDLE_ENGAGING_SUPPORT',
             type: 'AUTOMATIC',
-            id: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByHealthOrgUnit.id
+            id: johnInnovation.supports.supportByHealthOrgUnit.id
           },
           userRoleIds: [
             scenario.users.aliceQualifyingAccessor.roles.qaRole.id,
             scenario.users.jamieMadroxAccessor.roles.healthAccessorRole.id
           ],
-          innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
+          innovationId: johnInnovation.id,
           params: {
-            innovationName: scenario.users.johnInnovator.innovations.johnInnovation.name,
-            supportId: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByHealthOrgUnit.id,
+            innovationName: johnInnovation.name,
+            supportId: johnInnovation.supports.supportByHealthOrgUnit.id,
             unitId: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id
           }
         },
@@ -132,13 +134,13 @@ describe('Notifications / _handlers / idle support handler suite', () => {
           context: {
             detail: 'AU02_ACCESSOR_IDLE_ENGAGING_SUPPORT',
             type: 'AUTOMATIC',
-            id: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByMedTechOrgUnit.id
+            id: johnInnovation.supports.supportByMedTechOrgUnit.id
           },
           userRoleIds: [scenario.users.samAccessor.roles.accessorRole.id],
-          innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
+          innovationId: johnInnovation.id,
           params: {
-            innovationName: scenario.users.johnInnovator.innovations.johnInnovation.name,
-            supportId: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByMedTechOrgUnit.id,
+            innovationName: johnInnovation.name,
+            supportId: johnInnovation.supports.supportByMedTechOrgUnit.id,
             unitId: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id
           }
         }
@@ -160,12 +162,9 @@ describe('Notifications / _handlers / idle support handler suite', () => {
           notificationPreferenceType: 'AUTOMATIC',
           to: DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor),
           params: {
-            innovation_name: scenario.users.johnInnovator.innovations.johnInnovation.name,
-            innovation_overview_url: innovationOverviewUrl(
-              ServiceRoleEnum.ACCESSOR,
-              scenario.users.johnInnovator.innovations.johnInnovation.id
-            ),
-            thread_url: threadsUrl(ServiceRoleEnum.ACCESSOR, scenario.users.johnInnovator.innovations.johnInnovation.id)
+            innovation_name: johnInnovation.name,
+            innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, johnInnovation.id),
+            thread_url: threadsUrl(ServiceRoleEnum.ACCESSOR, johnInnovation.id)
           }
         },
         {
@@ -173,12 +172,9 @@ describe('Notifications / _handlers / idle support handler suite', () => {
           notificationPreferenceType: 'AUTOMATIC',
           to: DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'healthAccessorRole'),
           params: {
-            innovation_name: scenario.users.johnInnovator.innovations.johnInnovation.name,
-            innovation_overview_url: innovationOverviewUrl(
-              ServiceRoleEnum.ACCESSOR,
-              scenario.users.johnInnovator.innovations.johnInnovation.id
-            ),
-            thread_url: threadsUrl(ServiceRoleEnum.ACCESSOR, scenario.users.johnInnovator.innovations.johnInnovation.id)
+            innovation_name: johnInnovation.name,
+            innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, johnInnovation.id),
+            thread_url: threadsUrl(ServiceRoleEnum.ACCESSOR, johnInnovation.id)
           }
         },
         {
@@ -186,12 +182,9 @@ describe('Notifications / _handlers / idle support handler suite', () => {
           notificationPreferenceType: 'AUTOMATIC',
           to: DTOsHelper.getRecipientUser(scenario.users.samAccessor),
           params: {
-            innovation_name: scenario.users.johnInnovator.innovations.johnInnovation.name,
-            innovation_overview_url: innovationOverviewUrl(
-              ServiceRoleEnum.ACCESSOR,
-              scenario.users.johnInnovator.innovations.johnInnovation.id
-            ),
-            thread_url: threadsUrl(ServiceRoleEnum.ACCESSOR, scenario.users.johnInnovator.innovations.johnInnovation.id)
+            innovation_name: johnInnovation.name,
+            innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, johnInnovation.id),
+            thread_url: threadsUrl(ServiceRoleEnum.ACCESSOR, johnInnovation.id)
           }
         }
       ]);
@@ -201,29 +194,29 @@ describe('Notifications / _handlers / idle support handler suite', () => {
           context: {
             detail: 'AU06_ACCESSOR_IDLE_WAITING',
             type: 'AUTOMATIC',
-            id: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByHealthOrgUnit.id
+            id: johnInnovation.supports.supportByHealthOrgUnit.id
           },
           userRoleIds: [
             scenario.users.aliceQualifyingAccessor.roles.qaRole.id,
             scenario.users.jamieMadroxAccessor.roles.healthAccessorRole.id
           ],
-          innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
+          innovationId: johnInnovation.id,
           params: {
-            innovationName: scenario.users.johnInnovator.innovations.johnInnovation.name,
-            supportId: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByHealthOrgUnit.id
+            innovationName: johnInnovation.name,
+            supportId: johnInnovation.supports.supportByHealthOrgUnit.id
           }
         },
         {
           context: {
             detail: 'AU06_ACCESSOR_IDLE_WAITING',
             type: 'AUTOMATIC',
-            id: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByMedTechOrgUnit.id
+            id: johnInnovation.supports.supportByMedTechOrgUnit.id
           },
           userRoleIds: [scenario.users.samAccessor.roles.accessorRole.id],
-          innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
+          innovationId: johnInnovation.id,
           params: {
-            innovationName: scenario.users.johnInnovator.innovations.johnInnovation.name,
-            supportId: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByMedTechOrgUnit.id
+            innovationName: johnInnovation.name,
+            supportId: johnInnovation.supports.supportByMedTechOrgUnit.id
           }
         }
       ]);
@@ -246,7 +239,7 @@ describe('Notifications / _handlers / idle support handler suite', () => {
           notificationPreferenceType: 'AUTOMATIC',
           to: DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor),
           params: {
-            innovation_name: scenario.users.johnInnovator.innovations.johnInnovation.name
+            innovation_name: johnInnovation.name
           }
         },
         {
@@ -254,15 +247,7 @@ describe('Notifications / _handlers / idle support handler suite', () => {
           notificationPreferenceType: 'AUTOMATIC',
           to: DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'healthAccessorRole'),
           params: {
-            innovation_name: scenario.users.johnInnovator.innovations.johnInnovation.name
-          }
-        },
-        {
-          templateId: 'AU10_ACCESSOR_IDLE_ENGAGING_SUPPORT_FOR_SIX_WEEKS',
-          notificationPreferenceType: 'AUTOMATIC',
-          to: DTOsHelper.getRecipientUser(scenario.users.samAccessor),
-          params: {
-            innovation_name: scenario.users.johnInnovator.innovations.johnInnovation.name
+            innovation_name: johnInnovation.name
           }
         }
       ]);
@@ -272,31 +257,17 @@ describe('Notifications / _handlers / idle support handler suite', () => {
           context: {
             detail: 'AU10_ACCESSOR_IDLE_ENGAGING_SUPPORT_FOR_SIX_WEEKS',
             type: 'AUTOMATIC',
-            id: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByHealthOrgUnit.id
+            id: johnInnovation.supports.supportByHealthOrgUnit.id
           },
           userRoleIds: [
             scenario.users.aliceQualifyingAccessor.roles.qaRole.id,
             scenario.users.jamieMadroxAccessor.roles.healthAccessorRole.id
           ],
-          innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
+          innovationId: johnInnovation.id,
           params: {
-            innovationName: scenario.users.johnInnovator.innovations.johnInnovation.name,
-            supportId: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByHealthOrgUnit.id,
+            innovationName: johnInnovation.name,
+            supportId: johnInnovation.supports.supportByHealthOrgUnit.id,
             unitId: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id
-          }
-        },
-        {
-          context: {
-            detail: 'AU10_ACCESSOR_IDLE_ENGAGING_SUPPORT_FOR_SIX_WEEKS',
-            type: 'AUTOMATIC',
-            id: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByMedTechOrgUnit.id
-          },
-          userRoleIds: [scenario.users.samAccessor.roles.accessorRole.id],
-          innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
-          params: {
-            innovationName: scenario.users.johnInnovator.innovations.johnInnovation.name,
-            supportId: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByMedTechOrgUnit.id,
-            unitId: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id
           }
         }
       ]);
@@ -312,26 +283,11 @@ describe('Notifications / _handlers / idle support handler suite', () => {
       const inApps = handler.inApp.filter(a => a.context.detail === 'AU11_ACCESSOR_IDLE_WAITING_SUPPORT_FOR_SIX_WEEKS');
 
       const johnInnovationParams = {
-        innovation_name: scenario.users.johnInnovator.innovations.johnInnovation.name,
-        innovation_overview_url: innovationOverviewUrl(
-          ServiceRoleEnum.ACCESSOR,
-          scenario.users.johnInnovator.innovations.johnInnovation.id
-        ),
-        thread_url: threadsUrl(ServiceRoleEnum.ACCESSOR, scenario.users.johnInnovator.innovations.johnInnovation.id)
+        innovation_name: johnInnovation.name,
+        innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, johnInnovation.id),
+        thread_url: threadsUrl(ServiceRoleEnum.ACCESSOR, johnInnovation.id)
       };
       expect(emails).toStrictEqual([
-        {
-          templateId: 'AU11_ACCESSOR_IDLE_WAITING_SUPPORT_FOR_SIX_WEEKS',
-          notificationPreferenceType: 'AUTOMATIC',
-          to: DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor),
-          params: johnInnovationParams
-        },
-        {
-          templateId: 'AU11_ACCESSOR_IDLE_WAITING_SUPPORT_FOR_SIX_WEEKS',
-          notificationPreferenceType: 'AUTOMATIC',
-          to: DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'healthAccessorRole'),
-          params: johnInnovationParams
-        },
         {
           templateId: 'AU11_ACCESSOR_IDLE_WAITING_SUPPORT_FOR_SIX_WEEKS',
           notificationPreferenceType: 'AUTOMATIC',
@@ -345,29 +301,13 @@ describe('Notifications / _handlers / idle support handler suite', () => {
           context: {
             detail: 'AU11_ACCESSOR_IDLE_WAITING_SUPPORT_FOR_SIX_WEEKS',
             type: 'AUTOMATIC',
-            id: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByHealthOrgUnit.id
-          },
-          userRoleIds: [
-            scenario.users.aliceQualifyingAccessor.roles.qaRole.id,
-            scenario.users.jamieMadroxAccessor.roles.healthAccessorRole.id
-          ],
-          innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
-          params: {
-            innovationName: scenario.users.johnInnovator.innovations.johnInnovation.name,
-            supportId: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByHealthOrgUnit.id
-          }
-        },
-        {
-          context: {
-            detail: 'AU11_ACCESSOR_IDLE_WAITING_SUPPORT_FOR_SIX_WEEKS',
-            type: 'AUTOMATIC',
-            id: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByMedTechOrgUnit.id
+            id: johnInnovation.supports.supportByMedTechOrgUnit.id
           },
           userRoleIds: [scenario.users.samAccessor.roles.accessorRole.id],
-          innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
+          innovationId: johnInnovation.id,
           params: {
-            innovationName: scenario.users.johnInnovator.innovations.johnInnovation.name,
-            supportId: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByMedTechOrgUnit.id
+            innovationName: johnInnovation.name,
+            supportId: johnInnovation.supports.supportByMedTechOrgUnit.id
           }
         }
       ]);
