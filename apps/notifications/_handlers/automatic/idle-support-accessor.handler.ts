@@ -1,6 +1,6 @@
 import type { Context } from '@azure/functions';
 import { WEEK_IN_DAYS } from '@notifications/shared/constants';
-import { ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
+import { InnovationSupportStatusEnum, ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
 import { groupBy } from '@notifications/shared/helpers/misc.helper';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { innovationOverviewUrl, supportStatusUrl, supportSummaryUrl, threadsUrl } from '../../_helpers/url.helper';
@@ -11,6 +11,7 @@ export class IdleSupportAccessorHandler extends BaseHandler<
   | 'AU02_ACCESSOR_IDLE_ENGAGING_SUPPORT'
   | 'AU06_ACCESSOR_IDLE_WAITING'
   | 'AU10_ACCESSOR_IDLE_ENGAGING_SUPPORT_FOR_SIX_WEEKS'
+  | 'AU11_ACCESSOR_IDLE_WAITING_SUPPORT_FOR_SIX_WEEKS'
 > {
   constructor(
     requestUser: DomainContextType,
@@ -24,12 +25,12 @@ export class IdleSupportAccessorHandler extends BaseHandler<
     await this.AU02_ACCESSOR_IDLE_ENGAGING_SUPPORT();
     await this.AU06_ACCESSOR_IDLE_WAITING();
     await this.AU10_ACCESSOR_IDLE_ENGAGING_SUPPORT_FOR_SIX_WEEKS();
-
+    await this.AU11_ACCESSOR_IDLE_WAITING_SUPPORT_FOR_SIX_WEEKS();
     return this;
   }
 
   private async AU02_ACCESSOR_IDLE_ENGAGING_SUPPORT(): Promise<void> {
-    const idleSupports = await this.recipientsService.idleEngagingSupports(90, 30);
+    const idleSupports = await this.recipientsService.idleSupports(90, [InnovationSupportStatusEnum.ENGAGING], 30);
     const idleInnovationsMap = groupBy(idleSupports, 'innovationId');
     const innovationsInfo = await this.recipientsService.getInnovationsInfo([...idleInnovationsMap.keys()]);
     for (const [innovationId, supports] of idleInnovationsMap) {
@@ -113,7 +114,9 @@ export class IdleSupportAccessorHandler extends BaseHandler<
   }
 
   private async AU10_ACCESSOR_IDLE_ENGAGING_SUPPORT_FOR_SIX_WEEKS(): Promise<void> {
-    const idleSupports = await this.recipientsService.idleEngagingSupports(6 * WEEK_IN_DAYS);
+    const idleSupports = await this.recipientsService.idleSupports(6 * WEEK_IN_DAYS, [
+      InnovationSupportStatusEnum.ENGAGING
+    ]);
     const idleInnovationsMap = groupBy(idleSupports, 'innovationId');
     const innovationsInfo = await this.recipientsService.getInnovationsInfo([...idleInnovationsMap.keys()]);
     for (const [innovationId, supports] of idleInnovationsMap) {
@@ -140,6 +143,49 @@ export class IdleSupportAccessorHandler extends BaseHandler<
               innovationName: innovation.name,
               supportId: support.supportId,
               unitId: support.unitId
+            }
+          }
+        });
+      }
+    }
+  }
+
+  private async AU11_ACCESSOR_IDLE_WAITING_SUPPORT_FOR_SIX_WEEKS(): Promise<void> {
+    const idleSupports = await this.recipientsService.idleSupports(6 * WEEK_IN_DAYS, [
+      InnovationSupportStatusEnum.WAITING
+    ]);
+    const idleInnovationsMap = groupBy(idleSupports, 'innovationId');
+    const innovationsInfo = await this.recipientsService.getInnovationsInfo([...idleInnovationsMap.keys()]);
+    for (const [innovationId, supports] of idleInnovationsMap) {
+      const innovation = innovationsInfo.get(innovationId);
+      if (!innovation) {
+        continue;
+      }
+
+      for (const support of supports) {
+        const recipients = await this.recipientsService.innovationAssignedRecipients(innovationId, {
+          unitId: support.unitId
+        });
+
+        this.notify('AU11_ACCESSOR_IDLE_WAITING_SUPPORT_FOR_SIX_WEEKS', recipients, {
+          email: {
+            notificationPreferenceType: 'AUTOMATIC',
+            params: {
+              innovation_name: innovation.name,
+              innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, innovationId),
+              thread_url: threadsUrl(ServiceRoleEnum.ACCESSOR, innovationId)
+            }
+          },
+          inApp: {
+            context: {
+              detail: 'AU11_ACCESSOR_IDLE_WAITING_SUPPORT_FOR_SIX_WEEKS',
+              id: support.supportId,
+              type: 'AUTOMATIC'
+            },
+            innovationId,
+            params: {
+              innovationName: innovation.name,
+              supportId: support.supportId
             }
           }
         });

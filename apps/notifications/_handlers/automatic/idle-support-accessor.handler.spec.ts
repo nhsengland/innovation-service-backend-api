@@ -14,14 +14,16 @@ describe('Notifications / _handlers / idle support handler suite', () => {
     await testsHelper.init();
   });
 
-  jest.spyOn(RecipientsService.prototype, 'idleEngagingSupports').mockResolvedValue([
+  jest.spyOn(RecipientsService.prototype, 'idleSupports').mockResolvedValue([
     {
       supportId: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByHealthOrgUnit.id,
+      supportStatus: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByHealthOrgUnit.status,
       innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
       unitId: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id
     },
     {
       supportId: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByMedTechOrgUnit.id,
+      supportStatus: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByMedTechOrgUnit.status,
       innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
       unitId: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id
     }
@@ -295,6 +297,77 @@ describe('Notifications / _handlers / idle support handler suite', () => {
             innovationName: scenario.users.johnInnovator.innovations.johnInnovation.name,
             supportId: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByMedTechOrgUnit.id,
             unitId: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id
+          }
+        }
+      ]);
+    });
+  });
+
+  describe('AU11_ACCESSOR_IDLE_WAITING_SUPPORT_FOR_SIX_WEEKS', () => {
+    it('should send notifications for each innovations supporting accessors', async () => {
+      const handler = new IdleSupportAccessorHandler({} as any, {}, MocksHelper.mockContext());
+      await handler.run();
+
+      const emails = handler.emails.filter(e => e.templateId === 'AU11_ACCESSOR_IDLE_WAITING_SUPPORT_FOR_SIX_WEEKS');
+      const inApps = handler.inApp.filter(a => a.context.detail === 'AU11_ACCESSOR_IDLE_WAITING_SUPPORT_FOR_SIX_WEEKS');
+
+      const johnInnovationParams = {
+        innovation_name: scenario.users.johnInnovator.innovations.johnInnovation.name,
+        innovation_overview_url: innovationOverviewUrl(
+          ServiceRoleEnum.ACCESSOR,
+          scenario.users.johnInnovator.innovations.johnInnovation.id
+        ),
+        thread_url: threadsUrl(ServiceRoleEnum.ACCESSOR, scenario.users.johnInnovator.innovations.johnInnovation.id)
+      };
+      expect(emails).toStrictEqual([
+        {
+          templateId: 'AU11_ACCESSOR_IDLE_WAITING_SUPPORT_FOR_SIX_WEEKS',
+          notificationPreferenceType: 'AUTOMATIC',
+          to: DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor),
+          params: johnInnovationParams
+        },
+        {
+          templateId: 'AU11_ACCESSOR_IDLE_WAITING_SUPPORT_FOR_SIX_WEEKS',
+          notificationPreferenceType: 'AUTOMATIC',
+          to: DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'healthAccessorRole'),
+          params: johnInnovationParams
+        },
+        {
+          templateId: 'AU11_ACCESSOR_IDLE_WAITING_SUPPORT_FOR_SIX_WEEKS',
+          notificationPreferenceType: 'AUTOMATIC',
+          to: DTOsHelper.getRecipientUser(scenario.users.samAccessor),
+          params: johnInnovationParams
+        }
+      ]);
+
+      expect(inApps).toStrictEqual([
+        {
+          context: {
+            detail: 'AU11_ACCESSOR_IDLE_WAITING_SUPPORT_FOR_SIX_WEEKS',
+            type: 'AUTOMATIC',
+            id: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByHealthOrgUnit.id
+          },
+          userRoleIds: [
+            scenario.users.aliceQualifyingAccessor.roles.qaRole.id,
+            scenario.users.jamieMadroxAccessor.roles.healthAccessorRole.id
+          ],
+          innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
+          params: {
+            innovationName: scenario.users.johnInnovator.innovations.johnInnovation.name,
+            supportId: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByHealthOrgUnit.id
+          }
+        },
+        {
+          context: {
+            detail: 'AU11_ACCESSOR_IDLE_WAITING_SUPPORT_FOR_SIX_WEEKS',
+            type: 'AUTOMATIC',
+            id: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByMedTechOrgUnit.id
+          },
+          userRoleIds: [scenario.users.samAccessor.roles.accessorRole.id],
+          innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
+          params: {
+            innovationName: scenario.users.johnInnovator.innovations.johnInnovation.name,
+            supportId: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByMedTechOrgUnit.id
           }
         }
       ]);
