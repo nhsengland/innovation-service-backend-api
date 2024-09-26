@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
+ 
 import { container } from '../_config';
 
 import { InnovationEntity, InnovationSectionEntity } from '@innovations/shared/entities';

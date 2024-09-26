@@ -1293,7 +1293,7 @@ export class RecipientsService extends BaseService {
     const helperMap = new Map<ServiceRoleEnum, Map<string, string[]>>();
     for (const user of users) {
       if (!helperMap.has(user.userType)) helperMap.set(user.userType, new Map());
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+       
       const roleMap = helperMap.get(user.userType)!; // we know it exists this is a map get after set issue in typescript
       addToArrayValueInMap(roleMap, user.organisationUnit ?? 'default', user.id);
     }

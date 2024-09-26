@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
+ 
 import { container } from '../_config';
 
 import { randAbbreviation, randFullName, randPhoneNumber, randText, randUuid } from '@ngneat/falso';
