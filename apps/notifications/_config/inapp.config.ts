@@ -147,6 +147,10 @@ export type InAppTemplatesType = {
     supportId: string;
     unitId: string;
   };
+  AU11_ACCESSOR_IDLE_WAITING_SUPPORT_FOR_SIX_WEEKS: {
+    innovationName: string;
+    supportId: string;
+  };
   // Automatic / Transfer
   AU08_TRANSFER_ONE_WEEK_REMINDER_EXISTING_USER: {
     innovationName: string;
