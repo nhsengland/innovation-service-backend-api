@@ -815,10 +815,8 @@ paths:
                       type: string
                     name:
                       type: string
-                    collaboratorsCount:
-                      type: number
-                    expirationTransferDate:
-                      type: string
+                    isOwner:
+                      type: boolean
         "400":
           description: Bad request
   /v1/users/{userId}/roles/{roleId}:

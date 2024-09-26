@@ -580,7 +580,11 @@ export class DomainUsersService {
       const userInnovatorRole = dbUser.serviceRoles.find(item => item.role === ServiceRoleEnum.INNOVATOR);
 
       if (userInnovatorRole) {
-        const dbInnovations = await this.domainInnovationService.getInnovationsByOwnerId(dbUser.id, transaction);
+        const dbInnovations = await this.domainInnovationService.getInnovationsByInnovatorId(
+          dbUser.id,
+          false,
+          transaction
+        );
 
         await this.domainInnovationService.bulkUpdateCollaboratorStatusByEmail(
           transaction,
