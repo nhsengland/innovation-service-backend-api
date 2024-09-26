@@ -551,11 +551,11 @@ export class InnovationSupportsService extends BaseService {
           data.status === InnovationSupportStatusEnum.ENGAGING ? (data.accessors ?? []).map(item => item.id) : []
       }
     });
-    //sends an email and inapp to QAs when a new support is created
+    //sends an email and inapp to QAs when a new support in the WAITING status is created
     if (data.status === InnovationSupportStatusEnum.WAITING && data.accessors?.length) {
       await this.notifierService.send(domainContext, NotifierTypeEnum.SUPPORT_NEW_ASSIGN_WAITING_INNOVATION, {
         innovationId,
-        newAssignedAccessorsIds: data.accessors.map(item => item.id),
+        newAssignedAccessorsRoleIds: data.accessors.map(item => item.id),
         supportId: result.id
       });
     }
@@ -812,20 +812,22 @@ export class InnovationSupportsService extends BaseService {
       }
     });
 
-    //sends an email and inapp to QAs when a new support is created
-    if (data.status === InnovationSupportStatusEnum.WAITING && data.accessors?.length) {
-      await this.notifierService.send(domainContext, NotifierTypeEnum.SUPPORT_NEW_ASSIGN_WAITING_INNOVATION, {
-        innovationId,
-        newAssignedAccessorsIds: data.accessors.map(item => item.id),
-        supportId: result.id
-      });
-    }
-
     await this.notifierService.sendNotifyMe(domainContext, innovationId, 'SUPPORT_UPDATED', {
       status: data.status,
       units: dbSupport.organisationUnit.id,
       message: data.message
     });
+
+    //sends an email and inapp to QAs when a new support is created
+    if (data.status === InnovationSupportStatusEnum.WAITING && data.accessors?.length) {
+      await this.notifierService.send(domainContext, NotifierTypeEnum.SUPPORT_NEW_ASSIGN_WAITING_INNOVATION, {
+        innovationId,
+        newAssignedAccessorsRoleIds: data.accessors
+          .filter(item => result.newAssignedAccessors.has(item.userRoleId))
+          .map(item => item.userRoleId),
+        supportId: result.id
+      });
+    }
 
     return result;
   }
@@ -906,6 +908,7 @@ export class InnovationSupportsService extends BaseService {
 
       // Possible techdebt since notification depends on the thread at the moment and we don't have a thread
       // in old supports before November 2022 (see #156480)
+
       await this.notifierService.send(domainContext, NotifierTypeEnum.SUPPORT_NEW_ASSIGN_ACCESSORS, {
         innovationId: innovationId,
         supportId: supportId,

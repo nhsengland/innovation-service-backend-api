@@ -173,7 +173,7 @@ export type NotifierTemplatesType = {
 
   [NotifierTypeEnum.SUPPORT_NEW_ASSIGN_WAITING_INNOVATION]: {
     innovationId: string;
-    newAssignedAccessorsIds: string[];
+    newAssignedAccessorsRoleIds: string[];
     supportId: string;
   };
 

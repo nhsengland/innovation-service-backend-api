@@ -37,7 +37,7 @@ describe('Notifications / _handlers / support-new-assigned-accessors suite', () 
         inputData: {
           innovationId: innovation.id,
           supportId: support.id,
-          newAssignedAccessorsIds: assignedAccessorsRoleIds
+          newAssignedAccessorsRoleIds: assignedAccessorsRoleIds
         },
         recipients: assignedAccessorsRecipients,
         outputData: {
@@ -55,7 +55,7 @@ describe('Notifications / _handlers / support-new-assigned-accessors suite', () 
         inputData: {
           innovationId: innovation.id,
           supportId: support.id,
-          newAssignedAccessorsIds: assignedAccessorsRoleIds
+          newAssignedAccessorsRoleIds: assignedAccessorsRoleIds
         },
         recipients: assignedAccessorsRecipients,
         outputData: { innovationName: innovation.name }

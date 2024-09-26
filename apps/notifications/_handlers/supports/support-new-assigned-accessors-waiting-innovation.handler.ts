@@ -20,10 +20,10 @@ export class SupportNewAssignedWaitingInnovation extends BaseHandler<
     const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
 
     const accessorsRecipients = await this.recipientsService.getRecipientsByRoleId([
-      ...this.inputData.newAssignedAccessorsIds
+      ...this.inputData.newAssignedAccessorsRoleIds
     ]);
 
-    if (this.inputData.newAssignedAccessorsIds.length > 0) {
+    if (accessorsRecipients.length > 0) {
       await this.ST08_SUPPORT_NEW_ASSIGNED_WAITING_INNOVATION_TO_QA(innovation, accessorsRecipients);
     }
     return this;

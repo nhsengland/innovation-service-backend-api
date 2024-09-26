@@ -155,7 +155,7 @@ export const NOTIFICATIONS_CONFIG = {
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.SUPPORT_NEW_ASSIGN_WAITING_INNOVATION]>({
       innovationId: Joi.string().guid().required(),
       supportId: Joi.string().guid().required(),
-      newAssignedAccessorsIds: Joi.array().items(Joi.string().guid()).required()
+      newAssignedAccessorsRoleIds: Joi.array().items(Joi.string().guid()).required()
     }).required()
   },
   [NotifierTypeEnum.SUPPORT_STATUS_CHANGE_REQUEST]: {
