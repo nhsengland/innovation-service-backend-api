@@ -24,7 +24,7 @@ class V1MeInnovationsInfo {
       const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
 
       const result = (
-        await domainService.innovations.getInnovationsByInnovatorId(params.userId, queryParams.asCollaborator)
+        await domainService.innovations.getInnovationsByInnovatorId(params.userId, queryParams.includeAsCollaborator)
       ).map(innovation => ({
         id: innovation.id,
         name: innovation.name,

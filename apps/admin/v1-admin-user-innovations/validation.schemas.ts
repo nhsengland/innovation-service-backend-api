@@ -8,8 +8,8 @@ export const ParamsSchema = Joi.object<ParamsType>({
 }).required();
 
 export type QueryParamsType = {
-  asCollaborator?: boolean;
+  includeAsCollaborator?: boolean;
 };
 export const QueryParamsSchema = Joi.object<QueryParamsType>({
-  asCollaborator: Joi.boolean().optional()
+  includeAsCollaborator: Joi.boolean().optional()
 });

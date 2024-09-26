@@ -787,7 +787,7 @@ export class DomainInnovationsService {
 
   async getInnovationsByInnovatorId(
     userId: string,
-    asCollaborator?: boolean,
+    includeAsCollaborator?: boolean,
     entityManager?: EntityManager
   ): Promise<
     {
@@ -812,7 +812,7 @@ export class DomainInnovationsService {
       .leftJoin('innovations.owner', 'owner')
       .where('innovations.owner_id = :userId', { userId });
 
-    if (asCollaborator) {
+    if (includeAsCollaborator) {
       query.orWhere('collaborator.user_id = :userId', { userId });
     }
 
@@ -825,7 +825,7 @@ export class DomainInnovationsService {
       expirationTransferDate: innovation.transfers[0]
         ? new Date(innovation.transfers[0].createdAt.getTime() + EXPIRATION_DATES.transfers)
         : null,
-      ...(asCollaborator && { isOwner: innovation.owner?.id === userId ? true : false })
+      ...(includeAsCollaborator && { isOwner: innovation.owner?.id === userId ? true : false })
     }));
 
     return data;
