@@ -969,7 +969,11 @@ export class InnovationSupportsService extends BaseService {
 
     // Add followers logic
     // Update thread followers with the new assigned users only when the support is ENGAGING
-    if (support.status === InnovationSupportStatusEnum.ENGAGING && threadId) {
+    if (
+      (support.status === InnovationSupportStatusEnum.ENGAGING ||
+        support.status === InnovationSupportStatusEnum.WAITING) &&
+      threadId
+    ) {
       // If we want to remove only the previous assigned users we can use this
       // await this.innovationThreadsService.removeFollowers(threadId, [...previousUsersRoleIds], entityManager);
       await this.innovationThreadsService.removeOrganisationUnitFollowers(

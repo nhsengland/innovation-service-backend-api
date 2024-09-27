@@ -1,4 +1,3 @@
- 
 import { container } from '../_config';
 
 import {
@@ -773,14 +772,20 @@ describe('Innovations / _services / innovation-supports suite', () => {
       );
     });
 
-    it('should add the QA that made the request as assigned accessor when status is changed to WAITING', async () => {
+    it('should add new assigned accessors when status is changed to WAITING', async () => {
       const support = await sut.updateInnovationSupport(
-        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+        DTOsHelper.getUserRequestContext(scenario.users.sarahQualifyingAccessor),
         innovation.id,
         innovation.supports.supportByHealthOrgUnit.id,
         {
           status: InnovationSupportStatusEnum.WAITING,
-          message: randText({ charCount: 10 })
+          message: randText({ charCount: 10 }),
+          accessors: [
+            {
+              id: scenario.users.aliceQualifyingAccessor.id,
+              userRoleId: scenario.users.aliceQualifyingAccessor.roles.qaRole.id
+            }
+          ]
         },
         em
       );
@@ -795,7 +800,14 @@ describe('Innovations / _services / innovation-supports suite', () => {
         .getOne();
 
       expect(dbSupport?.userRoles.map(u => u.id)).toContain(scenario.users.aliceQualifyingAccessor.roles.qaRole.id);
-      expect(dbSupport?.userRoles).toHaveLength(1);
+
+      const dbThread = await em
+        .createQueryBuilder(InnovationThreadEntity, 'thread')
+        .leftJoinAndSelect('thread.followers', 'followers')
+        .where('thread.contextId = :contextId', { contextId: support.id })
+        .getOne();
+
+      expect(dbThread?.followers.map(f => f.id)).toContain(scenario.users.aliceQualifyingAccessor.roles.qaRole.id);
     });
 
     it.each([
@@ -1051,8 +1063,8 @@ describe('Innovations / _services / innovation-supports suite', () => {
       ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND));
     });
 
-    it('should fail with unprocessable if innovation status not engaging', async () => {
-      await em.update(InnovationSupportEntity, { id: support.id }, { status: InnovationSupportStatusEnum.WAITING });
+    it('should fail with unprocessable if innovation status not engaging or waiting', async () => {
+      await em.update(InnovationSupportEntity, { id: support.id }, { status: InnovationSupportStatusEnum.CLOSED });
       await expect(
         sut.updateInnovationSupportAccessors(
           context,
