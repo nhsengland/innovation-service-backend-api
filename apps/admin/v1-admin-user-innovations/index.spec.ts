@@ -26,11 +26,12 @@ beforeAll(async () => {
 const expected = [
   {
     id: randUuid(),
-    name: randCompanyName()
+    name: randCompanyName(),
+    isOwner: true
   }
 ];
 const mock = jest
-  .spyOn(DomainInnovationsService.prototype, 'getInnovationsByOwnerId')
+  .spyOn(DomainInnovationsService.prototype, 'getInnovationsByInnovatorId')
   .mockResolvedValue(
     expected.map(innovation => ({ ...innovation, collaboratorsCount: 3, expirationTransferDate: null }))
   );

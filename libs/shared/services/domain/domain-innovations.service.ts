@@ -785,8 +785,9 @@ export class DomainInnovationsService {
     return new Map(groupedStatus.map(cur => [cur.innovationId, cur.groupedStatus]));
   }
 
-  async getInnovationsByOwnerId(
+  async getInnovationsByInnovatorId(
     userId: string,
+    includeAsCollaborator?: boolean,
     entityManager?: EntityManager
   ): Promise<
     {
@@ -794,29 +795,37 @@ export class DomainInnovationsService {
       name: string;
       collaboratorsCount: number;
       expirationTransferDate: Date | null;
+      isOwner?: boolean;
     }[]
   > {
     const connection = entityManager ?? this.sqlConnection;
 
-    const query = await connection
+    const query = connection
       .createQueryBuilder(InnovationEntity, 'innovations')
-      .select(['innovations.id', 'innovations.name', 'collaborator.id', 'transfer.createdAt'])
+      .select(['innovations.id', 'innovations.name', 'collaborator.id', 'transfer.createdAt', 'owner.id'])
       .leftJoin('innovations.collaborators', 'collaborator', 'collaborator.status = :collaboratorStatus', {
         collaboratorStatus: InnovationCollaboratorStatusEnum.ACTIVE
       })
       .leftJoin('innovations.transfers', 'transfer', 'transfer.status = :transferStatus', {
         transferStatus: InnovationTransferStatusEnum.PENDING
       })
-      .where('innovations.owner_id = :userId', { userId })
-      .getMany();
+      .leftJoin('innovations.owner', 'owner')
+      .where('innovations.owner_id = :userId', { userId });
 
-    const data = query.map(innovation => ({
+    if (includeAsCollaborator) {
+      query.orWhere('collaborator.user_id = :userId', { userId });
+    }
+
+    const innovations = await query.getMany();
+
+    const data = innovations.map(innovation => ({
       id: innovation.id,
       name: innovation.name,
       collaboratorsCount: innovation.collaborators.length,
       expirationTransferDate: innovation.transfers[0]
         ? new Date(innovation.transfers[0].createdAt.getTime() + EXPIRATION_DATES.transfers)
-        : null
+        : null,
+      ...(includeAsCollaborator && { isOwner: innovation.owner?.id === userId ? true : false })
     }));
 
     return data;

@@ -9,7 +9,7 @@ import type { CustomContextType } from '@admin/shared/types';
 import { container } from '../_config';
 import type { ResponseDTO } from './transformation.dtos';
 import { JoiHelper, SwaggerHelper } from '@admin/shared/helpers';
-import { ParamsSchema, type ParamsType } from './validation.schemas';
+import { ParamsSchema, QueryParamsSchema, QueryParamsType, type ParamsType } from './validation.schemas';
 
 class V1MeInnovationsInfo {
   @JwtDecoder()
@@ -21,10 +21,14 @@ class V1MeInnovationsInfo {
       await authorizationService.validate(context).checkAdminType().verify();
 
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
+      const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
 
-      const result = (await domainService.innovations.getInnovationsByOwnerId(params.userId)).map(innovation => ({
+      const result = (
+        await domainService.innovations.getInnovationsByInnovatorId(params.userId, queryParams.includeAsCollaborator)
+      ).map(innovation => ({
         id: innovation.id,
-        name: innovation.name
+        name: innovation.name,
+        ...(innovation.isOwner !== undefined ? { isOwner: innovation.isOwner } : { isOwner: true })
       }));
       context.res = ResponseHelper.Ok<ResponseDTO>(result);
       return;
@@ -57,11 +61,8 @@ export default openApi(V1MeInnovationsInfo.httpTrigger as AzureFunction, '/v1/us
                   name: {
                     type: 'string'
                   },
-                  collaboratorsCount: {
-                    type: 'number'
-                  },
-                  expirationTransferDate: {
-                    type: 'string'
+                  isOwner: {
+                    type: 'boolean'
                   }
                 }
               }

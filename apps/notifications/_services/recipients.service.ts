@@ -834,21 +834,31 @@ export class RecipientsService extends BaseService {
   }
 
   /**
-   * returns the engaging supports that haven't had an interaction in n days, repeats every m days afterwards (if m is defined)
+   * returns the supports that haven't had an interaction in n days, repeats every m days afterwards (if m is defined)
    * @param days number of idle days to check (default: 90)
    * @param repeat repeat the notification every n days (if defined)
    */
-  async idleEngagingSupports(
+  async idleSupports(
     days = 90,
+    status: InnovationSupportStatusEnum[],
     repeat?: number,
     entityManager?: EntityManager
-  ): Promise<{ innovationId: string; unitId: string; supportId: string }[]> {
+  ): Promise<
+    { innovationId: string; unitId: string; supportId: string; supportStatus: InnovationSupportStatusEnum }[]
+  > {
+    if (!status.length) return [];
+
     const em = entityManager ?? this.sqlConnection.manager;
     const query = em
       .createQueryBuilder(InnovationSupportEntity, 'support')
-      .select(['support.id', 'lastActivityUpdate.innovationId', 'lastActivityUpdate.organisationUnitId'])
+      .select([
+        'support.id',
+        'support.status',
+        'lastActivityUpdate.innovationId',
+        'lastActivityUpdate.organisationUnitId'
+      ])
       .innerJoin('support.lastActivityUpdate', 'lastActivityUpdate')
-      .where('support.status = :status', { status: InnovationSupportStatusEnum.ENGAGING });
+      .where('support.status IN (:...status)', { status });
 
     if (repeat) {
       query
@@ -861,6 +871,7 @@ export class RecipientsService extends BaseService {
     const rows = await query.getMany();
     return rows.map(row => ({
       supportId: row.id,
+      supportStatus: row.status,
       innovationId: row.lastActivityUpdate.innovationId,
       unitId: row.lastActivityUpdate.organisationUnitId
     }));

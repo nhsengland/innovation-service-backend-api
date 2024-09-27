@@ -37,7 +37,7 @@ const expected = [
     expirationTransferDate: null
   }
 ];
-const mock = jest.spyOn(DomainInnovationsService.prototype, 'getInnovationsByOwnerId').mockResolvedValue(expected);
+const mock = jest.spyOn(DomainInnovationsService.prototype, 'getInnovationsByInnovatorId').mockResolvedValue(expected);
 
 afterEach(() => {
   jest.clearAllMocks();
