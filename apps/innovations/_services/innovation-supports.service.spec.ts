@@ -515,6 +515,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
       const innovTechHeavySupport = await new InnovationSupportBuilder(em)
         .setStatus(InnovationSupportStatusEnum.WAITING)
         .setInnovation(innovation.id)
+        .setMajorAssessment(innovation.assessment.id)
         .setOrganisationUnit(scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.id)
         .save();
       const supportSummaryList = await sut.getSupportSummaryList(

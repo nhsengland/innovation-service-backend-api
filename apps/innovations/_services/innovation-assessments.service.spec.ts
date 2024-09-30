@@ -53,7 +53,7 @@ describe('Innovation Assessments Suite', () => {
   });
 
   const innovationWithAssessment = scenario.users.johnInnovator.innovations.johnInnovation;
-  const innovationWithoutAssessment = scenario.users.adamInnovator.innovations.adamInnovation;
+  const innovationWithoutAssessment = scenario.users.adamInnovator.innovations.adamInnovationEmpty;
   const innovationWithAssessmentInProgress =
     scenario.users.ottoOctaviusInnovator.innovations.brainComputerInterfaceInnovation;
   const innovationWithArchivedStatus = scenario.users.johnInnovator.innovations.johnInnovationArchived;
@@ -703,6 +703,14 @@ describe('Innovation Assessments Suite', () => {
         .getRepository(InnovationEntity)
         .findOne({ where: { id: innovationWithAssessment.id }, relations: ['currentAssessment'] });
       expect(dbInnovation?.currentAssessment?.id).toBe(assessment.id);
+    });
+
+    it('should update the innovation current major assessment if major', async () => {
+      fail('todo');
+    });
+
+    it('should not update the innovation current major assessment if minor', async () => {
+      fail('todo');
     });
 
     it('should link the previous assessment', async () => {
