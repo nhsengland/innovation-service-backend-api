@@ -28,7 +28,7 @@ export const BodySchema = Joi.object<BodyType>({
   message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xxl).trim().required(),
   file: InnovationFileSchema,
   accessors: Joi.when('status', {
-    is: Joi.string().valid(InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.WAITING),
+    is: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.WAITING],
     then: Joi.array()
       .items(
         Joi.object({
