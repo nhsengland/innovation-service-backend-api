@@ -1190,6 +1190,7 @@ export class CompleteScenarioBuilder {
             innovations: {
               adamInnovation: {
                 ...adamInnovation,
+                assessment: adamInnovationAssessmentByPaul,
                 transfer: adamInnovationTransferToJane,
                 tasks: {
                   adamInnovationTaskBySean: adamInnovationTaskBySean,

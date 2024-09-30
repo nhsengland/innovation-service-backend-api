@@ -374,6 +374,7 @@ describe('Notifications / _services / recipients service suite', () => {
       await new InnovationSupportBuilder(em)
         .setStatus(InnovationSupportStatusEnum.ENGAGING)
         .setInnovation(scenario.users.adamInnovator.innovations.adamInnovation.id)
+        .setMajorAssessment(scenario.users.adamInnovator.innovations.adamInnovation.assessment.id)
         .setOrganisationUnit(scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id)
         .setAccessors([scenario.users.jamieMadroxAccessor])
         .save();
