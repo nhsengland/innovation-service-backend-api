@@ -1,4 +1,3 @@
- 
 import { container } from '../_config';
 
 import {
@@ -303,26 +302,6 @@ describe('Innovations / _services / innovation-supports suite', () => {
         units: context.organisation?.organisationUnit?.id,
         message
       });
-    });
-
-    it('should assign QA that created as accessor when status is WAITING', async () => {
-      const support = await sut.createInnovationSupport(
-        DTOsHelper.getUserRequestContext(scenario.users.bartQualifyingAccessor),
-        scenario.users.adamInnovator.innovations.adamInnovation.id,
-        {
-          status: InnovationSupportStatusEnum.WAITING,
-          message: randText({ charCount: 10 })
-        },
-        em
-      );
-
-      const dbSupport = await em
-        .createQueryBuilder(InnovationSupportEntity, 'support')
-        .leftJoinAndSelect('support.userRoles', 'roles')
-        .where('support.id = :supportId', { supportId: support.id })
-        .getOneOrFail();
-      expect(dbSupport.userRoles).toHaveLength(1);
-      expect(dbSupport.userRoles[0]?.id).toBe(scenario.users.bartQualifyingAccessor.roles.qaRole.id);
     });
 
     it('should throw an unprocessable entity error if the domain context has an invalid organisation unit id', async () => {
@@ -793,14 +772,20 @@ describe('Innovations / _services / innovation-supports suite', () => {
       );
     });
 
-    it('should add the QA that made the request as assigned accessor when status is changed to WAITING', async () => {
+    it('should add new assigned accessors when status is changed to WAITING', async () => {
       const support = await sut.updateInnovationSupport(
-        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+        DTOsHelper.getUserRequestContext(scenario.users.sarahQualifyingAccessor),
         innovation.id,
         innovation.supports.supportByHealthOrgUnit.id,
         {
           status: InnovationSupportStatusEnum.WAITING,
-          message: randText({ charCount: 10 })
+          message: randText({ charCount: 10 }),
+          accessors: [
+            {
+              id: scenario.users.aliceQualifyingAccessor.id,
+              userRoleId: scenario.users.aliceQualifyingAccessor.roles.qaRole.id
+            }
+          ]
         },
         em
       );
@@ -815,7 +800,14 @@ describe('Innovations / _services / innovation-supports suite', () => {
         .getOne();
 
       expect(dbSupport?.userRoles.map(u => u.id)).toContain(scenario.users.aliceQualifyingAccessor.roles.qaRole.id);
-      expect(dbSupport?.userRoles).toHaveLength(1);
+
+      const dbThread = await em
+        .createQueryBuilder(InnovationThreadEntity, 'thread')
+        .leftJoinAndSelect('thread.followers', 'followers')
+        .where('thread.contextId = :contextId', { contextId: support.id })
+        .getOne();
+
+      expect(dbThread?.followers.map(f => f.id)).toContain(scenario.users.aliceQualifyingAccessor.roles.qaRole.id);
     });
 
     it.each([
@@ -1071,8 +1063,8 @@ describe('Innovations / _services / innovation-supports suite', () => {
       ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND));
     });
 
-    it('should fail with unprocessable if innovation status not engaging', async () => {
-      await em.update(InnovationSupportEntity, { id: support.id }, { status: InnovationSupportStatusEnum.WAITING });
+    it('should fail with unprocessable if innovation status not engaging or waiting', async () => {
+      await em.update(InnovationSupportEntity, { id: support.id }, { status: InnovationSupportStatusEnum.CLOSED });
       await expect(
         sut.updateInnovationSupportAccessors(
           context,
@@ -1313,9 +1305,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           randUuid(),
           em
         )
-      ).rejects.toThrow(
-        new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_SUMMARY_PROGRESS_UPDATE_NOT_FOUND)
-      );
+      ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_SUMMARY_PROGRESS_UPDATE_NOT_FOUND));
     });
 
     it('should throw error UnprocessableEntityError if the progress update was created by other unit', async () => {

@@ -461,14 +461,15 @@ export class InnovationSupportsService extends BaseService {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_ALREADY_EXISTS);
     }
 
-    if (data.status !== InnovationSupportStatusEnum.ENGAGING && data.accessors?.length) {
+    if (
+      data.status !== InnovationSupportStatusEnum.ENGAGING &&
+      data.status !== InnovationSupportStatusEnum.WAITING &&
+      data.accessors?.length
+    ) {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_CANNOT_HAVE_ASSIGNED_ASSESSORS);
     }
 
-    // If status is waiting assigned QA as accessor automatically
-    const accessors =
-      data.accessors?.map(item => item.userRoleId) ??
-      (data.status === InnovationSupportStatusEnum.WAITING ? [domainContext.currentRole.id] : []);
+    const accessors = data.accessors?.map(item => item.userRoleId) ?? [];
 
     const result = await connection.transaction(async transaction => {
       const newSupport = InnovationSupportEntity.new({
@@ -550,6 +551,14 @@ export class InnovationSupportsService extends BaseService {
           data.status === InnovationSupportStatusEnum.ENGAGING ? (data.accessors ?? []).map(item => item.id) : []
       }
     });
+    //sends an email and inapp to QAs when a new support in the WAITING status is created
+    if (data.status === InnovationSupportStatusEnum.WAITING && data.accessors?.length) {
+      await this.notifierService.send(domainContext, NotifierTypeEnum.SUPPORT_NEW_ASSIGN_WAITING_INNOVATION, {
+        innovationId,
+        newAssignedAccessorsRoleIds: data.accessors.map(item => item.id),
+        supportId: result.id
+      });
+    }
 
     await this.notifierService.sendNotifyMe(domainContext, innovationId, 'SUPPORT_UPDATED', {
       status: data.status,
@@ -718,25 +727,20 @@ export class InnovationSupportsService extends BaseService {
 
     const result = await connection.transaction(async transaction => {
       let assignedAccessors: string[] = [];
-      if (data.status === InnovationSupportStatusEnum.ENGAGING) {
+      if (data.status === InnovationSupportStatusEnum.ENGAGING || data.status === InnovationSupportStatusEnum.WAITING) {
         assignedAccessors = data.accessors?.map(item => item.userRoleId) ?? [];
       } else {
         // Cleanup tasks if the status is not ENGAGING or WAITING
-        if (data.status !== InnovationSupportStatusEnum.WAITING) {
-          assignedAccessors = [];
-          await transaction
-            .createQueryBuilder()
-            .update(InnovationTaskEntity)
-            .set({ status: InnovationTaskStatusEnum.CANCELLED, updatedBy: domainContext.id })
-            .where({
-              innovationSupport: dbSupport.id,
-              status: In([InnovationTaskStatusEnum.OPEN])
-            })
-            .execute();
-        } else {
-          // In waiting status the QA is automatically assigned
-          assignedAccessors = [domainContext.currentRole.id];
-        }
+        assignedAccessors = [];
+        await transaction
+          .createQueryBuilder()
+          .update(InnovationTaskEntity)
+          .set({ status: InnovationTaskStatusEnum.CANCELLED, updatedBy: domainContext.id })
+          .where({
+            innovationSupport: dbSupport.id,
+            status: In([InnovationTaskStatusEnum.OPEN])
+          })
+          .execute();
       }
 
       dbSupport.status = data.status;
@@ -814,6 +818,17 @@ export class InnovationSupportsService extends BaseService {
       message: data.message
     });
 
+    //sends an email and inapp to QAs when a new support is created
+    if (data.status === InnovationSupportStatusEnum.WAITING && data.accessors?.length) {
+      await this.notifierService.send(domainContext, NotifierTypeEnum.SUPPORT_NEW_ASSIGN_WAITING_INNOVATION, {
+        innovationId,
+        newAssignedAccessorsRoleIds: data.accessors
+          .filter(item => result.newAssignedAccessors.has(item.userRoleId))
+          .map(item => item.userRoleId),
+        supportId: result.id
+      });
+    }
+
     return result;
   }
 
@@ -859,7 +874,10 @@ export class InnovationSupportsService extends BaseService {
     if (!support) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
     }
-    if (support.status !== InnovationSupportStatusEnum.ENGAGING) {
+    if (
+      support.status !== InnovationSupportStatusEnum.ENGAGING &&
+      support.status !== InnovationSupportStatusEnum.WAITING
+    ) {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UPDATE_WITH_UNPROCESSABLE_STATUS);
     }
 
@@ -890,6 +908,7 @@ export class InnovationSupportsService extends BaseService {
 
       // Possible techdebt since notification depends on the thread at the moment and we don't have a thread
       // in old supports before November 2022 (see #156480)
+
       await this.notifierService.send(domainContext, NotifierTypeEnum.SUPPORT_NEW_ASSIGN_ACCESSORS, {
         innovationId: innovationId,
         supportId: supportId,
@@ -950,7 +969,11 @@ export class InnovationSupportsService extends BaseService {
 
     // Add followers logic
     // Update thread followers with the new assigned users only when the support is ENGAGING
-    if (support.status === InnovationSupportStatusEnum.ENGAGING && threadId) {
+    if (
+      (support.status === InnovationSupportStatusEnum.ENGAGING ||
+        support.status === InnovationSupportStatusEnum.WAITING) &&
+      threadId
+    ) {
       // If we want to remove only the previous assigned users we can use this
       // await this.innovationThreadsService.removeFollowers(threadId, [...previousUsersRoleIds], entityManager);
       await this.innovationThreadsService.removeOrganisationUnitFollowers(
