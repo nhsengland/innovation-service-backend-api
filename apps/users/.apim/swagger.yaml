@@ -788,6 +788,7 @@ paths:
                       - AU08_TRANSFER_ONE_WEEK_REMINDER_EXISTING_USER
                       - AU09_TRANSFER_EXPIRED
                       - AU10_ACCESSOR_IDLE_ENGAGING_SUPPORT_FOR_SIX_WEEKS
+                      - AU11_ACCESSOR_IDLE_WAITING_SUPPORT_FOR_SIX_WEEKS
                       - SUPPORT_UPDATED
                       - PROGRESS_UPDATE_CREATED
                       - INNOVATION_RECORD_UPDATED
@@ -1003,6 +1004,7 @@ paths:
                             - AU08_TRANSFER_ONE_WEEK_REMINDER_EXISTING_USER
                             - AU09_TRANSFER_EXPIRED
                             - AU10_ACCESSOR_IDLE_ENGAGING_SUPPORT_FOR_SIX_WEEKS
+                            - AU11_ACCESSOR_IDLE_WAITING_SUPPORT_FOR_SIX_WEEKS
                             - SUPPORT_UPDATED
                             - PROGRESS_UPDATE_CREATED
                             - INNOVATION_RECORD_UPDATED
