@@ -1,7 +1,8 @@
 import { TestsHelper } from '@admin/shared/tests';
 
-import { InnovationEntity, InnovationSupportEntity, OrganisationUnitEntity } from '@admin/shared/entities';
 import { InnovationSupportStatusEnum } from '@admin/shared/enums';
+import { InnovationAssessmentBuilder } from '@admin/shared/tests/builders/innovation-assessment.builder';
+import { InnovationSupportBuilder } from '@admin/shared/tests/builders/innovation-support.builder';
 import type { EntityManager } from 'typeorm';
 import { container } from '../_config';
 import type { StatisticsService } from './statistics.service';
@@ -30,22 +31,29 @@ describe('Admin / _services / announcements service suite', () => {
   });
 
   describe('getOrganisationUnitInnovationCounters', () => {
+    const healthOrgUnit = scenario.organisations.healthOrg.organisationUnits.healthOrgUnit;
+    const innovation = scenario.users.adamInnovator.innovations.adamInnovationEmpty;
+    const naUser = scenario.users.paulNeedsAssessor;
+
     it('should return the count of innovations in each support status for the given organisation unit', async () => {
-      const resultBefore = await sut.getOrganisationUnitInnovationCounters(
-        scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
-        undefined,
-        em
-      );
+      const resultBefore = await sut.getOrganisationUnitInnovationCounters(healthOrgUnit.id, undefined, em);
 
       expect(resultBefore).toMatchObject({ ENGAGING: 4 });
 
-      await em.getRepository(InnovationSupportEntity).save({
-        status: InnovationSupportStatusEnum.ENGAGING,
-        innovation: InnovationEntity.new({ id: scenario.users.adamInnovator.innovations.adamInnovationEmpty.id }),
-        organisationUnit: OrganisationUnitEntity.new({
-          id: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id
-        })
-      });
+      const assessment = await new InnovationAssessmentBuilder(em)
+        .setInnovation(innovation.id)
+        .setNeedsAssessor(naUser.id)
+        .setUpdatedBy(naUser.id)
+        .setFinishedAt()
+        .suggestOrganisationUnits(healthOrgUnit)
+        .save();
+
+      await new InnovationSupportBuilder(em)
+        .setInnovation(innovation.id)
+        .setMajorAssessment(assessment.id)
+        .setStatus(InnovationSupportStatusEnum.ENGAGING)
+        .setOrganisationUnit(healthOrgUnit.id)
+        .save();
 
       const result = await sut.getOrganisationUnitInnovationCounters(
         scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
@@ -57,13 +65,20 @@ describe('Admin / _services / announcements service suite', () => {
     });
 
     it('should return the count of innovations in each ongoing support status for the given organisation unit', async () => {
-      await em.getRepository(InnovationSupportEntity).save({
-        status: InnovationSupportStatusEnum.SUGGESTED,
-        innovation: InnovationEntity.new({ id: scenario.users.adamInnovator.innovations.adamInnovationEmpty.id }),
-        organisationUnit: OrganisationUnitEntity.new({
-          id: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id
-        })
-      });
+      const assessment = await new InnovationAssessmentBuilder(em)
+        .setInnovation(innovation.id)
+        .setNeedsAssessor(naUser.id)
+        .setUpdatedBy(naUser.id)
+        .setFinishedAt()
+        .suggestOrganisationUnits(healthOrgUnit)
+        .save();
+
+      await new InnovationSupportBuilder(em)
+        .setInnovation(innovation.id)
+        .setMajorAssessment(assessment.id)
+        .setStatus(InnovationSupportStatusEnum.SUGGESTED)
+        .setOrganisationUnit(healthOrgUnit.id)
+        .save();
 
       const result = await sut.getOrganisationUnitInnovationCounters(
         scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id,

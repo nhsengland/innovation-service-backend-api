@@ -531,7 +531,7 @@ export class DomainInnovationsService {
       .createQueryBuilder(InnovationEntity, 'innovation')
       .select(['innovation.id', 'currentMajorAssessment.id'])
       .innerJoin('innovation.currentMajorAssessment', 'currentMajorAssessment')
-      .where('id = :id', { id: innovationId })
+      .where('innovation.id = :id', { id: innovationId })
       .getOne();
     if (!innovation) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
