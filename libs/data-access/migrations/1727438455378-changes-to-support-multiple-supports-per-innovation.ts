@@ -1,6 +1,6 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class RenameMissingUnits1726503822588 implements MigrationInterface {
+export class ChangesToSupportMultipleSupportsPerInnovation1727438455378 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Add current major assessment to innovation
     await queryRunner.query(`ALTER TABLE innovation ADD current_major_assessment_id UNIQUEIDENTIFIER`);
