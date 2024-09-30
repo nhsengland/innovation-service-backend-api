@@ -89,7 +89,8 @@ describe('v1-innovation-support-change-request Suite', () => {
           })
           .setBody<BodyType>({
             message: randText(),
-            status: InnovationSupportStatusEnum.WAITING
+            status: InnovationSupportStatusEnum.WAITING,
+            accessors: [{ id: randUuid(), userRoleId: randUuid() }]
           })
           .call<ErrorResponseType>(azureFunction);
 

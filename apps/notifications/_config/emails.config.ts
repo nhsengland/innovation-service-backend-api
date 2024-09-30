@@ -25,6 +25,7 @@ export const EmailTemplates = {
   ST05_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_NEW_QA: 'f33f5c16-3349-4eb0-b4da-a47806f12838',
   ST06_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_OLD_QA: 'cdb8e3b2-1f83-4ced-8fcb-3cf801262ae8',
   ST07_SUPPORT_STATUS_CHANGE_REQUEST: '7502777a-a1e7-4a63-bbfa-04eac9bca2ea',
+  ST08_SUPPORT_NEW_ASSIGNED_WAITING_INNOVATION_TO_QA: 'a64f7c3e-f108-439e-8291-e7d1b08bec43',
 
   // NEEDS ASSESSMENT
   NA01_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_INNOVATOR: 'fadfc3e8-d48e-446e-a81d-d573d774b725',
@@ -214,6 +215,10 @@ export type EmailTemplatesType = {
     proposed_status: string;
     request_comment: string;
     innovation_overview_url: string;
+  };
+  ST08_SUPPORT_NEW_ASSIGNED_WAITING_INNOVATION_TO_QA: {
+    innovation_name: string;
+    qa_name: string;
   };
 
   // NEEDS ASSESSMENT

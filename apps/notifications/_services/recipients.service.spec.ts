@@ -1,4 +1,3 @@
- 
 import { randUuid } from '@ngneat/falso';
 import { WEEK_IN_DAYS } from '@notifications/shared/constants';
 import {
@@ -1076,7 +1075,7 @@ describe('Notifications / _services / recipients service suite', () => {
 
   describe('idleWaitingSupports', () => {
     it('returns empty array of idle supports if there are no innovations', async () => {
-      const res = await sut.idleWaitingSupports(30, em);
+      const res = await sut.idleWaitingSupports(30, 0, em);
       expect(res).toHaveLength(0);
     });
 
@@ -1089,7 +1088,26 @@ describe('Notifications / _services / recipients service suite', () => {
         { id: support.id },
         { updatedAt: date30DaysAgo, status: InnovationSupportStatusEnum.WAITING }
       );
-      const res = await sut.idleWaitingSupports(30, em);
+      const res = await sut.idleWaitingSupports(30, 0, em);
+      expect(res).toMatchObject([
+        {
+          supportId: support.id,
+          innovationId: innovation.id,
+          unitId: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id
+        }
+      ]);
+    });
+
+    it('returns innovations if waiting and last updated 60 days ago with repeat interval', async () => {
+      const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+      const support = innovation.supports.supportByHealthOrgUnit;
+      const date60DaysAgo = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000);
+      await em.update(
+        InnovationSupportEntity,
+        { id: support.id },
+        { updatedAt: date60DaysAgo, status: InnovationSupportStatusEnum.WAITING }
+      );
+      const res = await sut.idleWaitingSupports(30, 30, em);
       expect(res).toMatchObject([
         {
           supportId: support.id,

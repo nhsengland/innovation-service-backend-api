@@ -171,6 +171,12 @@ export type NotifierTemplatesType = {
     requestStatusUpdateComment: string;
   };
 
+  [NotifierTypeEnum.SUPPORT_NEW_ASSIGN_WAITING_INNOVATION]: {
+    innovationId: string;
+    newAssignedAccessorsRoleIds: string[];
+    supportId: string;
+  };
+
   // Tasks
   [NotifierTypeEnum.TASK_CREATION]: {
     innovationId: string;

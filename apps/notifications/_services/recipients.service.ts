@@ -878,13 +878,16 @@ export class RecipientsService extends BaseService {
   }
 
   /**
-   * returns supports waiting for n days
+   * returns supports waiting for n days,
+   * repeats every m days afterwards (if m is defined)
    * @param days number of days to check (default: 90)
+   * @param repeat repeat the notification every n days (if defined)
    * @param entityManager optional entityManager
    * @returns idle supports
    */
   async idleWaitingSupports(
     days = 90,
+    repeat?: number,
     entityManager?: EntityManager
   ): Promise<{ innovationId: string; unitId: string; supportId: string }[]> {
     const em = entityManager ?? this.sqlConnection.manager;
@@ -893,8 +896,15 @@ export class RecipientsService extends BaseService {
       .select(['support.id', 'innovation.id', 'unit.id'])
       .innerJoin('support.innovation', 'innovation')
       .innerJoin('support.organisationUnit', 'unit')
-      .where('support.status = :status', { status: InnovationSupportStatusEnum.WAITING })
-      .andWhere('DATEDIFF(day, support.updatedAt, GETDATE()) = :days', { days });
+      .where('support.status = :status', { status: InnovationSupportStatusEnum.WAITING });
+
+    if (repeat) {
+      query
+        .andWhere('DATEDIFF(day, support.updatedAt, GETDATE()) >= :days', { days })
+        .andWhere('DATEDIFF(day, support.updatedAt, GETDATE()) % :repeat = 0', { repeat });
+    } else {
+      query.andWhere('DATEDIFF(day, support.updatedAt, GETDATE()) = :days', { days });
+    }
 
     const rows = await query.getMany();
     return rows.map(row => ({
@@ -1304,7 +1314,7 @@ export class RecipientsService extends BaseService {
     const helperMap = new Map<ServiceRoleEnum, Map<string, string[]>>();
     for (const user of users) {
       if (!helperMap.has(user.userType)) helperMap.set(user.userType, new Map());
-       
+
       const roleMap = helperMap.get(user.userType)!; // we know it exists this is a map get after set issue in typescript
       addToArrayValueInMap(roleMap, user.organisationUnit ?? 'default', user.id);
     }

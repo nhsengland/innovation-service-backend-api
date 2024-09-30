@@ -43,7 +43,8 @@ describe('v1-innovation-support-update', () => {
         })
         .setBody<BodyType>({
           message: randText(),
-          status: InnovationSupportStatusEnum.WAITING
+          status: InnovationSupportStatusEnum.WAITING,
+          accessors: [{ id: randUuid(), userRoleId: randUuid() }]
         })
         .call<never>(azureFunction);
 
@@ -71,7 +72,8 @@ describe('v1-innovation-support-update', () => {
         })
         .setBody<BodyType>({
           message: randText(),
-          status: InnovationSupportStatusEnum.WAITING
+          status: InnovationSupportStatusEnum.WAITING,
+          accessors: [{ id: randUuid(), userRoleId: randUuid() }]
         })
         .call<ErrorResponseType>(azureFunction);
 
@@ -90,7 +92,8 @@ describe('v1-innovation-support-update', () => {
         })
         .setBody<BodyType>({
           message: randText(),
-          status: InnovationSupportStatusEnum.WAITING
+          status: InnovationSupportStatusEnum.WAITING,
+          accessors: [{ id: randUuid(), userRoleId: randUuid() }]
         })
         .call<ErrorResponseType>(azureFunction);
 
