@@ -58,7 +58,7 @@ describe('Admin / _services / announcements service suite', () => {
 
     it('should return the count of innovations in each ongoing support status for the given organisation unit', async () => {
       await em.getRepository(InnovationSupportEntity).save({
-        status: InnovationSupportStatusEnum.UNASSIGNED,
+        status: InnovationSupportStatusEnum.SUGGESTED,
         innovation: InnovationEntity.new({ id: scenario.users.adamInnovator.innovations.adamInnovationEmpty.id }),
         organisationUnit: OrganisationUnitEntity.new({
           id: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id

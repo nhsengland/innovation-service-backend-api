@@ -35,7 +35,7 @@ class V1InnovationSupportCreate {
         .verify();
       const domainContext = auth.getContext();
 
-      const result = await innovationSupportsService.createInnovationSupport(domainContext, params.innovationId, body);
+      const result = await innovationSupportsService.startInnovationSupport(domainContext, params.innovationId, body);
 
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;

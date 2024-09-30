@@ -340,7 +340,7 @@ export class SearchService extends BaseService {
       // support is handled differently to remove the nested array since it's only 1 element in this case
       return {
         ...(fields.includes('id') && { id: support?.id ?? null }),
-        ...(fields.includes('status') && { status: support?.status ?? InnovationSupportStatusEnum.UNASSIGNED }),
+        ...(fields.includes('status') && { status: support?.status ?? InnovationSupportStatusEnum.SUGGESTED }), // TODO MJS - Check if this is correct
         ...(fields.includes('updatedAt') && { updatedAt: support?.updatedAt }),
         ...(fields.includes('updatedBy') && { updatedBy: displayName }),
         ...(fields.includes('closedReason') && {
@@ -614,7 +614,8 @@ export class SearchService extends BaseService {
         )
       );
 
-      if (supportStatuses.includes(InnovationSupportStatusEnum.UNASSIGNED)) {
+      if (supportStatuses.includes(InnovationSupportStatusEnum.SUGGESTED)) {
+        // TODO MJS - Check if this is correct
         should.push(
           boolQuery({
             mustNot: nestedQuery('supports', {

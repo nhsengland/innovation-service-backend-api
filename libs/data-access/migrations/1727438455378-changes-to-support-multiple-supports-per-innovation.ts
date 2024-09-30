@@ -25,7 +25,7 @@ export class ChangesToSupportMultipleSupportsPerInnovation1727438455378 implemen
       ALTER TABLE innovation_support ADD major_assessment_id UNIQUEIDENTIFIER CONSTRAINT "df_temp" DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL; -- Default to empty guid because of system_version
       ALTER TABLE innovation_support ADD close_reason VARCHAR(255);
       ALTER TABLE innovation_support DROP CONSTRAINT CK_innovation_support_archive_snapshot_is_json;
-      ALTER TABLE innovation_support DROP COLUMN archived_snapshot;
+      ALTER TABLE innovation_support DROP COLUMN archive_snapshot;
     `);
 
     // Update assessment_id with current_assessment_id from innovation table
@@ -93,6 +93,20 @@ export class ChangesToSupportMultipleSupportsPerInnovation1727438455378 implemen
       ALTER TABLE innovation_support ADD CONSTRAINT FK_innovation_support_assessment_id FOREIGN KEY (major_assessment_id) REFERENCES innovation_assessment(id);
       ALTER TABLE innovation_support_log ADD CONSTRAINT FK_innovation_support_log_major_assessment_id FOREIGN KEY (major_assessment_id) REFERENCES innovation_assessment(id);
     `);
+
+    // Fix the support log constraint and make current UNASSIGNED as SUGGESTED
+    await queryRunner.query(`
+      ALTER TABLE innovation_support DROP CONSTRAINT CK_innovation_support_status;
+      ALTER TABLE innovation_support DROP CONSTRAINT df_innovation_support_status;
+
+      UPDATE innovation_support SET [status] = 'SUGGESTED' WHERE [status] = 'UNASSIGNED';
+
+      -- Add status constraint with new statuses
+      ALTER TABLE innovation_support ADD CONSTRAINT "CK_innovation_support_status" CHECK( [status] IN ('SUGGESTED', 'ENGAGING', 'WAITING', 'UNSUITABLE', 'CLOSED') );
+      ALTER TABLE innovation_support ADD CONSTRAINT "df_innovation_support_status" DEFAULT 'SUGGESTED' FOR [status];
+    `);
+
+    // TODO: Missing support log suggested migration from currently SUGGESTED
   }
 
   public async down(): Promise<void> {

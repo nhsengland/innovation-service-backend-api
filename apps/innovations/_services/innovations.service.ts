@@ -46,23 +46,24 @@ import {
 } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import { TranslationHelper } from '@innovations/shared/helpers';
-import { DomainService, IRSchemaService, NotifierService } from '@innovations/shared/services';
 import type { DomainUsersService } from '@innovations/shared/services';
+import { DomainService, IRSchemaService, NotifierService } from '@innovations/shared/services';
 import {
+  type ActivityLogListParamsType,
+  type DomainContextType,
   isAccessorDomainContextType,
   isAdminDomainContextType,
-  isAssessmentDomainContextType,
-  type ActivityLogListParamsType,
-  type DomainContextType
+  isAssessmentDomainContextType
 } from '@innovations/shared/types';
 
 import {
-  InnovationSupportLogTypeEnum,
-  type InnovationRelevantOrganisationsStatusEnum
+  type InnovationRelevantOrganisationsStatusEnum,
+  InnovationSupportLogTypeEnum
 } from '@innovations/shared/enums';
 import { InnovationLocationEnum } from '../_enums/innovation.enums';
 import type { InnovationSectionModel } from '../_types/innovation.types';
 
+import { InnovationRelevantOrganisationsStatusView } from '@innovations/shared/entities';
 import { createDocumentFromInnovation } from '@innovations/shared/entities/innovation/innovation-document.entity';
 import type { InnovationListViewWithoutNull } from '@innovations/shared/entities/views/innovation-progress.view.entity';
 import { InnovationProgressView } from '@innovations/shared/entities/views/innovation-progress.view.entity';
@@ -73,7 +74,6 @@ import { groupBy, isString, mapValues, omit, pick, snakeCase } from 'lodash';
 import { BaseService } from './base.service';
 import { InnovationDocumentService } from './innovation-document.service';
 import SYMBOLS from './symbols';
-import { InnovationRelevantOrganisationsStatusView } from '@innovations/shared/entities';
 
 // TODO move types
 export const InnovationListSelectType = [
@@ -947,7 +947,8 @@ export class InnovationsService extends BaseService {
       query.andWhere(
         new Brackets(qb => {
           qb.where('support.status IN (:...supportStatuses)', { supportStatuses: supportStatuses });
-          if (supportStatuses.includes(InnovationSupportStatusEnum.UNASSIGNED)) {
+          if (supportStatuses.includes(InnovationSupportStatusEnum.SUGGESTED)) {
+            // TODO MJS - Check if this is correct
             qb.orWhere('support.id IS NULL');
           }
         })
@@ -966,6 +967,7 @@ export class InnovationsService extends BaseService {
         new Brackets(qb => {
           qb.where('support.status != :closedSupportStatus', {
             closedSupportStatus: InnovationSupportStatusEnum.CLOSED
+            // TODO MJS - this isn't correct for sure, it's the close reason that should be checked now leaving it like this for it to fail in the meanwhile
           }).orWhere('(support.archive_snapshot IS NULL AND shares.id IS NOT NULL)'); // these are always joined for accessor roles
         })
       );
@@ -1076,13 +1078,13 @@ export class InnovationsService extends BaseService {
       // distinguish if there's multiple roles for the same user
       updatedBy?.roles.some(r => r.role === ServiceRoleEnum.INNOVATOR)
         ? 'Innovator'
-        : updatedBy?.displayName ?? null;
+        : (updatedBy?.displayName ?? null);
 
     // support is handled differently to remove the nested array since it's only 1 element in this case
     return {
       ...(fields.includes('id') && { id: item.supports?.[0]?.id ?? null }),
       ...(fields.includes('status') && {
-        status: item.supports?.[0]?.status ?? InnovationSupportStatusEnum.UNASSIGNED
+        status: item.supports?.[0]?.status ?? InnovationSupportStatusEnum.SUGGESTED // TODO MJS - Check if this is correct
       }),
       ...(fields.includes('updatedAt') && { updatedAt: item.supports?.[0]?.updatedAt }),
       ...(fields.includes('updatedBy') && { updatedBy: displayName }),

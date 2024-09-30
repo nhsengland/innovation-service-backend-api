@@ -165,7 +165,7 @@ export class StatisticsService extends BaseService {
             .addSelect('MAX(innovations.submitted_at)', 'lastSubmittedAt')
             .innerJoin('innovations.organisationShares', 'organisationShares')
             .innerJoin('organisationShares.organisationUnits', 'organisationUnits')
-            .leftJoin( 'innovations.suggestions', 'suggestions')
+            .leftJoin('innovations.suggestions', 'suggestions')
             .leftJoin(
               'innovations.innovationSupports',
               'innovationSupports',
@@ -173,7 +173,7 @@ export class StatisticsService extends BaseService {
               { organisationUnit }
             )
             .andWhere('(innovationSupports.id IS NULL OR innovationSupports.status = :supportStatus)', {
-              supportStatus: InnovationSupportStatusEnum.UNASSIGNED
+              supportStatus: InnovationSupportStatusEnum.SUGGESTED // TODO MJS - Check if this is correct
             })
             .andWhere('innovations.status = :status', { status: InnovationStatusEnum.IN_PROGRESS })
             .andWhere('suggestions.suggestedUnitId = :organisationUnit', { organisationUnit })

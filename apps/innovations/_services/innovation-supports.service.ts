@@ -427,6 +427,41 @@ export class InnovationSupportsService extends BaseService {
   async createInnovationSupport(
     domainContext: DomainContextType,
     innovationId: string,
+    organisationUnitId: string,
+    entityManager?: EntityManager
+  ): Promise<void> {
+    if (!entityManager) {
+      return this.sqlConnection.transaction(async transaction => {
+        return this.createInnovationSupport(domainContext, innovationId, organisationUnitId, transaction);
+      });
+    }
+
+    const innovation = await entityManager
+      .createQueryBuilder(InnovationEntity, 'innovation')
+      .select(['innovation.id', 'majorAssessment.id'])
+      .innerJoin('innovation.currentMajorAssessment', 'majorAssessment')
+      .where('innovation.id = :innovationId', { innovationId })
+      .getOne();
+    if (!innovation || !innovation.currentMajorAssessment) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
+    }
+
+    await entityManager.save(InnovationSupportEntity, {
+      status: InnovationSupportStatusEnum.SUGGESTED,
+      createdBy: domainContext.id,
+      updatedBy: domainContext.id,
+      innovation: { id: innovationId },
+      organisationUnit: { id: organisationUnitId },
+      majorAssessment: { id: innovation.currentMajorAssessment.id }
+    });
+  }
+
+  /**
+   * Starts an innovation support, this can occur only once per active support and should start either from the suggested or search
+   */
+  async startInnovationSupport(
+    domainContext: DomainContextType,
+    innovationId: string,
     data: {
       status: InnovationSupportStatusEnum;
       message: string;
@@ -435,6 +470,8 @@ export class InnovationSupportsService extends BaseService {
     },
     entityManager?: EntityManager
   ): Promise<{ id: string }> {
+    if (1 < Number(5))
+      throw new Error('Missing start support changes: suggested, search. Use the create Innovation Support');
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const organisationUnitId = domainContext.organisation?.organisationUnit?.id;
@@ -617,7 +654,7 @@ export class InnovationSupportsService extends BaseService {
               supportStatus:
                 innovationSupport && innovationSupport.status
                   ? innovationSupport.status
-                  : InnovationSupportStatusEnum.UNASSIGNED,
+                  : InnovationSupportStatusEnum.SUGGESTED, // TODO MJS - Check if this is correct
               type: data.type,
               unitId: domainContext.organisation?.organisationUnit?.id ?? '',
               suggestedOrganisationUnits: [unit.id]
@@ -1062,7 +1099,7 @@ export class InnovationSupportsService extends BaseService {
           id: u.id,
           name: u.name,
           support: {
-            status: InnovationSupportStatusEnum.UNASSIGNED
+            status: InnovationSupportStatusEnum.SUGGESTED // TODO MJS - Check if this is correct
           },
           organisation: {
             id: u.orgId,
@@ -1166,7 +1203,8 @@ export class InnovationSupportsService extends BaseService {
             ...defaultSummary,
             type: 'SUPPORT_UPDATE',
             params: {
-              supportStatus: supportLog.innovationSupportStatus ?? InnovationSupportStatusEnum.UNASSIGNED, // Not needed, we are veryfing in the switch case that is a type that always has supportStatus
+              // TODO MJS - Check if this is correct
+              supportStatus: supportLog.innovationSupportStatus ?? InnovationSupportStatusEnum.SUGGESTED, // Not needed, we are veryfing in the switch case that is a type that always has supportStatus
               message: supportLog.description
             }
           });
@@ -1389,7 +1427,7 @@ export class InnovationSupportsService extends BaseService {
     );
 
     if (!support) {
-      support = { status: InnovationSupportStatusEnum.UNASSIGNED, engagedCount: 0 };
+      support = { status: InnovationSupportStatusEnum.SUGGESTED, engagedCount: 0 }; // TODO MJS - Check if this is correct
     }
 
     // currently this is not considered for closing, if this remains the query can be changed
@@ -1397,7 +1435,7 @@ export class InnovationSupportsService extends BaseService {
     const beenEngaged = true;
 
     switch (support.status) {
-      case InnovationSupportStatusEnum.UNASSIGNED:
+      case InnovationSupportStatusEnum.SUGGESTED: // TODO MJS - Check if this is correct
       case InnovationSupportStatusEnum.CLOSED:
         return [
           InnovationSupportStatusEnum.ENGAGING,

@@ -27,7 +27,7 @@ beforeAll(async () => {
 });
 
 const expected = { id: randUuid() };
-const mock = jest.spyOn(InnovationSupportsService.prototype, 'createInnovationSupport').mockResolvedValue(expected);
+const mock = jest.spyOn(InnovationSupportsService.prototype, 'startInnovationSupport').mockResolvedValue(expected);
 
 afterEach(() => {
   jest.clearAllMocks();

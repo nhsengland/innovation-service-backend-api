@@ -338,13 +338,6 @@ export class DomainInnovationsService {
 
         // Change all supports to closed and save a snapshot
         const supportsToUpdate = supports.map(support => {
-          // Save snapshot before updating support
-          support.archiveSnapshot = {
-            archivedAt,
-            status: support.status,
-            assignedAccessors: support.userRoles.map(r => r.id)
-          };
-
           support.userRoles = [];
           support.updatedBy = domainContext.id;
           support.status = InnovationSupportStatusEnum.CLOSED;
@@ -534,6 +527,16 @@ export class DomainInnovationsService {
     innovationId: string,
     params: SupportLogParams
   ): Promise<{ id: string }> {
+    const innovation = await transactionManager
+      .createQueryBuilder(InnovationEntity, 'innovation')
+      .select(['innovation.id', 'currentMajorAssessment.id'])
+      .innerJoin('innovation.currentMajorAssessment', 'currentMajorAssessment')
+      .where('id = :id', { id: innovationId })
+      .getOne();
+    if (!innovation) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
+    }
+
     const supportLogData = InnovationSupportLogEntity.new({
       innovation: InnovationEntity.new({ id: innovationId }),
       description: params.description,
@@ -541,6 +544,7 @@ export class DomainInnovationsService {
       createdBy: user.id,
       createdByUserRole: UserRoleEntity.new({ id: user.roleId }),
       updatedBy: user.id,
+      majorAssessmentId: innovation.currentMajorAssessment,
       ...(params.type !== InnovationSupportLogTypeEnum.ASSESSMENT_SUGGESTION && {
         organisationUnit: OrganisationUnitEntity.new({ id: params.unitId }),
         innovationSupportStatus: params.supportStatus

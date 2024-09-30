@@ -4,11 +4,9 @@ import {
   InnovationAssessmentEntity,
   InnovationEntity,
   InnovationReassessmentRequestEntity,
-  InnovationSupportEntity,
   OrganisationEntity,
   OrganisationUnitEntity,
-  UserEntity,
-  UserRoleEntity
+  UserEntity
 } from '@innovations/shared/entities';
 import {
   ActivityEnum,
@@ -36,12 +34,12 @@ import { InnovationHelper } from '../_helpers/innovation.helper';
 import type { InnovationAssessmentType, ReassessmentType } from '../_types/innovation.types';
 
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
+import { omit } from 'lodash';
 import type { EntityManager } from 'typeorm';
 import { BaseService } from './base.service';
 import type { InnovationDocumentService } from './innovation-document.service';
 import type { InnovationThreadsService } from './innovation-threads.service';
 import SYMBOLS from './symbols';
-import { omit } from 'lodash';
 
 @injectable()
 export class InnovationAssessmentsService extends BaseService {
@@ -591,6 +589,9 @@ export class InnovationAssessmentsService extends BaseService {
               comment: data.summary ?? ''
             });
           }
+
+          // TODO create supports
+          if (1 < Number(5)) throw new Error('TODO create support');
         }
       } else {
         // it's draft
@@ -641,14 +642,7 @@ export class InnovationAssessmentsService extends BaseService {
 
     const innovation = await connection
       .createQueryBuilder(InnovationEntity, 'innovation')
-      .select([
-        'innovation.id',
-        'innovation.status',
-        'innovationOwner.id',
-        'support.id',
-        'support.status',
-        'support.archiveSnapshot'
-      ])
+      .select(['innovation.id', 'innovation.status', 'innovationOwner.id', 'support.id', 'support.status'])
       .leftJoin('innovation.owner', 'innovationOwner')
       .leftJoin('innovation.innovationSupports', 'support')
       .where('innovation.id = :innovationId', { innovationId })
@@ -719,6 +713,11 @@ export class InnovationAssessmentsService extends BaseService {
         innovation.status === InnovationStatusEnum.ARCHIVED &&
         innovation.innovationSupports.length > 0
       ) {
+        if (1 < Number(5))
+          throw new Error(
+            'TODO MJS review this archive logic, keeping old code commented but likely this can be removed'
+          );
+        /*
         await transaction.save(
           InnovationSupportEntity,
           innovation.innovationSupports
@@ -729,7 +728,7 @@ export class InnovationAssessmentsService extends BaseService {
                 support.status =
                   snapshot.status !== InnovationSupportStatusEnum.ENGAGING
                     ? snapshot.status
-                    : InnovationSupportStatusEnum.UNASSIGNED;
+                    : InnovationSupportStatusEnum.SUGGESTED; // TODO MJS This will be reviewed later
                 support.userRoles =
                   snapshot.status === InnovationSupportStatusEnum.WAITING
                     ? snapshot.assignedAccessors.map(id => UserRoleEntity.new({ id }))
@@ -739,6 +738,7 @@ export class InnovationAssessmentsService extends BaseService {
               return support;
             })
         );
+        */
       }
 
       await this.documentService.syncDocumentVersions(domainContext, innovationId, transaction, { updatedAt: now });

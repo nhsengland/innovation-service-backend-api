@@ -1,4 +1,3 @@
- 
 import { container } from '../_config';
 
 import {
@@ -251,9 +250,52 @@ describe('Innovations / _services / innovation-supports suite', () => {
 
   describe('createInnovationSupport', () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+    const organisationWithoutSupport = scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit;
 
-    it('should create a support', async () => {
-      const support = await sut.createInnovationSupport(
+    it('should create a new innovation support as suggested', async () => {
+      const res = await sut.createInnovationSupport(
+        DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
+        innovation.id,
+        organisationWithoutSupport.id,
+        em
+      );
+
+      expect(res).toBeUndefined();
+
+      const dbSupport = await em
+        .createQueryBuilder(InnovationSupportEntity, 'support')
+        .where('support.innovation.id = :innovationId', { innovationId: innovation.id })
+        .andWhere('support.organisationUnit.id = :organisationUnitId', {
+          organisationUnitId: organisationWithoutSupport.id
+        })
+        .getOne();
+
+      expect(dbSupport).toMatchObject({
+        id: expect.any(String),
+        createdBy: scenario.users.paulNeedsAssessor.id,
+        updatedBy: scenario.users.paulNeedsAssessor.id,
+        status: InnovationSupportStatusEnum.SUGGESTED
+      });
+    });
+
+    it('should fail if there is an active innovation support', async () => {
+      fail('todo');
+    });
+
+    it("should fail if the innovation hasn't been shared with the organisation unit", async () => {
+      fail('todo');
+    });
+
+    it('should mark other supports as not most recent', async () => {
+      fail('todo');
+    });
+  });
+
+  describe('startInnovationSupport', () => {
+    const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+
+    it('should create and start a support if no support exists', async () => {
+      const support = await sut.startInnovationSupport(
         DTOsHelper.getUserRequestContext(scenario.users.bartQualifyingAccessor),
         scenario.users.adamInnovator.innovations.adamInnovation.id,
         {
@@ -278,11 +320,42 @@ describe('Innovations / _services / innovation-supports suite', () => {
       expect(notifierSendSpy).toHaveBeenCalled();
     });
 
+    it('should create and start a support if no active support exists', async () => {
+      if (1 < Number(5)) fail('todo');
+      const support = await sut.startInnovationSupport(
+        DTOsHelper.getUserRequestContext(scenario.users.bartQualifyingAccessor),
+        scenario.users.adamInnovator.innovations.adamInnovation.id,
+        {
+          status: InnovationSupportStatusEnum.ENGAGING,
+          message: randText({ charCount: 10 }),
+          accessors: [
+            {
+              id: scenario.users.jamieMadroxAccessor.id,
+              userRoleId: scenario.users.jamieMadroxAccessor.roles.aiRole.id
+            }
+          ]
+        },
+        em
+      );
+
+      expect(support).toMatchObject({
+        id: support.id
+      });
+
+      expect(activityLogSpy).toHaveBeenCalled();
+      expect(supportLogSpy).toHaveBeenCalled();
+      expect(notifierSendSpy).toHaveBeenCalled();
+    });
+
+    it('should start the innovation support if it was SUGGESTED', async () => {
+      fail('todo');
+    });
+
     it('should send the notifyMe', async () => {
       const context = DTOsHelper.getUserRequestContext(scenario.users.bartQualifyingAccessor);
       const innovation = scenario.users.adamInnovator.innovations.adamInnovation.id;
       const message = randText({ charCount: 10 });
-      await sut.createInnovationSupport(
+      await sut.startInnovationSupport(
         context,
         innovation,
         {
@@ -306,7 +379,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
     });
 
     it('should assign QA that created as accessor when status is WAITING', async () => {
-      const support = await sut.createInnovationSupport(
+      const support = await sut.startInnovationSupport(
         DTOsHelper.getUserRequestContext(scenario.users.bartQualifyingAccessor),
         scenario.users.adamInnovator.innovations.adamInnovation.id,
         {
@@ -327,7 +400,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
 
     it('should throw an unprocessable entity error if the domain context has an invalid organisation unit id', async () => {
       await expect(() =>
-        sut.createInnovationSupport(
+        sut.startInnovationSupport(
           DTOsHelper.getUserRequestContext(scenario.users.allMighty),
           innovation.id,
           {
@@ -348,7 +421,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
       }
 
       await expect(() =>
-        sut.createInnovationSupport(
+        sut.startInnovationSupport(
           domainContext,
           innovation.id,
           {
@@ -360,9 +433,9 @@ describe('Innovations / _services / innovation-supports suite', () => {
       ).rejects.toThrow(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND));
     });
 
-    it('should throw an unprocessable entity error if the support already exists', async () => {
+    it('should throw an unprocessable entity error if one active support already exists', async () => {
       await expect(() =>
-        sut.createInnovationSupport(
+        sut.startInnovationSupport(
           DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
           innovation.id,
           {
@@ -376,11 +449,11 @@ describe('Innovations / _services / innovation-supports suite', () => {
 
     it('should throw an unprocessable entity error if the accessors argument exists and the status is not ENGAGING', async () => {
       await expect(() =>
-        sut.createInnovationSupport(
+        sut.startInnovationSupport(
           DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
           innovation.id,
           {
-            status: InnovationSupportStatusEnum.UNASSIGNED,
+            status: InnovationSupportStatusEnum.SUGGESTED,
             message: randText({ charCount: 10 }),
             accessors: [
               {
@@ -491,7 +564,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           id: expect.any(String),
           name: scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.name,
           support: {
-            status: InnovationSupportStatusEnum.UNASSIGNED
+            status: InnovationSupportStatusEnum.SUGGESTED
           }
         }
       ]);
@@ -953,13 +1026,13 @@ describe('Innovations / _services / innovation-supports suite', () => {
       ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_MESSAGE_NOT_FOUND));
     });
 
-    it(`should throw a UnprocessableEntityError when trying to update to UNASSIGNED`, async () => {
+    it(`should throw a UnprocessableEntityError when trying to update to SUGGESTED`, async () => {
       await expect(() =>
         sut.updateInnovationSupport(
           DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
           innovation.id,
           innovation.supports.supportByHealthOrgUnit.id,
-          { status: InnovationSupportStatusEnum.UNASSIGNED, message: randText({ charCount: 10 }) },
+          { status: InnovationSupportStatusEnum.SUGGESTED, message: randText({ charCount: 10 }) },
           em
         )
       ).rejects.toThrow(
@@ -1313,9 +1386,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           randUuid(),
           em
         )
-      ).rejects.toThrow(
-        new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_SUMMARY_PROGRESS_UPDATE_NOT_FOUND)
-      );
+      ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_SUMMARY_PROGRESS_UPDATE_NOT_FOUND));
     });
 
     it('should throw error UnprocessableEntityError if the progress update was created by other unit', async () => {
@@ -1339,7 +1410,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
 
     it.each([
       [
-        InnovationSupportStatusEnum.UNASSIGNED,
+        InnovationSupportStatusEnum.SUGGESTED,
         true,
         [
           InnovationSupportStatusEnum.ENGAGING,

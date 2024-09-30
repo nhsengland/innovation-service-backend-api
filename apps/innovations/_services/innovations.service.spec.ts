@@ -454,10 +454,10 @@ describe('Innovations / _services / innovations suite', () => {
       expect(dbCancelledTasks).toHaveLength(dbPreviouslyOpenTasks.length);
     });
 
-    it('should close all support and save a snapshot', async () => {
+    it('should close all support', async () => {
       const dbPreviousSupports = await em
         .createQueryBuilder(InnovationSupportEntity, 'support')
-        .select(['support.id', 'support.status', 'support.archiveSnapshot', 'userRole.id', 'user.id'])
+        .select(['support.id', 'support.status', 'userRole.id', 'user.id'])
         .innerJoin('support.innovation', 'innovation')
         .leftJoin('support.userRoles', 'userRole')
         .leftJoin('userRole.user', 'user')
@@ -468,7 +468,7 @@ describe('Innovations / _services / innovations suite', () => {
 
       const dbSupports = await em
         .createQueryBuilder(InnovationSupportEntity, 'support')
-        .select(['support.id', 'support.status', 'support.archiveSnapshot'])
+        .select(['support.id', 'support.status'])
         .where('support.id IN (:...supportIds)', { supportIds: dbPreviousSupports.map(s => s.id) })
         .getMany();
 
@@ -476,11 +476,6 @@ describe('Innovations / _services / innovations suite', () => {
         const previousSupport = dbPreviousSupports.find(s => s.id === support.id);
         assert(previousSupport);
         expect(support.status).toBe(InnovationSupportStatusEnum.CLOSED);
-        expect(support.archiveSnapshot).toMatchObject({
-          archivedAt: expect.any(String),
-          status: previousSupport.status,
-          assignedAccessors: previousSupport.userRoles.map(r => r.id)
-        });
       }
     });
 

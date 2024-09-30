@@ -1,5 +1,11 @@
 import type { EntityManager } from 'typeorm';
-import { InnovationEntity, InnovationSupportEntity, OrganisationUnitEntity, UserRoleEntity } from '../../entities';
+import {
+  InnovationAssessmentEntity,
+  InnovationEntity,
+  InnovationSupportEntity,
+  OrganisationUnitEntity,
+  UserRoleEntity
+} from '../../entities';
 import { InnovationSupportStatusEnum } from '../../enums';
 import { BaseBuilder } from './base.builder';
 import type { TestUserType } from './user.builder';
@@ -8,8 +14,7 @@ export type TestInnovationSupportType = {
   id: string;
   status: InnovationSupportStatusEnum;
   updatedAt: Date;
-  archiveSnapshot: null | { archivedAt: Date; status: InnovationSupportStatusEnum; assignedAccessors: string[] };
-  userRoles: string[]
+  userRoles: string[];
 };
 
 export class InnovationSupportBuilder extends BaseBuilder {
@@ -18,8 +23,7 @@ export class InnovationSupportBuilder extends BaseBuilder {
   constructor(entityManager: EntityManager) {
     super(entityManager);
     this.support = InnovationSupportEntity.new({
-      status: InnovationSupportStatusEnum.UNASSIGNED,
-      archiveSnapshot: null,
+      status: InnovationSupportStatusEnum.SUGGESTED,
       userRoles: []
     });
   }
@@ -31,6 +35,11 @@ export class InnovationSupportBuilder extends BaseBuilder {
 
   setInnovation(innovationId: string): this {
     this.support.innovation = InnovationEntity.new({ id: innovationId });
+    return this;
+  }
+
+  setMajorAssessment(assessmentId: string): this {
+    this.support.majorAssessment = InnovationAssessmentEntity.new({ id: assessmentId });
     return this;
   }
 
@@ -57,16 +66,14 @@ export class InnovationSupportBuilder extends BaseBuilder {
   }
 
   async save(): Promise<TestInnovationSupportType> {
-    const savedSupport = await this.getEntityManager()
-      .getRepository(InnovationSupportEntity)
-      .save({
-        ...this.support,
-        archiveSnapshot: {
-          archivedAt: new Date(),
-          status: this.support.status,
-          assignedAccessors: this.support.userRoles.map(r => r.id)
-        }
-      });
+    const required = ['innovation', 'organisationUnit', 'majorAssessment'] as const;
+    for (const prop of required) {
+      if (!this.support[prop]) {
+        throw new Error(`InnovationSupportBuilder::save: ${prop} is required.`);
+      }
+    }
+
+    const savedSupport = await this.getEntityManager().getRepository(InnovationSupportEntity).save(this.support);
 
     const result = await this.getEntityManager()
       .createQueryBuilder(InnovationSupportEntity, 'support')
@@ -81,14 +88,7 @@ export class InnovationSupportBuilder extends BaseBuilder {
       id: result.id,
       status: result.status,
       updatedAt: result.updatedAt,
-      archiveSnapshot: result.archiveSnapshot
-        ? {
-            archivedAt: result.archiveSnapshot.archivedAt,
-            status: result.archiveSnapshot.status,
-            assignedAccessors: result.archiveSnapshot.assignedAccessors
-          }
-        : null,
-        userRoles: this.support.userRoles.map(r => r.id)
+      userRoles: this.support.userRoles.map(r => r.id)
     };
   }
 }

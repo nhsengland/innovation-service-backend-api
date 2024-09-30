@@ -1,4 +1,3 @@
- 
 import { container } from '../_config';
 
 import {
@@ -562,7 +561,7 @@ describe('Innovation Assessments Suite', () => {
       for (const prevSupport of prevSupports) {
         const current = supports.find(s => s.id === prevSupport.id);
         if (prevSupport.status === InnovationSupportStatusEnum.ENGAGING) {
-          expect(current?.status).toBe(InnovationSupportStatusEnum.UNASSIGNED);
+          expect(current?.status).toBe(InnovationSupportStatusEnum.SUGGESTED); // TODO MJS - check later
           expect(current?.userRoles).toHaveLength(0);
         } else {
           expect(current?.status).toBe(prevSupport.status);
