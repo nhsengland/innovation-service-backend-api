@@ -436,15 +436,31 @@ export class InnovationSupportsService extends BaseService {
       });
     }
 
+    // Idea if we put the majorAssessment in a innovation domain context we could add a isShared method to the
+    // innovation service and reuse it when we need to know if an innovation is shared (similar to hasActiveSupport)
     const innovation = await entityManager
       .createQueryBuilder(InnovationEntity, 'innovation')
       .select(['innovation.id', 'majorAssessment.id'])
       .innerJoin('innovation.currentMajorAssessment', 'majorAssessment')
+      .innerJoin('innovation.organisationShares', 'shares')
+      .innerJoin('shares.organisationUnits', 'organisationUnits')
       .where('innovation.id = :innovationId', { innovationId })
+      .andWhere('organisationUnits.id = :organisationUnitId', { organisationUnitId })
       .getOne();
     if (!innovation || !innovation.currentMajorAssessment) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
     }
+
+    if (await this.hasActiveSupport(innovationId, organisationUnitId, entityManager)) {
+      throw new ConflictError(InnovationErrorsEnum.INNOVATION_SUPPORT_ALREADY_EXISTS);
+    }
+
+    // Update older supports to not most recent
+    await entityManager.update(
+      InnovationSupportEntity,
+      { innovation: { id: innovationId }, organisationUnit: { id: organisationUnitId }, isMostRecent: true },
+      { isMostRecent: false }
+    );
 
     await entityManager.save(InnovationSupportEntity, {
       status: InnovationSupportStatusEnum.SUGGESTED,
@@ -1595,5 +1611,22 @@ export class InnovationSupportsService extends BaseService {
 
       return new Date(a.support.start).getTime() - new Date(b.support.start).getTime();
     });
+  }
+
+  private async hasActiveSupport(
+    innovationId: string,
+    organisationUnitId: string,
+    entityManager: EntityManager
+  ): Promise<boolean> {
+    const activeSupport = await entityManager
+      .createQueryBuilder(InnovationSupportEntity, 'support')
+      .where('support.innovation.id = :innovationId', { innovationId })
+      .andWhere('support.organisation_unit_id = :organisationUnitId', { organisationUnitId })
+      .andWhere('support.status NOT IN (:...statuses)', {
+        statuses: [InnovationSupportStatusEnum.CLOSED, InnovationSupportStatusEnum.UNSUITABLE]
+      })
+      .getOne();
+
+    return !!activeSupport;
   }
 }

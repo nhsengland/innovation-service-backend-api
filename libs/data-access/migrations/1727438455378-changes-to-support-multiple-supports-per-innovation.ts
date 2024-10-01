@@ -106,6 +106,12 @@ export class ChangesToSupportMultipleSupportsPerInnovation1727438455378 implemen
       ALTER TABLE innovation_support ADD CONSTRAINT "df_innovation_support_status" DEFAULT 'SUGGESTED' FOR [status];
     `);
 
+    // Alter support unique index to exclude closed supports
+    await queryRunner.query(`
+      DROP INDEX IX_UNIQUE_SUPPORT_UNIT ON innovation_support;
+      CREATE UNIQUE NONCLUSTERED INDEX IX_UNIQUE_SUPPORT_UNIT ON innovation_support(innovation_id, organisation_unit_id, deleted_at) WHERE [status] <> 'CLOSED' AND [status] <> 'UNSUITABLE';
+    `);
+
     // TODO: Missing support log suggested migration from currently SUGGESTED
   }
 

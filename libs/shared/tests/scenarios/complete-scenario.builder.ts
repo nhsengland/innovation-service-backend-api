@@ -203,7 +203,7 @@ export class CompleteScenarioBuilder {
         .setName('John Innovation')
         .setOwner(johnInnovator.id)
         .setStatus(InnovationStatusEnum.IN_PROGRESS)
-        .shareWith([healthOrg, medTechOrg])
+        .shareWith([healthOrg, medTechOrg, innovTechOrg])
         .addSection('INNOVATION_DESCRIPTION')
         .addSection('EVIDENCE_OF_EFFECTIVENESS', InnovationSectionStatusEnum.DRAFT)
         .withEvidences([

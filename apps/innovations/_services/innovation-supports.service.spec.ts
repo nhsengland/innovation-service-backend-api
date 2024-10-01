@@ -18,6 +18,7 @@ import {
 
 import {
   BadRequestError,
+  ConflictError,
   GenericErrorsEnum,
   InnovationErrorsEnum,
   NotFoundError,
@@ -250,6 +251,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
 
   describe('createInnovationSupport', () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+    const organisationWithSupport = scenario.organisations.healthOrg.organisationUnits.healthOrgUnit;
     const organisationWithoutSupport = scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit;
 
     it('should create a new innovation support as suggested', async () => {
@@ -274,20 +276,73 @@ describe('Innovations / _services / innovation-supports suite', () => {
         id: expect.any(String),
         createdBy: scenario.users.paulNeedsAssessor.id,
         updatedBy: scenario.users.paulNeedsAssessor.id,
-        status: InnovationSupportStatusEnum.SUGGESTED
+        status: InnovationSupportStatusEnum.SUGGESTED,
+        isMostRecent: true
       });
     });
 
+    it('should create a new innovation support if no active support', async () => {
+      await em.update(
+        InnovationSupportEntity,
+        { id: innovation.supports.supportByHealthOrgUnit.id },
+        { status: InnovationSupportStatusEnum.CLOSED }
+      );
+
+      const res = await sut.createInnovationSupport(
+        DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
+        innovation.id,
+        organisationWithSupport.id,
+        em
+      );
+
+      expect(res).toBeUndefined();
+    });
+
     it('should fail if there is an active innovation support', async () => {
-      fail('todo');
+      await expect(
+        sut.createInnovationSupport(
+          DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
+          innovation.id,
+          organisationWithSupport.id,
+          em
+        )
+      ).rejects.toThrow(new ConflictError(InnovationErrorsEnum.INNOVATION_SUPPORT_ALREADY_EXISTS));
     });
 
     it("should fail if the innovation hasn't been shared with the organisation unit", async () => {
-      fail('todo');
+      await em.query('DELETE FROM innovation_share WHERE innovation_id = @0', [innovation.id]);
+
+      await expect(
+        sut.createInnovationSupport(
+          DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
+          innovation.id,
+          organisationWithSupport.id,
+          em
+        )
+      ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND));
     });
 
     it('should mark other supports as not most recent', async () => {
-      fail('todo');
+      const previous = await em
+        .getRepository(InnovationSupportEntity)
+        .findOneBy({ innovation: { id: innovation.id }, isMostRecent: true });
+      expect(previous?.isMostRecent).toBe(true);
+
+      await em.update(
+        InnovationSupportEntity,
+        { id: innovation.supports.supportByHealthOrgUnit.id },
+        { status: InnovationSupportStatusEnum.CLOSED }
+      );
+
+      await sut.createInnovationSupport(
+        DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
+        innovation.id,
+        organisationWithSupport.id,
+        em
+      );
+
+      const after = await em.getRepository(InnovationSupportEntity).findOneByOrFail({ id: previous?.id });
+      expect(after?.isMostRecent).toBe(false);
     });
   });
 
