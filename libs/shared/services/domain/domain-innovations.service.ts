@@ -1010,6 +1010,21 @@ export class DomainInnovationsService {
     }));
   }
 
+  /** helper to return an innovation shared units (result might change keeping it simple) */
+  async getInnovationSharedUnits(innovationId: string, entityManager?: EntityManager): Promise<string[]> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const res = await em
+      .createQueryBuilder(InnovationEntity, 'innovation')
+      .select(['unit.id'])
+      .innerJoin('innovation.organisationShares', 'shares')
+      .innerJoin('shares.organisationUnits', 'unit')
+      .where('innovation.id = :innovationId', { innovationId })
+      .getRawMany(); // Using raw to avoid needless columns and Promise.all cause of lazy
+
+    return res.map(r => r.unit_id);
+  }
+
   /**
    * Fetches all the information needed for the document type.
    * If innovationIds are passed it will only return the information for those ids,

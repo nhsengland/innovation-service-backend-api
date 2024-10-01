@@ -346,6 +346,95 @@ describe('Innovations / _services / innovation-supports suite', () => {
     });
   });
 
+  describe('createSuggestedSupports', () => {
+    const na = scenario.users.paulNeedsAssessor;
+    const naContext = DTOsHelper.getUserRequestContext(na);
+    let previousCreateInnovationSupport: any;
+    const createInnovationSupportSpy = jest.fn().mockImplementation(() => {});
+
+    const innovationWithoutSupports = scenario.users.ottoOctaviusInnovator.innovations.brainComputerInterfaceInnovation;
+
+    beforeEach(() => {
+      createInnovationSupportSpy.mockClear();
+    });
+
+    beforeAll(() => {
+      previousCreateInnovationSupport = sut.createInnovationSupport;
+      sut.createInnovationSupport = createInnovationSupportSpy as any;
+    });
+
+    afterAll(() => {
+      sut.createInnovationSupport = previousCreateInnovationSupport;
+    });
+
+    it('should create a new innovation support as suggested', async () => {
+      await sut.createSuggestedSupports(
+        naContext,
+        innovationWithoutSupports.id,
+        [
+          scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id,
+          scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.id
+        ],
+        em
+      );
+
+      expect(createInnovationSupportSpy).toHaveBeenCalledTimes(2);
+      expect(createInnovationSupportSpy).toHaveBeenNthCalledWith(
+        1,
+        naContext,
+        innovationWithoutSupports.id,
+        scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id,
+        em
+      );
+      expect(createInnovationSupportSpy).toHaveBeenNthCalledWith(
+        2,
+        naContext,
+        innovationWithoutSupports.id,
+        scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.id,
+        em
+      );
+    });
+
+    it('should ignore units that are not shared', async () => {
+      await sut.createSuggestedSupports(
+        naContext,
+        innovationWithoutSupports.id,
+        [scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id],
+        em
+      );
+
+      expect(createInnovationSupportSpy).toHaveBeenCalledTimes(0);
+    });
+
+    it('should ignore units that are already supporting the innovation', async () => {
+      await new InnovationSupportBuilder(em)
+        .setInnovation(innovationWithoutSupports.id)
+        .setMajorAssessment(innovationWithoutSupports.assessmentInProgress.id)
+        .setStatus(InnovationSupportStatusEnum.ENGAGING)
+        .setOrganisationUnit(scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id)
+        .save();
+
+      await sut.createSuggestedSupports(
+        naContext,
+        innovationWithoutSupports.id,
+        [
+          scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id,
+          scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.id
+        ],
+        em
+      );
+
+      expect(createInnovationSupportSpy).toHaveBeenCalledTimes(1);
+      expect(createInnovationSupportSpy).toHaveBeenNthCalledWith(
+        1,
+        naContext,
+        innovationWithoutSupports.id,
+        scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.id,
+        em
+      );
+    });
+  });
+
   describe('startInnovationSupport', () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
 

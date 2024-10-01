@@ -905,6 +905,7 @@ export class CompleteScenarioBuilder {
         .setOwner(ottoOctaviusInnovator.id)
         .setStatus(InnovationStatusEnum.NEEDS_ASSESSMENT)
         .addSection('INNOVATION_DESCRIPTION')
+        .shareWith([innovTechOrg, medTechOrg])
         .save();
 
       const brainComputerInterfaceInnovationAssessment = await new InnovationAssessmentBuilder(entityManager)

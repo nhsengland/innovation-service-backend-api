@@ -473,7 +473,7 @@ export class InnovationSupportsService extends BaseService {
     });
   }
 
-  /** Creates the suggested units supports as long as they have been shared with */
+  /** Creates the suggested units supports as long as they have been shared with and they don't have an ongoing support  */
   async createSuggestedSupports(
     domainContext: DomainContextType,
     innovationId: string,
@@ -485,7 +485,8 @@ export class InnovationSupportsService extends BaseService {
       (
         await transaction
           .createQueryBuilder(InnovationSupportEntity, 'support')
-          .select(['support.id'])
+          .select(['support.id', 'unit.id'])
+          .innerJoin('support.organisationUnit', 'unit')
           .where('support.innovation = :innovationId', { innovationId })
           .andWhere('support.status IN (:...statuses)', {
             statuses: [
@@ -495,11 +496,14 @@ export class InnovationSupportsService extends BaseService {
             ]
           })
           .getMany()
-      ).map(s => s.id)
+      ).map(s => s.organisationUnit.id)
     );
-    // TODO filtrar shared
 
-    for (const unitId of newSuggestedUnits.filter(id => !ongoingSupports.has(id))) {
+    const sharedUnits = new Set(
+      await this.domainService.innovations.getInnovationSharedUnits(innovationId, transaction)
+    );
+
+    for (const unitId of newSuggestedUnits.filter(id => !ongoingSupports.has(id) && sharedUnits.has(id))) {
       await this.createInnovationSupport(domainContext, innovationId, unitId, transaction);
     }
   }
