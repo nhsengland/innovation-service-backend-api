@@ -555,7 +555,7 @@ export class InnovationSupportsService extends BaseService {
     if (data.status === InnovationSupportStatusEnum.WAITING && data.accessors?.length) {
       await this.notifierService.send(domainContext, NotifierTypeEnum.SUPPORT_NEW_ASSIGN_WAITING_INNOVATION, {
         innovationId,
-        newAssignedAccessorsRoleIds: data.accessors.map(item => item.id),
+        newAssignedAccessorsRoleIds: data.accessors.filter(item => item.userRoleId).map(item => item.userRoleId),
         supportId: result.id
       });
     }
