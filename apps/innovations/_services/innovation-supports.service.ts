@@ -97,8 +97,7 @@ export class InnovationSupportsService extends BaseService {
   constructor(
     @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
     @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
-    @inject(SYMBOLS.InnovationThreadsService)
-    private innovationThreadsService: InnovationThreadsService,
+    @inject(SYMBOLS.InnovationThreadsService) private innovationThreadsService: InnovationThreadsService,
     @inject(SYMBOLS.InnovationFileService) private innovationFileService: InnovationFileService,
     @inject(SYMBOLS.ValidationService) private validationService: ValidationService
   ) {
@@ -662,124 +661,117 @@ export class InnovationSupportsService extends BaseService {
     domainContext: DomainContextType,
     innovationId: string,
     data: {
-      type: InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION;
       description: string;
-      organisationUnits?: string[];
+      organisationUnits: string[];
     },
     entityManager?: EntityManager
   ): Promise<void> {
+    // TODO no unit tests on this function
     const connection = entityManager ?? this.sqlConnection.manager;
 
-    const organisationUnitId = domainContext.organisation?.organisationUnit?.id || '';
-
-    if (!organisationUnitId) {
-      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_WITH_UNPROCESSABLE_ORGANISATION_UNIT);
+    if (!isAccessorDomainContextType(domainContext)) {
+      throw new UnprocessableEntityError(AuthErrorsEnum.AUTH_USER_ROLE_NOT_ALLOWED);
     }
+
+    if (!data.organisationUnits.length) {
+      throw new BadRequestError(InnovationErrorsEnum.INNOVATION_SUGGESTION_WITHOUT_ORGANISATION_UNITS);
+    }
+
+    const organisationUnitId = domainContext.organisation.organisationUnit.id;
 
     const innovation = await connection
       .createQueryBuilder(InnovationEntity, 'innovation')
-      .leftJoinAndSelect('innovation.innovationSupports', 'supports')
-      .leftJoinAndSelect('supports.organisationUnit', 'organisationUnit')
+      .select(['innovation.id', 'supports.id', 'supports.status'])
+      .innerJoin('innovation.innovationSupports', 'supports')
+      .innerJoin('supports.organisationUnit', 'organisationUnit')
       .where('innovation.id = :innovationId', { innovationId })
+      .andWhere('organisationUnit.id = :organisationUnitId', { organisationUnitId })
       .getOne();
 
-    if (!innovation) {
+    const innovationSupport = innovation?.innovationSupports[0];
+
+    if (!innovationSupport) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
     }
 
-    const innovationSupport = innovation.innovationSupports.find(sup => sup.organisationUnit.id === organisationUnitId);
-
     await connection.transaction(async transaction => {
-      if (
-        data.type === InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION &&
-        data?.organisationUnits &&
-        data?.organisationUnits.length > 0
-      ) {
-        const units = await connection
-          .createQueryBuilder(OrganisationUnitEntity, 'unit')
-          .select(['unit.id', 'unit.name'])
-          .where('unit.id IN (:...organisationUnits)', {
-            organisationUnits: data?.organisationUnits
-          })
-          .getMany();
+      const units = await connection
+        .createQueryBuilder(OrganisationUnitEntity, 'unit')
+        .select(['unit.id', 'unit.name'])
+        .where('unit.id IN (:...organisationUnits)', {
+          organisationUnits: data.organisationUnits
+        })
+        .getMany();
 
-        const userUnitName = domainContext.organisation?.organisationUnit?.name ?? '';
+      const userUnitName = domainContext.organisation.organisationUnit.name;
 
-        for (const unit of units) {
-          const savedSupportLog = await this.domainService.innovations.addSupportLog(
-            transaction,
-            { id: domainContext.id, roleId: domainContext.currentRole.id },
-            innovationId,
-            {
-              description: data.description,
-              supportStatus:
-                innovationSupport && innovationSupport.status
-                  ? innovationSupport.status
-                  : InnovationSupportStatusEnum.SUGGESTED, // TODO MJS - Check if this is correct
-              type: data.type,
-              unitId: domainContext.organisation?.organisationUnit?.id ?? '',
-              suggestedOrganisationUnits: [unit.id]
-            }
-          );
-
-          const thread = await this.innovationThreadsService.createThreadOrMessage(
-            domainContext,
-            innovationId,
-            InnovationThreadSubjectEnum.ORGANISATION_SUGGESTION.replace('{{unit}}', userUnitName).replace(
-              '{{suggestedUnit}}',
-              unit.name
-            ),
-            data.description,
-            savedSupportLog.id,
-            ThreadContextTypeEnum.ORGANISATION_SUGGESTION,
-            transaction,
-            false
-          );
-
-          // Add qualifying accessors from unit as thread followers
-          const userRoles = await connection
-            .createQueryBuilder(UserRoleEntity, 'userRole')
-            .where('userRole.organisation_unit_id = :unitId', { unitId: unit.id })
-            .andWhere('userRole.role = :roleType', { roleType: ServiceRoleEnum.QUALIFYING_ACCESSOR })
-            .andWhere('userRole.is_active = 1')
-            .getMany();
-
-          if (userRoles.length) {
-            await this.innovationThreadsService.addFollowersToThread(
-              domainContext,
-              thread.thread.id,
-              userRoles.map(userRole => userRole.id),
-              false,
-              transaction
-            );
-          }
-        }
-
-        await this.domainService.innovations.addActivityLog(
+      for (const unit of units) {
+        const savedSupportLog = await this.domainService.innovations.addSupportLog(
           transaction,
+          { id: domainContext.id, roleId: domainContext.currentRole.id },
+          innovationId,
           {
-            innovationId,
-            activity: ActivityEnum.ORGANISATION_SUGGESTION,
-            domainContext
-          },
-          {
-            organisations: units.map(unit => unit.name)
+            description: data.description,
+            supportStatus: innovationSupport.status,
+            type: InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION,
+            unitId: domainContext.organisation.organisationUnit.id,
+            suggestedOrganisationUnits: [unit.id]
           }
         );
+
+        const thread = await this.innovationThreadsService.createThreadOrMessage(
+          domainContext,
+          innovationId,
+          InnovationThreadSubjectEnum.ORGANISATION_SUGGESTION.replace('{{unit}}', userUnitName).replace(
+            '{{suggestedUnit}}',
+            unit.name
+          ),
+          data.description,
+          savedSupportLog.id,
+          ThreadContextTypeEnum.ORGANISATION_SUGGESTION,
+          transaction,
+          false
+        );
+
+        // Add qualifying accessors from unit as thread followers
+        const userRoles = await connection
+          .createQueryBuilder(UserRoleEntity, 'userRole')
+          .where('userRole.organisation_unit_id = :unitId', { unitId: unit.id })
+          .andWhere('userRole.role = :roleType', { roleType: ServiceRoleEnum.QUALIFYING_ACCESSOR })
+          .andWhere('userRole.is_active = 1')
+          .getMany();
+
+        if (userRoles.length) {
+          await this.innovationThreadsService.addFollowersToThread(
+            domainContext,
+            thread.thread.id,
+            userRoles.map(userRole => userRole.id),
+            false,
+            transaction
+          );
+        }
       }
+
+      await this.createSuggestedSupports(domainContext, innovationId, data.organisationUnits, transaction);
+
+      await this.domainService.innovations.addActivityLog(
+        transaction,
+        {
+          innovationId,
+          activity: ActivityEnum.ORGANISATION_SUGGESTION,
+          domainContext
+        },
+        {
+          organisations: units.map(unit => unit.name)
+        }
+      );
     });
 
-    if (
-      data.type === InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION &&
-      data?.organisationUnits &&
-      data?.organisationUnits.length > 0
-    ) {
-      await this.notifierService.send(domainContext, NotifierTypeEnum.ORGANISATION_UNITS_SUGGESTION, {
-        innovationId,
-        unitsIds: data.organisationUnits,
-        comment: data.description
-      });
-    }
+    await this.notifierService.send(domainContext, NotifierTypeEnum.ORGANISATION_UNITS_SUGGESTION, {
+      innovationId,
+      unitsIds: data.organisationUnits,
+      comment: data.description
+    });
   }
 
   async updateInnovationSupport(

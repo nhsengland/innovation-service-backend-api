@@ -1,6 +1,5 @@
 import azureFunction from '.';
 
-import { InnovationSupportLogTypeEnum } from '@innovations/shared/enums';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@innovations/shared/tests';
 import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@innovations/shared/types';
@@ -33,9 +32,9 @@ afterEach(() => {
   jest.clearAllMocks();
 });
 
-describe('v1-innovation-support-logs-create Suite', () => {
+describe('v1-innovation-suggestion-create Suite', () => {
   describe('201', () => {
-    it('should create an innovation support log', async () => {
+    it('should create an innovation suggestion', async () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.aliceQualifyingAccessor)
         .setParams<ParamsType>({
@@ -43,8 +42,7 @@ describe('v1-innovation-support-logs-create Suite', () => {
         })
         .setBody<BodyType>({
           description: randText(),
-          organisationUnits: [],
-          type: InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION
+          organisationUnits: []
         })
         .call<never>(azureFunction);
 
@@ -70,8 +68,7 @@ describe('v1-innovation-support-logs-create Suite', () => {
         })
         .setBody<BodyType>({
           description: randText(),
-          organisationUnits: [],
-          type: InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION
+          organisationUnits: []
         })
         .call<ErrorResponseType>(azureFunction);
 
@@ -89,8 +86,7 @@ describe('v1-innovation-support-logs-create Suite', () => {
         })
         .setBody<BodyType>({
           description: randText(),
-          organisationUnits: [],
-          type: InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION
+          organisationUnits: []
         })
         .call<ErrorResponseType>(azureFunction);
 

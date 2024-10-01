@@ -2738,6 +2738,24 @@ paths:
           description: Bad Request
         "404":
           description: Not Found
+    post:
+      description: Create suggestion for an Innovation
+      operationId: v1-innovation-suggestions-create
+      tags:
+        - Create Innovation Suggestion
+      parameters:
+        - in: path
+          name: innovationId
+          required: true
+          schema:
+            type: string
+      responses:
+        "201":
+          description: Creates a suggestion.
+        "401":
+          description: Unauthorised
+        "404":
+          description: Not Found
   /v1/{innovationId}/supports/available-status:
     get:
       description: Get available status for a support
@@ -3019,26 +3037,6 @@ paths:
                     format: uuid
                 required:
                   - id
-  /v1/{innovationId}/support-logs:
-    post:
-      description: Create support logs for an Innovation
-      operationId: v1-innovation-support-logs-create
-      tags:
-        - Create Innovation Support Logs
-      parameters:
-        - in: path
-          name: innovationId
-          required: true
-          schema:
-            type: string
-      responses:
-        "201":
-          description: Creates a new innovation support logs for the innovation identified
-            by the supplied Innovation ID.
-        "401":
-          description: Unauthorised
-        "404":
-          description: Not Found
   /v1/{innovationId}/support-summary:
     get:
       operationId: v1-innovation-support-summary-list
