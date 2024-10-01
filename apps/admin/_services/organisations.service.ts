@@ -584,7 +584,7 @@ export class OrganisationsService extends BaseService {
         startsAt: startsAt,
         params: {
           link,
-          content: `${orgName} has been added to the Innovation Service
+          content: `${orgName} has been added to the Innovation Service.
             If you think this organisation will be able to support you, you can share your innovation with them in your data sharing preferences.`
         },
         type: AnnouncementTypeEnum.LOG_IN,
@@ -602,7 +602,7 @@ export class OrganisationsService extends BaseService {
         startsAt: startsAt,
         params: {
           link,
-          content: `${orgName} has been added to the Innovation Service
+          content: `${orgName} has been added to the Innovation Service.
             If you think this organisation could offer suitable support to an innovation, you can suggest it to them.`
         },
         type: AnnouncementTypeEnum.LOG_IN,
@@ -620,7 +620,7 @@ export class OrganisationsService extends BaseService {
         startsAt: startsAt,
         params: {
           link,
-          content: `${orgName} has been added to the Innovation Service`
+          content: `${orgName} has been added to the Innovation Service.`
         },
         type: AnnouncementTypeEnum.LOG_IN,
         sendEmail: true
