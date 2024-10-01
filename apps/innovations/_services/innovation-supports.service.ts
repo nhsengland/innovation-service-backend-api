@@ -424,6 +424,7 @@ export class InnovationSupportsService extends BaseService {
     };
   }
 
+  /** Creates innovation support. Currently state is suggested but this might change */
   async createInnovationSupport(
     domainContext: DomainContextType,
     innovationId: string,
@@ -470,6 +471,37 @@ export class InnovationSupportsService extends BaseService {
       organisationUnit: { id: organisationUnitId },
       majorAssessment: { id: innovation.currentMajorAssessment.id }
     });
+  }
+
+  /** Creates the suggested units supports as long as they have been shared with */
+  async createSuggestedSupports(
+    domainContext: DomainContextType,
+    innovationId: string,
+    newSuggestedUnits: string[],
+    transaction: EntityManager
+  ): Promise<void> {
+    // Create suggestions for the new suggested organisations without ongoing support
+    const ongoingSupports = new Set(
+      (
+        await transaction
+          .createQueryBuilder(InnovationSupportEntity, 'support')
+          .select(['support.id'])
+          .where('support.innovation = :innovationId', { innovationId })
+          .andWhere('support.status IN (:...statuses)', {
+            statuses: [
+              InnovationSupportStatusEnum.SUGGESTED,
+              InnovationSupportStatusEnum.ENGAGING,
+              InnovationSupportStatusEnum.WAITING
+            ]
+          })
+          .getMany()
+      ).map(s => s.id)
+    );
+    // TODO filtrar shared
+
+    for (const unitId of newSuggestedUnits.filter(id => !ongoingSupports.has(id))) {
+      await this.createInnovationSupport(domainContext, innovationId, unitId, transaction);
+    }
   }
 
   /**
