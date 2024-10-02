@@ -19,6 +19,7 @@ import {
 import {
   BadRequestError,
   ConflictError,
+  ForbiddenError,
   GenericErrorsEnum,
   InnovationErrorsEnum,
   NotFoundError,
@@ -27,6 +28,7 @@ import {
 } from '@innovations/shared/errors';
 import { TranslationHelper } from '@innovations/shared/helpers';
 import { DomainInnovationsService, NotifierService } from '@innovations/shared/services';
+import { AuthErrorsEnum } from '@innovations/shared/services/auth/authorization-validation.model';
 import { TestsHelper } from '@innovations/shared/tests';
 import { InnovationSupportLogBuilder } from '@innovations/shared/tests/builders/innovation-support-log.builder';
 import { InnovationSupportBuilder } from '@innovations/shared/tests/builders/innovation-support.builder';
@@ -259,10 +261,17 @@ describe('Innovations / _services / innovation-supports suite', () => {
         DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
         innovation.id,
         organisationWithoutSupport.id,
+        InnovationSupportStatusEnum.SUGGESTED,
         em
       );
 
-      expect(res).toBeUndefined();
+      expect(res).toMatchObject({
+        id: expect.any(String),
+        createdBy: scenario.users.paulNeedsAssessor.id,
+        updatedBy: scenario.users.paulNeedsAssessor.id,
+        status: InnovationSupportStatusEnum.SUGGESTED,
+        isMostRecent: true
+      });
 
       const dbSupport = await em
         .createQueryBuilder(InnovationSupportEntity, 'support')
@@ -292,10 +301,17 @@ describe('Innovations / _services / innovation-supports suite', () => {
         DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
         innovation.id,
         organisationWithSupport.id,
+        InnovationSupportStatusEnum.SUGGESTED,
         em
       );
 
-      expect(res).toBeUndefined();
+      expect(res).toMatchObject({
+        id: expect.any(String),
+        createdBy: scenario.users.paulNeedsAssessor.id,
+        updatedBy: scenario.users.paulNeedsAssessor.id,
+        status: InnovationSupportStatusEnum.SUGGESTED,
+        isMostRecent: true
+      });
     });
 
     it('should fail if there is an active innovation support', async () => {
@@ -304,6 +320,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
           innovation.id,
           organisationWithSupport.id,
+          InnovationSupportStatusEnum.SUGGESTED,
           em
         )
       ).rejects.toThrow(new ConflictError(InnovationErrorsEnum.INNOVATION_SUPPORT_ALREADY_EXISTS));
@@ -317,6 +334,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
           innovation.id,
           organisationWithSupport.id,
+          InnovationSupportStatusEnum.SUGGESTED,
           em
         )
       ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND));
@@ -338,6 +356,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
         DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
         innovation.id,
         organisationWithSupport.id,
+        InnovationSupportStatusEnum.SUGGESTED,
         em
       );
 
@@ -384,6 +403,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
         naContext,
         innovationWithoutSupports.id,
         scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id,
+        InnovationSupportStatusEnum.SUGGESTED,
         em
       );
       expect(createInnovationSupportSpy).toHaveBeenNthCalledWith(
@@ -391,6 +411,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
         naContext,
         innovationWithoutSupports.id,
         scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.id,
+        InnovationSupportStatusEnum.SUGGESTED,
         em
       );
     });
@@ -430,6 +451,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
         naContext,
         innovationWithoutSupports.id,
         scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.id,
+        InnovationSupportStatusEnum.SUGGESTED,
         em
       );
     });
@@ -465,10 +487,14 @@ describe('Innovations / _services / innovation-supports suite', () => {
     });
 
     it('should create and start a support if no active support exists', async () => {
-      if (1 < Number(5)) fail('todo');
+      await em.update(
+        InnovationSupportEntity,
+        { innovation: { id: scenario.users.johnInnovator.innovations.johnInnovation.id } },
+        { status: InnovationSupportStatusEnum.CLOSED }
+      );
       const support = await sut.startInnovationSupport(
         DTOsHelper.getUserRequestContext(scenario.users.bartQualifyingAccessor),
-        scenario.users.adamInnovator.innovations.adamInnovation.id,
+        scenario.users.johnInnovator.innovations.johnInnovation.id,
         {
           status: InnovationSupportStatusEnum.ENGAGING,
           message: randText({ charCount: 10 }),
@@ -485,14 +511,33 @@ describe('Innovations / _services / innovation-supports suite', () => {
       expect(support).toMatchObject({
         id: support.id
       });
-
-      expect(activityLogSpy).toHaveBeenCalled();
-      expect(supportLogSpy).toHaveBeenCalled();
-      expect(notifierSendSpy).toHaveBeenCalled();
     });
 
     it('should start the innovation support if it was SUGGESTED', async () => {
-      fail('todo');
+      await em.update(
+        InnovationSupportEntity,
+        { innovation: { id: scenario.users.johnInnovator.innovations.johnInnovation.id } },
+        { status: InnovationSupportStatusEnum.SUGGESTED }
+      );
+      const support = await sut.startInnovationSupport(
+        DTOsHelper.getUserRequestContext(scenario.users.bartQualifyingAccessor),
+        scenario.users.johnInnovator.innovations.johnInnovation.id,
+        {
+          status: InnovationSupportStatusEnum.ENGAGING,
+          message: randText({ charCount: 10 }),
+          accessors: [
+            {
+              id: scenario.users.jamieMadroxAccessor.id,
+              userRoleId: scenario.users.jamieMadroxAccessor.roles.aiRole.id
+            }
+          ]
+        },
+        em
+      );
+
+      expect(support).toMatchObject({
+        id: support.id
+      });
     });
 
     it('should send the notifyMe', async () => {
@@ -533,9 +578,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           },
           em
         )
-      ).rejects.toThrow(
-        new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_WITH_UNPROCESSABLE_ORGANISATION_UNIT)
-      );
+      ).rejects.toThrow(new ForbiddenError(AuthErrorsEnum.AUTH_USER_ROLE_NOT_ALLOWED));
     });
 
     it(`should throw a not found error if the organisation unit doesn't exist`, async () => {

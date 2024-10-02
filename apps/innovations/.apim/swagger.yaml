@@ -2910,45 +2910,6 @@ paths:
                     format: uuid
                 required:
                   - id
-  /v1/{innovationId}/supports:
-    post:
-      description: Create support in innovation.
-      operationId: v1-innovation-support-create
-      tags:
-        - "[v1] Innovation Support"
-      parameters:
-        - in: path
-          name: innovationId
-          required: true
-          schema:
-            type: string
-      responses:
-        "201":
-          description: Creates a new innovation support request for the innovation
-            identified by the supplied Innovation ID.
-        "401":
-          description: Unauthorised.
-    get:
-      description: Get a list with all Innovation's Supports.
-      operationId: v1-innovations-supports-list
-      tags:
-        - "[v1] Innovation Support"
-      parameters:
-        - in: path
-          name: innovationId
-          required: true
-          schema:
-            type: string
-        - in: query
-          name: status
-          required: false
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Success
-        "404":
-          description: Not found
   /v1/{innovationId}/supports/{supportId}:
     get:
       description: Get supporting information for an Innovation
@@ -3037,6 +2998,45 @@ paths:
                     format: uuid
                 required:
                   - id
+  /v1/{innovationId}/supports:
+    post:
+      description: Starts support in innovation.
+      operationId: v1-innovation-support-start
+      tags:
+        - "[v1] Innovation Support"
+      parameters:
+        - in: path
+          name: innovationId
+          required: true
+          schema:
+            type: string
+      responses:
+        "201":
+          description: Creates a new innovation support request for the innovation
+            identified by the supplied Innovation ID.
+        "401":
+          description: Unauthorised.
+    get:
+      description: Get a list with all Innovation's Supports.
+      operationId: v1-innovations-supports-list
+      tags:
+        - "[v1] Innovation Support"
+      parameters:
+        - in: path
+          name: innovationId
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: status
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+        "404":
+          description: Not found
   /v1/{innovationId}/support-summary:
     get:
       operationId: v1-innovation-support-summary-list

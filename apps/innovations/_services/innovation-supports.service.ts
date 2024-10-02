@@ -26,6 +26,7 @@ import {
 import {
   BadRequestError,
   ConflictError,
+  ForbiddenError,
   GenericErrorsEnum,
   InnovationErrorsEnum,
   NotFoundError,
@@ -455,11 +456,12 @@ export class InnovationSupportsService extends BaseService {
     domainContext: DomainContextType,
     innovationId: string,
     organisationUnitId: string,
+    status: InnovationSupportStatusEnum,
     entityManager?: EntityManager
-  ): Promise<void> {
+  ): Promise<InnovationSupportEntity> {
     if (!entityManager) {
       return this.sqlConnection.transaction(async transaction => {
-        return this.createInnovationSupport(domainContext, innovationId, organisationUnitId, transaction);
+        return this.createInnovationSupport(domainContext, innovationId, organisationUnitId, status, transaction);
       });
     }
 
@@ -489,8 +491,8 @@ export class InnovationSupportsService extends BaseService {
       { isMostRecent: false }
     );
 
-    await entityManager.save(InnovationSupportEntity, {
-      status: InnovationSupportStatusEnum.SUGGESTED,
+    return entityManager.save(InnovationSupportEntity, {
+      status,
       createdBy: domainContext.id,
       updatedBy: domainContext.id,
       innovation: { id: innovationId },
@@ -530,7 +532,13 @@ export class InnovationSupportsService extends BaseService {
     );
 
     for (const unitId of newSuggestedUnits.filter(id => !ongoingSupports.has(id) && sharedUnits.has(id))) {
-      await this.createInnovationSupport(domainContext, innovationId, unitId, transaction);
+      await this.createInnovationSupport(
+        domainContext,
+        innovationId,
+        unitId,
+        InnovationSupportStatusEnum.SUGGESTED,
+        transaction
+      );
     }
   }
 
@@ -548,15 +556,13 @@ export class InnovationSupportsService extends BaseService {
     },
     entityManager?: EntityManager
   ): Promise<{ id: string }> {
-    if (1 < Number(5))
-      throw new Error('Missing start support changes: suggested, search. Use the create Innovation Support');
     const connection = entityManager ?? this.sqlConnection.manager;
 
-    const organisationUnitId = domainContext.organisation?.organisationUnit?.id;
-
-    if (!organisationUnitId) {
-      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_WITH_UNPROCESSABLE_ORGANISATION_UNIT);
+    if (!isAccessorDomainContextType(domainContext)) {
+      throw new ForbiddenError(AuthErrorsEnum.AUTH_USER_ROLE_NOT_ALLOWED);
     }
+
+    const organisationUnitId = domainContext.organisation.organisationUnit.id;
 
     const organisationUnit = await connection
       .createQueryBuilder(OrganisationUnitEntity, 'unit')
@@ -571,8 +577,13 @@ export class InnovationSupportsService extends BaseService {
       .createQueryBuilder(InnovationSupportEntity, 'support')
       .where('support.innovation.id = :innovationId ', { innovationId })
       .andWhere('support.organisation_unit_id = :organisationUnitId', { organisationUnitId })
+      .andWhere('support.isMostRecent = 1')
       .getOne();
-    if (support) {
+
+    if (
+      support?.status === InnovationSupportStatusEnum.ENGAGING ||
+      support?.status === InnovationSupportStatusEnum.WAITING
+    ) {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_ALREADY_EXISTS);
     }
 
@@ -587,16 +598,26 @@ export class InnovationSupportsService extends BaseService {
     const accessors = data.accessors?.map(item => item.userRoleId) ?? [];
 
     const result = await connection.transaction(async transaction => {
-      const newSupport = InnovationSupportEntity.new({
-        status: data.status,
-        createdBy: domainContext.id,
-        updatedBy: domainContext.id,
-        innovation: InnovationEntity.new({ id: innovationId }),
-        organisationUnit: OrganisationUnitEntity.new({ id: organisationUnit.id }),
-        userRoles: [] // this will be setup later but we need to create the support first
-      });
+      let savedSupport: InnovationSupportEntity;
+      // Update support if it already exists (suggested) otherwise create a new one (organisation started on their own)
+      if (support?.status === InnovationSupportStatusEnum.SUGGESTED) {
+        const newSupport = support;
+        newSupport.status = data.status;
+        newSupport.updatedBy = domainContext.id;
+        savedSupport = await transaction.save(InnovationSupportEntity, newSupport);
+      } else {
+        savedSupport = await this.createInnovationSupport(
+          domainContext,
+          innovationId,
+          organisationUnitId,
+          data.status,
+          transaction
+        );
+      }
 
-      const savedSupport = await transaction.save(InnovationSupportEntity, newSupport);
+      // This is required because the typeorm entity is incomplete and will be assigned later
+      savedSupport.userRoles = [];
+      savedSupport.organisationUnit = organisationUnit;
 
       const user = { id: domainContext.id, identityId: domainContext.identityId };
       const thread = await this.innovationThreadsService.createThreadOrMessage(
@@ -822,6 +843,11 @@ export class InnovationSupportsService extends BaseService {
       .getOne();
     if (!dbSupport) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
+    }
+
+    if (dbSupport.status === InnovationSupportStatusEnum.SUGGESTED) {
+      // CLOSED; UNSUITABLE;
+      throw new Error('TODO - dbsupport must be active');
     }
 
     const validSupportStatus = await this.getValidSupportStatuses(
