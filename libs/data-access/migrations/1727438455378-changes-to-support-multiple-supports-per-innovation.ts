@@ -31,7 +31,7 @@ export class ChangesToSupportMultipleSupportsPerInnovation1727438455378 implemen
     // Update assessment_id with current_assessment_id from innovation table
     await queryRunner.query(`
       UPDATE innovation_support
-      SET major_assessment_id = innovation.current_major_assessment_id
+      SET major_assessment_id = innovation.current_major_assessment_id, is_most_recent = 1
       FROM innovation_support
       INNER JOIN innovation ON innovation_support.innovation_id = innovation.id;
 
