@@ -880,6 +880,14 @@ export class InnovationSupportsService extends BaseService {
       dbSupport.status = data.status;
       dbSupport.updatedBy = domainContext.id;
 
+      // add finishedAt if closing state
+      if (
+        data.status === InnovationSupportStatusEnum.CLOSED ||
+        data.status === InnovationSupportStatusEnum.UNSUITABLE
+      ) {
+        dbSupport.finishedAt = new Date();
+      }
+
       const savedSupport = await transaction.save(InnovationSupportEntity, dbSupport);
 
       const thread = await this.innovationThreadsService.createThreadOrMessage(

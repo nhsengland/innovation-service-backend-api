@@ -1148,6 +1148,68 @@ describe('Innovations / _services / innovation-supports suite', () => {
     );
 
     it.each([
+      [innovation.supports.supportByHealthOrgUnit.id, InnovationSupportStatusEnum.CLOSED],
+      [innovation.supports.supportByHealthOrgAiUnit.id, InnovationSupportStatusEnum.UNSUITABLE]
+    ])(
+      'should update finishedAt when status is changed to %s',
+      async (supportId: string, status: InnovationSupportStatusEnum) => {
+        const support = await sut.updateInnovationSupport(
+          DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+          innovation.id,
+          supportId,
+          {
+            status: status,
+            message: randText({ charCount: 10 })
+          },
+          em
+        );
+
+        expect(support).toMatchObject({
+          id: support.id
+        });
+
+        const dbSupport = await em
+          .createQueryBuilder(InnovationSupportEntity, 'support')
+          .select(['support.finishedAt'])
+          .where('support.id = :supportId', { supportId: support.id })
+          .getOne();
+
+        expect(dbSupport?.finishedAt).toStrictEqual(expect.any(Date));
+      }
+    );
+
+    it.each([
+      [innovation.supports.supportByHealthOrgUnit.id, InnovationSupportStatusEnum.WAITING],
+      [innovation.supports.supportByHealthOrgAiUnit.id, InnovationSupportStatusEnum.ENGAGING]
+    ])(
+      "shouldn't update finishedAt when status is changed to %s",
+      async (supportId: string, status: InnovationSupportStatusEnum) => {
+        const support = await sut.updateInnovationSupport(
+          DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+          innovation.id,
+          supportId,
+          {
+            status: status,
+            message: randText({ charCount: 10 })
+          },
+          em
+        );
+
+        expect(support).toMatchObject({
+          id: support.id
+        });
+
+        const dbSupport = await em
+          .createQueryBuilder(InnovationSupportEntity, 'support')
+          .select(['support.finishedAt'])
+          .where('support.id = :supportId', { supportId: support.id })
+          .getOne();
+
+        expect(dbSupport?.finishedAt).toBeUndefined();
+      }
+    );
+
+    it.each([
       InnovationSupportStatusEnum.SUGGESTED,
       InnovationSupportStatusEnum.CLOSED,
       InnovationSupportStatusEnum.UNSUITABLE
