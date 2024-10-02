@@ -965,32 +965,31 @@ describe('Innovations / _services / innovation-supports suite', () => {
   describe('updateSupportStatus', () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
 
-    it.each([
-      InnovationSupportStatusEnum.CLOSED,
-      InnovationSupportStatusEnum.UNSUITABLE,
-      InnovationSupportStatusEnum.WAITING
-    ])('should update the support status to %s', async (status: InnovationSupportStatusEnum) => {
-      const support = await sut.updateInnovationSupport(
-        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
-        innovation.id,
-        innovation.supports.supportByHealthOrgUnit.id,
-        { status: status, message: randText({ charCount: 10 }) },
-        em
-      );
+    it.each([InnovationSupportStatusEnum.CLOSED, InnovationSupportStatusEnum.WAITING])(
+      'should update the support status to %s',
+      async (status: InnovationSupportStatusEnum) => {
+        const support = await sut.updateInnovationSupport(
+          DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+          innovation.id,
+          innovation.supports.supportByHealthOrgUnit.id,
+          { status: status, message: randText({ charCount: 10 }) },
+          em
+        );
 
-      expect(support).toMatchObject({ id: support.id });
+        expect(support).toMatchObject({ id: support.id });
 
-      expect(activityLogSpy).toHaveBeenCalled();
-      expect(supportLogSpy).toHaveBeenCalled();
-      expect(notifierSendSpy).toHaveBeenCalled();
+        expect(activityLogSpy).toHaveBeenCalled();
+        expect(supportLogSpy).toHaveBeenCalled();
+        expect(notifierSendSpy).toHaveBeenCalled();
 
-      const dbSupport = await em
-        .createQueryBuilder(InnovationSupportEntity, 'support')
-        .where('support.id = :supportId', { supportId: support.id })
-        .getOne();
+        const dbSupport = await em
+          .createQueryBuilder(InnovationSupportEntity, 'support')
+          .where('support.id = :supportId', { supportId: support.id })
+          .getOne();
 
-      expect(dbSupport?.status).toBe(status);
-    });
+        expect(dbSupport?.status).toBe(status);
+      }
+    );
 
     it('should add new assigned accessors when status is changed to ENGAGING', async () => {
       const support = await sut.updateInnovationSupport(
@@ -1074,8 +1073,6 @@ describe('Innovations / _services / innovation-supports suite', () => {
 
     it.each([
       [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.CLOSED],
-      [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.UNSUITABLE],
-      [InnovationSupportStatusEnum.WAITING, InnovationSupportStatusEnum.CLOSED],
       [InnovationSupportStatusEnum.WAITING, InnovationSupportStatusEnum.UNSUITABLE]
     ])(
       'should clear any open tasks when status is changed from %s to %s',
@@ -1118,13 +1115,16 @@ describe('Innovations / _services / innovation-supports suite', () => {
       }
     );
 
-    it.each([InnovationSupportStatusEnum.CLOSED, InnovationSupportStatusEnum.UNSUITABLE])(
+    it.each([
+      [innovation.supports.supportByHealthOrgUnit.id, InnovationSupportStatusEnum.CLOSED],
+      [innovation.supports.supportByHealthOrgAiUnit.id, InnovationSupportStatusEnum.UNSUITABLE]
+    ])(
       'should remove all assigned accessors when status is changed to %s',
-      async (status: InnovationSupportStatusEnum) => {
+      async (supportId: string, status: InnovationSupportStatusEnum) => {
         const support = await sut.updateInnovationSupport(
           DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
           innovation.id,
-          innovation.supports.supportByHealthOrgUnit.id,
+          supportId,
           {
             status: status,
             message: randText({ charCount: 10 })
@@ -1146,6 +1146,26 @@ describe('Innovations / _services / innovation-supports suite', () => {
         expect(dbSupport?.userRoles).toHaveLength(0);
       }
     );
+
+    it.each([
+      InnovationSupportStatusEnum.SUGGESTED,
+      InnovationSupportStatusEnum.CLOSED,
+      InnovationSupportStatusEnum.UNSUITABLE
+    ])('should not allow update if status is %s', async (status: InnovationSupportStatusEnum) => {
+      await em.update(InnovationSupportEntity, { id: innovation.supports.supportByHealthOrgUnit.id }, { status });
+      await expect(
+        sut.updateInnovationSupport(
+          DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+          innovation.id,
+          innovation.supports.supportByHealthOrgUnit.id,
+          {
+            status: status,
+            message: randText({ charCount: 10 })
+          },
+          em
+        )
+      ).rejects.toThrow(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UPDATE_INACTIVE));
+    });
 
     it('should send a notifyMe when status is changed', async () => {
       const context = DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor);
@@ -1586,13 +1606,11 @@ describe('Innovations / _services / innovation-supports suite', () => {
 
   describe('getValidSupportStatuses', () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
-    const supportThatWasEngaged = innovation.supports.supportByHealthOrgUnit;
-    const supportThatWasNotEngaged = innovation.supports.supportByHealthOrgAiUnit;
+    const support = innovation.supports.supportByHealthOrgUnit;
 
     it.each([
       [
         InnovationSupportStatusEnum.SUGGESTED,
-        true,
         [
           InnovationSupportStatusEnum.ENGAGING,
           InnovationSupportStatusEnum.WAITING,
@@ -1601,54 +1619,19 @@ describe('Innovations / _services / innovation-supports suite', () => {
       ],
       [
         InnovationSupportStatusEnum.WAITING,
-        true,
-        [
-          InnovationSupportStatusEnum.ENGAGING,
-          InnovationSupportStatusEnum.UNSUITABLE,
-          InnovationSupportStatusEnum.CLOSED
-        ]
+        [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.UNSUITABLE]
       ],
-      [
-        InnovationSupportStatusEnum.WAITING,
-        false,
-        [
-          InnovationSupportStatusEnum.ENGAGING,
-          InnovationSupportStatusEnum.UNSUITABLE,
-          InnovationSupportStatusEnum.CLOSED
-        ]
-      ],
-      [
-        InnovationSupportStatusEnum.UNSUITABLE,
-        true,
-        [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.WAITING, InnovationSupportStatusEnum.CLOSED]
-      ],
-      [
-        InnovationSupportStatusEnum.UNSUITABLE,
-        false,
-        [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.WAITING, InnovationSupportStatusEnum.CLOSED]
-      ],
-      [
-        InnovationSupportStatusEnum.ENGAGING,
-        true,
-        [
-          InnovationSupportStatusEnum.WAITING,
-          InnovationSupportStatusEnum.UNSUITABLE,
-          InnovationSupportStatusEnum.CLOSED
-        ]
-      ]
+      [InnovationSupportStatusEnum.UNSUITABLE, []],
+      [InnovationSupportStatusEnum.ENGAGING, [InnovationSupportStatusEnum.WAITING, InnovationSupportStatusEnum.CLOSED]]
     ])(
       'when status is %s and wasEngaged=%s it should return %s',
-      async (
-        currentStatus: InnovationSupportStatusEnum,
-        wasEngaged: boolean,
-        expected: InnovationSupportStatusEnum[]
-      ) => {
-        const supportId = wasEngaged ? supportThatWasEngaged.id : supportThatWasNotEngaged.id;
+      async (currentStatus: InnovationSupportStatusEnum, expected: InnovationSupportStatusEnum[]) => {
+        const supportId = support.id;
         await em.getRepository(InnovationSupportEntity).update({ id: supportId }, { status: currentStatus });
 
         const validSupportStatuses = await sut.getValidSupportStatuses(
           innovation.id,
-          supportId === supportThatWasEngaged.id
+          supportId === support.id
             ? scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id
             : scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id,
           em

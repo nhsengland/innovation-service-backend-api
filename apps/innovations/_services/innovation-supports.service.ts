@@ -840,14 +840,14 @@ export class InnovationSupportsService extends BaseService {
       .innerJoinAndSelect('support.organisationUnit', 'organisationUnit')
       .leftJoinAndSelect('support.userRoles', 'userRole')
       .where('support.id = :supportId ', { supportId })
+      .andWhere('support.isMostRecent = 1')
       .getOne();
     if (!dbSupport) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
     }
 
-    if (dbSupport.status === InnovationSupportStatusEnum.SUGGESTED) {
-      // CLOSED; UNSUITABLE;
-      throw new Error('TODO - dbsupport must be active');
+    if (!(await this.hasActiveSupport(innovationId, dbSupport.organisationUnit.id, connection))) {
+      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UPDATE_INACTIVE);
     }
 
     const validSupportStatus = await this.getValidSupportStatuses(
@@ -1535,28 +1535,37 @@ export class InnovationSupportsService extends BaseService {
   ): Promise<InnovationSupportStatusEnum[]> {
     const em = entityManager ?? this.sqlConnection.manager;
 
-    let [support] = await em.query<{ status: InnovationSupportStatusEnum; engagedCount: number }[]>(
-      `
-        SELECT s.[status], (
-          SELECT COUNT(*) FROM innovation_support FOR SYSTEM_TIME ALL WHERE id = s.id AND [status] = 'ENGAGING'
-        ) as engagedCount
-        FROM innovation_support s
-        WHERE s.innovation_id = @0 AND organisation_unit_id = @1
-      `,
-      [innovationId, unitId]
-    );
+    // keeping this commented for now in case previously engaged supports are considered for closing
+    // let [support] = await em.query<{ status: InnovationSupportStatusEnum; engagedCount: number }[]>(
+    //   `
+    //     SELECT s.[status], (
+    //       SELECT COUNT(*) FROM innovation_support FOR SYSTEM_TIME ALL WHERE id = s.id AND [status] = 'ENGAGING'
+    //     ) as engagedCount
+    //     FROM innovation_support s
+    //     WHERE s.innovation_id = @0 AND organisation_unit_id = @1
+    //   `,
+    //   [innovationId, unitId]
+    // );
+    // if (!support) {
+    //   support = { status: InnovationSupportStatusEnum.SUGGESTED, engagedCount: 0 };
+    // }
+    // // currently this is not considered for closing, if this remains the query can be changed
+    // // const beenEngaged = support.engagedCount > 0;
+    // const beenEngaged = true;
 
-    if (!support) {
-      support = { status: InnovationSupportStatusEnum.SUGGESTED, engagedCount: 0 }; // TODO MJS - Check if this is correct
-    }
+    const status =
+      (
+        await em
+          .createQueryBuilder(InnovationSupportEntity, 'support')
+          .select('support.status')
+          .where('support.innovation_id = :innovationId', { innovationId })
+          .andWhere('support.organisation_unit_id = :unitId', { unitId })
+          .andWhere('support.isMostRecent = 1')
+          .getOne()
+      )?.status ?? InnovationSupportStatusEnum.SUGGESTED;
 
-    // currently this is not considered for closing, if this remains the query can be changed
-    // const beenEngaged = support.engagedCount > 0;
-    const beenEngaged = true;
-
-    switch (support.status) {
+    switch (status) {
       case InnovationSupportStatusEnum.SUGGESTED: // TODO MJS - Check if this is correct
-      case InnovationSupportStatusEnum.CLOSED:
         return [
           InnovationSupportStatusEnum.ENGAGING,
           InnovationSupportStatusEnum.WAITING,
@@ -1564,31 +1573,15 @@ export class InnovationSupportsService extends BaseService {
         ];
 
       case InnovationSupportStatusEnum.WAITING:
-        if (beenEngaged) {
-          return [
-            InnovationSupportStatusEnum.ENGAGING,
-            InnovationSupportStatusEnum.UNSUITABLE,
-            InnovationSupportStatusEnum.CLOSED
-          ];
-        }
         return [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.UNSUITABLE];
 
       case InnovationSupportStatusEnum.ENGAGING:
-        return [
-          InnovationSupportStatusEnum.WAITING,
-          InnovationSupportStatusEnum.UNSUITABLE,
-          InnovationSupportStatusEnum.CLOSED
-        ];
+        return [InnovationSupportStatusEnum.WAITING, InnovationSupportStatusEnum.CLOSED];
 
+      case InnovationSupportStatusEnum.CLOSED:
       case InnovationSupportStatusEnum.UNSUITABLE:
-        if (beenEngaged) {
-          return [
-            InnovationSupportStatusEnum.ENGAGING,
-            InnovationSupportStatusEnum.WAITING,
-            InnovationSupportStatusEnum.CLOSED
-          ];
-        }
-        return [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.WAITING];
+      default:
+        return [];
     }
   }
 
