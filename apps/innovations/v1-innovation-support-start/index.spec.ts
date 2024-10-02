@@ -33,9 +33,9 @@ afterEach(() => {
   jest.clearAllMocks();
 });
 
-describe('v1-innovation-support-change-request Suite', () => {
+describe('v1-innovation-support-start Suite', () => {
   describe('200', () => {
-    it('should return the innovation suggestions', async () => {
+    it('should start an innovation support', async () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.aliceQualifyingAccessor)
         .setParams<ParamsType>({
