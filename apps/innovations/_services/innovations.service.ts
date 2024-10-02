@@ -17,6 +17,7 @@ import {
   NotificationEntity,
   NotificationUserEntity,
   OrganisationEntity,
+  OrganisationUnitEntity,
   UserEntity,
   UserRoleEntity
 } from '@innovations/shared/entities';
@@ -73,6 +74,7 @@ import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import { groupBy, isString, mapValues, omit, pick, snakeCase } from 'lodash';
 import { BaseService } from './base.service';
 import { InnovationDocumentService } from './innovation-document.service';
+import { InnovationSupportsService } from './innovation-supports.service';
 import SYMBOLS from './symbols';
 
 // TODO move types
@@ -221,6 +223,7 @@ export class InnovationsService extends BaseService {
     @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
     @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
     @inject(SHARED_SYMBOLS.IRSchemaService) private irSchemaService: IRSchemaService,
+    @inject(SYMBOLS.InnovationSupportsService) private innovationSupportsService: InnovationSupportsService,
     @inject(SYMBOLS.InnovationDocumentService) private innovationDocumentService: InnovationDocumentService
   ) {
     super();
@@ -1541,8 +1544,15 @@ export class InnovationsService extends BaseService {
 
     const innovation = await em
       .createQueryBuilder(InnovationEntity, 'innovation')
-      .select(['innovation.id', 'innovation.status', 'innovation.hasBeenAssessed', 'organisationShares.id'])
+      .select([
+        'innovation.id',
+        'innovation.status',
+        'innovation.hasBeenAssessed',
+        'organisationShares.id',
+        'majorAssessment.id'
+      ])
       .leftJoin('innovation.organisationShares', 'organisationShares')
+      .leftJoin('innovation.currentMajorAssessment', 'majorAssessment')
       .where('innovation.id = :innovationId', { innovationId })
       .getOne();
 
@@ -1679,6 +1689,38 @@ export class InnovationsService extends BaseService {
         { organisations: organisations.map(o => o.name) }
       );
       await transaction.save(InnovationEntity, innovation);
+
+      // Create the supports for suggested organisations that were now shared
+      // this can only be after the new shares have been saved as createSuggestedSupports will check for the sharing
+      if (addedShares.length > 0) {
+        const suggestions = new Set(
+          await this.innovationSupportsService.getInnovationSuggestedUnits(
+            innovationId,
+            { majorAssessmentId: innovation.currentMajorAssessment?.id },
+            transaction
+          )
+        );
+
+        const organisationUnits = await transaction
+          .createQueryBuilder(OrganisationUnitEntity, 'unit')
+          .select(['unit.id'])
+          .where('unit.organisation_id IN (:...organisationId)', { organisationId: addedShares })
+          .andWhere('unit.inactivatedAt IS NULL')
+          .getMany();
+
+        const newUnitShares = organisationUnits
+          .filter(u => suggestions.has(u.id)) // only the ones that were suggested
+          .map(u => u.id);
+
+        if (newUnitShares.length) {
+          await this.innovationSupportsService.createSuggestedSupports(
+            domainContext,
+            innovationId,
+            newUnitShares,
+            transaction
+          );
+        }
+      }
 
       return toReturn;
     });

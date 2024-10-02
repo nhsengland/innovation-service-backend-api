@@ -41,6 +41,7 @@ import {
 import assert from 'node:assert';
 import { EntityManager } from 'typeorm';
 import { container } from '../_config';
+import { InnovationSupportsService } from './innovation-supports.service';
 import type { InnovationsService } from './innovations.service';
 import SYMBOLS from './symbols';
 
@@ -221,6 +222,21 @@ describe('Innovations / _services / innovations suite', () => {
   describe('updateInnovationShares', () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
 
+    const getInnovationSuggestedUnitsSpy = jest
+      .spyOn(InnovationSupportsService.prototype, 'getInnovationSuggestedUnits')
+      .mockResolvedValue([]);
+    const createSuggestedSupports = jest.spyOn(InnovationSupportsService.prototype, 'createSuggestedSupports');
+
+    beforeEach(() => {
+      getInnovationSuggestedUnitsSpy.mockClear();
+      createSuggestedSupports.mockClear();
+    });
+
+    afterAll(() => {
+      getInnovationSuggestedUnitsSpy.mockRestore();
+      createSuggestedSupports.mockRestore();
+    });
+
     it('should update the organisations that the innovation is shared with', async () => {
       // remove all existing shares and add share with innovTechOrg
       await sut.updateInnovationShares(
@@ -315,6 +331,38 @@ describe('Innovations / _services / innovations suite', () => {
 
       expect(dbRequest?.status).toBe(InnovationExportRequestStatusEnum.REJECTED);
       expect(dbRequest?.rejectReason).toBe(TranslationHelper.translate('DEFAULT_MESSAGES.EXPORT_REQUEST.STOP_SHARING'));
+    });
+
+    it('should add a support when adding a share if the support organisation unit had been suggested', async () => {
+      const context = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator);
+      getInnovationSuggestedUnitsSpy.mockResolvedValueOnce([
+        scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.id
+      ]);
+      await em.query('DELETE FROM innovation_share WHERE innovation_id = @0', [innovation.id]);
+      await sut.updateInnovationShares(context, innovation.id, [scenario.organisations.innovTechOrg.id], em);
+
+      expect(createSuggestedSupports).toHaveBeenCalled();
+      expect(createSuggestedSupports).toHaveBeenCalledWith(
+        context,
+        innovation.id,
+        [scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.id],
+        em
+      );
+    });
+
+    it("should not add a support when adding a share if the support organisation unit hadn't been suggested", async () => {
+      const context = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator);
+      await em.query('DELETE FROM innovation_share WHERE innovation_id = @0', [innovation.id]);
+      await sut.updateInnovationShares(context, innovation.id, [scenario.organisations.innovTechOrg.id], em);
+
+      expect(createSuggestedSupports).toHaveBeenCalledTimes(0);
+    });
+
+    it('should not add support when sharing with an organisation that was already shared', async () => {
+      const context = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator);
+      await sut.updateInnovationShares(context, innovation.id, [scenario.organisations.innovTechOrg.id], em);
+
+      expect(createSuggestedSupports).toHaveBeenCalledTimes(0);
     });
 
     it('should add the stop share to support summary from removed units', async () => {

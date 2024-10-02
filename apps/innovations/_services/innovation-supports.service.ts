@@ -263,14 +263,52 @@ export class InnovationSupportsService extends BaseService {
    */
   async getInnovationSuggestions(
     innovationId: string,
+    filters?: {
+      majorAssessmentId?: string;
+    },
     entityManager?: EntityManager
   ): Promise<InnovationSuggestionsType> {
+    const suggestions = await this.getDbSuggestions(innovationId, filters, entityManager);
+
+    const assessmentSuggestions = new Map<string, SuggestedOrganisationInfo>();
+    const accessorSuggestions = new Map<string, InnovationSuggestionAccessor>();
+
+    for (const suggestion of suggestions) {
+      // Means is a suggestion from Assessment team.
+      if (!suggestion.whom_id) {
+        this.addToAssessmentSuggestions(assessmentSuggestions, suggestion);
+      } else {
+        this.addToAccessorSuggestions(accessorSuggestions, suggestion);
+      }
+    }
+    return {
+      assessment: { suggestedOrganisations: Array.from(assessmentSuggestions.values()) },
+      accessors: Array.from(accessorSuggestions.values())
+    };
+  }
+
+  /** returns a list of units that have been suggested (id for now) */
+  async getInnovationSuggestedUnits(
+    innovationId: string,
+    filters?: { majorAssessmentId?: string },
+    entityManager?: EntityManager
+  ): Promise<string[]> {
+    const suggestions = await this.getDbSuggestions(innovationId, filters, entityManager);
+
+    return suggestions.map(s => s.suggested_unit_id);
+  }
+
+  /** Helper function to return the suggestions from the database */
+  private async getDbSuggestions(
+    innovationId: string,
+    filters?: { majorAssessmentId?: string },
+    entityManager?: EntityManager
+  ): Promise<SupportLogSuggestion[]> {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const query = em
       .createQueryBuilder()
       .from(InnovationSupportLogEntity, 'sl')
-      .distinct()
       .select([
         'whom.id',
         'whom.name',
@@ -303,23 +341,12 @@ export class InnovationSupportsService extends BaseService {
       .orderBy('whom.name', 'ASC')
       .addOrderBy('suggested_org.name', 'ASC')
       .addOrderBy('suggested_unit.name', 'ASC');
-    const rows = await query.getRawMany<SupportLogSuggestion>();
 
-    const assessmentSuggestions = new Map<string, SuggestedOrganisationInfo>();
-    const accessorSuggestions = new Map<string, InnovationSuggestionAccessor>();
-
-    for (const suggestion of rows) {
-      // Means is a suggestion from Assessment team.
-      if (!suggestion.whom_id) {
-        this.addToAssessmentSuggestions(assessmentSuggestions, suggestion);
-      } else {
-        this.addToAccessorSuggestions(accessorSuggestions, suggestion);
-      }
+    if (filters?.majorAssessmentId) {
+      query.andWhere('sl.major_assessment_id = :majorAssessmentId', { majorAssessmentId: filters.majorAssessmentId });
     }
-    return {
-      assessment: { suggestedOrganisations: Array.from(assessmentSuggestions.values()) },
-      accessors: Array.from(accessorSuggestions.values())
-    };
+
+    return await query.getRawMany<SupportLogSuggestion>();
   }
 
   private addToAssessmentSuggestions(
