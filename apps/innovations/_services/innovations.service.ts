@@ -29,6 +29,7 @@ import {
   type InnovationGroupedStatusEnum,
   InnovationSectionStatusEnum,
   InnovationStatusEnum,
+  InnovationSupportCloseReasonEnum,
   InnovationSupportStatusEnum,
   InnovationTaskStatusEnum,
   NotifierTypeEnum,
@@ -1596,6 +1597,10 @@ export class InnovationsService extends BaseService {
           .leftJoin('userRole.user', 'user', "user.status <> 'DELETED'")
           .where('innovation.id = :innovationId', { innovationId })
           .andWhere('unit.organisation IN (:...ids)', { ids: deletedShares })
+          .andWhere('support.status NOT IN (:...statuses)', {
+            statuses: [InnovationSupportStatusEnum.CLOSED, InnovationSupportStatusEnum.UNSUITABLE]
+          })
+          .andWhere('support.isMostRecent = 1')
           .getMany();
 
         const supportsOrgIdMap = new Map(supports.map(support => [support.organisationUnit.organisationId, support]));
@@ -1639,7 +1644,11 @@ export class InnovationsService extends BaseService {
           await transaction.update(
             InnovationSupportEntity,
             { id: In(supportIds) },
-            { status: InnovationSupportStatusEnum.CLOSED, updatedBy: domainContext.id }
+            {
+              status: InnovationSupportStatusEnum.CLOSED,
+              closeReason: InnovationSupportCloseReasonEnum.STOP_SHARE,
+              updatedBy: domainContext.id
+            }
           );
 
           const units = supports.map(s => s.organisationUnit.id);
