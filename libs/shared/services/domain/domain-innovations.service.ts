@@ -27,6 +27,7 @@ import {
   InnovationCollaboratorStatusEnum,
   InnovationExportRequestStatusEnum,
   InnovationStatusEnum,
+  InnovationSupportCloseReasonEnum,
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
   InnovationTaskStatusEnum,
@@ -195,7 +196,7 @@ export class DomainInnovationsService {
    * Contains all the business rules of archiving innovations.
    * It's responsible for:
    * 1. Updating all OPEN tasks to CANCELLED
-   * 2. Changing all supports to closed and save a snapshot
+   * 2. Changes all active supports to closed with the archive reason.
    * 3. Rejecting all PENDING export requests
    * 4. Updating innovation status to Archived and saving prevStatus
    * 5. Adding an entry to support log for each unit
@@ -306,7 +307,10 @@ export class DomainInnovationsService {
           .leftJoin('support.userRoles', 'userRole')
           .leftJoin('userRole.user', 'user', "user.status <> 'DELETED'")
           .where('support.innovation_id = :innovationId', { innovationId: innovation.id })
-          .andWhere('support.status <> :supportClosed', { supportClosed: InnovationSupportStatusEnum.CLOSED })
+          .andWhere('support.status NOT IN (:...statuses)', {
+            statuses: [InnovationSupportStatusEnum.CLOSED, InnovationSupportStatusEnum.UNSUITABLE]
+          })
+          .andWhere('support.isMostRecent = 1')
           .getMany();
 
         innovation.affectedUsers.push(
@@ -341,7 +345,8 @@ export class DomainInnovationsService {
           support.userRoles = [];
           support.updatedBy = domainContext.id;
           support.status = InnovationSupportStatusEnum.CLOSED;
-
+          support.closeReason = InnovationSupportCloseReasonEnum.ARCHIVE;
+          support.finishedAt = new Date();
           return support;
         });
         await transaction.save(InnovationSupportEntity, supportsToUpdate);

@@ -11,6 +11,7 @@ import {
   InnovationExportRequestStatusEnum,
   InnovationSectionStatusEnum,
   InnovationStatusEnum,
+  InnovationSupportCloseReasonEnum,
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
   InnovationTaskStatusEnum
@@ -510,13 +511,17 @@ describe('Innovations / _services / innovations suite', () => {
         .leftJoin('support.userRoles', 'userRole')
         .leftJoin('userRole.user', 'user')
         .where('innovation.id = :innovationId', { innovationId: innovation.id })
+        .andWhere('support.status NOT IN (:...statuses)', {
+          statuses: [InnovationSupportStatusEnum.CLOSED, InnovationSupportStatusEnum.UNSUITABLE]
+        })
+        .andWhere('support.isMostRecent = 1')
         .getMany();
 
       await sut.archiveInnovation(context, innovation.id, { message: message }, em);
 
       const dbSupports = await em
         .createQueryBuilder(InnovationSupportEntity, 'support')
-        .select(['support.id', 'support.status'])
+        .select(['support.id', 'support.status', 'support.closeReason', 'support.finishedAt'])
         .where('support.id IN (:...supportIds)', { supportIds: dbPreviousSupports.map(s => s.id) })
         .getMany();
 
@@ -524,6 +529,8 @@ describe('Innovations / _services / innovations suite', () => {
         const previousSupport = dbPreviousSupports.find(s => s.id === support.id);
         assert(previousSupport);
         expect(support.status).toBe(InnovationSupportStatusEnum.CLOSED);
+        expect(support.closeReason).toBe(InnovationSupportCloseReasonEnum.ARCHIVE);
+        expect(support.finishedAt).toStrictEqual(expect.any(Date));
       }
     });
 

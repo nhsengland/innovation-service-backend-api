@@ -1641,14 +1641,17 @@ export class InnovationsService extends BaseService {
           );
 
           // Close all supports
-          await transaction.update(
+          // TODO: confirm this with mjs.
+          await transaction.save(
             InnovationSupportEntity,
-            { id: In(supportIds) },
-            {
-              status: InnovationSupportStatusEnum.CLOSED,
-              closeReason: InnovationSupportCloseReasonEnum.STOP_SHARE,
-              updatedBy: domainContext.id
-            }
+            supports.map(support => {
+              support.userRoles = [];
+              support.updatedBy = domainContext.id;
+              support.status = InnovationSupportStatusEnum.CLOSED;
+              support.closeReason = InnovationSupportCloseReasonEnum.STOP_SHARE;
+              support.finishedAt = new Date();
+              return support;
+            })
           );
 
           const units = supports.map(s => s.organisationUnit.id);
