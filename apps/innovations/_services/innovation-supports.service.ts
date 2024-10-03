@@ -517,7 +517,15 @@ export class InnovationSupportsService extends BaseService {
         }
       );
 
-      await this.assignAccessors(domainContext, savedSupport, accessors, thread.thread.id, transaction);
+      await this.assignAccessors(
+        domainContext,
+        savedSupport,
+        accessors,
+        data.message,
+        true,
+        thread.thread.id,
+        transaction
+      );
 
       if (data.file) {
         await this.innovationFileService.createFile(
@@ -551,14 +559,6 @@ export class InnovationSupportsService extends BaseService {
           data.status === InnovationSupportStatusEnum.ENGAGING ? (data.accessors ?? []).map(item => item.id) : []
       }
     });
-    //sends an email and inapp to QAs when a new support in the WAITING status is created
-    if (data.status === InnovationSupportStatusEnum.WAITING && data.accessors?.length) {
-      await this.notifierService.send(domainContext, NotifierTypeEnum.SUPPORT_NEW_ASSIGN_WAITING_INNOVATION, {
-        innovationId,
-        newAssignedAccessorsRoleIds: data.accessors.map(item => item.id),
-        supportId: result.id
-      });
-    }
 
     await this.notifierService.sendNotifyMe(domainContext, innovationId, 'SUPPORT_UPDATED', {
       status: data.status,
@@ -710,6 +710,7 @@ export class InnovationSupportsService extends BaseService {
       .createQueryBuilder(InnovationSupportEntity, 'support')
       .innerJoinAndSelect('support.organisationUnit', 'organisationUnit')
       .leftJoinAndSelect('support.userRoles', 'userRole')
+      .leftJoinAndSelect('support.innovation', 'innovation')
       .where('support.id = :supportId ', { supportId })
       .getOne();
     if (!dbSupport) {
@@ -789,6 +790,8 @@ export class InnovationSupportsService extends BaseService {
         domainContext,
         savedSupport,
         assignedAccessors,
+        data.message,
+        true,
         thread.thread.id,
         transaction
       );
@@ -796,6 +799,7 @@ export class InnovationSupportsService extends BaseService {
       return { id: savedSupport.id, newAssignedAccessors: new Set(newAssignedAccessors), threadId: thread.thread.id };
     });
 
+    // Notify the innovator
     await this.notifierService.send(domainContext, NotifierTypeEnum.SUPPORT_STATUS_UPDATE, {
       innovationId,
       threadId: result.threadId,
@@ -817,17 +821,6 @@ export class InnovationSupportsService extends BaseService {
       units: dbSupport.organisationUnit.id,
       message: data.message
     });
-
-    //sends an email and inapp to QAs when a new support is created
-    if (data.status === InnovationSupportStatusEnum.WAITING && data.accessors?.length) {
-      await this.notifierService.send(domainContext, NotifierTypeEnum.SUPPORT_NEW_ASSIGN_WAITING_INNOVATION, {
-        innovationId,
-        newAssignedAccessorsRoleIds: data.accessors
-          .filter(item => result.newAssignedAccessors.has(item.userRoleId))
-          .map(item => item.userRoleId),
-        supportId: result.id
-      });
-    }
 
     return result;
   }
@@ -868,6 +861,7 @@ export class InnovationSupportsService extends BaseService {
       .createQueryBuilder(InnovationSupportEntity, 'support')
       .innerJoinAndSelect('support.organisationUnit', 'organisationUnit')
       .leftJoinAndSelect('support.userRoles', 'userRole')
+      .leftJoinAndSelect('support.innovation', 'innovation')
       .where('support.id = :supportId', { supportId })
       .andWhere('support.innovation_id = :innovationId', { innovationId })
       .getOne();
@@ -887,10 +881,12 @@ export class InnovationSupportsService extends BaseService {
       entityManager
     );
 
-    const accessorsChanges = await this.assignAccessors(
+    await this.assignAccessors(
       domainContext,
       support,
       data.accessors.map(item => item.userRoleId),
+      data.message,
+      false,
       thread?.id,
       entityManager
     );
@@ -905,23 +901,11 @@ export class InnovationSupportsService extends BaseService {
         undefined,
         entityManager
       );
-
-      // Possible techdebt since notification depends on the thread at the moment and we don't have a thread
-      // in old supports before November 2022 (see #156480)
-
-      await this.notifierService.send(domainContext, NotifierTypeEnum.SUPPORT_NEW_ASSIGN_ACCESSORS, {
-        innovationId: innovationId,
-        supportId: supportId,
-        threadId: thread.id,
-        message: data.message,
-        newAssignedAccessorsRoleIds: accessorsChanges.newAssignedAccessors,
-        removedAssignedAccessorsRoleIds: accessorsChanges.removedAssignedAccessors
-      });
     }
   }
 
   /**
-   * assigns accessors to a support, adding them to the thread followers if the support is ENGAGING
+   * assigns accessors to a support, adding them to the thread followers if the support is ENGAGING or WAITING
    * @param domainContext the domain context
    * @param support the support entity or id
    * @param accessorRoleIds the list of assigned accessors role ids
@@ -933,13 +917,15 @@ export class InnovationSupportsService extends BaseService {
     domainContext: DomainContextType,
     support: string | InnovationSupportEntity,
     accessorRoleIds: string[],
+    message: string,
+    changedStatus: boolean,
     threadId?: string,
     entityManager?: EntityManager
   ): Promise<{ newAssignedAccessors: string[]; removedAssignedAccessors: string[] }> {
     // Force a transaction if one not present
     if (!entityManager) {
       return this.sqlConnection.transaction(async transaction => {
-        return this.assignAccessors(domainContext, support, accessorRoleIds, threadId, transaction);
+        return this.assignAccessors(domainContext, support, accessorRoleIds, message, false, threadId, transaction);
       });
     }
 
@@ -968,7 +954,7 @@ export class InnovationSupportsService extends BaseService {
     });
 
     // Add followers logic
-    // Update thread followers with the new assigned users only when the support is ENGAGING
+    // Update thread followers with the new assigned users only when the support is ENGAGING or WAITING
     if (
       (support.status === InnovationSupportStatusEnum.ENGAGING ||
         support.status === InnovationSupportStatusEnum.WAITING) &&
@@ -988,8 +974,16 @@ export class InnovationSupportsService extends BaseService {
         false,
         entityManager
       );
+      await this.notifierService.send(domainContext, NotifierTypeEnum.SUPPORT_NEW_ASSIGN_ACCESSORS, {
+        innovationId: support.innovation.id,
+        supportId: support.id,
+        threadId: threadId,
+        message: message,
+        newAssignedAccessorsRoleIds: newAssignedAccessors,
+        removedAssignedAccessorsRoleIds: removedAssignedAccessors,
+        changedStatus: changedStatus
+      });
     }
-
     return { newAssignedAccessors, removedAssignedAccessors };
   }
 

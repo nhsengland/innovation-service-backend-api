@@ -1,5 +1,5 @@
 import type { Context } from '@azure/functions';
-import { ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
+import { InnovationSupportStatusEnum, ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { HandlersHelper } from '../../_helpers/handlers.helper';
 import { innovationOverviewUrl, threadUrl } from '../../_helpers/url.helper';
@@ -11,6 +11,7 @@ export class SupportNewAssignedAccessorsHandler extends BaseHandler<
   | 'ST04_SUPPORT_NEW_ASSIGNED_ACCESSORS_TO_INNOVATOR'
   | 'ST05_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_NEW_QA'
   | 'ST06_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_OLD_QA'
+  | 'ST08_SUPPORT_NEW_ASSIGNED_WAITING_INNOVATION_TO_QA'
 > {
   constructor(
     requestUser: DomainContextType,
@@ -32,14 +33,25 @@ export class SupportNewAssignedAccessorsHandler extends BaseHandler<
     if (this.inputData.newAssignedAccessorsRoleIds.length > 0) {
       const unitName = this.getRequestUnitName();
 
-      await this.ST04_SUPPORT_NEW_ASSIGNED_ACCESSORS_TO_INNOVATOR(
-        innovation,
-        unitName,
-        accessorsRecipients
-          .filter(r => this.inputData.newAssignedAccessorsRoleIds.includes(r.roleId))
-          .map(r => r.identityId)
-      );
-      await this.ST05_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_NEW_QA(innovation, accessorsRecipients);
+      const support = (await this.recipientsService.getInnovationSupports(this.inputData.innovationId)).filter(
+        s => s.id === this.inputData.supportId
+      )[0];
+
+      //Only sends this notification if the status is not being changed (only changing accessors)
+      if (!this.inputData.changedStatus) {
+        await this.ST04_SUPPORT_NEW_ASSIGNED_ACCESSORS_TO_INNOVATOR(
+          innovation,
+          unitName,
+          accessorsRecipients
+            .filter(r => this.inputData.newAssignedAccessorsRoleIds.includes(r.roleId))
+            .map(r => r.identityId)
+        );
+      }
+      if (support?.status === InnovationSupportStatusEnum.ENGAGING) {
+        await this.ST05_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_NEW_QA(innovation, accessorsRecipients);
+      } else if (support?.status === InnovationSupportStatusEnum.WAITING) {
+        await this.ST08_SUPPORT_NEW_ASSIGNED_WAITING_INNOVATION_TO_QA(innovation, accessorsRecipients);
+      }
     }
 
     if (this.inputData.removedAssignedAccessorsRoleIds.length > 0) {
@@ -135,6 +147,33 @@ export class SupportNewAssignedAccessorsHandler extends BaseHandler<
       },
       innovationId: innovation.id,
       params: { innovationName: innovation.name }
+    });
+  }
+
+  private async ST08_SUPPORT_NEW_ASSIGNED_WAITING_INNOVATION_TO_QA(
+    innovation: { id: string; name: string },
+    recipients: RecipientType[]
+  ): Promise<void> {
+    const requestUserName = await this.getRequestUserName();
+    const addedRecipients = recipients.filter(r => this.inputData.newAssignedAccessorsRoleIds.includes(r.roleId));
+
+    this.notify('ST08_SUPPORT_NEW_ASSIGNED_WAITING_INNOVATION_TO_QA', addedRecipients, {
+      email: {
+        notificationPreferenceType: 'SUPPORT',
+        params: {
+          innovation_name: innovation.name,
+          qa_name: requestUserName
+        }
+      },
+      inApp: {
+        context: {
+          type: 'SUPPORT',
+          detail: 'ST08_SUPPORT_NEW_ASSIGNED_WAITING_INNOVATION_TO_QA',
+          id: this.inputData.supportId
+        },
+        innovationId: innovation.id,
+        params: { innovationName: innovation.name }
+      }
     });
   }
 }

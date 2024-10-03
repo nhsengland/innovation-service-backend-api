@@ -42,7 +42,6 @@ import {
   SupportStatusChangeRequestHandler,
   SupportStatusUpdateHandler,
   SupportSummaryUpdateHandler,
-  SupportNewAssignedWaitingInnovation,
   TaskCreationHandler,
   TaskUpdateHandler,
   ThreadAddFollowersHandler,
@@ -148,14 +147,6 @@ export const NOTIFICATIONS_CONFIG = {
       message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).trim().required(),
       newAssignedAccessorsRoleIds: Joi.array().items(Joi.string().guid()),
       removedAssignedAccessorsRoleIds: Joi.array().items(Joi.string().guid())
-    }).required()
-  },
-  [NotifierTypeEnum.SUPPORT_NEW_ASSIGN_WAITING_INNOVATION]: {
-    handler: SupportNewAssignedWaitingInnovation,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.SUPPORT_NEW_ASSIGN_WAITING_INNOVATION]>({
-      innovationId: Joi.string().guid().required(),
-      supportId: Joi.string().guid().required(),
-      newAssignedAccessorsRoleIds: Joi.array().items(Joi.string().guid()).required()
     }).required()
   },
   [NotifierTypeEnum.SUPPORT_STATUS_CHANGE_REQUEST]: {

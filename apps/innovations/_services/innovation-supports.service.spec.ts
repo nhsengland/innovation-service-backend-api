@@ -1033,7 +1033,8 @@ describe('Innovations / _services / innovation-supports suite', () => {
         removedAssignedAccessorsRoleIds: [
           scenario.users.aliceQualifyingAccessor.roles.qaRole.id,
           scenario.users.jamieMadroxAccessor.roles.healthAccessorRole.id
-        ]
+        ],
+        changedStatus: false
       });
     });
 

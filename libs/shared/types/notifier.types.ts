@@ -163,18 +163,13 @@ export type NotifierTemplatesType = {
     message: string;
     newAssignedAccessorsRoleIds: string[];
     removedAssignedAccessorsRoleIds: string[];
+    changedStatus: boolean;
   };
   [NotifierTypeEnum.SUPPORT_STATUS_CHANGE_REQUEST]: {
     innovationId: string;
     supportId: string;
     proposedStatus: InnovationSupportStatusEnum;
     requestStatusUpdateComment: string;
-  };
-
-  [NotifierTypeEnum.SUPPORT_NEW_ASSIGN_WAITING_INNOVATION]: {
-    innovationId: string;
-    newAssignedAccessorsRoleIds: string[];
-    supportId: string;
   };
 
   // Tasks
