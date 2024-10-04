@@ -33,9 +33,9 @@ export class SupportNewAssignedAccessorsHandler extends BaseHandler<
     if (this.inputData.newAssignedAccessorsRoleIds.length > 0) {
       const unitName = this.getRequestUnitName();
 
-      const support = (await this.recipientsService.getInnovationSupports(this.inputData.innovationId)).filter(
+      const support = (await this.recipientsService.getInnovationSupports(this.inputData.innovationId)).find(
         s => s.id === this.inputData.supportId
-      )[0];
+      );
 
       //Only sends this notification if the status is not being changed (only changing accessors)
       if (!this.inputData.changedStatus) {

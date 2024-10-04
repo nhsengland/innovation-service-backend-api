@@ -925,7 +925,15 @@ export class InnovationSupportsService extends BaseService {
     // Force a transaction if one not present
     if (!entityManager) {
       return this.sqlConnection.transaction(async transaction => {
-        return this.assignAccessors(domainContext, support, accessorRoleIds, message, false, threadId, transaction);
+        return this.assignAccessors(
+          domainContext,
+          support,
+          accessorRoleIds,
+          message,
+          changedStatus,
+          threadId,
+          transaction
+        );
       });
     }
 
