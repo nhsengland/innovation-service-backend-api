@@ -146,7 +146,8 @@ export const NOTIFICATIONS_CONFIG = {
       threadId: Joi.string().guid().required(),
       message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).trim().required(),
       newAssignedAccessorsRoleIds: Joi.array().items(Joi.string().guid()),
-      removedAssignedAccessorsRoleIds: Joi.array().items(Joi.string().guid())
+      removedAssignedAccessorsRoleIds: Joi.array().items(Joi.string().guid()),
+      changedStatus: Joi.boolean().strict().required()
     }).required()
   },
   [NotifierTypeEnum.SUPPORT_STATUS_CHANGE_REQUEST]: {
