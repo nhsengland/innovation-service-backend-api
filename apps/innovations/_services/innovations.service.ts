@@ -131,7 +131,6 @@ export type InnovationListSelectType =
   | 'assessment.assignedTo'
   | 'assessment.isExempt'
   | `support.${keyof Pick<InnovationSupportEntity, 'id' | 'status' | 'updatedAt' | 'updatedBy' | 'closeReason'>}`
-  | 'support.closedReason'
   | 'owner.id'
   | 'owner.name'
   | 'owner.companyName'
@@ -559,11 +558,11 @@ export class InnovationsService extends BaseService {
       }
 
       query
-        .addSelect((fields.filter(f => f !== 'closedReason') ?? ['id']).map(f => `support.${f}`))
+        .addSelect((fields ?? ['id']).map(f => `support.${f}`))
         .leftJoin(
           'innovation.supports',
           'support',
-          'support.organisation_unit_id = :organisationUnitId && support.isMostRecent = 1',
+          'support.organisation_unit_id = :organisationUnitId AND support.isMostRecent = 1',
           { organisationUnitId: unitId }
         )
         // Ignore archived innovations that never had any support or it would be messing with the status and support summary
@@ -573,7 +572,7 @@ export class InnovationsService extends BaseService {
 
       // closedReason is inferred from the innovation and support status (archive) and having a support for this organisation (not shared)
       // updated by also depends on the statuses
-      if (fields.includes('closedReason') || fields.includes('updatedBy')) {
+      if (fields.includes('updatedBy')) {
         if (!query.expressionMap.selects.some(s => s.selection === 'innovation.status')) {
           query.addSelect('innovation.status');
         }
@@ -1095,7 +1094,7 @@ export class InnovationsService extends BaseService {
       }),
       ...(fields.includes('updatedAt') && { updatedAt: item.supports?.[0]?.updatedAt }),
       ...(fields.includes('updatedBy') && { updatedBy: displayName }),
-      ...(fields.includes('closedReason') && { closedReason: item.supports?.[0]?.closeReason })
+      ...(fields.includes('closeReason') && { closedReason: item.supports?.[0]?.closeReason })
     };
   }
 
