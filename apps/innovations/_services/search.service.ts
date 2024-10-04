@@ -7,7 +7,12 @@ import type {
 } from '@elastic/elasticsearch/lib/api/types';
 import { ES_ENV } from '@innovations/shared/config';
 import type { InnovationListView } from '@innovations/shared/entities';
-import { InnovationStatusEnum, InnovationSupportStatusEnum, ServiceRoleEnum } from '@innovations/shared/enums';
+import {
+  InnovationStatusEnum,
+  InnovationSupportCloseReasonEnum,
+  InnovationSupportStatusEnum,
+  ServiceRoleEnum
+} from '@innovations/shared/enums';
 import { GenericErrorsEnum, NotImplementedError } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import type { CurrentElasticSearchDocumentType } from '@innovations/shared/schemas/innovation-record';
@@ -343,14 +348,15 @@ export class SearchService extends BaseService {
         ...(fields.includes('status') && { status: support?.status ?? InnovationSupportStatusEnum.SUGGESTED }), // TODO MJS - Check if this is correct
         ...(fields.includes('updatedAt') && { updatedAt: support?.updatedAt }),
         ...(fields.includes('updatedBy') && { updatedBy: displayName }),
+        // TODO: mjs: This needs to be updated on the ES task.
         ...(fields.includes('closedReason') && {
           closedReason:
             support?.status === InnovationSupportStatusEnum.CLOSED
               ? !item.shares?.some(s => s === domainContext.organisation.id)
-                ? 'STOPPED_SHARED'
+                ? InnovationSupportCloseReasonEnum.STOP_SHARE
                 : item.status === 'ARCHIVED'
-                  ? 'ARCHIVED'
-                  : 'CLOSED'
+                  ? InnovationSupportCloseReasonEnum.ARCHIVE
+                  : InnovationSupportCloseReasonEnum.SUPPORT_COMPLETE
               : null
         })
       };

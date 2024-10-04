@@ -152,7 +152,7 @@ export type InnovationListFullResponseType = Omit<InnovationListViewFields, 'eng
     status: InnovationSupportStatusEnum;
     updatedAt: Date | null;
     updatedBy: string | null;
-    closedReason: 'ARCHIVED' | 'STOPPED_SHARED' | 'CLOSED' | null;
+    closedReason: InnovationSupportCloseReasonEnum | null;
   } | null;
   suggestion: {
     suggestedBy: string[];
@@ -1095,16 +1095,7 @@ export class InnovationsService extends BaseService {
       }),
       ...(fields.includes('updatedAt') && { updatedAt: item.supports?.[0]?.updatedAt }),
       ...(fields.includes('updatedBy') && { updatedBy: displayName }),
-      ...(fields.includes('closedReason') && {
-        closedReason:
-          item.supports?.[0]?.status === InnovationSupportStatusEnum.CLOSED
-            ? !item.organisationShares?.length
-              ? 'STOPPED_SHARED'
-              : item.status === 'ARCHIVED'
-                ? 'ARCHIVED'
-                : 'CLOSED'
-            : null
-      })
+      ...(fields.includes('closedReason') && { closedReason: item.supports?.[0]?.closeReason })
     };
   }
 
