@@ -116,7 +116,7 @@ export const InnovationListSelectType = [
   'support.status',
   'support.updatedAt',
   'support.updatedBy',
-  'support.closedReason',
+  'support.closeReason',
   'owner.id',
   'owner.name',
   'owner.companyName',
@@ -151,7 +151,7 @@ export type InnovationListFullResponseType = Omit<InnovationListViewFields, 'eng
     status: InnovationSupportStatusEnum;
     updatedAt: Date | null;
     updatedBy: string | null;
-    closedReason: InnovationSupportCloseReasonEnum | null;
+    closeReason: InnovationSupportCloseReasonEnum | null;
   } | null;
   suggestion: {
     suggestedBy: string[];
@@ -413,21 +413,11 @@ export class InnovationsService extends BaseService {
               message: 'Sort by name is not allowed'
             });
 
-          case 'support.closedReason':
-            query.addSelect(
-              `CASE WHEN innovation.status = '${InnovationStatusEnum.ARCHIVED}' THEN 1 ELSE CASE WHEN shares.id IS NULL THEN 3 ELSE 2 END END`,
-              'closedReasonOrder'
-            );
-            query.addOrderBy(`closedReasonOrder`, value);
-            break;
           default:
             query.addOrderBy(key.includes('.') ? key : `innovation.${key}`, value);
         }
       }
     });
-
-    // Improve dependency selects if required at this point later on if it becomes a rules, keeping it in the functions
-    // that have the knowledge of the fields for now. Ie: closedReason for support requires innovation.status
 
     const queryResult = await query.getManyAndCount();
 
@@ -570,8 +560,7 @@ export class InnovationsService extends BaseService {
           innovationArchivedStatus: InnovationStatusEnum.ARCHIVED
         });
 
-      // closedReason is inferred from the innovation and support status (archive) and having a support for this organisation (not shared)
-      // updated by also depends on the statuses
+      // updated by also depends on the innovation and support status
       if (fields.includes('updatedBy')) {
         if (!query.expressionMap.selects.some(s => s.selection === 'innovation.status')) {
           query.addSelect('innovation.status');
@@ -1094,7 +1083,7 @@ export class InnovationsService extends BaseService {
       }),
       ...(fields.includes('updatedAt') && { updatedAt: item.supports?.[0]?.updatedAt }),
       ...(fields.includes('updatedBy') && { updatedBy: displayName }),
-      ...(fields.includes('closeReason') && { closedReason: item.supports?.[0]?.closeReason })
+      ...(fields.includes('closeReason') && { closeReason: item.supports?.[0]?.closeReason })
     };
   }
 

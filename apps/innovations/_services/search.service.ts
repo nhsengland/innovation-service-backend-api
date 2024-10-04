@@ -53,7 +53,7 @@ type SearchInnovationListSelectType =
   | 'support.status'
   | 'support.updatedAt'
   | 'support.updatedBy'
-  | 'support.closedReason'
+  | 'support.closeReason'
   | 'owner.id'
   | 'owner.name'
   | 'owner.companyName';
@@ -349,8 +349,8 @@ export class SearchService extends BaseService {
         ...(fields.includes('updatedAt') && { updatedAt: support?.updatedAt }),
         ...(fields.includes('updatedBy') && { updatedBy: displayName }),
         // TODO: mjs: This needs to be updated on the ES task.
-        ...(fields.includes('closedReason') && {
-          closedReason:
+        ...(fields.includes('closeReason') && {
+          closeReason:
             support?.status === InnovationSupportStatusEnum.CLOSED
               ? !item.shares?.some(s => s === domainContext.organisation.id)
                 ? InnovationSupportCloseReasonEnum.STOP_SHARE
