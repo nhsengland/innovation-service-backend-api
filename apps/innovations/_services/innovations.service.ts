@@ -130,7 +130,7 @@ export type InnovationListSelectType =
   | `assessment.${keyof Pick<InnovationAssessmentEntity, 'id' | 'updatedAt' | 'finishedAt'>}`
   | 'assessment.assignedTo'
   | 'assessment.isExempt'
-  | `support.${keyof Pick<InnovationSupportEntity, 'id' | 'status' | 'updatedAt' | 'updatedBy'>}`
+  | `support.${keyof Pick<InnovationSupportEntity, 'id' | 'status' | 'updatedAt' | 'updatedBy' | 'closeReason'>}`
   | 'support.closedReason'
   | 'owner.id'
   | 'owner.name'
@@ -560,9 +560,12 @@ export class InnovationsService extends BaseService {
 
       query
         .addSelect((fields.filter(f => f !== 'closedReason') ?? ['id']).map(f => `support.${f}`))
-        .leftJoin('innovation.supports', 'support', 'support.organisation_unit_id = :organisationUnitId', {
-          organisationUnitId: unitId
-        })
+        .leftJoin(
+          'innovation.supports',
+          'support',
+          'support.organisation_unit_id = :organisationUnitId && support.isMostRecent = 1',
+          { organisationUnitId: unitId }
+        )
         // Ignore archived innovations that never had any support or it would be messing with the status and support summary
         .andWhere('(innovation.status != :innovationArchivedStatus OR support.id IS NOT NULL) ', {
           innovationArchivedStatus: InnovationStatusEnum.ARCHIVED
@@ -1258,7 +1261,8 @@ export class InnovationsService extends BaseService {
 
     // Supports relations.
     if (filters.fields?.includes('supports')) {
-      query.leftJoin('innovation.innovationSupports', 'innovationSupports');
+      // TODO: mjs: make sure if we want to return closed supports. With the current screens we should mantain it.
+      query.leftJoin('innovation.innovationSupports', 'innovationSupports', 'innovationSupports.isMostRecent = 1');
       query.leftJoin('innovationSupports.organisationUnit', 'supportingOrganisationUnit');
       query.addSelect(['innovationSupports.id', 'innovationSupports.status', 'supportingOrganisationUnit.id']);
     }

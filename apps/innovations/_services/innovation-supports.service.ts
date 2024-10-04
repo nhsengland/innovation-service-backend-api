@@ -126,7 +126,7 @@ export class InnovationSupportsService extends BaseService {
 
     const query = connection
       .createQueryBuilder(InnovationEntity, 'innovation')
-      .leftJoinAndSelect('innovation.innovationSupports', 'supports')
+      .leftJoinAndSelect('innovation.innovationSupports', 'supports', 'supports.isMostRecent = 1')
       .leftJoinAndSelect('supports.organisationUnit', 'organisationUnit')
       .leftJoinAndSelect('organisationUnit.organisation', 'organisation')
       .where('innovation.id = :innovationId', { innovationId });
@@ -1012,6 +1012,7 @@ export class InnovationSupportsService extends BaseService {
       .leftJoinAndSelect('support.userRoles', 'userRole')
       .where('support.id = :supportId', { supportId })
       .andWhere('support.innovation_id = :innovationId', { innovationId })
+      .andWhere('support.isMostRecent = 1')
       .getOne();
     if (!support) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
@@ -1091,6 +1092,7 @@ export class InnovationSupportsService extends BaseService {
         .innerJoinAndSelect('support.organisationUnit', 'organisationUnit')
         .leftJoinAndSelect('support.userRoles', 'userRole')
         .where('support.id = :supportId ', { support })
+        .andWhere('support.isMostRecent = 1')
         .getOne();
 
       if (!dbSupport) {
@@ -1420,6 +1422,7 @@ export class InnovationSupportsService extends BaseService {
       .innerJoin('support.innovation', 'innovation')
       .where('support.innovation_id = :innovationId', { innovationId })
       .andWhere('support.organisation_unit_id = :unitId', { unitId })
+      .andWhere('support.isMostRecent = 1')
       .getOne();
     if (!support) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
@@ -1707,6 +1710,7 @@ export class InnovationSupportsService extends BaseService {
       .andWhere('support.status NOT IN (:...statuses)', {
         statuses: [InnovationSupportStatusEnum.CLOSED, InnovationSupportStatusEnum.UNSUITABLE]
       })
+      .andWhere('support.isMostRecent = 1') // TODO: mjs: validate with Manuel
       .getOne();
 
     return !!activeSupport;
