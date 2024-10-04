@@ -149,11 +149,13 @@ describe('Notifications / _handlers / support-status-update suite', () => {
           support: {
             id: support.id,
             status: InnovationSupportStatusEnum.WAITING,
-            message: message
+            message: message,
+            newAssignedAccessorsIds: support.accessors.map(a => a.id)
           }
         },
         recipients: recipients,
         outputData: {
+          accessors_name: HandlersHelper.transformIntoBullet(support.accessors.map(a => a.name)),
           innovation_name: innovation.name,
           unit_name: requestUserUnit.name,
           message: message,

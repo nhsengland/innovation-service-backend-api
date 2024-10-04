@@ -42,16 +42,21 @@ export class SupportStatusUpdateHandler extends BaseHandler<
     return this;
   }
 
-  private async ST01_SUPPORT_STATUS_TO_ENGAGING(
-    innovation: { id: string; name: string },
-    recipients: RecipientType[]
-  ): Promise<void> {
+  private async getAccessorNames(): Promise<string[]> {
     const accessorsIdentityIds = await this.recipientsService.usersIds2IdentityIds(
       this.inputData.support.newAssignedAccessorsIds ?? []
     );
     const accessorsInfo = await this.recipientsService.usersIdentityInfo(Array.from(accessorsIdentityIds.values()));
     const accessorNames: string[] = [];
     accessorsInfo.forEach(a => accessorNames.push(a.displayName));
+    return accessorNames;
+  }
+
+  private async ST01_SUPPORT_STATUS_TO_ENGAGING(
+    innovation: { id: string; name: string },
+    recipients: RecipientType[]
+  ): Promise<void> {
+    const accessorNames: string[] = await this.getAccessorNames();
 
     const unitName = this.getRequestUnitName();
 
@@ -124,6 +129,8 @@ export class SupportStatusUpdateHandler extends BaseHandler<
   ): Promise<void> {
     const unitName = this.getRequestUnitName();
 
+    const accessorNames: string[] = await this.getAccessorNames();
+
     this.addEmails('ST03_SUPPORT_STATUS_TO_WAITING', recipients, {
       notificationPreferenceType: 'SUPPORT',
       params: {
@@ -134,7 +141,8 @@ export class SupportStatusUpdateHandler extends BaseHandler<
           ServiceRoleEnum.INNOVATOR,
           innovation.id,
           this.requestUser.organisation?.organisationUnit?.id
-        )
+        ),
+        accessors_name: HandlersHelper.transformIntoBullet(accessorNames)
       }
     });
 

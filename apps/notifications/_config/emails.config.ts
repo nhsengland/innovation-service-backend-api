@@ -191,6 +191,7 @@ export type EmailTemplatesType = {
   ST03_SUPPORT_STATUS_TO_WAITING: {
     unit_name: string;
     innovation_name: string;
+    accessors_name: string;
     message: string;
     support_summary_url: string;
   };
