@@ -194,24 +194,23 @@ describe('Notifications / _handlers / support-new-assigned-accessors suite', () 
       });
     });
 
-    //Test not working. Needs to be reviewed. Functionaity is working.
-    // it('should send an in-app to the new QA/A when a QA assignes new accessors', async () => {
-    //   await testInApps(SupportNewAssignedAccessorsHandler, 'ST08_SUPPORT_NEW_ASSIGNED_WAITING_INNOVATION_TO_QA', {
-    //     innovationId: innovation.id,
-    //     context: { type: 'SUPPORT', id: support.id },
-    //     requestUser: DTOsHelper.getUserRequestContext(requestUser),
-    //     inputData: {
-    //       innovationId: innovation.id,
-    //       threadId: threadId,
-    //       supportId: waitingSupport.id,
-    //       message: message,
-    //       newAssignedAccessorsRoleIds: [assignedAccessorsRoleIds[0]!],
-    //       removedAssignedAccessorsRoleIds: [],
-    //       changedStatus: true
-    //     },
-    //     recipients: assignedAccessorsRecipients.filter(r => r.userId === scenario.users.aliceQualifyingAccessor.id),
-    //     outputData: { innovationName: innovation.name }
-    //   });
-    // });
+    it('should send an in-app to the new QA/A when a QA assignes new accessors', async () => {
+      await testInApps(SupportNewAssignedAccessorsHandler, 'ST08_SUPPORT_NEW_ASSIGNED_WAITING_INNOVATION_TO_QA', {
+        innovationId: innovation.id,
+        context: { type: 'SUPPORT', id: waitingSupport.id },
+        requestUser: DTOsHelper.getUserRequestContext(requestUser),
+        inputData: {
+          innovationId: innovation.id,
+          threadId: threadId,
+          supportId: waitingSupport.id,
+          message: message,
+          newAssignedAccessorsRoleIds: [assignedAccessorsRoleIds[0]!],
+          removedAssignedAccessorsRoleIds: [],
+          changedStatus: true
+        },
+        recipients: assignedAccessorsRecipients.filter(r => r.userId === scenario.users.aliceQualifyingAccessor.id),
+        outputData: { innovationName: innovation.name }
+      });
+    });
   });
 });
