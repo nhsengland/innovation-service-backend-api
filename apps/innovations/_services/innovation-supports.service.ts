@@ -1618,7 +1618,7 @@ export class InnovationSupportsService extends BaseService {
           SELECT innovation_id, organisation_unit_id, MIN(valid_from) as startSupport, MAX(valid_to) as endSupport
           FROM innovation_support
           FOR SYSTEM_TIME ALL
-          WHERE innovation_id = 'EEA0ABBE-E869-EF11-9C35-7C1E52029168' AND (status IN ('ENGAGING'))
+          WHERE innovation_id = @0 AND (status IN ('ENGAGING'))
           GROUP BY innovation_id, organisation_unit_id
       ) t ON t.innovation_id = s.innovation_id AND t.organisation_unit_id = s.organisation_unit_id
       WHERE s.innovation_id = @0 AND s.is_most_recent = 1
