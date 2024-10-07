@@ -1177,7 +1177,7 @@ paths:
                 - support.status
                 - support.updatedAt
                 - support.updatedBy
-                - support.closedReason
+                - support.closeReason
                 - owner.id
                 - owner.name
                 - owner.companyName
@@ -4927,7 +4927,7 @@ paths:
                 - support.status
                 - support.updatedAt
                 - support.updatedBy
-                - support.closedReason
+                - support.closeReason
                 - owner.id
                 - owner.name
                 - owner.companyName

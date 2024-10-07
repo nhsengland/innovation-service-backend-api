@@ -3,7 +3,6 @@ import { Brackets, EntityManager, In } from 'typeorm';
 
 import {
   InnovationEntity,
-  InnovationSuggestedUnitsView,
   InnovationSupportEntity,
   InnovationSupportLogEntity,
   InnovationTaskEntity,
@@ -1162,7 +1161,6 @@ export class InnovationSupportsService extends BaseService {
   ): Promise<Record<keyof typeof InnovationSupportSummaryTypeEnum, SuggestedUnitType[]>> {
     const em = entityManager ?? this.sqlConnection.manager;
 
-    const suggestedUnitsInfoMap = await this.getSuggestedUnitsInfoMap(innovationId, em);
     const unitsSupportInformationMap = await this.getSuggestedUnitsSupportInfoMap(innovationId, em);
 
     const suggestedIds = new Set<string>();
@@ -1220,23 +1218,6 @@ export class InnovationSupportsService extends BaseService {
         });
       }
     }
-
-    // Since they are UNASSIGNED they don't exist on support table, we have to add them here
-    suggested.push(
-      ...Array.from(suggestedUnitsInfoMap.values())
-        .filter(u => !suggestedIds.has(u.id))
-        .map(u => ({
-          id: u.id,
-          name: u.name,
-          support: {
-            status: InnovationSupportStatusEnum.SUGGESTED // TODO MJS - Check if this is correct
-          },
-          organisation: {
-            id: u.orgId,
-            acronym: u.orgAcronym
-          }
-        }))
-    );
 
     return {
       [InnovationSupportSummaryTypeEnum.ENGAGING]: this.sortByStartDate(engaging),
@@ -1422,7 +1403,7 @@ export class InnovationSupportsService extends BaseService {
       .innerJoin('support.innovation', 'innovation')
       .where('support.innovation_id = :innovationId', { innovationId })
       .andWhere('support.organisation_unit_id = :unitId', { unitId })
-      .andWhere('support.isMostRecent = 1')
+      .andWhere('support.isMostRecent = 1') // TODO: This will probably changed because of past progress updates
       .getOne();
     if (!support) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
@@ -1623,42 +1604,6 @@ export class InnovationSupportsService extends BaseService {
     return files.data[0];
   }
 
-  private async getSuggestedUnitsInfoMap(
-    innovationId: string,
-    em: EntityManager
-  ): Promise<Map<string, { id: string; name: string; orgId: string; orgAcronym: string }>> {
-    const suggestedUnits = await this.getSuggestedUnits(innovationId, em);
-    return new Map(suggestedUnits.map(u => [u.id, u]));
-  }
-
-  private async getSuggestedUnits(
-    innovationId: string,
-    em: EntityManager
-  ): Promise<{ id: string; name: string; orgId: string; orgAcronym: string }[]> {
-    const suggestions = await em
-      .createQueryBuilder(InnovationSuggestedUnitsView, 'suggestion')
-      .select([
-        'suggestion.suggestedBy',
-        'suggestion.suggestedUnitId',
-        'unit.id',
-        'unit.name',
-        'unit.acronym',
-        'org.id',
-        'org.acronym'
-      ])
-      .leftJoin('suggestion.suggestedUnit', 'unit')
-      .leftJoin('unit.organisation', 'org')
-      .where('suggestion.innovation_id = :innovationId', { innovationId })
-      .getMany();
-
-    return suggestions.map(s => ({
-      id: s.suggestedUnit.id,
-      name: s.suggestedUnit.name,
-      orgId: s.suggestedUnit.organisation.id,
-      orgAcronym: s.suggestedUnit.organisation.acronym ?? ''
-    }));
-  }
-
   private async getSuggestedUnitsSupportInfoMap(
     innovationId: string,
     em: EntityManager
@@ -1670,13 +1615,13 @@ export class InnovationSupportsService extends BaseService {
       INNER JOIN organisation_unit ou ON ou.id = s.organisation_unit_id
       INNER JOIN organisation org ON org.id = ou.organisation_id
       LEFT JOIN (
-          SELECT id, MIN(valid_from) as startSupport, MAX(valid_to) as endSupport
+          SELECT innovation_id, organisation_unit_id, MIN(valid_from) as startSupport, MAX(valid_to) as endSupport
           FROM innovation_support
           FOR SYSTEM_TIME ALL
-          WHERE innovation_id = @0 AND (status IN ('ENGAGING'))
-          GROUP BY id
-      ) t ON t.id = s.id
-      WHERE innovation_id = @0
+          WHERE innovation_id = 'EEA0ABBE-E869-EF11-9C35-7C1E52029168' AND (status IN ('ENGAGING'))
+          GROUP BY innovation_id, organisation_unit_id
+      ) t ON t.innovation_id = s.innovation_id AND t.organisation_unit_id = s.organisation_unit_id
+      WHERE s.innovation_id = @0 AND s.is_most_recent = 1
     `,
       [innovationId]
     );
@@ -1710,7 +1655,7 @@ export class InnovationSupportsService extends BaseService {
       .andWhere('support.status NOT IN (:...statuses)', {
         statuses: [InnovationSupportStatusEnum.CLOSED, InnovationSupportStatusEnum.UNSUITABLE]
       })
-      .andWhere('support.isMostRecent = 1') // TODO: mjs: validate with Manuel
+      .andWhere('support.isMostRecent = 1')
       .getOne();
 
     return !!activeSupport;
