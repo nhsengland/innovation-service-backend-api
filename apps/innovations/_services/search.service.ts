@@ -7,12 +7,7 @@ import type {
 } from '@elastic/elasticsearch/lib/api/types';
 import { ES_ENV } from '@innovations/shared/config';
 import type { InnovationListView } from '@innovations/shared/entities';
-import {
-  InnovationStatusEnum,
-  InnovationSupportCloseReasonEnum,
-  InnovationSupportStatusEnum,
-  ServiceRoleEnum
-} from '@innovations/shared/enums';
+import { InnovationStatusEnum, InnovationSupportStatusEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 import { GenericErrorsEnum, NotImplementedError } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import type { CurrentElasticSearchDocumentType } from '@innovations/shared/schemas/innovation-record';
@@ -330,7 +325,7 @@ export class SearchService extends BaseService {
     extra: PickHandlerReturnType<typeof this.postHandlers, 'users'>
   ): Partial<InnovationListFullResponseType['support']> {
     if (isAccessorDomainContextType(domainContext)) {
-      const support = item.supports?.filter(s => s.unitId === domainContext.organisation.organisationUnit.id)[0];
+      const support = item.supports?.find(s => s.unitId === domainContext.organisation.organisationUnit.id);
       const updatedBy = extra.users?.get(support?.updatedBy ?? '') ?? null;
       const displayName =
         // Ensuring that updatedBy is always innovator if the innovation is archived or not shared
@@ -348,17 +343,7 @@ export class SearchService extends BaseService {
         ...(fields.includes('status') && { status: support?.status ?? InnovationSupportStatusEnum.SUGGESTED }), // TODO MJS - Check if this is correct
         ...(fields.includes('updatedAt') && { updatedAt: support?.updatedAt }),
         ...(fields.includes('updatedBy') && { updatedBy: displayName }),
-        // TODO: mjs: This needs to be updated on the ES task.
-        ...(fields.includes('closeReason') && {
-          closeReason:
-            support?.status === InnovationSupportStatusEnum.CLOSED
-              ? !item.shares?.some(s => s === domainContext.organisation.id)
-                ? InnovationSupportCloseReasonEnum.STOP_SHARE
-                : item.status === 'ARCHIVED'
-                  ? InnovationSupportCloseReasonEnum.ARCHIVE
-                  : InnovationSupportCloseReasonEnum.SUPPORT_COMPLETE
-              : null
-        })
+        ...(fields.includes('closeReason') && { closeReason: support?.closeReason })
       };
     }
 
