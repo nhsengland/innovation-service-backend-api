@@ -33,6 +33,7 @@ export class createViewLastSupportActivityUpdate1699361786862 implements Migrati
     INNER JOIN innovation i ON s.innovation_id=i.id AND i.status = 'IN_PROGRESS'
     LEFT JOIN latest_support_log_update l1 on s.innovation_id = l1.innovation_id and s.organisation_unit_id=l1.organisation_unit_id
     LEFT JOIN latest_activity_log_update l2 on s.innovation_id = l2.innovation_id and s.organisation_unit_id=l2.organisation_unit_id
+    WHERE s.is_most_recent = 1
   `);
   }
 
