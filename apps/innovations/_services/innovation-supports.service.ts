@@ -451,7 +451,6 @@ export class InnovationSupportsService extends BaseService {
     };
   }
 
-  /** Creates innovation support. Currently state is suggested but this might change */
   async createInnovationSupport(
     domainContext: DomainContextType,
     innovationId: string,
@@ -491,13 +490,16 @@ export class InnovationSupportsService extends BaseService {
       { isMostRecent: false }
     );
 
+    const now = new Date();
     return entityManager.save(InnovationSupportEntity, {
       status,
       createdBy: domainContext.id,
       updatedBy: domainContext.id,
       innovation: { id: innovationId },
       organisationUnit: { id: organisationUnitId },
-      majorAssessment: { id: innovation.currentMajorAssessment.id }
+      majorAssessment: { id: innovation.currentMajorAssessment.id },
+      ...(status !== InnovationSupportStatusEnum.SUGGESTED && { startedAt: now }),
+      ...(status === InnovationSupportStatusEnum.UNSUITABLE && { finishedAt: now })
     });
   }
 
@@ -604,6 +606,7 @@ export class InnovationSupportsService extends BaseService {
         const newSupport = support;
         newSupport.status = data.status;
         newSupport.updatedBy = domainContext.id;
+        newSupport.startedAt = new Date();
         savedSupport = await transaction.save(InnovationSupportEntity, newSupport);
       } else {
         savedSupport = await this.createInnovationSupport(

@@ -32,6 +32,9 @@ export class InnovationSupportEntity extends BaseEntity {
   @Column({ name: 'close_reason', type: 'simple-enum' })
   closeReason: InnovationSupportCloseReasonEnum | null;
 
+  @Column({ name: 'started_at', type: 'datetime2' })
+  startedAt: Date | null;
+
   @Column({ name: 'finished_at', type: 'datetime2' })
   finishedAt: Date | null;
 
