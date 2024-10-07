@@ -1,6 +1,6 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class ChangesToSupportMultipleSupportsPerInnovation1727438455378 implements MigrationInterface {
+export class ChangesToSupportMultipleSupportsPerInnovation1727438455380 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Add current major assessment to innovation
     await queryRunner.query(`ALTER TABLE innovation ADD current_major_assessment_id UNIQUEIDENTIFIER`);
@@ -20,6 +20,7 @@ export class ChangesToSupportMultipleSupportsPerInnovation1727438455378 implemen
 
     // Changes to support table
     await queryRunner.query(`
+      ALTER TABLE innovation_support ADD started_at DATETIME2;
       ALTER TABLE innovation_support ADD finished_at DATETIME2;
       ALTER TABLE innovation_support ADD is_most_recent BIT CONSTRAINT "df_innovation_support_is_most_recent" DEFAULT 1;
       ALTER TABLE innovation_support ADD major_assessment_id UNIQUEIDENTIFIER CONSTRAINT "df_temp" DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL; -- Default to empty guid because of system_version

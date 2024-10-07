@@ -33,9 +33,12 @@ class V1InnovationSupportStart {
         .checkNotArchived()
         .checkInnovation({ status: [InnovationStatusEnum.IN_PROGRESS] })
         .verify();
-      const domainContext = auth.getContext();
 
-      const result = await innovationSupportsService.startInnovationSupport(domainContext, params.innovationId, body);
+      const result = await innovationSupportsService.startInnovationSupport(
+        auth.getContext(),
+        params.innovationId,
+        body
+      );
 
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;
