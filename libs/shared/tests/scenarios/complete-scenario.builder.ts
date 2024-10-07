@@ -120,6 +120,17 @@ export class CompleteScenarioBuilder {
         .setInactivatedAt(new Date())
         .save();
 
+      // notSharedOrg Organisation has one unit: InnovTech Org Unit
+      const notSharedOrg = await new OrganisationBuilder(entityManager).setName('Not Shared Organisation').save();
+      const notSharedOrgUnit = await new OrganisationUnitBuilder(entityManager)
+        .addToOrganisation(notSharedOrg.id)
+        .setName('InnovTech Org Unit')
+        .save();
+      const notSharedOrgHeavyOrgUnit = await new OrganisationUnitBuilder(entityManager)
+        .addToOrganisation(notSharedOrg.id)
+        .setName('InnovTech Heavy Org Unit')
+        .save();
+
       // QAs and Accessors
 
       // Alice Qualifying Accessor specs:
@@ -1393,6 +1404,13 @@ export class CompleteScenarioBuilder {
             organisationUnits: {
               innovTechOrgUnit: innovTechOrgUnit,
               innovTechHeavyOrgUnit: innovTechHeavyOrgUnit
+            }
+          },
+          notSharedOrg: {
+            ...notSharedOrg,
+            organisationUnits: {
+              notSharedOrgUnit: notSharedOrgUnit,
+              notSharedOrgHeavyOrgUnit: notSharedOrgHeavyOrgUnit
             }
           },
           inactiveEmptyOrg: {

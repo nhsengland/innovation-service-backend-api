@@ -365,7 +365,8 @@ export class RecipientsService extends BaseService {
       .innerJoin('userRole.user', 'user')
       .where('userRole.organisation_unit_id = organisationUnit.id') // Only get the role for the organisation unit
       .andWhere('user.status != :userDeleted', { userDeleted: UserStatusEnum.DELETED }) // Filter deleted users
-      .andWhere('support.innovation_id = :innovationId', { innovationId: innovationId });
+      .andWhere('support.innovation_id = :innovationId', { innovationId: innovationId })
+      .andWhere('support.isMostRecent = 1');
 
     if (filters.supportStatus) {
       query.andWhere('support.status IN (:...supportStatus)', { supportStatus: filters.supportStatus });
@@ -417,7 +418,7 @@ export class RecipientsService extends BaseService {
         'user.identityId',
         'user.status'
       ])
-      .innerJoin('innovation.innovationSupports', 'support')
+      .innerJoin('innovation.innovationSupports', 'support', 'support.isMostRecent = 1')
       .innerJoin('support.organisationUnit', 'organisationUnit')
       .innerJoin('support.userRoles', 'userRole')
       .innerJoin('userRole.user', 'user')
@@ -783,6 +784,7 @@ export class RecipientsService extends BaseService {
       .select(['support.id', 'support.status', 'unit.id'])
       .innerJoin('support.organisationUnit', 'unit')
       .where('support.innovation_id = :innovationId', { innovationId })
+      .andWhere('support.isMostRecent = 1')
       .getMany();
 
     return supports.map(s => ({ id: s.id, status: s.status, unitId: s.organisationUnit.id }));
@@ -815,9 +817,14 @@ export class RecipientsService extends BaseService {
         'lastEngagement',
         'lastEngagement.innovationId = innovation.id'
       )
-      .leftJoin('innovation.innovationSupports', 'supports', 'supports.status IN (:...engagingStatus)', {
-        engagingStatus: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.WAITING]
-      })
+      .leftJoin(
+        'innovation.innovationSupports',
+        'supports',
+        'supports.status IN (:...engagingStatus) AND supports.isMostRecent = 1',
+        {
+          engagingStatus: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.WAITING]
+        }
+      )
       .where('innovation.status = :innovationStatus', { innovationStatus: InnovationStatusEnum.IN_PROGRESS })
       .andWhere('supports.id IS NULL')
       .andWhere(
@@ -858,7 +865,8 @@ export class RecipientsService extends BaseService {
         'lastActivityUpdate.organisationUnitId'
       ])
       .innerJoin('support.lastActivityUpdate', 'lastActivityUpdate')
-      .where('support.status IN (:...status)', { status });
+      .where('support.status IN (:...status)', { status })
+      .andWhere('support.isMostRecent = 1');
 
     if (repeat) {
       query
@@ -896,7 +904,8 @@ export class RecipientsService extends BaseService {
       .select(['support.id', 'innovation.id', 'unit.id'])
       .innerJoin('support.innovation', 'innovation')
       .innerJoin('support.organisationUnit', 'unit')
-      .where('support.status = :status', { status: InnovationSupportStatusEnum.WAITING });
+      .where('support.status = :status', { status: InnovationSupportStatusEnum.WAITING })
+      .andWhere('support.isMostRecent = 1');
 
     if (repeat) {
       query

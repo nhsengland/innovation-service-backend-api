@@ -319,7 +319,7 @@ describe('Notifications / _services / recipients service suite', () => {
       const shares = await sut.innovationSharedOrganisationsWithUnits(
         scenario.users.johnInnovator.innovations.johnInnovation.id
       );
-      expect(shares).toHaveLength(2);
+      expect(shares).toHaveLength(3);
       expect(shares).toMatchObject([
         {
           id: scenario.organisations.healthOrg.id,
@@ -347,6 +347,23 @@ describe('Notifications / _services / recipients service suite', () => {
               id: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id,
               name: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.name,
               acronym: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.acronym
+            }
+          ]
+        },
+        {
+          id: scenario.organisations.innovTechOrg.id,
+          name: scenario.organisations.innovTechOrg.name,
+          acronym: scenario.organisations.innovTechOrg.acronym,
+          organisationUnits: [
+            {
+              id: scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.id,
+              name: scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.name,
+              acronym: scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.acronym
+            },
+            {
+              id: scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.id,
+              name: scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.name,
+              acronym: scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.acronym
             }
           ]
         }
