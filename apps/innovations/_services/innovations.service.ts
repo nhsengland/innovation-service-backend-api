@@ -1240,7 +1240,7 @@ export class InnovationsService extends BaseService {
 
     // Supports relations.
     if (filters.fields?.includes('supports')) {
-      // TODO: mjs: make sure if we want to return closed supports. With the current screens we should mantain it.
+      // To keep current behavior we're returning only the most recent supports (this might change in the future)
       query.leftJoin('innovation.innovationSupports', 'innovationSupports', 'innovationSupports.isMostRecent = 1');
       query.leftJoin('innovationSupports.organisationUnit', 'supportingOrganisationUnit');
       query.addSelect(['innovationSupports.id', 'innovationSupports.status', 'supportingOrganisationUnit.id']);
@@ -1624,7 +1624,6 @@ export class InnovationsService extends BaseService {
           );
 
           // Close all supports
-          // TODO: confirm this with mjs.
           await transaction.save(
             InnovationSupportEntity,
             supports.map(support => {
