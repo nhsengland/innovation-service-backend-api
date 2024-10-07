@@ -451,7 +451,6 @@ export class InnovationSupportsService extends BaseService {
     };
   }
 
-  /** Creates innovation support. Currently state is suggested but this might change */
   async createInnovationSupport(
     domainContext: DomainContextType,
     innovationId: string,
