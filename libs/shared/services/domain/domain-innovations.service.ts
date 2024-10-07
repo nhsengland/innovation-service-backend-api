@@ -1053,7 +1053,7 @@ export class DomainInnovationsService {
           LEFT JOIN organisation o ON ur.organisation_id = o.id AND o.is_shadow = 0
       ),
       support AS (
-        SELECT s.id, innovation_id, s.status, s.updated_at, s.updated_by,
+        SELECT s.id, innovation_id, s.status, s.close_reason, s.updated_at, s.updated_by,
           ou.id AS unit_id, ou.name AS unit_name, ou.acronym AS unit_acronym,
           o.id AS org_id, o.name AS org_name, o.acronym AS org_acronym,
           (
@@ -1069,6 +1069,7 @@ export class DomainInnovationsService {
           INNER JOIN organisation_unit ou ON s.organisation_unit_id = ou.id AND ou.deleted_at IS NULL
           INNER JOIN organisation o ON ou.organisation_id = o.id
         WHERE s.deleted_at IS NULL
+          AND s.is_most_recent = 1
       )
     SELECT
       i.id,
@@ -1106,7 +1107,7 @@ export class DomainInnovationsService {
         WHERE s.innovation_id=i.id
       ) AS shares,
       (
-        SELECT id, s.unit_id AS unitId, s.status, s.updated_at AS updatedAt, s.updated_by AS updatedBy,
+        SELECT id, s.unit_id AS unitId, s.status, s.close_reason as closeReason, s.updated_at AS updatedAt, s.updated_by AS updatedBy,
         (
           SELECT JSON_QUERY('[' + STRING_AGG(CONVERT(VARCHAR(38), QUOTENAME(roleId, '"')), ',') + ']')
           FROM OPENJSON(s.assigned_accessors, '$')

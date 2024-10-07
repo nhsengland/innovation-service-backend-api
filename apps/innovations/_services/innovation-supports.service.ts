@@ -13,6 +13,7 @@ import {
 import {
   ActivityEnum,
   InnovationFileContextTypeEnum,
+  InnovationSupportCloseReasonEnum,
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
   InnovationSupportSummaryTypeEnum,
@@ -885,6 +886,7 @@ export class InnovationSupportsService extends BaseService {
         data.status === InnovationSupportStatusEnum.UNSUITABLE
       ) {
         dbSupport.finishedAt = new Date();
+        dbSupport.closeReason = InnovationSupportCloseReasonEnum.SUPPORT_COMPLETE;
       }
 
       const savedSupport = await transaction.save(InnovationSupportEntity, dbSupport);
