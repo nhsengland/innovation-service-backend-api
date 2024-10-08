@@ -1368,7 +1368,8 @@ export class CompleteScenarioBuilder {
             }
           },
           lisaQualifyingAccessor: {
-            ...lisaQualifyingAccessor
+            ...lisaQualifyingAccessor,
+            roles: { qaRole: lisaQualifyingAccessor.roles['qaRole']! }
           },
           // Needs assessors
           paulNeedsAssessor: {

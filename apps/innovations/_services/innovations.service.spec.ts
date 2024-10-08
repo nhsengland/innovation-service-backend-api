@@ -209,6 +209,13 @@ describe('Innovations / _services / innovations suite', () => {
             name: scenario.organisations.medTechOrg.name,
             acronym: scenario.organisations.medTechOrg.acronym
           }
+        },
+        {
+          organisation: {
+            id: scenario.organisations.innovTechOrg.id,
+            name: scenario.organisations.innovTechOrg.name,
+            acronym: scenario.organisations.innovTechOrg.acronym
+          }
         }
       ]);
     });
@@ -943,6 +950,7 @@ describe('Innovations / _services / innovations suite', () => {
 
       expect(relevantStatusOrganisationList).toMatchObject([
         {
+          id: innovation.id,
           status: innovation.supports.supportByHealthOrgUnit.relevantStatus,
           organisation: {
             id: scenario.organisations.healthOrg.id,
@@ -968,6 +976,7 @@ describe('Innovations / _services / innovations suite', () => {
           ]
         },
         {
+          id: innovation.id,
           status: innovation.supports.supportByHealthOrgUnit.relevantStatus,
           organisation: {
             id: scenario.organisations.medTechOrg.id,
@@ -984,6 +993,27 @@ describe('Innovations / _services / innovations suite', () => {
               id: scenario.users.samAccessor.id,
               roleId: scenario.users.samAccessor.roles.accessorRole.id,
               name: scenario.users.samAccessor.name
+            }
+          ]
+        },
+        {
+          id: innovation.id,
+          status: InnovationSupportStatusEnum.SUGGESTED,
+          organisation: {
+            id: scenario.organisations.innovTechOrg.id,
+            name: scenario.organisations.innovTechOrg.name,
+            acronym: scenario.organisations.innovTechOrg.acronym,
+            unit: {
+              id: scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.id,
+              name: scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.name,
+              acronym: scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.acronym
+            }
+          },
+          recipients: [
+            {
+              id: scenario.users.lisaQualifyingAccessor.id,
+              roleId: scenario.users.lisaQualifyingAccessor.roles.qaRole.id,
+              name: scenario.users.lisaQualifyingAccessor.name
             }
           ]
         }
@@ -1034,6 +1064,32 @@ describe('Innovations / _services / innovations suite', () => {
               id: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id,
               name: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.name,
               acronym: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.acronym
+            }
+          }
+        },
+        {
+          status: InnovationSupportStatusEnum.SUGGESTED,
+          organisation: {
+            id: scenario.organisations.innovTechOrg.id,
+            name: scenario.organisations.innovTechOrg.name,
+            acronym: scenario.organisations.innovTechOrg.acronym,
+            unit: {
+              id: scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.id,
+              name: scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.name,
+              acronym: scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.acronym
+            }
+          }
+        },
+        {
+          status: InnovationSupportStatusEnum.SUGGESTED,
+          organisation: {
+            id: scenario.organisations.innovTechOrg.id,
+            name: scenario.organisations.innovTechOrg.name,
+            acronym: scenario.organisations.innovTechOrg.acronym,
+            unit: {
+              id: scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.id,
+              name: scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.name,
+              acronym: scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.acronym
             }
           }
         }

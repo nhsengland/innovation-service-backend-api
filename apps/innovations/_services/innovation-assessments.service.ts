@@ -672,7 +672,8 @@ export class InnovationAssessmentsService extends BaseService {
           archivedStatus: null,
           archiveReason: null,
           updatedBy: assessment.createdBy,
-          currentAssessment: { id: assessment.id }
+          currentAssessment: { id: assessment.id },
+          currentMajorAssessment: { id: assessment.id }
         }
       );
 

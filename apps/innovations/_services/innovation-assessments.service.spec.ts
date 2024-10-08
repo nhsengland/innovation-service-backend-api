@@ -645,12 +645,19 @@ describe('Innovation Assessments Suite', () => {
         .where('reassessment.id = :reassessmentId', {
           reassessmentId: innovationReassessment.reassessment.id
         })
-        .getOne();
+        .getOneOrFail();
+
+      const dbInnovation = await em
+        .createQueryBuilder(InnovationEntity, 'innovation')
+        .select(['innovation.id', 'innovation.current_major_assessment_id'])
+        .where('innovation.id = :innovationId', { innovationId: innovationWithAssessment.id })
+        .getRawOne();
 
       expect(innovationReassessment).toEqual({
-        assessment: { id: bdReassessment?.assessment.id },
-        reassessment: { id: bdReassessment?.id }
+        assessment: { id: bdReassessment.assessment.id },
+        reassessment: { id: bdReassessment.id }
       });
+      expect(dbInnovation.current_major_assessment_id).toBe(bdReassessment.assessment.id);
     });
 
     it('should not create a reassessment if the innovation has no assessment', async () => {
@@ -786,14 +793,6 @@ describe('Innovation Assessments Suite', () => {
         .getRepository(InnovationEntity)
         .findOne({ where: { id: innovationWithAssessment.id }, relations: ['currentAssessment'] });
       expect(dbInnovation?.currentAssessment?.id).toBe(assessment.id);
-    });
-
-    it('should update the innovation current major assessment if major', async () => {
-      fail('todo');
-    });
-
-    it('should not update the innovation current major assessment if minor', async () => {
-      fail('todo');
     });
 
     it('should link the previous assessment', async () => {
