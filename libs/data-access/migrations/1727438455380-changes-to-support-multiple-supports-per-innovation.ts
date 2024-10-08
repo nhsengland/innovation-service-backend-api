@@ -31,6 +31,11 @@ export class ChangesToSupportMultipleSupportsPerInnovation1727438455380 implemen
 
     // Update assessment_id with current_assessment_id from innovation table
     await queryRunner.query(`
+      UPDATE innovation_support
+      SET major_assessment_id = innovation.current_major_assessment_id
+      FROM innovation_support
+      INNER JOIN innovation ON innovation_support.innovation_id = innovation.id;
+
        -- Drop the default constraint
       ALTER TABLE innovation_support DROP CONSTRAINT df_temp;
     `);
