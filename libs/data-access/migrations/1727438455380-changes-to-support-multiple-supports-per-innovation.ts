@@ -22,7 +22,7 @@ export class ChangesToSupportMultipleSupportsPerInnovation1727438455380 implemen
     await queryRunner.query(`
       ALTER TABLE innovation_support ADD started_at DATETIME2;
       ALTER TABLE innovation_support ADD finished_at DATETIME2;
-      ALTER TABLE innovation_support ADD is_most_recent BIT CONSTRAINT "df_innovation_support_is_most_recent" DEFAULT 1;
+      ALTER TABLE innovation_support ADD is_most_recent BIT CONSTRAINT "df_innovation_support_is_most_recent" DEFAULT 1 NOT NULL;
       ALTER TABLE innovation_support ADD major_assessment_id UNIQUEIDENTIFIER CONSTRAINT "df_temp" DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL; -- Default to empty guid because of system_version
       ALTER TABLE innovation_support ADD close_reason VARCHAR(255);
       ALTER TABLE innovation_support DROP CONSTRAINT CK_innovation_support_archive_snapshot_is_json;
@@ -31,11 +31,6 @@ export class ChangesToSupportMultipleSupportsPerInnovation1727438455380 implemen
 
     // Update assessment_id with current_assessment_id from innovation table
     await queryRunner.query(`
-      UPDATE innovation_support
-      SET major_assessment_id = innovation.current_major_assessment_id, is_most_recent = 1
-      FROM innovation_support
-      INNER JOIN innovation ON innovation_support.innovation_id = innovation.id;
-
        -- Drop the default constraint
       ALTER TABLE innovation_support DROP CONSTRAINT df_temp;
     `);
@@ -113,7 +108,65 @@ export class ChangesToSupportMultipleSupportsPerInnovation1727438455380 implemen
       CREATE UNIQUE NONCLUSTERED INDEX IX_UNIQUE_SUPPORT_UNIT ON innovation_support(innovation_id, organisation_unit_id, deleted_at) WHERE [status] <> 'CLOSED' AND [status] <> 'UNSUITABLE';
     `);
 
-    // TODO: Missing support log suggested migration from currently SUGGESTED
+    // Add close reason
+    await queryRunner.query(`
+      WITH reason AS (
+        SELECT s.id, IIF(sh.organisation_id IS NULL, 'STOP_SHARE', IIF(i.status='ARCHIVED', 'ARCHIVE', 'SUPPORT_COMPLETE')) as close_reason
+        FROM innovation_support s
+        INNER JOIN organisation_unit ou ON s.organisation_unit_id = ou.id
+        INNER JOIN innovation i ON i.id = s.innovation_id
+        LEFT JOIN innovation_share sh ON sh.innovation_id = s.innovation_id AND ou.organisation_id = sh.organisation_id
+        WHERE s.status = 'CLOSED'
+      ) UPDATE innovation_support
+      SET close_reason = reason.close_reason
+      FROM reason
+      WHERE innovation_support.id = reason.id;
+
+      UPDATE innovation_support
+      SET close_reason = 'SUPPORT_COMPLETE'
+      WHERE status='UNSUITABLE';
+    `);
+
+    // Add suggested supports
+    await queryRunner.query(`
+      WITH accessor_suggestions AS (
+        SELECT sl.innovation_id, slou.organisation_unit_id, MIN(sl.created_at) AS suggested_on
+        FROM innovation_support_log_organisation_unit slou
+        INNER JOIN innovation_support_log sl ON slou.innovation_support_log_id = sl.id
+        WHERE sl.type='ACCESSOR_SUGGESTION'
+        GROUP BY sl.innovation_id, slou.organisation_unit_id
+      ), assessment_suggestions AS (
+        SELECT i.id AS innovation_id, aou.organisation_unit_id, a.finished_at AS suggested_on
+        FROM innovation i
+        INNER JOIN innovation_assessment a ON i.current_assessment_id = a.id
+        INNER JOIN innovation_assessment_organisation_unit aou ON a.id = aou.innovation_assessment_id
+        WHERE a.finished_at IS NOT NULL
+      ), all_suggestions AS (
+        SELECT innovation_id, organisation_unit_id, MIN(suggested_on) as suggested_on FROM (SELECT * FROM accessor_suggestions
+        UNION ALL
+        SELECT * FROM assessment_suggestions) t
+        GROUP BY innovation_id, organisation_unit_id
+      ), supports_to_create AS (
+        SELECT sug.*, i.current_major_assessment_id
+        FROM all_suggestions sug
+        INNER JOIN innovation i ON sug.innovation_id = i.id
+        INNER JOIN organisation_unit ou ON sug.organisation_unit_id = ou.id
+        INNER JOIN innovation_share sh ON sug.innovation_id = sh.innovation_id  AND sh.organisation_id = ou.organisation_id
+        LEFT JOIN innovation_support s ON s.innovation_id = sug.innovation_id AND s.organisation_unit_id = sug.organisation_unit_id
+        WHERE s.id IS NULL
+        AND i.status='IN_PROGRESS'
+      ) INSERT INTO innovation_support (created_at, created_by, updated_at, updated_by, status, innovation_id, organisation_unit_id, major_assessment_id)
+      SELECT 
+        s.suggested_on, 
+        '00000000-0000-0000-0000-000000000000', 
+        s.suggested_on, 
+        '00000000-0000-0000-0000-000000000000', 
+        'SUGGESTED', 
+        s.innovation_id, 
+        s.organisation_unit_id, 
+        s.current_major_assessment_id 
+      FROM supports_to_create s
+`);
   }
 
   public async down(): Promise<void> {
