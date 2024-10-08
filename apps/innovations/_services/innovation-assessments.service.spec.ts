@@ -8,7 +8,11 @@ import {
   InnovationSectionEntity,
   InnovationSupportEntity
 } from '@innovations/shared/entities';
-import { InnovationStatusEnum, InnovationSupportStatusEnum } from '@innovations/shared/enums';
+import {
+  InnovationSectionStatusEnum,
+  InnovationStatusEnum,
+  InnovationSupportStatusEnum
+} from '@innovations/shared/enums';
 import {
   ConflictError,
   ForbiddenError,
@@ -27,6 +31,7 @@ import { randomUUID } from 'crypto';
 import type { EntityManager } from 'typeorm';
 import type { InnovationAssessmentsService } from './innovation-assessments.service';
 import SYMBOLS from './symbols';
+import { InnovationSectionBuilder } from '@innovations/shared/tests/builders/innovation-section.builder';
 
 describe('Innovation Assessments Suite', () => {
   let sut: InnovationAssessmentsService;
@@ -226,6 +231,17 @@ describe('Innovation Assessments Suite', () => {
     it('should return the sections updated since the previous assessment', async () => {
       const res = await sut.getSectionsUpdatedSincePreviousAssessment(innovation.assessment.id, em);
 
+      expect(res.sort()).toEqual(['COST_OF_INNOVATION', 'INNOVATION_DESCRIPTION'].sort());
+    });
+
+    it('should return only the valid sections (on the schema) updated since the previous assessment', async () => {
+      await new InnovationSectionBuilder(em)
+        .setInnovation(innovation.id)
+        .setSection('OLD_SECTION' as any)
+        .setStatus(InnovationSectionStatusEnum.SUBMITTED)
+        .save();
+
+      const res = await sut.getSectionsUpdatedSincePreviousAssessment(innovation.assessment.id, em);
       expect(res.sort()).toEqual(['COST_OF_INNOVATION', 'INNOVATION_DESCRIPTION'].sort());
     });
 

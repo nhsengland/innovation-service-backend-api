@@ -29,7 +29,7 @@ import {
   UnprocessableEntityError,
   UserErrorsEnum
 } from '@innovations/shared/errors';
-import type { DomainService, NotifierService } from '@innovations/shared/services';
+import type { DomainService, IRSchemaService, NotifierService } from '@innovations/shared/services';
 import type { DomainContextType, InnovationAssessmentKPIExemptionType } from '@innovations/shared/types';
 
 import { InnovationHelper } from '../_helpers/innovation.helper';
@@ -48,6 +48,7 @@ export class InnovationAssessmentsService extends BaseService {
   constructor(
     @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
     @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
+    @inject(SHARED_SYMBOLS.IRSchemaService) private irSchemaService: IRSchemaService,
     @inject(SYMBOLS.InnovationThreadsService) private threadService: InnovationThreadsService,
     @inject(SYMBOLS.InnovationDocumentService) private documentService: InnovationDocumentService
   ) {
@@ -280,7 +281,12 @@ export class InnovationAssessmentsService extends BaseService {
       [assessmentId]
     );
 
-    return dbResult.map((item: any) => item.section);
+    if (!dbResult.length) {
+      return [];
+    }
+
+    const schema = await this.irSchemaService.getSchema();
+    return dbResult.map((item: any) => item.section).filter((s: string) => schema.model.isSubsectionValid(s));
   }
 
   async createInnovationAssessment(
