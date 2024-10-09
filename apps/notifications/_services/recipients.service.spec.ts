@@ -319,7 +319,7 @@ describe('Notifications / _services / recipients service suite', () => {
       const shares = await sut.innovationSharedOrganisationsWithUnits(
         scenario.users.johnInnovator.innovations.johnInnovation.id
       );
-      expect(shares).toHaveLength(2);
+      expect(shares).toHaveLength(3);
       expect(shares).toMatchObject([
         {
           id: scenario.organisations.healthOrg.id,
@@ -349,6 +349,23 @@ describe('Notifications / _services / recipients service suite', () => {
               acronym: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.acronym
             }
           ]
+        },
+        {
+          id: scenario.organisations.innovTechOrg.id,
+          name: scenario.organisations.innovTechOrg.name,
+          acronym: scenario.organisations.innovTechOrg.acronym,
+          organisationUnits: [
+            {
+              id: scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.id,
+              name: scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.name,
+              acronym: scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.acronym
+            },
+            {
+              id: scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.id,
+              name: scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.name,
+              acronym: scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.acronym
+            }
+          ]
         }
       ]);
     });
@@ -374,6 +391,7 @@ describe('Notifications / _services / recipients service suite', () => {
       await new InnovationSupportBuilder(em)
         .setStatus(InnovationSupportStatusEnum.ENGAGING)
         .setInnovation(scenario.users.adamInnovator.innovations.adamInnovation.id)
+        .setMajorAssessment(scenario.users.adamInnovator.innovations.adamInnovation.assessment.id)
         .setOrganisationUnit(scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id)
         .setAccessors([scenario.users.jamieMadroxAccessor])
         .save();

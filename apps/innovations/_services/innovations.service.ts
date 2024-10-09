@@ -17,6 +17,7 @@ import {
   NotificationEntity,
   NotificationUserEntity,
   OrganisationEntity,
+  OrganisationUnitEntity,
   UserEntity,
   UserRoleEntity
 } from '@innovations/shared/entities';
@@ -28,6 +29,7 @@ import {
   type InnovationGroupedStatusEnum,
   InnovationSectionStatusEnum,
   InnovationStatusEnum,
+  InnovationSupportCloseReasonEnum,
   InnovationSupportStatusEnum,
   InnovationTaskStatusEnum,
   NotifierTypeEnum,
@@ -46,23 +48,24 @@ import {
 } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import { TranslationHelper } from '@innovations/shared/helpers';
-import { DomainService, IRSchemaService, NotifierService } from '@innovations/shared/services';
 import type { DomainUsersService } from '@innovations/shared/services';
+import { DomainService, IRSchemaService, NotifierService } from '@innovations/shared/services';
 import {
+  type ActivityLogListParamsType,
+  type DomainContextType,
   isAccessorDomainContextType,
   isAdminDomainContextType,
-  isAssessmentDomainContextType,
-  type ActivityLogListParamsType,
-  type DomainContextType
+  isAssessmentDomainContextType
 } from '@innovations/shared/types';
 
 import {
-  InnovationSupportLogTypeEnum,
-  type InnovationRelevantOrganisationsStatusEnum
+  type InnovationRelevantOrganisationsStatusEnum,
+  InnovationSupportLogTypeEnum
 } from '@innovations/shared/enums';
 import { InnovationLocationEnum } from '../_enums/innovation.enums';
 import type { InnovationSectionModel } from '../_types/innovation.types';
 
+import { InnovationRelevantOrganisationsStatusView } from '@innovations/shared/entities';
 import { createDocumentFromInnovation } from '@innovations/shared/entities/innovation/innovation-document.entity';
 import type { InnovationListViewWithoutNull } from '@innovations/shared/entities/views/innovation-progress.view.entity';
 import { InnovationProgressView } from '@innovations/shared/entities/views/innovation-progress.view.entity';
@@ -72,8 +75,8 @@ import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import { groupBy, isString, mapValues, omit, pick, snakeCase } from 'lodash';
 import { BaseService } from './base.service';
 import { InnovationDocumentService } from './innovation-document.service';
+import { InnovationSupportsService } from './innovation-supports.service';
 import SYMBOLS from './symbols';
-import { InnovationRelevantOrganisationsStatusView } from '@innovations/shared/entities';
 
 // TODO move types
 export const InnovationListSelectType = [
@@ -113,7 +116,7 @@ export const InnovationListSelectType = [
   'support.status',
   'support.updatedAt',
   'support.updatedBy',
-  'support.closedReason',
+  'support.closeReason',
   'owner.id',
   'owner.name',
   'owner.companyName',
@@ -127,8 +130,7 @@ export type InnovationListSelectType =
   | `assessment.${keyof Pick<InnovationAssessmentEntity, 'id' | 'updatedAt' | 'finishedAt'>}`
   | 'assessment.assignedTo'
   | 'assessment.isExempt'
-  | `support.${keyof Pick<InnovationSupportEntity, 'id' | 'status' | 'updatedAt' | 'updatedBy'>}`
-  | 'support.closedReason'
+  | `support.${keyof Pick<InnovationSupportEntity, 'id' | 'status' | 'updatedAt' | 'updatedBy' | 'closeReason'>}`
   | 'owner.id'
   | 'owner.name'
   | 'owner.companyName'
@@ -149,7 +151,7 @@ export type InnovationListFullResponseType = Omit<InnovationListViewFields, 'eng
     status: InnovationSupportStatusEnum;
     updatedAt: Date | null;
     updatedBy: string | null;
-    closedReason: 'ARCHIVED' | 'STOPPED_SHARED' | 'CLOSED' | null;
+    closeReason: InnovationSupportCloseReasonEnum | null;
   } | null;
   suggestion: {
     suggestedBy: string[];
@@ -221,6 +223,7 @@ export class InnovationsService extends BaseService {
     @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
     @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
     @inject(SHARED_SYMBOLS.IRSchemaService) private irSchemaService: IRSchemaService,
+    @inject(SYMBOLS.InnovationSupportsService) private innovationSupportsService: InnovationSupportsService,
     @inject(SYMBOLS.InnovationDocumentService) private innovationDocumentService: InnovationDocumentService
   ) {
     super();
@@ -410,21 +413,11 @@ export class InnovationsService extends BaseService {
               message: 'Sort by name is not allowed'
             });
 
-          case 'support.closedReason':
-            query.addSelect(
-              `CASE WHEN innovation.status = '${InnovationStatusEnum.ARCHIVED}' THEN 1 ELSE CASE WHEN shares.id IS NULL THEN 3 ELSE 2 END END`,
-              'closedReasonOrder'
-            );
-            query.addOrderBy(`closedReasonOrder`, value);
-            break;
           default:
             query.addOrderBy(key.includes('.') ? key : `innovation.${key}`, value);
         }
       }
     });
-
-    // Improve dependency selects if required at this point later on if it becomes a rules, keeping it in the functions
-    // that have the knowledge of the fields for now. Ie: closedReason for support requires innovation.status
 
     const queryResult = await query.getManyAndCount();
 
@@ -555,18 +548,20 @@ export class InnovationsService extends BaseService {
       }
 
       query
-        .addSelect((fields.filter(f => f !== 'closedReason') ?? ['id']).map(f => `support.${f}`))
-        .leftJoin('innovation.supports', 'support', 'support.organisation_unit_id = :organisationUnitId', {
-          organisationUnitId: unitId
-        })
+        .addSelect((fields ?? ['id']).map(f => `support.${f}`))
+        .leftJoin(
+          'innovation.supports',
+          'support',
+          'support.organisation_unit_id = :organisationUnitId AND support.isMostRecent = 1',
+          { organisationUnitId: unitId }
+        )
         // Ignore archived innovations that never had any support or it would be messing with the status and support summary
         .andWhere('(innovation.status != :innovationArchivedStatus OR support.id IS NOT NULL) ', {
           innovationArchivedStatus: InnovationStatusEnum.ARCHIVED
         });
 
-      // closedReason is inferred from the innovation and support status (archive) and having a support for this organisation (not shared)
-      // updated by also depends on the statuses
-      if (fields.includes('closedReason') || fields.includes('updatedBy')) {
+      // updated by also depends on the innovation and support status
+      if (fields.includes('updatedBy')) {
         if (!query.expressionMap.selects.some(s => s.selection === 'innovation.status')) {
           query.addSelect('innovation.status');
         }
@@ -947,7 +942,8 @@ export class InnovationsService extends BaseService {
       query.andWhere(
         new Brackets(qb => {
           qb.where('support.status IN (:...supportStatuses)', { supportStatuses: supportStatuses });
-          if (supportStatuses.includes(InnovationSupportStatusEnum.UNASSIGNED)) {
+          if (supportStatuses.includes(InnovationSupportStatusEnum.SUGGESTED)) {
+            // TODO MJS - Check if this is correct
             qb.orWhere('support.id IS NULL');
           }
         })
@@ -966,6 +962,7 @@ export class InnovationsService extends BaseService {
         new Brackets(qb => {
           qb.where('support.status != :closedSupportStatus', {
             closedSupportStatus: InnovationSupportStatusEnum.CLOSED
+            // TODO MJS - this isn't correct for sure, it's the close reason that should be checked now leaving it like this for it to fail in the meanwhile
           }).orWhere('(support.archive_snapshot IS NULL AND shares.id IS NOT NULL)'); // these are always joined for accessor roles
         })
       );
@@ -1076,26 +1073,17 @@ export class InnovationsService extends BaseService {
       // distinguish if there's multiple roles for the same user
       updatedBy?.roles.some(r => r.role === ServiceRoleEnum.INNOVATOR)
         ? 'Innovator'
-        : updatedBy?.displayName ?? null;
+        : (updatedBy?.displayName ?? null);
 
     // support is handled differently to remove the nested array since it's only 1 element in this case
     return {
       ...(fields.includes('id') && { id: item.supports?.[0]?.id ?? null }),
       ...(fields.includes('status') && {
-        status: item.supports?.[0]?.status ?? InnovationSupportStatusEnum.UNASSIGNED
+        status: item.supports?.[0]?.status ?? InnovationSupportStatusEnum.SUGGESTED // TODO MJS - Check if this is correct
       }),
       ...(fields.includes('updatedAt') && { updatedAt: item.supports?.[0]?.updatedAt }),
       ...(fields.includes('updatedBy') && { updatedBy: displayName }),
-      ...(fields.includes('closedReason') && {
-        closedReason:
-          item.supports?.[0]?.status === InnovationSupportStatusEnum.CLOSED
-            ? !item.organisationShares?.length
-              ? 'STOPPED_SHARED'
-              : item.status === 'ARCHIVED'
-                ? 'ARCHIVED'
-                : 'CLOSED'
-            : null
-      })
+      ...(fields.includes('closeReason') && { closeReason: item.supports?.[0]?.closeReason })
     };
   }
 
@@ -1252,7 +1240,8 @@ export class InnovationsService extends BaseService {
 
     // Supports relations.
     if (filters.fields?.includes('supports')) {
-      query.leftJoin('innovation.innovationSupports', 'innovationSupports');
+      // To keep current behavior we're returning only the most recent supports (this might change in the future)
+      query.leftJoin('innovation.innovationSupports', 'innovationSupports', 'innovationSupports.isMostRecent = 1');
       query.leftJoin('innovationSupports.organisationUnit', 'supportingOrganisationUnit');
       query.addSelect(['innovationSupports.id', 'innovationSupports.status', 'supportingOrganisationUnit.id']);
     }
@@ -1539,8 +1528,15 @@ export class InnovationsService extends BaseService {
 
     const innovation = await em
       .createQueryBuilder(InnovationEntity, 'innovation')
-      .select(['innovation.id', 'innovation.status', 'innovation.hasBeenAssessed', 'organisationShares.id'])
+      .select([
+        'innovation.id',
+        'innovation.status',
+        'innovation.hasBeenAssessed',
+        'organisationShares.id',
+        'majorAssessment.id'
+      ])
       .leftJoin('innovation.organisationShares', 'organisationShares')
+      .leftJoin('innovation.currentMajorAssessment', 'majorAssessment')
       .where('innovation.id = :innovationId', { innovationId })
       .getOne();
 
@@ -1584,6 +1580,10 @@ export class InnovationsService extends BaseService {
           .leftJoin('userRole.user', 'user', "user.status <> 'DELETED'")
           .where('innovation.id = :innovationId', { innovationId })
           .andWhere('unit.organisation IN (:...ids)', { ids: deletedShares })
+          .andWhere('support.status NOT IN (:...statuses)', {
+            statuses: [InnovationSupportStatusEnum.CLOSED, InnovationSupportStatusEnum.UNSUITABLE]
+          })
+          .andWhere('support.isMostRecent = 1')
           .getMany();
 
         const supportsOrgIdMap = new Map(supports.map(support => [support.organisationUnit.organisationId, support]));
@@ -1624,10 +1624,16 @@ export class InnovationsService extends BaseService {
           );
 
           // Close all supports
-          await transaction.update(
+          await transaction.save(
             InnovationSupportEntity,
-            { id: In(supportIds) },
-            { status: InnovationSupportStatusEnum.CLOSED, updatedBy: domainContext.id }
+            supports.map(support => {
+              support.userRoles = [];
+              support.updatedBy = domainContext.id;
+              support.status = InnovationSupportStatusEnum.CLOSED;
+              support.closeReason = InnovationSupportCloseReasonEnum.STOP_SHARE;
+              support.finishedAt = new Date();
+              return support;
+            })
           );
 
           const units = supports.map(s => s.organisationUnit.id);
@@ -1677,6 +1683,38 @@ export class InnovationsService extends BaseService {
         { organisations: organisations.map(o => o.name) }
       );
       await transaction.save(InnovationEntity, innovation);
+
+      // Create the supports for suggested organisations that were now shared
+      // this can only be after the new shares have been saved as createSuggestedSupports will check for the sharing
+      if (addedShares.length > 0) {
+        const suggestions = new Set(
+          await this.innovationSupportsService.getInnovationSuggestedUnits(
+            innovationId,
+            { majorAssessmentId: innovation.currentMajorAssessment?.id },
+            transaction
+          )
+        );
+
+        const organisationUnits = await transaction
+          .createQueryBuilder(OrganisationUnitEntity, 'unit')
+          .select(['unit.id'])
+          .where('unit.organisation_id IN (:...organisationId)', { organisationId: addedShares })
+          .andWhere('unit.inactivatedAt IS NULL')
+          .getMany();
+
+        const newUnitShares = organisationUnits
+          .filter(u => suggestions.has(u.id)) // only the ones that were suggested
+          .map(u => u.id);
+
+        if (newUnitShares.length) {
+          await this.innovationSupportsService.createSuggestedSupports(
+            domainContext,
+            innovationId,
+            newUnitShares,
+            transaction
+          );
+        }
+      }
 
       return toReturn;
     });

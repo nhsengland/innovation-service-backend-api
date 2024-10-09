@@ -27,6 +27,7 @@ import {
   InnovationCollaboratorStatusEnum,
   InnovationExportRequestStatusEnum,
   InnovationStatusEnum,
+  InnovationSupportCloseReasonEnum,
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
   InnovationTaskStatusEnum,
@@ -195,7 +196,7 @@ export class DomainInnovationsService {
    * Contains all the business rules of archiving innovations.
    * It's responsible for:
    * 1. Updating all OPEN tasks to CANCELLED
-   * 2. Changing all supports to closed and save a snapshot
+   * 2. Changes all active supports to closed with the archive reason.
    * 3. Rejecting all PENDING export requests
    * 4. Updating innovation status to Archived and saving prevStatus
    * 5. Adding an entry to support log for each unit
@@ -306,7 +307,10 @@ export class DomainInnovationsService {
           .leftJoin('support.userRoles', 'userRole')
           .leftJoin('userRole.user', 'user', "user.status <> 'DELETED'")
           .where('support.innovation_id = :innovationId', { innovationId: innovation.id })
-          .andWhere('support.status <> :supportClosed', { supportClosed: InnovationSupportStatusEnum.CLOSED })
+          .andWhere('support.status NOT IN (:...statuses)', {
+            statuses: [InnovationSupportStatusEnum.CLOSED, InnovationSupportStatusEnum.UNSUITABLE]
+          })
+          .andWhere('support.isMostRecent = 1')
           .getMany();
 
         innovation.affectedUsers.push(
@@ -338,17 +342,11 @@ export class DomainInnovationsService {
 
         // Change all supports to closed and save a snapshot
         const supportsToUpdate = supports.map(support => {
-          // Save snapshot before updating support
-          support.archiveSnapshot = {
-            archivedAt,
-            status: support.status,
-            assignedAccessors: support.userRoles.map(r => r.id)
-          };
-
           support.userRoles = [];
           support.updatedBy = domainContext.id;
           support.status = InnovationSupportStatusEnum.CLOSED;
-
+          support.closeReason = InnovationSupportCloseReasonEnum.ARCHIVE;
+          support.finishedAt = new Date();
           return support;
         });
         await transaction.save(InnovationSupportEntity, supportsToUpdate);
@@ -534,6 +532,16 @@ export class DomainInnovationsService {
     innovationId: string,
     params: SupportLogParams
   ): Promise<{ id: string }> {
+    const innovation = await transactionManager
+      .createQueryBuilder(InnovationEntity, 'innovation')
+      .select(['innovation.id', 'currentMajorAssessment.id'])
+      .innerJoin('innovation.currentMajorAssessment', 'currentMajorAssessment')
+      .where('innovation.id = :id', { id: innovationId })
+      .getOne();
+    if (!innovation) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
+    }
+
     const supportLogData = InnovationSupportLogEntity.new({
       innovation: InnovationEntity.new({ id: innovationId }),
       description: params.description,
@@ -541,6 +549,7 @@ export class DomainInnovationsService {
       createdBy: user.id,
       createdByUserRole: UserRoleEntity.new({ id: user.roleId }),
       updatedBy: user.id,
+      majorAssessmentId: innovation.currentMajorAssessment,
       ...(params.type !== InnovationSupportLogTypeEnum.ASSESSMENT_SUGGESTION && {
         organisationUnit: OrganisationUnitEntity.new({ id: params.unitId }),
         innovationSupportStatus: params.supportStatus
@@ -1006,6 +1015,21 @@ export class DomainInnovationsService {
     }));
   }
 
+  /** helper to return an innovation shared units (result might change keeping it simple) */
+  async getInnovationSharedUnits(innovationId: string, entityManager?: EntityManager): Promise<string[]> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const res = await em
+      .createQueryBuilder(InnovationEntity, 'innovation')
+      .select(['unit.id'])
+      .innerJoin('innovation.organisationShares', 'shares')
+      .innerJoin('shares.organisationUnits', 'unit')
+      .where('innovation.id = :innovationId', { innovationId })
+      .getRawMany(); // Using raw to avoid needless columns and Promise.all cause of lazy
+
+    return res.map(r => r.unit_id);
+  }
+
   /**
    * Fetches all the information needed for the document type.
    * If innovationIds are passed it will only return the information for those ids,
@@ -1029,7 +1053,7 @@ export class DomainInnovationsService {
           LEFT JOIN organisation o ON ur.organisation_id = o.id AND o.is_shadow = 0
       ),
       support AS (
-        SELECT s.id, innovation_id, s.status, s.updated_at, s.updated_by,
+        SELECT s.id, innovation_id, s.status, s.close_reason, s.updated_at, s.updated_by,
           ou.id AS unit_id, ou.name AS unit_name, ou.acronym AS unit_acronym,
           o.id AS org_id, o.name AS org_name, o.acronym AS org_acronym,
           (
@@ -1045,6 +1069,7 @@ export class DomainInnovationsService {
           INNER JOIN organisation_unit ou ON s.organisation_unit_id = ou.id AND ou.deleted_at IS NULL
           INNER JOIN organisation o ON ou.organisation_id = o.id
         WHERE s.deleted_at IS NULL
+          AND s.is_most_recent = 1
       )
     SELECT
       i.id,
@@ -1082,7 +1107,7 @@ export class DomainInnovationsService {
         WHERE s.innovation_id=i.id
       ) AS shares,
       (
-        SELECT id, s.unit_id AS unitId, s.status, s.updated_at AS updatedAt, s.updated_by AS updatedBy,
+        SELECT id, s.unit_id AS unitId, s.status, s.close_reason as closeReason, s.updated_at AS updatedAt, s.updated_by AS updatedBy,
         (
           SELECT JSON_QUERY('[' + STRING_AGG(CONVERT(VARCHAR(38), QUOTENAME(roleId, '"')), ',') + ']')
           FROM OPENJSON(s.assigned_accessors, '$')

@@ -8,6 +8,7 @@ import { OrganisationUnitEntity, UserEntity } from '@admin/shared/entities';
 import { UserRoleEntity } from '@admin/shared/entities';
 import { InnovationSupportStatusEnum, ServiceRoleEnum, UserStatusEnum } from '@admin/shared/enums';
 import { NotFoundError, UserErrorsEnum } from '@admin/shared/errors';
+import { InnovationAssessmentBuilder } from '@admin/shared/tests/builders/innovation-assessment.builder';
 import { InnovationSupportBuilder } from '@admin/shared/tests/builders/innovation-support.builder';
 import { UserBuilder } from '@admin/shared/tests/builders/user.builder';
 import { randUuid } from '@ngneat/falso';
@@ -145,11 +146,23 @@ describe('Admin / _services / validations service suite', () => {
       });
     });
     it('should be invalid if there is an innovation only supported by the user', async () => {
+      const innovation = scenario.users.johnInnovator.innovations.johnInnovationEmpty;
+      const naUser = scenario.users.paulNeedsAssessor;
+      const healthOrgUnit = scenario.organisations.healthOrg.organisationUnits.healthOrgUnit;
       // make support with only one user
+      const assessment = await new InnovationAssessmentBuilder(em)
+        .setInnovation(innovation.id)
+        .setNeedsAssessor(naUser.id)
+        .setUpdatedBy(naUser.id)
+        .setFinishedAt()
+        .suggestOrganisationUnits(healthOrgUnit)
+        .save();
+
       await new InnovationSupportBuilder(em)
         .setStatus(InnovationSupportStatusEnum.ENGAGING)
-        .setInnovation(scenario.users.johnInnovator.innovations.johnInnovationEmpty.id)
-        .setOrganisationUnit(scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id)
+        .setInnovation(innovation.id)
+        .setMajorAssessment(assessment.id)
+        .setOrganisationUnit(healthOrgUnit.id)
         .setAccessors([scenario.users.aliceQualifyingAccessor])
         .save();
 

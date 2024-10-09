@@ -11,6 +11,7 @@ import {
   InnovationExportRequestStatusEnum,
   InnovationSectionStatusEnum,
   InnovationStatusEnum,
+  InnovationSupportCloseReasonEnum,
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
   InnovationTaskStatusEnum
@@ -41,6 +42,7 @@ import {
 import assert from 'node:assert';
 import { EntityManager } from 'typeorm';
 import { container } from '../_config';
+import { InnovationSupportsService } from './innovation-supports.service';
 import type { InnovationsService } from './innovations.service';
 import SYMBOLS from './symbols';
 
@@ -207,6 +209,13 @@ describe('Innovations / _services / innovations suite', () => {
             name: scenario.organisations.medTechOrg.name,
             acronym: scenario.organisations.medTechOrg.acronym
           }
+        },
+        {
+          organisation: {
+            id: scenario.organisations.innovTechOrg.id,
+            name: scenario.organisations.innovTechOrg.name,
+            acronym: scenario.organisations.innovTechOrg.acronym
+          }
         }
       ]);
     });
@@ -220,6 +229,21 @@ describe('Innovations / _services / innovations suite', () => {
 
   describe('updateInnovationShares', () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+
+    const getInnovationSuggestedUnitsSpy = jest
+      .spyOn(InnovationSupportsService.prototype, 'getInnovationSuggestedUnits')
+      .mockResolvedValue([]);
+    const createSuggestedSupports = jest.spyOn(InnovationSupportsService.prototype, 'createSuggestedSupports');
+
+    beforeEach(() => {
+      getInnovationSuggestedUnitsSpy.mockClear();
+      createSuggestedSupports.mockClear();
+    });
+
+    afterAll(() => {
+      getInnovationSuggestedUnitsSpy.mockRestore();
+      createSuggestedSupports.mockRestore();
+    });
 
     it('should update the organisations that the innovation is shared with', async () => {
       // remove all existing shares and add share with innovTechOrg
@@ -315,6 +339,38 @@ describe('Innovations / _services / innovations suite', () => {
 
       expect(dbRequest?.status).toBe(InnovationExportRequestStatusEnum.REJECTED);
       expect(dbRequest?.rejectReason).toBe(TranslationHelper.translate('DEFAULT_MESSAGES.EXPORT_REQUEST.STOP_SHARING'));
+    });
+
+    it('should add a support when adding a share if the support organisation unit had been suggested', async () => {
+      const context = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator);
+      getInnovationSuggestedUnitsSpy.mockResolvedValueOnce([
+        scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.id
+      ]);
+      await em.query('DELETE FROM innovation_share WHERE innovation_id = @0', [innovation.id]);
+      await sut.updateInnovationShares(context, innovation.id, [scenario.organisations.innovTechOrg.id], em);
+
+      expect(createSuggestedSupports).toHaveBeenCalled();
+      expect(createSuggestedSupports).toHaveBeenCalledWith(
+        context,
+        innovation.id,
+        [scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.id],
+        em
+      );
+    });
+
+    it("should not add a support when adding a share if the support organisation unit hadn't been suggested", async () => {
+      const context = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator);
+      await em.query('DELETE FROM innovation_share WHERE innovation_id = @0', [innovation.id]);
+      await sut.updateInnovationShares(context, innovation.id, [scenario.organisations.innovTechOrg.id], em);
+
+      expect(createSuggestedSupports).toHaveBeenCalledTimes(0);
+    });
+
+    it('should not add support when sharing with an organisation that was already shared', async () => {
+      const context = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator);
+      await sut.updateInnovationShares(context, innovation.id, [scenario.organisations.innovTechOrg.id], em);
+
+      expect(createSuggestedSupports).toHaveBeenCalledTimes(0);
     });
 
     it('should add the stop share to support summary from removed units', async () => {
@@ -454,21 +510,25 @@ describe('Innovations / _services / innovations suite', () => {
       expect(dbCancelledTasks).toHaveLength(dbPreviouslyOpenTasks.length);
     });
 
-    it('should close all support and save a snapshot', async () => {
+    it('should close all support', async () => {
       const dbPreviousSupports = await em
         .createQueryBuilder(InnovationSupportEntity, 'support')
-        .select(['support.id', 'support.status', 'support.archiveSnapshot', 'userRole.id', 'user.id'])
+        .select(['support.id', 'support.status', 'userRole.id', 'user.id'])
         .innerJoin('support.innovation', 'innovation')
         .leftJoin('support.userRoles', 'userRole')
         .leftJoin('userRole.user', 'user')
         .where('innovation.id = :innovationId', { innovationId: innovation.id })
+        .andWhere('support.status NOT IN (:...statuses)', {
+          statuses: [InnovationSupportStatusEnum.CLOSED, InnovationSupportStatusEnum.UNSUITABLE]
+        })
+        .andWhere('support.isMostRecent = 1')
         .getMany();
 
       await sut.archiveInnovation(context, innovation.id, { message: message }, em);
 
       const dbSupports = await em
         .createQueryBuilder(InnovationSupportEntity, 'support')
-        .select(['support.id', 'support.status', 'support.archiveSnapshot'])
+        .select(['support.id', 'support.status', 'support.closeReason', 'support.finishedAt'])
         .where('support.id IN (:...supportIds)', { supportIds: dbPreviousSupports.map(s => s.id) })
         .getMany();
 
@@ -476,11 +536,8 @@ describe('Innovations / _services / innovations suite', () => {
         const previousSupport = dbPreviousSupports.find(s => s.id === support.id);
         assert(previousSupport);
         expect(support.status).toBe(InnovationSupportStatusEnum.CLOSED);
-        expect(support.archiveSnapshot).toMatchObject({
-          archivedAt: expect.any(String),
-          status: previousSupport.status,
-          assignedAccessors: previousSupport.userRoles.map(r => r.id)
-        });
+        expect(support.closeReason).toBe(InnovationSupportCloseReasonEnum.ARCHIVE);
+        expect(support.finishedAt).toStrictEqual(expect.any(Date));
       }
     });
 
@@ -893,6 +950,7 @@ describe('Innovations / _services / innovations suite', () => {
 
       expect(relevantStatusOrganisationList).toMatchObject([
         {
+          id: innovation.id,
           status: innovation.supports.supportByHealthOrgUnit.relevantStatus,
           organisation: {
             id: scenario.organisations.healthOrg.id,
@@ -918,6 +976,7 @@ describe('Innovations / _services / innovations suite', () => {
           ]
         },
         {
+          id: innovation.id,
           status: innovation.supports.supportByHealthOrgUnit.relevantStatus,
           organisation: {
             id: scenario.organisations.medTechOrg.id,
@@ -934,6 +993,27 @@ describe('Innovations / _services / innovations suite', () => {
               id: scenario.users.samAccessor.id,
               roleId: scenario.users.samAccessor.roles.accessorRole.id,
               name: scenario.users.samAccessor.name
+            }
+          ]
+        },
+        {
+          id: innovation.id,
+          status: InnovationSupportStatusEnum.SUGGESTED,
+          organisation: {
+            id: scenario.organisations.innovTechOrg.id,
+            name: scenario.organisations.innovTechOrg.name,
+            acronym: scenario.organisations.innovTechOrg.acronym,
+            unit: {
+              id: scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.id,
+              name: scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.name,
+              acronym: scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.acronym
+            }
+          },
+          recipients: [
+            {
+              id: scenario.users.lisaQualifyingAccessor.id,
+              roleId: scenario.users.lisaQualifyingAccessor.roles.qaRole.id,
+              name: scenario.users.lisaQualifyingAccessor.name
             }
           ]
         }
@@ -984,6 +1064,32 @@ describe('Innovations / _services / innovations suite', () => {
               id: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id,
               name: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.name,
               acronym: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.acronym
+            }
+          }
+        },
+        {
+          status: InnovationSupportStatusEnum.SUGGESTED,
+          organisation: {
+            id: scenario.organisations.innovTechOrg.id,
+            name: scenario.organisations.innovTechOrg.name,
+            acronym: scenario.organisations.innovTechOrg.acronym,
+            unit: {
+              id: scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.id,
+              name: scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.name,
+              acronym: scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.acronym
+            }
+          }
+        },
+        {
+          status: InnovationSupportStatusEnum.SUGGESTED,
+          organisation: {
+            id: scenario.organisations.innovTechOrg.id,
+            name: scenario.organisations.innovTechOrg.name,
+            acronym: scenario.organisations.innovTechOrg.acronym,
+            unit: {
+              id: scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.id,
+              name: scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.name,
+              acronym: scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.acronym
             }
           }
         }

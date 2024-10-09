@@ -48,7 +48,7 @@ type SearchInnovationListSelectType =
   | 'support.status'
   | 'support.updatedAt'
   | 'support.updatedBy'
-  | 'support.closedReason'
+  | 'support.closeReason'
   | 'owner.id'
   | 'owner.name'
   | 'owner.companyName';
@@ -325,7 +325,7 @@ export class SearchService extends BaseService {
     extra: PickHandlerReturnType<typeof this.postHandlers, 'users'>
   ): Partial<InnovationListFullResponseType['support']> {
     if (isAccessorDomainContextType(domainContext)) {
-      const support = item.supports?.filter(s => s.unitId === domainContext.organisation.organisationUnit.id)[0];
+      const support = item.supports?.find(s => s.unitId === domainContext.organisation.organisationUnit.id);
       const updatedBy = extra.users?.get(support?.updatedBy ?? '') ?? null;
       const displayName =
         // Ensuring that updatedBy is always innovator if the innovation is archived or not shared
@@ -340,19 +340,10 @@ export class SearchService extends BaseService {
       // support is handled differently to remove the nested array since it's only 1 element in this case
       return {
         ...(fields.includes('id') && { id: support?.id ?? null }),
-        ...(fields.includes('status') && { status: support?.status ?? InnovationSupportStatusEnum.UNASSIGNED }),
+        ...(fields.includes('status') && { status: support?.status ?? InnovationSupportStatusEnum.SUGGESTED }), // TODO MJS - Check if this is correct
         ...(fields.includes('updatedAt') && { updatedAt: support?.updatedAt }),
         ...(fields.includes('updatedBy') && { updatedBy: displayName }),
-        ...(fields.includes('closedReason') && {
-          closedReason:
-            support?.status === InnovationSupportStatusEnum.CLOSED
-              ? !item.shares?.some(s => s === domainContext.organisation.id)
-                ? 'STOPPED_SHARED'
-                : item.status === 'ARCHIVED'
-                  ? 'ARCHIVED'
-                  : 'CLOSED'
-              : null
-        })
+        ...(fields.includes('closeReason') && { closeReason: support?.closeReason })
       };
     }
 
@@ -614,7 +605,8 @@ export class SearchService extends BaseService {
         )
       );
 
-      if (supportStatuses.includes(InnovationSupportStatusEnum.UNASSIGNED)) {
+      if (supportStatuses.includes(InnovationSupportStatusEnum.SUGGESTED)) {
+        // TODO MJS - Check if this is correct
         should.push(
           boolQuery({
             mustNot: nestedQuery('supports', {
