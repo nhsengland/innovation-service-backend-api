@@ -124,11 +124,11 @@ export class CompleteScenarioBuilder {
       const notSharedOrg = await new OrganisationBuilder(entityManager).setName('Not Shared Organisation').save();
       const notSharedOrgUnit = await new OrganisationUnitBuilder(entityManager)
         .addToOrganisation(notSharedOrg.id)
-        .setName('InnovTech Org Unit')
+        .setName('NotShared Org Unit')
         .save();
       const notSharedOrgHeavyOrgUnit = await new OrganisationUnitBuilder(entityManager)
         .addToOrganisation(notSharedOrg.id)
-        .setName('InnovTech Heavy Org Unit')
+        .setName('NotShared Heavy Org Unit')
         .save();
 
       // QAs and Accessors

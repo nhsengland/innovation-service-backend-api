@@ -1,9 +1,9 @@
 import { randUuid } from '@ngneat/falso';
-import { BadRequestError, InnovationErrorsEnum } from '../../errors';
 import type { EntityManager } from 'typeorm';
 import { container } from '../../config/inversify.config';
 import { InnovationDocumentEntity, InnovationEntity } from '../../entities';
 import { InnovationGroupedStatusEnum, InnovationStatusEnum, UserStatusEnum } from '../../enums';
+import { BadRequestError, InnovationErrorsEnum } from '../../errors';
 import { TestsHelper } from '../../tests';
 import SHARED_SYMBOLS from '../symbols';
 import type { DomainInnovationsService } from './domain-innovations.service';
@@ -81,7 +81,11 @@ describe('Shared / services / innovations suite', () => {
           }
         ],
 
-        shares: [scenario.organisations.healthOrg.id, scenario.organisations.medTechOrg.id],
+        shares: [
+          scenario.organisations.healthOrg.id,
+          scenario.organisations.medTechOrg.id,
+          scenario.organisations.innovTechOrg.id
+        ],
         supports: expect.anything(), // hard to create the schema
         assessment: {
           id: expect.any(String),

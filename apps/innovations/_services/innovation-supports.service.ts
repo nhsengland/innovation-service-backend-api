@@ -498,6 +498,7 @@ export class InnovationSupportsService extends BaseService {
       innovation: { id: innovationId },
       organisationUnit: { id: organisationUnitId },
       majorAssessment: { id: innovation.currentMajorAssessment.id },
+      userRoles: [],
       ...(status !== InnovationSupportStatusEnum.SUGGESTED && { startedAt: now }),
       ...(status === InnovationSupportStatusEnum.UNSUITABLE && { finishedAt: now })
     });
@@ -577,6 +578,9 @@ export class InnovationSupportsService extends BaseService {
 
     const support = await connection
       .createQueryBuilder(InnovationSupportEntity, 'support')
+      .addSelect(['innovation.id', 'organisationUnit.id'])
+      .innerJoin('support.innovation', 'innovation')
+      .innerJoin('support.organisationUnit', 'organisationUnit')
       .where('support.innovation.id = :innovationId ', { innovationId })
       .andWhere('support.organisation_unit_id = :organisationUnitId', { organisationUnitId })
       .andWhere('support.isMostRecent = 1')
@@ -607,6 +611,7 @@ export class InnovationSupportsService extends BaseService {
         newSupport.status = data.status;
         newSupport.updatedBy = domainContext.id;
         newSupport.startedAt = new Date();
+        newSupport.userRoles = [];
         savedSupport = await transaction.save(InnovationSupportEntity, newSupport);
       } else {
         savedSupport = await this.createInnovationSupport(
@@ -617,10 +622,6 @@ export class InnovationSupportsService extends BaseService {
           transaction
         );
       }
-
-      // This is required because the typeorm entity is incomplete and will be assigned later
-      savedSupport.userRoles = [];
-      savedSupport.organisationUnit = organisationUnit;
 
       const user = { id: domainContext.id, identityId: domainContext.identityId };
       const thread = await this.innovationThreadsService.createThreadOrMessage(
