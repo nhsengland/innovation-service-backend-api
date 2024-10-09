@@ -101,6 +101,14 @@ export class ChangesToSupportMultipleSupportsPerInnovation1727438455380 implemen
       ALTER TABLE innovation_support DROP CONSTRAINT df_innovation_support_status;
 
       UPDATE innovation_support SET [status] = 'SUGGESTED' WHERE [status] = 'UNASSIGNED';
+      
+      -- Close the supports that were UNASSIGNED but then not shared
+      UPDATE innovation_support 
+      SET close_reason = 'STOP_SHARE', status='CLOSED'
+      FROM  innovation_support s
+      INNER JOIN organisation_unit ou ON ou.id = s.organisation_unit_id
+      LEFT JOIN innovation_share sh ON s.innovation_id=sh.innovation_id AND sh.organisation_id= ou.organisation_id
+      WHERE sh.innovation_id IS NULL;
 
       -- Add status constraint with new statuses
       ALTER TABLE innovation_support ADD CONSTRAINT "CK_innovation_support_status" CHECK( [status] IN ('SUGGESTED', 'ENGAGING', 'WAITING', 'UNSUITABLE', 'CLOSED') );
@@ -135,22 +143,23 @@ export class ChangesToSupportMultipleSupportsPerInnovation1727438455380 implemen
     // Add suggested supports
     await queryRunner.query(`
       WITH accessor_suggestions AS (
-        SELECT sl.innovation_id, slou.organisation_unit_id, MIN(sl.created_at) AS suggested_on
+        SELECT DISTINCT sl.innovation_id, slou.organisation_unit_id, 
+        FIRST_VALUE(sl.created_at) OVER (PARTITION BY sl.innovation_id, slou.organisation_unit_id order by sl.created_at) as suggested_on,
+        FIRST_VALUE(sl.created_by) OVER (PARTITION BY sl.innovation_id, slou.organisation_unit_id order by sl.created_at) as creator
         FROM innovation_support_log_organisation_unit slou
         INNER JOIN innovation_support_log sl ON slou.innovation_support_log_id = sl.id
         WHERE sl.type='ACCESSOR_SUGGESTION'
-        GROUP BY sl.innovation_id, slou.organisation_unit_id
       ), assessment_suggestions AS (
-        SELECT i.id AS innovation_id, aou.organisation_unit_id, a.finished_at AS suggested_on
+        SELECT i.id AS innovation_id, aou.organisation_unit_id, a.finished_at AS suggested_on, a.updated_by as creator
         FROM innovation i
         INNER JOIN innovation_assessment a ON i.current_assessment_id = a.id
         INNER JOIN innovation_assessment_organisation_unit aou ON a.id = aou.innovation_assessment_id
         WHERE a.finished_at IS NOT NULL
       ), all_suggestions AS (
-        SELECT innovation_id, organisation_unit_id, MIN(suggested_on) as suggested_on FROM (SELECT * FROM accessor_suggestions
-        UNION ALL
-        SELECT * FROM assessment_suggestions) t
-        GROUP BY innovation_id, organisation_unit_id
+        SELECT DISTINCT innovation_id, organisation_unit_id, 
+        FIRST_VALUE(suggested_on) OVER (PARTITION BY innovation_id, organisation_unit_id order by suggested_on) as suggested_on,
+        FIRST_VALUE(creator) OVER (PARTITION BY innovation_id, organisation_unit_id order by suggested_on) as creator
+        FROM (SELECT * FROM accessor_suggestions UNION ALL SELECT * FROM assessment_suggestions) t
       ), supports_to_create AS (
         SELECT sug.*, i.current_major_assessment_id
         FROM all_suggestions sug
@@ -160,18 +169,18 @@ export class ChangesToSupportMultipleSupportsPerInnovation1727438455380 implemen
         LEFT JOIN innovation_support s ON s.innovation_id = sug.innovation_id AND s.organisation_unit_id = sug.organisation_unit_id
         WHERE s.id IS NULL
         AND i.status='IN_PROGRESS'
-      ) INSERT INTO innovation_support (created_at, created_by, updated_at, updated_by, status, innovation_id, organisation_unit_id, major_assessment_id)
-      SELECT 
-        s.suggested_on, 
-        '00000000-0000-0000-0000-000000000000', 
-        s.suggested_on, 
-        '00000000-0000-0000-0000-000000000000', 
-        'SUGGESTED', 
-        s.innovation_id, 
-        s.organisation_unit_id, 
-        s.current_major_assessment_id 
-      FROM supports_to_create s
-`);
+      )  INSERT INTO innovation_support (created_at, created_by, updated_at, updated_by, status, innovation_id, organisation_unit_id, major_assessment_id)
+      SELECT
+        s.suggested_on,
+        s.creator,
+        s.suggested_on,
+        s.creator,
+        'SUGGESTED',
+        s.innovation_id,
+        s.organisation_unit_id,
+        s.current_major_assessment_id
+      FROM supports_to_create s;
+    `);
   }
 
   public async down(): Promise<void> {
