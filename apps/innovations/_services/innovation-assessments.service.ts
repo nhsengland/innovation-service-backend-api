@@ -28,7 +28,7 @@ import {
   UnprocessableEntityError,
   UserErrorsEnum
 } from '@innovations/shared/errors';
-import type { DomainService, NotifierService } from '@innovations/shared/services';
+import type { DomainService, IRSchemaService, NotifierService } from '@innovations/shared/services';
 import type { DomainContextType, InnovationAssessmentKPIExemptionType } from '@innovations/shared/types';
 
 import { InnovationHelper } from '../_helpers/innovation.helper';
@@ -47,10 +47,11 @@ import SYMBOLS from './symbols';
 export class InnovationAssessmentsService extends BaseService {
   constructor(
     @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
-    @inject(SYMBOLS.InnovationSupportsService) private innovationSupportsService: InnovationSupportsService,
+    @inject(SHARED_SYMBOLS.IRSchemaService) private irSchemaService: IRSchemaService,
+    @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
     @inject(SYMBOLS.InnovationDocumentService) private documentService: InnovationDocumentService,
-    @inject(SYMBOLS.InnovationThreadsService) private threadService: InnovationThreadsService,
-    @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService
+    @inject(SYMBOLS.InnovationSupportsService) private innovationSupportsService: InnovationSupportsService,
+    @inject(SYMBOLS.InnovationThreadsService) private threadService: InnovationThreadsService
   ) {
     super();
   }
@@ -281,7 +282,12 @@ export class InnovationAssessmentsService extends BaseService {
       [assessmentId]
     );
 
-    return dbResult.map((item: any) => item.section);
+    if (!dbResult.length) {
+      return [];
+    }
+
+    const schema = await this.irSchemaService.getSchema();
+    return dbResult.map((item: any) => item.section).filter((s: string) => schema.model.isSubsectionValid(s));
   }
 
   async createInnovationAssessment(
