@@ -705,6 +705,12 @@ describe('Innovations / _services / innovation-supports suite', () => {
         .setMajorAssessment(innovation.assessment.id)
         .setOrganisationUnit(scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.id)
         .save();
+      const innovTechOrgUnitSupport = await new InnovationSupportBuilder(em)
+        .setStatus(InnovationSupportStatusEnum.SUGGESTED)
+        .setInnovation(innovation.id)
+        .setMajorAssessment(innovation.assessment.id)
+        .setOrganisationUnit(scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.id)
+        .save();
       const supportSummaryList = await sut.getSupportSummaryList(
         DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
         innovation.id,
@@ -717,7 +723,12 @@ describe('Innovations / _services / innovation-supports suite', () => {
           name: scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.name,
           support: {
             id: innovation.supports.supportByHealthOrgAiUnit.id,
-            status: InnovationSupportStatusEnum.WAITING
+            status: InnovationSupportStatusEnum.WAITING,
+            start: expect.any(Date)
+          },
+          organisation: {
+            id: scenario.organisations.healthOrg.id,
+            acronym: scenario.organisations.healthOrg.acronym
           }
         },
         {
@@ -725,14 +736,24 @@ describe('Innovations / _services / innovation-supports suite', () => {
           name: scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.name,
           support: {
             id: innovTechHeavySupport.id,
-            status: InnovationSupportStatusEnum.WAITING
+            status: InnovationSupportStatusEnum.WAITING,
+            start: expect.any(Date)
+          },
+          organisation: {
+            id: scenario.organisations.innovTechOrg.id,
+            acronym: scenario.organisations.innovTechOrg.acronym
           }
         },
         {
           id: expect.any(String),
           name: scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.name,
           support: {
-            status: InnovationSupportStatusEnum.SUGGESTED
+            id: innovTechOrgUnitSupport.id,
+            status: innovTechOrgUnitSupport.status
+          },
+          organisation: {
+            id: scenario.organisations.innovTechOrg.id,
+            acronym: scenario.organisations.innovTechOrg.acronym
           }
         }
       ]);

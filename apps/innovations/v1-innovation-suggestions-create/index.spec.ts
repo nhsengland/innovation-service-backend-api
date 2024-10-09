@@ -42,7 +42,7 @@ describe('v1-innovation-suggestion-create Suite', () => {
         })
         .setBody<BodyType>({
           description: randText(),
-          organisationUnits: []
+          organisationUnits: [scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id]
         })
         .call<never>(azureFunction);
 
@@ -68,7 +68,7 @@ describe('v1-innovation-suggestion-create Suite', () => {
         })
         .setBody<BodyType>({
           description: randText(),
-          organisationUnits: []
+          organisationUnits: [scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id]
         })
         .call<ErrorResponseType>(azureFunction);
 
@@ -86,7 +86,7 @@ describe('v1-innovation-suggestion-create Suite', () => {
         })
         .setBody<BodyType>({
           description: randText(),
-          organisationUnits: []
+          organisationUnits: [scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id]
         })
         .call<ErrorResponseType>(azureFunction);
 
