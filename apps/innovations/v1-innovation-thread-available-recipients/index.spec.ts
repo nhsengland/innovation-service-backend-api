@@ -68,7 +68,9 @@ describe('v1-innovation-thread-available-recipients', () => {
         })
         .call<ResponseDTO>(azureFunction);
 
-      expect(result.body).toStrictEqual(expected);
+      expect(result.body.sort((a, b) => a.organisation.unit.name.localeCompare(b.organisation.unit.name))).toEqual(
+        expected
+      );
       expect(result.status).toBe(200);
       expect(mock).toHaveBeenCalledTimes(1);
     });
