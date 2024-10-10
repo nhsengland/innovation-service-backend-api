@@ -1322,7 +1322,6 @@ export class InnovationSupportsService extends BaseService {
             ...defaultSummary,
             type: 'SUPPORT_UPDATE',
             params: {
-              // TODO MJS - Check if this is correct
               supportStatus: supportLog.innovationSupportStatus ?? InnovationSupportStatusEnum.SUGGESTED, // Not needed, we are veryfing in the switch case that is a type that always has supportStatus
               message: supportLog.description
             }
@@ -1565,7 +1564,7 @@ export class InnovationSupportsService extends BaseService {
       )?.status ?? InnovationSupportStatusEnum.SUGGESTED;
 
     switch (status) {
-      case InnovationSupportStatusEnum.SUGGESTED: // TODO MJS - Check if this is correct
+      case InnovationSupportStatusEnum.SUGGESTED:
         return [
           InnovationSupportStatusEnum.ENGAGING,
           InnovationSupportStatusEnum.WAITING,

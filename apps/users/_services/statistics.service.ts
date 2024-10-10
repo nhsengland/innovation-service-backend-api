@@ -172,8 +172,8 @@ export class StatisticsService extends BaseService {
               'innovationSupports.innovation_id = innovations.id AND innovationSupports.organisation_unit_id = :organisationUnit',
               { organisationUnit }
             )
-            .andWhere('(innovationSupports.id IS NULL OR innovationSupports.status = :supportStatus)', {
-              supportStatus: InnovationSupportStatusEnum.SUGGESTED // TODO MJS - Check if this is correct
+            .andWhere('innovationSupports.status = :supportStatus', {
+              supportStatus: InnovationSupportStatusEnum.SUGGESTED
             })
             .andWhere('innovations.status = :status', { status: InnovationStatusEnum.IN_PROGRESS })
             .andWhere('suggestions.suggestedUnitId = :organisationUnit', { organisationUnit })

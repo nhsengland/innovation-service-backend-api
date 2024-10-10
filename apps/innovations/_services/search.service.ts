@@ -326,7 +326,9 @@ export class SearchService extends BaseService {
   ): Partial<InnovationListFullResponseType['support']> {
     if (isAccessorDomainContextType(domainContext)) {
       const support = item.supports?.find(s => s.unitId === domainContext.organisation.organisationUnit.id);
-      const updatedBy = extra.users?.get(support?.updatedBy ?? '') ?? null;
+      if (!support) return null;
+
+      const updatedBy = extra.users?.get(support.updatedBy) ?? null;
       const displayName =
         // Ensuring that updatedBy is always innovator if the innovation is archived or not shared
         item.status === InnovationStatusEnum.ARCHIVED ||
@@ -339,11 +341,11 @@ export class SearchService extends BaseService {
 
       // support is handled differently to remove the nested array since it's only 1 element in this case
       return {
-        ...(fields.includes('id') && { id: support?.id ?? null }),
-        ...(fields.includes('status') && { status: support?.status ?? InnovationSupportStatusEnum.SUGGESTED }), // TODO MJS - Check if this is correct
-        ...(fields.includes('updatedAt') && { updatedAt: support?.updatedAt }),
+        ...(fields.includes('id') && { id: support.id }),
+        ...(fields.includes('status') && { status: support.status }),
+        ...(fields.includes('updatedAt') && { updatedAt: support.updatedAt }),
         ...(fields.includes('updatedBy') && { updatedBy: displayName }),
-        ...(fields.includes('closeReason') && { closeReason: support?.closeReason })
+        ...(fields.includes('closeReason') && { closeReason: support.closeReason })
       };
     }
 
@@ -591,9 +593,7 @@ export class SearchService extends BaseService {
     supportStatuses: InnovationSupportStatusEnum[]
   ): void {
     if (supportStatuses.length && isAccessorDomainContextType(domainContext)) {
-      const should: QueryDslQueryContainer[] = [];
-
-      should.push(
+      builder.addFilter(
         nestedQuery(
           'supports',
           boolQuery({
@@ -604,19 +604,6 @@ export class SearchService extends BaseService {
           })
         )
       );
-
-      if (supportStatuses.includes(InnovationSupportStatusEnum.SUGGESTED)) {
-        // TODO MJS - Check if this is correct
-        should.push(
-          boolQuery({
-            mustNot: nestedQuery('supports', {
-              term: { 'supports.unitId': domainContext.organisation.organisationUnit.id }
-            })
-          })
-        );
-      }
-
-      builder.addFilter(orQuery(should));
     }
   }
 
