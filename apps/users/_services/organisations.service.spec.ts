@@ -173,7 +173,7 @@ describe('Users / _services / organisations service suite', () => {
             isActive: true,
             userCount: 3
           }
-        ],
+        ].sort((a, b) => a.name.localeCompare(b.name)),
         isActive: true
       });
     });
@@ -201,7 +201,7 @@ describe('Users / _services / organisations service suite', () => {
             isActive: true,
             userCount: 3
           }
-        ],
+        ].sort((a, b) => a.name.localeCompare(b.name)),
         isActive: true
       });
     });
@@ -305,10 +305,10 @@ describe('Users / _services / organisations service suite', () => {
       ]);
     });
 
-    it("it should give an error if the unitId doesn't match his", async ()=> {
-      await expect(() => sut.getAccessorAndInnovations(DTOsHelper.getUserRequestContext(alice), randUuid(), em)).rejects.toThrow(
-        new ForbiddenError(OrganisationErrorsEnum.ORGANISATION_USER_FROM_OTHER_ORG)
-      );
+    it("it should give an error if the unitId doesn't match his", async () => {
+      await expect(() =>
+        sut.getAccessorAndInnovations(DTOsHelper.getUserRequestContext(alice), randUuid(), em)
+      ).rejects.toThrow(new ForbiddenError(OrganisationErrorsEnum.ORGANISATION_USER_FROM_OTHER_ORG));
     });
   });
 });
