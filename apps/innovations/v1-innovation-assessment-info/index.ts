@@ -75,7 +75,7 @@ class V1InnovationAssessmentInfo {
           id: item.id,
           name: item.name,
           acronym: item.acronym,
-          units: item.units
+          units: item.units.sort((a, b) => a.name.localeCompare(b.name))
         })),
         updatedAt: result.updatedAt,
         updatedBy: result.updatedBy,

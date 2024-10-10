@@ -205,7 +205,7 @@ describe('Users / _services / organisations service suite', () => {
             isActive: true,
             userCount: 3
           }
-        ],
+        ].sort((a, b) => a.name.localeCompare(b.name)),
         isActive: true
       });
     });
@@ -233,7 +233,7 @@ describe('Users / _services / organisations service suite', () => {
             isActive: true,
             userCount: 3
           }
-        ],
+        ].sort((a, b) => a.name.localeCompare(b.name)),
         isActive: true
       });
     });
