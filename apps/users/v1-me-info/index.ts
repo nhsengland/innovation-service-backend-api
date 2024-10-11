@@ -32,6 +32,7 @@ class V1MeInfo {
       const requestUser = await domainService.users.getUserInfo(
         { identityId: context.auth.user.identityId },
         { organisations: true },
+        undefined,
         { forceRefresh: forceRefresh === 'true' }
       );
       const userRoles = requestUser.roles.filter(role => role.isActive);

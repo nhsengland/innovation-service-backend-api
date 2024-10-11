@@ -36,8 +36,8 @@ export class DomainUsersService {
   async getUserInfo(
     data: { userId: string } | { identityId: string } | { email: string },
     filters?: { organisations?: boolean },
-    options?: { forceRefresh?: boolean },
-    entityManager?: EntityManager
+    entityManager?: EntityManager,
+    options?: { forceRefresh?: boolean }
   ): Promise<{
     id: string;
     identityId: string;
