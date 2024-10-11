@@ -27,9 +27,12 @@ class V1MeInfo {
 
     try {
       // TODO: The org flag will be removed when we take organisations from the FE
+
+      const forceRefresh = context.req?.query['forceRefresh'];
       const requestUser = await domainService.users.getUserInfo(
         { identityId: context.auth.user.identityId },
-        { organisations: true }
+        { organisations: true },
+        { forceRefresh: forceRefresh === 'true' }
       );
       const userRoles = requestUser.roles.filter(role => role.isActive);
 

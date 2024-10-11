@@ -14,7 +14,7 @@ import type { InnovationSupportsService } from '../_services/innovation-supports
 import SYMBOLS from '../_services/symbols';
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 
-// TO DO: RENAME ENDPOINT
+// TODO: RENAME ENDPOINT
 // IMPROVE VALIDATOR
 // OPTIMIZE CREATE INNOVATION ORGANISATIONS SUGGESTIONS
 class V1InnovationsSupportLogCreate {

@@ -1,4 +1,3 @@
- 
 import type { DataSource, EntityManager } from 'typeorm';
 
 import { container } from '../config/inversify.config';
@@ -18,6 +17,13 @@ import { CompleteScenarioBuilder, type CompleteScenarioType } from './scenarios/
 export class TestsHelper {
   private sqlConnection: DataSource;
   private em: EntityManager;
+  private options: { mockFunctions: boolean } = { mockFunctions: true };
+
+  constructor(options?: { mockFunctions: boolean }) {
+    if (options) {
+      this.options = options;
+    }
+  }
 
   protected readonly completeScenarioBuilder: CompleteScenarioBuilder = new CompleteScenarioBuilder();
 
@@ -29,7 +35,7 @@ export class TestsHelper {
     }
 
     // This is set when we're running the tests and not the global setup / teardown
-    if (this.completeScenarioBuilder.getScenario()) {
+    if (this.completeScenarioBuilder.getScenario() && this.options.mockFunctions) {
       this.setupGlobalMocks();
     }
 

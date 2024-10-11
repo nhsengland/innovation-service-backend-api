@@ -112,7 +112,6 @@ export class UsersService extends BaseService {
       }
 
       if (data.role) {
-        // TODO: IMPROVE THE SERVICE ROLE INFERENCE
         await transaction.update(
           UserRoleEntity,
           { user: { id: userId }, organisation: { id: data.role.organisationId } },
