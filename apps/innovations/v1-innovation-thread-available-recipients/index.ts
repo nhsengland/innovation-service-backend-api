@@ -37,22 +37,24 @@ class V1InnovationThreadAvailableRecipients {
       const filteredResult = result.filter(item => item.recipients !== undefined && item.recipients.length > 0);
 
       context.res = ResponseHelper.Ok<ResponseDTO>(
-        filteredResult.map(item => ({
-          id: item.id,
-          status: item.status,
-          organisation: {
-            id: item.organisation.id,
-            name: item.organisation.name,
-            acronym: item.organisation.acronym!,
-            unit: {
-              id: item.organisation.unit.id,
-              name: item.organisation.unit.name,
-              acronym: item.organisation.unit.acronym!
-            }
-          },
-          //This is needed for typescript < 5.5
-          recipients: item.recipients ? item.recipients : []
-        }))
+        filteredResult
+          .map(item => ({
+            id: item.id,
+            status: item.status,
+            organisation: {
+              id: item.organisation.id,
+              name: item.organisation.name,
+              acronym: item.organisation.acronym!,
+              unit: {
+                id: item.organisation.unit.id,
+                name: item.organisation.unit.name,
+                acronym: item.organisation.unit.acronym!
+              }
+            },
+            //This is needed for typescript < 5.5
+            recipients: item.recipients ? item.recipients : []
+          }))
+          .sort((a, b) => a.organisation.unit.name.localeCompare(b.organisation.unit.name))
       );
       return;
     } catch (error) {
