@@ -1228,9 +1228,9 @@ export class InnovationSupportsService extends BaseService {
     }
 
     return {
-      [InnovationSupportSummaryTypeEnum.ENGAGING]: this.sortByStartDate(engaging),
-      [InnovationSupportSummaryTypeEnum.BEEN_ENGAGED]: this.sortByStartDate(beenEngaged),
-      [InnovationSupportSummaryTypeEnum.SUGGESTED]: this.sortByStartDate(suggested)
+      [InnovationSupportSummaryTypeEnum.ENGAGING]: engaging,
+      [InnovationSupportSummaryTypeEnum.BEEN_ENGAGED]: beenEngaged,
+      [InnovationSupportSummaryTypeEnum.SUGGESTED]: suggested
     };
   }
 
@@ -1629,25 +1629,12 @@ export class InnovationSupportsService extends BaseService {
           GROUP BY innovation_id, organisation_unit_id
       ) t ON t.innovation_id = s.innovation_id AND t.organisation_unit_id = s.organisation_unit_id
       WHERE s.innovation_id = @0 AND s.is_most_recent = 1
+      ORDER BY DATEPART(year, COALESCE(t.startSupport, s.updated_at)) DESC, DATEPART(month, COALESCE(t.startSupport, s.updated_at)) DESC, ou.name ASC
     `,
       [innovationId]
     );
 
     return new Map(unitsSupportInformation.map(support => [support.unitId, support]));
-  }
-
-  private sortByStartDate(units: SuggestedUnitType[]): SuggestedUnitType[] {
-    return units.sort((a, b) => {
-      if (!a.support.start) {
-        return 1;
-      }
-
-      if (!b.support.start) {
-        return -1;
-      }
-
-      return new Date(a.support.start).getTime() - new Date(b.support.start).getTime();
-    });
   }
 
   private async hasActiveSupport(
