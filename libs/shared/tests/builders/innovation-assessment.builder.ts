@@ -35,7 +35,7 @@ export type TestInnovationAssessmentType = {
 export class InnovationAssessmentBuilder extends BaseBuilder {
   private assessment: DeepPartial<InnovationAssessmentEntity> = {
     majorVersion: 1,
-    minorVersion: 1,
+    minorVersion: 0,
     description: randProductDescription(),
     startedAt: new Date(),
     summary: randText(),
@@ -115,7 +115,11 @@ export class InnovationAssessmentBuilder extends BaseBuilder {
     await this.getEntityManager().update(
       InnovationEntity,
       { id: this.assessment.innovation?.id },
-      { currentAssessment: { id: savedAssessment.id }, hasBeenAssessed: !!this.assessment.finishedAt }
+      {
+        currentAssessment: { id: savedAssessment.id },
+        ...(this.assessment.minorVersion === 0 && { currentMajorAssessment: { id: savedAssessment.id } }),
+        hasBeenAssessed: !!this.assessment.finishedAt
+      }
     );
 
     if (!result) {

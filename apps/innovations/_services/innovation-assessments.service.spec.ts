@@ -1,4 +1,3 @@
- 
 import { container } from '../_config';
 
 import {
@@ -8,8 +7,13 @@ import {
   InnovationSectionEntity,
   InnovationSupportEntity
 } from '@innovations/shared/entities';
-import { InnovationStatusEnum, InnovationSupportStatusEnum } from '@innovations/shared/enums';
 import {
+  InnovationSectionStatusEnum,
+  InnovationStatusEnum,
+  InnovationSupportStatusEnum
+} from '@innovations/shared/enums';
+import {
+  BadRequestError,
   ConflictError,
   ForbiddenError,
   InnovationErrorsEnum,
@@ -19,6 +23,7 @@ import {
 } from '@innovations/shared/errors';
 import { DomainInnovationsService, NotifierService } from '@innovations/shared/services';
 import { TestsHelper } from '@innovations/shared/tests';
+import { InnovationAssessmentBuilder } from '@innovations/shared/tests/builders/innovation-assessment.builder';
 import { InnovationReassessmentRequestBuilder } from '@innovations/shared/tests/builders/innovation-reassessment-request.builder';
 import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
 import type { InnovationAssessmentKPIExemptionType } from '@innovations/shared/types/assessment.types';
@@ -26,7 +31,9 @@ import { randText, randUuid } from '@ngneat/falso';
 import { randomUUID } from 'crypto';
 import type { EntityManager } from 'typeorm';
 import type { InnovationAssessmentsService } from './innovation-assessments.service';
+import { InnovationSupportsService } from './innovation-supports.service';
 import SYMBOLS from './symbols';
+import { InnovationSectionBuilder } from '@innovations/shared/tests/builders/innovation-section.builder';
 
 describe('Innovation Assessments Suite', () => {
   let sut: InnovationAssessmentsService;
@@ -35,6 +42,10 @@ describe('Innovation Assessments Suite', () => {
 
   const testsHelper = new TestsHelper();
   const scenario = testsHelper.getCompleteScenario();
+
+  const createSuggestedSupportsMock = jest
+    .spyOn(InnovationSupportsService.prototype, 'createSuggestedSupports')
+    .mockResolvedValue();
 
   beforeAll(async () => {
     sut = container.get<InnovationAssessmentsService>(SYMBOLS.InnovationAssessmentsService);
@@ -47,6 +58,7 @@ describe('Innovation Assessments Suite', () => {
 
   beforeEach(async () => {
     em = await testsHelper.getQueryRunnerEntityManager();
+    createSuggestedSupportsMock.mockClear();
   });
 
   afterEach(async () => {
@@ -54,7 +66,7 @@ describe('Innovation Assessments Suite', () => {
   });
 
   const innovationWithAssessment = scenario.users.johnInnovator.innovations.johnInnovation;
-  const innovationWithoutAssessment = scenario.users.adamInnovator.innovations.adamInnovation;
+  const innovationWithoutAssessment = scenario.users.adamInnovator.innovations.adamInnovationEmpty;
   const innovationWithAssessmentInProgress =
     scenario.users.ottoOctaviusInnovator.innovations.brainComputerInterfaceInnovation;
   const innovationWithArchivedStatus = scenario.users.johnInnovator.innovations.johnInnovationArchived;
@@ -226,6 +238,17 @@ describe('Innovation Assessments Suite', () => {
     it('should return the sections updated since the previous assessment', async () => {
       const res = await sut.getSectionsUpdatedSincePreviousAssessment(innovation.assessment.id, em);
 
+      expect(res.sort()).toEqual(['COST_OF_INNOVATION', 'INNOVATION_DESCRIPTION'].sort());
+    });
+
+    it('should return only the valid sections (on the schema) updated since the previous assessment', async () => {
+      await new InnovationSectionBuilder(em)
+        .setInnovation(innovation.id)
+        .setSection('OLD_SECTION' as any)
+        .setStatus(InnovationSectionStatusEnum.SUBMITTED)
+        .save();
+
+      const res = await sut.getSectionsUpdatedSincePreviousAssessment(innovation.assessment.id, em);
       expect(res.sort()).toEqual(['COST_OF_INNOVATION', 'INNOVATION_DESCRIPTION'].sort());
     });
 
@@ -435,9 +458,13 @@ describe('Innovation Assessments Suite', () => {
 
       const updatedAssessment = await sut.updateInnovationAssessment(
         DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
-        innovationWithAssessment.id,
+        innovationWithAssessmentInProgress.id,
         assessment.id,
-        { isSubmission: true },
+        {
+          isSubmission: true,
+          suggestedOrganisationUnitsIds: [scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id],
+          summary: 'test update assessment'
+        },
         em
       );
 
@@ -488,7 +515,14 @@ describe('Innovation Assessments Suite', () => {
         DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
         innovationWithAssessment.id,
         assessment.id,
-        { isSubmission: true },
+        {
+          isSubmission: true,
+          suggestedOrganisationUnitsIds: [
+            scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
+            scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.id
+          ],
+          summary: 'test update assessment'
+        },
         em
       );
 
@@ -501,6 +535,109 @@ describe('Innovation Assessments Suite', () => {
         status: InnovationStatusEnum.IN_PROGRESS,
         hasBeenAssessed: true
       });
+    });
+
+    it('should create support for suggested units', async () => {
+      const assessment = innovationWithAssessmentInProgress.assessmentInProgress;
+      const context = DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor);
+
+      await sut.updateInnovationAssessment(
+        context,
+        innovationWithAssessmentInProgress.id,
+        assessment.id,
+        {
+          isSubmission: true,
+          suggestedOrganisationUnitsIds: [
+            scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
+            scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id
+          ],
+          summary: 'test update assessment'
+        },
+        em
+      );
+
+      expect(createSuggestedSupportsMock).toHaveBeenCalledTimes(1);
+      expect(createSuggestedSupportsMock).toHaveBeenCalledWith(
+        context,
+        innovationWithAssessmentInProgress.id,
+        [
+          scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
+          scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id
+        ],
+        em
+      );
+    });
+
+    it('should create support for only new suggested units', async () => {
+      const na = scenario.users.paulNeedsAssessor;
+      // Create a edit reassessment
+      const assessment = await new InnovationAssessmentBuilder(em)
+        .setInnovation(innovationWithAssessment.id)
+        .setNeedsAssessor(na.id)
+        .setUpdatedBy(na.id)
+        .setVersion(1, 1)
+        .suggestOrganisationUnits(scenario.organisations.healthOrg.organisationUnits.healthOrgUnit)
+        .save();
+      const context = DTOsHelper.getUserRequestContext(na);
+
+      await sut.updateInnovationAssessment(
+        context,
+        innovationWithAssessment.id,
+        assessment.id,
+        {
+          isSubmission: true,
+          suggestedOrganisationUnitsIds: [
+            scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
+            scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id
+          ],
+          summary: 'test update assessment'
+        },
+        em
+      );
+
+      expect(createSuggestedSupportsMock).toHaveBeenCalledTimes(1);
+      expect(createSuggestedSupportsMock).toHaveBeenCalledWith(
+        context,
+        innovationWithAssessment.id,
+        [scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id],
+        em
+      );
+    });
+
+    it('should throw error if submitting an assessment without suggestions', async () => {
+      const assessment = innovationWithAssessmentInProgress.assessmentInProgress;
+      const context = DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor);
+
+      await expect(
+        sut.updateInnovationAssessment(
+          context,
+          innovationWithAssessmentInProgress.id,
+          assessment.id,
+          {
+            isSubmission: true,
+            summary: 'test update assessment'
+          },
+          em
+        )
+      ).rejects.toThrow(new BadRequestError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_SUBMISSION_NO_SUGGESTIONS));
+    });
+
+    it('should fail if submitting a assessment without summary', async () => {
+      const assessment = innovationWithAssessmentInProgress.assessmentInProgress;
+      const context = DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor);
+
+      await expect(
+        sut.updateInnovationAssessment(
+          context,
+          innovationWithAssessmentInProgress.id,
+          assessment.id,
+          {
+            isSubmission: true,
+            suggestedOrganisationUnitsIds: [scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id]
+          },
+          em
+        )
+      ).rejects.toThrow(new BadRequestError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_SUBMISSION_NO_SUMMARY));
     });
   });
 
@@ -524,51 +661,19 @@ describe('Innovation Assessments Suite', () => {
         .where('reassessment.id = :reassessmentId', {
           reassessmentId: innovationReassessment.reassessment.id
         })
-        .getOne();
+        .getOneOrFail();
+
+      const dbInnovation = await em
+        .createQueryBuilder(InnovationEntity, 'innovation')
+        .select(['innovation.id', 'innovation.current_major_assessment_id'])
+        .where('innovation.id = :innovationId', { innovationId: innovationWithAssessment.id })
+        .getRawOne();
 
       expect(innovationReassessment).toEqual({
-        assessment: { id: bdReassessment?.assessment.id },
-        reassessment: { id: bdReassessment?.id }
+        assessment: { id: bdReassessment.assessment.id },
+        reassessment: { id: bdReassessment.id }
       });
-    });
-
-    it('should create a ressessment and restore old supports', async () => {
-      await em.update(
-        InnovationSupportEntity,
-        { innovation: { id: innovationWithAssessment.id } },
-        { status: InnovationSupportStatusEnum.CLOSED }
-      );
-      await em.update(InnovationEntity, { id: innovationWithAssessment.id }, { status: InnovationStatusEnum.ARCHIVED });
-
-      await sut.createInnovationReassessment(
-        DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
-        innovationWithAssessment.id,
-        { reassessmentReason: ['NO_SUPPORT'], description: randText(), whatSupportDoYouNeed: randText() },
-        em
-      );
-
-      const supports = await em
-        .createQueryBuilder(InnovationSupportEntity, 'support')
-        .select(['support.id', 'support.status', 'userRoles.id'])
-        .leftJoin('support.userRoles', 'userRoles')
-        .where('support.innovation_id = :innovationId', { innovationId: innovationWithAssessment.id })
-        .getMany();
-
-      const prevSupports = [
-        innovationWithAssessment.supports.supportByHealthOrgUnit,
-        innovationWithAssessment.supports.supportByMedTechOrgUnit,
-        innovationWithAssessment.supports.supportByHealthOrgAiUnit
-      ];
-      for (const prevSupport of prevSupports) {
-        const current = supports.find(s => s.id === prevSupport.id);
-        if (prevSupport.status === InnovationSupportStatusEnum.ENGAGING) {
-          expect(current?.status).toBe(InnovationSupportStatusEnum.UNASSIGNED);
-          expect(current?.userRoles).toHaveLength(0);
-        } else {
-          expect(current?.status).toBe(prevSupport.status);
-          expect(current?.userRoles.map(r => r.id)).toMatchObject(prevSupport.userRoles);
-        }
-      }
+      expect(dbInnovation.current_major_assessment_id).toBe(bdReassessment.assessment.id);
     });
 
     it('should not create a reassessment if the innovation has no assessment', async () => {

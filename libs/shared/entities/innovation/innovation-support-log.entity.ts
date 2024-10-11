@@ -8,6 +8,7 @@ import { InnovationEntity } from './innovation.entity';
 
 import { InnovationSupportLogTypeEnum, InnovationSupportStatusEnum } from '../../enums/innovation.enums';
 import type { SupportLogAssessmentSuggestion, SupportLogProgressUpdate } from '../../types/domain.types';
+import { InnovationAssessmentEntity } from './innovation-assessment.entity';
 
 @Entity('innovation_support_log')
 export class InnovationSupportLogEntity extends BaseEntity {
@@ -29,6 +30,10 @@ export class InnovationSupportLogEntity extends BaseEntity {
   @ManyToOne(() => InnovationEntity, { nullable: false })
   @JoinColumn({ name: 'innovation_id' })
   innovation: InnovationEntity;
+
+  @ManyToOne(() => InnovationAssessmentEntity)
+  @JoinColumn({ name: 'major_assessment_id' })
+  majorAssessmentId: InnovationAssessmentEntity | null;
 
   @ManyToOne(() => OrganisationUnitEntity, { nullable: true })
   @JoinColumn({ name: 'organisation_unit_id' })

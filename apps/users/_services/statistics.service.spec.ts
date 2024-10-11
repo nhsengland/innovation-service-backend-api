@@ -177,7 +177,7 @@ describe('Users / _services / statistics service suite', () => {
         .getRepository(InnovationSupportEntity)
         .update(
           { id: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByHealthOrgUnit.id },
-          { status: InnovationSupportStatusEnum.UNASSIGNED }
+          { status: InnovationSupportStatusEnum.SUGGESTED }
         );
 
       await new InnovationSupportLogBuilder(em)
@@ -205,7 +205,7 @@ describe('Users / _services / statistics service suite', () => {
         .getRepository(InnovationSupportEntity)
         .update(
           { id: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByHealthOrgUnit.id },
-          { status: InnovationSupportStatusEnum.UNASSIGNED }
+          { status: InnovationSupportStatusEnum.SUGGESTED }
         );
 
       await new InnovationSupportLogBuilder(em)
@@ -219,7 +219,7 @@ describe('Users / _services / statistics service suite', () => {
         {
           id: scenario.users.adamInnovator.innovations.adamInnovation.supports.adamInnovationSupportByHealthOrgUnit.id
         },
-        { status: InnovationSupportStatusEnum.UNASSIGNED }
+        { status: InnovationSupportStatusEnum.SUGGESTED }
       );
 
       await new InnovationSupportLogBuilder(em)

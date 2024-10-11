@@ -9,7 +9,7 @@ const TRANSLATIONS = {
     }
   },
   SUPPORT_STATUS: {
-    UNASSIGNED: 'Unassigned',
+    SUGGESTED: 'Suggested',
     ENGAGING: 'Engaging',
     WAITING: 'Waiting',
     UNSUITABLE: 'Unsuitable',

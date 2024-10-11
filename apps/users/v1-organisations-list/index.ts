@@ -46,14 +46,16 @@ class V1OrganisationsList {
             isActive: item.isActive
           }), // admin only
           ...(item.organisationUnits && {
-            organisationUnits: item.organisationUnits.map(ou => ({
-              id: ou.id,
-              name: ou.name,
-              acronym: ou.acronym,
-              ...(domainContext.currentRole.role === ServiceRoleEnum.ADMIN && {
-                isActive: ou.isActive
-              }) // admin only
-            }))
+            organisationUnits: item.organisationUnits
+              .map(ou => ({
+                id: ou.id,
+                name: ou.name,
+                acronym: ou.acronym,
+                ...(domainContext.currentRole.role === ServiceRoleEnum.ADMIN && {
+                  isActive: ou.isActive
+                }) // admin only
+              }))
+              .sort((a, b) => a.name.localeCompare(b.name))
           })
         }))
       );

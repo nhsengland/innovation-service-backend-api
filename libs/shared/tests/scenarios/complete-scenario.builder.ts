@@ -9,6 +9,7 @@ import {
   randText,
   randUuid
 } from '@ngneat/falso';
+import { AnnouncementStatusEnum, AnnouncementTypeEnum } from '../../enums/announcement.enums';
 import {
   InnovationCollaboratorStatusEnum,
   InnovationExportRequestStatusEnum,
@@ -23,8 +24,9 @@ import {
   ThreadContextTypeEnum
 } from '../../enums/innovation.enums';
 import { ServiceRoleEnum, UserStatusEnum } from '../../enums/user.enums';
-import { AnnouncementStatusEnum, AnnouncementTypeEnum } from '../../enums/announcement.enums';
 import type { Reminder, SupportUpdated } from '../../types';
+import { AnnouncementUserBuilder } from '../builders/announcement-users.builder';
+import { AnnouncementBuilder } from '../builders/announcement.builder';
 import { InnovationAssessmentBuilder } from '../builders/innovation-assessment.builder';
 import { InnovationCollaboratorBuilder } from '../builders/innovation-collaborator.builder';
 import { InnovationExportRequestBuilder } from '../builders/innovation-export-request.builder';
@@ -41,8 +43,6 @@ import { NotifyMeSubscriptionBuilder } from '../builders/notify-me-subscription.
 import { OrganisationUnitBuilder } from '../builders/organisation-unit.builder';
 import { OrganisationBuilder } from '../builders/organisation.builder';
 import { type TestUserType, UserBuilder } from '../builders/user.builder';
-import { AnnouncementBuilder } from '../builders/announcement.builder';
-import { AnnouncementUserBuilder } from '../builders/announcement-users.builder';
 
 export type CompleteScenarioType = Awaited<ReturnType<CompleteScenarioBuilder['createScenario']>>;
 
@@ -118,6 +118,17 @@ export class CompleteScenarioBuilder {
         .addToOrganisation(inactiveEmptyOrg.id)
         .setName('Inactive Empty Org Unit')
         .setInactivatedAt(new Date())
+        .save();
+
+      // notSharedOrg Organisation has one unit: InnovTech Org Unit
+      const notSharedOrg = await new OrganisationBuilder(entityManager).setName('Not Shared Organisation').save();
+      const notSharedOrgUnit = await new OrganisationUnitBuilder(entityManager)
+        .addToOrganisation(notSharedOrg.id)
+        .setName('NotShared Org Unit')
+        .save();
+      const notSharedOrgHeavyOrgUnit = await new OrganisationUnitBuilder(entityManager)
+        .addToOrganisation(notSharedOrg.id)
+        .setName('NotShared Heavy Org Unit')
         .save();
 
       // QAs and Accessors
@@ -203,7 +214,7 @@ export class CompleteScenarioBuilder {
         .setName('John Innovation')
         .setOwner(johnInnovator.id)
         .setStatus(InnovationStatusEnum.IN_PROGRESS)
-        .shareWith([healthOrg, medTechOrg])
+        .shareWith([healthOrg, medTechOrg, innovTechOrg])
         .addSection('INNOVATION_DESCRIPTION')
         .addSection('EVIDENCE_OF_EFFECTIVENESS', InnovationSectionStatusEnum.DRAFT)
         .withEvidences([
@@ -291,6 +302,7 @@ export class CompleteScenarioBuilder {
       const johnInnovationSupportByHealthOrgUnit = await new InnovationSupportBuilder(entityManager)
         .setStatus(InnovationSupportStatusEnum.ENGAGING)
         .setInnovation(johnInnovation.id)
+        .setMajorAssessment(johnInnovationAssessmentByPaul.id)
         .setOrganisationUnit(healthOrgUnit.id)
         .setAccessors([aliceQualifyingAccessor, jamieMadroxAccessor])
         .save();
@@ -299,6 +311,7 @@ export class CompleteScenarioBuilder {
       const johnInnovationSupportByHealthOrgAIUnit = await new InnovationSupportBuilder(entityManager)
         .setStatus(InnovationSupportStatusEnum.WAITING)
         .setInnovation(johnInnovation.id)
+        .setMajorAssessment(johnInnovationAssessmentByPaul.id)
         .setOrganisationUnit(healthOrgAiUnit.id)
         .save();
       // Add support logs from HealthOrgAIUnit to johnInnovation
@@ -317,21 +330,31 @@ export class CompleteScenarioBuilder {
       const johnInnovationSupportByMedTechOrgUnit = await new InnovationSupportBuilder(entityManager)
         .setStatus(InnovationSupportStatusEnum.ENGAGING)
         .setInnovation(johnInnovation.id)
+        .setMajorAssessment(johnInnovationAssessmentByPaul.id)
         .setOrganisationUnit(medTechOrgUnit.id)
         .setAccessors([samAccessor])
         .save();
 
-      // support log on johnInnovation of previous UNASSIGNED support
+      // support log on johnInnovation of previous SUGGESTED support
       const johnInnovationSupportLog = await new InnovationSupportLogBuilder(entityManager)
         .setInnovation(johnInnovation.id)
         .setCreatedBy(aliceQualifyingAccessor, aliceQualifyingAccessor.roles['qaRole']!)
-        .setSupportStatus(InnovationSupportStatusEnum.UNASSIGNED)
+        .setSupportStatus(InnovationSupportStatusEnum.SUGGESTED)
+        .save();
+
+      const johnArchivedInnovationAssessmentByPaul = await new InnovationAssessmentBuilder(entityManager)
+        .setInnovation(johnInnovationArchived.id)
+        .setNeedsAssessor(paulNeedsAssessor.id)
+        .setUpdatedBy(paulNeedsAssessor.id)
+        .setFinishedAt()
+        .suggestOrganisationUnits(healthOrgUnit, innovTechOrgUnit)
         .save();
 
       // Add a boilerplate support to the john archived innovation
       await new InnovationSupportBuilder(entityManager)
         .setStatus(InnovationSupportStatusEnum.CLOSED)
         .setInnovation(johnInnovationArchived.id)
+        .setMajorAssessment(johnArchivedInnovationAssessmentByPaul.id)
         .setOrganisationUnit(healthOrgUnit.id)
         .save();
 
@@ -752,6 +775,14 @@ export class CompleteScenarioBuilder {
         .shareWith([healthOrg])
         .save();
 
+      const adamInnovationAssessmentByPaul = await new InnovationAssessmentBuilder(entityManager)
+        .setInnovation(adamInnovation.id)
+        .setNeedsAssessor(paulNeedsAssessor.id)
+        .setUpdatedBy(paulNeedsAssessor.id)
+        .setFinishedAt()
+        .suggestOrganisationUnits(healthOrgUnit, innovTechOrgUnit)
+        .save();
+
       const adamInnovationEmpty = await new InnovationBuilder(entityManager)
         .setName('Adam Innovation Empty')
         .setOwner(adamInnovator.id)
@@ -778,6 +809,7 @@ export class CompleteScenarioBuilder {
       const adamInnovationSupportByHealthOrgUnit = await new InnovationSupportBuilder(entityManager)
         .setStatus(InnovationSupportStatusEnum.ENGAGING)
         .setInnovation(adamInnovation.id)
+        .setMajorAssessment(adamInnovationAssessmentByPaul.id)
         .setOrganisationUnit(healthOrgUnit.id)
         .setAccessors([aliceQualifyingAccessor, jamieMadroxAccessor])
         .save();
@@ -842,9 +874,18 @@ export class CompleteScenarioBuilder {
         .setOwner(ottoOctaviusInnovator.id)
         .save();
 
+      const chestHarnessInnovationAssessmentByPaul = await new InnovationAssessmentBuilder(entityManager)
+        .setInnovation(chestHarnessInnovation.id)
+        .setNeedsAssessor(paulNeedsAssessor.id)
+        .setUpdatedBy(paulNeedsAssessor.id)
+        .setFinishedAt()
+        .suggestOrganisationUnits(healthOrgUnit, innovTechOrgUnit)
+        .save();
+
       const chestHarnessInnovationSupport = await new InnovationSupportBuilder(entityManager)
         .setStatus(InnovationSupportStatusEnum.ENGAGING)
         .setInnovation(chestHarnessInnovation.id)
+        .setMajorAssessment(chestHarnessInnovationAssessmentByPaul.id)
         .setOrganisationUnit(healthOrgUnit.id)
         .setAccessors([aliceQualifyingAccessor, jamieMadroxAccessor])
         .save();
@@ -854,9 +895,18 @@ export class CompleteScenarioBuilder {
         .setName('Tentacles')
         .save();
 
+      const tentaclesInnovationAssessmentByPaul = await new InnovationAssessmentBuilder(entityManager)
+        .setInnovation(tentaclesInnovation.id)
+        .setNeedsAssessor(paulNeedsAssessor.id)
+        .setUpdatedBy(paulNeedsAssessor.id)
+        .setFinishedAt()
+        .suggestOrganisationUnits(healthOrgUnit, innovTechOrgUnit)
+        .save();
+
       const tentaclesInnovationSupport = await new InnovationSupportBuilder(entityManager)
         .setStatus(InnovationSupportStatusEnum.ENGAGING)
         .setInnovation(tentaclesInnovation.id)
+        .setMajorAssessment(tentaclesInnovationAssessmentByPaul.id)
         .setOrganisationUnit(healthOrgUnit.id)
         .setAccessors([jamieMadroxAccessor])
         .save();
@@ -866,6 +916,7 @@ export class CompleteScenarioBuilder {
         .setOwner(ottoOctaviusInnovator.id)
         .setStatus(InnovationStatusEnum.NEEDS_ASSESSMENT)
         .addSection('INNOVATION_DESCRIPTION')
+        .shareWith([innovTechOrg, medTechOrg])
         .save();
 
       const brainComputerInterfaceInnovationAssessment = await new InnovationAssessmentBuilder(entityManager)
@@ -1151,6 +1202,7 @@ export class CompleteScenarioBuilder {
             innovations: {
               adamInnovation: {
                 ...adamInnovation,
+                assessment: adamInnovationAssessmentByPaul,
                 transfer: adamInnovationTransferToJane,
                 tasks: {
                   adamInnovationTaskBySean: adamInnovationTaskBySean,
@@ -1316,7 +1368,8 @@ export class CompleteScenarioBuilder {
             }
           },
           lisaQualifyingAccessor: {
-            ...lisaQualifyingAccessor
+            ...lisaQualifyingAccessor,
+            roles: { qaRole: lisaQualifyingAccessor.roles['qaRole']! }
           },
           // Needs assessors
           paulNeedsAssessor: {
@@ -1352,6 +1405,13 @@ export class CompleteScenarioBuilder {
             organisationUnits: {
               innovTechOrgUnit: innovTechOrgUnit,
               innovTechHeavyOrgUnit: innovTechHeavyOrgUnit
+            }
+          },
+          notSharedOrg: {
+            ...notSharedOrg,
+            organisationUnits: {
+              notSharedOrgUnit: notSharedOrgUnit,
+              notSharedOrgHeavyOrgUnit: notSharedOrgHeavyOrgUnit
             }
           },
           inactiveEmptyOrg: {

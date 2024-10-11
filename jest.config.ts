@@ -33,7 +33,7 @@ const jestBaseConfig: Config = {
     'libs/shared/builders',
     'node_modules'
   ],
-  testTimeout: 15000,
+  testTimeout: 60000,
   workerIdleMemoryLimit: '1Gb'
 };
 

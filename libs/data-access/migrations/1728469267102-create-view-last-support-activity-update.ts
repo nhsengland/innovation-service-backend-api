@@ -2,7 +2,7 @@ import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 // This view is used to calculate the KPI for the support team, this can be improved once we don't need to query the
 // activity log
-export class createViewLastSupportActivityUpdate1699361786862 implements MigrationInterface {
+export class createViewLastSupportActivityUpdate1728469267102 implements MigrationInterface {
   async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
     CREATE OR ALTER VIEW [innovation_support_last_activity_update_view] AS
@@ -33,6 +33,7 @@ export class createViewLastSupportActivityUpdate1699361786862 implements Migrati
     INNER JOIN innovation i ON s.innovation_id=i.id AND i.status = 'IN_PROGRESS'
     LEFT JOIN latest_support_log_update l1 on s.innovation_id = l1.innovation_id and s.organisation_unit_id=l1.organisation_unit_id
     LEFT JOIN latest_activity_log_update l2 on s.innovation_id = l2.innovation_id and s.organisation_unit_id=l2.organisation_unit_id
+    WHERE s.is_most_recent = 1
   `);
   }
 

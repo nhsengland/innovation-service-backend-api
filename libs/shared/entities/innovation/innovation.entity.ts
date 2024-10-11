@@ -86,6 +86,10 @@ export class InnovationEntity extends BaseEntity {
   @JoinColumn({ name: 'current_assessment_id' })
   currentAssessment: InnovationAssessmentEntity | null;
 
+  @ManyToOne(() => InnovationAssessmentEntity, { nullable: true })
+  @JoinColumn({ name: 'current_major_assessment_id' })
+  currentMajorAssessment: InnovationAssessmentEntity | null;
+
   @OneToMany(() => InnovationAssessmentEntity, record => record.innovation, {
     cascade: ['insert', 'update']
   })

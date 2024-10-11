@@ -152,13 +152,15 @@ export class OrganisationsService extends BaseService {
             ])
           );
 
-      res.organisationUnits = (await organisation.organisationUnits).map(unit => ({
-        id: unit.id,
-        name: unit.name,
-        acronym: unit.acronym,
-        isActive: !unit.inactivatedAt,
-        userCount: unitUserCounts.get(unit.id) ?? 0
-      }));
+      res.organisationUnits = (await organisation.organisationUnits)
+        .map(unit => ({
+          id: unit.id,
+          name: unit.name,
+          acronym: unit.acronym,
+          isActive: !unit.inactivatedAt,
+          userCount: unitUserCounts.get(unit.id) ?? 0
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name));
     }
 
     return res;

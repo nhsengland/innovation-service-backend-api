@@ -3,6 +3,7 @@ import type { CurrentDocumentType } from '.';
 import type {
   InnovationGroupedStatusEnum,
   InnovationStatusEnum,
+  InnovationSupportCloseReasonEnum,
   InnovationSupportStatusEnum,
   UserStatusEnum
 } from '../../enums';
@@ -34,6 +35,7 @@ export type ElasticSearchDocumentType = {
     id: string;
     unitId: string;
     status: InnovationSupportStatusEnum;
+    closeReason: InnovationSupportCloseReasonEnum | null;
     updatedAt: Date;
     updatedBy: string;
     assignedAccessorsRoleIds?: string[];
@@ -102,6 +104,7 @@ export const ElasticSearchSchema: CreateIndexParams = {
           id: { type: 'keyword' },
           unitId: { type: 'keyword' },
           status: { type: 'keyword' },
+          closeReason: { type: 'keyword' },
           updatedAt: { type: 'date' },
           updatedBy: { type: 'keyword' },
           assignedAccessorsRoleIds: { type: 'keyword' }

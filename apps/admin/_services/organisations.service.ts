@@ -96,9 +96,9 @@ export class OrganisationsService extends BaseService {
     //get supports to complete
     const supportsToClose = await em
       .createQueryBuilder(InnovationSupportEntity, 'support')
-      .leftJoinAndSelect('support.organisationUnit', 'unit')
-      .leftJoinAndSelect('support.innovation', 'innovation')
-      .leftJoinAndSelect('support.userRoles', 'userRole')
+      .select(['support.id', 'support.status', 'innovation.id'])
+      .innerJoin('support.organisationUnit', 'unit')
+      .innerJoin('support.innovation', 'innovation')
       .where('unit.id = :unitId', { unitId })
       .andWhere('support.status IN (:...supportStatusToComplete)', { supportStatusToComplete })
       .getMany();

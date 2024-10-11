@@ -95,7 +95,7 @@ describe('Notifications / _handlers / organisation-units-suggestion suite', () =
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         inputData: {
           innovationId: innovation.id,
-          unitsIds: [scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.id],
+          unitsIds: [scenario.organisations.notSharedOrg.organisationUnits.notSharedOrgUnit.id],
           comment: comment
         },
         recipients: innovatorRecipients,
@@ -113,7 +113,7 @@ describe('Notifications / _handlers / organisation-units-suggestion suite', () =
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         inputData: {
           innovationId: innovation.id,
-          unitsIds: [scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.id],
+          unitsIds: [scenario.organisations.notSharedOrg.organisationUnits.notSharedOrgUnit.id],
           comment: comment
         },
         recipients: innovatorRecipients,

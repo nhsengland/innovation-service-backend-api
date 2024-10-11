@@ -14,10 +14,7 @@ import type { InnovationSupportsService } from '../_services/innovation-supports
 import SYMBOLS from '../_services/symbols';
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 
-// TODO: RENAME ENDPOINT
-// IMPROVE VALIDATOR
-// OPTIMIZE CREATE INNOVATION ORGANISATIONS SUGGESTIONS
-class V1InnovationsSupportLogCreate {
+class V1InnovationSuggestionsCreate {
   @JwtDecoder()
   @ElasticSearchDocumentUpdate()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
@@ -52,11 +49,11 @@ class V1InnovationsSupportLogCreate {
   }
 }
 
-export default openApi(V1InnovationsSupportLogCreate.httpTrigger as AzureFunction, '/v1/{innovationId}/support-logs', {
+export default openApi(V1InnovationSuggestionsCreate.httpTrigger as AzureFunction, '/v1/{innovationId}/suggestions', {
   post: {
-    description: 'Create support logs for an Innovation',
-    operationId: 'v1-innovation-support-logs-create',
-    tags: ['Create Innovation Support Logs'],
+    description: 'Create suggestion for an Innovation',
+    operationId: 'v1-innovation-suggestions-create',
+    tags: ['Create Innovation Suggestion'],
     parameters: [
       {
         in: 'path',
@@ -69,8 +66,7 @@ export default openApi(V1InnovationsSupportLogCreate.httpTrigger as AzureFunctio
     ],
     responses: {
       201: {
-        description:
-          'Creates a new innovation support logs for the innovation identified by the supplied Innovation ID.'
+        description: 'Creates a suggestion.'
       },
       401: {
         description: 'Unauthorised'

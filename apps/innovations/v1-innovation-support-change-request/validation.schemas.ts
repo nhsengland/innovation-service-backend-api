@@ -13,14 +13,14 @@ export const ParamsSchema = Joi.object<ParamsType>({
 }).required();
 
 export type BodyType = {
-  status: Exclude<InnovationSupportStatusEnum, 'UNASSIGNED'>;
+  status: Exclude<InnovationSupportStatusEnum, 'SUGGESTED'>;
   message: string;
 };
 
 export const BodySchema = Joi.object<BodyType>({
   status: Joi.string()
     .valid(...Object.values(InnovationSupportStatusEnum))
-    .disallow(InnovationSupportStatusEnum.UNASSIGNED)
+    .disallow(InnovationSupportStatusEnum.SUGGESTED)
     .required(),
   message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).trim().required()
 }).required();
