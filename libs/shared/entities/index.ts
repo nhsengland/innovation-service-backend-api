@@ -81,6 +81,7 @@ import { InnovationGroupedStatusViewEntity } from './views/innovation-grouped-st
 import { LastSupportStatusViewEntity } from './views/last-support-status.view.entity';
 import { InnovationListView } from './views/innovation-list-view.entity';
 import { InnovationTaskDescriptionsViewEntity } from './views/innovation-task-descriptions.view.entity';
+import { SupportKPIViewEntity } from './views/support-kpi.view.entity';
 import { SupportLastActivityUpdateView } from './views/support-last-activity-update.view.entity';
 import { DocumentsStatisticsViewEntity } from './views/documents-statistics.view.entity';
 import { InnovationSuggestedUnitsView } from './views/innovation-suggested-units.view.entity';
@@ -90,6 +91,7 @@ export { InnovationGroupedStatusViewEntity } from './views/innovation-grouped-st
 export { LastSupportStatusViewEntity } from './views/last-support-status.view.entity';
 export { InnovationListView } from './views/innovation-list-view.entity';
 export { InnovationTaskDescriptionsViewEntity } from './views/innovation-task-descriptions.view.entity';
+export { SupportKPIViewEntity } from './views/support-kpi.view.entity';
 export { SupportLastActivityUpdateView } from './views/support-last-activity-update.view.entity';
 export { DocumentsStatisticsViewEntity } from './views/documents-statistics.view.entity';
 export { InnovationSuggestedUnitsView } from './views/innovation-suggested-units.view.entity';
@@ -136,6 +138,7 @@ export const VIEW_ENTITIES = [
   InnovationGroupedStatusViewEntity,
   InnovationTaskDescriptionsViewEntity,
   LastSupportStatusViewEntity,
+  SupportKPIViewEntity,
   SupportLastActivityUpdateView,
   DocumentsStatisticsViewEntity,
   InnovationSuggestedUnitsView,
