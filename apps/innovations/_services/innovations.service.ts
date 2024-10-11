@@ -939,15 +939,7 @@ export class InnovationsService extends BaseService {
       if (!query.expressionMap.aliases.find(item => item.name === 'support')) {
         this.withSupport(domainContext, query);
       }
-      query.andWhere(
-        new Brackets(qb => {
-          qb.where('support.status IN (:...supportStatuses)', { supportStatuses: supportStatuses });
-          if (supportStatuses.includes(InnovationSupportStatusEnum.SUGGESTED)) {
-            // TODO MJS - Check if this is correct
-            qb.orWhere('support.id IS NULL');
-          }
-        })
-      );
+      query.andWhere('support.status IN (:...supportStatuses)', { supportStatuses: supportStatuses });
     }
   }
 
@@ -957,15 +949,9 @@ export class InnovationsService extends BaseService {
     value: boolean
   ): void {
     if (value && isAccessorDomainContextType(domainContext)) {
-      // we only want closed supports that aren't archives or stopped shared
-      query.andWhere(
-        new Brackets(qb => {
-          qb.where('support.status != :closedSupportStatus', {
-            closedSupportStatus: InnovationSupportStatusEnum.CLOSED
-            // TODO MJS - this isn't correct for sure, it's the close reason that should be checked now leaving it like this for it to fail in the meanwhile
-          }).orWhere('(support.archive_snapshot IS NULL AND shares.id IS NOT NULL)'); // these are always joined for accessor roles
-        })
-      );
+      query.andWhere('support.closeReason = :closeReason', {
+        closeReason: InnovationSupportCloseReasonEnum.SUPPORT_COMPLETE
+      });
     }
   }
 
@@ -1064,7 +1050,10 @@ export class InnovationsService extends BaseService {
     fields: InnovationListChildrenType<'support'>[],
     extra: PickHandlerReturnType<typeof this.postHandlers, 'users'>
   ): Partial<InnovationListFullResponseType['support']> {
-    const updatedBy = extra.users?.get(item.supports?.[0]?.updatedBy ?? '') ?? null;
+    const support = item.supports?.[0];
+    if (!support) return {};
+
+    const updatedBy = extra.users?.get(support.updatedBy) ?? null;
     const displayName =
       // Ensuring that updatedBy is always innovator if the innovation is archived or not shared
       item.status === InnovationStatusEnum.ARCHIVED ||
@@ -1077,13 +1066,11 @@ export class InnovationsService extends BaseService {
 
     // support is handled differently to remove the nested array since it's only 1 element in this case
     return {
-      ...(fields.includes('id') && { id: item.supports?.[0]?.id ?? null }),
-      ...(fields.includes('status') && {
-        status: item.supports?.[0]?.status ?? InnovationSupportStatusEnum.SUGGESTED // TODO MJS - Check if this is correct
-      }),
-      ...(fields.includes('updatedAt') && { updatedAt: item.supports?.[0]?.updatedAt }),
+      ...(fields.includes('id') && { id: support.id ?? null }),
+      ...(fields.includes('status') && { status: support.status }),
+      ...(fields.includes('updatedAt') && { updatedAt: support.updatedAt }),
       ...(fields.includes('updatedBy') && { updatedBy: displayName }),
-      ...(fields.includes('closeReason') && { closeReason: item.supports?.[0]?.closeReason })
+      ...(fields.includes('closeReason') && { closeReason: support.closeReason })
     };
   }
 

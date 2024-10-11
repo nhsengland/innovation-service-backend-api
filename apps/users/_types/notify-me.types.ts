@@ -23,7 +23,7 @@ const SupportUpdatedSchema = Joi.object<SupportUpdated>({
     status: Joi.array()
       .items(
         Joi.string().valid(
-          ...Object.values(InnovationSupportStatusEnum).filter(v => v !== InnovationSupportStatusEnum.SUGGESTED) // TODO MJS - Check if this is correct
+          ...Object.values(InnovationSupportStatusEnum).filter(v => v !== InnovationSupportStatusEnum.SUGGESTED)
         )
       )
       .min(1)

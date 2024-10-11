@@ -208,13 +208,6 @@ describe('Users / _services / statistics service suite', () => {
           { status: InnovationSupportStatusEnum.SUGGESTED }
         );
 
-      await new InnovationSupportLogBuilder(em)
-        .setLogType(InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION)
-        .setSuggestedUnits([scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id])
-        .setInnovation(scenario.users.johnInnovator.innovations.johnInnovation.id)
-        .setCreatedBy(scenario.users.bartQualifyingAccessor, scenario.users.bartQualifyingAccessor.roles.qaRole)
-        .save();
-
       await em.getRepository(InnovationSupportEntity).update(
         {
           id: scenario.users.adamInnovator.innovations.adamInnovation.supports.adamInnovationSupportByHealthOrgUnit.id
@@ -222,19 +215,12 @@ describe('Users / _services / statistics service suite', () => {
         { status: InnovationSupportStatusEnum.SUGGESTED }
       );
 
-      await new InnovationSupportLogBuilder(em)
-        .setLogType(InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION)
-        .setSuggestedUnits([scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id])
-        .setInnovation(scenario.users.adamInnovator.innovations.adamInnovation.id)
-        .setCreatedBy(scenario.users.bartQualifyingAccessor, scenario.users.bartQualifyingAccessor.roles.qaRole)
-        .save();
-
       const result = await sut.innovationsToReview(
         DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
         em
       );
 
-      expect(result.count).toBe(3);
+      expect(result.count).toBe(2);
     });
 
     it.each([
