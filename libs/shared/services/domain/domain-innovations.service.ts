@@ -344,6 +344,7 @@ export class DomainInnovationsService {
         const supportsToUpdate = supports.map(support => {
           support.userRoles = [];
           support.updatedBy = domainContext.id;
+          support.updatedByUserRole = domainContext.currentRole.id;
           support.status = InnovationSupportStatusEnum.CLOSED;
           support.closeReason = InnovationSupportCloseReasonEnum.ARCHIVE;
           support.finishedAt = new Date();
