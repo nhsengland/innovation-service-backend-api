@@ -148,8 +148,8 @@ export class IdentityProviderService {
    * @param identityId the user identity id
    * @returns the user
    */
-  async getUserInfo(identityId: string): Promise<IdentityUserInfo> {
-    const users = await this.getUsersList([identityId]);
+  async getUserInfo(identityId: string, forceRefresh?: boolean): Promise<IdentityUserInfo> {
+    const users = await this.getUsersList([identityId], forceRefresh);
     if (!users[0]) throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
 
     return users[0];
@@ -190,8 +190,12 @@ export class IdentityProviderService {
    * @param identityIds the user identities
    * @returns list of users
    */
-  async getUsersList(identityIds: string[]): Promise<IdentityUserInfo[]> {
+  async getUsersList(identityIds: string[], forceRefresh?: boolean): Promise<IdentityUserInfo[]> {
     const uniqueUserIds = [...new Set(identityIds)]; // Remove duplicated entries.
+
+    if (forceRefresh) {
+      await this.cache.deleteMany(uniqueUserIds);
+    }
 
     const res = await this.cache.getMany(uniqueUserIds);
     if (res.length !== uniqueUserIds.length) {

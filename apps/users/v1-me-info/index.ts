@@ -1,9 +1,9 @@
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
-import type { AzureFunction } from '@azure/functions';
+import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@users/shared/decorators';
 import { AnnouncementTypeEnum, PhoneUserPreferenceEnum, ServiceRoleEnum } from '@users/shared/enums';
-import { ResponseHelper } from '@users/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@users/shared/helpers';
 import type { DomainService } from '@users/shared/services';
 import SHARED_SYMBOLS from '@users/shared/services/symbols';
 import type { CustomContextType } from '@users/shared/types';
@@ -16,10 +16,11 @@ import type { TermsOfUseService } from '../_services/terms-of-use.service';
 import type { UsersService } from '../_services/users.service';
 
 import type { ResponseDTO } from './transformation.dtos';
+import { QueryParamsSchema, QueryParamsType } from './validation.schema';
 
 class V1MeInfo {
   @JwtDecoder()
-  static async httpTrigger(context: CustomContextType): Promise<void> {
+  static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
     const domainService = container.get<DomainService>(SHARED_SYMBOLS.DomainService);
     const usersService = container.get<UsersService>(SYMBOLS.UsersService);
     const termsOfUseService = container.get<TermsOfUseService>(SYMBOLS.TermsOfUseService);
@@ -27,9 +28,14 @@ class V1MeInfo {
 
     try {
       // TODO: The org flag will be removed when we take organisations from the FE
+
+      const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
+
       const requestUser = await domainService.users.getUserInfo(
         { identityId: context.auth.user.identityId },
-        { organisations: true }
+        { organisations: true },
+        undefined,
+        { forceRefresh: queryParams.forceRefresh }
       );
       const userRoles = requestUser.roles.filter(role => role.isActive);
 
@@ -102,10 +108,41 @@ export default openApi(V1MeInfo.httpTrigger as AzureFunction, '/v1/me', {
     description: 'Retrieves the user profile information.',
     operationId: 'v1-me-info',
     tags: ['[v1] Users'],
-    parameters: [],
+    parameters: SwaggerHelper.paramJ2S({ path: QueryParamsSchema }),
     responses: {
-      200: { description: 'Successful operation' },
-      404: { description: 'Not found' }
+      200: {
+        description: 'Successful operation',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                id: { type: 'string' },
+                email: { type: 'string' },
+                displayName: { type: 'string' },
+                roles: { type: 'array', items: { type: 'string' } },
+                contactByEmail: { type: 'boolean' },
+                contactByPhone: { type: 'boolean' },
+                contactByPhoneTimeframe: { type: 'string' },
+                contactDetails: { type: 'string' },
+                phone: { type: 'string' },
+                passwordResetAt: { type: 'string' },
+                firstTimeSignInAt: { type: 'string' },
+                termsOfUseAccepted: { type: 'boolean' },
+                hasInnovationTransfers: { type: 'boolean' },
+                hasInnovationCollaborations: { type: 'boolean' },
+                hasLoginAnnouncements: { type: 'object' },
+                organisations: { type: 'array', items: { type: 'object' } }
+              }
+            }
+          }
+        }
+      },
+      400: { description: 'Bad Request' },
+      401: { description: 'Unauthorized' },
+      403: { description: 'Forbidden' },
+      404: { description: 'Not found' },
+      500: { description: 'Internal server error' }
     }
   }
 });
