@@ -1,10 +1,10 @@
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
-import type { AzureFunction } from '@azure/functions';
+import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@users/shared/decorators';
 import { AnnouncementTypeEnum, PhoneUserPreferenceEnum, ServiceRoleEnum } from '@users/shared/enums';
-import { ResponseHelper } from '@users/shared/helpers';
-import type { DomainService } from '@users/shared/services';
+import { JoiHelper, ResponseHelper } from '@users/shared/helpers';
+import type { AuthorizationService, DomainService } from '@users/shared/services';
 import SHARED_SYMBOLS from '@users/shared/services/symbols';
 import type { CustomContextType } from '@users/shared/types';
 
@@ -16,10 +16,11 @@ import type { TermsOfUseService } from '../_services/terms-of-use.service';
 import type { UsersService } from '../_services/users.service';
 
 import type { ResponseDTO } from './transformation.dtos';
+import { QueryParamsSchema, QueryParamsType } from './validation.schema';
 
 class V1MeInfo {
   @JwtDecoder()
-  static async httpTrigger(context: CustomContextType): Promise<void> {
+  static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
     const domainService = container.get<DomainService>(SHARED_SYMBOLS.DomainService);
     const usersService = container.get<UsersService>(SYMBOLS.UsersService);
     const termsOfUseService = container.get<TermsOfUseService>(SYMBOLS.TermsOfUseService);
@@ -28,12 +29,13 @@ class V1MeInfo {
     try {
       // TODO: The org flag will be removed when we take organisations from the FE
 
-      const forceRefresh = context.req?.query['forceRefresh'];
+      const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
+
       const requestUser = await domainService.users.getUserInfo(
         { identityId: context.auth.user.identityId },
         { organisations: true },
         undefined,
-        { forceRefresh: forceRefresh === 'true' }
+        { forceRefresh: queryParams.forceRefresh }
       );
       const userRoles = requestUser.roles.filter(role => role.isActive);
 
