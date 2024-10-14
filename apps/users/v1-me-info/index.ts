@@ -4,7 +4,7 @@ import type { AzureFunction, HttpRequest } from '@azure/functions';
 import { JwtDecoder } from '@users/shared/decorators';
 import { AnnouncementTypeEnum, PhoneUserPreferenceEnum, ServiceRoleEnum } from '@users/shared/enums';
 import { JoiHelper, ResponseHelper } from '@users/shared/helpers';
-import type { AuthorizationService, DomainService } from '@users/shared/services';
+import type { DomainService } from '@users/shared/services';
 import SHARED_SYMBOLS from '@users/shared/services/symbols';
 import type { CustomContextType } from '@users/shared/types';
 
