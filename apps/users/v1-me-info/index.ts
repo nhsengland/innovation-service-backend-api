@@ -3,7 +3,7 @@ import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@users/shared/decorators';
 import { AnnouncementTypeEnum, PhoneUserPreferenceEnum, ServiceRoleEnum } from '@users/shared/enums';
-import { JoiHelper, ResponseHelper } from '@users/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@users/shared/helpers';
 import type { DomainService } from '@users/shared/services';
 import SHARED_SYMBOLS from '@users/shared/services/symbols';
 import type { CustomContextType } from '@users/shared/types';
@@ -108,10 +108,41 @@ export default openApi(V1MeInfo.httpTrigger as AzureFunction, '/v1/me', {
     description: 'Retrieves the user profile information.',
     operationId: 'v1-me-info',
     tags: ['[v1] Users'],
-    parameters: [],
+    parameters: SwaggerHelper.paramJ2S({ path: QueryParamsSchema }),
     responses: {
-      200: { description: 'Successful operation' },
-      404: { description: 'Not found' }
+      200: {
+        description: 'Successful operation',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                id: { type: 'string' },
+                email: { type: 'string' },
+                displayName: { type: 'string' },
+                roles: { type: 'array', items: { type: 'string' } },
+                contactByEmail: { type: 'boolean' },
+                contactByPhone: { type: 'boolean' },
+                contactByPhoneTimeframe: { type: 'string' },
+                contactDetails: { type: 'string' },
+                phone: { type: 'string' },
+                passwordResetAt: { type: 'string' },
+                firstTimeSignInAt: { type: 'string' },
+                termsOfUseAccepted: { type: 'boolean' },
+                hasInnovationTransfers: { type: 'boolean' },
+                hasInnovationCollaborations: { type: 'boolean' },
+                hasLoginAnnouncements: { type: 'object' },
+                organisations: { type: 'array', items: { type: 'object' } }
+              }
+            }
+          }
+        }
+      },
+      400: { description: 'Bad Request' },
+      401: { description: 'Unauthorized' },
+      403: { description: 'Forbidden' },
+      404: { description: 'Not found' },
+      500: { description: 'Internal server error' }
     }
   }
 });
