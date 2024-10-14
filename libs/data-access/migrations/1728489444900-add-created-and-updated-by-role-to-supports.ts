@@ -8,7 +8,13 @@ export class addCreatedAndUpdatedByRoleToSupports1728489444900 implements Migrat
       ALTER TABLE innovation_support ADD updated_by_user_role_id UNIQUEIDENTIFIER CONSTRAINT "df_temp_updated_by_user_role" DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL;
     `);
 
-    // Add the supports != SUGGESTED
+    /*
+     * Add the supports != SUGGESTED
+     *
+     * We have to get the org_created_by_role fallback since in prod there were supports that were migrated from
+     * one unit to another (NICE and AI). Since the s.organisation_unit was different from the the support unit
+     * we had to get the role that the user had from the organisation.
+     */
     await queryRunner.query(`
       WITH
           not_suggested_supports
@@ -60,7 +66,7 @@ export class addCreatedAndUpdatedByRoleToSupports1728489444900 implements Migrat
                   INNER JOIN innovation_support_log sl ON sl.created_at = s.created_at AND sl.innovation_id = s.innovation_id
                   INNER JOIN innovation_support_log_organisation_unit slou ON slou.innovation_support_log_id = sl.id AND slou.organisation_unit_id = s.organisation_unit_id
                   INNER JOIN user_role r ON r.id = sl.created_by_user_role_id AND r.organisation_unit_id = sl.organisation_unit_id
-              WHERE s.status = 'SUGGESTED'
+              WHERE s.status = 'SUGGESTED' AND s.created_by_user_role_id != '00000000-0000-0000-0000-000000000000'
           )
       UPDATE innovation_support
       SET created_by_user_role_id = sbq.suggestor_role_id, updated_by_user_role_id = sbq.suggestor_role_id
