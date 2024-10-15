@@ -21,8 +21,6 @@ class V1InnovationsSuggestionList {
     const innovationSupportsService = container.get<InnovationSupportsService>(SYMBOLS.InnovationSupportsService);
 
     try {
-      console.log('params', request.params);
-
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
       const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
 
