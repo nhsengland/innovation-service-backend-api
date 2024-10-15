@@ -1616,6 +1616,7 @@ export class InnovationsService extends BaseService {
             supports.map(support => {
               support.userRoles = [];
               support.updatedBy = domainContext.id;
+              support.updatedByUserRole = domainContext.currentRole.id;
               support.status = InnovationSupportStatusEnum.CLOSED;
               support.closeReason = InnovationSupportCloseReasonEnum.STOP_SHARE;
               support.finishedAt = new Date();

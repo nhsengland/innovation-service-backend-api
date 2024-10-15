@@ -394,6 +394,10 @@ describe('Notifications / _services / recipients service suite', () => {
         .setMajorAssessment(scenario.users.adamInnovator.innovations.adamInnovation.assessment.id)
         .setOrganisationUnit(scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id)
         .setAccessors([scenario.users.jamieMadroxAccessor])
+        .setCreatedAndUpdatedBy(
+          scenario.users.sarahQualifyingAccessor.id,
+          scenario.users.sarahQualifyingAccessor.roles['qaRole'].id
+        )
         .save();
 
       const res = await sut.innovationAssignedRecipients(

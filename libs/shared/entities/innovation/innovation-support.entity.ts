@@ -10,8 +10,6 @@ import {
   PrimaryGeneratedColumn
 } from 'typeorm';
 
-import { BaseEntity } from '../base.entity';
-
 import { OrganisationUnitEntity } from '../organisation/organisation-unit.entity';
 import { InnovationTaskEntity } from './innovation-task.entity';
 import { InnovationEntity } from './innovation.entity';
@@ -20,9 +18,10 @@ import { InnovationSupportCloseReasonEnum, InnovationSupportStatusEnum } from '.
 import { UserRoleEntity } from '../user/user-role.entity';
 import { SupportLastActivityUpdateView } from '../views/support-last-activity-update.view.entity';
 import { InnovationAssessmentEntity } from './innovation-assessment.entity';
+import { BaseByRoleEntity } from '../base-by-roles.entity';
 
 @Entity('innovation_support')
-export class InnovationSupportEntity extends BaseEntity {
+export class InnovationSupportEntity extends BaseByRoleEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
