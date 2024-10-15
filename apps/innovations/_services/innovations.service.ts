@@ -1156,6 +1156,7 @@ export class InnovationsService extends BaseService {
     lastEndSupportAt: null | Date;
     assessment?: null | {
       id: string;
+      currentMajorAssessmentId: string;
       majorVersion: number;
       minorVersion: number;
       createdAt: Date;
@@ -1207,6 +1208,7 @@ export class InnovationsService extends BaseService {
     // Assessment relations.
     if (filters.fields?.includes('assessment')) {
       query.leftJoin('innovation.currentAssessment', 'currentAssessment');
+      query.leftJoin('innovation.currentMajorAssessment', 'currentMajorAssessment');
       query.leftJoin('currentAssessment.assignTo', 'assignTo', 'assignTo.status != :deletedStatus', {
         deletedStatus: UserStatusEnum.DELETED
       });
@@ -1219,6 +1221,7 @@ export class InnovationsService extends BaseService {
         'currentAssessment.minorVersion',
         'currentAssessment.createdAt',
         'currentAssessment.finishedAt',
+        'currentMajorAssessment.id',
         'assignTo.id',
         'assignTo.status',
         'assignToRoles.id'
@@ -1281,6 +1284,7 @@ export class InnovationsService extends BaseService {
       | null
       | {
           id: string;
+          currentMajorAssessmentId: string;
           majorVersion: number;
           minorVersion: number;
           createdAt: Date;
@@ -1291,20 +1295,22 @@ export class InnovationsService extends BaseService {
 
     if (filters.fields?.includes('assessment')) {
       const assignTo = usersInfo.find(item => item.id === innovation.currentAssessment?.assignTo?.id && item.isActive);
-      assessment = innovation.currentAssessment
-        ? {
-            id: innovation.currentAssessment.id,
-            majorVersion: innovation.currentAssessment.majorVersion,
-            minorVersion: innovation.currentAssessment.minorVersion,
-            createdAt: innovation.currentAssessment.createdAt,
-            finishedAt: innovation.currentAssessment.finishedAt,
-            ...(assignTo &&
-              assignTo.roles[0] && {
-                assignedTo: { id: assignTo.id, name: assignTo.displayName, userRoleId: assignTo.roles[0].id }
-              }),
-            reassessmentCount: (await innovation.reassessmentRequests).length
-          }
-        : null;
+      assessment =
+        innovation.currentAssessment && innovation.currentMajorAssessment
+          ? {
+              id: innovation.currentAssessment.id,
+              currentMajorAssessmentId: innovation.currentMajorAssessment.id,
+              majorVersion: innovation.currentAssessment.majorVersion,
+              minorVersion: innovation.currentAssessment.minorVersion,
+              createdAt: innovation.currentAssessment.createdAt,
+              finishedAt: innovation.currentAssessment.finishedAt,
+              ...(assignTo &&
+                assignTo.roles[0] && {
+                  assignedTo: { id: assignTo.id, name: assignTo.displayName, userRoleId: assignTo.roles[0].id }
+                }),
+              reassessmentCount: (await innovation.reassessmentRequests).length
+            }
+          : null;
     }
 
     return {

@@ -12,7 +12,7 @@ import { container } from '../_config';
 import type { InnovationSupportsService } from '../_services/innovation-supports.service';
 import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
-import { ParamsSchema, ParamsType } from './validation.schemas';
+import { ParamsSchema, ParamsType, QueryParamsSchema, QueryParamsType } from './validation.schemas';
 
 class V1InnovationsSuggestionList {
   @JwtDecoder()
@@ -21,7 +21,10 @@ class V1InnovationsSuggestionList {
     const innovationSupportsService = container.get<InnovationSupportsService>(SYMBOLS.InnovationSupportsService);
 
     try {
+      console.log('params', request.params);
+
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
+      const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
 
       await authorizationService
         .validate(context)
@@ -31,7 +34,9 @@ class V1InnovationsSuggestionList {
         .checkInnovation()
         .verify();
 
-      const result = await innovationSupportsService.getInnovationSuggestions(params.innovationId);
+      const result = await innovationSupportsService.getInnovationSuggestions(params.innovationId, {
+        ...(queryParams.majorAssessmentId && { majorAssessmentId: queryParams.majorAssessmentId })
+      });
 
       context.res = ResponseHelper.Ok<ResponseDTO>(result);
       return;
