@@ -433,6 +433,10 @@ describe('Innovations / _services / innovation-supports suite', () => {
         .setMajorAssessment(innovationWithoutSupports.assessmentInProgress.id)
         .setStatus(InnovationSupportStatusEnum.ENGAGING)
         .setOrganisationUnit(scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id)
+        .setCreatedAndUpdatedBy(
+          scenario.users.scottQualifyingAccessor.id,
+          scenario.users.scottQualifyingAccessor.roles['qaRole'].id
+        )
         .save();
 
       await sut.createSuggestedSupports(
@@ -710,6 +714,10 @@ describe('Innovations / _services / innovation-supports suite', () => {
         .setInnovation(innovation.id)
         .setMajorAssessment(innovation.assessment.id)
         .setOrganisationUnit(scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.id)
+        .setCreatedAndUpdatedBy(
+          scenario.users.lisaQualifyingAccessor.id,
+          scenario.users.lisaQualifyingAccessor.roles['qaRole'].id
+        )
         .save();
       const supportSummaryList = await sut.getSupportSummaryList(
         DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),

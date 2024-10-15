@@ -495,6 +495,8 @@ export class InnovationSupportsService extends BaseService {
       status,
       createdBy: domainContext.id,
       updatedBy: domainContext.id,
+      updatedByUserRole: domainContext.currentRole.id,
+      createdByUserRole: domainContext.currentRole.id,
       innovation: { id: innovationId },
       organisationUnit: { id: organisationUnitId },
       majorAssessment: { id: innovation.currentMajorAssessment.id },
@@ -610,6 +612,7 @@ export class InnovationSupportsService extends BaseService {
         const newSupport = support;
         newSupport.status = data.status;
         newSupport.updatedBy = domainContext.id;
+        newSupport.updatedByUserRole = domainContext.currentRole.id;
         newSupport.startedAt = new Date();
         newSupport.userRoles = [];
         savedSupport = await transaction.save(InnovationSupportEntity, newSupport);

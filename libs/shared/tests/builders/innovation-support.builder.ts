@@ -9,6 +9,7 @@ import {
 import { InnovationSupportStatusEnum } from '../../enums';
 import { BaseBuilder } from './base.builder';
 import type { TestUserType } from './user.builder';
+import { randUuid } from '@ngneat/falso';
 
 export type TestInnovationSupportType = {
   id: string;
@@ -24,7 +25,11 @@ export class InnovationSupportBuilder extends BaseBuilder {
     super(entityManager);
     this.support = InnovationSupportEntity.new({
       status: InnovationSupportStatusEnum.SUGGESTED,
-      userRoles: []
+      userRoles: [],
+      createdBy: randUuid(),
+      createdByUserRole: randUuid(),
+      updatedBy: randUuid(),
+      updatedByUserRole: randUuid()
     });
   }
 
@@ -62,6 +67,14 @@ export class InnovationSupportBuilder extends BaseBuilder {
 
       this.support.userRoles.push(UserRoleEntity.new({ id: validRole.id }));
     }
+    return this;
+  }
+
+  setCreatedAndUpdatedBy(userId: string, roleId: string): this {
+    this.support.createdBy = userId;
+    this.support.createdByUserRole = roleId;
+    this.support.updatedBy = userId;
+    this.support.updatedByUserRole = roleId;
     return this;
   }
 
