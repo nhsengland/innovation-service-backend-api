@@ -15,6 +15,7 @@ export type TestInnovationSupportType = {
   status: InnovationSupportStatusEnum;
   updatedAt: Date;
   userRoles: string[];
+  startedAt: Date | null;
 };
 
 export class InnovationSupportBuilder extends BaseBuilder {
@@ -65,12 +66,21 @@ export class InnovationSupportBuilder extends BaseBuilder {
     return this;
   }
 
+  setStartedAt(date: Date): this {
+    this.support.startedAt = date;
+    return this;
+  }
+
   async save(): Promise<TestInnovationSupportType> {
     const required = ['innovation', 'organisationUnit', 'majorAssessment'] as const;
     for (const prop of required) {
       if (!this.support[prop]) {
         throw new Error(`InnovationSupportBuilder::save: ${prop} is required.`);
       }
+    }
+
+    if (this.support.status !== InnovationSupportStatusEnum.SUGGESTED && !this.support.startedAt) {
+      this.support.startedAt = new Date();
     }
 
     const savedSupport = await this.getEntityManager().getRepository(InnovationSupportEntity).save(this.support);
@@ -88,7 +98,8 @@ export class InnovationSupportBuilder extends BaseBuilder {
       id: result.id,
       status: result.status,
       updatedAt: result.updatedAt,
-      userRoles: this.support.userRoles.map(r => r.id)
+      userRoles: this.support.userRoles.map(r => r.id),
+      startedAt: result.startedAt
     };
   }
 }

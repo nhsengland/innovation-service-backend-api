@@ -34,14 +34,12 @@ describe('Innovations / _services / validation suite', () => {
     const unit = scenario.organisations.healthOrg.organisationUnits.healthOrgUnit;
 
     it('should return valid if support had already started at a given date', async () => {
-      await em.getRepository(InnovationSupportEntity).update({ id: support.id }, { startedAt: new Date('2000-01-01') });
-
       const result = await sut.checkIfSupportHadAlreadyStartedAtDate(
         DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
         innovation.id,
         {
           unitId: unit.id,
-          date: new Date('2000-01-01')
+          date: support.startedAt!
         },
         em
       );
@@ -66,8 +64,6 @@ describe('Innovations / _services / validation suite', () => {
     });
 
     it('should throw an error if the date is in the future', async () => {
-      await em.getRepository(InnovationSupportEntity).update({ id: support.id }, { startedAt: new Date('2000-01-01') });
-
       const today = new Date();
       const tomorrow = today.setDate(today.getDate() + 1);
 

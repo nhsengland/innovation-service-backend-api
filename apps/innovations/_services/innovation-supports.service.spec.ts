@@ -1456,20 +1456,16 @@ describe('Innovations / _services / innovation-supports suite', () => {
     const innovationId = scenario.users.johnInnovator.innovations.johnInnovation.id;
     const support = scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByHealthOrgUnit;
 
-    const today = new Date();
-
     it('should create a support summary without a file for a unit with started support', async () => {
       const domainContext = DTOsHelper.getUserRequestContext(user, 'qaRole');
       const data: Parameters<InnovationSupportsService['createProgressUpdate']>[2] = {
         description: randText(),
         title: randText(),
-        createdAt: today
+        createdAt: support.startedAt!
       };
       const dbProgressId = randUuid();
 
       supportLogSpy.mockResolvedValueOnce({ id: dbProgressId });
-
-      await em.getRepository(InnovationSupportEntity).update({ id: support.id }, { startedAt: today });
 
       await sut.createProgressUpdate(domainContext, innovationId, data, em);
 
@@ -1512,12 +1508,10 @@ describe('Innovations / _services / innovation-supports suite', () => {
           }
         },
         title: randText(),
-        createdAt: today
+        createdAt: support.startedAt!
       };
 
       supportLogSpy.mockResolvedValueOnce({ id: dbProgressId });
-
-      await em.getRepository(InnovationSupportEntity).update({ id: support.id }, { startedAt: today });
 
       await sut.createProgressUpdate(domainContext, innovationId, data, em);
 
@@ -1549,12 +1543,10 @@ describe('Innovations / _services / innovation-supports suite', () => {
       const context = DTOsHelper.getUserRequestContext(user);
       const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
 
-      await em.getRepository(InnovationSupportEntity).update({ id: support.id }, { startedAt: today });
-
       await sut.createProgressUpdate(
         context,
         innovation.id,
-        { description: randText(), title: randText(), createdAt: today },
+        { description: randText(), title: randText(), createdAt: support.startedAt! },
         em
       );
 
@@ -1568,7 +1560,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
         sut.createProgressUpdate(
           DTOsHelper.getUserRequestContext(scenario.users.allMighty),
           innovationId,
-          { description: randText(), title: randText(), createdAt: new Date() },
+          { description: randText(), title: randText(), createdAt: support.startedAt! },
           em
         )
       ).rejects.toThrow(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND));
@@ -1579,20 +1571,20 @@ describe('Innovations / _services / innovation-supports suite', () => {
         sut.createProgressUpdate(
           DTOsHelper.getUserRequestContext(scenario.users.samAccessor, 'accessorRole'),
           scenario.users.adamInnovator.innovations.adamInnovation.id,
-          { description: randText(), title: randText(), createdAt: new Date() },
+          { description: randText(), title: randText(), createdAt: support.startedAt! },
           em
         )
       ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND));
     });
 
     it('should throw an UnprocessableEntityError when the unit has not yet started support with innovation', async () => {
-      await em.update(InnovationSupportEntity, { id: support.id }, { status: InnovationSupportStatusEnum.WAITING });
+      await em.update(InnovationSupportEntity, { id: support.id }, { startedAt: new Date('2000-01-01') });
 
       await expect(() =>
         sut.createProgressUpdate(
           DTOsHelper.getUserRequestContext(user, 'qaRole'),
           innovationId,
-          { description: randText(), title: randText(), createdAt: new Date() },
+          { description: randText(), title: randText(), createdAt: new Date('1999-01-01') },
           em
         )
       ).rejects.toThrow(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UNIT_NOT_STARTED));
