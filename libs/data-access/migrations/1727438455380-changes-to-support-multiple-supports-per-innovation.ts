@@ -101,9 +101,9 @@ export class ChangesToSupportMultipleSupportsPerInnovation1727438455380 implemen
       ALTER TABLE innovation_support DROP CONSTRAINT df_innovation_support_status;
 
       UPDATE innovation_support SET [status] = 'SUGGESTED' WHERE [status] = 'UNASSIGNED';
-      
+
       -- Close the supports that were UNASSIGNED but then not shared
-      UPDATE innovation_support 
+      UPDATE innovation_support
       SET close_reason = 'STOP_SHARE', status='CLOSED'
       FROM  innovation_support s
       INNER JOIN organisation_unit ou ON ou.id = s.organisation_unit_id
@@ -143,7 +143,7 @@ export class ChangesToSupportMultipleSupportsPerInnovation1727438455380 implemen
     // Add suggested supports
     await queryRunner.query(`
       WITH accessor_suggestions AS (
-        SELECT DISTINCT sl.innovation_id, slou.organisation_unit_id, 
+        SELECT DISTINCT sl.innovation_id, slou.organisation_unit_id,
         FIRST_VALUE(sl.created_at) OVER (PARTITION BY sl.innovation_id, slou.organisation_unit_id order by sl.created_at) as suggested_on,
         FIRST_VALUE(sl.created_by) OVER (PARTITION BY sl.innovation_id, slou.organisation_unit_id order by sl.created_at) as creator
         FROM innovation_support_log_organisation_unit slou
@@ -156,7 +156,7 @@ export class ChangesToSupportMultipleSupportsPerInnovation1727438455380 implemen
         INNER JOIN innovation_assessment_organisation_unit aou ON a.id = aou.innovation_assessment_id
         WHERE a.finished_at IS NOT NULL
       ), all_suggestions AS (
-        SELECT DISTINCT innovation_id, organisation_unit_id, 
+        SELECT DISTINCT innovation_id, organisation_unit_id,
         FIRST_VALUE(suggested_on) OVER (PARTITION BY innovation_id, organisation_unit_id order by suggested_on) as suggested_on,
         FIRST_VALUE(creator) OVER (PARTITION BY innovation_id, organisation_unit_id order by suggested_on) as creator
         FROM (SELECT * FROM accessor_suggestions UNION ALL SELECT * FROM assessment_suggestions) t
@@ -180,6 +180,22 @@ export class ChangesToSupportMultipleSupportsPerInnovation1727438455380 implemen
         s.organisation_unit_id,
         s.current_major_assessment_id
       FROM supports_to_create s;
+    `);
+
+    // Set started_at for supports
+    await queryRunner.query(`
+      WITH started_at AS (
+        SELECT id, MIN(updated_at) as min_started_at
+        FROM innovation_support
+        FOR SYSTEM_TIME ALL
+        WHERE status NOT IN ('SUGGESTED', 'UNASSIGNED')
+        GROUP BY id
+      )
+      UPDATE innovation_support
+      SET started_at = started_at.min_started_at
+      FROM started_at
+      WHERE innovation_support.id = started_at.id
+      AND status != 'SUGGESTED';
     `);
   }
 
