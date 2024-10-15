@@ -15,7 +15,7 @@ export const ParamsSchema = Joi.object<ParamsType>({
 export type BodyType = {
   description: string;
   document?: InnovationFileType;
-  createdAt?: Date;
+  createdAt: Date;
 } & SupportLogProgressUpdate['params'];
 
 const BaseSchema = Joi.object<BodyType>({

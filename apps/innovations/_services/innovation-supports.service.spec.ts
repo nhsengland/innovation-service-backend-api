@@ -1452,17 +1452,24 @@ describe('Innovations / _services / innovation-supports suite', () => {
   });
 
   describe('createProgressUpdate', () => {
+    const user = scenario.users.aliceQualifyingAccessor;
     const innovationId = scenario.users.johnInnovator.innovations.johnInnovation.id;
+    const support = scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByHealthOrgUnit;
 
-    it('should create a support summary when a unit is engaging without a file', async () => {
-      const domainContext = DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole');
+    const today = new Date();
+
+    it('should create a support summary without a file for a unit with started support', async () => {
+      const domainContext = DTOsHelper.getUserRequestContext(user, 'qaRole');
       const data: Parameters<InnovationSupportsService['createProgressUpdate']>[2] = {
         description: randText(),
-        title: randText()
+        title: randText(),
+        createdAt: today
       };
       const dbProgressId = randUuid();
 
       supportLogSpy.mockResolvedValueOnce({ id: dbProgressId });
+
+      await em.getRepository(InnovationSupportEntity).update({ id: support.id }, { startedAt: today });
 
       await sut.createProgressUpdate(domainContext, innovationId, data, em);
 
@@ -1482,7 +1489,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
         {
           type: InnovationSupportLogTypeEnum.PROGRESS_UPDATE,
           description: data.description,
-          supportStatus: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByHealthOrgUnit.status,
+          supportStatus: support.status,
           unitId: domainContext.organisation?.organisationUnit?.id,
           params: { title: data.title }
         }
@@ -1490,8 +1497,8 @@ describe('Innovations / _services / innovation-supports suite', () => {
       expect(fileExists).toBe(0);
     });
 
-    it('should create a support summary when a unit is engaging with a file', async () => {
-      const domainContext = DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole');
+    it('should create a support summary with a file for a unit with started support', async () => {
+      const domainContext = DTOsHelper.getUserRequestContext(user, 'qaRole');
       const dbProgressId = randUuid();
       const data: Parameters<InnovationSupportsService['createProgressUpdate']>[2] = {
         description: randText(),
@@ -1504,10 +1511,13 @@ describe('Innovations / _services / innovation-supports suite', () => {
             extension: randFileExt()
           }
         },
-        title: randText()
+        title: randText(),
+        createdAt: today
       };
 
       supportLogSpy.mockResolvedValueOnce({ id: dbProgressId });
+
+      await em.getRepository(InnovationSupportEntity).update({ id: support.id }, { startedAt: today });
 
       await sut.createProgressUpdate(domainContext, innovationId, data, em);
 
@@ -1527,7 +1537,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
         {
           type: InnovationSupportLogTypeEnum.PROGRESS_UPDATE,
           description: data.description,
-          supportStatus: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByHealthOrgUnit.status,
+          supportStatus: support.status,
           unitId: domainContext.organisation?.organisationUnit?.id,
           params: { title: data.title }
         }
@@ -1536,9 +1546,17 @@ describe('Innovations / _services / innovation-supports suite', () => {
     });
 
     it('should send a notifyMe when progress update is created', async () => {
-      const context = DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor);
+      const context = DTOsHelper.getUserRequestContext(user);
       const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
-      await sut.createProgressUpdate(context, innovation.id, { description: randText(), title: randText() }, em);
+
+      await em.getRepository(InnovationSupportEntity).update({ id: support.id }, { startedAt: today });
+
+      await sut.createProgressUpdate(
+        context,
+        innovation.id,
+        { description: randText(), title: randText(), createdAt: today },
+        em
+      );
 
       expect(notifierSendNotifyMeSpy).toHaveBeenCalledWith(context, innovation.id, 'PROGRESS_UPDATE_CREATED', {
         units: context.organisation?.organisationUnit?.id
@@ -1550,7 +1568,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
         sut.createProgressUpdate(
           DTOsHelper.getUserRequestContext(scenario.users.allMighty),
           innovationId,
-          { description: randText(), title: randText() },
+          { description: randText(), title: randText(), createdAt: new Date() },
           em
         )
       ).rejects.toThrow(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND));
@@ -1561,62 +1579,63 @@ describe('Innovations / _services / innovation-supports suite', () => {
         sut.createProgressUpdate(
           DTOsHelper.getUserRequestContext(scenario.users.samAccessor, 'accessorRole'),
           scenario.users.adamInnovator.innovations.adamInnovation.id,
-          { description: randText(), title: randText() },
+          { description: randText(), title: randText(), createdAt: new Date() },
           em
         )
       ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND));
     });
 
-    it('should throw an UnprocessableEntityError when the unit is not currently engaging', async () => {
-      await em.update(
-        InnovationSupportEntity,
-        { id: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByHealthOrgUnit.id },
-        { status: InnovationSupportStatusEnum.WAITING }
-      );
+    it('should throw an UnprocessableEntityError when the unit has not yet started support with innovation', async () => {
+      await em.update(InnovationSupportEntity, { id: support.id }, { status: InnovationSupportStatusEnum.WAITING });
 
       await expect(() =>
         sut.createProgressUpdate(
-          DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole'),
+          DTOsHelper.getUserRequestContext(user, 'qaRole'),
           innovationId,
-          { description: randText(), title: randText() },
+          { description: randText(), title: randText(), createdAt: new Date() },
           em
         )
-      ).rejects.toThrow(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UNIT_NOT_ENGAGING));
+      ).rejects.toThrow(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UNIT_NOT_STARTED));
     });
 
     describe('create past progress update', () => {
-      const mock = jest.spyOn(ValidationService.prototype, 'checkIfSupportStatusAtDate');
+      const mock = jest.spyOn(ValidationService.prototype, 'checkIfSupportHadAlreadyStartedAtDate');
 
       afterAll(() => mock.mockRestore());
 
       it('should create a progress update in the past', async () => {
-        mock.mockResolvedValueOnce({ rule: 'checkIfSupportStatusAtDate', valid: true });
-        const createdAt = randPastDate();
-        createdAt.setHours(0, 0, 0, 0); // There's issues with milliseconds comparison in tests and FE always sends 00:00:00 anyway
+        mock.mockResolvedValueOnce({ rule: 'checkIfSupportHadAlreadyStartedAtDate', valid: true });
+
+        const pastDate = randPastDate();
+        pastDate.setHours(0, 0, 0, 0);
+        const pastDatePlusOneDay = new Date(pastDate);
+        pastDatePlusOneDay.setDate(pastDatePlusOneDay.getDate() + 1);
+
+        await em.update(InnovationSupportEntity, { id: support.id }, { startedAt: pastDate });
 
         await sut.createProgressUpdate(
-          DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole'),
+          DTOsHelper.getUserRequestContext(user, 'qaRole'),
           innovationId,
-          { description: randText(), title: randText(), createdAt },
+          { description: randText(), title: randText(), createdAt: pastDatePlusOneDay },
           em
         );
 
         await em
           .createQueryBuilder(InnovationSupportLogEntity, 'log')
-          .where('log.createdAt <= :createdAt', { createdAt })
+          .where('log.createdAt <= :createdAt', { createdAt: pastDatePlusOneDay })
           .getOneOrFail();
       });
 
       it('should throw an UnprocessableEntityError if the date is invalid', async () => {
-        mock.mockResolvedValueOnce({ rule: 'checkIfSupportStatusAtDate', valid: false });
+        mock.mockResolvedValueOnce({ rule: 'checkIfSupportHadAlreadyStartedAtDate', valid: false });
         await expect(() =>
           sut.createProgressUpdate(
-            DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole'),
+            DTOsHelper.getUserRequestContext(user, 'qaRole'),
             innovationId,
             { description: randText(), title: randText(), createdAt: randPastDate() },
             em
           )
-        ).rejects.toThrow(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UNIT_NOT_ENGAGING));
+        ).rejects.toThrow(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UNIT_NOT_STARTED));
       });
     });
   });

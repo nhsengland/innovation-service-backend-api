@@ -49,7 +49,6 @@ import type {
   SuggestedOrganisationInfo
 } from '../_types/innovation.types';
 
-import { DatesHelper } from '@innovations/shared/helpers';
 import { AuthErrorsEnum } from '@innovations/shared/services/auth/authorization-validation.model';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { SupportSummaryUnitInfo } from '../_types/support.types';
@@ -67,6 +66,7 @@ type UnitSupportInformationType = {
   unitName: string;
   startSupport: null | Date;
   endSupport: null | Date;
+  minStartSupport: null | Date;
   orgId: string;
   orgAcronym: string;
 };
@@ -74,7 +74,7 @@ type UnitSupportInformationType = {
 type SuggestedUnitType = {
   id: string;
   name: string;
-  support: { id?: string; status: InnovationSupportStatusEnum; start?: Date; end?: Date };
+  support: { id?: string; status: InnovationSupportStatusEnum; start?: Date; end?: Date; minStart?: Date };
   organisation: {
     id: string;
     acronym: string;
@@ -1186,7 +1186,8 @@ export class InnovationSupportsService extends BaseService {
           support: {
             id: support.id,
             status: support.status,
-            start: support.startSupport ?? undefined
+            start: support.startSupport ?? undefined,
+            minStart: support.minStartSupport ?? undefined
           },
           organisation: {
             id: support.orgId,
@@ -1202,7 +1203,8 @@ export class InnovationSupportsService extends BaseService {
             id: support.id,
             status: support.status,
             start: support.startSupport,
-            end: support.endSupport
+            end: support.endSupport,
+            minStart: support.minStartSupport ?? undefined
           },
           organisation: {
             id: support.orgId,
@@ -1217,7 +1219,8 @@ export class InnovationSupportsService extends BaseService {
           support: {
             id: support.id,
             status: support.status,
-            start: support.updatedAt
+            start: support.updatedAt,
+            minStart: support.minStartSupport ?? undefined
           },
           organisation: {
             id: support.orgId,
@@ -1389,8 +1392,8 @@ export class InnovationSupportsService extends BaseService {
     innovationId: string,
     data: {
       description: string;
+      createdAt: Date;
       document?: InnovationFileType;
-      createdAt?: Date;
     } & SupportLogProgressUpdate['params'],
     entityManager?: EntityManager
   ): Promise<void> {
@@ -1412,29 +1415,24 @@ export class InnovationSupportsService extends BaseService {
       .andWhere('support.organisation_unit_id = :unitId', { unitId })
       .andWhere('support.isMostRecent = 1') // TODO: This will probably changed because of past progress updates
       .getOne();
+
     if (!support) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
     }
 
-    // If we have a created date and it's different from today check if the support was engaging otherwise check current
-    if (
-      data.createdAt &&
-      DatesHelper.getDateAsLocalDateString(data.createdAt) !== DatesHelper.getDateAsLocalDateString(new Date())
-    ) {
-      const res = await this.validationService.checkIfSupportStatusAtDate(domainContext, innovationId, {
-        supportId: support.id,
-        date: data.createdAt,
-        status: InnovationSupportStatusEnum.ENGAGING
-      });
+    // Validate if the support had already started at the given date
+    const res = await this.validationService.checkIfSupportHadAlreadyStartedAtDate(
+      domainContext,
+      innovationId,
+      {
+        unitId,
+        date: data.createdAt
+      },
+      connection
+    );
 
-      if (!res.valid) {
-        throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UNIT_NOT_ENGAGING);
-      }
-    } else {
-      data.createdAt = undefined; // We don't need to store the date if it's today
-      if (!(support.status === InnovationSupportStatusEnum.ENGAGING)) {
-        throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UNIT_NOT_ENGAGING);
-      }
+    if (!res.valid) {
+      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UNIT_NOT_STARTED);
     }
 
     await connection.transaction(async transaction => {
@@ -1617,7 +1615,8 @@ export class InnovationSupportsService extends BaseService {
   ): Promise<Map<string, UnitSupportInformationType>> {
     const unitsSupportInformation: UnitSupportInformationType[] = await em.query(
       `
-      SELECT s.id, s.status, s.updated_at as updatedAt, ou.id as unitId, ou.name as unitName, org.id as orgId, org.acronym as orgAcronym, t.startSupport, t.endSupport
+      SELECT s.id, s.status, s.updated_at as updatedAt, ou.id as unitId, ou.name as unitName, org.id as orgId, org.acronym as orgAcronym, t.startSupport, t.endSupport,
+      (SELECT MIN(started_at) FROM innovation_support WHERE innovation_id = @0 AND organisation_unit_id = ou.id) as minStartSupport
       FROM innovation_support s
       INNER JOIN organisation_unit ou ON ou.id = s.organisation_unit_id
       INNER JOIN organisation org ON org.id = ou.organisation_id
