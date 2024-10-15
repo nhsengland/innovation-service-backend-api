@@ -164,6 +164,10 @@ describe('Admin / _services / validations service suite', () => {
         .setMajorAssessment(assessment.id)
         .setOrganisationUnit(healthOrgUnit.id)
         .setAccessors([scenario.users.aliceQualifyingAccessor])
+        .setCreatedAndUpdatedBy(
+          scenario.users.aliceQualifyingAccessor.id,
+          scenario.users.aliceQualifyingAccessor.roles['qaRole'].id
+        )
         .save();
 
       const result = await sut.checkIfNoInnovationsSupportedOnlyByThisUser(

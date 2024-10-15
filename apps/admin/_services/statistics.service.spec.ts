@@ -53,6 +53,10 @@ describe('Admin / _services / announcements service suite', () => {
         .setMajorAssessment(assessment.id)
         .setStatus(InnovationSupportStatusEnum.ENGAGING)
         .setOrganisationUnit(healthOrgUnit.id)
+        .setCreatedAndUpdatedBy(
+          scenario.users.aliceQualifyingAccessor.id,
+          scenario.users.aliceQualifyingAccessor.roles['qaRole'].id
+        )
         .save();
 
       const result = await sut.getOrganisationUnitInnovationCounters(
@@ -78,6 +82,10 @@ describe('Admin / _services / announcements service suite', () => {
         .setMajorAssessment(assessment.id)
         .setStatus(InnovationSupportStatusEnum.SUGGESTED)
         .setOrganisationUnit(healthOrgUnit.id)
+        .setCreatedAndUpdatedBy(
+          scenario.users.aliceQualifyingAccessor.id,
+          scenario.users.aliceQualifyingAccessor.roles['qaRole'].id
+        )
         .save();
 
       const result = await sut.getOrganisationUnitInnovationCounters(

@@ -305,6 +305,7 @@ export class CompleteScenarioBuilder {
         .setMajorAssessment(johnInnovationAssessmentByPaul.id)
         .setOrganisationUnit(healthOrgUnit.id)
         .setAccessors([aliceQualifyingAccessor, jamieMadroxAccessor])
+        .setCreatedAndUpdatedBy(aliceQualifyingAccessor.id, aliceQualifyingAccessor.roles['qaRole']!.id)
         .save();
 
       // support on johnInnovation by HealthOrgAIUnit in status WAITING
@@ -313,6 +314,7 @@ export class CompleteScenarioBuilder {
         .setInnovation(johnInnovation.id)
         .setMajorAssessment(johnInnovationAssessmentByPaul.id)
         .setOrganisationUnit(healthOrgAiUnit.id)
+        .setCreatedAndUpdatedBy(sarahQualifyingAccessor.id, sarahQualifyingAccessor.roles['qaRole']!.id)
         .save();
       // Add support logs from HealthOrgAIUnit to johnInnovation
       await new InnovationSupportLogBuilder(entityManager)
@@ -333,6 +335,7 @@ export class CompleteScenarioBuilder {
         .setMajorAssessment(johnInnovationAssessmentByPaul.id)
         .setOrganisationUnit(medTechOrgUnit.id)
         .setAccessors([samAccessor])
+        .setCreatedAndUpdatedBy(scottQualifyingAccessor.id, scottQualifyingAccessor.roles['qaRole']!.id)
         .save();
 
       // support log on johnInnovation of previous SUGGESTED support
@@ -356,6 +359,7 @@ export class CompleteScenarioBuilder {
         .setInnovation(johnInnovationArchived.id)
         .setMajorAssessment(johnArchivedInnovationAssessmentByPaul.id)
         .setOrganisationUnit(healthOrgUnit.id)
+        .setCreatedAndUpdatedBy(aliceQualifyingAccessor.id, aliceQualifyingAccessor.roles['qaRole']!.id)
         .save();
 
       // task on johnInnovation created by Alice (QA)
@@ -812,6 +816,7 @@ export class CompleteScenarioBuilder {
         .setMajorAssessment(adamInnovationAssessmentByPaul.id)
         .setOrganisationUnit(healthOrgUnit.id)
         .setAccessors([aliceQualifyingAccessor, jamieMadroxAccessor])
+        .setCreatedAndUpdatedBy(aliceQualifyingAccessor.id, aliceQualifyingAccessor.roles['qaRole']!.id)
         .save();
 
       const adamInnovationTaskBySean = await new InnovationTaskBuilder(entityManager)
@@ -888,6 +893,7 @@ export class CompleteScenarioBuilder {
         .setMajorAssessment(chestHarnessInnovationAssessmentByPaul.id)
         .setOrganisationUnit(healthOrgUnit.id)
         .setAccessors([aliceQualifyingAccessor, jamieMadroxAccessor])
+        .setCreatedAndUpdatedBy(aliceQualifyingAccessor.id, aliceQualifyingAccessor.roles['qaRole']!.id)
         .save();
 
       const tentaclesInnovation = await new InnovationBuilder(entityManager)
@@ -909,6 +915,7 @@ export class CompleteScenarioBuilder {
         .setMajorAssessment(tentaclesInnovationAssessmentByPaul.id)
         .setOrganisationUnit(healthOrgUnit.id)
         .setAccessors([jamieMadroxAccessor])
+        .setCreatedAndUpdatedBy(aliceQualifyingAccessor.id, aliceQualifyingAccessor.roles['qaRole']!.id)
         .save();
 
       const brainComputerInterfaceInnovation = await new InnovationBuilder(entityManager)
