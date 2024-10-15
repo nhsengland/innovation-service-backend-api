@@ -1,11 +1,11 @@
 import { type EntityManager } from 'typeorm';
 import type { ValidationService } from './validation.service';
-import { TestsHelper } from '@admin/shared/tests';
+import { TestsHelper } from '@innovations/shared/tests';
 import SYMBOLS from './symbols';
 import { container } from '../_config';
 import { InnovationSupportEntity } from '@innovations/shared/entities';
-import { DTOsHelper } from '@admin/shared/tests/helpers/dtos.helper';
-import { BadRequestError, GenericErrorsEnum } from '@admin/shared/errors';
+import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
+import { BadRequestError, GenericErrorsEnum } from '@innovations/shared/errors';
 
 describe('Innovations / _services / validation suite', () => {
   let sut: ValidationService;
