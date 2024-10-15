@@ -218,6 +218,7 @@ describe('v1-innovation-info Suite', () => {
         ...expected,
         assessment: {
           id: randUuid(),
+          currentMajorAssessmentId: randUuid(),
           majorVersion: randNumber(),
           minorVersion: randNumber(),
           assignedTo: { id: randUuid(), name: randFullName(), userRoleId: randUuid() },
