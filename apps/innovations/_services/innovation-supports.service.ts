@@ -144,13 +144,7 @@ export class InnovationSupportsService extends BaseService {
     const innovationSupports = innovation.innovationSupports;
 
     // Fetch users names.
-    let usersInfo: {
-      id: string;
-      identityId: string;
-      email: string;
-      displayName: string;
-      isActive: boolean;
-    }[] = [];
+    let usersInfo = new Map();
 
     if (filters.fields.includes('engagingAccessors')) {
       const assignedAccessorsIds = innovationSupports
@@ -161,7 +155,7 @@ export class InnovationSupportsService extends BaseService {
         )
         .flatMap(support => support.userRoles.filter(item => item.isActive).map(item => item.user.id));
 
-      usersInfo = await this.domainService.users.getUsersList({ userIds: assignedAccessorsIds });
+      usersInfo = await this.domainService.users.getUsersMap({ userIds: assignedAccessorsIds });
     }
 
     return innovationSupports.map(support => {
@@ -173,7 +167,7 @@ export class InnovationSupportsService extends BaseService {
           .map(supportUserRole => ({
             id: supportUserRole.user.id,
             userRoleId: supportUserRole.id,
-            name: usersInfo.find(item => item.id === supportUserRole.user.id)?.displayName || '',
+            name: usersInfo.get(supportUserRole.user.id)?.displayName ?? '',
             isActive: supportUserRole.isActive
           }))
           .filter(authUser => authUser.name);
@@ -434,9 +428,7 @@ export class InnovationSupportsService extends BaseService {
     const assignedAccessorsIds = innovationSupport.userRoles
       .filter(item => item.user.status === UserStatusEnum.ACTIVE)
       .map(item => item.user.id);
-    const usersInfo = await this.domainService.users.getUsersList({
-      userIds: assignedAccessorsIds
-    });
+    const usersInfo = await this.domainService.users.getUsersMap({ userIds: assignedAccessorsIds });
 
     return {
       id: innovationSupport.id,
@@ -445,7 +437,7 @@ export class InnovationSupportsService extends BaseService {
         .map(su => ({
           id: su.user.id,
           userRoleId: su.id,
-          name: usersInfo.find(item => item.id === su.user.id)?.displayName || ''
+          name: usersInfo.get(su.user.id)?.displayName ?? ''
         }))
         .filter(authUser => authUser.name)
     };
