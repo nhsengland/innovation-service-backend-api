@@ -33,7 +33,7 @@ import {
   OrganisationErrorsEnum,
   UnprocessableEntityError
 } from '@innovations/shared/errors';
-import type { DomainService, NotifierService } from '@innovations/shared/services';
+import type { DomainService, DomainUsersService, NotifierService } from '@innovations/shared/services';
 import {
   isAccessorDomainContextType,
   type DomainContextType,
@@ -144,7 +144,7 @@ export class InnovationSupportsService extends BaseService {
     const innovationSupports = innovation.innovationSupports;
 
     // Fetch users names.
-    let usersInfo = new Map();
+    let usersInfo: Awaited<ReturnType<DomainUsersService['getUsersMap']>> = new Map();
 
     if (filters.fields.includes('engagingAccessors')) {
       const assignedAccessorsIds = innovationSupports
