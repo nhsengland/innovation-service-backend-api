@@ -213,11 +213,10 @@ export class DomainUsersService {
     }
 
     const dbUsers = await query.getMany();
-    // TODO: This can be changed for the Map method.
-    const identityUsers = await this.identityProviderService.getUsersList(dbUsers.map(items => items.identityId));
+    const identityUsers = await this.identityProviderService.getUsersMap(dbUsers.map(items => items.identityId));
 
     return dbUsers.map(dbUser => {
-      const identityUser = identityUsers.find(item => item.identityId === dbUser.identityId);
+      const identityUser = identityUsers.get(dbUser.identityId);
       if (!identityUser) {
         throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND, { details: { context: 'S.DU.gUL' } });
       }

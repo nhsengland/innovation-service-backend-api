@@ -231,24 +231,20 @@ export class InnovationCollaboratorsService extends BaseService {
 
     const userIds = collaborators.map(c => c.userId).filter((u): u is string => u !== null);
 
-    const usersInfo = await this.domainService.users.getUsersList({ userIds });
-    const usersInfoMap = new Map(usersInfo.map(u => [u.id, u]));
+    const usersInfo = await this.domainService.users.getUsersMap({ userIds });
 
     const data = collaborators.map(collaborator => ({
       id: collaborator.id,
       email: collaborator.email,
       status: collaborator.status,
       ...(collaborator.userId && {
-        name: usersInfoMap.get(collaborator.userId)?.displayName ?? '',
-        isActive: usersInfoMap.get(collaborator.userId)?.isActive ?? false
+        name: usersInfo.get(collaborator.userId)?.displayName ?? '',
+        isActive: usersInfo.get(collaborator.userId)?.isActive ?? false
       }),
       ...(collaborator.collaboratorRole && { role: collaborator.collaboratorRole })
     }));
 
-    return {
-      count,
-      data
-    };
+    return { count, data };
   }
 
   async getCollaboratorInfo(

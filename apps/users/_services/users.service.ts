@@ -346,11 +346,11 @@ export class UsersService extends BaseService {
 
     // Get users from database
     const [dbUsers, count] = await query.getManyAndCount();
-    const identityUsers = await this.identityProviderService.getUsersList(dbUsers.map(items => items.identityId));
+    const identityUsers = await this.identityProviderService.getUsersMap(dbUsers.map(items => items.identityId));
 
     const users = await Promise.all(
       dbUsers.map(async dbUser => {
-        const identityUser = identityUsers.find(item => item.identityId === dbUser.identityId);
+        const identityUser = identityUsers.get(dbUser.identityId);
         if (!identityUser) {
           throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND, {
             details: { context: 'S.DU.gUL' }
