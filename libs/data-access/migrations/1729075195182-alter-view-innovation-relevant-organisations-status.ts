@@ -15,12 +15,12 @@ export class AlterViewInnovationRelevantOrganisations1729075195182 implements Mi
       AND s.organisation_unit_id NOT IN (SELECT organisation_unit_id FROM engaging_waiting WHERE innovation_id = s.innovation_id)
       GROUP BY s.innovation_id, s.organisation_unit_id
     ), suggested AS (
-        SELECT ins.innovation_id, ins.organisation_unit_id, 'SUGGESTED' as status, ins.id as support_id
-        FROM innovation_support ins
+        SELECT s.innovation_id, s.organisation_unit_id, 'SUGGESTED' as status, s.id as support_id
+        FROM innovation_support s
         WHERE [status] = 'SUGGESTED'
-        AND ins.is_most_recent = 1
-        AND ins.organisation_unit_id NOT IN (SELECT organisation_unit_id FROM previous_engaged WHERE innovation_id = ins.innovation_id)
-        GROUP BY ins.innovation_id, ins.organisation_unit_id, ins.id
+        AND s.is_most_recent = 1
+        AND s.organisation_unit_id NOT IN (SELECT organisation_unit_id FROM previous_engaged WHERE innovation_id = s.innovation_id)
+        GROUP BY s.innovation_id, s.organisation_unit_id, s.id
     ), all_supports AS (
       SELECT * FROM engaging_waiting
       UNION ALL
