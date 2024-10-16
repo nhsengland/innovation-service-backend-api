@@ -1,13 +1,13 @@
 import { type MigrationInterface, type QueryRunner } from 'typeorm';
 
-export class AlterViewInnovationRelevantOrganisations1728986175420 implements MigrationInterface {
+export class AlterViewInnovationRelevantOrganisations1729075195182 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
         CREATE OR ALTER   VIEW [dbo].[innovation_relevant_organisations_status_view] AS
           WITH engaging_waiting AS (
       SELECT s.innovation_id, s.organisation_unit_id, s.status, s.id as support_id
       FROM innovation_support s
-      WHERE s.status IN ('ENGAGING','WAITING')
+      WHERE s.status IN ('ENGAGING','WAITING') AND is_most_recent = 1
     ), previous_engaged AS (
       SELECT s.innovation_id, s.organisation_unit_id, 'PREVIOUS_ENGAGED' as status, null as support_id
       FROM innovation_support FOR SYSTEM_TIME ALL s
@@ -15,11 +15,12 @@ export class AlterViewInnovationRelevantOrganisations1728986175420 implements Mi
       AND s.organisation_unit_id NOT IN (SELECT organisation_unit_id FROM engaging_waiting WHERE innovation_id = s.innovation_id)
       GROUP BY s.innovation_id, s.organisation_unit_id
     ), suggested AS (
-        SELECT ins.innovation_id, ins.organisation_unit_id, 'SUGGESTED' as status, null as support_id
+        SELECT ins.innovation_id, ins.organisation_unit_id, 'SUGGESTED' as status, ins.id as support_id
         FROM innovation_support ins
         WHERE [status] = 'SUGGESTED'
+        AND ins.is_most_recent = 1
         AND ins.organisation_unit_id NOT IN (SELECT organisation_unit_id FROM previous_engaged WHERE innovation_id = ins.innovation_id)
-        GROUP BY ins.innovation_id, ins.organisation_unit_id
+        GROUP BY ins.innovation_id, ins.organisation_unit_id, ins.id
     ), all_supports AS (
       SELECT * FROM engaging_waiting
       UNION ALL
