@@ -53,6 +53,11 @@ type SearchInnovationListSelectType =
   | 'owner.name'
   | 'owner.companyName';
 
+// In advanced search the suggestedOnly applies not to a state as the innovation list but to the suggestions as it
+// affects other innovations besides "UNASSIGNED". This should probably be changed in the future and removed and focus
+// on support statuses
+type SearchFilters = InnovationListFilters & { suggestedOnly: boolean };
+
 // NOTE: when the new flat document (IR versioning) is implemented this will not be needed
 const translations = new Map([
   ['name', ['document', 'INNOVATION_DESCRIPTION', 'name']],
@@ -369,10 +374,10 @@ export class SearchService extends BaseService {
   }
 
   private readonly filtersHandlers: {
-    [k in keyof Partial<InnovationListFilters>]: (
+    [k in keyof Partial<SearchFilters>]: (
       domainContext: DomainContextType,
       builder: ElasticSearchQueryBuilder,
-      value: Required<InnovationListFilters>[k]
+      value: Required<SearchFilters>[k]
     ) => void | Promise<void>;
   } = {
     assignedToMe: this.addAssignedToMeFilter.bind(this),
@@ -590,10 +595,18 @@ export class SearchService extends BaseService {
   private addSupportFilter(
     domainContext: DomainContextType,
     builder: ElasticSearchQueryBuilder,
-    supportStatuses: InnovationSupportStatusEnum[]
+    supportStatuses: (InnovationSupportStatusEnum | 'UNASSIGNED')[]
   ): void {
     if (supportStatuses.length && isAccessorDomainContextType(domainContext)) {
-      builder.addFilter(
+      const should: QueryDslQueryContainer[] = [];
+      const hasUnassigned = supportStatuses.includes('UNASSIGNED');
+
+      // This is only valid while we use UNASSIGNED as a status and in common with SUGGESTED
+      if (hasUnassigned && !supportStatuses.includes(InnovationSupportStatusEnum.SUGGESTED)) {
+        supportStatuses.push(InnovationSupportStatusEnum.SUGGESTED);
+      }
+
+      should.push(
         nestedQuery(
           'supports',
           boolQuery({
@@ -604,6 +617,18 @@ export class SearchService extends BaseService {
           })
         )
       );
+
+      if (hasUnassigned) {
+        should.push(
+          boolQuery({
+            mustNot: nestedQuery('supports', {
+              term: { 'supports.unitId': domainContext.organisation.organisationUnit.id }
+            })
+          })
+        );
+      }
+
+      builder.addFilter(orQuery(should));
     }
   }
 

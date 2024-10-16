@@ -1721,11 +1721,23 @@ describe('Innovations / _services / innovation-supports suite', () => {
         ]
       ],
       [
+        InnovationSupportStatusEnum.ENGAGING,
+        [
+          InnovationSupportStatusEnum.WAITING,
+          InnovationSupportStatusEnum.CLOSED,
+          InnovationSupportStatusEnum.UNSUITABLE
+        ]
+      ],
+      [
         InnovationSupportStatusEnum.WAITING,
-        [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.UNSUITABLE]
+        [
+          InnovationSupportStatusEnum.ENGAGING,
+          InnovationSupportStatusEnum.CLOSED,
+          InnovationSupportStatusEnum.UNSUITABLE
+        ]
       ],
       [InnovationSupportStatusEnum.UNSUITABLE, []],
-      [InnovationSupportStatusEnum.ENGAGING, [InnovationSupportStatusEnum.WAITING, InnovationSupportStatusEnum.CLOSED]]
+      [InnovationSupportStatusEnum.CLOSED, []]
     ])(
       'when status is %s and wasEngaged=%s it should return %s',
       async (currentStatus: InnovationSupportStatusEnum, expected: InnovationSupportStatusEnum[]) => {

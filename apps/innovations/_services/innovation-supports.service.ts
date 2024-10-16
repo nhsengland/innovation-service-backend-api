@@ -1535,24 +1535,6 @@ export class InnovationSupportsService extends BaseService {
   ): Promise<InnovationSupportStatusEnum[]> {
     const em = entityManager ?? this.sqlConnection.manager;
 
-    // keeping this commented for now in case previously engaged supports are considered for closing
-    // let [support] = await em.query<{ status: InnovationSupportStatusEnum; engagedCount: number }[]>(
-    //   `
-    //     SELECT s.[status], (
-    //       SELECT COUNT(*) FROM innovation_support FOR SYSTEM_TIME ALL WHERE id = s.id AND [status] = 'ENGAGING'
-    //     ) as engagedCount
-    //     FROM innovation_support s
-    //     WHERE s.innovation_id = @0 AND organisation_unit_id = @1
-    //   `,
-    //   [innovationId, unitId]
-    // );
-    // if (!support) {
-    //   support = { status: InnovationSupportStatusEnum.SUGGESTED, engagedCount: 0 };
-    // }
-    // // currently this is not considered for closing, if this remains the query can be changed
-    // // const beenEngaged = support.engagedCount > 0;
-    // const beenEngaged = true;
-
     const status =
       (
         await em
@@ -1573,10 +1555,18 @@ export class InnovationSupportsService extends BaseService {
         ];
 
       case InnovationSupportStatusEnum.WAITING:
-        return [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.UNSUITABLE];
+        return [
+          InnovationSupportStatusEnum.ENGAGING,
+          InnovationSupportStatusEnum.CLOSED,
+          InnovationSupportStatusEnum.UNSUITABLE
+        ];
 
       case InnovationSupportStatusEnum.ENGAGING:
-        return [InnovationSupportStatusEnum.WAITING, InnovationSupportStatusEnum.CLOSED];
+        return [
+          InnovationSupportStatusEnum.WAITING,
+          InnovationSupportStatusEnum.CLOSED,
+          InnovationSupportStatusEnum.UNSUITABLE
+        ];
 
       case InnovationSupportStatusEnum.CLOSED:
       case InnovationSupportStatusEnum.UNSUITABLE:

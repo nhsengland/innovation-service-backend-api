@@ -7,13 +7,8 @@ import { JoiHelper } from '@innovations/shared/helpers';
 import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
 import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import { InnovationLocationEnum } from '../_enums/innovation.enums';
-import type {
-  InnovationListFilters} from '../_services/innovations.service';
-import {
-  DateFilterFieldsType,
-  HasAccessThroughKeys,
-  InnovationListSelectType
-} from '../_services/innovations.service';
+import type { InnovationListFilters } from '../_services/innovations.service';
+import { DateFilterFieldsType, HasAccessThroughKeys, InnovationListSelectType } from '../_services/innovations.service';
 
 export type QueryParamsType = PaginationQueryParamsType<InnovationListSelectType> &
   InnovationListFilters & {
@@ -99,7 +94,6 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
         then: Joi.object({
           assignedToMe: Joi.boolean().optional(),
           closedByMyOrganisation: Joi.boolean().optional(),
-          suggestedOnly: Joi.boolean().optional(),
           supportStatuses: JoiHelper.AppCustomJoi()
             .stringArray()
             .items(Joi.string().valid(InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.CLOSED))
@@ -111,10 +105,9 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
         then: Joi.object({
           assignedToMe: Joi.boolean().optional(),
           closedByMyOrganisation: Joi.boolean().optional(),
-          suggestedOnly: Joi.boolean().optional(),
           supportStatuses: JoiHelper.AppCustomJoi()
             .stringArray()
-            .items(Joi.string().valid(...Object.values(InnovationSupportStatusEnum)))
+            .items(Joi.string().valid(...Object.values(InnovationSupportStatusEnum), 'UNASSIGNED'))
             .optional()
         })
       },

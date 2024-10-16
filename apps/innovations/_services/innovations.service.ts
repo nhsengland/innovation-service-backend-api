@@ -192,8 +192,7 @@ export type InnovationListFilters = {
   latestWorkedByMe?: boolean;
   locations?: InnovationLocationEnum[];
   search?: string;
-  suggestedOnly?: boolean;
-  supportStatuses?: InnovationSupportStatusEnum[];
+  supportStatuses?: (InnovationSupportStatusEnum | 'UNASSIGNED')[];
   supportUnit?: string;
   closedByMyOrganisation?: boolean;
 };
@@ -554,11 +553,7 @@ export class InnovationsService extends BaseService {
           'support',
           'support.organisation_unit_id = :organisationUnitId AND support.isMostRecent = 1',
           { organisationUnitId: unitId }
-        )
-        // Ignore archived innovations that never had any support or it would be messing with the status and support summary
-        .andWhere('(innovation.status != :innovationArchivedStatus OR support.id IS NOT NULL) ', {
-          innovationArchivedStatus: InnovationStatusEnum.ARCHIVED
-        });
+        );
 
       // updated by also depends on the innovation and support status
       if (fields.includes('updatedBy')) {
@@ -702,7 +697,6 @@ export class InnovationsService extends BaseService {
     latestWorkedByMe: this.addLatestWorkedByMeFilter.bind(this),
     locations: this.addLocationFilter.bind(this),
     search: this.addSearchFilter.bind(this),
-    suggestedOnly: this.addSuggestedOnlyFilter.bind(this),
     supportStatuses: this.addSupportFilter.bind(this),
     supportUnit: () => {} // this is handled in the withSupport handler for admin users and forbidden otherwise
   };
@@ -906,40 +900,19 @@ export class InnovationsService extends BaseService {
     }
   }
 
-  private addSuggestedOnlyFilter(
-    domainContext: DomainContextType,
-    query: SelectQueryBuilder<InnovationListView>,
-    value: boolean
-  ): void {
-    // TODO this will be changed in a future story as the logic for suggested will be updated
-    if (value && isAccessorDomainContextType(domainContext)) {
-      query
-        .innerJoin('innovation', 'i', 'i.id = innovation.id')
-        .leftJoin('i.currentAssessment', 'assessments')
-
-        .leftJoin('assessments.organisationUnits', 'assessmentOrganisationUnits')
-        .leftJoin('i.innovationSupportLogs', 'supportLogs', 'supportLogs.type = :supportLogType', {
-          supportLogType: InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION
-        })
-        .leftJoin('supportLogs.suggestedOrganisationUnits', 'supportLogOrgUnit')
-        .andWhere(
-          `(assessmentOrganisationUnits.id = :suggestedOrganisationUnitId OR supportLogOrgUnit.id =:suggestedOrganisationUnitId)`,
-          { suggestedOrganisationUnitId: domainContext.organisation.organisationUnit.id }
-        );
-    }
-  }
-
   private addSupportFilter(
     domainContext: DomainContextType,
     query: SelectQueryBuilder<InnovationListView>,
-    supportStatuses: InnovationSupportStatusEnum[]
+    supportStatuses: (InnovationSupportStatusEnum | 'UNASSIGNED')[]
   ): void {
     if (supportStatuses.length) {
       // sanity check to ensure we're joining with the support
       if (!query.expressionMap.aliases.find(item => item.name === 'support')) {
         this.withSupport(domainContext, query);
       }
-      query.andWhere('support.status IN (:...supportStatuses)', { supportStatuses: supportStatuses });
+      query.andWhere("COALESCE(support.status, 'UNASSIGNED') IN (:...supportStatuses)", {
+        supportStatuses: supportStatuses
+      });
     }
   }
 

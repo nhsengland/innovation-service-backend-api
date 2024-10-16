@@ -7,12 +7,8 @@ import { JoiHelper } from '@innovations/shared/helpers';
 import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
 import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import { InnovationLocationEnum } from '../_enums/innovation.enums';
-import type {
-  InnovationListFilters} from '../_services/innovations.service';
-import {
-  DateFilterFieldsType,
-  InnovationListSelectType
-} from '../_services/innovations.service';
+import type { InnovationListFilters } from '../_services/innovations.service';
+import { DateFilterFieldsType, InnovationListSelectType } from '../_services/innovations.service';
 
 export type QueryParamsType = PaginationQueryParamsType<InnovationListSelectType & 'relevance'> &
   InnovationListFilters & {
@@ -112,7 +108,7 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
           suggestedOnly: Joi.boolean().optional(),
           supportStatuses: JoiHelper.AppCustomJoi()
             .stringArray()
-            .items(Joi.string().valid(...Object.values(InnovationSupportStatusEnum)))
+            .items(Joi.string().valid(...Object.values(InnovationSupportStatusEnum), 'UNASSIGNED'))
             .optional()
         })
       },
