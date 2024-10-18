@@ -130,4 +130,12 @@ describe('DatesHelper', () => {
       expect(result).toEqual('2023-06-02');
     });
   });
+
+  describe('getLongDateFormat', () => {
+    it('returns date as string in long format', () => {
+      const date = new Date('2023-01-01');
+      const result = DatesHelper.getLongDateFormat(date);
+      expect(result).toEqual('1 January 2023');
+    });
+  });
 });
