@@ -57,6 +57,7 @@ import type { InnovationFileService } from './innovation-file.service';
 import type { InnovationThreadsService } from './innovation-threads.service';
 import SYMBOLS from './symbols';
 import type { ValidationService } from './validation.service';
+import { DatesHelper } from '@innovations/shared/helpers';
 
 type UnitSupportInformationType = {
   id: string;
@@ -622,7 +623,10 @@ export class InnovationSupportsService extends BaseService {
       const thread = await this.innovationThreadsService.createThreadOrMessage(
         domainContext,
         innovationId,
-        InnovationThreadSubjectEnum.INNOVATION_SUPPORT_UPDATE.replace('{{Unit}}', organisationUnit.name),
+        InnovationThreadSubjectEnum.INNOVATION_SUPPORT_UPDATE.replace('{{unit}}', organisationUnit.name).replace(
+          '{{startedAt}}',
+          DatesHelper.getLongDateFormat(savedSupport.startedAt!)
+        ),
         data.message,
         savedSupport.id,
         ThreadContextTypeEnum.SUPPORT,
@@ -894,7 +898,10 @@ export class InnovationSupportsService extends BaseService {
       const thread = await this.innovationThreadsService.createThreadOrMessage(
         domainContext,
         innovationId,
-        InnovationThreadSubjectEnum.INNOVATION_SUPPORT_UPDATE.replace('{{Unit}}', dbSupport.organisationUnit.name),
+        InnovationThreadSubjectEnum.INNOVATION_SUPPORT_UPDATE.replace(
+          '{{unit}}',
+          savedSupport.organisationUnit.name
+        ).replace('{{startedAt}}', DatesHelper.getLongDateFormat(savedSupport.startedAt!)),
         data.message,
         savedSupport.id,
         ThreadContextTypeEnum.SUPPORT,
