@@ -968,7 +968,7 @@ export class RecipientsService extends BaseService {
       .innerJoin('support.organisationUnit', 'organisationUnit')
       .select(['support.id', 'innovation.id', 'innovation.name', 'organisationUnit.id'])
       .where('support.isMostRecent = 1')
-      .andWhere('support.status = :status', { status: InnovationSupportStatusEnum.SUGGESTED })
+      .andWhere('support.status = :supportStatus', { supportStatus: InnovationSupportStatusEnum.SUGGESTED })
       .andWhere('innovation.status = :status', { status: InnovationStatusEnum.IN_PROGRESS }); // This shouldn't be required but just in case
 
     // for some unknown reason passing date shows the right query, works locally connected to the stage DB but not
