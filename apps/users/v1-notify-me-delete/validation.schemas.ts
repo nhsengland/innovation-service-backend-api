@@ -5,5 +5,5 @@ export type QueryType = {
   ids: string[];
 };
 export const QuerySchema = Joi.object<QueryType>({
-  ids: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().guid()).min(1)
+  ids: JoiHelper.AppCustomJoi().stringArray().items(JoiHelper.AppCustomJoi().string().guid()).min(1)
 }).required();

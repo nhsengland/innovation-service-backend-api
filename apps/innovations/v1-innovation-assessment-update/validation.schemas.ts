@@ -2,14 +2,15 @@ import Joi from 'joi';
 
 import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
 import { MaturityLevelCatalogueType, YesPartiallyNoCatalogueType } from '@innovations/shared/enums';
+import { JoiHelper } from '@innovations/shared/helpers';
 
 export type ParamsType = {
   innovationId: string;
   assessmentId: string;
 };
 export const ParamsSchema = Joi.object<ParamsType>({
-  innovationId: Joi.string().guid().required(),
-  assessmentId: Joi.string().guid().required()
+  innovationId: JoiHelper.AppCustomJoi().string().guid().required(),
+  assessmentId: JoiHelper.AppCustomJoi().string().guid().required()
 }).required();
 
 export type BodyType = {
@@ -35,57 +36,69 @@ export type BodyType = {
   isSubmission?: boolean;
 };
 export const BodySchema = Joi.object<BodyType>({
-  summary: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).allow(null).optional(),
-  description: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).allow(null).optional(),
+  summary: JoiHelper.AppCustomJoi().string().max(TEXTAREA_LENGTH_LIMIT.xl).allow(null).optional(),
+  description: JoiHelper.AppCustomJoi().string().max(TEXTAREA_LENGTH_LIMIT.xl).allow(null).optional(),
 
-  maturityLevel: Joi.string()
+  maturityLevel: JoiHelper.AppCustomJoi()
+    .string()
     .valid(...MaturityLevelCatalogueType)
     .allow(null)
     .optional(),
-  maturityLevelComment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xs).allow(null).optional(),
+  maturityLevelComment: JoiHelper.AppCustomJoi().string().max(TEXTAREA_LENGTH_LIMIT.xs).allow(null).optional(),
 
-  hasRegulatoryApprovals: Joi.string()
+  hasRegulatoryApprovals: JoiHelper.AppCustomJoi()
+    .string()
     .valid(...YesPartiallyNoCatalogueType)
     .allow(null)
     .optional(),
-  hasRegulatoryApprovalsComment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xs).allow(null).optional(),
+  hasRegulatoryApprovalsComment: JoiHelper.AppCustomJoi().string().max(TEXTAREA_LENGTH_LIMIT.xs).allow(null).optional(),
 
-  hasEvidence: Joi.string()
+  hasEvidence: JoiHelper.AppCustomJoi()
+    .string()
     .valid(...YesPartiallyNoCatalogueType)
     .allow(null)
     .optional(),
-  hasEvidenceComment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xs).allow(null).optional(),
+  hasEvidenceComment: JoiHelper.AppCustomJoi().string().max(TEXTAREA_LENGTH_LIMIT.xs).allow(null).optional(),
 
-  hasValidation: Joi.string()
+  hasValidation: JoiHelper.AppCustomJoi()
+    .string()
     .valid(...YesPartiallyNoCatalogueType)
     .allow(null)
     .optional(),
-  hasValidationComment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xs).allow(null).optional(),
+  hasValidationComment: JoiHelper.AppCustomJoi().string().max(TEXTAREA_LENGTH_LIMIT.xs).allow(null).optional(),
 
-  hasProposition: Joi.string()
+  hasProposition: JoiHelper.AppCustomJoi()
+    .string()
     .valid(...YesPartiallyNoCatalogueType)
     .allow(null)
     .optional(),
-  hasPropositionComment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xs).allow(null).optional(),
+  hasPropositionComment: JoiHelper.AppCustomJoi().string().max(TEXTAREA_LENGTH_LIMIT.xs).allow(null).optional(),
 
-  hasCompetitionKnowledge: Joi.string()
+  hasCompetitionKnowledge: JoiHelper.AppCustomJoi()
+    .string()
     .valid(...YesPartiallyNoCatalogueType)
     .allow(null)
     .optional(),
-  hasCompetitionKnowledgeComment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xs).allow(null).optional(),
+  hasCompetitionKnowledgeComment: JoiHelper.AppCustomJoi()
+    .string()
+    .max(TEXTAREA_LENGTH_LIMIT.xs)
+    .allow(null)
+    .optional(),
 
-  hasImplementationPlan: Joi.string()
+  hasImplementationPlan: JoiHelper.AppCustomJoi()
+    .string()
     .valid(...YesPartiallyNoCatalogueType)
     .allow(null)
     .optional(),
-  hasImplementationPlanComment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xs).allow(null).optional(),
+  hasImplementationPlanComment: JoiHelper.AppCustomJoi().string().max(TEXTAREA_LENGTH_LIMIT.xs).allow(null).optional(),
 
-  hasScaleResource: Joi.string()
+  hasScaleResource: JoiHelper.AppCustomJoi()
+    .string()
     .valid(...YesPartiallyNoCatalogueType)
     .allow(null)
     .optional(),
-  hasScaleResourceComment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xs).allow(null).optional(),
+  hasScaleResourceComment: JoiHelper.AppCustomJoi().string().max(TEXTAREA_LENGTH_LIMIT.xs).allow(null).optional(),
 
-  suggestedOrganisationUnitsIds: Joi.array().items(Joi.string().guid()).allow(null).optional(),
+  suggestedOrganisationUnitsIds: Joi.array().items(JoiHelper.AppCustomJoi().string().guid()).allow(null).optional(),
   isSubmission: Joi.boolean().strict().optional().default(false)
 }).required();

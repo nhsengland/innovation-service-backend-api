@@ -1,4 +1,5 @@
 import { InnovationCollaboratorStatusEnum } from '@innovations/shared/enums';
+import { JoiHelper } from '@innovations/shared/helpers';
 import Joi from 'joi';
 
 export type CollaboratorStatusType =
@@ -13,8 +14,8 @@ export type ParamsType = {
   collaboratorId: string;
 };
 export const ParamsSchema = Joi.object<ParamsType>({
-  innovationId: Joi.string().guid().required(),
-  collaboratorId: Joi.string().guid().required()
+  innovationId: JoiHelper.AppCustomJoi().string().guid().required(),
+  collaboratorId: JoiHelper.AppCustomJoi().string().guid().required()
 }).required();
 
 export type BodyType = {
@@ -24,12 +25,14 @@ export type BodyType = {
 export const BodySchema = Joi.object<BodyType>({
   status: Joi.when('$collaboratorType', {
     is: 'OWNER',
-    then: Joi.string()
+    then: JoiHelper.AppCustomJoi()
+      .string()
       .valid(InnovationCollaboratorStatusEnum.CANCELLED, InnovationCollaboratorStatusEnum.REMOVED)
       .optional()
   }).when('$collaboratorType', {
     is: 'COLLABORATOR',
-    then: Joi.string()
+    then: JoiHelper.AppCustomJoi()
+      .string()
       .valid(
         InnovationCollaboratorStatusEnum.ACTIVE,
         InnovationCollaboratorStatusEnum.DECLINED,
@@ -39,7 +42,7 @@ export const BodySchema = Joi.object<BodyType>({
   }),
   role: Joi.when('$collaboratorType', {
     is: 'OWNER',
-    then: Joi.string().max(25).allow(null).optional(),
+    then: JoiHelper.AppCustomJoi().string().max(25).allow(null).optional(),
     otherwise: Joi.forbidden()
   })
 }).required();

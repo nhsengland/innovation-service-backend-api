@@ -1,14 +1,15 @@
 import Joi from 'joi';
 
 import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
+import { JoiHelper } from '@innovations/shared/helpers';
 
 export type ParamsType = {
   innovationId: string;
   supportId: string;
 };
 export const ParamsSchema = Joi.object<ParamsType>({
-  innovationId: Joi.string().guid().required(),
-  supportId: Joi.string().guid().required()
+  innovationId: JoiHelper.AppCustomJoi().string().guid().required(),
+  supportId: JoiHelper.AppCustomJoi().string().guid().required()
 }).required();
 
 export type BodyType = {
@@ -17,12 +18,12 @@ export type BodyType = {
 };
 
 export const BodySchema = Joi.object<BodyType>({
-  message: Joi.string().allow(null, '').max(TEXTAREA_LENGTH_LIMIT.xl).trim().required(),
+  message: JoiHelper.AppCustomJoi().string().allow(null, '').max(TEXTAREA_LENGTH_LIMIT.xl).required(),
   accessors: Joi.array()
     .items(
       Joi.object({
-        id: Joi.string().guid().required(),
-        userRoleId: Joi.string().guid().required()
+        id: JoiHelper.AppCustomJoi().string().guid().required(),
+        userRoleId: JoiHelper.AppCustomJoi().string().guid().required()
       })
     )
     .min(1)

@@ -39,6 +39,7 @@ import SHARED_SYMBOLS from '@admin/shared/services/symbols';
 import { AdminOperationEnum, validationsHelper } from '../_config/admin-operations.config';
 import type { ValidationResult } from '../types/validation.types';
 import { BaseService } from './base.service';
+import { JoiHelper } from '@admin/shared/helpers';
 
 @injectable()
 export class UsersService extends BaseService {
@@ -581,7 +582,7 @@ export class UsersService extends BaseService {
 
   private isUuid(idOrEmail: string): boolean {
     try {
-      Joi.attempt(idOrEmail, Joi.string().guid());
+      Joi.attempt(idOrEmail, JoiHelper.AppCustomJoi().string().guid());
       return true;
     } catch {
       return false;
