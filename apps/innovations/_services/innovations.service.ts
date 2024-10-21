@@ -1135,7 +1135,6 @@ export class InnovationsService extends BaseService {
       createdAt: Date;
       finishedAt: null | Date;
       assignedTo?: { id: string; name: string; userRoleId: string };
-      reassessmentCount: number;
     };
     supports?: { id: string; status: InnovationSupportStatusEnum; organisationUnitId: string }[];
     collaboratorId?: string;
@@ -1263,7 +1262,6 @@ export class InnovationsService extends BaseService {
           createdAt: Date;
           finishedAt: null | Date;
           assignedTo?: { id: string; name: string; userRoleId: string };
-          reassessmentCount: number;
         };
 
     if (filters.fields?.includes('assessment')) {
@@ -1280,8 +1278,7 @@ export class InnovationsService extends BaseService {
               ...(assignTo &&
                 assignTo.roles[0] && {
                   assignedTo: { id: assignTo.id, name: assignTo.displayName, userRoleId: assignTo.roles[0].id }
-                }),
-              reassessmentCount: (await innovation.reassessmentRequests).length
+                })
             }
           : null;
     }

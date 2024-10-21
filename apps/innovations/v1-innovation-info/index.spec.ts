@@ -223,8 +223,7 @@ describe('v1-innovation-info Suite', () => {
           minorVersion: randNumber(),
           assignedTo: { id: randUuid(), name: randFullName(), userRoleId: randUuid() },
           createdAt: randPastDate(),
-          finishedAt: randPastDate(),
-          reassessmentCount: randNumber()
+          finishedAt: randPastDate()
         }
       };
       mock.mockResolvedValueOnce(expectedWithAssessment);
