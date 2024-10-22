@@ -5,10 +5,20 @@
     "version": "[3.3.0, 4.0.0)"
   },
   "logging": {
+    "fileLoggingMode": "debugOnly",
+    "logLevel": {
+      "default": "Information"
+    },
+    "aggregator": {
+      "batchSize": 1000,
+      "flushTimeout": "00:00:30"
+    },
     "applicationInsights": {
+      "enableDependencyTracking": true,
       "samplingSettings": {
         "isEnabled": true,
-        "excludedTypes": "Request"
+        "maxTelemetryItemsPerSecond": 20,
+        "excludedTypes": "Request;Exception"
       }
     }
   }
