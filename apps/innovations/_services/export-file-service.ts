@@ -20,6 +20,7 @@ import {
 } from '@innovations/shared/types';
 import { BaseService } from './base.service';
 import Joi from 'joi';
+import { JoiHelper } from '@innovations/shared/helpers';
 
 export type DocumentExportInboundDataType = { sections: InnovationAllSectionsType; startSectionIndex: number };
 export const DocumentExportBodySchema = Joi.object<DocumentExportInboundDataType>({
@@ -28,22 +29,23 @@ export const DocumentExportBodySchema = Joi.object<DocumentExportInboundDataType
       sections: Joi.array()
         .items(
           Joi.object({
-            section: Joi.string().required(),
-            status: Joi.string()
+            section: JoiHelper.AppCustomJoi().string().required(),
+            status: JoiHelper.AppCustomJoi()
+              .string()
               .valid(...Object.values(InnovationSectionStatusEnum), 'UNKNOWN')
               .required(),
             answers: Joi.array()
               .items(
                 Joi.object({
-                  label: Joi.string().required(),
-                  value: Joi.string().allow(null, '').required()
+                  label: JoiHelper.AppCustomJoi().string().required(),
+                  value: JoiHelper.AppCustomJoi().string().allow(null, '').required()
                 })
               )
               .required()
           })
         )
         .required(),
-      title: Joi.string().required()
+      title: JoiHelper.AppCustomJoi().string().required()
     })
     .required(),
   startSectionIndex: Joi.number().required()
@@ -68,7 +70,10 @@ export class ExportFileService extends BaseService {
     options?: Parameters<ExportFileService['handlers'][T]>[2]
   ): Promise<ReturnType<ExportFileService['handlers'][T]>> {
     // Add draft note to QA/A/NA on the pdf version
-    if (type === 'pdf' && (isAccessorDomainContextType(domainContext) || isAssessmentDomainContextType(domainContext))) {
+    if (
+      type === 'pdf' &&
+      (isAccessorDomainContextType(domainContext) || isAssessmentDomainContextType(domainContext))
+    ) {
       body.sections.forEach(section => {
         section.sections.forEach(subsection => {
           if (subsection.status === 'DRAFT') {

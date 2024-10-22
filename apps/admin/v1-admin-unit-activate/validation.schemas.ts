@@ -1,3 +1,4 @@
+import { JoiHelper } from '@admin/shared/helpers';
 import Joi from 'joi';
 
 export type ParamsType = {
@@ -5,13 +6,13 @@ export type ParamsType = {
   organisationUnitId: string;
 };
 export const ParamsSchema = Joi.object<ParamsType>({
-  organisationId: Joi.string().guid().required(),
-  organisationUnitId: Joi.string().guid().required()
+  organisationId: JoiHelper.AppCustomJoi().string().guid().required(),
+  organisationUnitId: JoiHelper.AppCustomJoi().string().guid().required()
 }).required();
 
 export type BodyType = {
   userIds: string[];
 };
 export const BodySchema = Joi.object<BodyType>({
-  userIds: Joi.array().items(Joi.string()).required()
+  userIds: Joi.array().items(JoiHelper.AppCustomJoi().string()).required()
 }).required();

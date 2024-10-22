@@ -28,22 +28,37 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
   orderKeys: Object.keys(orderFields)
 })
   .append<QueryParamsType>({
-    innovationId: Joi.string().guid().optional(),
-    innovationName: JoiHelper.AppCustomJoi().decodeURIString().trim().allow(null, '').optional(),
+    innovationId: JoiHelper.AppCustomJoi().string().guid().optional(),
+    innovationName: JoiHelper.AppCustomJoi().decodeURIString().allow(null, '').optional(),
     sections: JoiHelper.AppCustomJoi()
       .stringArray()
-      .items(Joi.string().valid(...CurrentCatalogTypes.InnovationSections))
+      .items(
+        JoiHelper.AppCustomJoi()
+          .string()
+          .valid(...CurrentCatalogTypes.InnovationSections)
+      )
       .optional(),
     status: JoiHelper.AppCustomJoi()
       .stringArray()
-      .items(Joi.string().valid(...Object.values(InnovationTaskStatusEnum)))
+      .items(
+        JoiHelper.AppCustomJoi()
+          .string()
+          .valid(...Object.values(InnovationTaskStatusEnum))
+      )
       .optional(),
     innovationStatus: JoiHelper.AppCustomJoi()
       .stringArray()
-      .items(Joi.string().valid(...Object.values(InnovationStatusEnum)))
+      .items(
+        JoiHelper.AppCustomJoi()
+          .string()
+          .valid(...Object.values(InnovationStatusEnum))
+      )
       .optional(),
     createdByMe: Joi.boolean().optional(),
     allTasks: Joi.boolean().optional(),
-    fields: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid('notifications')).optional()
+    fields: JoiHelper.AppCustomJoi()
+      .stringArray()
+      .items(JoiHelper.AppCustomJoi().string().valid('notifications'))
+      .optional()
   })
   .required();

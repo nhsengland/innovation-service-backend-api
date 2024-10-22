@@ -3,6 +3,7 @@ import Joi from 'joi';
 import { NotifierTypeEnum } from '@notifications/shared/enums';
 import type { DomainContextType } from '@notifications/shared/types';
 import { DomainContextSchema } from '@notifications/shared/types';
+import { JoiHelper } from '@notifications/shared/helpers';
 
 export type MessageType = {
   data: {
@@ -17,7 +18,8 @@ export const MessageSchema = Joi.object<MessageType>({
   data: Joi.object<MessageType['data']>({
     requestUser: DomainContextSchema.required(),
 
-    action: Joi.string()
+    action: JoiHelper.AppCustomJoi()
+      .string()
       .valid(...Object.values(NotifierTypeEnum))
       .required(),
 

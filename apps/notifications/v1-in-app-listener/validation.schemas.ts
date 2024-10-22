@@ -1,6 +1,7 @@
 import Joi from 'joi';
 
 import { NotificationCategoryType, NotificationDetailType } from '@notifications/shared/enums';
+import { JoiHelper } from '@notifications/shared/helpers';
 
 export type MessageType = {
   data: {
@@ -19,22 +20,22 @@ export type MessageType = {
 export const MessageSchema = Joi.object<MessageType>({
   data: Joi.object<MessageType['data']>({
     requestUser: Joi.object({
-      id: Joi.string().guid().required()
+      id: JoiHelper.AppCustomJoi().string().guid().required()
     }).required(),
 
-    innovationId: Joi.string().guid().required(),
+    innovationId: JoiHelper.AppCustomJoi().string().guid().required(),
 
     context: Joi.object<MessageType['data']['context']>({
-      type: Joi.string()
+      type: JoiHelper.AppCustomJoi().string()
         .valid(...NotificationCategoryType)
         .required(),
-      detail: Joi.string()
+      detail: JoiHelper.AppCustomJoi().string()
         .valid(...NotificationDetailType)
         .required(),
-      id: Joi.string().guid().required()
+      id: JoiHelper.AppCustomJoi().string().guid().required()
     }).required(),
 
-    userRoleIds: Joi.array().items(Joi.string().guid()).required(),
+    userRoleIds: Joi.array().items(JoiHelper.AppCustomJoi().string().guid()).required(),
 
     params: Joi.object().required()
   }).required()

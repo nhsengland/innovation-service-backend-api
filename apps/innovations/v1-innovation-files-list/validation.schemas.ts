@@ -13,7 +13,7 @@ export type ParamsType = {
   innovationId: string;
 };
 export const ParamsSchema = Joi.object<ParamsType>({
-  innovationId: Joi.string().guid().required()
+  innovationId: JoiHelper.AppCustomJoi().string().guid().required()
 }).required();
 
 export type QueryParamsType = PaginationQueryParamsType<OrderFields> & {
@@ -35,23 +35,34 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
   name: JoiHelper.AppCustomJoi().decodeURIString().trim().optional(),
   uploadedBy: JoiHelper.AppCustomJoi()
     .stringArray()
-    .items(Joi.string().valid(...Object.values(ServiceRoleEnum)))
+    .items(
+      JoiHelper.AppCustomJoi()
+        .string()
+        .valid(...Object.values(ServiceRoleEnum))
+    )
     .optional(),
   contextTypes: JoiHelper.AppCustomJoi()
     .stringArray()
-    .items(Joi.string().valid(...Object.values(InnovationFileContextTypeEnum)))
+    .items(
+      JoiHelper.AppCustomJoi()
+        .string()
+        .valid(...Object.values(InnovationFileContextTypeEnum))
+    )
     .optional(),
-  contextId: Joi.string().max(100).optional(),
-  units: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().uuid()).optional(),
+  contextId: JoiHelper.AppCustomJoi().string().max(100).optional(),
+  units: JoiHelper.AppCustomJoi().stringArray().items(JoiHelper.AppCustomJoi().string().uuid()).optional(),
   dateFilter: JoiHelper.AppCustomJoi()
     .stringArrayOfObjects()
     .items(
       Joi.object({
-        field: Joi.string().valid('createdAt').required(),
+        field: JoiHelper.AppCustomJoi().string().valid('createdAt').required(),
         startDate: Joi.date().optional(),
         endDate: Joi.date().optional()
       })
     )
     .optional(),
-  fields: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid('description')).optional()
+  fields: JoiHelper.AppCustomJoi()
+    .stringArray()
+    .items(JoiHelper.AppCustomJoi().string().valid('description'))
+    .optional()
 });

@@ -1,11 +1,12 @@
-import type { AnnouncementParamsType} from '@admin/shared/enums';
+import type { AnnouncementParamsType } from '@admin/shared/enums';
 import { AnnouncementTypeEnum, ServiceRoleEnum } from '@admin/shared/enums';
+import { JoiHelper } from '@admin/shared/helpers';
 import type { FilterPayload } from '@admin/shared/models/schema-engine/schema.model';
 import Joi from 'joi';
 
 export const AnnouncementJoiLinkValidation = Joi.object({
-  label: Joi.string(),
-  url: Joi.string().uri()
+  label: JoiHelper.AppCustomJoi().string(),
+  url: JoiHelper.AppCustomJoi().string().uri()
 });
 
 // Announcement Schema for regular announcements and scheduled status
@@ -20,10 +21,11 @@ export type AnnouncementBodyType = {
   sendEmail: boolean;
 };
 export const AnnouncementBodySchema = Joi.object<AnnouncementBodyType>({
-  title: Joi.string().max(100).required().description('Title of the announcement'),
+  title: JoiHelper.AppCustomJoi().string().max(100).required().description('Title of the announcement'),
   userRoles: Joi.array()
     .items(
-      Joi.string()
+      JoiHelper.AppCustomJoi()
+        .string()
         .valid(...Object.values(ServiceRoleEnum).filter(t => t !== ServiceRoleEnum.ADMIN))
         .required()
         .description('User roles that will see the announcement.')
@@ -31,20 +33,21 @@ export const AnnouncementBodySchema = Joi.object<AnnouncementBodyType>({
     .min(1),
 
   params: Joi.object<AnnouncementBodyType['params']>({
-    content: Joi.string().required(),
+    content: JoiHelper.AppCustomJoi().string().required(),
     link: AnnouncementJoiLinkValidation.optional()
   }),
   startsAt: Joi.date().required(),
   expiresAt: Joi.date().greater(Joi.ref('startsAt')).optional(),
-  type: Joi.string()
+  type: JoiHelper.AppCustomJoi()
+    .string()
     .valid(...Object.values(AnnouncementTypeEnum))
     .required(),
   filters: Joi.array()
     .items(
       Joi.object<FilterPayload>({
-        section: Joi.string().required(),
-        question: Joi.string().required(),
-        answers: Joi.array().items(Joi.string()).min(1).required()
+        section: JoiHelper.AppCustomJoi().string().required(),
+        question: JoiHelper.AppCustomJoi().string().required(),
+        answers: Joi.array().items(JoiHelper.AppCustomJoi().string()).min(1).required()
       })
     )
     .optional(),

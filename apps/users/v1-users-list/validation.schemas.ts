@@ -19,14 +19,22 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({ orderKeys: Obje
   .append<QueryParamsType>({
     userTypes: JoiHelper.AppCustomJoi()
       .stringArray()
-      .items(Joi.string().valid(...Object.values(ServiceRoleEnum)))
+      .items(
+        JoiHelper.AppCustomJoi()
+          .string()
+          .valid(...Object.values(ServiceRoleEnum))
+      )
       .min(1)
       .description('Types of user to filter.'),
-    organisationUnitId: Joi.string().guid().optional().description('Id of the organisation unit the user belongs to.'),
+    organisationUnitId: JoiHelper.AppCustomJoi()
+      .string()
+      .guid()
+      .optional()
+      .description('Id of the organisation unit the user belongs to.'),
     onlyActive: Joi.boolean().optional().description('List only active users or all users.'),
     fields: JoiHelper.AppCustomJoi()
       .stringArray()
-      .items(Joi.string().valid('email'))
+      .items(JoiHelper.AppCustomJoi().string().valid('email'))
       .default([])
       .description('Additional fields to display in response.')
   })

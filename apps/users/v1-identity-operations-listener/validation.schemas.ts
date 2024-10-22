@@ -1,3 +1,4 @@
+import { JoiHelper } from '@users/shared/helpers';
 import Joi from 'joi';
 
 export type IdentityOperationType = {
@@ -13,10 +14,10 @@ export type IdentityOperationType = {
 
 export const IdentityOperationSchema = Joi.object<IdentityOperationType>({
   data: Joi.object<IdentityOperationType['data']>({
-    identityId: Joi.string().guid().required(),
+    identityId: JoiHelper.AppCustomJoi().string().guid().required(),
     body: Joi.object({
-      displayName: Joi.string().optional(),
-      mobilePhone: Joi.string().allow(null).optional(),
+      displayName: JoiHelper.AppCustomJoi().string().optional(),
+      mobilePhone: JoiHelper.AppCustomJoi().string().allow(null).optional(),
       accountEnabled: Joi.boolean().optional()
     }).required()
   }).required()

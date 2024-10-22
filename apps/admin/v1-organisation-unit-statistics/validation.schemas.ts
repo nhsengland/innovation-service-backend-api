@@ -13,12 +13,16 @@ export type QueryType = {
 };
 
 export const ParamsSchema = Joi.object<ParamsType>({
-  unit: Joi.string().guid().required()
+  unit: JoiHelper.AppCustomJoi().string().guid().required()
 }).required();
 
 export const QuerySchema = Joi.object<QueryType>({
   statistics: JoiHelper.AppCustomJoi()
     .stringArray()
-    .items(Joi.string().valid(...statistics))
+    .items(
+      JoiHelper.AppCustomJoi()
+        .string()
+        .valid(...statistics)
+    )
     .required()
 }).required();

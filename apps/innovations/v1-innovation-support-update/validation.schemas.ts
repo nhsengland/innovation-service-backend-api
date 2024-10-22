@@ -2,14 +2,15 @@ import Joi from 'joi';
 
 import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
 import { InnovationSupportStatusEnum } from '@innovations/shared/enums';
+import { JoiHelper } from '@innovations/shared/helpers';
 
 export type ParamsType = {
   innovationId: string;
   supportId: string;
 };
 export const ParamsSchema = Joi.object<ParamsType>({
-  innovationId: Joi.string().guid().required(),
-  supportId: Joi.string().guid().required()
+  innovationId: JoiHelper.AppCustomJoi().string().guid().required(),
+  supportId: JoiHelper.AppCustomJoi().string().guid().required()
 }).required();
 
 export type BodyType = {
@@ -18,7 +19,8 @@ export type BodyType = {
   accessors?: { id: string; userRoleId: string }[];
 };
 export const BodySchema = Joi.object<BodyType>({
-  status: Joi.string()
+  status: JoiHelper.AppCustomJoi()
+    .string()
     .valid(
       InnovationSupportStatusEnum.ENGAGING,
       InnovationSupportStatusEnum.WAITING,
@@ -26,14 +28,14 @@ export const BodySchema = Joi.object<BodyType>({
       InnovationSupportStatusEnum.CLOSED
     )
     .required(),
-  message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xxl).trim().required(),
+  message: JoiHelper.AppCustomJoi().string().max(TEXTAREA_LENGTH_LIMIT.xxl).required(),
   accessors: Joi.when('status', {
     is: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.WAITING],
     then: Joi.array()
       .items(
         Joi.object({
-          id: Joi.string().guid().required(),
-          userRoleId: Joi.string().guid().required()
+          id: JoiHelper.AppCustomJoi().string().guid().required(),
+          userRoleId: JoiHelper.AppCustomJoi().string().guid().required()
         })
       )
       .required(),

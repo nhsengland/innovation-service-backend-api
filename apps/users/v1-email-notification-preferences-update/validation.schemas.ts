@@ -1,5 +1,6 @@
-import type { NotificationCategoryType} from '@users/shared/enums';
+import type { NotificationCategoryType } from '@users/shared/enums';
 import { NotificationPreferenceEnum, ServiceRoleEnum } from '@users/shared/enums';
+import { JoiHelper } from '@users/shared/helpers';
 import {
   ANotificationCategories,
   INotificationCategories,
@@ -21,7 +22,8 @@ export type BodyType = {
   preferences: NotificationPreferences;
 };
 
-const PreferenceValueSchema = Joi.string()
+const PreferenceValueSchema = JoiHelper.AppCustomJoi()
+  .string()
   .valid(...Object.values(NotificationPreferenceEnum))
   .required();
 export const BodySchema = Joi.object<BodyType>({

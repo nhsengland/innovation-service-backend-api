@@ -1,11 +1,12 @@
 import Joi from 'joi';
 import { pick } from 'lodash';
-import type { CurrentDocumentType} from '../../schemas/innovation-record';
+import type { CurrentDocumentType } from '../../schemas/innovation-record';
 import { requiredSectionsAndQuestions } from '../../schemas/innovation-record';
 import type { Question } from './question.types';
 import { QuestionValidatorFactory } from './question.validator';
 import { SchemaValidation } from './schema.validations';
 import { translateEvidences } from '../../schemas/innovation-record/translation.helper';
+import { JoiHelper } from '../../helpers/joi.helper';
 
 export type IRSchemaType = {
   sections: {
@@ -448,8 +449,8 @@ export class SchemaModel {
 
       items.push(
         Joi.object({
-          section: Joi.string().required(),
-          question: Joi.string().required(),
+          section: JoiHelper.AppCustomJoi().string().required(),
+          question: JoiHelper.AppCustomJoi().string().required(),
           answers: QuestionValidatorFactory.validate(question, true)
         })
       );
