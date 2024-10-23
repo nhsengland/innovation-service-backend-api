@@ -120,19 +120,88 @@ export default openApi(V1MeInfo.httpTrigger as AzureFunction, '/v1/me', {
                 id: { type: 'string' },
                 email: { type: 'string' },
                 displayName: { type: 'string' },
-                roles: { type: 'array', items: { type: 'string' } },
+                roles: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'string' },
+                      role: { type: 'string', enum: Object.values(ServiceRoleEnum) },
+                      isActive: { type: 'boolean' },
+                      organisation: {
+                        type: 'object',
+                        properties: {
+                          id: { type: 'string' },
+                          name: { type: 'string' },
+                          acronym: { type: 'string', nullable: true },
+                          organisationUnit: {
+                            type: 'object',
+                            properties: {
+                              id: { type: 'string' },
+                              name: { type: 'string' },
+                              acronym: { type: 'string' }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
                 contactByEmail: { type: 'boolean' },
                 contactByPhone: { type: 'boolean' },
-                contactByPhoneTimeframe: { type: 'string' },
-                contactDetails: { type: 'string' },
-                phone: { type: 'string' },
-                passwordResetAt: { type: 'string' },
-                firstTimeSignInAt: { type: 'string' },
+                contactByPhoneTimeframe: { type: 'string', nullable: true },
+                contactDetails: { type: 'string', nullable: true },
+                phone: { type: 'string', nullable: true },
                 termsOfUseAccepted: { type: 'boolean' },
                 hasInnovationTransfers: { type: 'boolean' },
                 hasInnovationCollaborations: { type: 'boolean' },
                 hasLoginAnnouncements: { type: 'object' },
-                organisations: { type: 'array', items: { type: 'object' } }
+                passwordResetAt: { type: 'string', format: 'date-time', nullable: true },
+                firstTimeSignInAt: { type: 'string', format: 'date-time', nullable: true },
+                organisations: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      id: {
+                        type: 'string'
+                      },
+                      acronym: {
+                        type: 'string',
+                        nullable: true
+                      },
+                      name: {
+                        type: 'string'
+                      },
+                      isShadow: {
+                        type: 'boolean'
+                      },
+                      size: {
+                        type: 'string',
+                        nullable: true
+                      },
+                      description: {
+                        type: 'string',
+                        nullable: true
+                      },
+                      registrationNumber: {
+                        type: 'string',
+                        nullable: true
+                      },
+                      organisationUnits: {
+                        type: 'array',
+                        items: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            name: { type: 'string' },
+                            acronym: { type: 'string' }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
               }
             }
           }

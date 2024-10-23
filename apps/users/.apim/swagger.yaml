@@ -373,21 +373,52 @@ paths:
                   roles:
                     type: array
                     items:
-                      type: string
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        role:
+                          type: string
+                          enum:
+                            - ADMIN
+                            - INNOVATOR
+                            - ACCESSOR
+                            - ASSESSMENT
+                            - QUALIFYING_ACCESSOR
+                        isActive:
+                          type: boolean
+                        organisation:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                            name:
+                              type: string
+                            acronym:
+                              type: string
+                              nullable: true
+                            organisationUnit:
+                              type: object
+                              properties:
+                                id:
+                                  type: string
+                                name:
+                                  type: string
+                                acronym:
+                                  type: string
                   contactByEmail:
                     type: boolean
                   contactByPhone:
                     type: boolean
                   contactByPhoneTimeframe:
                     type: string
+                    nullable: true
                   contactDetails:
                     type: string
+                    nullable: true
                   phone:
                     type: string
-                  passwordResetAt:
-                    type: string
-                  firstTimeSignInAt:
-                    type: string
+                    nullable: true
                   termsOfUseAccepted:
                     type: boolean
                   hasInnovationTransfers:
@@ -396,10 +427,48 @@ paths:
                     type: boolean
                   hasLoginAnnouncements:
                     type: object
+                  passwordResetAt:
+                    type: string
+                    format: date-time
+                    nullable: true
+                  firstTimeSignInAt:
+                    type: string
+                    format: date-time
+                    nullable: true
                   organisations:
                     type: array
                     items:
                       type: object
+                      properties:
+                        id:
+                          type: string
+                        acronym:
+                          type: string
+                          nullable: true
+                        name:
+                          type: string
+                        isShadow:
+                          type: boolean
+                        size:
+                          type: string
+                          nullable: true
+                        description:
+                          type: string
+                          nullable: true
+                        registrationNumber:
+                          type: string
+                          nullable: true
+                        organisationUnits:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              id:
+                                type: string
+                              name:
+                                type: string
+                              acronym:
+                                type: string
         "400":
           description: Bad Request
         "401":
