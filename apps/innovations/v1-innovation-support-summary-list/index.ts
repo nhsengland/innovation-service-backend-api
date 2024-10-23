@@ -71,12 +71,21 @@ export default openApi(
                     support: {
                       type: 'object',
                       properties: {
+                        id: { type: 'string' },
                         status: {
                           type: 'string',
                           enum: Object.values(InnovationSupportStatusEnum)
                         },
-                        start: { type: 'string' },
-                        end: { type: 'string' }
+                        start: { type: 'string', format: 'date-time' },
+                        end: { type: 'string', format: 'date-time' },
+                        minStart: { type: 'string', format: 'date-time' }
+                      }
+                    },
+                    organisation: {
+                      type: 'object',
+                      properties: {
+                        id: { type: 'string' },
+                        name: { type: 'string' }
                       }
                     }
                   }

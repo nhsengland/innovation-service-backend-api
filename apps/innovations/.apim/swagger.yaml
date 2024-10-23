@@ -3067,6 +3067,8 @@ paths:
                     support:
                       type: object
                       properties:
+                        id:
+                          type: string
                         status:
                           type: string
                           enum:
@@ -3077,7 +3079,19 @@ paths:
                             - CLOSED
                         start:
                           type: string
+                          format: date-time
                         end:
+                          type: string
+                          format: date-time
+                        minStart:
+                          type: string
+                          format: date-time
+                    organisation:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        name:
                           type: string
         "400":
           description: The request is invalid.
