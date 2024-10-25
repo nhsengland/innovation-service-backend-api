@@ -112,11 +112,12 @@ export const InnovationListSelectType = [
   // NOTE: The suggestion is always related to the unit from the QA accessing
   'suggestion.suggestedBy',
   'suggestion.suggestedOn',
+  'support.closeReason',
   'support.id',
+  'support.isShared',
   'support.status',
   'support.updatedAt',
   'support.updatedBy',
-  'support.closeReason',
   'owner.id',
   'owner.name',
   'owner.companyName',
@@ -131,6 +132,7 @@ export type InnovationListSelectType =
   | 'assessment.assignedTo'
   | 'assessment.isExempt'
   | `support.${keyof Pick<InnovationSupportEntity, 'id' | 'status' | 'updatedAt' | 'updatedBy' | 'closeReason'>}`
+  | 'support.isShared'
   | 'owner.id'
   | 'owner.name'
   | 'owner.companyName'
@@ -152,6 +154,7 @@ export type InnovationListFullResponseType = Omit<InnovationListViewFields, 'eng
     updatedAt: Date | null;
     updatedBy: string | null;
     closeReason: InnovationSupportCloseReasonEnum | null;
+    isShared: boolean;
   } | null;
   suggestion: {
     suggestedBy: string[];
@@ -547,7 +550,7 @@ export class InnovationsService extends BaseService {
       }
 
       query
-        .addSelect((fields ?? ['id']).map(f => `support.${f}`))
+        .addSelect((fields ?? ['id']).filter(f => f != 'isShared').map(f => `support.${f}`))
         .leftJoin(
           'innovation.supports',
           'support',
@@ -1040,10 +1043,11 @@ export class InnovationsService extends BaseService {
     // support is handled differently to remove the nested array since it's only 1 element in this case
     return {
       ...(fields.includes('id') && { id: support.id ?? null }),
+      ...(fields.includes('closeReason') && { closeReason: support.closeReason }),
+      ...(fields.includes('isShared') && { isShared: !!item.organisationShares?.length }),
       ...(fields.includes('status') && { status: support.status }),
       ...(fields.includes('updatedAt') && { updatedAt: support.updatedAt }),
-      ...(fields.includes('updatedBy') && { updatedBy: displayName }),
-      ...(fields.includes('closeReason') && { closeReason: support.closeReason })
+      ...(fields.includes('updatedBy') && { updatedBy: displayName })
     };
   }
 

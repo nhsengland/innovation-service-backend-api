@@ -1173,11 +1173,12 @@ paths:
                 - engagingUnits
                 - suggestion.suggestedBy
                 - suggestion.suggestedOn
+                - support.closeReason
                 - support.id
+                - support.isShared
                 - support.status
                 - support.updatedAt
                 - support.updatedBy
-                - support.closeReason
                 - owner.id
                 - owner.name
                 - owner.companyName
@@ -4937,11 +4938,12 @@ paths:
                 - engagingUnits
                 - suggestion.suggestedBy
                 - suggestion.suggestedOn
+                - support.closeReason
                 - support.id
+                - support.isShared
                 - support.status
                 - support.updatedAt
                 - support.updatedBy
-                - support.closeReason
                 - owner.id
                 - owner.name
                 - owner.companyName
