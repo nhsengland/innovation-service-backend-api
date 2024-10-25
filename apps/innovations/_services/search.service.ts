@@ -420,7 +420,7 @@ export class SearchService extends BaseService {
           type: 'best_fields',
           query: search,
           fields: [...priorities, 'document.*'],
-          fuzziness: 'AUTO',
+          fuzziness: 0,
           prefix_length: 2,
           tie_breaker: 0.3
           // minimum_should_match: '2<-25% 9<-3'
