@@ -1,7 +1,7 @@
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 import type { AzureFunction, Context, HttpRequest } from '@azure/functions';
 
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 
 import { container } from '../_config';
 
@@ -33,7 +33,7 @@ export default openApi(V1InnovationTransferCheck.httpTrigger as AzureFunction, '
   get: {
     description: 'Get details of pending innovations transfers',
     operationId: 'v1-innovation-transfer-check',
-    parameters: [{ in: 'path', name: 'transferId', required: true, schema: { type: 'string' } }],
+    parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     responses: {
       200: {
         description: 'Ok',

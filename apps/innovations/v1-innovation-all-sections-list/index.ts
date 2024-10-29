@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 
 import type { AuthorizationService } from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
@@ -55,7 +55,7 @@ export default openApi(GetInnovationAllSectionsList.httpTrigger as AzureFunction
     tags: ['Innovation'],
     summary: 'Get an innovation sections list details.',
     operationId: 'v1-innovation-all-sections-list',
-    parameters: [{ in: 'path', name: 'innovationId', required: true, schema: { type: 'string' } }],
+    parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     responses: {
       200: {
         description: 'Success',

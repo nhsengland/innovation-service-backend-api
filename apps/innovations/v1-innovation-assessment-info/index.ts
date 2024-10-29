@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { Audit, JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import type { AuthorizationService } from '@innovations/shared/services';
 import { ActionEnum, TargetEnum } from '@innovations/shared/services/integrations/audit.service';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
@@ -98,28 +98,7 @@ export default openApi(
       description: 'Get Innovation Assessment Info',
       tags: ['Innovation Assessment Info'],
       operationId: 'v1-innovation-assessment-info',
-      parameters: [
-        {
-          name: 'innovationId',
-          in: 'path',
-          description: 'Innovation Id',
-          required: true,
-          schema: {
-            type: 'string',
-            format: 'uuid'
-          }
-        },
-        {
-          name: 'assessmentId',
-          in: 'path',
-          description: 'Assessment Id',
-          required: true,
-          schema: {
-            type: 'string',
-            format: 'uuid'
-          }
-        }
-      ],
+      parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       responses: {
         200: {
           description: 'Success',

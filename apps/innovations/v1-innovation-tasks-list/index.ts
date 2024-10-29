@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import type { AuthorizationService } from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { CustomContextType } from '@innovations/shared/types';
@@ -68,74 +68,7 @@ export default openApi(V1InnovationTasksList.httpTrigger as AzureFunction, '/v1/
     description: 'Get a list of innovation tasks.',
     operationId: 'v1-innovation-tasks-list',
     tags: ['[v1] Innovation Tasks'],
-    parameters: [
-      {
-        name: 'skip',
-        in: 'query',
-        required: false,
-        description: 'The number of records to skip.',
-        schema: {
-          type: 'integer',
-          minimum: 0
-        }
-      },
-      {
-        name: 'take',
-        in: 'query',
-        required: false,
-        description: 'The number of records to take.',
-        schema: {
-          type: 'integer',
-          minimum: 1,
-          maximum: 100
-        }
-      },
-      {
-        name: 'order',
-        in: 'query',
-        required: false,
-        description: 'The order of the records.',
-        schema: {
-          type: 'string'
-        }
-      },
-      {
-        name: 'status',
-        in: 'query',
-        required: false,
-        description: 'The status of the task.',
-        schema: {
-          type: 'string'
-        }
-      },
-      {
-        name: 'section',
-        in: 'query',
-        required: false,
-        description: 'The section of the task.',
-        schema: {
-          type: 'string'
-        }
-      },
-      {
-        name: 'innovationId',
-        in: 'query',
-        required: false,
-        description: 'The innovation id of the task.',
-        schema: {
-          type: 'string'
-        }
-      },
-      {
-        name: 'innovationName',
-        in: 'query',
-        required: false,
-        description: 'The innovation name of the task.',
-        schema: {
-          type: 'string'
-        }
-      }
-    ],
+    parameters: SwaggerHelper.paramJ2S({ query: QueryParamsSchema }),
     responses: {
       200: {
         description: 'The list of innovation tasks.',

@@ -55,23 +55,6 @@ export default openApi(
       summary: 'Submit an innovation section.',
       operationId: 'v1-innovation-section-submit',
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
-      requestBody: {
-        description: 'Innovation section submit request body.',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                id: {
-                  type: 'string',
-                  description: 'Innovation section id.',
-                  example: '1'
-                }
-              }
-            }
-          }
-        }
-      },
       responses: {
         200: {
           description: 'Innovation section submit response.'

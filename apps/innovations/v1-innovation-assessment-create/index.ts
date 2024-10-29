@@ -3,7 +3,7 @@ import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { Audit, ElasticSearchDocumentUpdate, JwtDecoder } from '@innovations/shared/decorators';
 import { InnovationStatusEnum } from '@innovations/shared/enums';
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import type { AuthorizationService } from '@innovations/shared/services';
 import { ActionEnum, TargetEnum } from '@innovations/shared/services/integrations/audit.service';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
@@ -61,36 +61,8 @@ export default openApi(CreateInnovationAssessment.httpTrigger as AzureFunction, 
     description: 'Create an innovation assessment.',
     operationId: 'v1-innovation-assessment-create',
     tags: ['Innovation Assessment'],
-    parameters: [
-      {
-        name: 'innovationId',
-        in: 'path',
-        description: 'The innovation id.',
-        required: true,
-        schema: {
-          type: 'string',
-          format: 'uuid'
-        }
-      }
-    ],
-    requestBody: {
-      description: 'The innovation assessment data.',
-      required: true,
-      content: {
-        'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              comment: {
-                type: 'string',
-                description: 'The comment for the assessment.'
-              }
-            },
-            required: ['comment']
-          }
-        }
-      }
-    },
+    parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
+    requestBody: SwaggerHelper.bodyJ2S(BodySchema, { description: 'The innovation assessment data.', required: true }),
     responses: {
       200: {
         description: 'The innovation assessment has been created.',

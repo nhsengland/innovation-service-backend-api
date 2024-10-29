@@ -4,7 +4,7 @@ import type { AzureFunction, HttpRequest } from '@azure/functions';
 import { JwtDecoder } from '@innovations/shared/decorators';
 import { InnovationStatusEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 import { BadRequestError, GenericErrorsEnum } from '@innovations/shared/errors';
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import type { AuthorizationService } from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { CustomContextType } from '@innovations/shared/types';
@@ -97,63 +97,8 @@ export default openApi(V1InnovationTaskUpdate.httpTrigger as AzureFunction, '/v1
     description: 'Update an innovation task.',
     operationId: 'v1-innovation-task-update',
     tags: ['[v1] Innovation Tasks'],
-    parameters: [
-      {
-        name: 'innovationId',
-        in: 'path',
-        description: 'The innovation id.',
-        required: true,
-        schema: {
-          type: 'string'
-        }
-      },
-      {
-        name: 'taskId',
-        in: 'path',
-        description: 'The innovation task id.',
-        required: true,
-        schema: {
-          type: 'string'
-        }
-      }
-    ],
-    requestBody: {
-      description: 'The innovation task data.',
-      required: true,
-      content: {
-        'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              name: {
-                type: 'string',
-                description: 'The name of the task.'
-              },
-              description: {
-                type: 'string',
-                description: 'The description of the task.'
-              },
-              status: {
-                type: 'string',
-                description: 'The status of the task.'
-              },
-              assignee: {
-                type: 'string',
-                description: 'The assignee of the task.'
-              },
-              dueDate: {
-                type: 'string',
-                description: 'The due date of the task.'
-              },
-              comment: {
-                type: 'string',
-                description: 'The comment of the task.'
-              }
-            }
-          }
-        }
-      }
-    },
+    parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
+    requestBody: SwaggerHelper.bodyJ2S(BodySchema, { description: 'The innovation task data.' }),
     responses: {
       '200': {
         description: 'The innovation task has been updated.',

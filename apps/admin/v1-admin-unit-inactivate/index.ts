@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@admin/shared/decorators';
-import { JoiHelper, ResponseHelper } from '@admin/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@admin/shared/helpers';
 import type { AuthorizationService } from '@admin/shared/services';
 import type { CustomContextType } from '@admin/shared/types';
 
@@ -45,26 +45,7 @@ export default openApi(
     patch: {
       description: 'Inactivate an organisation unit.',
       operationId: 'v1-admin-unit-inactivate',
-      parameters: [
-        {
-          name: 'organisationId',
-          in: 'path',
-          description: 'The organisation id.',
-          required: true,
-          schema: {
-            type: 'string'
-          }
-        },
-        {
-          name: 'organisationUnitId',
-          in: 'path',
-          description: 'The organisation unit id.',
-          required: true,
-          schema: {
-            type: 'string'
-          }
-        }
-      ],
+      parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       responses: {
         '200': {
           description: 'The organisation unit has been inactivated.',

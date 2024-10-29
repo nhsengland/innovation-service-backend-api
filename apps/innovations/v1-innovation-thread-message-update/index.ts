@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import type { AuthorizationService } from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { CustomContextType } from '@innovations/shared/types';
@@ -69,52 +69,8 @@ export default openApi(
       description: 'Update a thread message',
       tags: ['[v1] Innovation Threads'],
       operationId: 'v1-innovation-thread-message-update',
-      parameters: [
-        {
-          name: 'innovationId',
-          in: 'path',
-          description: 'Innovation Id',
-          required: true,
-          schema: {
-            type: 'string'
-          }
-        },
-        {
-          name: 'threadId',
-          in: 'path',
-          description: 'Thread Id',
-          required: true,
-          schema: {
-            type: 'string'
-          }
-        },
-        {
-          name: 'messageId',
-          in: 'path',
-          description: 'Message Id',
-          required: true,
-          schema: {
-            type: 'string'
-          }
-        }
-      ],
-      requestBody: {
-        description: 'Message',
-        required: true,
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                message: {
-                  type: 'string',
-                  description: 'Message'
-                }
-              }
-            }
-          }
-        }
-      },
+      parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
+      requestBody: SwaggerHelper.bodyJ2S(BodySchema),
       responses: {
         '200': {
           description: 'Success',

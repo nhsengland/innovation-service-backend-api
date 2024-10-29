@@ -2,8 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
-import { NotificationCategoryType } from '@innovations/shared/enums';
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import type { AuthorizationService } from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { CustomContextType } from '@innovations/shared/types';
@@ -48,51 +47,8 @@ export default openApi(
     patch: {
       operationId: 'v1-innovation-notifications-dismiss',
       description: 'Dismisses innovation notifications.',
-      parameters: [
-        {
-          name: 'innovationId',
-          in: 'path',
-          required: true,
-          description: 'Innovation ID',
-          schema: {
-            type: 'string',
-            format: 'uuid'
-          }
-        }
-      ],
-      requestBody: {
-        description: 'Dismiss innovation notifications request body.',
-        required: true,
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                notificationIds: {
-                  type: 'array',
-                  items: {
-                    type: 'string',
-                    format: 'uuid'
-                  }
-                },
-                notificationContext: {
-                  type: 'object',
-                  properties: {
-                    id: {
-                      type: 'string',
-                      format: 'uuid'
-                    },
-                    type: {
-                      type: 'string',
-                      enum: NotificationCategoryType
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
+      parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
+      requestBody: SwaggerHelper.bodyJ2S(BodySchema, { description: 'Dismiss innovation notifications request body.' }),
       responses: {
         204: { description: 'Success' },
         400: { description: 'Invalid payload' }

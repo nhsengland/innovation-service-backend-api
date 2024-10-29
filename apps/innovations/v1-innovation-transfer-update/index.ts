@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { ElasticSearchDocumentUpdate, JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import type { AuthorizationService } from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { CustomContextType } from '@innovations/shared/types';
@@ -52,28 +52,8 @@ export default openApi(V1InnovationTransferUpdate.httpTrigger as AzureFunction, 
   patch: {
     description: 'Update an innovation transfer status',
     operationId: 'v1-innovation-transfer-update',
-    parameters: [
-      {
-        name: 'transferId',
-        in: 'path',
-        required: true,
-        description: 'The innovation transfer id',
-        schema: {
-          type: 'string'
-        }
-      }
-    ],
-    requestBody: {
-      description: 'The innovation transfer status',
-      required: true,
-      content: {
-        'application/json': {
-          schema: {
-            type: 'object'
-          }
-        }
-      }
-    },
+    parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
+    requestBody: SwaggerHelper.bodyJ2S(BodySchema, { description: 'The innovation transfer status' }),
     responses: {
       204: {
         description: 'The innovation transfer status has been updated'

@@ -160,11 +160,12 @@ paths:
       summary: Get an innovation sections list details.
       operationId: v1-innovation-all-sections-list
       parameters:
-        - in: path
-          name: innovationId
+        - name: innovationId
+          in: path
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         "200":
           description: Success
@@ -278,14 +279,12 @@ paths:
       parameters:
         - name: innovationId
           in: path
-          description: Innovation Id
           required: true
           schema:
             type: string
             format: uuid
         - name: assessmentId
           in: path
-          description: Assessment Id
           required: true
           schema:
             type: string
@@ -410,14 +409,12 @@ paths:
       parameters:
         - name: innovationId
           in: path
-          description: Innovation ID
           required: true
           schema:
             type: string
             format: uuid
         - name: assessmentId
           in: path
-          description: Assessment ID
           required: true
           schema:
             type: string
@@ -430,16 +427,112 @@ paths:
             schema:
               type: object
               properties:
-                status:
+                summary:
+                  type: string
+                  maxLength: 2000
+                  nullable: true
+                description:
+                  type: string
+                  maxLength: 2000
+                  nullable: true
+                maturityLevel:
                   type: string
                   enum:
-                    - APPROVED
-                    - REJECTED
-                comment:
+                    - DISCOVERY
+                    - ADVANCED
+                    - READY
+                  nullable: true
+                maturityLevelComment:
                   type: string
-                  maxLength: 1000
-              required:
-                - status
+                  maxLength: 200
+                  nullable: true
+                hasRegulatoryApprovals:
+                  type: string
+                  enum:
+                    - YES
+                    - PARTIALLY
+                    - NO
+                  nullable: true
+                hasRegulatoryApprovalsComment:
+                  type: string
+                  maxLength: 200
+                  nullable: true
+                hasEvidence:
+                  type: string
+                  enum:
+                    - YES
+                    - PARTIALLY
+                    - NO
+                  nullable: true
+                hasEvidenceComment:
+                  type: string
+                  maxLength: 200
+                  nullable: true
+                hasValidation:
+                  type: string
+                  enum:
+                    - YES
+                    - PARTIALLY
+                    - NO
+                  nullable: true
+                hasValidationComment:
+                  type: string
+                  maxLength: 200
+                  nullable: true
+                hasProposition:
+                  type: string
+                  enum:
+                    - YES
+                    - PARTIALLY
+                    - NO
+                  nullable: true
+                hasPropositionComment:
+                  type: string
+                  maxLength: 200
+                  nullable: true
+                hasCompetitionKnowledge:
+                  type: string
+                  enum:
+                    - YES
+                    - PARTIALLY
+                    - NO
+                  nullable: true
+                hasCompetitionKnowledgeComment:
+                  type: string
+                  maxLength: 200
+                  nullable: true
+                hasImplementationPlan:
+                  type: string
+                  enum:
+                    - YES
+                    - PARTIALLY
+                    - NO
+                  nullable: true
+                hasImplementationPlanComment:
+                  type: string
+                  maxLength: 200
+                  nullable: true
+                hasScaleResource:
+                  type: string
+                  enum:
+                    - YES
+                    - PARTIALLY
+                    - NO
+                  nullable: true
+                hasScaleResourceComment:
+                  type: string
+                  maxLength: 200
+                  nullable: true
+                suggestedOrganisationUnitsIds:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  nullable: true
+                isSubmission:
+                  type: boolean
+                  default: false
+              additionalProperties: false
       responses:
         "200":
           description: Returns the updated innovation assessment.
@@ -492,7 +585,6 @@ paths:
       parameters:
         - name: innovationId
           in: path
-          description: The innovation id.
           required: true
           schema:
             type: string
@@ -505,11 +597,12 @@ paths:
             schema:
               type: object
               properties:
-                comment:
+                message:
                   type: string
-                  description: The comment for the assessment.
+                  maxLength: 4000
               required:
-                - comment
+                - message
+              additionalProperties: false
       responses:
         "200":
           description: The innovation assessment has been created.
@@ -2050,7 +2143,6 @@ paths:
         - name: innovationId
           in: path
           required: true
-          description: Innovation ID
           schema:
             type: string
             format: uuid
@@ -2067,7 +2159,6 @@ paths:
         - name: innovationId
           in: path
           required: true
-          description: Innovation ID
           schema:
             type: string
             format: uuid
@@ -2084,27 +2175,117 @@ paths:
                   items:
                     type: string
                     format: uuid
-                notificationContext:
-                  type: object
-                  properties:
-                    id:
-                      type: string
-                      format: uuid
-                    type:
-                      type: string
-                      enum:
-                        - TASK
-                        - DOCUMENTS
-                        - MESSAGES
-                        - SUPPORT
-                        - NEEDS_ASSESSMENT
-                        - ORGANISATION_SUGGESTIONS
-                        - INNOVATION_MANAGEMENT
-                        - ADMIN
-                        - ACCOUNT
-                        - AUTOMATIC
-                        - NOTIFY_ME
-                        - ANNOUNCEMENTS
+                  default: []
+                contextTypes:
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                      - TASK
+                      - DOCUMENTS
+                      - MESSAGES
+                      - SUPPORT
+                      - NEEDS_ASSESSMENT
+                      - ORGANISATION_SUGGESTIONS
+                      - INNOVATION_MANAGEMENT
+                      - ADMIN
+                      - ACCOUNT
+                      - AUTOMATIC
+                      - NOTIFY_ME
+                      - ANNOUNCEMENTS
+                  default: []
+                contextDetails:
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                      - TA01_TASK_CREATION_TO_INNOVATOR
+                      - TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS
+                      - TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT
+                      - TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT
+                      - TA05_TASK_CANCELLED_TO_INNOVATOR
+                      - TA06_TASK_REOPEN_TO_INNOVATOR
+                      - DC01_UPLOADED_DOCUMENT_TO_INNOVATOR
+                      - ME01_THREAD_CREATION
+                      - ME02_THREAD_ADD_FOLLOWERS
+                      - ME03_THREAD_MESSAGE_CREATION
+                      - ST01_SUPPORT_STATUS_TO_ENGAGING
+                      - ST02_SUPPORT_STATUS_TO_OTHER
+                      - ST03_SUPPORT_STATUS_TO_WAITING
+                      - ST04_SUPPORT_NEW_ASSIGNED_ACCESSORS_TO_INNOVATOR
+                      - ST05_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_NEW_QA
+                      - ST06_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_OLD_QA
+                      - ST07_SUPPORT_STATUS_CHANGE_REQUEST
+                      - ST08_SUPPORT_NEW_ASSIGNED_WAITING_INNOVATION_TO_QA
+                      - SS01_SUPPORT_SUMMARY_UPDATE_TO_INNOVATORS
+                      - SS02_SUPPORT_SUMMARY_UPDATE_TO_OTHER_ENGAGING_ACCESSORS
+                      - NA01_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_INNOVATOR
+                      - NA02_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_ASSESSMENT
+                      - NA03_NEEDS_ASSESSMENT_STARTED_TO_INNOVATOR
+                      - NA04_NEEDS_ASSESSMENT_COMPLETE_TO_INNOVATOR
+                      - NA06_NEEDS_ASSESSOR_REMOVED
+                      - NA07_NEEDS_ASSESSOR_ASSIGNED
+                      - OS01_UNITS_SUGGESTION_TO_SUGGESTED_UNITS_QA
+                      - OS02_UNITS_SUGGESTION_NOT_SHARED_TO_INNOVATOR
+                      - OS03_INNOVATION_DELAYED_SHARED_SUGGESTION
+                      - RE01_EXPORT_REQUEST_SUBMITTED
+                      - RE02_EXPORT_REQUEST_APPROVED
+                      - RE03_EXPORT_REQUEST_REJECTED
+                      - AI01_INNOVATION_ARCHIVED_TO_SELF
+                      - AI02_INNOVATION_ARCHIVED_TO_COLLABORATORS
+                      - AI03_INNOVATION_ARCHIVED_TO_ENGAGING_QA_A
+                      - AI04_INNOVATION_ARCHIVED_TO_NA_DURING_NEEDS_ASSESSMENT
+                      - SH04_INNOVATION_STOPPED_SHARING_WITH_INDIVIDUAL_ORG_TO_OWNER
+                      - SH05_INNOVATION_STOPPED_SHARING_WITH_INDIVIDUAL_ORG_TO_QA_A
+                      - DA01_OWNER_DELETED_ACCOUNT_WITH_PENDING_TRANSFER_TO_COLLABORATOR
+                      - DA02_OWNER_DELETED_ACCOUNT_WITHOUT_PENDING_TRANSFER_TO_COLLABORATOR
+                      - MC01_COLLABORATOR_INVITE_EXISTING_USER
+                      - MC02_COLLABORATOR_INVITE_NEW_USER
+                      - MC03_COLLABORATOR_UPDATE_CANCEL_INVITE
+                      - MC04_COLLABORATOR_UPDATE_ACCEPTS_INVITE
+                      - MC05_COLLABORATOR_UPDATE_DECLINES_INVITE
+                      - MC06_COLLABORATOR_UPDATE_REMOVED_COLLABORATOR
+                      - MC07_COLLABORATOR_UPDATE_COLLABORATOR_LEFT_TO_INNOVATORS
+                      - MC08_COLLABORATOR_UPDATE_COLLABORATOR_LEFT_TO_SELF
+                      - TO01_TRANSFER_OWNERSHIP_NEW_USER
+                      - TO02_TRANSFER_OWNERSHIP_EXISTING_USER
+                      - TO06_TRANSFER_OWNERSHIP_ACCEPTS_PREVIOUS_OWNER
+                      - TO07_TRANSFER_OWNERSHIP_ACCEPTS_ASSIGNED_ACCESSORS
+                      - TO08_TRANSFER_OWNERSHIP_DECLINES_PREVIOUS_OWNER
+                      - TO09_TRANSFER_OWNERSHIP_CANCELED_NEW_OWNER
+                      - AP02_INNOVATOR_LOCKED_TO_ASSIGNED_USERS
+                      - AP03_USER_LOCKED_TO_LOCKED_USER
+                      - AP07_UNIT_INACTIVATED_TO_ENGAGING_INNOVATIONS
+                      - AP08_USER_EMAIL_ADDRESS_UPDATED
+                      - AP09_NEW_SUPPORTING_ACCOUNT
+                      - CA01_ACCOUNT_CREATION_OF_INNOVATOR
+                      - CA02_ACCOUNT_CREATION_OF_COLLABORATOR
+                      - AU01_INNOVATOR_INCOMPLETE_RECORD
+                      - AU02_ACCESSOR_IDLE_ENGAGING_SUPPORT
+                      - AU03_INNOVATOR_IDLE_SUPPORT
+                      - AU04_SUPPORT_KPI_REMINDER
+                      - AU05_SUPPORT_KPI_OVERDUE
+                      - AU06_ACCESSOR_IDLE_WAITING
+                      - AU07_TRANSFER_ONE_WEEK_REMINDER_NEW_USER
+                      - AU08_TRANSFER_ONE_WEEK_REMINDER_EXISTING_USER
+                      - AU09_TRANSFER_EXPIRED
+                      - AU10_ACCESSOR_IDLE_ENGAGING_SUPPORT_FOR_SIX_WEEKS
+                      - AU11_ACCESSOR_IDLE_WAITING_SUPPORT_FOR_SIX_WEEKS
+                      - SUPPORT_UPDATED
+                      - PROGRESS_UPDATE_CREATED
+                      - INNOVATION_RECORD_UPDATED
+                      - REMINDER
+                      - SUGGESTED_SUPPORT_UPDATED
+                      - AP10_NEW_ANNOUNCEMENT
+                      - AP11_NEW_ANNOUNCEMENT_WITH_INNOVATIONS_NAME
+                  default: []
+                contextIds:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  default: []
+              additionalProperties: false
       responses:
         "204":
           description: Success
@@ -2453,17 +2634,6 @@ paths:
               - REVENUE_MODEL
               - COST_OF_INNOVATION
               - DEPLOYMENT
-      requestBody:
-        description: Innovation section submit request body.
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                id:
-                  type: string
-                  description: Innovation section id.
-                  example: "1"
       responses:
         "200":
           description: Innovation section submit response.
@@ -2475,11 +2645,12 @@ paths:
       summary: Get an innovation sections list.
       operationId: v1-innovation-sections-list
       parameters:
-        - in: path
-          name: innovationId
+        - name: innovationId
+          in: path
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         "200":
           description: Success
@@ -2531,11 +2702,12 @@ paths:
       summary: Get all the shares for an innovation.
       operationId: v1-innovation-shares
       parameters:
-        - in: path
-          name: innovationId
+        - name: innovationId
+          in: path
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         "200":
           description: OK
@@ -2672,7 +2844,6 @@ paths:
         - name: innovationId
           in: path
           required: true
-          description: Innovation ID
           schema:
             type: string
             format: uuid
@@ -2726,11 +2897,12 @@ paths:
       tags:
         - Innovation Suggestions
       parameters:
-        - in: path
-          name: innovationId
+        - name: innovationId
+          in: path
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         "200":
           description: OK
@@ -2744,11 +2916,31 @@ paths:
       tags:
         - Create Innovation Suggestion
       parameters:
-        - in: path
-          name: innovationId
+        - name: innovationId
+          in: path
           required: true
           schema:
             type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                description:
+                  type: string
+                  maxLength: 2000
+                organisationUnits:
+                  type: array
+                  items:
+                    type: string
+                  minItems: 1
+              required:
+                - description
+                - organisationUnits
+              additionalProperties: false
       responses:
         "201":
           description: Creates a suggestion.
@@ -2868,15 +3060,19 @@ paths:
       tags:
         - Innovation Support
       parameters:
-        - in: path
-          name: innovationId
-          description: Unique innovation ID
+        - name: innovationId
+          in: path
           required: true
-        - in: path
-          name: supportId
+          schema:
+            type: string
+            format: uuid
+        - name: supportId
+          in: path
           required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
-        description: ""
         required: true
         content:
           application/json:
@@ -2886,17 +3082,20 @@ paths:
                 status:
                   type: string
                   enum:
-                    - SUGGESTED
                     - ENGAGING
                     - WAITING
                     - UNSUITABLE
                     - CLOSED
+                  not:
+                    enum:
+                      - SUGGESTED
                 message:
                   type: string
-                  maxLength: 400
+                  maxLength: 2000
               required:
                 - status
                 - message
+              additionalProperties: false
       responses:
         "200":
           description: Innovation ID
@@ -2917,16 +3116,18 @@ paths:
       tags:
         - "[v1] Innovation Support"
       parameters:
-        - in: path
-          name: innovationId
+        - name: innovationId
+          in: path
           required: true
           schema:
             type: string
-        - in: path
-          name: supportId
+            format: uuid
+        - name: supportId
+          in: path
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         "200":
           description: OK
@@ -2940,19 +3141,19 @@ paths:
       tags:
         - "[v1] Innovation Support"
       parameters:
-        - in: path
-          name: innovationId
-          description: Unique innovation ID
+        - name: innovationId
+          in: path
           required: true
           schema:
             type: string
-        - in: path
-          name: supportId
+            format: uuid
+        - name: supportId
+          in: path
           required: true
           schema:
             type: string
+            format: uuid
       requestBody:
-        description: ""
         required: true
         content:
           application/json:
@@ -2962,25 +3163,30 @@ paths:
                 status:
                   type: string
                   enum:
-                    - SUGGESTED
                     - ENGAGING
                     - WAITING
                     - UNSUITABLE
                     - CLOSED
                 message:
                   type: string
-                  maxLength: 400
+                  maxLength: 4000
                 accessors:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      accessorId:
-                        type: string
-                        format: uuid
-                      organisationalUnitId:
-                        type: string
-                        format: uuid
+                  oneOf:
+                    - type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          userRoleId:
+                            type: string
+                            format: uuid
+                        required:
+                          - id
+                          - userRoleId
+                        additionalProperties: false
+                      x-required: true
               required:
                 - status
                 - message
@@ -3005,11 +3211,83 @@ paths:
       tags:
         - "[v1] Innovation Support"
       parameters:
-        - in: path
-          name: innovationId
+        - name: innovationId
+          in: path
           required: true
           schema:
             type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - ENGAGING
+                    - WAITING
+                    - UNSUITABLE
+                message:
+                  type: string
+                  maxLength: 4000
+                file:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      maxLength: 100
+                    description:
+                      type: string
+                      maxLength: 500
+                    file:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          maxLength: 100
+                        name:
+                          type: string
+                          maxLength: 100
+                        size:
+                          type: number
+                          format: float
+                        extension:
+                          type: string
+                          maxLength: 4
+                      required:
+                        - id
+                        - name
+                        - size
+                        - extension
+                      additionalProperties: false
+                  required:
+                    - name
+                    - file
+                  additionalProperties: false
+                accessors:
+                  oneOf:
+                    - type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          userRoleId:
+                            type: string
+                            format: uuid
+                        required:
+                          - id
+                          - userRoleId
+                        additionalProperties: false
+                      x-required: true
+              required:
+                - status
+                - message
+              additionalProperties: false
       responses:
         "201":
           description: Creates a new innovation support request for the innovation
@@ -3022,16 +3300,12 @@ paths:
       tags:
         - "[v1] Innovation Support"
       parameters:
-        - in: path
-          name: innovationId
+        - name: innovationId
+          in: path
           required: true
           schema:
             type: string
-        - in: query
-          name: status
-          required: false
-          schema:
-            type: string
+            format: uuid
       responses:
         "200":
           description: Success
@@ -3515,16 +3789,16 @@ paths:
       parameters:
         - name: innovationId
           in: path
-          description: The innovation id.
           required: true
           schema:
             type: string
+            format: uuid
         - name: taskId
           in: path
-          description: The innovation task id.
           required: true
           schema:
             type: string
+            format: uuid
       requestBody:
         description: The innovation task data.
         required: true
@@ -3533,24 +3807,24 @@ paths:
             schema:
               type: object
               properties:
-                name:
-                  type: string
-                  description: The name of the task.
-                description:
-                  type: string
-                  description: The description of the task.
                 status:
+                  oneOf:
+                    - type: string
+                      enum:
+                        - OPEN
+                        - CANCELLED
+                      x-required: true
+                    - type: string
+                      enum:
+                        - DONE
+                        - DECLINED
+                      x-required: true
+                message:
                   type: string
-                  description: The status of the task.
-                assignee:
-                  type: string
-                  description: The assignee of the task.
-                dueDate:
-                  type: string
-                  description: The due date of the task.
-                comment:
-                  type: string
-                  description: The comment of the task.
+                  maxLength: 500
+              required:
+                - message
+              additionalProperties: false
       responses:
         "200":
           description: The innovation task has been updated.
@@ -3604,48 +3878,104 @@ paths:
         - name: skip
           in: query
           required: false
-          description: The number of records to skip.
           schema:
             type: integer
-            minimum: 0
         - name: take
           in: query
           required: false
-          description: The number of records to take.
           schema:
             type: integer
-            minimum: 1
             maximum: 100
+            default: 20
         - name: order
           in: query
           required: false
-          description: The order of the records.
           schema:
-            type: string
-        - name: status
-          in: query
-          required: false
-          description: The status of the task.
-          schema:
-            type: string
-        - name: section
-          in: query
-          required: false
-          description: The section of the task.
-          schema:
-            type: string
+            type: object
+            properties: {}
+            additionalProperties:
+              type: string
+              enum:
+                - ASC
+                - DESC
+            default:
+              default: DESC
         - name: innovationId
           in: query
           required: false
-          description: The innovation id of the task.
           schema:
             type: string
+            format: uuid
         - name: innovationName
           in: query
           required: false
-          description: The innovation name of the task.
           schema:
             type: string
+            nullable: true
+        - name: sections
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - INNOVATION_DESCRIPTION
+                - UNDERSTANDING_OF_NEEDS
+                - EVIDENCE_OF_EFFECTIVENESS
+                - MARKET_RESEARCH
+                - CURRENT_CARE_PATHWAY
+                - TESTING_WITH_USERS
+                - REGULATIONS_AND_STANDARDS
+                - INTELLECTUAL_PROPERTY
+                - REVENUE_MODEL
+                - COST_OF_INNOVATION
+                - DEPLOYMENT
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - OPEN
+                - DONE
+                - DECLINED
+                - CANCELLED
+        - name: innovationStatus
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - CREATED
+                - WAITING_NEEDS_ASSESSMENT
+                - NEEDS_ASSESSMENT
+                - IN_PROGRESS
+                - WITHDRAWN
+                - ARCHIVED
+        - name: createdByMe
+          in: query
+          required: false
+          schema:
+            type: boolean
+        - name: allTasks
+          in: query
+          required: false
+          schema:
+            type: boolean
+        - name: fields
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - notifications
       responses:
         "200":
           description: The list of innovation tasks.
@@ -3713,11 +4043,12 @@ paths:
       tags:
         - "[v1] Innovation Threads Available Recipients"
       parameters:
-        - in: path
-          name: innovationId
+        - name: innovationId
+          in: path
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         "200":
           description: Success
@@ -3733,10 +4064,10 @@ paths:
       parameters:
         - name: innovationId
           in: path
-          description: The innovation id.
           required: true
           schema:
             type: string
+            format: uuid
       requestBody:
         description: The thread details.
         required: true
@@ -3747,15 +4078,54 @@ paths:
               properties:
                 subject:
                   type: string
-                  description: The thread subject.
-                  example: Subject
+                  maxLength: 200
                 message:
                   type: string
-                  description: The thread message.
-                  example: Message
+                  maxLength: 4000
+                file:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      maxLength: 100
+                    description:
+                      type: string
+                      maxLength: 500
+                    file:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          maxLength: 100
+                        name:
+                          type: string
+                          maxLength: 100
+                        size:
+                          type: number
+                          format: float
+                        extension:
+                          type: string
+                          maxLength: 4
+                      required:
+                        - id
+                        - name
+                        - size
+                        - extension
+                      additionalProperties: false
+                  required:
+                    - name
+                    - file
+                  additionalProperties: false
+                followerUserRoleIds:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
               required:
                 - subject
                 - message
+                - followerUserRoleIds
+              additionalProperties: false
       responses:
         "200":
           description: The thread was created successfully.
@@ -4037,16 +4407,16 @@ paths:
       parameters:
         - name: innovationId
           in: path
-          description: Innovation Id
           required: true
           schema:
             type: string
+            format: uuid
         - name: threadId
           in: path
-          description: Thread Id
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         "200":
           description: Success
@@ -4087,16 +4457,16 @@ paths:
       parameters:
         - name: innovationId
           in: path
-          description: Innovation ID
           required: true
           schema:
             type: string
+            format: uuid
         - name: threadId
           in: path
-          description: Thread ID
           required: true
           schema:
             type: string
+            format: uuid
       requestBody:
         description: Message to be created.
         required: true
@@ -4107,7 +4477,44 @@ paths:
               properties:
                 message:
                   type: string
-                  description: Message to be created.
+                  maxLength: 4000
+                file:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      maxLength: 100
+                    description:
+                      type: string
+                      maxLength: 500
+                    file:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          maxLength: 100
+                        name:
+                          type: string
+                          maxLength: 100
+                        size:
+                          type: number
+                          format: float
+                        extension:
+                          type: string
+                          maxLength: 4
+                      required:
+                        - id
+                        - name
+                        - size
+                        - extension
+                      additionalProperties: false
+                  required:
+                    - name
+                    - file
+                  additionalProperties: false
+              required:
+                - message
+              additionalProperties: false
       responses:
         "200":
           description: Message created.
@@ -4255,22 +4662,22 @@ paths:
       parameters:
         - name: innovationId
           in: path
-          description: Innovation ID
           required: true
           schema:
             type: string
+            format: uuid
         - name: threadId
           in: path
-          description: Thread ID
           required: true
           schema:
             type: string
+            format: uuid
         - name: messageId
           in: path
-          description: Message ID
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         "200":
           description: Success
@@ -4305,24 +4712,23 @@ paths:
       parameters:
         - name: innovationId
           in: path
-          description: Innovation Id
           required: true
           schema:
             type: string
+            format: uuid
         - name: threadId
           in: path
-          description: Thread Id
           required: true
           schema:
             type: string
+            format: uuid
         - name: messageId
           in: path
-          description: Message Id
           required: true
           schema:
             type: string
+            format: uuid
       requestBody:
-        description: Message
         required: true
         content:
           application/json:
@@ -4331,7 +4737,10 @@ paths:
               properties:
                 message:
                   type: string
-                  description: Message
+                  maxLength: 4000
+              required:
+                - message
+              additionalProperties: false
       responses:
         "200":
           description: Success
@@ -4358,11 +4767,12 @@ paths:
       description: Get details of pending innovations transfers
       operationId: v1-innovation-transfer-check
       parameters:
-        - in: path
-          name: transferId
+        - name: transferId
+          in: path
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         "200":
           description: Ok
@@ -4382,10 +4792,25 @@ paths:
       operationId: createInnovationTransfer
       parameters: []
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                innovationId:
+                  type: string
+                  format: uuid
+                ownerToCollaborator:
+                  type: boolean
+              required:
+                - email
+                - innovationId
+                - ownerToCollaborator
+              additionalProperties: false
       responses:
         "200":
           description: Success
@@ -4424,6 +4849,7 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         "200":
           description: Success
@@ -4444,9 +4870,9 @@ paths:
         - name: transferId
           in: path
           required: true
-          description: The innovation transfer id
           schema:
             type: string
+            format: uuid
       requestBody:
         description: The innovation transfer status
         required: true
@@ -4454,6 +4880,16 @@ paths:
           application/json:
             schema:
               type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - CANCELED
+                    - DECLINED
+                    - COMPLETED
+              required:
+                - status
+              additionalProperties: false
       responses:
         "204":
           description: The innovation transfer status has been updated

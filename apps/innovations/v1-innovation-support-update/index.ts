@@ -3,7 +3,7 @@ import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { ElasticSearchDocumentUpdate, JwtDecoder } from '@innovations/shared/decorators';
 import { InnovationStatusEnum, InnovationSupportStatusEnum, ServiceRoleEnum } from '@innovations/shared/enums';
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import type { AuthorizationService } from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { CustomContextType } from '@innovations/shared/types';
@@ -58,64 +58,8 @@ export default openApi(
       description: 'Update support on innovation.',
       operationId: 'v1-innovation-support-update',
       tags: ['[v1] Innovation Support'],
-      parameters: [
-        {
-          in: 'path',
-          name: 'innovationId',
-          description: 'Unique innovation ID',
-          required: true,
-          schema: {
-            type: 'string'
-          }
-        },
-        {
-          in: 'path',
-          name: 'supportId',
-          required: true,
-          schema: {
-            type: 'string'
-          }
-        }
-      ],
-      requestBody: {
-        description: '',
-        required: true,
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                status: {
-                  type: 'string',
-                  enum: Object.values(InnovationSupportStatusEnum)
-                },
-                message: {
-                  type: 'string',
-                  maxLength: 400
-                },
-                accessors: {
-                  type: 'array',
-                  items: {
-                    type: 'object',
-                    properties: {
-                      accessorId: {
-                        type: 'string',
-                        format: 'uuid'
-                      },
-                      organisationalUnitId: {
-                        type: 'string',
-                        format: 'uuid'
-                      }
-                    }
-                  }
-                }
-              },
-              required: ['status', 'message'],
-              additionalProperties: false
-            }
-          }
-        }
-      },
+      parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
+      requestBody: SwaggerHelper.bodyJ2S(BodySchema),
       responses: {
         '200': {
           description: 'Innovation ID',

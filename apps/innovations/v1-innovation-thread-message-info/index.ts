@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import type { AuthorizationService } from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { CustomContextType } from '@innovations/shared/types';
@@ -56,35 +56,7 @@ export default openApi(
       summary: 'Get a thread message info',
       description: 'Get a thread message info',
       tags: ['[v1] Innovation Threads'],
-      parameters: [
-        {
-          name: 'innovationId',
-          in: 'path',
-          description: 'Innovation ID',
-          required: true,
-          schema: {
-            type: 'string'
-          }
-        },
-        {
-          name: 'threadId',
-          in: 'path',
-          description: 'Thread ID',
-          required: true,
-          schema: {
-            type: 'string'
-          }
-        },
-        {
-          name: 'messageId',
-          in: 'path',
-          description: 'Message ID',
-          required: true,
-          schema: {
-            type: 'string'
-          }
-        }
-      ],
+      parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       responses: {
         200: {
           description: 'Success',

@@ -3,7 +3,7 @@ import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { Audit, ElasticSearchDocumentUpdate, JwtDecoder } from '@innovations/shared/decorators';
 import { InnovationStatusEnum } from '@innovations/shared/enums';
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import type { AuthorizationService } from '@innovations/shared/services';
 import { ActionEnum, TargetEnum } from '@innovations/shared/services/integrations/audit.service';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
@@ -70,50 +70,8 @@ export default openApi(
       summary: 'Update an innovation assessment',
       description: 'Update an innovation assessment.',
       operationId: 'v1-innovation-assessment-update',
-      parameters: [
-        {
-          name: 'innovationId',
-          in: 'path',
-          description: 'Innovation ID',
-          required: true,
-          schema: {
-            type: 'string',
-            format: 'uuid'
-          }
-        },
-        {
-          name: 'assessmentId',
-          in: 'path',
-          description: 'Assessment ID',
-          required: true,
-          schema: {
-            type: 'string',
-            format: 'uuid'
-          }
-        }
-      ],
-      requestBody: {
-        description: 'Innovation assessment update request body.',
-        required: true,
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                status: {
-                  type: 'string',
-                  enum: ['APPROVED', 'REJECTED']
-                },
-                comment: {
-                  type: 'string',
-                  maxLength: 1000
-                }
-              },
-              required: ['status']
-            }
-          }
-        }
-      },
+      parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
+      requestBody: SwaggerHelper.bodyJ2S(BodySchema, { description: 'Innovation assessment update request body.' }),
       responses: {
         200: {
           description: 'Returns the updated innovation assessment.',

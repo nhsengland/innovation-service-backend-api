@@ -5,7 +5,7 @@ import { container } from '../_config';
 
 import { JwtDecoder } from '@admin/shared/decorators';
 import { ServiceRoleEnum } from '@admin/shared/enums';
-import { JoiHelper, ResponseHelper } from '@admin/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@admin/shared/helpers';
 import type { AuthorizationService } from '@admin/shared/services';
 import SHARED_SYMBOLS from '@admin/shared/services/symbols';
 import type { CustomContextType } from '@admin/shared/types';
@@ -42,25 +42,7 @@ export default openApi(V1AdminUserInfo.httpTrigger as AzureFunction, '/v1/users/
     operationId: 'v1-admin-user-info',
     description: 'Get user info.',
     tags: ['[v1] Admin Users'],
-    parameters: [
-      {
-        name: 'userIdOrEmail',
-        in: 'path',
-        required: true,
-        schema: {
-          anyOf: [
-            {
-              type: 'string',
-              format: 'uuid'
-            },
-            {
-              type: 'string',
-              format: 'email'
-            }
-          ]
-        }
-      }
-    ],
+    parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     responses: {
       200: {
         description: 'Success',

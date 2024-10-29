@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@admin/shared/decorators';
-import { JoiHelper, ResponseHelper } from '@admin/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@admin/shared/helpers';
 import type { AuthorizationService } from '@admin/shared/services';
 import type { CustomContextType } from '@admin/shared/types';
 
@@ -50,43 +50,8 @@ export default openApi(
     patch: {
       description: 'Activate an organisation unit.',
       operationId: 'v1-admin-unit-activate',
-      parameters: [
-        {
-          name: 'organisationId',
-          in: 'path',
-          description: 'The organisation id.',
-          required: true,
-          schema: {
-            type: 'string'
-          }
-        },
-        {
-          name: 'organisationUnitId',
-          in: 'path',
-          description: 'The organisation unit id.',
-          required: true,
-          schema: {
-            type: 'string'
-          }
-        }
-      ],
-      requestBody: {
-        description: 'The id of the users to unlock.',
-        required: true,
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                userIds: {
-                  type: 'string',
-                  description: 'Ids of the users to unlock.'
-                }
-              }
-            }
-          }
-        }
-      },
+      parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
+      requestBody: SwaggerHelper.bodyJ2S(BodySchema, { description: 'The id of the users to unlock.' }),
       responses: {
         '200': {
           description: 'The organisation unit has been activated.',
