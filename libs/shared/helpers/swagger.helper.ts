@@ -71,4 +71,21 @@ export class SwaggerHelper {
       }
     };
   };
+
+  /**
+   * conver joi schema for response body into a swagger schema
+   *
+   */
+  static responseJ2S = (data: Schema, options: { description: string }): OpenAPIV3.ResponseObject => {
+    const swaggerSchema = j2s(data).swagger;
+
+    return {
+      description: options.description,
+      content: {
+        'application/json': {
+          schema: swaggerSchema
+        }
+      }
+    };
+  };
 }

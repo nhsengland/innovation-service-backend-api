@@ -12,7 +12,7 @@ import { container } from '../_config';
 import type { AnnouncementsService } from '../_services/announcements.service';
 import SYMBOLS from '../_services/symbols';
 
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { QueryParamsType, QueryParamsSchema } from '../v1-me-announcements/validation.schemas';
 
 class V1MeAnnouncements {
@@ -58,26 +58,7 @@ export default openApi(V1MeAnnouncements.httpTrigger as AzureFunction, '/v1/me/a
     tags: ['[v1] Announcements'],
     parameters: SwaggerHelper.paramJ2S({ query: QueryParamsSchema }),
     responses: {
-      200: {
-        description: 'Success',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  id: { type: 'string', format: 'uuid' },
-                  title: { type: 'string' },
-                  userRoles: { type: 'array', items: { type: 'string', enum: Object.keys(ServiceRoleEnum) } },
-                  createdAt: { type: 'string', format: 'date-time' },
-                  params: { type: 'object' }
-                }
-              }
-            }
-          }
-        }
-      }
+      200: SwaggerHelper.responseJ2S(ResponseBodySchema, { description: 'Success' })
     }
   }
 });

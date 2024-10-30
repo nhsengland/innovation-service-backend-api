@@ -614,9 +614,9 @@ paths:
                   id:
                     type: string
                     format: uuid
-                    description: The innovation assessment id.
                 required:
                   - id
+                additionalProperties: false
         "400":
           description: The innovation assessment has not been created.
         "401":

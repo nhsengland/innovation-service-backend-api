@@ -303,21 +303,37 @@ paths:
                       format: uuid
                     title:
                       type: string
-                    userRoles:
-                      type: array
-                      items:
-                        type: string
-                        enum:
-                          - ADMIN
-                          - INNOVATOR
-                          - ACCESSOR
-                          - ASSESSMENT
-                          - QUALIFYING_ACCESSOR
-                    createdAt:
+                    startsAt:
                       type: string
                       format: date-time
+                    expiresAt:
+                      type: string
+                      format: date-time
+                      nullable: true
                     params:
                       type: object
+                      properties:
+                        content:
+                          type: string
+                        link:
+                          type: object
+                          properties:
+                            label:
+                              type: string
+                            url:
+                              type: string
+                          required:
+                            - label
+                            - url
+                          additionalProperties: false
+                      required:
+                        - content
+                      additionalProperties: false
+                      nullable: true
+                  required:
+                    - title
+                    - startsAt
+                  additionalProperties: false
   /v1/me:
     post:
       description: Create a new user on DB
