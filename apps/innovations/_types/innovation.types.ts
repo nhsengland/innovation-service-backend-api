@@ -8,6 +8,7 @@ import type {
   MaturityLevelCatalogueType,
   YesPartiallyNoCatalogueType
 } from '@innovations/shared/enums';
+import { JoiHelper } from '@innovations/shared/helpers';
 import type { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import type { OrganisationWithUnitsType } from '@innovations/shared/types';
 import Joi from 'joi';
@@ -191,13 +192,13 @@ export type InnovationFileTypeWithContext = InnovationFileType & {
 };
 
 export const InnovationFileSchema = Joi.object<InnovationFileType>({
-  name: Joi.string().max(100).required(),
-  description: Joi.string().max(TEXTAREA_LENGTH_LIMIT.s).optional(),
+  name: JoiHelper.AppCustomJoi().string().max(100).required(),
+  description: JoiHelper.AppCustomJoi().string().max(TEXTAREA_LENGTH_LIMIT.s).optional(),
   file: Joi.object({
-    id: Joi.string().max(100).required(),
-    name: Joi.string().max(100).required(),
+    id: JoiHelper.AppCustomJoi().string().max(100).required(),
+    name: JoiHelper.AppCustomJoi().string().max(100).required(),
     size: Joi.number().required(),
-    extension: Joi.string().max(4).required()
+    extension: JoiHelper.AppCustomJoi().string().max(4).required()
   }).required()
 });
 

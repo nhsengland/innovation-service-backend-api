@@ -48,10 +48,15 @@ type SearchInnovationListSelectType =
   | 'support.status'
   | 'support.updatedAt'
   | 'support.updatedBy'
-  | 'support.closedReason'
+  | 'support.closeReason'
   | 'owner.id'
   | 'owner.name'
   | 'owner.companyName';
+
+// In advanced search the suggestedOnly applies not to a state as the innovation list but to the suggestions as it
+// affects other innovations besides "UNASSIGNED". This should probably be changed in the future and removed and focus
+// on support statuses
+type SearchFilters = InnovationListFilters & { suggestedOnly: boolean };
 
 // NOTE: when the new flat document (IR versioning) is implemented this will not be needed
 const translations = new Map([
@@ -325,8 +330,10 @@ export class SearchService extends BaseService {
     extra: PickHandlerReturnType<typeof this.postHandlers, 'users'>
   ): Partial<InnovationListFullResponseType['support']> {
     if (isAccessorDomainContextType(domainContext)) {
-      const support = item.supports?.filter(s => s.unitId === domainContext.organisation.organisationUnit.id)[0];
-      const updatedBy = extra.users?.get(support?.updatedBy ?? '') ?? null;
+      const support = item.supports?.find(s => s.unitId === domainContext.organisation.organisationUnit.id);
+      if (!support) return null;
+
+      const updatedBy = extra.users?.get(support.updatedBy) ?? null;
       const displayName =
         // Ensuring that updatedBy is always innovator if the innovation is archived or not shared
         item.status === InnovationStatusEnum.ARCHIVED ||
@@ -339,20 +346,11 @@ export class SearchService extends BaseService {
 
       // support is handled differently to remove the nested array since it's only 1 element in this case
       return {
-        ...(fields.includes('id') && { id: support?.id ?? null }),
-        ...(fields.includes('status') && { status: support?.status ?? InnovationSupportStatusEnum.UNASSIGNED }),
-        ...(fields.includes('updatedAt') && { updatedAt: support?.updatedAt }),
+        ...(fields.includes('id') && { id: support.id }),
+        ...(fields.includes('status') && { status: support.status }),
+        ...(fields.includes('updatedAt') && { updatedAt: support.updatedAt }),
         ...(fields.includes('updatedBy') && { updatedBy: displayName }),
-        ...(fields.includes('closedReason') && {
-          closedReason:
-            support?.status === InnovationSupportStatusEnum.CLOSED
-              ? !item.shares?.some(s => s === domainContext.organisation.id)
-                ? 'STOPPED_SHARED'
-                : item.status === 'ARCHIVED'
-                  ? 'ARCHIVED'
-                  : 'CLOSED'
-              : null
-        })
+        ...(fields.includes('closeReason') && { closeReason: support.closeReason })
       };
     }
 
@@ -376,10 +374,10 @@ export class SearchService extends BaseService {
   }
 
   private readonly filtersHandlers: {
-    [k in keyof Partial<InnovationListFilters>]: (
+    [k in keyof Partial<SearchFilters>]: (
       domainContext: DomainContextType,
       builder: ElasticSearchQueryBuilder,
-      value: Required<InnovationListFilters>[k]
+      value: Required<SearchFilters>[k]
     ) => void | Promise<void>;
   } = {
     assignedToMe: this.addAssignedToMeFilter.bind(this),
@@ -422,7 +420,7 @@ export class SearchService extends BaseService {
           type: 'best_fields',
           query: search,
           fields: [...priorities, 'document.*'],
-          fuzziness: 0, // Fuzziness AUTO with highlight is causing major slowdowns, fuzziness and highlight is causing slow
+          fuzziness: 0,
           prefix_length: 2,
           tie_breaker: 0.3
           // minimum_should_match: '2<-25% 9<-3'
@@ -597,10 +595,16 @@ export class SearchService extends BaseService {
   private addSupportFilter(
     domainContext: DomainContextType,
     builder: ElasticSearchQueryBuilder,
-    supportStatuses: InnovationSupportStatusEnum[]
+    supportStatuses: (InnovationSupportStatusEnum | 'UNASSIGNED')[]
   ): void {
     if (supportStatuses.length && isAccessorDomainContextType(domainContext)) {
       const should: QueryDslQueryContainer[] = [];
+      const hasUnassigned = supportStatuses.includes('UNASSIGNED');
+
+      // This is only valid while we use UNASSIGNED as a status and in common with SUGGESTED
+      if (hasUnassigned && !supportStatuses.includes(InnovationSupportStatusEnum.SUGGESTED)) {
+        supportStatuses.push(InnovationSupportStatusEnum.SUGGESTED);
+      }
 
       should.push(
         nestedQuery(
@@ -614,7 +618,7 @@ export class SearchService extends BaseService {
         )
       );
 
-      if (supportStatuses.includes(InnovationSupportStatusEnum.UNASSIGNED)) {
+      if (hasUnassigned) {
         should.push(
           boolQuery({
             mustNot: nestedQuery('supports', {

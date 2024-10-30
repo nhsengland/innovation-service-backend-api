@@ -1,3 +1,4 @@
+import { JoiHelper } from '@innovations/shared/helpers';
 import Joi from 'joi';
 
 export type ParamsType = {
@@ -5,6 +6,6 @@ export type ParamsType = {
   evidenceId: string;
 };
 export const ParamsSchema = Joi.object<ParamsType>({
-  innovationId: Joi.string().guid().required(),
-  evidenceId: Joi.string().guid().required()
+  innovationId: JoiHelper.AppCustomJoi().string().guid().required(),
+  evidenceId: JoiHelper.AppCustomJoi().string().guid().required()
 }).required();

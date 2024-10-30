@@ -5,9 +5,9 @@ import type { EntityManager } from 'typeorm';
 
 import { ForbiddenError, NotFoundError, OrganisationErrorsEnum } from '@users/shared/errors';
 import { TestsHelper } from '@users/shared/tests';
+import { DTOsHelper } from '@users/shared/tests/helpers/dtos.helper';
 import type { OrganisationsService } from './organisations.service';
 import SYMBOLS from './symbols';
-import { DTOsHelper } from '@users/shared/tests/helpers/dtos.helper';
 
 describe('Users / _services / organisations service suite', () => {
   let sut: OrganisationsService;
@@ -52,6 +52,12 @@ describe('Users / _services / organisations service suite', () => {
           name: scenario.organisations.medTechOrg.name,
           acronym: scenario.organisations.medTechOrg.acronym,
           isActive: scenario.organisations.medTechOrg.isActive
+        },
+        {
+          id: scenario.organisations.notSharedOrg.id,
+          name: scenario.organisations.notSharedOrg.name,
+          acronym: scenario.organisations.notSharedOrg.acronym,
+          isActive: scenario.organisations.notSharedOrg.isActive
         }
       ]);
     });
@@ -113,6 +119,26 @@ describe('Users / _services / organisations service suite', () => {
               isActive: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.isActive
             }
           ]
+        },
+        {
+          id: scenario.organisations.notSharedOrg.id,
+          name: scenario.organisations.notSharedOrg.name,
+          acronym: scenario.organisations.notSharedOrg.acronym,
+          isActive: scenario.organisations.notSharedOrg.isActive,
+          organisationUnits: [
+            {
+              id: scenario.organisations.notSharedOrg.organisationUnits.notSharedOrgUnit.id,
+              name: scenario.organisations.notSharedOrg.organisationUnits.notSharedOrgUnit.name,
+              acronym: scenario.organisations.notSharedOrg.organisationUnits.notSharedOrgUnit.acronym,
+              isActive: scenario.organisations.notSharedOrg.organisationUnits.notSharedOrgUnit.isActive
+            },
+            {
+              id: scenario.organisations.notSharedOrg.organisationUnits.notSharedOrgHeavyOrgUnit.id,
+              name: scenario.organisations.notSharedOrg.organisationUnits.notSharedOrgHeavyOrgUnit.name,
+              acronym: scenario.organisations.notSharedOrg.organisationUnits.notSharedOrgHeavyOrgUnit.acronym,
+              isActive: scenario.organisations.notSharedOrg.organisationUnits.notSharedOrgHeavyOrgUnit.isActive
+            }
+          ]
         }
       ]);
     });
@@ -144,6 +170,12 @@ describe('Users / _services / organisations service suite', () => {
           name: scenario.organisations.medTechOrg.name,
           acronym: scenario.organisations.medTechOrg.acronym,
           isActive: scenario.organisations.medTechOrg.isActive
+        },
+        {
+          id: scenario.organisations.notSharedOrg.id,
+          name: scenario.organisations.notSharedOrg.name,
+          acronym: scenario.organisations.notSharedOrg.acronym,
+          isActive: scenario.organisations.notSharedOrg.isActive
         }
       ]);
     });
@@ -173,7 +205,7 @@ describe('Users / _services / organisations service suite', () => {
             isActive: true,
             userCount: 3
           }
-        ],
+        ].sort((a, b) => a.name.localeCompare(b.name)),
         isActive: true
       });
     });
@@ -201,7 +233,7 @@ describe('Users / _services / organisations service suite', () => {
             isActive: true,
             userCount: 3
           }
-        ],
+        ].sort((a, b) => a.name.localeCompare(b.name)),
         isActive: true
       });
     });
@@ -305,10 +337,10 @@ describe('Users / _services / organisations service suite', () => {
       ]);
     });
 
-    it("it should give an error if the unitId doesn't match his", async ()=> {
-      await expect(() => sut.getAccessorAndInnovations(DTOsHelper.getUserRequestContext(alice), randUuid(), em)).rejects.toThrow(
-        new ForbiddenError(OrganisationErrorsEnum.ORGANISATION_USER_FROM_OTHER_ORG)
-      );
+    it("it should give an error if the unitId doesn't match his", async () => {
+      await expect(() =>
+        sut.getAccessorAndInnovations(DTOsHelper.getUserRequestContext(alice), randUuid(), em)
+      ).rejects.toThrow(new ForbiddenError(OrganisationErrorsEnum.ORGANISATION_USER_FROM_OTHER_ORG));
     });
   });
 });

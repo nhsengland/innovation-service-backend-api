@@ -36,3 +36,4 @@ export { SupportStatusUpdateHandler } from './supports/support-status-update.han
 export { TaskCreationHandler } from './tasks/task-creation.handler';
 export { TaskUpdateHandler } from './tasks/task-update.handler';
 export { NewAnnouncementHandler } from './admin/new-announcement.handler';
+export { UserEmailAddressUpdatedHandler } from './admin/user-email-address-updated.handler';

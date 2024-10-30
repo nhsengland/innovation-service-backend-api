@@ -1,4 +1,6 @@
 import {
+  AnnouncementEntity,
+  AnnouncementUserEntity,
   InnovationEntity,
   InnovationExportRequestEntity,
   InnovationSupportEntity,
@@ -6,13 +8,10 @@ import {
   InnovationThreadEntity,
   InnovationTransferEntity,
   NotificationPreferenceEntity,
-  OrganisationUnitEntity,
   OrganisationEntity,
-  SupportKPIViewEntity,
+  OrganisationUnitEntity,
   UserEntity,
-  UserRoleEntity,
-  AnnouncementUserEntity,
-  AnnouncementEntity
+  UserRoleEntity
 } from '@notifications/shared/entities';
 import {
   AnnouncementParamsType,
@@ -44,9 +43,9 @@ import { BaseService } from './base.service';
 import { InnovationSupportLogEntity } from '@notifications/shared/entities';
 import { InnovationCollaboratorEntity } from '@notifications/shared/entities/innovation/innovation-collaborator.entity';
 import { DatesHelper } from '@notifications/shared/helpers';
+import { addToArrayValueInMap } from '@notifications/shared/helpers/misc.helper';
 import type { IdentityUserInfo, NotificationPreferences } from '@notifications/shared/types';
 import { Brackets, type EntityManager } from 'typeorm';
-import { addToArrayValueInMap } from '@notifications/shared/helpers/misc.helper';
 
 export type RecipientType = {
   roleId: string;
@@ -365,7 +364,8 @@ export class RecipientsService extends BaseService {
       .innerJoin('userRole.user', 'user')
       .where('userRole.organisation_unit_id = organisationUnit.id') // Only get the role for the organisation unit
       .andWhere('user.status != :userDeleted', { userDeleted: UserStatusEnum.DELETED }) // Filter deleted users
-      .andWhere('support.innovation_id = :innovationId', { innovationId: innovationId });
+      .andWhere('support.innovation_id = :innovationId', { innovationId: innovationId })
+      .andWhere('support.isMostRecent = 1');
 
     if (filters.supportStatus) {
       query.andWhere('support.status IN (:...supportStatus)', { supportStatus: filters.supportStatus });
@@ -417,7 +417,7 @@ export class RecipientsService extends BaseService {
         'user.identityId',
         'user.status'
       ])
-      .innerJoin('innovation.innovationSupports', 'support')
+      .innerJoin('innovation.innovationSupports', 'support', 'support.isMostRecent = 1')
       .innerJoin('support.organisationUnit', 'organisationUnit')
       .innerJoin('support.userRoles', 'userRole')
       .innerJoin('userRole.user', 'user')
@@ -783,6 +783,7 @@ export class RecipientsService extends BaseService {
       .select(['support.id', 'support.status', 'unit.id'])
       .innerJoin('support.organisationUnit', 'unit')
       .where('support.innovation_id = :innovationId', { innovationId })
+      .andWhere('support.isMostRecent = 1')
       .getMany();
 
     return supports.map(s => ({ id: s.id, status: s.status, unitId: s.organisationUnit.id }));
@@ -815,9 +816,14 @@ export class RecipientsService extends BaseService {
         'lastEngagement',
         'lastEngagement.innovationId = innovation.id'
       )
-      .leftJoin('innovation.innovationSupports', 'supports', 'supports.status IN (:...engagingStatus)', {
-        engagingStatus: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.WAITING]
-      })
+      .leftJoin(
+        'innovation.innovationSupports',
+        'supports',
+        'supports.status IN (:...engagingStatus) AND supports.isMostRecent = 1',
+        {
+          engagingStatus: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.WAITING]
+        }
+      )
       .where('innovation.status = :innovationStatus', { innovationStatus: InnovationStatusEnum.IN_PROGRESS })
       .andWhere('supports.id IS NULL')
       .andWhere(
@@ -834,21 +840,32 @@ export class RecipientsService extends BaseService {
   }
 
   /**
-   * returns the engaging supports that haven't had an interaction in n days, repeats every m days afterwards (if m is defined)
+   * returns the supports that haven't had an interaction in n days, repeats every m days afterwards (if m is defined)
    * @param days number of idle days to check (default: 90)
    * @param repeat repeat the notification every n days (if defined)
    */
-  async idleEngagingSupports(
+  async idleSupports(
     days = 90,
+    status: InnovationSupportStatusEnum[],
     repeat?: number,
     entityManager?: EntityManager
-  ): Promise<{ innovationId: string; unitId: string; supportId: string }[]> {
+  ): Promise<
+    { innovationId: string; unitId: string; supportId: string; supportStatus: InnovationSupportStatusEnum }[]
+  > {
+    if (!status.length) return [];
+
     const em = entityManager ?? this.sqlConnection.manager;
     const query = em
       .createQueryBuilder(InnovationSupportEntity, 'support')
-      .select(['support.id', 'lastActivityUpdate.innovationId', 'lastActivityUpdate.organisationUnitId'])
+      .select([
+        'support.id',
+        'support.status',
+        'lastActivityUpdate.innovationId',
+        'lastActivityUpdate.organisationUnitId'
+      ])
       .innerJoin('support.lastActivityUpdate', 'lastActivityUpdate')
-      .where('support.status = :status', { status: InnovationSupportStatusEnum.ENGAGING });
+      .where('support.status IN (:...status)', { status })
+      .andWhere('support.isMostRecent = 1');
 
     if (repeat) {
       query
@@ -861,19 +878,23 @@ export class RecipientsService extends BaseService {
     const rows = await query.getMany();
     return rows.map(row => ({
       supportId: row.id,
+      supportStatus: row.status,
       innovationId: row.lastActivityUpdate.innovationId,
       unitId: row.lastActivityUpdate.organisationUnitId
     }));
   }
 
   /**
-   * returns supports waiting for n days
+   * returns supports waiting for n days,
+   * repeats every m days afterwards (if m is defined)
    * @param days number of days to check (default: 90)
+   * @param repeat repeat the notification every n days (if defined)
    * @param entityManager optional entityManager
    * @returns idle supports
    */
   async idleWaitingSupports(
     days = 90,
+    repeat?: number,
     entityManager?: EntityManager
   ): Promise<{ innovationId: string; unitId: string; supportId: string }[]> {
     const em = entityManager ?? this.sqlConnection.manager;
@@ -883,7 +904,15 @@ export class RecipientsService extends BaseService {
       .innerJoin('support.innovation', 'innovation')
       .innerJoin('support.organisationUnit', 'unit')
       .where('support.status = :status', { status: InnovationSupportStatusEnum.WAITING })
-      .andWhere('DATEDIFF(day, support.updatedAt, GETDATE()) = :days', { days });
+      .andWhere('support.isMostRecent = 1');
+
+    if (repeat) {
+      query
+        .andWhere('DATEDIFF(day, support.updatedAt, GETDATE()) >= :days', { days })
+        .andWhere('DATEDIFF(day, support.updatedAt, GETDATE()) % :repeat = 0', { repeat });
+    } else {
+      query.andWhere('DATEDIFF(day, support.updatedAt, GETDATE()) = :days', { days });
+    }
 
     const rows = await query.getMany();
     return rows.map(row => ({
@@ -934,8 +963,13 @@ export class RecipientsService extends BaseService {
   ): Promise<Map<string, { id: string; name: string }[]>> {
     const date = DatesHelper.addWorkingDays(new Date(), -days);
     const query = this.sqlConnection
-      .createQueryBuilder(SupportKPIViewEntity, 'kpi')
-      .select(['kpi.innovationId', 'kpi.innovationName', 'kpi.organisationUnitId']);
+      .createQueryBuilder(InnovationSupportEntity, 'support')
+      .innerJoin('support.innovation', 'innovation')
+      .innerJoin('support.organisationUnit', 'organisationUnit')
+      .select(['support.id', 'innovation.id', 'innovation.name', 'organisationUnit.id'])
+      .where('support.isMostRecent = 1')
+      .andWhere('support.status = :supportStatus', { supportStatus: InnovationSupportStatusEnum.SUGGESTED })
+      .andWhere('innovation.status = :status', { status: InnovationStatusEnum.IN_PROGRESS }); // This shouldn't be required but just in case
 
     // for some unknown reason passing date shows the right query, works locally connected to the stage DB but not
     // in stage. Resorted to using the date.toISOString().split('T')[0] to get the date in the right format for the query
@@ -943,22 +977,22 @@ export class RecipientsService extends BaseService {
       // We want all dates before the date provided where the weekday is the same as the date provided
 
       // this is a hack to know the day of the week of assigned_date with 2 being Monday, Saturday and Sunday
-      const weekday = `CASE DATEPART(DW, kpi.assigned_date) WHEN 3 THEN 3 WHEN 4 THEN 4 WHEN 5 THEN 5 WHEN 6 THEN 6 ELSE 2 END`;
+      const weekday = `CASE DATEPART(DW, support.created_at) WHEN 3 THEN 3 WHEN 4 THEN 4 WHEN 5 THEN 5 WHEN 6 THEN 6 ELSE 2 END`;
       date.setHours(23, 59, 59, 999);
       query
-        .where('kpi.assigned_date <= :fullDate', { fullDate: date })
+        .andWhere('support.created_at <= :fullDate', { fullDate: date })
         .andWhere(`${weekday} = DATEPART(DW, :date)`, { date: date.toISOString().split('T')[0] });
     } else {
       // We want all dates that are the same as the date provided (or previous day if it's a weekend)
-      query.where(
-        'DATEDIFF(day, "kpi"."assigned_date", :date) = 0 OR (DATEPART(DW, :date) = 2 AND DATEDIFF(day, "kpi"."assigned_date", :date) IN (1,2))',
+      query.andWhere(
+        'DATEDIFF(day, "support"."created_at", :date) = 0 OR (DATEPART(DW, :date) = 2 AND DATEDIFF(day, "support"."created_at", :date) IN (1,2))',
         { date: date.toISOString().split('T')[0] }
       );
     }
 
     const dbResult = await query.getMany();
     return dbResult.reduce((acc, item) => {
-      addToArrayValueInMap(acc, item.organisationUnitId, { id: item.innovationId, name: item.innovationName });
+      addToArrayValueInMap(acc, item.organisationUnit.id, { id: item.innovation.id, name: item.innovation.name });
       return acc;
     }, new Map<string, { id: string; name: string }[]>());
   }
@@ -1293,7 +1327,7 @@ export class RecipientsService extends BaseService {
     const helperMap = new Map<ServiceRoleEnum, Map<string, string[]>>();
     for (const user of users) {
       if (!helperMap.has(user.userType)) helperMap.set(user.userType, new Map());
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
       const roleMap = helperMap.get(user.userType)!; // we know it exists this is a map get after set issue in typescript
       addToArrayValueInMap(roleMap, user.organisationUnit ?? 'default', user.id);
     }

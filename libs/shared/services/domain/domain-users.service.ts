@@ -36,7 +36,8 @@ export class DomainUsersService {
   async getUserInfo(
     data: { userId: string } | { identityId: string } | { email: string },
     filters?: { organisations?: boolean },
-    entityManager?: EntityManager
+    entityManager?: EntityManager,
+    options?: { forceRefresh?: boolean }
   ): Promise<{
     id: string;
     identityId: string;
@@ -157,7 +158,7 @@ export class DomainUsersService {
       });
     }
 
-    const user = await this.identityProviderService.getUserInfo(dbUser.identityId);
+    const user = await this.identityProviderService.getUserInfo(dbUser.identityId, options?.forceRefresh);
 
     return {
       id: dbUser.id,
@@ -212,11 +213,10 @@ export class DomainUsersService {
     }
 
     const dbUsers = await query.getMany();
-    // TODO: This can be changed for the Map method.
-    const identityUsers = await this.identityProviderService.getUsersList(dbUsers.map(items => items.identityId));
+    const identityUsers = await this.identityProviderService.getUsersMap(dbUsers.map(items => items.identityId));
 
     return dbUsers.map(dbUser => {
-      const identityUser = identityUsers.find(item => item.identityId === dbUser.identityId);
+      const identityUser = identityUsers.get(dbUser.identityId);
       if (!identityUser) {
         throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND, { details: { context: 'S.DU.gUL' } });
       }
@@ -293,7 +293,7 @@ export class DomainUsersService {
       } else {
         return [dbUser];
       }
-    } catch (_error) {
+    } catch {
       // As this method mimics a search, on errors, we just return an empty array.
       return [];
     }
@@ -580,7 +580,11 @@ export class DomainUsersService {
       const userInnovatorRole = dbUser.serviceRoles.find(item => item.role === ServiceRoleEnum.INNOVATOR);
 
       if (userInnovatorRole) {
-        const dbInnovations = await this.domainInnovationService.getInnovationsByOwnerId(dbUser.id, transaction);
+        const dbInnovations = await this.domainInnovationService.getInnovationsByInnovatorId(
+          dbUser.id,
+          false,
+          transaction
+        );
 
         await this.domainInnovationService.bulkUpdateCollaboratorStatusByEmail(
           transaction,

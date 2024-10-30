@@ -11,7 +11,11 @@ export type QueryParamsType = {
 export const QueryParamsSchema = Joi.object({
   status: JoiHelper.AppCustomJoi()
     .stringArray()
-    .items(Joi.string().valid(InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT, InnovationStatusEnum.NEEDS_ASSESSMENT))
+    .items(
+      JoiHelper.AppCustomJoi()
+        .string()
+        .valid(InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT, InnovationStatusEnum.NEEDS_ASSESSMENT)
+    )
     .required(),
   assignedToMe: Joi.boolean().optional().default(false)
 }).required();

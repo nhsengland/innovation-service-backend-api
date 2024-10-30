@@ -1,37 +1,38 @@
 import { InnovationCollaboratorStatusEnum } from '@innovations/shared/enums';
-import type { TypeFromArray } from '@innovations/shared/types';
+import { JoiHelper } from '@innovations/shared/helpers';
 import Joi from 'joi';
 
-const status = [
-  InnovationCollaboratorStatusEnum.ACTIVE,
-  InnovationCollaboratorStatusEnum.CANCELLED,
-  InnovationCollaboratorStatusEnum.DECLINED,
-  InnovationCollaboratorStatusEnum.LEFT,
-  InnovationCollaboratorStatusEnum.REMOVED
-] as const;
+export type CollaboratorStatusType =
+  | InnovationCollaboratorStatusEnum.ACTIVE
+  | InnovationCollaboratorStatusEnum.CANCELLED
+  | InnovationCollaboratorStatusEnum.DECLINED
+  | InnovationCollaboratorStatusEnum.LEFT
+  | InnovationCollaboratorStatusEnum.REMOVED;
 
 export type ParamsType = {
   innovationId: string;
   collaboratorId: string;
 };
 export const ParamsSchema = Joi.object<ParamsType>({
-  innovationId: Joi.string().guid().required(),
-  collaboratorId: Joi.string().guid().required()
+  innovationId: JoiHelper.AppCustomJoi().string().guid().required(),
+  collaboratorId: JoiHelper.AppCustomJoi().string().guid().required()
 }).required();
 
 export type BodyType = {
-  status?: TypeFromArray<typeof status>;
+  status?: CollaboratorStatusType;
   role?: string;
 };
 export const BodySchema = Joi.object<BodyType>({
   status: Joi.when('$collaboratorType', {
     is: 'OWNER',
-    then: Joi.string()
+    then: JoiHelper.AppCustomJoi()
+      .string()
       .valid(InnovationCollaboratorStatusEnum.CANCELLED, InnovationCollaboratorStatusEnum.REMOVED)
       .optional()
   }).when('$collaboratorType', {
     is: 'COLLABORATOR',
-    then: Joi.string()
+    then: JoiHelper.AppCustomJoi()
+      .string()
       .valid(
         InnovationCollaboratorStatusEnum.ACTIVE,
         InnovationCollaboratorStatusEnum.DECLINED,
@@ -41,7 +42,7 @@ export const BodySchema = Joi.object<BodyType>({
   }),
   role: Joi.when('$collaboratorType', {
     is: 'OWNER',
-    then: Joi.string().max(25).allow(null).optional(),
+    then: JoiHelper.AppCustomJoi().string().max(25).allow(null).optional(),
     otherwise: Joi.forbidden()
   })
 }).required();

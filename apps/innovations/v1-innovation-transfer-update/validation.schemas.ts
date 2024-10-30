@@ -1,12 +1,13 @@
 import Joi from 'joi';
 
 import { InnovationTransferStatusEnum } from '@innovations/shared/enums';
+import { JoiHelper } from '@innovations/shared/helpers';
 
 export type ParamsType = {
   transferId: string;
 };
 export const ParamsSchema = Joi.object<ParamsType>({
-  transferId: Joi.string().guid().required()
+  transferId: JoiHelper.AppCustomJoi().string().guid().required()
 }).required();
 
 export type BodyType = {
@@ -16,7 +17,8 @@ export type BodyType = {
     | InnovationTransferStatusEnum.COMPLETED;
 };
 export const BodySchema = Joi.object<BodyType>({
-  status: Joi.string()
+  status: JoiHelper.AppCustomJoi()
+    .string()
     .valid(
       InnovationTransferStatusEnum.CANCELED,
       InnovationTransferStatusEnum.DECLINED,

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { randUuid } from '@ngneat/falso';
 import { WEEK_IN_DAYS } from '@notifications/shared/constants';
 import {
@@ -33,7 +32,7 @@ import { TestsHelper } from '@notifications/shared/tests';
 import { InnovationSupportBuilder } from '@notifications/shared/tests/builders/innovation-support.builder';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import type { Role2PreferencesType } from '@notifications/shared/types';
-import type { EntityManager } from 'typeorm';
+import { In, type EntityManager } from 'typeorm';
 import { container } from '../_config';
 import type { RecipientsService } from './recipients.service';
 import { SYMBOLS } from './symbols';
@@ -320,7 +319,7 @@ describe('Notifications / _services / recipients service suite', () => {
       const shares = await sut.innovationSharedOrganisationsWithUnits(
         scenario.users.johnInnovator.innovations.johnInnovation.id
       );
-      expect(shares).toHaveLength(2);
+      expect(shares).toHaveLength(3);
       expect(shares).toMatchObject([
         {
           id: scenario.organisations.healthOrg.id,
@@ -350,6 +349,23 @@ describe('Notifications / _services / recipients service suite', () => {
               acronym: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.acronym
             }
           ]
+        },
+        {
+          id: scenario.organisations.innovTechOrg.id,
+          name: scenario.organisations.innovTechOrg.name,
+          acronym: scenario.organisations.innovTechOrg.acronym,
+          organisationUnits: [
+            {
+              id: scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.id,
+              name: scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.name,
+              acronym: scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.acronym
+            },
+            {
+              id: scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.id,
+              name: scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.name,
+              acronym: scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.acronym
+            }
+          ]
         }
       ]);
     });
@@ -375,8 +391,13 @@ describe('Notifications / _services / recipients service suite', () => {
       await new InnovationSupportBuilder(em)
         .setStatus(InnovationSupportStatusEnum.ENGAGING)
         .setInnovation(scenario.users.adamInnovator.innovations.adamInnovation.id)
+        .setMajorAssessment(scenario.users.adamInnovator.innovations.adamInnovation.assessment.id)
         .setOrganisationUnit(scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id)
         .setAccessors([scenario.users.jamieMadroxAccessor])
+        .setCreatedAndUpdatedBy(
+          scenario.users.sarahQualifyingAccessor.id,
+          scenario.users.sarahQualifyingAccessor.roles['qaRole'].id
+        )
         .save();
 
       const res = await sut.innovationAssignedRecipients(
@@ -935,9 +956,9 @@ describe('Notifications / _services / recipients service suite', () => {
     });
   });
 
-  describe('idleEngagingSupports', () => {
+  describe('idleSupports', () => {
     it('returns empty array of idle innovations if there are no innovations', async () => {
-      const res = await sut.idleEngagingSupports(30, 30, em);
+      const res = await sut.idleSupports(30, [InnovationSupportStatusEnum.ENGAGING], 30, em);
       expect(res).toHaveLength(0);
     });
 
@@ -950,7 +971,7 @@ describe('Notifications / _services / recipients service suite', () => {
         innovation: { id: innovation.id },
         organisationUnit: { id: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id }
       });
-      const res = await sut.idleEngagingSupports(6 * WEEK_IN_DAYS, 0, em);
+      const res = await sut.idleSupports(6 * WEEK_IN_DAYS, [InnovationSupportStatusEnum.ENGAGING], 0, em);
       expect(res).toHaveLength(1);
     });
 
@@ -964,7 +985,7 @@ describe('Notifications / _services / recipients service suite', () => {
         innovation: { id: innovation.id },
         organisationUnit: { id: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id }
       });
-      const res = await sut.idleEngagingSupports(30, 30, em);
+      const res = await sut.idleSupports(30, [InnovationSupportStatusEnum.ENGAGING], 30, em);
       expect(res).toHaveLength(1);
     });
 
@@ -986,7 +1007,7 @@ describe('Notifications / _services / recipients service suite', () => {
         innovation: { id: innovation.id },
         organisationUnit: { id: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id }
       });
-      const res = await sut.idleEngagingSupports(30, 30, em);
+      const res = await sut.idleSupports(30, [InnovationSupportStatusEnum.ENGAGING], 30, em);
       expect(res).toHaveLength(1);
     });
 
@@ -1008,7 +1029,7 @@ describe('Notifications / _services / recipients service suite', () => {
         innovation: { id: innovation.id },
         organisationUnit: { id: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id }
       });
-      const res = await sut.idleEngagingSupports(30, 30, em);
+      const res = await sut.idleSupports(30, [InnovationSupportStatusEnum.ENGAGING], 30, em);
       expect(res).toHaveLength(1);
     });
 
@@ -1026,14 +1047,57 @@ describe('Notifications / _services / recipients service suite', () => {
         [date30DaysAgo, innovation.id, scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id]
       );
 
-      const res = await sut.idleEngagingSupports(30, 30, em);
+      const res = await sut.idleSupports(30, [InnovationSupportStatusEnum.ENGAGING], 30, em);
       expect(res).toHaveLength(1);
+    });
+
+    it('returns innovations if last given support was 6 weeks ago (waiting)', async () => {
+      const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+      const support = innovation.supports.supportByHealthOrgAiUnit;
+      const dateSixWeeksAgo = new Date(Date.now() - 6 * WEEK_IN_DAYS * 24 * 60 * 60 * 1000);
+      await em.update(InnovationSupportEntity, { id: support.id }, { updatedAt: dateSixWeeksAgo });
+      const res = await sut.idleSupports(6 * WEEK_IN_DAYS, [InnovationSupportStatusEnum.WAITING], 0, em);
+      expect(res).toHaveLength(1);
+      expect(res[0]?.supportStatus).toBe(InnovationSupportStatusEnum.WAITING);
+    });
+
+    it('returns innovations if last given support was 6 weeks ago (waiting and engaging)', async () => {
+      const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+      const waitingSupport = innovation.supports.supportByHealthOrgAiUnit;
+      const engagingSupport = innovation.supports.supportByHealthOrgUnit;
+
+      const dateSixWeeksAgo = new Date(Date.now() - 6 * WEEK_IN_DAYS * 24 * 60 * 60 * 1000);
+      await em.update(
+        InnovationSupportEntity,
+        { id: In([waitingSupport.id, engagingSupport.id]) },
+        { updatedAt: dateSixWeeksAgo }
+      );
+      await em.delete(InnovationSupportLogEntity, {
+        innovation: { id: innovation.id },
+        organisationUnit: { id: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id }
+      });
+
+      const res = await sut.idleSupports(
+        6 * WEEK_IN_DAYS,
+        [InnovationSupportStatusEnum.WAITING, InnovationSupportStatusEnum.ENGAGING],
+        0,
+        em
+      );
+
+      expect(res).toHaveLength(2);
+      expect(res[0]?.supportStatus).toBe(InnovationSupportStatusEnum.ENGAGING);
+      expect(res[1]?.supportStatus).toBe(InnovationSupportStatusEnum.WAITING);
+    });
+
+    it('returns empty array of idle innovations if support status is passed', async () => {
+      const res = await sut.idleSupports(30, [], 0, em);
+      expect(res).toHaveLength(0);
     });
   });
 
   describe('idleWaitingSupports', () => {
     it('returns empty array of idle supports if there are no innovations', async () => {
-      const res = await sut.idleWaitingSupports(30, em);
+      const res = await sut.idleWaitingSupports(30, 0, em);
       expect(res).toHaveLength(0);
     });
 
@@ -1046,7 +1110,26 @@ describe('Notifications / _services / recipients service suite', () => {
         { id: support.id },
         { updatedAt: date30DaysAgo, status: InnovationSupportStatusEnum.WAITING }
       );
-      const res = await sut.idleWaitingSupports(30, em);
+      const res = await sut.idleWaitingSupports(30, 0, em);
+      expect(res).toMatchObject([
+        {
+          supportId: support.id,
+          innovationId: innovation.id,
+          unitId: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id
+        }
+      ]);
+    });
+
+    it('returns innovations if waiting and last updated 60 days ago with repeat interval', async () => {
+      const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+      const support = innovation.supports.supportByHealthOrgUnit;
+      const date60DaysAgo = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000);
+      await em.update(
+        InnovationSupportEntity,
+        { id: support.id },
+        { updatedAt: date60DaysAgo, status: InnovationSupportStatusEnum.WAITING }
+      );
+      const res = await sut.idleWaitingSupports(30, 30, em);
       expect(res).toMatchObject([
         {
           supportId: support.id,

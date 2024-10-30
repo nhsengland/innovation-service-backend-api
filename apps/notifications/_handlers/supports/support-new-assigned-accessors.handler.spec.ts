@@ -26,7 +26,10 @@ describe('Notifications / _handlers / support-new-assigned-accessors suite', () 
   });
 
   const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+
   const support = innovation.supports.supportByHealthOrgUnit;
+  const waitingSupport = innovation.supports.supportByHealthOrgAiUnit;
+
   const assignedAccessorsRoleIds = [
     scenario.users.aliceQualifyingAccessor.roles.qaRole.id,
     scenario.users.jamieMadroxAccessor.roles.healthAccessorRole.id
@@ -49,7 +52,8 @@ describe('Notifications / _handlers / support-new-assigned-accessors suite', () 
           supportId: support.id,
           message: message,
           newAssignedAccessorsRoleIds: assignedAccessorsRoleIds,
-          removedAssignedAccessorsRoleIds: []
+          removedAssignedAccessorsRoleIds: [],
+          changedStatus: false
         },
         recipients: innovatorRecipients,
         outputData: {
@@ -73,7 +77,8 @@ describe('Notifications / _handlers / support-new-assigned-accessors suite', () 
           supportId: support.id,
           message: message,
           newAssignedAccessorsRoleIds: assignedAccessorsRoleIds,
-          removedAssignedAccessorsRoleIds: []
+          removedAssignedAccessorsRoleIds: [],
+          changedStatus: false
         },
         recipients: innovatorRecipients,
         outputData: {
@@ -96,7 +101,8 @@ describe('Notifications / _handlers / support-new-assigned-accessors suite', () 
           supportId: support.id,
           message: message,
           newAssignedAccessorsRoleIds: assignedAccessorsRoleIds,
-          removedAssignedAccessorsRoleIds: []
+          removedAssignedAccessorsRoleIds: [],
+          changedStatus: false
         },
         recipients: assignedAccessorsRecipients,
         outputData: {
@@ -118,7 +124,8 @@ describe('Notifications / _handlers / support-new-assigned-accessors suite', () 
           supportId: support.id,
           message: message,
           newAssignedAccessorsRoleIds: assignedAccessorsRoleIds,
-          removedAssignedAccessorsRoleIds: []
+          removedAssignedAccessorsRoleIds: [],
+          changedStatus: false
         },
         recipients: assignedAccessorsRecipients,
         outputData: { innovationName: innovation.name }
@@ -137,7 +144,8 @@ describe('Notifications / _handlers / support-new-assigned-accessors suite', () 
           supportId: support.id,
           message: message,
           newAssignedAccessorsRoleIds: [assignedAccessorsRoleIds[0]!],
-          removedAssignedAccessorsRoleIds: [assignedAccessorsRoleIds[1]!]
+          removedAssignedAccessorsRoleIds: [assignedAccessorsRoleIds[1]!],
+          changedStatus: false
         },
         recipients: assignedAccessorsRecipients.filter(r => r.userId === scenario.users.jamieMadroxAccessor.id),
         outputData: { innovation_name: innovation.name }
@@ -155,9 +163,52 @@ describe('Notifications / _handlers / support-new-assigned-accessors suite', () 
           supportId: support.id,
           message: message,
           newAssignedAccessorsRoleIds: [assignedAccessorsRoleIds[0]!],
-          removedAssignedAccessorsRoleIds: [assignedAccessorsRoleIds[1]!]
+          removedAssignedAccessorsRoleIds: [assignedAccessorsRoleIds[1]!],
+          changedStatus: false
         },
         recipients: assignedAccessorsRecipients.filter(r => r.userId === scenario.users.jamieMadroxAccessor.id),
+        outputData: { innovationName: innovation.name }
+      });
+    });
+  });
+
+  describe('ST08_SUPPORT_NEW_ASSIGNED_WAITING_INNOVATION_TO_QA', () => {
+    it('should send an email to the new QA/A when a QA assignes new accessors', async () => {
+      await testEmails(SupportNewAssignedAccessorsHandler, 'ST08_SUPPORT_NEW_ASSIGNED_WAITING_INNOVATION_TO_QA', {
+        notificationPreferenceType: 'SUPPORT',
+        requestUser: DTOsHelper.getUserRequestContext(requestUser),
+        inputData: {
+          innovationId: innovation.id,
+          threadId: threadId,
+          supportId: waitingSupport.id,
+          message: message,
+          newAssignedAccessorsRoleIds: assignedAccessorsRoleIds,
+          removedAssignedAccessorsRoleIds: [],
+          changedStatus: true
+        },
+        recipients: assignedAccessorsRecipients,
+        outputData: {
+          innovation_name: innovation.name,
+          qa_name: requestUser.name
+        }
+      });
+    });
+
+    it('should send an in-app to the new QA/A when a QA assignes new accessors', async () => {
+      await testInApps(SupportNewAssignedAccessorsHandler, 'ST08_SUPPORT_NEW_ASSIGNED_WAITING_INNOVATION_TO_QA', {
+        innovationId: innovation.id,
+        context: { type: 'SUPPORT', id: waitingSupport.id },
+        requestUser: DTOsHelper.getUserRequestContext(requestUser),
+        inputData: {
+          innovationId: innovation.id,
+          threadId: threadId,
+          supportId: waitingSupport.id,
+          message: message,
+          newAssignedAccessorsRoleIds: [assignedAccessorsRoleIds[0]!],
+          removedAssignedAccessorsRoleIds: [],
+          changedStatus: true
+        },
+        recipients: assignedAccessorsRecipients.filter(r => r.userId === scenario.users.aliceQualifyingAccessor.id),
         outputData: { innovationName: innovation.name }
       });
     });

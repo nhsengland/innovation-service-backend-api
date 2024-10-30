@@ -154,33 +154,13 @@ export class StatisticsService extends BaseService {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const { count, lastSubmittedAt } = await em
-      .createQueryBuilder()
+      .createQueryBuilder(InnovationEntity, 'innovations')
       .select('count(*)', 'count')
-      .addSelect('MAX(lastSubmittedAt)', 'lastSubmittedAt')
-      .from(
-        qb =>
-          qb
-            .from(InnovationEntity, 'innovations')
-            .select('innovations.id')
-            .addSelect('MAX(innovations.submitted_at)', 'lastSubmittedAt')
-            .innerJoin('innovations.organisationShares', 'organisationShares')
-            .innerJoin('organisationShares.organisationUnits', 'organisationUnits')
-            .leftJoin( 'innovations.suggestions', 'suggestions')
-            .leftJoin(
-              'innovations.innovationSupports',
-              'innovationSupports',
-              'innovationSupports.innovation_id = innovations.id AND innovationSupports.organisation_unit_id = :organisationUnit',
-              { organisationUnit }
-            )
-            .andWhere('(innovationSupports.id IS NULL OR innovationSupports.status = :supportStatus)', {
-              supportStatus: InnovationSupportStatusEnum.UNASSIGNED
-            })
-            .andWhere('innovations.status = :status', { status: InnovationStatusEnum.IN_PROGRESS })
-            .andWhere('suggestions.suggestedUnitId = :organisationUnit', { organisationUnit })
-            .andWhere('organisationUnits.id = :organisationUnit', { organisationUnit })
-            .groupBy('innovations.id'),
-        'innovations'
-      )
+      .addSelect('MAX(innovations.submitted_at)', 'lastSubmittedAt')
+      .innerJoin('innovations.innovationSupports', 'supports')
+      .where('innovations.status = :status', { status: InnovationStatusEnum.IN_PROGRESS })
+      .andWhere('supports.status = :supportStatus', { supportStatus: InnovationSupportStatusEnum.SUGGESTED })
+      .andWhere('supports.organisation_unit_id = :organisationUnit', { organisationUnit })
       .getRawOne();
 
     return {

@@ -1173,11 +1173,12 @@ paths:
                 - engagingUnits
                 - suggestion.suggestedBy
                 - suggestion.suggestedOn
+                - support.closeReason
                 - support.id
+                - support.isShared
                 - support.status
                 - support.updatedAt
                 - support.updatedBy
-                - support.closedReason
                 - owner.id
                 - owner.name
                 - owner.companyName
@@ -2738,6 +2739,24 @@ paths:
           description: Bad Request
         "404":
           description: Not Found
+    post:
+      description: Create suggestion for an Innovation
+      operationId: v1-innovation-suggestions-create
+      tags:
+        - Create Innovation Suggestion
+      parameters:
+        - in: path
+          name: innovationId
+          required: true
+          schema:
+            type: string
+      responses:
+        "201":
+          description: Creates a suggestion.
+        "401":
+          description: Unauthorised
+        "404":
+          description: Not Found
   /v1/{innovationId}/supports/available-status:
     get:
       description: Get available status for a support
@@ -2764,7 +2783,7 @@ paths:
                     items:
                       type: string
                       enum:
-                        - UNASSIGNED
+                        - SUGGESTED
                         - ENGAGING
                         - WAITING
                         - UNSUITABLE
@@ -2868,7 +2887,7 @@ paths:
                 status:
                   type: string
                   enum:
-                    - UNASSIGNED
+                    - SUGGESTED
                     - ENGAGING
                     - WAITING
                     - UNSUITABLE
@@ -2892,45 +2911,6 @@ paths:
                     format: uuid
                 required:
                   - id
-  /v1/{innovationId}/supports:
-    post:
-      description: Create support in innovation.
-      operationId: v1-innovation-support-create
-      tags:
-        - "[v1] Innovation Support"
-      parameters:
-        - in: path
-          name: innovationId
-          required: true
-          schema:
-            type: string
-      responses:
-        "201":
-          description: Creates a new innovation support request for the innovation
-            identified by the supplied Innovation ID.
-        "401":
-          description: Unauthorised.
-    get:
-      description: Get a list with all Innovation's Supports.
-      operationId: v1-innovations-supports-list
-      tags:
-        - "[v1] Innovation Support"
-      parameters:
-        - in: path
-          name: innovationId
-          required: true
-          schema:
-            type: string
-        - in: query
-          name: status
-          required: false
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Success
-        "404":
-          description: Not found
   /v1/{innovationId}/supports/{supportId}:
     get:
       description: Get supporting information for an Innovation
@@ -2983,7 +2963,7 @@ paths:
                 status:
                   type: string
                   enum:
-                    - UNASSIGNED
+                    - SUGGESTED
                     - ENGAGING
                     - WAITING
                     - UNSUITABLE
@@ -3019,12 +2999,12 @@ paths:
                     format: uuid
                 required:
                   - id
-  /v1/{innovationId}/support-logs:
+  /v1/{innovationId}/supports:
     post:
-      description: Create support logs for an Innovation
-      operationId: v1-innovation-support-logs-create
+      description: Starts support in innovation.
+      operationId: v1-innovation-support-start
       tags:
-        - Create Innovation Support Logs
+        - "[v1] Innovation Support"
       parameters:
         - in: path
           name: innovationId
@@ -3033,12 +3013,31 @@ paths:
             type: string
       responses:
         "201":
-          description: Creates a new innovation support logs for the innovation identified
-            by the supplied Innovation ID.
+          description: Creates a new innovation support request for the innovation
+            identified by the supplied Innovation ID.
         "401":
-          description: Unauthorised
+          description: Unauthorised.
+    get:
+      description: Get a list with all Innovation's Supports.
+      operationId: v1-innovations-supports-list
+      tags:
+        - "[v1] Innovation Support"
+      parameters:
+        - in: path
+          name: innovationId
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: status
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
         "404":
-          description: Not Found
+          description: Not found
   /v1/{innovationId}/support-summary:
     get:
       operationId: v1-innovation-support-summary-list
@@ -3069,17 +3068,31 @@ paths:
                     support:
                       type: object
                       properties:
+                        id:
+                          type: string
                         status:
                           type: string
                           enum:
-                            - UNASSIGNED
+                            - SUGGESTED
                             - ENGAGING
                             - WAITING
                             - UNSUITABLE
                             - CLOSED
                         start:
                           type: string
+                          format: date-time
                         end:
+                          type: string
+                          format: date-time
+                        minStart:
+                          type: string
+                          format: date-time
+                    organisation:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        name:
                           type: string
         "400":
           description: The request is invalid.
@@ -3354,7 +3367,7 @@ paths:
                         supportStatus:
                           type: string
                           enum:
-                            - UNASSIGNED
+                            - SUGGESTED
                             - ENGAGING
                             - WAITING
                             - UNSUITABLE
@@ -4925,11 +4938,12 @@ paths:
                 - engagingUnits
                 - suggestion.suggestedBy
                 - suggestion.suggestedOn
+                - support.closeReason
                 - support.id
+                - support.isShared
                 - support.status
                 - support.updatedAt
                 - support.updatedBy
-                - support.closedReason
                 - owner.id
                 - owner.name
                 - owner.companyName

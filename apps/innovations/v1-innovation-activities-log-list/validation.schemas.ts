@@ -14,7 +14,7 @@ export type ParamsType = {
   innovationId: string;
 };
 export const ParamsSchema = Joi.object<ParamsType>({
-  innovationId: Joi.string().guid().required()
+  innovationId: JoiHelper.AppCustomJoi().string().guid().required()
 }).required();
 
 export type QueryParamsType = PaginationQueryParamsType<orderFields> & {
@@ -31,13 +31,18 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
   .append<QueryParamsType>({
     activityTypes: JoiHelper.AppCustomJoi()
       .stringArray()
-      .items(Joi.string().valid(...Object.values(ActivityTypeEnum)))
+      .items(
+        JoiHelper.AppCustomJoi()
+          .string()
+          .valid(...Object.values(ActivityTypeEnum))
+      )
       .optional(),
     dateFilters: JoiHelper.AppCustomJoi()
       .stringArrayOfObjects()
       .items(
         Joi.object({
-          field: Joi.string()
+          field: JoiHelper.AppCustomJoi()
+            .string()
             .valid(...DateFilterFieldsType)
             .required(),
           startDate: Joi.date().optional(),

@@ -2,14 +2,13 @@ import { injectable } from 'inversify';
 import Joi from 'joi';
 import type { EntityManager } from 'typeorm';
 
-import { InnovationSupportStatusEnum } from '@innovations/shared/enums';
 import { BadRequestError, GenericErrorsEnum } from '@innovations/shared/errors';
 import { DatesHelper, JoiHelper } from '@innovations/shared/helpers';
 import type { DomainContextType } from '@innovations/shared/types';
 
 import { BaseService } from './base.service';
 
-export const ValidationRules = ['checkIfSupportStatusAtDate'] as const;
+export const ValidationRules = ['checkIfSupportHadAlreadyStartedAtDate'] as const;
 export type ValidationRules = (typeof ValidationRules)[number];
 export type ValidationResult = {
   rule: ValidationRules;
@@ -21,14 +20,11 @@ export type ValidationResult = {
 export class ValidationService extends BaseService {
   // Configuration
   private readonly config = {
-    checkIfSupportStatusAtDate: {
-      handler: this.checkIfSupportStatusAtDate.bind(this),
+    checkIfSupportHadAlreadyStartedAtDate: {
+      handler: this.checkIfSupportHadAlreadyStartedAtDate.bind(this),
       joiDefinition: Joi.object({
-        supportId: Joi.string().guid().required(),
-        date: Joi.date().required(),
-        status: Joi.string()
-          .valid(...Object.values(InnovationSupportStatusEnum))
-          .required()
+        unitId: JoiHelper.AppCustomJoi().string().guid().required(),
+        date: Joi.date().required()
       }).required()
     }
   };
@@ -39,19 +35,18 @@ export class ValidationService extends BaseService {
   }
 
   /**
-   * check if the innovation support was given status on a particular date
+   * check if the support had already started on a particular date
    * @param _domainContext
-   * @param _innovationId
-   * @param data the input data (supportId, year, month, day, status)
+   * @param innovationId
+   * @param data the input data (unitId, year, month, day, status)
    * @param entityManager
    */
-  async checkIfSupportStatusAtDate(
+  async checkIfSupportHadAlreadyStartedAtDate(
     _domainContext: DomainContextType,
-    _innovationId: string,
+    innovationId: string,
     data: {
-      supportId: string;
+      unitId: string;
       date: Date;
-      status: InnovationSupportStatusEnum;
     },
     entityManager?: EntityManager
   ): Promise<ValidationResult> {
@@ -67,23 +62,24 @@ export class ValidationService extends BaseService {
     }
 
     const result = await em.query(
-      `SELECT TOP 1 1 from innovation_support
-    FOR SYSTEM_TIME ALL
-    WHERE
-    status = @0
-    AND id = @1
-    AND DATEDIFF(day, valid_from, @2) >= 0
-    AND DATEDIFF(day, valid_to, @2) <= 0`,
-      [data.status, data.supportId, dateString]
+      `SELECT MIN(started_at) as minStartedAt FROM innovation_support WHERE organisation_unit_id = @0 AND innovation_id = @1`,
+      [data.unitId, innovationId]
     );
 
-    return result.length
-      ? { rule: 'checkIfSupportStatusAtDate', valid: true }
-      : {
-          rule: 'checkIfSupportStatusAtDate',
-          valid: false,
-          details: { message: `Support status ${data.status} was not valid on ${dateString}` }
-        };
+    // Check if minStartedAt is not null
+    if (result.length && result[0].minStartedAt) {
+      const minStartedAtDate = new Date(result[0].minStartedAt);
+      minStartedAtDate.setHours(0, 0, 0, 0);
+      if (date >= minStartedAtDate) {
+        return { rule: 'checkIfSupportHadAlreadyStartedAtDate', valid: true };
+      }
+    }
+
+    return {
+      rule: 'checkIfSupportHadAlreadyStartedAtDate',
+      valid: false,
+      details: { message: `Support had not yet started on ${dateString}` }
+    };
   }
 
   /**

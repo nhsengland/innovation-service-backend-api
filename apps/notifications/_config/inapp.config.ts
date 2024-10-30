@@ -97,6 +97,10 @@ export type InAppTemplatesType = {
     innovationName: string;
     status: string;
   };
+  ST08_SUPPORT_NEW_ASSIGNED_WAITING_INNOVATION_TO_QA: {
+    innovationName: string;
+  };
+
   // Needs assessment
   NA01_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_INNOVATOR: {
     innovationName: string;
@@ -146,6 +150,10 @@ export type InAppTemplatesType = {
     innovationName: string;
     supportId: string;
     unitId: string;
+  };
+  AU11_ACCESSOR_IDLE_WAITING_SUPPORT_FOR_SIX_WEEKS: {
+    innovationName: string;
+    supportId: string;
   };
   // Automatic / Transfer
   AU08_TRANSFER_ONE_WEEK_REMINDER_EXISTING_USER: {

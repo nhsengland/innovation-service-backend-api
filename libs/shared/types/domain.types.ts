@@ -4,6 +4,7 @@ import type { ActivityEnum } from '../enums/activity.enums';
 import type { InnovationSupportLogTypeEnum, InnovationSupportStatusEnum } from '../enums/innovation.enums';
 import { ServiceRoleEnum } from '../enums/user.enums';
 import type { CurrentCatalogTypes } from '../schemas/innovation-record';
+import { JoiHelper } from '../helpers/joi.helper';
 
 export type RoleType = {
   id: string;
@@ -22,7 +23,8 @@ export type CreateRolesType =
     };
 
 export const CreateRolesSchema = Joi.object<CreateRolesType>({
-  role: Joi.string()
+  role: JoiHelper.AppCustomJoi()
+    .string()
     .valid(
       ServiceRoleEnum.ADMIN,
       ServiceRoleEnum.ASSESSMENT,
@@ -33,11 +35,16 @@ export const CreateRolesSchema = Joi.object<CreateRolesType>({
     .description('Role of the user.')
 })
   .when('.role', {
-    is: Joi.string().valid(ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR),
+    is: JoiHelper.AppCustomJoi().string().valid(ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR),
     then: Joi.object({
-      organisationId: Joi.string().guid().required().description('Id of the organisation.').required(),
+      organisationId: JoiHelper.AppCustomJoi()
+        .string()
+        .guid()
+        .required()
+        .description('Id of the organisation.')
+        .required(),
       unitIds: Joi.array()
-        .items(Joi.string().guid())
+        .items(JoiHelper.AppCustomJoi().string().guid())
         .required()
         .description('Ids of the organisation units.')
         .required()
@@ -135,17 +142,17 @@ export const isAdminDomainContextType = (value: DomainContextType): value is Adm
 
 // TODO - improve this type.
 export const DomainContextSchema = Joi.object<DomainContextType>({
-  id: Joi.string().uuid().required(),
-  identityId: Joi.string().uuid().required(),
+  id: JoiHelper.AppCustomJoi().string().uuid().required(),
+  identityId: JoiHelper.AppCustomJoi().string().uuid().required(),
   organisation: Joi.when('$currentRole.role', {
     is: ServiceRoleEnum.INNOVATOR,
     then: Joi.object({
-      id: Joi.string().uuid().required(),
-      name: Joi.string().allow('').required(),
-      acronym: Joi.string().allow(null).required(),
-      role: Joi.string().required(),
+      id: JoiHelper.AppCustomJoi().string().uuid().required(),
+      name: JoiHelper.AppCustomJoi().string().allow('').required(),
+      acronym: JoiHelper.AppCustomJoi().string().allow(null).required(),
+      role: JoiHelper.AppCustomJoi().string().required(),
       isShadow: Joi.boolean().required(),
-      size: Joi.string().allow(null).required()
+      size: JoiHelper.AppCustomJoi().string().allow(null).required()
     })
       .allow(null)
       .required()
@@ -163,18 +170,18 @@ export const DomainContextSchema = Joi.object<DomainContextType>({
     .when('$currentRole.role', {
       is: ServiceRoleEnum.ACCESSOR,
       then: Joi.object({
-        id: Joi.string().uuid().required(),
-        name: Joi.string().allow('').required(),
-        acronym: Joi.string().allow(null).required(),
-        role: Joi.string().required(),
+        id: JoiHelper.AppCustomJoi().string().uuid().required(),
+        name: JoiHelper.AppCustomJoi().string().allow('').required(),
+        acronym: JoiHelper.AppCustomJoi().string().allow(null).required(),
+        role: JoiHelper.AppCustomJoi().string().required(),
         isShadow: Joi.boolean().required(),
-        size: Joi.string().allow(null).required(),
+        size: JoiHelper.AppCustomJoi().string().allow(null).required(),
         organisationUnit: Joi.object({
-          id: Joi.string().uuid().required(),
-          name: Joi.string().required(),
-          acronym: Joi.string().required(),
+          id: JoiHelper.AppCustomJoi().string().uuid().required(),
+          name: JoiHelper.AppCustomJoi().string().required(),
+          acronym: JoiHelper.AppCustomJoi().string().required(),
           organisationUnitUser: Joi.object({
-            id: Joi.string().uuid().required()
+            id: JoiHelper.AppCustomJoi().string().uuid().required()
           }).required()
         }).required()
       })
@@ -182,25 +189,26 @@ export const DomainContextSchema = Joi.object<DomainContextType>({
     .when('$currentRole.role', {
       is: ServiceRoleEnum.QUALIFYING_ACCESSOR,
       then: Joi.object({
-        id: Joi.string().uuid().required(),
-        name: Joi.string().allow('').required(),
-        acronym: Joi.string().allow(null).required(),
-        role: Joi.string().required(),
+        id: JoiHelper.AppCustomJoi().string().uuid().required(),
+        name: JoiHelper.AppCustomJoi().string().allow('').required(),
+        acronym: JoiHelper.AppCustomJoi().string().allow(null).required(),
+        role: JoiHelper.AppCustomJoi().string().required(),
         isShadow: Joi.boolean().required(),
-        size: Joi.string().allow(null).required(),
+        size: JoiHelper.AppCustomJoi().string().allow(null).required(),
         organisationUnit: Joi.object({
-          id: Joi.string().uuid().required(),
-          name: Joi.string().required(),
-          acronym: Joi.string().required(),
+          id: JoiHelper.AppCustomJoi().string().uuid().required(),
+          name: JoiHelper.AppCustomJoi().string().required(),
+          acronym: JoiHelper.AppCustomJoi().string().required(),
           organisationUnitUser: Joi.object({
-            id: Joi.string().uuid().required()
+            id: JoiHelper.AppCustomJoi().string().uuid().required()
           }).required()
         }).required()
       })
     }),
   currentRole: Joi.object({
-    id: Joi.string().uuid().optional(),
-    role: Joi.string()
+    id: JoiHelper.AppCustomJoi().string().uuid().optional(),
+    role: JoiHelper.AppCustomJoi()
+      .string()
       .valid(...Object.values(ServiceRoleEnum), '')
       .optional()
   }).required()

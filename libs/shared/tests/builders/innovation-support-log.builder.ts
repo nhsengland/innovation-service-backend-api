@@ -25,7 +25,7 @@ export class InnovationSupportLogBuilder extends BaseBuilder {
     super(entityManager);
     this.supportLog = {
       type: InnovationSupportLogTypeEnum.STATUS_UPDATE,
-      innovationSupportStatus: InnovationSupportStatusEnum.UNASSIGNED,
+      innovationSupportStatus: InnovationSupportStatusEnum.SUGGESTED,
       description: randText({ charCount: 10 })
     };
   }

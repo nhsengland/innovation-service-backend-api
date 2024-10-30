@@ -1,12 +1,13 @@
 import Joi from 'joi';
 
 import { NotificationCategoryType, NotificationDetailType } from '@innovations/shared/enums';
+import { JoiHelper } from '@innovations/shared/helpers';
 
 export type ParamsType = {
   innovationId: string;
 };
 export const ParamsSchema = Joi.object<ParamsType>({
-  innovationId: Joi.string().guid().required()
+  innovationId: JoiHelper.AppCustomJoi().string().guid().required()
 }).required();
 
 export type BodyType = {
@@ -16,12 +17,20 @@ export type BodyType = {
   contextIds: string[];
 };
 export const BodySchema = Joi.object<BodyType>({
-  notificationIds: Joi.array().items(Joi.string().guid()).default([]),
+  notificationIds: Joi.array().items(JoiHelper.AppCustomJoi().string().guid()).default([]),
   contextTypes: Joi.array()
-    .items(Joi.string().valid(...NotificationCategoryType))
+    .items(
+      JoiHelper.AppCustomJoi()
+        .string()
+        .valid(...NotificationCategoryType)
+    )
     .default([]),
   contextDetails: Joi.array()
-    .items(Joi.string().valid(...NotificationDetailType))
+    .items(
+      JoiHelper.AppCustomJoi()
+        .string()
+        .valid(...NotificationDetailType)
+    )
     .default([]),
-  contextIds: Joi.array().items(Joi.string().guid()).default([])
+  contextIds: Joi.array().items(JoiHelper.AppCustomJoi().string().guid()).default([])
 }).required();

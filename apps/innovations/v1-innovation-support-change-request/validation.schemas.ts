@@ -2,25 +2,27 @@ import Joi from 'joi';
 
 import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
 import { InnovationSupportStatusEnum } from '@innovations/shared/enums';
+import { JoiHelper } from '@innovations/shared/helpers';
 
 export type ParamsType = {
   innovationId: string;
   supportId: string;
 };
 export const ParamsSchema = Joi.object<ParamsType>({
-  innovationId: Joi.string().guid().required(),
-  supportId: Joi.string().guid().required()
+  innovationId: JoiHelper.AppCustomJoi().string().guid().required(),
+  supportId: JoiHelper.AppCustomJoi().string().guid().required()
 }).required();
 
 export type BodyType = {
-  status: Exclude<InnovationSupportStatusEnum, 'UNASSIGNED'>;
+  status: Exclude<InnovationSupportStatusEnum, 'SUGGESTED'>;
   message: string;
 };
 
 export const BodySchema = Joi.object<BodyType>({
-  status: Joi.string()
+  status: JoiHelper.AppCustomJoi()
+    .string()
     .valid(...Object.values(InnovationSupportStatusEnum))
-    .disallow(InnovationSupportStatusEnum.UNASSIGNED)
+    .disallow(InnovationSupportStatusEnum.SUGGESTED)
     .required(),
-  message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).trim().required()
+  message: JoiHelper.AppCustomJoi().string().max(TEXTAREA_LENGTH_LIMIT.xl).required()
 }).required();

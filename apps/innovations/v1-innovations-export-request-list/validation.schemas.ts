@@ -12,7 +12,7 @@ export type ParamsType = {
   innovationId: string;
 };
 export const ParamsSchema = Joi.object<ParamsType>({
-  innovationId: Joi.string().guid().required()
+  innovationId: JoiHelper.AppCustomJoi().string().guid().required()
 }).required();
 
 export type QueryParamsType = PaginationQueryParamsType<orderFields> & {
@@ -24,7 +24,11 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
   .append<QueryParamsType>({
     statuses: JoiHelper.AppCustomJoi()
       .stringArray()
-      .items(Joi.string().valid(...Object.values(InnovationExportRequestStatusEnum)))
+      .items(
+        JoiHelper.AppCustomJoi()
+          .string()
+          .valid(...Object.values(InnovationExportRequestStatusEnum))
+      )
       .optional()
   })
   .required();

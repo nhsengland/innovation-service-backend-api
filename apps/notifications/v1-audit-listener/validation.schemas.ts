@@ -1,4 +1,5 @@
-import type { AuditEntry} from '@notifications/shared/services/integrations/audit.service';
+import { JoiHelper } from '@notifications/shared/helpers';
+import type { AuditEntry } from '@notifications/shared/services/integrations/audit.service';
 import { ActionEnum, TargetEnum } from '@notifications/shared/services/integrations/audit.service';
 import Joi from 'joi';
 
@@ -6,15 +7,17 @@ export type AuditMessageEntry = Omit<AuditEntry, 'date'> & { date: Date };
 
 export const MessageSchema = Joi.object<AuditMessageEntry>({
   date: Joi.date().required(),
-  action: Joi.string()
+  action: JoiHelper.AppCustomJoi()
+    .string()
     .allow(...Object.values(ActionEnum))
     .required(),
-  functionName: Joi.string(),
-  innovationId: Joi.string(),
-  invocationId: Joi.string(),
-  target: Joi.string()
+  functionName: JoiHelper.AppCustomJoi().string(),
+  innovationId: JoiHelper.AppCustomJoi().string(),
+  invocationId: JoiHelper.AppCustomJoi().string(),
+  target: JoiHelper.AppCustomJoi()
+    .string()
     .allow(...Object.values(TargetEnum))
     .required(),
-  targetId: Joi.string(),
-  user: Joi.string().required()
+  targetId: JoiHelper.AppCustomJoi().string(),
+  user: JoiHelper.AppCustomJoi().string().required()
 }).required();

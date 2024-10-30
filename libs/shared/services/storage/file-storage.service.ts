@@ -62,7 +62,7 @@ export class FileStorageService {
         '?' +
         query.toString()
       );
-    } catch (_error) {
+    } catch {
       // TODO: Log this here!
       throw new ServiceUnavailableError(GenericErrorsEnum.SERVICE_FILE_STORAGE_ERROR);
     }
@@ -98,7 +98,7 @@ export class FileStorageService {
       }
 
       return response;
-    } catch (_error) {
+    } catch {
       // TODO: Log this here!
       throw new ServiceUnavailableError(GenericErrorsEnum.SERVICE_FILE_STORAGE_ERROR);
     }

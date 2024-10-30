@@ -1,15 +1,22 @@
 import type { EntityManager } from 'typeorm';
-import { InnovationEntity, InnovationSupportEntity, OrganisationUnitEntity, UserRoleEntity } from '../../entities';
+import {
+  InnovationAssessmentEntity,
+  InnovationEntity,
+  InnovationSupportEntity,
+  OrganisationUnitEntity,
+  UserRoleEntity
+} from '../../entities';
 import { InnovationSupportStatusEnum } from '../../enums';
 import { BaseBuilder } from './base.builder';
 import type { TestUserType } from './user.builder';
+import { randUuid } from '@ngneat/falso';
 
 export type TestInnovationSupportType = {
   id: string;
   status: InnovationSupportStatusEnum;
   updatedAt: Date;
-  archiveSnapshot: null | { archivedAt: Date; status: InnovationSupportStatusEnum; assignedAccessors: string[] };
-  userRoles: string[]
+  userRoles: string[];
+  startedAt: Date | null;
 };
 
 export class InnovationSupportBuilder extends BaseBuilder {
@@ -18,9 +25,12 @@ export class InnovationSupportBuilder extends BaseBuilder {
   constructor(entityManager: EntityManager) {
     super(entityManager);
     this.support = InnovationSupportEntity.new({
-      status: InnovationSupportStatusEnum.UNASSIGNED,
-      archiveSnapshot: null,
-      userRoles: []
+      status: InnovationSupportStatusEnum.SUGGESTED,
+      userRoles: [],
+      createdBy: randUuid(),
+      createdByUserRole: randUuid(),
+      updatedBy: randUuid(),
+      updatedByUserRole: randUuid()
     });
   }
 
@@ -31,6 +41,11 @@ export class InnovationSupportBuilder extends BaseBuilder {
 
   setInnovation(innovationId: string): this {
     this.support.innovation = InnovationEntity.new({ id: innovationId });
+    return this;
+  }
+
+  setMajorAssessment(assessmentId: string): this {
+    this.support.majorAssessment = InnovationAssessmentEntity.new({ id: assessmentId });
     return this;
   }
 
@@ -56,17 +71,32 @@ export class InnovationSupportBuilder extends BaseBuilder {
     return this;
   }
 
+  setCreatedAndUpdatedBy(userId: string, roleId: string): this {
+    this.support.createdBy = userId;
+    this.support.createdByUserRole = roleId;
+    this.support.updatedBy = userId;
+    this.support.updatedByUserRole = roleId;
+    return this;
+  }
+
+  setStartedAt(date: Date): this {
+    this.support.startedAt = date;
+    return this;
+  }
+
   async save(): Promise<TestInnovationSupportType> {
-    const savedSupport = await this.getEntityManager()
-      .getRepository(InnovationSupportEntity)
-      .save({
-        ...this.support,
-        archiveSnapshot: {
-          archivedAt: new Date(),
-          status: this.support.status,
-          assignedAccessors: this.support.userRoles.map(r => r.id)
-        }
-      });
+    const required = ['innovation', 'organisationUnit', 'majorAssessment'] as const;
+    for (const prop of required) {
+      if (!this.support[prop]) {
+        throw new Error(`InnovationSupportBuilder::save: ${prop} is required.`);
+      }
+    }
+
+    if (this.support.status !== InnovationSupportStatusEnum.SUGGESTED && !this.support.startedAt) {
+      this.support.startedAt = new Date();
+    }
+
+    const savedSupport = await this.getEntityManager().getRepository(InnovationSupportEntity).save(this.support);
 
     const result = await this.getEntityManager()
       .createQueryBuilder(InnovationSupportEntity, 'support')
@@ -81,14 +111,8 @@ export class InnovationSupportBuilder extends BaseBuilder {
       id: result.id,
       status: result.status,
       updatedAt: result.updatedAt,
-      archiveSnapshot: result.archiveSnapshot
-        ? {
-            archivedAt: result.archiveSnapshot.archivedAt,
-            status: result.archiveSnapshot.status,
-            assignedAccessors: result.archiveSnapshot.assignedAccessors
-          }
-        : null,
-        userRoles: this.support.userRoles.map(r => r.id)
+      userRoles: this.support.userRoles.map(r => r.id),
+      startedAt: result.startedAt
     };
   }
 }

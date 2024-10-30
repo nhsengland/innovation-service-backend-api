@@ -7,12 +7,8 @@ import { JoiHelper } from '@innovations/shared/helpers';
 import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
 import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import { InnovationLocationEnum } from '../_enums/innovation.enums';
-import type {
-  InnovationListFilters} from '../_services/innovations.service';
-import {
-  DateFilterFieldsType,
-  InnovationListSelectType
-} from '../_services/innovations.service';
+import type { InnovationListFilters } from '../_services/innovations.service';
+import { DateFilterFieldsType, InnovationListSelectType } from '../_services/innovations.service';
 
 export type QueryParamsType = PaginationQueryParamsType<InnovationListSelectType & 'relevance'> &
   InnovationListFilters & {
@@ -25,17 +21,26 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
   .append<QueryParamsType>({
     careSettings: JoiHelper.AppCustomJoi()
       .stringArray()
-      .items(Joi.string().valid(...CurrentCatalogTypes.catalogCareSettings))
+      .items(
+        JoiHelper.AppCustomJoi()
+          .string()
+          .valid(...CurrentCatalogTypes.catalogCareSettings)
+      )
       .optional(),
     categories: JoiHelper.AppCustomJoi()
       .stringArray()
-      .items(Joi.string().valid(...CurrentCatalogTypes.catalogCategory))
+      .items(
+        JoiHelper.AppCustomJoi()
+          .string()
+          .valid(...CurrentCatalogTypes.catalogCategory)
+      )
       .optional(),
     dateFilters: JoiHelper.AppCustomJoi()
       .stringArrayOfObjects()
       .items(
         Joi.object({
-          field: Joi.string()
+          field: JoiHelper.AppCustomJoi()
+            .string()
             .valid(...DateFilterFieldsType)
             .required(),
           startDate: Joi.date().optional(),
@@ -43,33 +48,52 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
         })
       )
       .optional(),
-    diseasesAndConditions: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().max(100)).optional(),
-    engagingOrganisations: JoiHelper.AppCustomJoi().stringArray().items(Joi.string()).optional(),
-    engagingUnits: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().uuid()).optional(),
+    diseasesAndConditions: JoiHelper.AppCustomJoi()
+      .stringArray()
+      .items(JoiHelper.AppCustomJoi().string().max(100))
+      .optional(),
+    engagingOrganisations: JoiHelper.AppCustomJoi().stringArray().items(JoiHelper.AppCustomJoi().string()).optional(),
+    engagingUnits: JoiHelper.AppCustomJoi().stringArray().items(JoiHelper.AppCustomJoi().string().uuid()).optional(),
     fields: JoiHelper.AppCustomJoi()
       .stringArray()
-      .items(Joi.string().valid(...Object.values(InnovationListSelectType)))
+      .items(
+        JoiHelper.AppCustomJoi()
+          .string()
+          .valid(...Object.values(InnovationListSelectType))
+      )
       .min(1)
       .required(),
     groupedStatuses: JoiHelper.AppCustomJoi()
       .stringArray()
       .items(
-        Joi.string().valid(
-          ...Object.values(InnovationGroupedStatusEnum).filter(v => v !== InnovationGroupedStatusEnum.WITHDRAWN)
-        )
+        JoiHelper.AppCustomJoi()
+          .string()
+          .valid(...Object.values(InnovationGroupedStatusEnum).filter(v => v !== InnovationGroupedStatusEnum.WITHDRAWN))
       ) // withdrawn is not allowed filter except for admin
       .optional(),
     involvedAACProgrammes: JoiHelper.AppCustomJoi()
       .stringArray()
-      .items(Joi.string().valid(...CurrentCatalogTypes.catalogInvolvedAACProgrammes))
+      .items(
+        JoiHelper.AppCustomJoi()
+          .string()
+          .valid(...CurrentCatalogTypes.catalogInvolvedAACProgrammes)
+      )
       .optional(),
     keyHealthInequalities: JoiHelper.AppCustomJoi()
       .stringArray()
-      .items(Joi.string().valid(...CurrentCatalogTypes.catalogKeyHealthInequalities))
+      .items(
+        JoiHelper.AppCustomJoi()
+          .string()
+          .valid(...CurrentCatalogTypes.catalogKeyHealthInequalities)
+      )
       .optional(),
     locations: JoiHelper.AppCustomJoi()
       .stringArray()
-      .items(Joi.string().valid(...Object.values(InnovationLocationEnum)))
+      .items(
+        JoiHelper.AppCustomJoi()
+          .string()
+          .valid(...Object.values(InnovationLocationEnum))
+      )
       .optional(),
     search: JoiHelper.AppCustomJoi().decodeURIString().trim().max(TEXTAREA_LENGTH_LIMIT.xs).allow(null, '').optional()
   })
@@ -80,7 +104,7 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
       //   then: Joi.object({
       //     hasAccessThrough: JoiHelper.AppCustomJoi()
       //       .stringArray()
-      //       .items(Joi.string().valid(...HasAccessThroughKeys))
+      //       .items(JoiHelper.AppCustomJoi().string().valid(...HasAccessThroughKeys))
       //       .default(['owner', 'collaborator'])
       //       .min(1)
       //   })
@@ -100,7 +124,11 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
           suggestedOnly: Joi.boolean().optional(),
           supportStatuses: JoiHelper.AppCustomJoi()
             .stringArray()
-            .items(Joi.string().valid(InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.CLOSED))
+            .items(
+              JoiHelper.AppCustomJoi()
+                .string()
+                .valid(InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.CLOSED)
+            )
             .optional()
         })
       },
@@ -112,7 +140,11 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
           suggestedOnly: Joi.boolean().optional(),
           supportStatuses: JoiHelper.AppCustomJoi()
             .stringArray()
-            .items(Joi.string().valid(...Object.values(InnovationSupportStatusEnum)))
+            .items(
+              JoiHelper.AppCustomJoi()
+                .string()
+                .valid(...Object.values(InnovationSupportStatusEnum), 'UNASSIGNED')
+            )
             .optional()
         })
       },
@@ -121,15 +153,23 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
         then: Joi.object({
           groupedStatuses: JoiHelper.AppCustomJoi()
             .stringArray()
-            .items(Joi.string().valid(...Object.values(InnovationGroupedStatusEnum)))
+            .items(
+              JoiHelper.AppCustomJoi()
+                .string()
+                .valid(...Object.values(InnovationGroupedStatusEnum))
+            )
             .optional(),
           supportStatuses: JoiHelper.AppCustomJoi()
             .stringArray()
-            .items(Joi.string().valid(...Object.values(InnovationSupportStatusEnum)))
+            .items(
+              JoiHelper.AppCustomJoi()
+                .string()
+                .valid(...Object.values(InnovationSupportStatusEnum))
+            )
             .optional(),
           supportUnit: Joi.when('supportStatuses', {
             is: Joi.exist(),
-            then: Joi.string().uuid().required()
+            then: JoiHelper.AppCustomJoi().string().uuid().required()
           })
         })
       }

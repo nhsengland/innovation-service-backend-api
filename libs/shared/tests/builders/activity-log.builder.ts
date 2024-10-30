@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
+ 
 import type { EntityManager } from 'typeorm';
 import { BaseBuilder } from './base.builder';
 import type { ActivityEnum, ActivityTypeEnum } from '../../enums';

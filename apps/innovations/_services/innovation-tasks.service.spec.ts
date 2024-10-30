@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { container } from '../_config';
 
 import {
@@ -242,7 +241,6 @@ describe('Innovation Tasks Suite', () => {
   });
 
   describe('getTasksList', () => {
-    // TODO
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
     const innovation2 = scenario.users.adamInnovator.innovations.adamInnovation;
     const allTasks = [
@@ -974,9 +972,7 @@ describe('Innovation Tasks Suite', () => {
           },
           em
         )
-      ).rejects.toThrow(
-        new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_TASK_WITH_UNPROCESSABLE_STATUS)
-      );
+      ).rejects.toThrow(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_TASK_WITH_UNPROCESSABLE_STATUS));
     });
 
     it('should not update if task is from an QA/A', async () => {
@@ -1078,9 +1074,7 @@ describe('Innovation Tasks Suite', () => {
           },
           em
         )
-      ).rejects.toThrow(
-        new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_TASK_WITH_UNPROCESSABLE_STATUS)
-      );
+      ).rejects.toThrow(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_TASK_WITH_UNPROCESSABLE_STATUS));
     });
   });
 

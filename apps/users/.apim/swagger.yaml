@@ -350,12 +350,135 @@ paths:
       operationId: v1-me-info
       tags:
         - "[v1] Users"
-      parameters: []
+      parameters:
+        - name: forceRefresh
+          in: query
+          required: false
+          schema:
+            type: boolean
       responses:
         "200":
           description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  email:
+                    type: string
+                  displayName:
+                    type: string
+                  roles:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        role:
+                          type: string
+                          enum:
+                            - ADMIN
+                            - INNOVATOR
+                            - ACCESSOR
+                            - ASSESSMENT
+                            - QUALIFYING_ACCESSOR
+                        isActive:
+                          type: boolean
+                        organisation:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                            name:
+                              type: string
+                            acronym:
+                              type: string
+                              nullable: true
+                            organisationUnit:
+                              type: object
+                              properties:
+                                id:
+                                  type: string
+                                name:
+                                  type: string
+                                acronym:
+                                  type: string
+                  contactByEmail:
+                    type: boolean
+                  contactByPhone:
+                    type: boolean
+                  contactByPhoneTimeframe:
+                    type: string
+                    nullable: true
+                  contactDetails:
+                    type: string
+                    nullable: true
+                  phone:
+                    type: string
+                    nullable: true
+                  termsOfUseAccepted:
+                    type: boolean
+                  hasInnovationTransfers:
+                    type: boolean
+                  hasInnovationCollaborations:
+                    type: boolean
+                  hasLoginAnnouncements:
+                    type: object
+                  passwordResetAt:
+                    type: string
+                    format: date-time
+                    nullable: true
+                  firstTimeSignInAt:
+                    type: string
+                    format: date-time
+                    nullable: true
+                  organisations:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        acronym:
+                          type: string
+                          nullable: true
+                        name:
+                          type: string
+                        isShadow:
+                          type: boolean
+                        size:
+                          type: string
+                          nullable: true
+                        description:
+                          type: string
+                          nullable: true
+                        registrationNumber:
+                          type: string
+                          nullable: true
+                        organisationUnits:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              id:
+                                type: string
+                              name:
+                                type: string
+                              acronym:
+                                type: string
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
         "404":
           description: Not found
+        "500":
+          description: Internal server error
     put:
       description: User profile information update
       operationId: v1-me-update
@@ -735,6 +858,7 @@ paths:
                       - ST05_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_NEW_QA
                       - ST06_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_OLD_QA
                       - ST07_SUPPORT_STATUS_CHANGE_REQUEST
+                      - ST08_SUPPORT_NEW_ASSIGNED_WAITING_INNOVATION_TO_QA
                       - SS01_SUPPORT_SUMMARY_UPDATE_TO_INNOVATORS
                       - SS02_SUPPORT_SUMMARY_UPDATE_TO_OTHER_ENGAGING_ACCESSORS
                       - NA01_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_INNOVATOR
@@ -788,6 +912,7 @@ paths:
                       - AU08_TRANSFER_ONE_WEEK_REMINDER_EXISTING_USER
                       - AU09_TRANSFER_EXPIRED
                       - AU10_ACCESSOR_IDLE_ENGAGING_SUPPORT_FOR_SIX_WEEKS
+                      - AU11_ACCESSOR_IDLE_WAITING_SUPPORT_FOR_SIX_WEEKS
                       - SUPPORT_UPDATED
                       - PROGRESS_UPDATE_CREATED
                       - INNOVATION_RECORD_UPDATED
@@ -950,6 +1075,7 @@ paths:
                             - ST05_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_NEW_QA
                             - ST06_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_OLD_QA
                             - ST07_SUPPORT_STATUS_CHANGE_REQUEST
+                            - ST08_SUPPORT_NEW_ASSIGNED_WAITING_INNOVATION_TO_QA
                             - SS01_SUPPORT_SUMMARY_UPDATE_TO_INNOVATORS
                             - SS02_SUPPORT_SUMMARY_UPDATE_TO_OTHER_ENGAGING_ACCESSORS
                             - NA01_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_INNOVATOR
@@ -1003,6 +1129,7 @@ paths:
                             - AU08_TRANSFER_ONE_WEEK_REMINDER_EXISTING_USER
                             - AU09_TRANSFER_EXPIRED
                             - AU10_ACCESSOR_IDLE_ENGAGING_SUPPORT_FOR_SIX_WEEKS
+                            - AU11_ACCESSOR_IDLE_WAITING_SUPPORT_FOR_SIX_WEEKS
                             - SUPPORT_UPDATED
                             - PROGRESS_UPDATE_CREATED
                             - INNOVATION_RECORD_UPDATED

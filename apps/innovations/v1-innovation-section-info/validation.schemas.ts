@@ -8,8 +8,8 @@ export type ParamsType = {
   sectionKey: CurrentCatalogTypes.InnovationSections;
 };
 export const ParamsSchema = Joi.object<ParamsType>({
-  innovationId: Joi.string().guid().required(),
-  sectionKey: Joi.string()
+  innovationId: JoiHelper.AppCustomJoi().string().guid().required(),
+  sectionKey: JoiHelper.AppCustomJoi().string()
     .valid(...CurrentCatalogTypes.InnovationSections)
     .required()
 }).required();
@@ -18,5 +18,5 @@ export type QueryParamsType = {
   fields?: 'tasks'[];
 };
 export const QueryParamsSchema = Joi.object({
-  fields: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid('tasks'))
+  fields: JoiHelper.AppCustomJoi().stringArray().items(JoiHelper.AppCustomJoi().string().valid('tasks'))
 });

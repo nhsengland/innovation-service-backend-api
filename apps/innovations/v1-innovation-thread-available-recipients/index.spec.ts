@@ -48,7 +48,7 @@ const expected = [
     },
     recipients: [{ id: randUuid(), roleId: randUuid(), name: randFullName() }]
   }
-];
+].sort((a, b) => a.organisation.unit.name.localeCompare(b.organisation.unit.name));
 
 const mock = jest
   .spyOn(InnovationsService.prototype, 'getInnovationRelavantOrganisationsStatusList')

@@ -1,4 +1,5 @@
 import { ServiceRoleEnum } from '@admin/shared/enums';
+import { JoiHelper } from '@admin/shared/helpers';
 import { CreateRolesSchema, type CreateRolesType } from '@admin/shared/types';
 import Joi from 'joi';
 
@@ -6,7 +7,7 @@ export type ParamsType = {
   userId: string;
 };
 export const ParamsSchema = Joi.object<ParamsType>({
-  userId: Joi.string().guid().required()
+  userId: JoiHelper.AppCustomJoi().string().guid().required()
 }).required();
 
 export type BodyType = CreateRolesType & { role: Exclude<CreateRolesType['role'], ServiceRoleEnum.ADMIN> };

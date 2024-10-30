@@ -9,7 +9,11 @@ export type QueryParamsType = {
 export const QueryParamsSchema = Joi.object<QueryParamsType>({
   type: JoiHelper.AppCustomJoi()
     .stringArray()
-    .items(Joi.string().valid(...Object.values(AnnouncementTypeEnum)))
+    .items(
+      JoiHelper.AppCustomJoi()
+        .string()
+        .valid(...Object.values(AnnouncementTypeEnum))
+    )
     .optional(),
-  innovationId: Joi.string().guid().optional()
+  innovationId: JoiHelper.AppCustomJoi().string().guid().optional()
 });

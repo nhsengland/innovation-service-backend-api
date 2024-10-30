@@ -163,6 +163,7 @@ export type NotifierTemplatesType = {
     message: string;
     newAssignedAccessorsRoleIds: string[];
     removedAssignedAccessorsRoleIds: string[];
+    changedStatus: boolean;
   };
   [NotifierTypeEnum.SUPPORT_STATUS_CHANGE_REQUEST]: {
     innovationId: string;

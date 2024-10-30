@@ -15,7 +15,7 @@ import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 
-class V1InnovationSupportCreate {
+class V1InnovationSupportStart {
   @JwtDecoder()
   @ElasticSearchDocumentUpdate()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
@@ -33,9 +33,12 @@ class V1InnovationSupportCreate {
         .checkNotArchived()
         .checkInnovation({ status: [InnovationStatusEnum.IN_PROGRESS] })
         .verify();
-      const domainContext = auth.getContext();
 
-      const result = await innovationSupportsService.createInnovationSupport(domainContext, params.innovationId, body);
+      const result = await innovationSupportsService.startInnovationSupport(
+        auth.getContext(),
+        params.innovationId,
+        body
+      );
 
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;
@@ -46,10 +49,10 @@ class V1InnovationSupportCreate {
   }
 }
 
-export default openApi(V1InnovationSupportCreate.httpTrigger as AzureFunction, '/v1/{innovationId}/supports', {
+export default openApi(V1InnovationSupportStart.httpTrigger as AzureFunction, '/v1/{innovationId}/supports', {
   post: {
-    description: 'Create support in innovation.',
-    operationId: 'v1-innovation-support-create',
+    description: 'Starts support in innovation.',
+    operationId: 'v1-innovation-support-start',
     tags: ['[v1] Innovation Support'],
     parameters: [
       {
