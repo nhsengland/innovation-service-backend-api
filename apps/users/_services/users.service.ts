@@ -326,7 +326,9 @@ export class UsersService extends BaseService {
     }
 
     if (filters.onlyActive) {
-      query.andWhere('user.status = :userActive', { userActive: UserStatusEnum.ACTIVE });
+      query
+        .andWhere('user.status = :userActive', { userActive: UserStatusEnum.ACTIVE })
+        .andWhere('serviceRoles.isActive = :roleActive', { roleActive: true });
     }
 
     query.skip(pagination.skip).take(pagination.take);
