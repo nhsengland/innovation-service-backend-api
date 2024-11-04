@@ -8,14 +8,18 @@ import { dashboardUrl } from '../../_helpers/url.helper';
 import { RecipientsService } from '../../_services/recipients.service';
 import { NotificationsTestsHelper } from '../../_tests/notifications-test.helper';
 import { AccountCreationHandler } from './account-creation.handler';
+import * as crypto from 'crypto';
 
 describe('Notifications / _handlers / account-creation suite', () => {
-  const testsHelper = new NotificationsTestsHelper();
-  const scenario = testsHelper.getCompleteScenario();
-
   beforeAll(async () => {
     await testsHelper.init();
   });
+
+  const testsHelper = new NotificationsTestsHelper();
+  const scenario = testsHelper.getCompleteScenario();
+
+  const notificationId = crypto.randomUUID();
+  //jest.spyOn(crypto, 'randomUUID').mockImplementation(() => notificationId);
 
   describe('CA01_ACCOUNT_CREATION_OF_INNOVATOR', () => {
     it('should send an email to user who created a new innovator account', async () => {
@@ -24,7 +28,7 @@ describe('Notifications / _handlers / account-creation suite', () => {
         requestUser: DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
         recipients: [DTOsHelper.getRecipientUser(scenario.users.johnInnovator)],
         inputData: {},
-        outputData: { dashboard_url: dashboardUrl(ServiceRoleEnum.INNOVATOR) },
+        outputData: { dashboard_url: dashboardUrl(ServiceRoleEnum.INNOVATOR, notificationId) },
         options: { includeSelf: true }
       });
     });
@@ -51,7 +55,7 @@ describe('Notifications / _handlers / account-creation suite', () => {
         outputData: {
           multiple_innovations: 'no',
           innovations_name: HandlersHelper.transformIntoBullet([innovationName]),
-          dashboard_url: dashboardUrl(ServiceRoleEnum.INNOVATOR)
+          dashboard_url: dashboardUrl(ServiceRoleEnum.INNOVATOR, notificationId)
         },
         options: { includeSelf: true }
       });
@@ -76,7 +80,7 @@ describe('Notifications / _handlers / account-creation suite', () => {
         outputData: {
           multiple_innovations: 'yes',
           innovations_name: HandlersHelper.transformIntoBullet(innovationNames),
-          dashboard_url: dashboardUrl(ServiceRoleEnum.INNOVATOR)
+          dashboard_url: dashboardUrl(ServiceRoleEnum.INNOVATOR, notificationId)
         },
         options: { includeSelf: true }
       });

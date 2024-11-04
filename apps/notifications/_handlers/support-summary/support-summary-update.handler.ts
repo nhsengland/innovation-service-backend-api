@@ -7,6 +7,7 @@ import {
 } from '@notifications/shared/types';
 import { supportSummaryUrl } from '../../_helpers/url.helper';
 import { BaseHandler } from '../base.handler';
+import { randomUUID } from 'crypto';
 
 export class SupportSummaryUpdateHandler extends BaseHandler<
   NotifierTypeEnum.SUPPORT_SUMMARY_UPDATE,
@@ -40,13 +41,19 @@ export class SupportSummaryUpdateHandler extends BaseHandler<
   ): Promise<void> {
     const innovators = await this.recipientsService.getInnovationActiveOwnerAndCollaborators(innovation.id);
     const recipients = await this.recipientsService.getUsersRecipient(innovators, ServiceRoleEnum.INNOVATOR);
+    const notificationId = randomUUID();
 
     this.addEmails('SS01_SUPPORT_SUMMARY_UPDATE_TO_INNOVATORS', recipients, {
       notificationPreferenceType: 'SUPPORT',
       params: {
         innovation_name: innovation.name,
         unit_name: unit.name,
-        support_summary_update_url: supportSummaryUrl(ServiceRoleEnum.INNOVATOR, this.inputData.innovationId, unit.id)
+        support_summary_update_url: supportSummaryUrl(
+          ServiceRoleEnum.INNOVATOR,
+          this.inputData.innovationId,
+          unit.id,
+          notificationId
+        )
       }
     });
 
@@ -61,7 +68,8 @@ export class SupportSummaryUpdateHandler extends BaseHandler<
         innovationName: innovation.name,
         unitName: unit.name,
         unitId: unit.id
-      }
+      },
+      notificationId
     });
   }
 
@@ -74,6 +82,7 @@ export class SupportSummaryUpdateHandler extends BaseHandler<
         supportStatus: [InnovationSupportStatusEnum.ENGAGING]
       })
     ).filter(r => r.unitId !== unit.id);
+    const notificationId = randomUUID();
 
     this.addEmails('SS02_SUPPORT_SUMMARY_UPDATE_TO_OTHER_ENGAGING_ACCESSORS', recipients, {
       notificationPreferenceType: 'SUPPORT',
@@ -95,7 +104,8 @@ export class SupportSummaryUpdateHandler extends BaseHandler<
         innovationName: innovation.name,
         unitName: unit.name,
         unitId: unit.id
-      }
+      },
+      notificationId
     });
   }
 }

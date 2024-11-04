@@ -3,6 +3,7 @@ import { ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/en
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { innovationOverviewUrl } from '../../../_helpers/url.helper';
 import { BaseHandler } from '../../base.handler';
+import { randomUUID } from 'crypto';
 
 export class AccountDeletionHandler extends BaseHandler<
   NotifierTypeEnum.ACCOUNT_DELETION,
@@ -36,6 +37,7 @@ export class AccountDeletionHandler extends BaseHandler<
 
     if (collaborators.length > 0) {
       const recipients = await this.recipientsService.getUsersRecipient(collaborators, ServiceRoleEnum.INNOVATOR);
+      const notificationId = randomUUID();
 
       this.notify('DA01_OWNER_DELETED_ACCOUNT_WITH_PENDING_TRANSFER_TO_COLLABORATOR', recipients, {
         email: {
@@ -43,7 +45,7 @@ export class AccountDeletionHandler extends BaseHandler<
           params: {
             expiry_date: innovation.transferExpireDate ?? '',
             innovation_name: innovationInfo.name,
-            innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.INNOVATOR, innovation.id)
+            innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.INNOVATOR, innovation.id, notificationId)
           }
         },
         inApp: {
@@ -53,7 +55,8 @@ export class AccountDeletionHandler extends BaseHandler<
             detail: 'DA01_OWNER_DELETED_ACCOUNT_WITH_PENDING_TRANSFER_TO_COLLABORATOR'
           },
           innovationId: innovation.id,
-          params: { innovationName: innovationInfo.name }
+          params: { innovationName: innovationInfo.name },
+          notificationId
         }
       });
     }
@@ -73,6 +76,7 @@ export class AccountDeletionHandler extends BaseHandler<
           organisationUnit: u.unitId
         }))
       );
+      const notificationId = randomUUID();
 
       this.notify('DA02_OWNER_DELETED_ACCOUNT_WITHOUT_PENDING_TRANSFER_TO_COLLABORATOR', recipients, {
         email: {
@@ -88,7 +92,8 @@ export class AccountDeletionHandler extends BaseHandler<
             detail: 'DA02_OWNER_DELETED_ACCOUNT_WITHOUT_PENDING_TRANSFER_TO_COLLABORATOR'
           },
           innovationId: innovation.id,
-          params: { innovationName: innovationInfo.name }
+          params: { innovationName: innovationInfo.name },
+          notificationId
         }
       });
     }

@@ -5,6 +5,7 @@ import { testEmails } from '../../_helpers/tests.helper';
 import { dataSharingPreferencesUrl } from '../../_helpers/url.helper';
 import { NotificationsTestsHelper } from '../../_tests/notifications-test.helper';
 import { UnitInactivatedHandler } from './unit-inactivated.handler';
+import { randomUUID } from 'crypto';
 
 describe('Notifications / _handlers / unit-inactivated suite', () => {
   const testsHelper = new NotificationsTestsHelper();
@@ -22,6 +23,7 @@ describe('Notifications / _handlers / unit-inactivated suite', () => {
       scenario.users.johnInnovator.innovations.johnInnovation,
       scenario.users.adamInnovator.innovations.adamInnovation
     ];
+    const notificationId = randomUUID();
     it('should send an email to the innovation owners of the innovations that were completed', async () => {
       await testEmails(UnitInactivatedHandler, 'AP07_UNIT_INACTIVATED_TO_ENGAGING_INNOVATIONS', {
         inputData: { unitId: inactivatedUnit.id, completedInnovationIds: completedInnovation.map(i => i.id) },
@@ -34,7 +36,7 @@ describe('Notifications / _handlers / unit-inactivated suite', () => {
         outputData: completedInnovation.map(i => ({
           innovation_name: i.name,
           unit_name: inactivatedUnit.name,
-          support_url: dataSharingPreferencesUrl(ServiceRoleEnum.INNOVATOR, i.id)
+          support_url: dataSharingPreferencesUrl(ServiceRoleEnum.INNOVATOR, i.id, notificationId)
         }))
       });
     });

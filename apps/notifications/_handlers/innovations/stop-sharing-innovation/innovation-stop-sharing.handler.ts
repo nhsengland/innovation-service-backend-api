@@ -3,6 +3,7 @@ import { ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/en
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { dataSharingPreferencesUrl } from '../../../_helpers/url.helper';
 import { BaseHandler } from '../../base.handler';
+import { randomUUID } from 'crypto';
 
 export class InnovationStopSharingHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_STOP_SHARING,
@@ -42,6 +43,7 @@ export class InnovationStopSharingHandler extends BaseHandler<
       return;
     }
     const organisationInfo = await this.recipientsService.organisationInfo(this.inputData?.organisationId ?? '');
+    const notificationId = randomUUID();
 
     this.notify('SH04_INNOVATION_STOPPED_SHARING_WITH_INDIVIDUAL_ORG_TO_OWNER', [recipient], {
       email: {
@@ -49,7 +51,11 @@ export class InnovationStopSharingHandler extends BaseHandler<
         params: {
           innovation_name: innovation.name,
           organisation_name: organisationInfo.name,
-          data_sharing_preferences_url: dataSharingPreferencesUrl(ServiceRoleEnum.INNOVATOR, innovation.id)
+          data_sharing_preferences_url: dataSharingPreferencesUrl(
+            ServiceRoleEnum.INNOVATOR,
+            innovation.id,
+            notificationId
+          )
         },
         options: { includeSelf: true }
       },
@@ -64,7 +70,8 @@ export class InnovationStopSharingHandler extends BaseHandler<
           innovationName: innovation.name,
           organisationName: organisationInfo.name
         },
-        options: { includeSelf: true }
+        options: { includeSelf: true },
+        notificationId
       }
     });
   }
@@ -74,6 +81,7 @@ export class InnovationStopSharingHandler extends BaseHandler<
     ownerId?: string;
   }): Promise<void> {
     const assignedQAs = await this.recipientsService.getRecipientsByRoleId(this.inputData.affectedUsers?.roleIds ?? []);
+    const notificationId = randomUUID();
 
     this.notify('SH05_INNOVATION_STOPPED_SHARING_WITH_INDIVIDUAL_ORG_TO_QA_A', assignedQAs, {
       email: {
@@ -91,7 +99,8 @@ export class InnovationStopSharingHandler extends BaseHandler<
         innovationId: innovation.id,
         params: {
           innovationName: innovation.name
-        }
+        },
+        notificationId
       }
     });
   }

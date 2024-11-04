@@ -4,6 +4,7 @@ import type { DomainContextType, NotifierTemplatesType } from '@notifications/sh
 import { innovationRecordUrl } from '../../../_helpers/url.helper';
 import type { RecipientType } from '../../../_services/recipients.service';
 import { BaseHandler } from '../../base.handler';
+import { randomUUID } from 'crypto';
 
 export class ExportRequestFeedbackHandler extends BaseHandler<
   NotifierTypeEnum.EXPORT_REQUEST_FEEDBACK,
@@ -47,6 +48,7 @@ export class ExportRequestFeedbackHandler extends BaseHandler<
     recipient: RecipientType
   ): Promise<void> {
     const requestName = await this.getRequestUserName();
+    const notificationId = randomUUID();
 
     this.notify('RE02_EXPORT_REQUEST_APPROVED', [recipient], {
       email: {
@@ -54,7 +56,7 @@ export class ExportRequestFeedbackHandler extends BaseHandler<
         params: {
           innovation_name: innovation.name,
           innovator_name: requestName,
-          innovation_record_url: innovationRecordUrl(recipient.role, innovation.id)
+          innovation_record_url: innovationRecordUrl(recipient.role, innovation.id, notificationId)
         }
       },
       inApp: {
@@ -67,7 +69,8 @@ export class ExportRequestFeedbackHandler extends BaseHandler<
         params: {
           exportRequestId: this.inputData.exportRequestId,
           innovationName: innovation.name
-        }
+        },
+        notificationId
       }
     });
   }
@@ -78,6 +81,7 @@ export class ExportRequestFeedbackHandler extends BaseHandler<
     rejectReason: string
   ): Promise<void> {
     const requestName = await this.getRequestUserName();
+    const notificationId = randomUUID();
 
     this.notify('RE03_EXPORT_REQUEST_REJECTED', [recipient], {
       email: {
@@ -98,7 +102,8 @@ export class ExportRequestFeedbackHandler extends BaseHandler<
         params: {
           exportRequestId: this.inputData.exportRequestId,
           innovationName: innovation.name
-        }
+        },
+        notificationId
       }
     });
   }

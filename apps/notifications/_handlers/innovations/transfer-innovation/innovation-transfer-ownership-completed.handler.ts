@@ -1,4 +1,4 @@
-import type { NotifierTypeEnum} from '@notifications/shared/enums';
+import type { NotifierTypeEnum } from '@notifications/shared/enums';
 import { InnovationTransferStatusEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
@@ -9,6 +9,7 @@ import { container } from '../../../_config';
 import { manageInnovationUrl } from '../../../_helpers/url.helper';
 import type { RecipientType } from '../../../_services/recipients.service';
 import { BaseHandler } from '../../base.handler';
+import { randomUUID } from 'crypto';
 
 export class InnovationTransferOwnershipCompletedHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_COMPLETED,
@@ -69,6 +70,8 @@ export class InnovationTransferOwnershipCompletedHandler extends BaseHandler<
     oldOwner: RecipientType,
     newOwner: string
   ): void {
+    const notificationId = randomUUID();
+
     this.notify('TO06_TRANSFER_OWNERSHIP_ACCEPTS_PREVIOUS_OWNER', [oldOwner], {
       email: {
         notificationPreferenceType: 'INNOVATION_MANAGEMENT',
@@ -87,7 +90,8 @@ export class InnovationTransferOwnershipCompletedHandler extends BaseHandler<
         params: {
           innovationName: innovation.name,
           newInnovationOwner: newOwner
-        }
+        },
+        notificationId
       }
     });
   }
@@ -98,6 +102,8 @@ export class InnovationTransferOwnershipCompletedHandler extends BaseHandler<
     newOwner: string
   ): Promise<void> {
     const assignedQAs = await this.recipientsService.innovationAssignedRecipients(innovation.id, {});
+    const notificationId = randomUUID();
+
     this.addInApp('TO07_TRANSFER_OWNERSHIP_ACCEPTS_ASSIGNED_ACCESSORS', assignedQAs, {
       context: {
         detail: 'TO07_TRANSFER_OWNERSHIP_ACCEPTS_ASSIGNED_ACCESSORS',
@@ -109,7 +115,8 @@ export class InnovationTransferOwnershipCompletedHandler extends BaseHandler<
         innovationName: innovation.name,
         newInnovationOwnerName: newOwner,
         oldInnovationOwnerName: oldOwner
-      }
+      },
+      notificationId
     });
   }
 
@@ -120,12 +127,14 @@ export class InnovationTransferOwnershipCompletedHandler extends BaseHandler<
   ): Promise<void> {
     const targetIdentity = await this.identityProviderService.getUserInfoByEmail(targetEmail);
     const newOwner = await this.getUserName(targetIdentity?.identityId, ServiceRoleEnum.INNOVATOR);
+    const notificationId = randomUUID();
+
     this.notify('TO08_TRANSFER_OWNERSHIP_DECLINES_PREVIOUS_OWNER', [owner], {
       email: {
         notificationPreferenceType: 'INNOVATION_MANAGEMENT',
         params: {
           innovation_name: innovation.name,
-          manage_innovation_url: manageInnovationUrl(ServiceRoleEnum.INNOVATOR, innovation.id),
+          manage_innovation_url: manageInnovationUrl(ServiceRoleEnum.INNOVATOR, innovation.id, notificationId),
           new_innovation_owner: newOwner
         }
       },
@@ -138,7 +147,8 @@ export class InnovationTransferOwnershipCompletedHandler extends BaseHandler<
         innovationId: innovation.id,
         params: {
           innovationName: innovation.name
-        }
+        },
+        notificationId
       }
     });
   }
@@ -155,6 +165,8 @@ export class InnovationTransferOwnershipCompletedHandler extends BaseHandler<
     const recipient = await this.recipientsService.getUsersRecipient(targetUser, ServiceRoleEnum.INNOVATOR);
 
     if (recipient) {
+      const notificationId = randomUUID();
+
       this.notify('TO09_TRANSFER_OWNERSHIP_CANCELED_NEW_OWNER', [recipient], {
         email: {
           notificationPreferenceType: 'INNOVATION_MANAGEMENT',
@@ -173,7 +185,8 @@ export class InnovationTransferOwnershipCompletedHandler extends BaseHandler<
           params: {
             innovationName: innovation.name,
             innovationOwner: oldOwnerName
-          }
+          },
+          notificationId
         }
       });
     } else {

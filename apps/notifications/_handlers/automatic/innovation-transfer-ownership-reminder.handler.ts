@@ -1,5 +1,5 @@
 import type { Context } from '@azure/functions';
-import type { NotifierTypeEnum} from '@notifications/shared/enums';
+import type { NotifierTypeEnum } from '@notifications/shared/enums';
 import { ServiceRoleEnum } from '@notifications/shared/enums';
 import type { IdentityProviderService } from '@notifications/shared/services';
 import SHARED_SYMBOLS from '@notifications/shared/services/symbols';
@@ -9,6 +9,7 @@ import { container } from '../../_config';
 
 import { createAccountUrl, dashboardUrl } from '../../_helpers/url.helper';
 import { BaseHandler } from '../base.handler';
+import { randomUUID } from 'crypto';
 
 export class InnovationTransferOwnershipReminderHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_REMINDER,
@@ -42,12 +43,14 @@ export class InnovationTransferOwnershipReminderHandler extends BaseHandler<
         const recipient = await this.recipientsService.getUsersRecipient(userId, ServiceRoleEnum.INNOVATOR);
 
         if (recipient) {
+          const notificationId = randomUUID();
+
           this.notify('AU08_TRANSFER_ONE_WEEK_REMINDER_EXISTING_USER', [recipient], {
             email: {
               notificationPreferenceType: 'AUTOMATIC',
               params: {
                 innovation_name: this.inputData.innovationName,
-                dashboard_url: dashboardUrl(ServiceRoleEnum.INNOVATOR)
+                dashboard_url: dashboardUrl(ServiceRoleEnum.INNOVATOR, notificationId)
               }
             },
             inApp: {
@@ -59,7 +62,8 @@ export class InnovationTransferOwnershipReminderHandler extends BaseHandler<
               innovationId: this.inputData.innovationId,
               params: {
                 innovationName: this.inputData.innovationName
-              }
+              },
+              notificationId
             }
           });
         }

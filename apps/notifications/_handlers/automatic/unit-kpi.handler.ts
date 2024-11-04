@@ -5,6 +5,7 @@ import type { Context } from '@azure/functions';
 import { innovationOverviewUrl } from '../../_helpers/url.helper';
 import type { RecipientType } from '../../_services/recipients.service';
 import { BaseHandler } from '../base.handler';
+import { randomUUID } from 'crypto';
 
 export class UnitKPIHandler extends BaseHandler<
   NotifierTypeEnum.UNIT_KPI,
@@ -48,13 +49,15 @@ export class UnitKPIHandler extends BaseHandler<
       const qas = this.unitQAs.get(unitId) ?? [];
 
       for (const innovation of innovations) {
+        const notificationId = randomUUID();
+
         this.notify(templateId, qas, {
           email: {
             templateId: templateId,
             notificationPreferenceType: 'AUTOMATIC',
             params: {
               innovation_name: innovation.name,
-              innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, innovation.id)
+              innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, innovation.id, notificationId)
             }
           },
           inApp: {
@@ -66,7 +69,8 @@ export class UnitKPIHandler extends BaseHandler<
             },
             params: {
               innovationName: innovation.name
-            }
+            },
+            notificationId
           }
         });
       }

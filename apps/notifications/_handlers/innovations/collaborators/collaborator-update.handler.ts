@@ -3,6 +3,7 @@ import { InnovationCollaboratorStatusEnum, ServiceRoleEnum, type NotifierTypeEnu
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { manageCollaboratorsUrl } from '../../../_helpers/url.helper';
 import { BaseHandler } from '../../base.handler';
+import { randomUUID } from 'crypto';
 
 export class CollaboratorUpdateHandler extends BaseHandler<
   NotifierTypeEnum.COLLABORATOR_UPDATE,
@@ -55,6 +56,8 @@ export class CollaboratorUpdateHandler extends BaseHandler<
     const recipient = await this.recipientsService.getUsersRecipient(collaborator.userId, ServiceRoleEnum.INNOVATOR);
 
     if (collaborator.userId && recipient) {
+      const notificationId = randomUUID();
+
       this.notify('MC03_COLLABORATOR_UPDATE_CANCEL_INVITE', [recipient], {
         email: {
           notificationPreferenceType: 'INNOVATION_MANAGEMENT',
@@ -71,7 +74,8 @@ export class CollaboratorUpdateHandler extends BaseHandler<
             collaboratorId: collaborator.collaboratorId,
             innovationName: innovation.name,
             requestUserName: requestUserName
-          }
+          },
+          notificationId
         }
       });
     } else {
@@ -89,13 +93,15 @@ export class CollaboratorUpdateHandler extends BaseHandler<
     const owner = await this.recipientsService.getUsersRecipient(innovation.ownerId, ServiceRoleEnum.INNOVATOR);
 
     if (owner) {
+      const notificationId = randomUUID();
+
       this.notify('MC04_COLLABORATOR_UPDATE_ACCEPTS_INVITE', [owner], {
         email: {
           notificationPreferenceType: 'INNOVATION_MANAGEMENT',
           params: {
             innovation_name: innovation.name,
             innovator_name: requestUserName,
-            manage_collaborators_url: manageCollaboratorsUrl(innovation.id)
+            manage_collaborators_url: manageCollaboratorsUrl(innovation.id, notificationId)
           }
         },
         inApp: {
@@ -109,7 +115,8 @@ export class CollaboratorUpdateHandler extends BaseHandler<
             collaboratorId: this.inputData.collaborator.id,
             innovationName: innovation.name,
             requestUserName: requestUserName
-          }
+          },
+          notificationId
         }
       });
     }
@@ -122,13 +129,15 @@ export class CollaboratorUpdateHandler extends BaseHandler<
     const owner = await this.recipientsService.getUsersRecipient(innovation.ownerId, ServiceRoleEnum.INNOVATOR);
 
     if (owner) {
+      const notificationId = randomUUID();
+
       this.notify('MC05_COLLABORATOR_UPDATE_DECLINES_INVITE', [owner], {
         email: {
           notificationPreferenceType: 'INNOVATION_MANAGEMENT',
           params: {
             innovation_name: innovation.name,
             innovator_name: requestUserName,
-            manage_collaborators_url: manageCollaboratorsUrl(innovation.id)
+            manage_collaborators_url: manageCollaboratorsUrl(innovation.id, notificationId)
           }
         },
         inApp: {
@@ -142,7 +151,8 @@ export class CollaboratorUpdateHandler extends BaseHandler<
             collaboratorId: this.inputData.collaborator.id,
             innovationName: innovation.name,
             requestUserName: requestUserName
-          }
+          },
+          notificationId
         }
       });
     }
@@ -156,6 +166,8 @@ export class CollaboratorUpdateHandler extends BaseHandler<
     const recipient = await this.recipientsService.getUsersRecipient(collaborator.userId, ServiceRoleEnum.INNOVATOR);
 
     if (recipient) {
+      const notificationId = randomUUID();
+
       this.notify('MC06_COLLABORATOR_UPDATE_REMOVED_COLLABORATOR', [recipient], {
         email: {
           notificationPreferenceType: 'INNOVATION_MANAGEMENT',
@@ -172,7 +184,8 @@ export class CollaboratorUpdateHandler extends BaseHandler<
             collaboratorId: this.inputData.collaborator.id,
             innovationName: innovation.name,
             requestUserName: requestUserName
-          }
+          },
+          notificationId
         }
       });
     }
@@ -184,6 +197,7 @@ export class CollaboratorUpdateHandler extends BaseHandler<
   ): Promise<void> {
     const innovators = await this.recipientsService.getInnovationActiveOwnerAndCollaborators(innovation.id);
     const recipients = await this.recipientsService.getUsersRecipient(innovators, ServiceRoleEnum.INNOVATOR);
+    const notificationId = randomUUID();
 
     this.notify('MC07_COLLABORATOR_UPDATE_COLLABORATOR_LEFT_TO_INNOVATORS', recipients, {
       email: {
@@ -191,7 +205,7 @@ export class CollaboratorUpdateHandler extends BaseHandler<
         params: {
           innovation_name: innovation.name,
           innovator_name: requestUserName,
-          manage_collaborators_url: manageCollaboratorsUrl(innovation.id)
+          manage_collaborators_url: manageCollaboratorsUrl(innovation.id, notificationId)
         }
       },
       inApp: {
@@ -205,7 +219,8 @@ export class CollaboratorUpdateHandler extends BaseHandler<
           collaboratorId: this.inputData.collaborator.id,
           innovationName: innovation.name,
           requestUserName: requestUserName
-        }
+        },
+        notificationId
       }
     });
   }
@@ -218,6 +233,8 @@ export class CollaboratorUpdateHandler extends BaseHandler<
     const collaborator = await this.recipientsService.getUsersRecipient(this.requestUser.id, ServiceRoleEnum.INNOVATOR);
 
     if (collaborator) {
+      const notificationId = randomUUID();
+
       this.notify('MC08_COLLABORATOR_UPDATE_COLLABORATOR_LEFT_TO_SELF', [collaborator], {
         email: {
           notificationPreferenceType: 'INNOVATION_MANAGEMENT',
@@ -235,7 +252,8 @@ export class CollaboratorUpdateHandler extends BaseHandler<
             collaboratorId: this.inputData.collaborator.id,
             innovationName: innovation.name
           },
-          options: { includeSelf: true }
+          options: { includeSelf: true },
+          notificationId
         }
       });
     }

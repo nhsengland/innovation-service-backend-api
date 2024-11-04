@@ -1,4 +1,4 @@
-import type { NotifierTypeEnum} from '@notifications/shared/enums';
+import type { NotifierTypeEnum } from '@notifications/shared/enums';
 import { InnovationTaskStatusEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import {
   isInnovatorDomainContextType,
@@ -10,6 +10,7 @@ import type { Context } from '@azure/functions';
 import { taskUrl, threadUrl } from '../../_helpers/url.helper';
 import type { RecipientType } from '../../_services/recipients.service';
 import { BaseHandler } from '../base.handler';
+import { randomUUID } from 'crypto';
 
 export class TaskUpdateHandler extends BaseHandler<
   NotifierTypeEnum.TASK_UPDATE,
@@ -69,6 +70,7 @@ export class TaskUpdateHandler extends BaseHandler<
     innovators: RecipientType[]
   ): Promise<void> {
     const taskStatus = this.translateStatus(this.inputData.task.status);
+    const notificationId = randomUUID();
 
     this.notify('TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS', innovators, {
       email: {
@@ -77,7 +79,7 @@ export class TaskUpdateHandler extends BaseHandler<
           innovation_name: innovation.name,
           innovator_name: await this.getRequestUserName(),
           task_status: taskStatus,
-          message_url: threadUrl(ServiceRoleEnum.INNOVATOR, innovation.id, this.inputData.threadId)
+          message_url: threadUrl(ServiceRoleEnum.INNOVATOR, innovation.id, this.inputData.threadId, notificationId)
         }
       },
       inApp: {
@@ -93,7 +95,8 @@ export class TaskUpdateHandler extends BaseHandler<
           status: taskStatus,
           messageId: this.inputData.messageId,
           threadId: this.inputData.threadId
-        }
+        },
+        notificationId
       }
     });
   }
@@ -102,6 +105,8 @@ export class TaskUpdateHandler extends BaseHandler<
     innovation: { id: string; name: string },
     recipient: RecipientType
   ): Promise<void> {
+    const notificationId = randomUUID();
+
     this.notify('TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT', [recipient], {
       email: {
         notificationPreferenceType: 'TASK',
@@ -109,8 +114,8 @@ export class TaskUpdateHandler extends BaseHandler<
           innovation_name: innovation.name,
           innovator_name: await this.getRequestUserName(),
           message: this.inputData.message,
-          message_url: threadUrl(recipient.role, innovation.id, this.inputData.threadId),
-          task_url: taskUrl(recipient.role, innovation.id, this.inputData.task.id)
+          message_url: threadUrl(recipient.role, innovation.id, this.inputData.threadId, notificationId),
+          task_url: taskUrl(recipient.role, innovation.id, this.inputData.task.id, notificationId)
         }
       },
       inApp: {
@@ -125,7 +130,8 @@ export class TaskUpdateHandler extends BaseHandler<
           innovationName: innovation.name,
           messageId: this.inputData.messageId,
           threadId: this.inputData.threadId
-        }
+        },
+        notificationId
       }
     });
   }
@@ -134,6 +140,8 @@ export class TaskUpdateHandler extends BaseHandler<
     innovation: { id: string; name: string },
     recipient: RecipientType
   ): Promise<void> {
+    const notificationId = randomUUID();
+
     this.notify('TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT', [recipient], {
       email: {
         notificationPreferenceType: 'TASK',
@@ -141,7 +149,7 @@ export class TaskUpdateHandler extends BaseHandler<
           innovation_name: innovation.name,
           innovator_name: await this.getRequestUserName(),
           message: this.inputData.message,
-          message_url: threadUrl(recipient.role, innovation.id, this.inputData.threadId)
+          message_url: threadUrl(recipient.role, innovation.id, this.inputData.threadId, notificationId)
         }
       },
       inApp: {
@@ -156,7 +164,8 @@ export class TaskUpdateHandler extends BaseHandler<
           innovationName: innovation.name,
           messageId: this.inputData.messageId,
           threadId: this.inputData.threadId
-        }
+        },
+        notificationId
       }
     });
   }
@@ -165,6 +174,8 @@ export class TaskUpdateHandler extends BaseHandler<
     innovation: { id: string; name: string },
     innovators: RecipientType[]
   ): Promise<void> {
+    const notificationId = randomUUID();
+
     this.notify('TA05_TASK_CANCELLED_TO_INNOVATOR', innovators, {
       email: {
         notificationPreferenceType: 'TASK',
@@ -173,7 +184,7 @@ export class TaskUpdateHandler extends BaseHandler<
           unit_name: this.getRequestUnitName(),
           innovation_name: innovation.name,
           message: this.inputData.message,
-          message_url: threadUrl(ServiceRoleEnum.INNOVATOR, innovation.id, this.inputData.threadId)
+          message_url: threadUrl(ServiceRoleEnum.INNOVATOR, innovation.id, this.inputData.threadId, notificationId)
         }
       },
       inApp: {
@@ -189,7 +200,8 @@ export class TaskUpdateHandler extends BaseHandler<
           unitName: this.getRequestUnitName(),
           messageId: this.inputData.messageId,
           threadId: this.inputData.threadId
-        }
+        },
+        notificationId
       }
     });
   }
@@ -198,6 +210,8 @@ export class TaskUpdateHandler extends BaseHandler<
     innovation: { id: string; name: string },
     innovators: RecipientType[]
   ): Promise<void> {
+    const notificationId = randomUUID();
+
     this.notify('TA06_TASK_REOPEN_TO_INNOVATOR', innovators, {
       email: {
         notificationPreferenceType: 'TASK',
@@ -206,7 +220,7 @@ export class TaskUpdateHandler extends BaseHandler<
           unit_name: this.getRequestUnitName(),
           innovation_name: innovation.name,
           message: this.inputData.message,
-          message_url: threadUrl(ServiceRoleEnum.INNOVATOR, innovation.id, this.inputData.threadId)
+          message_url: threadUrl(ServiceRoleEnum.INNOVATOR, innovation.id, this.inputData.threadId, notificationId)
         }
       },
       inApp: {
@@ -222,7 +236,8 @@ export class TaskUpdateHandler extends BaseHandler<
           unitName: this.getRequestUnitName(),
           messageId: this.inputData.messageId,
           threadId: this.inputData.threadId
-        }
+        },
+        notificationId
       }
     });
   }

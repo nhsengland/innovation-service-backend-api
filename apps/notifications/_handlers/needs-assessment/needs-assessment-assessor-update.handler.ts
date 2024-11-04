@@ -4,6 +4,7 @@ import type { DomainContextType, NotifierTemplatesType } from '@notifications/sh
 import { innovationOverviewUrl } from '../../_helpers/url.helper';
 import type { RecipientType } from '../../_services/recipients.service';
 import { BaseHandler } from '../base.handler';
+import { randomUUID } from 'crypto';
 
 export class NeedsAssessmentAssessorUpdateHandler extends BaseHandler<
   NotifierTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE,
@@ -43,12 +44,19 @@ export class NeedsAssessmentAssessorUpdateHandler extends BaseHandler<
     innovationName: string
   ): void {
     if (!recipient) return;
+
+    const notificationId = randomUUID();
+
     this.notify(template, [recipient], {
       email: {
         notificationPreferenceType: 'NEEDS_ASSESSMENT',
         params: {
           innovation_name: innovationName,
-          innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ASSESSMENT, this.inputData.innovationId)
+          innovation_overview_url: innovationOverviewUrl(
+            ServiceRoleEnum.ASSESSMENT,
+            this.inputData.innovationId,
+            notificationId
+          )
         }
       },
       inApp: {
@@ -60,7 +68,8 @@ export class NeedsAssessmentAssessorUpdateHandler extends BaseHandler<
         innovationId: this.inputData.innovationId,
         params: {
           innovationName: innovationName
-        }
+        },
+        notificationId
       }
     });
   }

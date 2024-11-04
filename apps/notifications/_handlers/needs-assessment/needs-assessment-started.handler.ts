@@ -3,6 +3,7 @@ import { ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/en
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { threadUrl } from '../../_helpers/url.helper';
 import { BaseHandler } from '../base.handler';
+import { randomUUID } from 'crypto';
 
 export class NeedsAssessmentStartedHandler extends BaseHandler<
   NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED,
@@ -22,6 +23,7 @@ export class NeedsAssessmentStartedHandler extends BaseHandler<
       this.inputData.innovationId
     );
     const recipients = await this.recipientsService.getUsersRecipient(innovators, ServiceRoleEnum.INNOVATOR);
+    const notificationId = randomUUID();
 
     this.notify('NA03_NEEDS_ASSESSMENT_STARTED_TO_INNOVATOR', recipients, {
       email: {
@@ -29,7 +31,12 @@ export class NeedsAssessmentStartedHandler extends BaseHandler<
         params: {
           innovation_name: innovation.name,
           message: this.inputData.message,
-          message_url: threadUrl(ServiceRoleEnum.INNOVATOR, this.inputData.innovationId, this.inputData.threadId)
+          message_url: threadUrl(
+            ServiceRoleEnum.INNOVATOR,
+            this.inputData.innovationId,
+            this.inputData.threadId,
+            notificationId
+          )
         }
       },
       inApp: {
@@ -43,7 +50,8 @@ export class NeedsAssessmentStartedHandler extends BaseHandler<
           innovationName: innovation.name,
           messageId: this.inputData.messageId,
           threadId: this.inputData.threadId
-        }
+        },
+        notificationId
       }
     });
 
