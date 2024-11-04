@@ -2,13 +2,17 @@ import { randUserName, randUuid } from '@ngneat/falso';
 import { InnovationExportRequestStatusEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { MocksHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
+import * as crypto from 'crypto';
 import { HandlersHelper } from '../../_helpers/handlers.helper';
 import { testEmails } from '../../_helpers/tests.helper';
 import { dashboardUrl } from '../../_helpers/url.helper';
 import { RecipientsService } from '../../_services/recipients.service';
 import { NotificationsTestsHelper } from '../../_tests/notifications-test.helper';
 import { AccountCreationHandler } from './account-creation.handler';
-import * as crypto from 'crypto';
+
+jest.mock('crypto');
+const notificationId = '00001234-1234-1234-1234-123456789012';
+jest.spyOn(crypto, 'randomUUID').mockImplementation(() => notificationId);
 
 describe('Notifications / _handlers / account-creation suite', () => {
   beforeAll(async () => {
@@ -17,9 +21,6 @@ describe('Notifications / _handlers / account-creation suite', () => {
 
   const testsHelper = new NotificationsTestsHelper();
   const scenario = testsHelper.getCompleteScenario();
-
-  const notificationId = crypto.randomUUID();
-  //jest.spyOn(crypto, 'randomUUID').mockImplementation(() => notificationId);
 
   describe('CA01_ACCOUNT_CREATION_OF_INNOVATOR', () => {
     it('should send an email to user who created a new innovator account', async () => {
