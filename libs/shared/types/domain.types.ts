@@ -3,8 +3,8 @@ import Joi from 'joi';
 import type { ActivityEnum } from '../enums/activity.enums';
 import type { InnovationSupportLogTypeEnum, InnovationSupportStatusEnum } from '../enums/innovation.enums';
 import { ServiceRoleEnum } from '../enums/user.enums';
-import type { CurrentCatalogTypes } from '../schemas/innovation-record';
 import { JoiHelper } from '../helpers/joi.helper';
+import type { CurrentCatalogTypes } from '../schemas/innovation-record';
 
 export type RoleType = {
   id: string;

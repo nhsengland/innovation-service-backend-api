@@ -2786,6 +2786,7 @@ paths:
                         - SUGGESTED
                         - ENGAGING
                         - WAITING
+                        - UNASSIGNED
                         - UNSUITABLE
                         - CLOSED
         "400":
@@ -2890,6 +2891,7 @@ paths:
                     - SUGGESTED
                     - ENGAGING
                     - WAITING
+                    - UNASSIGNED
                     - UNSUITABLE
                     - CLOSED
                 message:
@@ -2966,6 +2968,7 @@ paths:
                     - SUGGESTED
                     - ENGAGING
                     - WAITING
+                    - UNASSIGNED
                     - UNSUITABLE
                     - CLOSED
                 message:
@@ -3076,6 +3079,7 @@ paths:
                             - SUGGESTED
                             - ENGAGING
                             - WAITING
+                            - UNASSIGNED
                             - UNSUITABLE
                             - CLOSED
                         start:
@@ -3370,6 +3374,7 @@ paths:
                             - SUGGESTED
                             - ENGAGING
                             - WAITING
+                            - UNASSIGNED
                             - UNSUITABLE
                             - CLOSED
                         message:
