@@ -1,3 +1,4 @@
+import * as crypto from 'crypto';
 import { randText } from '@ngneat/falso';
 import { InnovationExportRequestStatusEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
@@ -6,6 +7,10 @@ import { innovationRecordUrl } from '../../../_helpers/url.helper';
 import { RecipientsService } from '../../../_services/recipients.service';
 import { NotificationsTestsHelper } from '../../../_tests/notifications-test.helper';
 import { ExportRequestFeedbackHandler } from './export-request-feedback.handler';
+
+jest.mock('crypto');
+const notificationId = '00001234-1234-1234-1234-123456789012';
+jest.spyOn(crypto, 'randomUUID').mockImplementation(() => notificationId);
 
 describe('Notifications / _handlers / export-request-feedback suite', () => {
   const testsHelper = new NotificationsTestsHelper();
@@ -36,7 +41,7 @@ describe('Notifications / _handlers / export-request-feedback suite', () => {
         outputData: {
           innovator_name: requestUser.name,
           innovation_name: innovation.name,
-          innovation_record_url: innovationRecordUrl(ServiceRoleEnum.ACCESSOR, innovation.id)
+          innovation_record_url: innovationRecordUrl(ServiceRoleEnum.ACCESSOR, innovation.id, notificationId)
         }
       });
     });
@@ -47,7 +52,8 @@ describe('Notifications / _handlers / export-request-feedback suite', () => {
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         recipients: [DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor)],
         inputData: { innovationId: innovation.id, exportRequestId: exportRequest.id },
-        outputData: { innovationName: innovation.name, exportRequestId: exportRequest.id }
+        outputData: { innovationName: innovation.name, exportRequestId: exportRequest.id },
+        notificationId
       });
     });
   });
@@ -83,7 +89,8 @@ describe('Notifications / _handlers / export-request-feedback suite', () => {
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         recipients: [DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor)],
         inputData: { innovationId: innovation.id, exportRequestId: exportRequest.id },
-        outputData: { innovationName: innovation.name, exportRequestId: exportRequest.id }
+        outputData: { innovationName: innovation.name, exportRequestId: exportRequest.id },
+        notificationId
       });
     });
   });

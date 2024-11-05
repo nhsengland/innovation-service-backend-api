@@ -5,6 +5,11 @@ import { howToProceedUrl, innovationRecordUrl } from '../../_helpers/url.helper'
 import { RecipientsService } from '../../_services/recipients.service';
 import { NotificationsTestsHelper } from '../../_tests/notifications-test.helper';
 import { IdleSupportInnovatorHandler } from './idle-support-innovator.handler';
+import * as crypto from 'crypto';
+
+jest.mock('crypto');
+const notificationId = '00001234-1234-1234-1234-123456789012';
+jest.spyOn(crypto, 'randomUUID').mockImplementation(() => notificationId);
 
 describe('Notifications / _handlers / idle support handler suite', () => {
   const testsHelper = new NotificationsTestsHelper();
@@ -39,11 +44,13 @@ describe('Notifications / _handlers / idle support handler suite', () => {
             innovation_name: scenario.users.johnInnovator.innovations.johnInnovation.name,
             innovation_record_url: innovationRecordUrl(
               ServiceRoleEnum.INNOVATOR,
-              scenario.users.johnInnovator.innovations.johnInnovation.id
+              scenario.users.johnInnovator.innovations.johnInnovation.id,
+              notificationId
             ),
             how_to_proceed_page_url: howToProceedUrl(
               ServiceRoleEnum.INNOVATOR,
-              scenario.users.johnInnovator.innovations.johnInnovation.id
+              scenario.users.johnInnovator.innovations.johnInnovation.id,
+              notificationId
             )
           }
         },
@@ -55,11 +62,13 @@ describe('Notifications / _handlers / idle support handler suite', () => {
             innovation_name: scenario.users.johnInnovator.innovations.johnInnovation.name,
             innovation_record_url: innovationRecordUrl(
               ServiceRoleEnum.INNOVATOR,
-              scenario.users.johnInnovator.innovations.johnInnovation.id
+              scenario.users.johnInnovator.innovations.johnInnovation.id,
+              notificationId
             ),
             how_to_proceed_page_url: howToProceedUrl(
               ServiceRoleEnum.INNOVATOR,
-              scenario.users.johnInnovator.innovations.johnInnovation.id
+              scenario.users.johnInnovator.innovations.johnInnovation.id,
+              notificationId
             )
           }
         },
@@ -71,11 +80,13 @@ describe('Notifications / _handlers / idle support handler suite', () => {
             innovation_name: scenario.users.ottoOctaviusInnovator.innovations.chestHarnessInnovation.name,
             innovation_record_url: innovationRecordUrl(
               ServiceRoleEnum.INNOVATOR,
-              scenario.users.ottoOctaviusInnovator.innovations.chestHarnessInnovation.id
+              scenario.users.ottoOctaviusInnovator.innovations.chestHarnessInnovation.id,
+              notificationId
             ),
             how_to_proceed_page_url: howToProceedUrl(
               ServiceRoleEnum.INNOVATOR,
-              scenario.users.ottoOctaviusInnovator.innovations.chestHarnessInnovation.id
+              scenario.users.ottoOctaviusInnovator.innovations.chestHarnessInnovation.id,
+              notificationId
             )
           }
         }
@@ -95,7 +106,8 @@ describe('Notifications / _handlers / idle support handler suite', () => {
           innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
           params: {
             innovationName: scenario.users.johnInnovator.innovations.johnInnovation.name
-          }
+          },
+          notificationId
         },
         {
           context: {
@@ -107,7 +119,8 @@ describe('Notifications / _handlers / idle support handler suite', () => {
           innovationId: scenario.users.ottoOctaviusInnovator.innovations.chestHarnessInnovation.id,
           params: {
             innovationName: scenario.users.ottoOctaviusInnovator.innovations.chestHarnessInnovation.name
-          }
+          },
+          notificationId
         }
       ]);
     });

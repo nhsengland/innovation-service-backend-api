@@ -1,3 +1,4 @@
+import * as crypto from 'crypto';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { HandlersHelper } from '../../_helpers/handlers.helper';
 import { testEmails, testInApps } from '../../_helpers/tests.helper';
@@ -5,6 +6,10 @@ import { threadUrl } from '../../_helpers/url.helper';
 import { RecipientsService } from '../../_services/recipients.service';
 import { NotificationsTestsHelper } from '../../_tests/notifications-test.helper';
 import { ThreadAddFollowersHandler } from './thread-add-followers.handler';
+
+jest.mock('crypto');
+const notificationId = '00001234-1234-1234-1234-123456789012';
+jest.spyOn(crypto, 'randomUUID').mockImplementation(() => notificationId);
 
 describe('Notifications / _handlers / thread-add-followers suite', () => {
   const testsHelper = new NotificationsTestsHelper();
@@ -46,7 +51,7 @@ describe('Notifications / _handlers / thread-add-followers suite', () => {
         outputData: recipients.map(r => ({
           innovation_name: innovation.name,
           sender: `${requestUser.name} (${displayTag})`,
-          thread_url: threadUrl(r.role, innovation.id, thread.id)
+          thread_url: threadUrl(r.role, innovation.id, thread.id, notificationId)
         }))
       });
     });
@@ -66,7 +71,8 @@ describe('Notifications / _handlers / thread-add-followers suite', () => {
           senderDisplayInformation: requestUser.name,
           innovationName: innovation.name,
           threadId: thread.id
-        }
+        },
+        notificationId
       });
     });
   });

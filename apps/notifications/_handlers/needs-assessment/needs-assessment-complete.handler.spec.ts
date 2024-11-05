@@ -1,3 +1,4 @@
+import * as crypto from 'crypto';
 import { randUuid } from '@ngneat/falso';
 import { ServiceRoleEnum } from '@notifications/shared/enums';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
@@ -5,6 +6,10 @@ import { testEmails, testInApps } from '../../_helpers/tests.helper';
 import { assessmentUrl, dataSharingPreferencesUrl } from '../../_helpers/url.helper';
 import { NotificationsTestsHelper } from '../../_tests/notifications-test.helper';
 import { NeedsAssessmentCompleteHandler } from './needs-assessment-complete.handler';
+
+jest.mock('crypto');
+const notificationId = '00001234-1234-1234-1234-123456789012';
+jest.spyOn(crypto, 'randomUUID').mockImplementation(() => notificationId);
 
 describe('Notifications / _handlers / needs assessment complete suite', () => {
   const testsHelper = new NotificationsTestsHelper();
@@ -32,11 +37,16 @@ describe('Notifications / _handlers / needs assessment complete suite', () => {
           inputData: inputData,
           outputData: {
             innovation_name: innovation.name,
-            data_sharing_preferences_url: dataSharingPreferencesUrl(ServiceRoleEnum.INNOVATOR, inputData.innovationId),
+            data_sharing_preferences_url: dataSharingPreferencesUrl(
+              ServiceRoleEnum.INNOVATOR,
+              inputData.innovationId,
+              notificationId
+            ),
             needs_assessment_url: assessmentUrl(
               ServiceRoleEnum.INNOVATOR,
               inputData.innovationId,
-              inputData.assessmentId
+              inputData.assessmentId,
+              notificationId
             )
           },
           requestUser: DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
@@ -57,7 +67,8 @@ describe('Notifications / _handlers / needs assessment complete suite', () => {
             assessmentId: inputData.assessmentId
           },
           requestUser: DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
-          recipients: recipients
+          recipients: recipients,
+          notificationId
         });
       });
     });

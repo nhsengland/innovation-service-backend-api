@@ -5,6 +5,11 @@ import { innovationOverviewUrl, supportStatusUrl, supportSummaryUrl, threadsUrl 
 import { RecipientsService } from '../../_services/recipients.service';
 import { NotificationsTestsHelper } from '../../_tests/notifications-test.helper';
 import { IdleSupportAccessorHandler } from './idle-support-accessor.handler';
+import * as crypto from 'crypto';
+
+jest.mock('crypto');
+const notificationId = '00001234-1234-1234-1234-123456789012';
+jest.spyOn(crypto, 'randomUUID').mockImplementation(() => notificationId);
 
 describe('Notifications / _handlers / idle support handler suite', () => {
   const testsHelper = new NotificationsTestsHelper();
@@ -62,14 +67,16 @@ describe('Notifications / _handlers / idle support handler suite', () => {
             support_status_url: supportStatusUrl(
               ServiceRoleEnum.ACCESSOR,
               johnInnovation.id,
-              johnInnovation.supports.supportByHealthOrgUnit.id
+              johnInnovation.supports.supportByHealthOrgUnit.id,
+              notificationId
             ),
             support_summary_url: supportSummaryUrl(
               ServiceRoleEnum.ACCESSOR,
               johnInnovation.id,
+              notificationId,
               scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id
             ),
-            thread_url: threadsUrl(ServiceRoleEnum.ACCESSOR, johnInnovation.id)
+            thread_url: threadsUrl(ServiceRoleEnum.ACCESSOR, johnInnovation.id, notificationId)
           }
         },
         {
@@ -81,14 +88,16 @@ describe('Notifications / _handlers / idle support handler suite', () => {
             support_status_url: supportStatusUrl(
               ServiceRoleEnum.ACCESSOR,
               johnInnovation.id,
-              johnInnovation.supports.supportByHealthOrgUnit.id
+              johnInnovation.supports.supportByHealthOrgUnit.id,
+              notificationId
             ),
             support_summary_url: supportSummaryUrl(
               ServiceRoleEnum.ACCESSOR,
               johnInnovation.id,
+              notificationId,
               scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id
             ),
-            thread_url: threadsUrl(ServiceRoleEnum.ACCESSOR, johnInnovation.id)
+            thread_url: threadsUrl(ServiceRoleEnum.ACCESSOR, johnInnovation.id, notificationId)
           }
         },
         {
@@ -100,14 +109,16 @@ describe('Notifications / _handlers / idle support handler suite', () => {
             support_status_url: supportStatusUrl(
               ServiceRoleEnum.ACCESSOR,
               johnInnovation.id,
-              johnInnovation.supports.supportByMedTechOrgUnit.id
+              johnInnovation.supports.supportByMedTechOrgUnit.id,
+              notificationId
             ),
             support_summary_url: supportSummaryUrl(
               ServiceRoleEnum.ACCESSOR,
               johnInnovation.id,
+              notificationId,
               scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id
             ),
-            thread_url: threadsUrl(ServiceRoleEnum.ACCESSOR, johnInnovation.id)
+            thread_url: threadsUrl(ServiceRoleEnum.ACCESSOR, johnInnovation.id, notificationId)
           }
         }
       ]);
@@ -128,7 +139,8 @@ describe('Notifications / _handlers / idle support handler suite', () => {
             innovationName: johnInnovation.name,
             supportId: johnInnovation.supports.supportByHealthOrgUnit.id,
             unitId: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id
-          }
+          },
+          notificationId
         },
         {
           context: {
@@ -142,7 +154,8 @@ describe('Notifications / _handlers / idle support handler suite', () => {
             innovationName: johnInnovation.name,
             supportId: johnInnovation.supports.supportByMedTechOrgUnit.id,
             unitId: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id
-          }
+          },
+          notificationId
         }
       ]);
     });
@@ -163,8 +176,8 @@ describe('Notifications / _handlers / idle support handler suite', () => {
           to: DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor),
           params: {
             innovation_name: johnInnovation.name,
-            innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, johnInnovation.id),
-            thread_url: threadsUrl(ServiceRoleEnum.ACCESSOR, johnInnovation.id)
+            innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, johnInnovation.id, notificationId),
+            thread_url: threadsUrl(ServiceRoleEnum.ACCESSOR, johnInnovation.id, notificationId)
           }
         },
         {
@@ -173,8 +186,8 @@ describe('Notifications / _handlers / idle support handler suite', () => {
           to: DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'healthAccessorRole'),
           params: {
             innovation_name: johnInnovation.name,
-            innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, johnInnovation.id),
-            thread_url: threadsUrl(ServiceRoleEnum.ACCESSOR, johnInnovation.id)
+            innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, johnInnovation.id, notificationId),
+            thread_url: threadsUrl(ServiceRoleEnum.ACCESSOR, johnInnovation.id, notificationId)
           }
         },
         {
@@ -183,8 +196,8 @@ describe('Notifications / _handlers / idle support handler suite', () => {
           to: DTOsHelper.getRecipientUser(scenario.users.samAccessor),
           params: {
             innovation_name: johnInnovation.name,
-            innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, johnInnovation.id),
-            thread_url: threadsUrl(ServiceRoleEnum.ACCESSOR, johnInnovation.id)
+            innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, johnInnovation.id, notificationId),
+            thread_url: threadsUrl(ServiceRoleEnum.ACCESSOR, johnInnovation.id, notificationId)
           }
         }
       ]);
@@ -204,7 +217,8 @@ describe('Notifications / _handlers / idle support handler suite', () => {
           params: {
             innovationName: johnInnovation.name,
             supportId: johnInnovation.supports.supportByHealthOrgUnit.id
-          }
+          },
+          notificationId
         },
         {
           context: {
@@ -217,7 +231,8 @@ describe('Notifications / _handlers / idle support handler suite', () => {
           params: {
             innovationName: johnInnovation.name,
             supportId: johnInnovation.supports.supportByMedTechOrgUnit.id
-          }
+          },
+          notificationId
         }
       ]);
     });
@@ -268,7 +283,8 @@ describe('Notifications / _handlers / idle support handler suite', () => {
             innovationName: johnInnovation.name,
             supportId: johnInnovation.supports.supportByHealthOrgUnit.id,
             unitId: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id
-          }
+          },
+          notificationId
         }
       ]);
     });
@@ -284,8 +300,8 @@ describe('Notifications / _handlers / idle support handler suite', () => {
 
       const johnInnovationParams = {
         innovation_name: johnInnovation.name,
-        innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, johnInnovation.id),
-        thread_url: threadsUrl(ServiceRoleEnum.ACCESSOR, johnInnovation.id)
+        innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, johnInnovation.id, notificationId),
+        thread_url: threadsUrl(ServiceRoleEnum.ACCESSOR, johnInnovation.id, notificationId)
       };
       expect(emails).toStrictEqual([
         {
@@ -308,7 +324,8 @@ describe('Notifications / _handlers / idle support handler suite', () => {
           params: {
             innovationName: johnInnovation.name,
             supportId: johnInnovation.supports.supportByMedTechOrgUnit.id
-          }
+          },
+          notificationId
         }
       ]);
     });

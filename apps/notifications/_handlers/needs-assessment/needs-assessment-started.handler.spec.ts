@@ -1,3 +1,4 @@
+import * as crypto from 'crypto';
 import { randText, randUuid } from '@ngneat/falso';
 import { ServiceRoleEnum } from '@notifications/shared/enums';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
@@ -5,6 +6,10 @@ import { testEmails, testInApps } from '../../_helpers/tests.helper';
 import { threadUrl } from '../../_helpers/url.helper';
 import { NotificationsTestsHelper } from '../../_tests/notifications-test.helper';
 import { NeedsAssessmentStartedHandler } from './needs-assessment-started.handler';
+
+jest.mock('crypto');
+const notificationId = '00001234-1234-1234-1234-123456789012';
+jest.spyOn(crypto, 'randomUUID').mockImplementation(() => notificationId);
 
 describe('Notifications / _handlers / needs assessment start suite', () => {
   const testsHelper = new NotificationsTestsHelper();
@@ -36,7 +41,12 @@ describe('Notifications / _handlers / needs assessment start suite', () => {
           outputData: {
             innovation_name: innovation.name,
             message: inputData.message,
-            message_url: threadUrl(ServiceRoleEnum.INNOVATOR, inputData.innovationId, inputData.threadId)
+            message_url: threadUrl(
+              ServiceRoleEnum.INNOVATOR,
+              inputData.innovationId,
+              inputData.threadId,
+              notificationId
+            )
           },
           requestUser: DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
           recipients: recipients
@@ -57,7 +67,8 @@ describe('Notifications / _handlers / needs assessment start suite', () => {
             messageId: inputData.messageId
           },
           requestUser: DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
-          recipients: recipients
+          recipients: recipients,
+          notificationId
         });
       });
     });

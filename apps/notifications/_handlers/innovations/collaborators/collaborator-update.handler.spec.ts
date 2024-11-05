@@ -1,3 +1,4 @@
+import * as crypto from 'crypto';
 import { InnovationCollaboratorStatusEnum } from '@notifications/shared/enums';
 import { MocksHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
@@ -5,6 +6,10 @@ import { testEmails, testInApps } from '../../../_helpers/tests.helper';
 import { manageCollaboratorsUrl } from '../../../_helpers/url.helper';
 import { NotificationsTestsHelper } from '../../../_tests/notifications-test.helper';
 import { CollaboratorUpdateHandler } from './collaborator-update.handler';
+
+jest.mock('crypto');
+const notificationId = '00001234-1234-1234-1234-123456789012';
+jest.spyOn(crypto, 'randomUUID').mockImplementation(() => notificationId);
 
 describe('Notifications / _handlers / collaborator-update suite', () => {
   const testsHelper = new NotificationsTestsHelper();
@@ -51,7 +56,8 @@ describe('Notifications / _handlers / collaborator-update suite', () => {
           innovationName: innovation.name,
           requestUserName: requestUser.name,
           collaboratorId: collaboratorExistingUser.id
-        }
+        },
+        notificationId
       });
     });
 
@@ -97,7 +103,7 @@ describe('Notifications / _handlers / collaborator-update suite', () => {
         outputData: {
           innovation_name: innovation.name,
           innovator_name: requestUser.name,
-          manage_collaborators_url: manageCollaboratorsUrl(innovation.id)
+          manage_collaborators_url: manageCollaboratorsUrl(innovation.id, notificationId)
         }
       });
     });
@@ -116,7 +122,8 @@ describe('Notifications / _handlers / collaborator-update suite', () => {
           collaboratorId: collaborator.id,
           innovationName: innovation.name,
           requestUserName: requestUser.name
-        }
+        },
+        notificationId
       });
     });
   });
@@ -137,7 +144,7 @@ describe('Notifications / _handlers / collaborator-update suite', () => {
         outputData: {
           innovation_name: innovation.name,
           innovator_name: requestUser.name,
-          manage_collaborators_url: manageCollaboratorsUrl(innovation.id)
+          manage_collaborators_url: manageCollaboratorsUrl(innovation.id, notificationId)
         }
       });
     });
@@ -156,7 +163,8 @@ describe('Notifications / _handlers / collaborator-update suite', () => {
           collaboratorId: collaborator.id,
           innovationName: innovation.name,
           requestUserName: requestUser.name
-        }
+        },
+        notificationId
       });
     });
   });
@@ -195,7 +203,8 @@ describe('Notifications / _handlers / collaborator-update suite', () => {
           collaboratorId: collaborator.id,
           innovationName: innovation.name,
           requestUserName: requestUser.name
-        }
+        },
+        notificationId
       });
     });
   });
@@ -219,7 +228,7 @@ describe('Notifications / _handlers / collaborator-update suite', () => {
         outputData: {
           innovation_name: innovation.name,
           innovator_name: requestUser.name,
-          manage_collaborators_url: manageCollaboratorsUrl(innovation.id)
+          manage_collaborators_url: manageCollaboratorsUrl(innovation.id, notificationId)
         }
       });
     });
@@ -241,7 +250,8 @@ describe('Notifications / _handlers / collaborator-update suite', () => {
           collaboratorId: collaborator.id,
           innovationName: innovation.name,
           requestUserName: requestUser.name
-        }
+        },
+        notificationId
       });
     });
   });
@@ -275,7 +285,8 @@ describe('Notifications / _handlers / collaborator-update suite', () => {
           collaborator: { id: collaborator.id, status: InnovationCollaboratorStatusEnum.LEFT }
         },
         outputData: { innovationName: innovation.name, collaboratorId: collaborator.id },
-        options: { includeSelf: true }
+        options: { includeSelf: true },
+        notificationId
       });
     });
   });

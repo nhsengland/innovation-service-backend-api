@@ -1,3 +1,4 @@
+import * as crypto from 'crypto';
 import { ServiceRoleEnum } from '@notifications/shared/enums';
 import { MocksHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
@@ -5,6 +6,10 @@ import { testEmails, testInApps } from '../../../_helpers/tests.helper';
 import { collaboratorInfoUrl, createAccountUrl } from '../../../_helpers/url.helper';
 import { NotificationsTestsHelper } from '../../../_tests/notifications-test.helper';
 import { CollaboratorInviteHandler } from './collaborator-invite.handler';
+
+jest.mock('crypto');
+const notificationId = '00001234-1234-1234-1234-123456789012';
+jest.spyOn(crypto, 'randomUUID').mockImplementation(() => notificationId);
 
 describe('Notifications / _handlers / collaborator-invite suite', () => {
   const testsHelper = new NotificationsTestsHelper();
@@ -29,7 +34,7 @@ describe('Notifications / _handlers / collaborator-invite suite', () => {
         outputData: {
           innovation_name: innovation.name,
           innovator_name: requestUser.name,
-          invitation_url: collaboratorInfoUrl(ServiceRoleEnum.INNOVATOR, innovation.id, collaborator.id)
+          invitation_url: collaboratorInfoUrl(ServiceRoleEnum.INNOVATOR, innovation.id, collaborator.id, notificationId)
         }
       });
     });
@@ -45,7 +50,8 @@ describe('Notifications / _handlers / collaborator-invite suite', () => {
           innovationName: innovation.name,
           requestUserName: requestUser.name,
           collaboratorId: collaborator.id
-        }
+        },
+        notificationId
       });
     });
   });

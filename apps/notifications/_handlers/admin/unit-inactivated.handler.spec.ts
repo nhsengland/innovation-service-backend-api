@@ -5,7 +5,11 @@ import { testEmails } from '../../_helpers/tests.helper';
 import { dataSharingPreferencesUrl } from '../../_helpers/url.helper';
 import { NotificationsTestsHelper } from '../../_tests/notifications-test.helper';
 import { UnitInactivatedHandler } from './unit-inactivated.handler';
-import { randomUUID } from 'crypto';
+import * as crypto from 'crypto';
+
+jest.mock('crypto');
+const notificationId = '00001234-1234-1234-1234-123456789012';
+jest.spyOn(crypto, 'randomUUID').mockImplementation(() => notificationId);
 
 describe('Notifications / _handlers / unit-inactivated suite', () => {
   const testsHelper = new NotificationsTestsHelper();
@@ -23,7 +27,6 @@ describe('Notifications / _handlers / unit-inactivated suite', () => {
       scenario.users.johnInnovator.innovations.johnInnovation,
       scenario.users.adamInnovator.innovations.adamInnovation
     ];
-    const notificationId = randomUUID();
     it('should send an email to the innovation owners of the innovations that were completed', async () => {
       await testEmails(UnitInactivatedHandler, 'AP07_UNIT_INACTIVATED_TO_ENGAGING_INNOVATIONS', {
         inputData: { unitId: inactivatedUnit.id, completedInnovationIds: completedInnovation.map(i => i.id) },

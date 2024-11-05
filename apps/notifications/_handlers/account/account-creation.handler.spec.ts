@@ -1,8 +1,8 @@
+import * as crypto from 'crypto';
 import { randUserName, randUuid } from '@ngneat/falso';
 import { InnovationExportRequestStatusEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { MocksHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
-import * as crypto from 'crypto';
 import { HandlersHelper } from '../../_helpers/handlers.helper';
 import { testEmails } from '../../_helpers/tests.helper';
 import { dashboardUrl } from '../../_helpers/url.helper';
