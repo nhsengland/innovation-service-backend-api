@@ -58,7 +58,12 @@ export class IdleSupportAccessorHandler extends BaseHandler<
                 support.supportId,
                 notificationId
               ),
-              support_summary_url: supportSummaryUrl(ServiceRoleEnum.ACCESSOR, innovationId, support.unitId),
+              support_summary_url: supportSummaryUrl(
+                ServiceRoleEnum.ACCESSOR,
+                innovationId,
+                notificationId,
+                support.unitId
+              ),
               thread_url: threadsUrl(ServiceRoleEnum.ACCESSOR, innovationId, notificationId)
             }
           },
