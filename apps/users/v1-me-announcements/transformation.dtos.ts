@@ -10,9 +10,9 @@ export type ResponseDTO = {
   innovations?: string[];
 }[];
 
-export const ResponseBodySchema = Joi.array().items(
+export const ResponseBodySchema = Joi.array<ResponseDTO>().items(
   Joi.object({
-    id: Joi.string().guid(),
+    id: Joi.string().uuid().required(),
     title: Joi.string().required(),
     startsAt: Joi.date().required(),
     expiresAt: Joi.date().allow(null),

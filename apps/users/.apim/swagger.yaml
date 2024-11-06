@@ -243,6 +243,29 @@ paths:
                 type: array
                 items:
                   type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    invitedAt:
+                      type: string
+                      format: date-time
+                    innovation:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        name:
+                          type: string
+                      required:
+                        - id
+                        - name
+                      additionalProperties: false
+                  required:
+                    - id
+                    - invitedAt
+                  additionalProperties: false
   /v1/me/announcements/{announcementId}/read:
     patch:
       operationId: v1-me-announcement-read
@@ -331,6 +354,7 @@ paths:
                       additionalProperties: false
                       nullable: true
                   required:
+                    - id
                     - title
                     - startsAt
                   additionalProperties: false
@@ -350,6 +374,10 @@ paths:
                 properties:
                   id:
                     type: string
+                    format: uuid
+                required:
+                  - id
+                additionalProperties: false
         "400":
           description: Bad request
           content:
@@ -378,44 +406,151 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                  email:
-                    type: string
-                  displayName:
-                    type: string
-                  roles:
-                    type: array
-                    items:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
                       type: string
-                  contactByEmail:
-                    type: boolean
-                  contactByPhone:
-                    type: boolean
-                  contactByPhoneTimeframe:
-                    type: string
-                  contactDetails:
-                    type: string
-                  phone:
-                    type: string
-                  passwordResetAt:
-                    type: string
-                  firstTimeSignInAt:
-                    type: string
-                  termsOfUseAccepted:
-                    type: boolean
-                  hasInnovationTransfers:
-                    type: boolean
-                  hasInnovationCollaborations:
-                    type: boolean
-                  hasLoginAnnouncements:
-                    type: object
-                  organisations:
-                    type: array
-                    items:
+                      format: uuid
+                    email:
+                      type: string
+                    displayName:
+                      type: string
+                    roles:
                       type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        role:
+                          type: string
+                          enum:
+                            - ADMIN
+                            - INNOVATOR
+                            - ACCESSOR
+                            - ASSESSMENT
+                            - QUALIFYING_ACCESSOR
+                        isActive:
+                          type: boolean
+                        organisation:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                            name:
+                              type: string
+                            acronym:
+                              type: string
+                              nullable: true
+                          required:
+                            - id
+                            - name
+                            - acronym
+                          additionalProperties: false
+                        organisationUnit:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                            name:
+                              type: string
+                            acronym:
+                              type: string
+                          required:
+                            - id
+                            - name
+                            - acronym
+                          additionalProperties: false
+                      required:
+                        - id
+                        - isActive
+                      additionalProperties: false
+                    contactByEmail:
+                      type: boolean
+                    contactByPhone:
+                      type: boolean
+                    contactByPhoneTimeframe:
+                      type: string
+                      enum:
+                        - MORNING
+                        - AFTERNOON
+                        - DAILY
+                      nullable: true
+                    contactDetails:
+                      type: string
+                      nullable: true
+                    phone:
+                      type: string
+                      nullable: true
+                    termsOfUseAccepted:
+                      type: boolean
+                    hasInnovationTransfers:
+                      type: boolean
+                    hasInnovationCollaborations:
+                      type: boolean
+                    hasLoginAnnouncements:
+                      type: object
+                      properties: {}
+                      additionalProperties:
+                        type: boolean
+                    passwordResetAt:
+                      type: string
+                      format: date-time
+                      nullable: true
+                    firstTimeSignInAt:
+                      type: string
+                      format: date-time
+                      nullable: true
+                    organisations:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          acronym:
+                            type: string
+                            nullable: true
+                          name:
+                            type: string
+                          isShadow:
+                            type: boolean
+                          size:
+                            type: string
+                            nullable: true
+                          description:
+                            type: string
+                            nullable: true
+                          registrationNumber:
+                            type: string
+                            nullable: true
+                        required:
+                          - id
+                          - acronym
+                          - name
+                          - isShadow
+                          - size
+                          - description
+                          - registrationNumber
+                        additionalProperties: false
+                  required:
+                    - id
+                    - email
+                    - displayName
+                    - contactByEmail
+                    - contactByPhone
+                    - contactDetails
+                    - phone
+                    - termsOfUseAccepted
+                    - hasInnovationTransfers
+                    - hasInnovationCollaborations
+                    - passwordResetAt
+                    - firstTimeSignInAt
+                  additionalProperties: false
         "400":
           description: Bad Request
         "401":
@@ -536,6 +671,10 @@ paths:
                 properties:
                   id:
                     type: string
+                    format: uuid
+                required:
+                  - id
+                additionalProperties: false
         "400":
           description: Bad request
           content:
@@ -600,12 +739,21 @@ paths:
                   properties:
                     id:
                       type: string
+                      format: uuid
                     name:
                       type: string
                     collaboratorsCount:
-                      type: number
+                      type: integer
                     expirationTransferDate:
                       type: string
+                      format: date-time
+                      nullable: true
+                  required:
+                    - id
+                    - name
+                    - collaboratorsCount
+                    - expirationTransferDate
+                  additionalProperties: false
         "400":
           description: Bad request
   /v1/me/mfa:
@@ -630,6 +778,9 @@ paths:
                       - phone
                   phoneNumber:
                     type: string
+                required:
+                  - type
+                additionalProperties: false
         "400":
           description: Bad Request
         "401":
@@ -696,7 +847,10 @@ paths:
                 properties:
                   id:
                     type: string
-                    description: Operation identifier
+                    format: uuid
+                required:
+                  - id
+                additionalProperties: false
         "422":
           description: Unprocessable Entity
   /v1/me/terms-of-use:
@@ -709,6 +863,30 @@ paths:
       responses:
         "200":
           description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  name:
+                    type: string
+                  summary:
+                    type: string
+                  releasedAt:
+                    type: string
+                    format: date-time
+                  isAccepted:
+                    type: boolean
+                required:
+                  - id
+                  - name
+                  - summary
+                  - releasedAt
+                  - isAccepted
+                additionalProperties: false
         "404":
           description: Terms of use not found
   /v1/notifications/counters:
@@ -727,8 +905,11 @@ paths:
                 type: object
                 properties:
                   total:
-                    type: number
+                    type: integer
                     description: The total of active notifications
+                required:
+                  - total
+                additionalProperties: false
   /v1/notifications/{notificationId}:
     delete:
       description: Returns the id of the deleted notification
@@ -753,7 +934,10 @@ paths:
                 properties:
                   id:
                     type: string
-                    description: The notification id
+                    format: uuid
+                required:
+                  - id
+                additionalProperties: false
   /v1/notifications/dismiss:
     patch:
       description: Returns the number of affected notifications
@@ -896,8 +1080,11 @@ paths:
                 type: object
                 properties:
                   affected:
-                    type: number
+                    type: integer
                     description: The number of affected notifications
+                required:
+                  - affected
+                additionalProperties: false
   /v1/notifications:
     get:
       description: Returns the user notifications
@@ -969,8 +1156,7 @@ paths:
                 type: object
                 properties:
                   count:
-                    type: number
-                    description: The total number of notifications
+                    type: integer
                   data:
                     type: array
                     items:
@@ -979,17 +1165,14 @@ paths:
                         id:
                           type: string
                           format: uuid
-                          description: The notification ID
                         innovation:
                           type: object
                           properties:
                             id:
                               type: string
                               format: uuid
-                              description: The innovation ID
                             name:
                               type: string
-                              description: The innovation name
                             status:
                               type: string
                               enum:
@@ -999,7 +1182,14 @@ paths:
                                 - IN_PROGRESS
                                 - WITHDRAWN
                                 - ARCHIVED
-                              description: The innovation status
+                            ownerName:
+                              type: string
+                          required:
+                            - id
+                            - name
+                            - status
+                            - ownerName
+                          additionalProperties: false
                         contextType:
                           type: string
                           enum:
@@ -1015,7 +1205,6 @@ paths:
                             - AUTOMATIC
                             - NOTIFY_ME
                             - ANNOUNCEMENTS
-                          description: The notification context category
                         contextDetail:
                           type: string
                           enum:
@@ -1098,21 +1287,28 @@ paths:
                             - SUGGESTED_SUPPORT_UPDATED
                             - AP10_NEW_ANNOUNCEMENT
                             - AP11_NEW_ANNOUNCEMENT_WITH_INNOVATIONS_NAME
-                          description: The notification context detail
                         contextId:
                           type: string
-                          description: The notification context ID
                         createdAt:
                           type: string
                           format: date-time
-                          description: The notification creation date
                         readAt:
                           type: string
                           format: date-time
-                          description: The notification read date
+                          nullable: true
                         params:
                           type: object
-                          description: The notification params
+                          properties: {}
+                          additionalProperties: false
+                      required:
+                        - id
+                        - contextId
+                        - createdAt
+                        - readAt
+                      additionalProperties: false
+                required:
+                  - count
+                additionalProperties: false
   /v1/notify-me:
     delete:
       description: Notify me subscription delete
@@ -1317,6 +1513,29 @@ paths:
       responses:
         "200":
           description: List of user custom notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    innovationId:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    count:
+                      type: integer
+                    subscriptions:
+                      type: object
+                      properties: {}
+                      additionalProperties: false
+                  required:
+                    - innovationId
+                    - name
+                    - count
+                  additionalProperties: false
         "400":
           description: Bad Request
         "401":
@@ -1606,7 +1825,53 @@ paths:
             format: uuid
       responses:
         "200":
-          description: Success.
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        accessor:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                            role:
+                              type: string
+                              enum:
+                                - ADMIN
+                                - INNOVATOR
+                                - ACCESSOR
+                                - ASSESSMENT
+                                - QUALIFYING_ACCESSOR
+                          required:
+                            - name
+                          additionalProperties: false
+                        innovations:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              id:
+                                type: string
+                                format: uuid
+                              name:
+                                type: string
+                            required:
+                              - id
+                              - name
+                            additionalProperties: false
+                      additionalProperties: false
+                required:
+                  - count
+                additionalProperties: false
         "400":
           description: Bad Request
         "401":
@@ -1659,6 +1924,38 @@ paths:
                 type: array
                 items:
                   type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    acronym:
+                      type: string
+                    isActive:
+                      type: boolean
+                    organisationUnits:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        name:
+                          type: string
+                        acronym:
+                          type: string
+                        isActive:
+                          type: boolean
+                      required:
+                        - id
+                        - name
+                        - acronym
+                      additionalProperties: false
+                  required:
+                    - id
+                    - name
+                    - acronym
+                  additionalProperties: false
   /v1:
     head:
       operationId: v1-users-email-available

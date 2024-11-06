@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction } from '@azure/functions';
 
 import { JwtDecoder } from '@users/shared/decorators';
-import { ResponseHelper } from '@users/shared/helpers';
+import { ResponseHelper, SwaggerHelper } from '@users/shared/helpers';
 import type { AuthorizationService } from '@users/shared/services';
 import SHARED_SYMBOLS from '@users/shared/services/symbols';
 import type { CustomContextType } from '@users/shared/types';
@@ -11,7 +11,7 @@ import { container } from '../_config';
 
 import SYMBOLS from '../_services/symbols';
 import type { TermsOfUseService } from '../_services/terms-of-use.service';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 
 class V1MeTermsOfUseAccept {
   @JwtDecoder()
@@ -51,19 +51,9 @@ export default openApi(V1MeTermsOfUseAccept.httpTrigger as AzureFunction, '/v1/m
     tags: ['[v1] Terms of Use'],
     parameters: [],
     responses: {
-      200: {
-        description: 'Successful operation',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                id: { type: 'string', description: 'Operation identifier' }
-              }
-            }
-          }
-        }
-      },
+      200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: 'Successful operation'
+      }),
       422: { description: 'Unprocessable Entity' }
     }
   }

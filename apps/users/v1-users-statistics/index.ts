@@ -7,7 +7,6 @@ import SHARED_SYMBOLS from '@users/shared/services/symbols';
 import type { CustomContextType } from '@users/shared/types';
 
 import { container } from '../_config';
-import { UserStatisticsEnum } from '../_enums/user.enums';
 import { StatisticsHandlersHelper } from '../_helpers/handlers.helper';
 import type { ResponseDTO } from './transformation.dtos';
 import { QuerySchema, QueryType } from './validation.schemas';

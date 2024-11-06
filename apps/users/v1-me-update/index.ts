@@ -13,7 +13,7 @@ import { container } from '../_config';
 
 import SYMBOLS from '../_services/symbols';
 import type { UsersService } from '../_services/users.service';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import {
   DefaultUserBodySchema,
   DefaultUserBodyType,
@@ -97,19 +97,9 @@ export default openApi(V1MeUpdate.httpTrigger as AzureFunction, '/v1/me', {
     parameters: [],
     requestBody: SwaggerHelper.bodyJ2S(InnovatorBodySchema),
     responses: {
-      200: {
-        description: 'User information updated',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                id: { type: 'string' }
-              }
-            }
-          }
-        }
-      },
+      200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: 'User information updated'
+      }),
       400: {
         description: 'Bad request',
         content: {

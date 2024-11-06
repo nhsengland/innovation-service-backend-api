@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction } from '@azure/functions';
 
 import { JwtDecoder } from '@users/shared/decorators';
-import { ResponseHelper } from '@users/shared/helpers';
+import { ResponseHelper, SwaggerHelper } from '@users/shared/helpers';
 import type { AuthorizationService } from '@users/shared/services';
 import SHARED_SYMBOLS from '@users/shared/services/symbols';
 import type { CustomContextType } from '@users/shared/types';
@@ -11,7 +11,7 @@ import { container } from '../_config';
 
 import SYMBOLS from '../_services/symbols';
 import type { TermsOfUseService } from '../_services/terms-of-use.service';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 
 class V1MeTermsOfUseInfo {
   @JwtDecoder()
@@ -57,7 +57,9 @@ export default openApi(V1MeTermsOfUseInfo.httpTrigger as AzureFunction, '/v1/me/
     tags: ['[v1] Terms of Use'],
     parameters: [],
     responses: {
-      200: { description: 'Successful operation' },
+      200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: 'Successful operation'
+      }),
       404: { description: 'Terms of use not found' }
     }
   }
