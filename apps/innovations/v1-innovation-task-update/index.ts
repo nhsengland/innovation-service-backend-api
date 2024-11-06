@@ -13,7 +13,7 @@ import { container } from '../_config';
 
 import type { InnovationTasksService } from '../_services/innovation-tasks.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1InnovationTaskUpdate {
@@ -100,54 +100,9 @@ export default openApi(V1InnovationTaskUpdate.httpTrigger as AzureFunction, '/v1
     parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     requestBody: SwaggerHelper.bodyJ2S(BodySchema, { description: 'The innovation task data.' }),
     responses: {
-      '200': {
-        description: 'The innovation task has been updated.',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                id: {
-                  type: 'string',
-                  description: 'The innovation task id.'
-                },
-                name: {
-                  type: 'string',
-                  description: 'The name of the task.'
-                },
-                description: {
-                  type: 'string',
-                  description: 'The description of the task.'
-                },
-                status: {
-                  type: 'string',
-                  description: 'The status of the task.'
-                },
-                assignee: {
-                  type: 'string',
-                  description: 'The assignee of the task.'
-                },
-                dueDate: {
-                  type: 'string',
-                  description: 'The due date of the task.'
-                },
-                comment: {
-                  type: 'string',
-                  description: 'The comment of the task.'
-                },
-                createdAt: {
-                  type: 'string',
-                  description: 'The date when the task was created.'
-                },
-                updatedAt: {
-                  type: 'string',
-                  description: 'The date when the task was updated.'
-                }
-              }
-            }
-          }
-        }
-      },
+      '200': SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: 'The innovation task has been updated.'
+      }),
       '400': {
         description: 'The innovation task data is invalid.'
       },

@@ -11,7 +11,7 @@ import { container } from '../_config';
 
 import type { InnovationSupportsService } from '../_services/innovation-supports.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, type ParamsType } from './validation.schemas';
 
 class V1InnovationSupportInfo {
@@ -49,9 +49,9 @@ export default openApi(
       tags: ['[v1] Innovation Support'],
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       responses: {
-        200: {
+        200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
           description: 'OK'
-        },
+        }),
         400: {
           description: 'Bad Request'
         },

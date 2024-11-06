@@ -11,7 +11,7 @@ import { container } from '../_config';
 
 import type { InnovationTasksService } from '../_services/innovation-tasks.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { QueryParamsSchema, QueryParamsType } from './validation.schemas';
 
 class V1InnovationTasksList {
@@ -70,80 +70,9 @@ export default openApi(V1InnovationTasksList.httpTrigger as AzureFunction, '/v1/
     tags: ['[v1] Innovation Tasks'],
     parameters: SwaggerHelper.paramJ2S({ query: QueryParamsSchema }),
     responses: {
-      200: {
-        description: 'The list of innovation tasks.',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                count: {
-                  type: 'integer',
-                  description: 'The total number of records.'
-                },
-                data: {
-                  type: 'array',
-                  items: {
-                    type: 'object',
-                    properties: {
-                      id: {
-                        type: 'string',
-                        description: 'The id of the task.'
-                      },
-                      displayId: {
-                        type: 'string',
-                        description: 'The display id of the task.'
-                      },
-                      status: {
-                        type: 'string',
-                        description: 'The status of the task.'
-                      },
-                      description: {
-                        type: 'string',
-                        description: 'The description of the task.'
-                      },
-                      section: {
-                        type: 'string',
-                        description: 'The section of the task.'
-                      },
-                      createdAt: {
-                        type: 'string',
-                        description: 'The date the task was created.'
-                      },
-                      updatedAt: {
-                        type: 'string',
-                        description: 'The date the task was last updated.'
-                      },
-                      innovation: {
-                        type: 'object',
-                        properties: {
-                          id: {
-                            type: 'string',
-                            description: 'The id of the innovation.'
-                          },
-                          name: {
-                            type: 'string',
-                            description: 'The name of the innovation.'
-                          }
-                        }
-                      },
-                      notifications: {
-                        type: 'object',
-                        properties: {
-                          count: {
-                            type: 'integer',
-                            description: 'The number of notifications for the task.'
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
+      200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: 'The list of innovation tasks.'
+      }),
       400: {
         description: 'The request is invalid.'
       },

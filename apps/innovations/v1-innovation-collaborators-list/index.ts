@@ -12,7 +12,7 @@ import { container } from '../_config';
 
 import type { InnovationCollaboratorsService } from '../_services/innovation-collaborators.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType, QueryParamsSchema, QueryParamsType } from './validation.schemas';
 
 class V1InnovationCollaboratorsList {
@@ -73,45 +73,9 @@ export default openApi(V1InnovationCollaboratorsList.httpTrigger as AzureFunctio
     tags: ['[v1] Innovation Collaborators'],
     parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     responses: {
-      200: {
-        description: 'The list of innovation collaborators.',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                count: {
-                  type: 'integer',
-                  description: 'The total number of records.'
-                },
-                data: {
-                  type: 'array',
-                  items: {
-                    type: 'object',
-                    properties: {
-                      id: {
-                        type: 'string'
-                      },
-                      name: {
-                        type: 'string'
-                      },
-                      role: {
-                        type: 'string'
-                      },
-                      email: {
-                        type: 'string'
-                      },
-                      status: {
-                        type: 'string'
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
+      200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: 'The list of innovation collaborators.'
+      }),
       400: {
         description: 'The request is invalid.'
       },

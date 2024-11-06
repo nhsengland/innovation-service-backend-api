@@ -11,7 +11,7 @@ import { container } from '../_config';
 
 import type { InnovationTransferService } from '../_services/innovation-transfer.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType } from './validation.schemas';
 
 class CreateInnovationTransfer {
@@ -59,16 +59,9 @@ export default openApi(CreateInnovationTransfer.httpTrigger as AzureFunction, '/
     parameters: [],
     requestBody: SwaggerHelper.bodyJ2S(BodySchema),
     responses: {
-      200: {
-        description: 'Success',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object'
-            }
-          }
-        }
-      },
+      200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: 'Success'
+      }),
       400: {
         description: 'Bad Request',
         content: {

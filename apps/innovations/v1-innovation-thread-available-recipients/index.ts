@@ -10,7 +10,7 @@ import type { CustomContextType } from '@innovations/shared/types';
 import { container } from '../_config';
 
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, type ParamsType } from './validation.schemas';
 import type { InnovationsService } from '../_services/innovations.service';
 
@@ -74,9 +74,9 @@ export default openApi(
       tags: ['[v1] Innovation Threads Available Recipients'],
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       responses: {
-        200: {
+        200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
           description: 'Success'
-        },
+        }),
         404: {
           description: 'Not found'
         }

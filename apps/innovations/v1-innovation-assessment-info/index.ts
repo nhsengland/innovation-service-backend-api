@@ -12,7 +12,7 @@ import { container } from '../_config';
 
 import type { InnovationAssessmentsService } from '../_services/innovation-assessments.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1InnovationAssessmentInfo {
@@ -100,83 +100,9 @@ export default openApi(
       operationId: 'v1-innovation-assessment-info',
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       responses: {
-        200: {
-          description: 'Success',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  id: { type: 'string', format: 'uuid' },
-                  summary: { type: 'string' },
-                  description: { type: 'string' },
-                  finishedAt: { type: 'string', format: 'date-time' },
-                  assignTo: {
-                    type: 'object',
-                    properties: {
-                      id: { type: 'string', format: 'uuid' },
-                      name: { type: 'string' }
-                    }
-                  },
-                  maturityLevel: { type: 'string' },
-                  maturityLevelComment: { type: 'string' },
-                  hasRegulatoryApprovals: { type: 'boolean' },
-                  hasRegulatoryApprovalsComment: { type: 'string' },
-                  hasEvidence: { type: 'boolean' },
-                  hasEvidenceComment: { type: 'string' },
-                  hasValidation: { type: 'boolean' },
-                  hasValidationComment: { type: 'string' },
-                  hasProposition: { type: 'boolean' },
-                  hasPropositionComment: { type: 'string' },
-                  hasCompetitionKnowledge: { type: 'boolean' },
-                  hasCompetitionKnowledgeComment: { type: 'string' },
-                  hasImplementationPlan: { type: 'boolean' },
-                  hasImplementationPlanComment: { type: 'string' },
-                  hasScaleResource: { type: 'boolean' },
-                  hasScaleResourceComment: { type: 'string' },
-                  suggestedOrganisations: {
-                    type: 'array',
-                    items: {
-                      type: 'object',
-                      properties: {
-                        id: { type: 'string', format: 'uuid' },
-                        name: { type: 'string' },
-                        acronym: { type: 'string' },
-                        units: {
-                          type: 'array',
-                          items: {
-                            type: 'object',
-                            properties: {
-                              id: { type: 'string', format: 'uuid' },
-                              name: { type: 'string' },
-                              acronym: { type: 'string' },
-                              organisation: {
-                                type: 'object',
-                                properties: {
-                                  id: { type: 'string', format: 'uuid' },
-                                  name: { type: 'string' },
-                                  acronym: { type: 'string' }
-                                }
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  },
-                  updatedAt: { type: 'string', format: 'date-time' },
-                  updatedBy: {
-                    type: 'object',
-                    properties: {
-                      id: { type: 'string', format: 'uuid' },
-                      name: { type: 'string' }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
+        200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+          description: 'Success'
+        }),
         400: {
           description: 'Bad Request'
         },

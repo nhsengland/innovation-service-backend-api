@@ -11,7 +11,7 @@ import { container } from '../_config';
 
 import type { InnovationThreadsService } from '../_services/innovation-threads.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import type { ParamsType } from './validation.schemas';
 import { ParamsSchema } from './validation.schemas';
 
@@ -58,30 +58,9 @@ export default openApi(
       tags: ['[v1] Innovation Threads'],
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       responses: {
-        200: {
-          description: 'Success',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  id: {
-                    type: 'string',
-                    description: 'Message ID'
-                  },
-                  message: {
-                    type: 'string',
-                    description: 'Message'
-                  },
-                  createdAt: {
-                    type: 'string',
-                    description: 'Message creation date'
-                  }
-                }
-              }
-            }
-          }
-        },
+        200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+          description: 'Success'
+        }),
         401: {
           description: 'Unauthorized'
         },

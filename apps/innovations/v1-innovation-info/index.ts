@@ -13,7 +13,7 @@ import { container } from '../_config';
 
 import type { InnovationsService } from '../_services/innovations.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType, QueryParamsSchema, QueryParamsType } from './validation.schemas';
 
 class V1InnovationInfo {
@@ -109,7 +109,9 @@ export default openApi(V1InnovationInfo.httpTrigger as AzureFunction, '/v1/{inno
     tags: ['[v1] Innovation'],
     parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     responses: {
-      200: { description: 'Success' },
+      200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: 'Success'
+      }),
       400: { description: 'Invalid innovation payload' }
     }
   }

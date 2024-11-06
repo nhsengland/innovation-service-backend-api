@@ -1,4 +1,5 @@
-import type { InnovationExportRequestStatusEnum } from '@innovations/shared/enums';
+import { InnovationExportRequestStatusEnum } from '@innovations/shared/enums';
+import Joi from 'joi';
 
 export type ResponseDTO = {
   id: string;
@@ -14,3 +15,20 @@ export type ResponseDTO = {
   updatedBy: { name: string };
   updatedAt: Date;
 };
+
+export const ResponseBodySchema = Joi.object({
+  id: Joi.string().uuid().required(),
+  status: Joi.string().valid(...Object.values(InnovationExportRequestStatusEnum)),
+  requestReason: Joi.string().required(),
+  rejectReason: Joi.string().optional(),
+  createdBy: Joi.object({
+    name: Joi.string().required,
+    displayRole: Joi.string().optional(),
+    displayType: Joi.string().optional()
+  }),
+  createdAt: Joi.date().required(),
+  updatedBy: Joi.object({
+    name: Joi.string().required()
+  }),
+  updatedAt: Joi.date().required()
+});

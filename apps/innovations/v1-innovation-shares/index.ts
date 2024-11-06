@@ -11,7 +11,7 @@ import { container } from '../_config';
 
 import type { InnovationsService } from '../_services/innovations.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1InnovationShares {
@@ -59,57 +59,9 @@ export default openApi(V1InnovationShares.httpTrigger as AzureFunction, '/v1/{in
     operationId: 'v1-innovation-shares',
     parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     responses: {
-      200: {
-        description: 'OK',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  id: {
-                    type: 'string',
-                    description: 'The unique identifier of the share.'
-                  },
-                  innovationId: {
-                    type: 'string',
-                    description: 'The unique identifier of the innovation.'
-                  },
-                  organisationId: {
-                    type: 'string',
-                    description: 'The unique identifier of the organisation.'
-                  },
-                  organisationName: {
-                    type: 'string',
-                    description: 'The name of the organisation.'
-                  },
-                  organisationUnitId: {
-                    type: 'string',
-                    description: 'The unique identifier of the organisation unit.'
-                  },
-                  organisationUnitName: {
-                    type: 'string',
-                    description: 'The name of the organisation unit.'
-                  },
-                  status: {
-                    type: 'string',
-                    description: 'The status of the share.'
-                  },
-                  createdAt: {
-                    type: 'string',
-                    description: 'The date and time when the share was created.'
-                  },
-                  updatedAt: {
-                    type: 'string',
-                    description: 'The date and time when the share was last updated.'
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
+      200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: 'OK'
+      }),
       401: {
         description: 'Unauthorized'
       },

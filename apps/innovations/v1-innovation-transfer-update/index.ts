@@ -11,7 +11,7 @@ import { container } from '../_config';
 
 import type { InnovationTransferService } from '../_services/innovation-transfer.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1InnovationTransferUpdate {
@@ -55,9 +55,9 @@ export default openApi(V1InnovationTransferUpdate.httpTrigger as AzureFunction, 
     parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     requestBody: SwaggerHelper.bodyJ2S(BodySchema, { description: 'The innovation transfer status' }),
     responses: {
-      204: {
+      204: SwaggerHelper.responseJ2S(ResponseBodySchema, {
         description: 'The innovation transfer status has been updated'
-      },
+      }),
       400: {
         description: 'The innovation transfer status is invalid'
       },

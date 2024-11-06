@@ -13,7 +13,7 @@ import { container } from '../_config';
 import { InnovationStatusEnum } from '@innovations/shared/enums';
 import type { InnovationThreadsService } from '../_services/innovation-threads.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1InnovationThreadMessageCreate {
@@ -78,52 +78,9 @@ export default openApi(
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       requestBody: SwaggerHelper.bodyJ2S(BodySchema, { description: 'Message to be created.' }),
       responses: {
-        200: {
-          description: 'Message created.',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  threadMessage: {
-                    type: 'object',
-                    properties: {
-                      id: {
-                        type: 'string',
-                        description: 'Message ID.'
-                      },
-                      message: {
-                        type: 'string',
-                        description: 'Message.'
-                      },
-                      createdBy: {
-                        type: 'object',
-                        properties: {
-                          id: {
-                            type: 'string',
-                            description: 'User ID.'
-                          },
-                          identityId: {
-                            type: 'string',
-                            description: 'User identity ID.'
-                          }
-                        }
-                      },
-                      createdAt: {
-                        type: 'string',
-                        description: 'Date when the message was created.'
-                      },
-                      isEditable: {
-                        type: 'boolean',
-                        description: 'Flag to indicate if the message can be edited.'
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
+        200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+          description: 'Message created.'
+        }),
         400: {
           description: 'Bad request.'
         },

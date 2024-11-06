@@ -13,7 +13,7 @@ import { container } from '../_config';
 
 import type { InnovationAssessmentsService } from '../_services/innovation-assessments.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1InnovationAssessmentUpdate {
@@ -73,46 +73,9 @@ export default openApi(
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       requestBody: SwaggerHelper.bodyJ2S(BodySchema, { description: 'Innovation assessment update request body.' }),
       responses: {
-        200: {
-          description: 'Returns the updated innovation assessment.',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  id: {
-                    type: 'string',
-                    format: 'uuid'
-                  },
-                  innovationId: {
-                    type: 'string',
-                    format: 'uuid'
-                  },
-                  assessmentId: {
-                    type: 'string',
-                    format: 'uuid'
-                  },
-                  status: {
-                    type: 'string',
-                    enum: ['APPROVED', 'REJECTED']
-                  },
-                  comment: {
-                    type: 'string',
-                    maxLength: 1000
-                  },
-                  createdAt: {
-                    type: 'string',
-                    format: 'date-time'
-                  },
-                  updatedAt: {
-                    type: 'string',
-                    format: 'date-time'
-                  }
-                }
-              }
-            }
-          }
-        },
+        200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+          description: 'Returns the updated innovation assessment.'
+        }),
         400: {
           description: 'Bad request. Validation error.'
         },

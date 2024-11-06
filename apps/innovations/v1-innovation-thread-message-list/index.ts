@@ -11,7 +11,7 @@ import { container } from '../_config';
 
 import type { InnovationThreadsService } from '../_services/innovation-threads.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType, QueryParamsSchema, QueryParamsType } from './validation.schemas';
 
 class V1InnovationThreadMessageList {
@@ -99,98 +99,9 @@ export default openApi(
       tags: ['[v1] Innovation Threads'],
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       responses: {
-        200: {
-          description: 'Returns a list of messages from a thread',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  count: {
-                    type: 'number'
-                  },
-                  messages: {
-                    type: 'array',
-                    items: {
-                      type: 'object',
-                      properties: {
-                        id: {
-                          type: 'string'
-                        },
-                        createdAt: {
-                          type: 'string'
-                        },
-                        createdBy: {
-                          type: 'object',
-                          properties: {
-                            id: {
-                              type: 'string'
-                            },
-                            name: {
-                              type: 'string'
-                            },
-                            type: {
-                              type: 'string',
-                              enum: ['INNOVATOR', 'ASSESSOR', 'ACCESSOR']
-                            },
-                            organisationUnit: {
-                              type: 'object',
-                              properties: {
-                                id: {
-                                  type: 'string'
-                                },
-                                name: {
-                                  type: 'string'
-                                },
-                                acronym: {
-                                  type: 'string'
-                                }
-                              }
-                            },
-                            organisation: {
-                              type: 'object',
-                              properties: {
-                                id: {
-                                  type: 'string'
-                                },
-                                name: {
-                                  type: 'string'
-                                },
-                                acronym: {
-                                  type: 'string'
-                                }
-                              }
-                            }
-                          }
-                        },
-                        isEditable: {
-                          type: 'boolean'
-                        },
-                        isNew: {
-                          type: 'boolean'
-                        },
-                        message: {
-                          type: 'string'
-                        },
-                        file: {
-                          type: 'object',
-                          properties: {
-                            id: { type: 'string' },
-                            name: { type: 'string' },
-                            url: { type: 'string' }
-                          }
-                        },
-                        updatedAt: {
-                          type: 'string'
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
+        200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+          description: 'Returns a list of messages from a thread'
+        }),
         400: {
           description: 'Bad request'
         },

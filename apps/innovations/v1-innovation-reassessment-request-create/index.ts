@@ -11,7 +11,7 @@ import { container } from '../_config';
 
 import type { InnovationAssessmentsService } from '../_services/innovation-assessments.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1InnovationReassessmentRequestCreate {
@@ -66,7 +66,9 @@ export default openApi(
         description: 'Create a reassessment request for an innovation.'
       }),
       responses: {
-        200: { description: 'Returns the reassessment request and the cloned assessment id' },
+        200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+          description: 'Returns the reassessment request and the cloned assessment id'
+        }),
         400: { description: 'Bad request' },
         401: { description: 'Unauthorized' },
         403: { description: 'Forbidden' },

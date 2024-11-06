@@ -1,4 +1,5 @@
-import type { InnovationRelevantOrganisationsStatusEnum } from '@innovations/shared/enums';
+import { InnovationRelevantOrganisationsStatusEnum } from '@innovations/shared/enums';
+import Joi from 'joi';
 
 export type ResponseDTO = {
   id: string;
@@ -11,3 +12,24 @@ export type ResponseDTO = {
   };
   recipients: { id: string; roleId: string; name: string }[];
 }[];
+
+export const ResponseBodySchema = Joi.array<ResponseDTO>().items(
+  Joi.object({
+    id: Joi.string().uuid().required(),
+    status: Joi.string().valid(...Object.values(InnovationRelevantOrganisationsStatusEnum)),
+    organisation: Joi.object({
+      id: Joi.string().uuid().required(),
+      name: Joi.string().required(),
+      acronym: Joi.string().required(),
+      unit: Joi.object({
+        id: Joi.string().uuid().required(),
+        name: Joi.string().required(),
+        acronym: Joi.string().required()
+      })
+    }).required(),
+    recipients: Joi.object({
+      id: Joi.string().uuid().required(),
+      name: Joi.string().required()
+    })
+  })
+);

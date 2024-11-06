@@ -4,7 +4,7 @@ import type { AzureFunction, Context, HttpRequest } from '@azure/functions';
 import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 
 import { container } from '../_config';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 
 import type { InnovationCollaboratorsService } from '../_services/innovation-collaborators.service';
 import SYMBOLS from '../_services/symbols';
@@ -43,23 +43,9 @@ export default openApi(
       tags: ['[v1] Innovation Collaborators'],
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       responses: {
-        200: {
-          description: 'Success',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  userExists: { type: 'boolean', description: 'User exists in service' },
-                  collaboratorStatus: {
-                    type: 'string',
-                    description: 'Status of the collaborator invite'
-                  }
-                }
-              }
-            }
-          }
-        },
+        200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+          description: 'Success'
+        }),
         404: {
           description: 'Not Found'
         }

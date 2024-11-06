@@ -10,7 +10,7 @@ import type { CustomContextType } from '@innovations/shared/types';
 import { container } from '../_config';
 import type { InnovationTransferService } from '../_services/innovation-transfer.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType } from './validation.schemas';
 
 class GetInnovationTransfer {
@@ -48,16 +48,9 @@ export default openApi(GetInnovationTransfer.httpTrigger as AzureFunction, '/v1/
     operationId: 'getInnovationTransfer',
     parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     responses: {
-      200: {
-        description: 'Success',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object'
-            }
-          }
-        }
-      },
+      200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: 'Success'
+      }),
       404: {
         description: 'Not Found',
         content: {

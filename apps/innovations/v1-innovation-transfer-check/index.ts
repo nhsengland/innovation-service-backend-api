@@ -7,7 +7,7 @@ import { container } from '../_config';
 
 import type { InnovationTransferService } from '../_services/innovation-transfer.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import type { ParamsType } from './validation.schemas';
 import { ParamsSchema } from './validation.schemas';
 
@@ -35,19 +35,9 @@ export default openApi(V1InnovationTransferCheck.httpTrigger as AzureFunction, '
     operationId: 'v1-innovation-transfer-check',
     parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     responses: {
-      200: {
-        description: 'Ok',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                userExists: { type: 'boolean', description: 'User exists in service' }
-              }
-            }
-          }
-        }
-      },
+      200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: 'Ok'
+      }),
       404: {
         description: 'The innovation transfer does not exist'
       }

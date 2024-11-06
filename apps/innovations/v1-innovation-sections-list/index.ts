@@ -11,7 +11,7 @@ import { container } from '../_config';
 
 import type { InnovationSectionsService } from '../_services/innovation-sections.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1InnovationSectionsList {
@@ -66,55 +66,9 @@ export default openApi(V1InnovationSectionsList.httpTrigger as AzureFunction, '/
     operationId: 'v1-innovation-sections-list',
     parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     responses: {
-      200: {
-        description: 'Success',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                id: {
-                  type: 'string',
-                  description: 'Innovation id.'
-                },
-                name: {
-                  type: 'string',
-                  description: 'Innovation name.'
-                },
-                status: {
-                  type: 'string',
-                  description: 'Innovation status.'
-                },
-                sections: {
-                  type: 'array',
-                  description: 'Innovation sections.',
-                  items: {
-                    type: 'object',
-                    properties: {
-                      id: {
-                        type: 'string',
-                        description: 'Innovation section id.'
-                      },
-                      section: {
-                        type: 'string',
-                        description: 'Innovation section name.'
-                      },
-                      status: {
-                        type: 'string',
-                        description: 'Innovation section status.'
-                      },
-                      submittedAt: {
-                        type: 'string',
-                        description: 'Innovation section submitted date.'
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
+      200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: 'Success'
+      }),
       401: {
         description: 'Unauthorized'
       },

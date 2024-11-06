@@ -12,7 +12,7 @@ import { container } from '../_config';
 
 import type { InnovationSectionsService } from '../_services/innovation-sections.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType, QueryParamsSchema, QueryParamsType } from './validation.schemas';
 
 class GetInnovationAllSectionsList {
@@ -57,16 +57,9 @@ export default openApi(GetInnovationAllSectionsList.httpTrigger as AzureFunction
     operationId: 'v1-innovation-all-sections-list',
     parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     responses: {
-      200: {
-        description: 'Success',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object'
-            }
-          }
-        }
-      },
+      200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: 'Success'
+      }),
       401: {
         description: 'Unauthorized'
       },
