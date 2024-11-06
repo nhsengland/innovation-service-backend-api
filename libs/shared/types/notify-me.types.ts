@@ -21,7 +21,10 @@ export type SupportUpdated = {
   subscriptionType: 'INSTANTLY' | 'ONCE';
   preConditions: {
     units: string[];
-    status: ExcludeEnum<InnovationSupportStatusEnum, InnovationSupportStatusEnum.SUGGESTED>[];
+    status: ExcludeEnum<
+      InnovationSupportStatusEnum,
+      InnovationSupportStatusEnum.SUGGESTED | InnovationSupportStatusEnum.UNASSIGNED
+    >[];
   };
   notificationType: 'SUPPORT_UPDATED' | 'SUGGESTED_SUPPORT_UPDATED';
 };
