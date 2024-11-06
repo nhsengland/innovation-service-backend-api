@@ -11,7 +11,7 @@ import { container } from '../_config';
 import SHARED_SYMBOLS from '@admin/shared/services/symbols';
 import type { OrganisationsService } from '../_services/organisations.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1AdminUnitInactivate {
@@ -47,22 +47,9 @@ export default openApi(
       operationId: 'v1-admin-unit-inactivate',
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       responses: {
-        '200': {
-          description: 'The organisation unit has been inactivated.',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  unitId: {
-                    type: 'string',
-                    description: 'The organisation unit id.'
-                  }
-                }
-              }
-            }
-          }
-        },
+        '200': SwaggerHelper.responseJ2S(ResponseBodySchema, {
+          description: 'The organisation unit has been inactivated.'
+        }),
         '400': {
           description: 'Bad request.'
         },

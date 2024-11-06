@@ -10,11 +10,10 @@ import type { CustomContextType } from '@admin/shared/types';
 
 import { container } from '../_config';
 
-import { TermsOfUseTypeEnum } from '@admin/shared/enums';
 import SHARED_SYMBOLS from '@admin/shared/services/symbols';
 import SYMBOLS from '../_services/symbols';
 import type { TermsOfUseService } from '../_services/terms-of-use.service';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { QueryParamsSchema, QueryParamsType } from './validation.schemas';
 
 class V1AdminTermsOfUseList {
@@ -45,36 +44,9 @@ export default openApi(V1AdminTermsOfUseList.httpTrigger as AzureFunction, '/v1/
     operationId: 'v1-admin-terms-of-use-list',
     parameters: SwaggerHelper.paramJ2S({ query: QueryParamsSchema }),
     responses: {
-      '200': {
-        description: 'The list of terms of use versions.',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                count: {
-                  type: 'number',
-                  description: 'The total number of terms of use.'
-                },
-                data: {
-                  type: 'array',
-                  items: {
-                    type: 'object',
-                    properties: {
-                      id: { type: 'string', format: 'uuid' },
-                      name: { type: 'string' },
-                      touType: { type: 'string', enum: Object.values(TermsOfUseTypeEnum) },
-                      summary: { type: 'string' },
-                      releaseAt: { type: 'string', format: 'date-time', nullable: true },
-                      createdAt: { type: 'string', format: 'date-time' }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
+      '200': SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: 'The list of terms of use versions.'
+      }),
       '400': {
         description: 'Bad request.'
       },

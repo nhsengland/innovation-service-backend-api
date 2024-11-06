@@ -24,7 +24,10 @@ paths:
                     type: string
                     enum:
                       - OK
-                      - WARN
+                      - NOK
+                required:
+                  - status
+                additionalProperties: false
         "401":
           description: Unauthorized
         "403":
@@ -79,10 +82,17 @@ paths:
                 properties:
                   id:
                     type: string
+                    format: uuid
                     description: The organisation id.
                   units:
-                    type: string
+                    type: array
+                    items:
+                      type: string
                     description: Ids of the organisation units belonging to the organisation.
+                required:
+                  - id
+                  - units
+                additionalProperties: false
         "400":
           description: Bad request.
         "401":
@@ -96,10 +106,10 @@ paths:
       parameters:
         - name: organisationId
           in: path
-          description: The organisation id.
           required: true
           schema:
             type: string
+            format: uuid
       requestBody:
         description: New name and acronym for the organisation.
         required: true
@@ -108,9 +118,16 @@ paths:
             schema:
               type: object
               properties:
-                userIds:
+                name:
                   type: string
-                  description: Name and acronym for the organisation.
+                  maxLength: 100
+                acronym:
+                  type: string
+                  maxLength: 10
+              required:
+                - name
+                - acronym
+              additionalProperties: false
       responses:
         "200":
           description: The organisation unit has been updated.
@@ -121,7 +138,11 @@ paths:
                 properties:
                   organisationId:
                     type: string
+                    format: uuid
                     description: The organisation id.
+                required:
+                  - organisationId
+                additionalProperties: false
         "400":
           description: Bad request.
         "401":
@@ -242,9 +263,12 @@ paths:
               schema:
                 type: object
                 properties:
-                  unitId:
+                  id:
                     type: string
-                    description: Id of the updated terms of use.
+                    format: uuid
+                required:
+                  - id
+                additionalProperties: false
         "400":
           description: Bad request.
         "401":
@@ -290,9 +314,12 @@ paths:
               schema:
                 type: object
                 properties:
-                  unitId:
+                  id:
                     type: string
-                    description: Id of the created terms of use.
+                    format: uuid
+                required:
+                  - id
+                additionalProperties: false
         "400":
           description: Bad request.
         "401":
@@ -337,7 +364,7 @@ paths:
                 type: object
                 properties:
                   count:
-                    type: number
+                    type: integer
                     description: The total number of terms of use.
                   data:
                     type: array
@@ -356,13 +383,24 @@ paths:
                             - SUPPORT_ORGANISATION
                         summary:
                           type: string
-                        releaseAt:
+                        releasedAt:
                           type: string
                           format: date-time
                           nullable: true
                         createdAt:
                           type: string
                           format: date-time
+                      required:
+                        - id
+                        - name
+                        - touType
+                        - summary
+                        - releasedAt
+                        - createdAt
+                      additionalProperties: false
+                required:
+                  - count
+                additionalProperties: false
         "400":
           description: Bad request.
         "401":
@@ -376,16 +414,16 @@ paths:
       parameters:
         - name: organisationId
           in: path
-          description: The organisation id.
           required: true
           schema:
             type: string
+            format: uuid
         - name: organisationUnitId
           in: path
-          description: The organisation unit id.
           required: true
           schema:
             type: string
+            format: uuid
       requestBody:
         description: The id of the users to unlock.
         required: true
@@ -395,8 +433,12 @@ paths:
               type: object
               properties:
                 userIds:
-                  type: string
-                  description: Ids of the users to unlock.
+                  type: array
+                  items:
+                    type: string
+              required:
+                - userIds
+              additionalProperties: false
       responses:
         "200":
           description: The organisation unit has been activated.
@@ -407,7 +449,10 @@ paths:
                 properties:
                   unitId:
                     type: string
-                    description: The organisation unit id.
+                    format: uuid
+                required:
+                  - unitId
+                additionalProperties: false
         "400":
           description: Bad request.
         "401":
@@ -456,9 +501,12 @@ paths:
               schema:
                 type: object
                 properties:
-                  unitId:
+                  id:
                     type: string
-                    description: The organisation id.
+                    format: uuid
+                required:
+                  - id
+                additionalProperties: false
         "400":
           description: Bad request.
         "401":
@@ -472,16 +520,16 @@ paths:
       parameters:
         - name: organisationId
           in: path
-          description: The organisation id.
           required: true
           schema:
             type: string
+            format: uuid
         - name: organisationUnitId
           in: path
-          description: The organisation unit id.
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         "200":
           description: The organisation unit has been inactivated.
@@ -492,7 +540,10 @@ paths:
                 properties:
                   unitId:
                     type: string
-                    description: The organisation unit id.
+                    format: uuid
+                required:
+                  - unitId
+                additionalProperties: false
         "400":
           description: Bad request.
         "401":
@@ -508,16 +559,16 @@ paths:
       parameters:
         - name: organisationId
           in: path
-          description: The organisation id.
           required: true
           schema:
             type: string
+            format: uuid
         - name: organisationUnitId
           in: path
-          description: The organisation unit id.
           required: true
           schema:
             type: string
+            format: uuid
       requestBody:
         description: New name and acronym for the unit.
         required: true
@@ -526,9 +577,16 @@ paths:
             schema:
               type: object
               properties:
-                userIds:
+                name:
                   type: string
-                  description: Name and acronym for the unit.
+                  maxLength: 100
+                acronym:
+                  type: string
+                  maxLength: 10
+              required:
+                - name
+                - acronym
+              additionalProperties: false
       responses:
         "200":
           description: The organisation unit has been updated.
@@ -539,7 +597,10 @@ paths:
                 properties:
                   unitId:
                     type: string
-                    description: The organisation unit id.
+                    format: uuid
+                required:
+                  - unitId
+                additionalProperties: false
         "400":
           description: Bad request.
         "401":
@@ -564,6 +625,57 @@ paths:
       responses:
         "200":
           description: List of innovations assigned to the user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        innovation:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                            name:
+                              type: string
+                          required:
+                            - id
+                            - name
+                          additionalProperties: false
+                        supportedBy:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              id:
+                                type: string
+                                format: uuid
+                              name:
+                                type: string
+                              role:
+                                type: string
+                                enum:
+                                  - ADMIN
+                                  - INNOVATOR
+                                  - ACCESSOR
+                                  - ASSESSMENT
+                                  - QUALIFYING_ACCESSOR
+                            required:
+                              - id
+                              - name
+                            additionalProperties: false
+                      additionalProperties: false
+                required:
+                  - count
+                  - data
+                additionalProperties: false
         "400":
           description: Bad Request
         "401":
@@ -637,7 +749,10 @@ paths:
                 properties:
                   id:
                     type: string
-                    description: The user id.
+                    format: uuid
+                required:
+                  - id
+                additionalProperties: false
         "400":
           description: Bad request.
         "401":
@@ -715,9 +830,12 @@ paths:
               schema:
                 type: object
                 properties:
-                  userId:
+                  id:
                     type: string
-                    description: Id of the user.
+                    format: uuid
+                required:
+                  - id
+                additionalProperties: false
         "400":
           description: Bad request.
         "401":
@@ -735,13 +853,15 @@ paths:
       parameters:
         - name: userIdOrEmail
           in: path
-          required: true
+          required: false
           schema:
             anyOf:
               - type: string
                 format: uuid
+                x-required: true
               - type: string
                 format: email
+                x-required: true
       responses:
         "200":
           description: Success
@@ -768,6 +888,7 @@ paths:
                       properties:
                         id:
                           type: string
+                          format: uuid
                         role:
                           type: string
                           enum:
@@ -776,10 +897,51 @@ paths:
                             - ACCESSOR
                             - ASSESSMENT
                             - QUALIFYING_ACCESSOR
-                        displayTeam:
-                          type: string
                         isActive:
                           type: boolean
+                        organisation:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                            name:
+                              type: string
+                            acronym:
+                              type: string
+                              nullable: true
+                          required:
+                            - id
+                            - name
+                            - acronym
+                          additionalProperties: false
+                        organisationUnit:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                            name:
+                              type: string
+                            acronym:
+                              type: string
+                          required:
+                            - id
+                            - name
+                            - acronym
+                          additionalProperties: false
+                        displayTeam:
+                          type: string
+                      required:
+                        - id
+                        - isActive
+                      additionalProperties: false
+                required:
+                  - id
+                  - email
+                  - name
+                  - isActive
+                additionalProperties: false
         "400":
           description: The request is invalid.
         "401":
@@ -813,10 +975,16 @@ paths:
                   properties:
                     id:
                       type: string
+                      format: uuid
                     name:
                       type: string
                     isOwner:
                       type: boolean
+                  required:
+                    - id
+                    - name
+                    - isOwner
+                  additionalProperties: false
         "400":
           description: Bad request
   /v1/users/{userId}/roles/{roleId}:
@@ -858,7 +1026,10 @@ paths:
                   properties:
                     id:
                       type: string
-                      description: The role id.
+                      format: uuid
+                  required:
+                    - id
+                  additionalProperties: false
         "400":
           description: The request is invalid.
         "401":
@@ -926,7 +1097,11 @@ paths:
                   properties:
                     id:
                       type: string
+                      format: uuid
                       description: The role id.
+                  required:
+                    - id
+                  additionalProperties: false
         "400":
           description: The request is invalid.
         "401":
@@ -956,8 +1131,34 @@ paths:
                 type: object
                 properties:
                   validations:
-                    type: object
-                    description: Validation data.
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        rule:
+                          type: string
+                          enum:
+                            - AssessmentUserIsNotTheOnlyOne
+                            - LastQualifyingAccessorUserOnOrganisationUnit
+                            - NoInnovationsSupportedOnlyByThisUser
+                            - UserHasAnyAdminRole
+                            - UserHasAnyInnovatorRole
+                            - UserHasAnyAssessmentRole
+                            - UserHasAnyAccessorRole
+                            - UserHasAnyQualifyingAccessorRole
+                            - UserHasAnyAccessorRoleInOtherOrganisation
+                            - UserAlreadyHasRoleInUnit
+                            - OrganisationUnitIsActive
+                            - UserIsAccessorInAllUnitsOfOrg
+                            - UserCanHaveAssessmentOrAccessorRole
+                        valid:
+                          type: boolean
+                        details: {}
+                      required:
+                        - rule
+                        - valid
+                      additionalProperties: false
+                additionalProperties: false
         "400":
           description: Bad request.
         "401":
@@ -1054,6 +1255,10 @@ paths:
                 properties:
                   id:
                     type: string
+                    format: uuid
+                required:
+                  - id
+                additionalProperties: false
         "400":
           description: Bad Request
         "401":
@@ -1075,31 +1280,48 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    id:
-                      type: string
-                      format: uuid
-                    userRoles:
-                      type: array
-                      items:
-                        type: string
-                        enum:
-                          - ADMIN
-                          - INNOVATOR
-                          - ACCESSOR
-                          - ASSESSMENT
-                          - QUALIFYING_ACCESSOR
-                    params:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  data:
+                    type: array
+                    items:
                       type: object
-                    createdAt:
-                      type: string
-                      format: date-time
-                    expiresAt:
-                      type: string
-                      format: date-time
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        title:
+                          type: string
+                        startsAt:
+                          type: string
+                          format: date-time
+                        expiresAt:
+                          type: string
+                          format: date-time
+                          nullable: true
+                        status:
+                          type: string
+                          enum:
+                            - SCHEDULED
+                            - ACTIVE
+                            - DONE
+                            - DELETED
+                        type:
+                          type: string
+                          enum:
+                            - LOG_IN
+                            - HOMEPAGE
+                      required:
+                        - id
+                        - title
+                        - startsAt
+                        - expiresAt
+                      additionalProperties: false
+                required:
+                  - count
+                additionalProperties: false
   /v1/announcements/{announcementId}:
     delete:
       description: Delete an announcement.
@@ -1141,6 +1363,8 @@ paths:
                   id:
                     type: string
                     format: uuid
+                  title:
+                    type: string
                   userRoles:
                     type: array
                     items:
@@ -1153,27 +1377,39 @@ paths:
                         - QUALIFYING_ACCESSOR
                   params:
                     type: object
-                  createdAt:
+                    properties: {}
+                    additionalProperties: false
+                    nullable: true
+                  startsAt:
                     type: string
                     format: date-time
                   expiresAt:
                     type: string
                     format: date-time
+                    nullable: true
                   status:
                     type: string
+                    enum:
+                      - SCHEDULED
+                      - ACTIVE
+                      - DONE
+                      - DELETED
                   filters:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        section:
+                    type: object
+                    properties:
+                      section:
+                        type: string
+                      question:
+                        type: string
+                      answers:
+                        type: array
+                        items:
                           type: string
-                        question:
-                          type: string
-                        answers:
-                          type: array
-                          items:
-                            type: string
+                    required:
+                      - section
+                      - question
+                    additionalProperties: false
+                    nullable: true
                   sendEmail:
                     type: boolean
                   type:
@@ -1181,6 +1417,16 @@ paths:
                     enum:
                       - LOG_IN
                       - HOMEPAGE
+                required:
+                  - id
+                  - title
+                  - userRoles
+                  - params
+                  - startsAt
+                  - expiresAt
+                  - filters
+                  - sendEmail
+                additionalProperties: false
         "400":
           description: Bad request
         "401":
@@ -1315,6 +1561,9 @@ paths:
                       - phone
                   phoneNumber:
                     type: string
+                required:
+                  - type
+                additionalProperties: false
         "400":
           description: Bad Request
         "401":

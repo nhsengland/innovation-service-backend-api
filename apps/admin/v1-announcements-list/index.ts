@@ -2,8 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@admin/shared/decorators';
-import { ServiceRoleEnum } from '@admin/shared/enums';
-import { JoiHelper, ResponseHelper } from '@admin/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@admin/shared/helpers';
 import type { AuthorizationService } from '@admin/shared/services';
 import type { CustomContextType } from '@admin/shared/types';
 
@@ -12,7 +11,7 @@ import type { AnnouncementsService } from '../_services/announcements.service';
 import SYMBOLS from '../_services/symbols';
 
 import SHARED_SYMBOLS from '@admin/shared/services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { AdminQueryParamsSchema, AdminQueryParamsType } from './validation.schemas';
 
 class V1AnnouncementsList {
@@ -52,26 +51,9 @@ export default openApi(V1AnnouncementsList.httpTrigger as AzureFunction, '/v1/an
     operationId: 'v1-announcements-list',
     tags: ['[v1] Announcements'],
     responses: {
-      200: {
-        description: 'Success',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  id: { type: 'string', format: 'uuid' },
-                  userRoles: { type: 'array', items: { type: 'string', enum: Object.keys(ServiceRoleEnum) } },
-                  params: { type: 'object' },
-                  createdAt: { type: 'string', format: 'date-time' },
-                  expiresAt: { type: 'string', format: 'date-time' }
-                }
-              }
-            }
-          }
-        }
-      }
+      200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: 'Success'
+      })
     }
   }
 });

@@ -13,7 +13,7 @@ import { container } from '../_config';
 import SHARED_SYMBOLS from '@admin/shared/services/symbols';
 import SYMBOLS from '../_services/symbols';
 import type { TermsOfUseService } from '../_services/terms-of-use.service';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1AdminTermsOfUseUpdate {
@@ -51,22 +51,9 @@ export default openApi(V1AdminTermsOfUseUpdate.httpTrigger as AzureFunction, '/v
       description: 'The terms of use to be updated.'
     }),
     responses: {
-      '200': {
-        description: 'The terms of use have been updated.',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                unitId: {
-                  type: 'string',
-                  description: 'Id of the updated terms of use.'
-                }
-              }
-            }
-          }
-        }
-      },
+      '200': SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: 'The terms of use have been updated.'
+      }),
       '400': {
         description: 'Bad request.'
       },

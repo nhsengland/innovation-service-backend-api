@@ -4,7 +4,6 @@ import type { AzureFunction, HttpRequest } from '@azure/functions';
 import { container } from '../_config';
 
 import { JwtDecoder } from '@admin/shared/decorators';
-import { ServiceRoleEnum } from '@admin/shared/enums';
 import { JoiHelper, ResponseHelper, SwaggerHelper } from '@admin/shared/helpers';
 import type { AuthorizationService } from '@admin/shared/services';
 import SHARED_SYMBOLS from '@admin/shared/services/symbols';
@@ -12,7 +11,7 @@ import type { CustomContextType } from '@admin/shared/types';
 
 import SYMBOLS from '../_services/symbols';
 import type { UsersService } from '../_services/users.service';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1AdminUserInfo {
@@ -44,35 +43,9 @@ export default openApi(V1AdminUserInfo.httpTrigger as AzureFunction, '/v1/users/
     tags: ['[v1] Admin Users'],
     parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     responses: {
-      200: {
-        description: 'Success',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                id: { type: 'string', format: 'uuid' },
-                email: { type: 'string' },
-                name: { type: 'string' },
-                phone: { type: 'string' },
-                isActive: { type: 'boolean' },
-                roles: {
-                  type: 'array',
-                  items: {
-                    type: 'object',
-                    properties: {
-                      id: { type: 'string' },
-                      role: { type: 'string', enum: Object.values(ServiceRoleEnum) },
-                      displayTeam: { type: 'string' },
-                      isActive: { type: 'boolean' }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
+      200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: 'Success'
+      }),
       400: { description: 'The request is invalid.' },
       401: { description: 'The user is not authenticated.' },
       403: { description: 'The user is not authorized to access this resource.' },

@@ -7,7 +7,7 @@ import SHARED_SYMBOLS from '@admin/shared/services/symbols';
 import type { CustomContextType } from '@admin/shared/types';
 
 import { container } from '../_config';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { JoiHelper, SwaggerHelper } from '@admin/shared/helpers';
 import { ParamsSchema, type ParamsType } from './validation.schemas';
 import type { UsersService } from '../_services/users.service';
@@ -45,7 +45,9 @@ export default openApi(
       tags: ['[v1] Innovations'],
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       responses: {
-        200: { description: 'List of innovations assigned to the user' },
+        200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+          description: 'List of innovations assigned to the user'
+        }),
         400: { description: 'Bad Request' },
         401: { description: 'Unauthorized' },
         403: { description: 'Forbidden' },
