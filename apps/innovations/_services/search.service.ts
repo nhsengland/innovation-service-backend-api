@@ -595,11 +595,11 @@ export class SearchService extends BaseService {
   private addSupportFilter(
     domainContext: DomainContextType,
     builder: ElasticSearchQueryBuilder,
-    supportStatuses: (InnovationSupportStatusEnum | 'UNASSIGNED')[]
+    supportStatuses: InnovationSupportStatusEnum[]
   ): void {
     if (supportStatuses.length && isAccessorDomainContextType(domainContext)) {
       const should: QueryDslQueryContainer[] = [];
-      const hasUnassigned = supportStatuses.includes('UNASSIGNED');
+      const hasUnassigned = supportStatuses.includes(InnovationSupportStatusEnum.UNASSIGNED);
 
       // This is only valid while we use UNASSIGNED as a status and in common with SUGGESTED
       if (hasUnassigned && !supportStatuses.includes(InnovationSupportStatusEnum.SUGGESTED)) {

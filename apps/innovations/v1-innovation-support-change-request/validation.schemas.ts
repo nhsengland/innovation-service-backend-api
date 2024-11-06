@@ -22,7 +22,7 @@ export const BodySchema = Joi.object<BodyType>({
   status: JoiHelper.AppCustomJoi()
     .string()
     .valid(...Object.values(InnovationSupportStatusEnum))
-    .disallow(InnovationSupportStatusEnum.SUGGESTED)
+    .disallow(InnovationSupportStatusEnum.SUGGESTED, InnovationSupportStatusEnum.UNASSIGNED)
     .required(),
   message: JoiHelper.AppCustomJoi().string().max(TEXTAREA_LENGTH_LIMIT.xl).required()
 }).required();

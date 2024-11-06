@@ -146,7 +146,7 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
             .items(
               JoiHelper.AppCustomJoi()
                 .string()
-                .valid(...Object.values(InnovationSupportStatusEnum), 'UNASSIGNED')
+                .valid(...Object.values(InnovationSupportStatusEnum))
             )
             .optional()
         })

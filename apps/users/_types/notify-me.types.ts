@@ -24,7 +24,8 @@ const SupportUpdatedSchema = Joi.object<SupportUpdated>({
       .items(
         JoiHelper.AppCustomJoi()
           .string()
-          .valid(...Object.values(InnovationSupportStatusEnum).filter(v => v !== InnovationSupportStatusEnum.SUGGESTED))
+          .valid(...Object.values(InnovationSupportStatusEnum))
+          .disallow(InnovationSupportStatusEnum.SUGGESTED, InnovationSupportStatusEnum.UNASSIGNED)
       )
       .min(1)
       .required()
@@ -123,7 +124,10 @@ export type SupportUpdatedResponseDTO = {
   eventType: 'SUPPORT_UPDATED';
   subscriptionType: 'INSTANTLY' | 'ONCE';
   organisations: OrganisationWithUnits[];
-  status: ExcludeEnum<InnovationSupportStatusEnum, InnovationSupportStatusEnum.SUGGESTED>[];
+  status: ExcludeEnum<
+    InnovationSupportStatusEnum,
+    InnovationSupportStatusEnum.SUGGESTED | InnovationSupportStatusEnum.UNASSIGNED
+  >[];
   notificationType: 'SUPPORT_UPDATED' | 'SUGGESTED_SUPPORT_UPDATED';
 };
 

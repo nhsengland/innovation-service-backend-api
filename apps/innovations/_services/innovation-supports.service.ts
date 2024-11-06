@@ -49,6 +49,7 @@ import type {
   SuggestedOrganisationInfo
 } from '../_types/innovation.types';
 
+import { DatesHelper } from '@innovations/shared/helpers';
 import { AuthErrorsEnum } from '@innovations/shared/services/auth/authorization-validation.model';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { SupportSummaryUnitInfo } from '../_types/support.types';
@@ -57,7 +58,6 @@ import type { InnovationFileService } from './innovation-file.service';
 import type { InnovationThreadsService } from './innovation-threads.service';
 import SYMBOLS from './symbols';
 import type { ValidationService } from './validation.service';
-import { DatesHelper } from '@innovations/shared/helpers';
 
 type UnitSupportInformationType = {
   id: string;
@@ -733,15 +733,19 @@ export class InnovationSupportsService extends BaseService {
     const innovation = await connection
       .createQueryBuilder(InnovationEntity, 'innovation')
       .select(['innovation.id', 'supports.id', 'supports.status'])
-      .innerJoin('innovation.innovationSupports', 'supports')
-      .innerJoin('supports.organisationUnit', 'organisationUnit')
+      .leftJoin(
+        'innovation.innovationSupports',
+        'supports',
+        'supports.isMostRecent = 1 AND supports.organisation_unit_id = :organisationUnitId',
+        { organisationUnitId }
+      )
+      .leftJoin('supports.organisationUnit', 'organisationUnit')
       .where('innovation.id = :innovationId', { innovationId })
-      .andWhere('organisationUnit.id = :organisationUnitId', { organisationUnitId })
       .getOne();
 
-    const innovationSupport = innovation?.innovationSupports[0];
+    const innovationSupportStatus = innovation?.innovationSupports[0]?.status ?? InnovationSupportStatusEnum.UNASSIGNED;
 
-    if (!innovationSupport) {
+    if (!innovation) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
     }
 
@@ -763,7 +767,7 @@ export class InnovationSupportsService extends BaseService {
           innovationId,
           {
             description: data.description,
-            supportStatus: innovationSupport.status,
+            supportStatus: innovationSupportStatus,
             type: InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION,
             unitId: domainContext.organisation.organisationUnit.id,
             suggestedOrganisationUnits: [unit.id]
@@ -1327,7 +1331,7 @@ export class InnovationSupportsService extends BaseService {
             ...defaultSummary,
             type: 'SUPPORT_UPDATE',
             params: {
-              supportStatus: supportLog.innovationSupportStatus ?? InnovationSupportStatusEnum.SUGGESTED, // Not needed, we are veryfing in the switch case that is a type that always has supportStatus
+              supportStatus: supportLog.innovationSupportStatus ?? InnovationSupportStatusEnum.UNASSIGNED, // Not needed, we are veryfing in the switch case that is a type that always has supportStatus
               message: supportLog.description
             }
           });
@@ -1543,9 +1547,10 @@ export class InnovationSupportsService extends BaseService {
           .andWhere('support.organisation_unit_id = :unitId', { unitId })
           .andWhere('support.isMostRecent = 1')
           .getOne()
-      )?.status ?? InnovationSupportStatusEnum.SUGGESTED;
+      )?.status ?? InnovationSupportStatusEnum.UNASSIGNED;
 
     switch (status) {
+      case InnovationSupportStatusEnum.UNASSIGNED:
       case InnovationSupportStatusEnum.SUGGESTED:
         return [
           InnovationSupportStatusEnum.ENGAGING,

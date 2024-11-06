@@ -12,6 +12,7 @@ const TRANSLATIONS = {
     SUGGESTED: 'Suggested',
     ENGAGING: 'Engaging',
     WAITING: 'Waiting',
+    UNASSIGNED: 'Unassigned',
     UNSUITABLE: 'Unsuitable',
     CLOSED: 'Closed'
   },
