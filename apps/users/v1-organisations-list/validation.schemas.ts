@@ -9,7 +9,7 @@ export type QueryParamsType = {
 };
 
 export const QueryParamsSchema = Joi.object({
-  fields: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid('organisationUnits')),
+  fields: JoiHelper.AppCustomJoi().stringArray().items(JoiHelper.AppCustomJoi().string().valid('organisationUnits')),
   withInactive: Joi.when('$userType', {
     is: ServiceRoleEnum.ADMIN,
     then: Joi.boolean().optional(),

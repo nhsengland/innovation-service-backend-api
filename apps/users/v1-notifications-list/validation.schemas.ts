@@ -20,7 +20,8 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
     contextTypes: JoiHelper.AppCustomJoi()
       .stringArray()
       .items(
-        Joi.string()
+        JoiHelper.AppCustomJoi()
+          .string()
           .allow('')
           .valid(...NotificationCategoryType)
       )

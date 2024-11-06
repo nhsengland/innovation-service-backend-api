@@ -46,4 +46,19 @@ export class DatesHelper {
     const format = Intl.DateTimeFormat('sv', { timeZone: 'Europe/London' });
     return format.format(date);
   }
+
+  /**
+   * Converts a date to a long date format string as of UK timezone.
+   * @param date The date object to format.
+   * @returns The date as a string in the format '18 September 2024'.
+   */
+  static getLongDateFormat(date: Date): string {
+    const format = Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Europe/London',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+    return format.format(date);
+  }
 }

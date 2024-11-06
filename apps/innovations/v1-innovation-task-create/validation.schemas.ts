@@ -2,12 +2,13 @@ import Joi from 'joi';
 
 import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
 import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
+import { JoiHelper } from '@innovations/shared/helpers';
 
 export type ParamsType = {
   innovationId: string;
 };
 export const ParamsSchema = Joi.object<ParamsType>({
-  innovationId: Joi.string().guid().required()
+  innovationId: JoiHelper.AppCustomJoi().string().guid().required()
 }).required();
 
 export type BodyType = {
@@ -15,9 +16,14 @@ export type BodyType = {
   description: string;
 };
 export const BodySchema = Joi.object<BodyType>({
-  section: Joi.string()
+  section: JoiHelper.AppCustomJoi()
+    .string()
     .valid(...CurrentCatalogTypes.InnovationSections)
     .required()
     .description('The section key.'),
-  description: Joi.string().max(TEXTAREA_LENGTH_LIMIT.s).required().description('The description of the task.')
+  description: JoiHelper.AppCustomJoi()
+    .string()
+    .max(TEXTAREA_LENGTH_LIMIT.s)
+    .required()
+    .description('The description of the task.')
 }).required();

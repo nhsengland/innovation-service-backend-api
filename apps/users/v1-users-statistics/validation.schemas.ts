@@ -9,6 +9,10 @@ export type QueryType = {
 export const QuerySchema = Joi.object<QueryType>({
   statistics: JoiHelper.AppCustomJoi()
     .stringArray()
-    .items(Joi.string().valid(...Object.values(UserStatisticsEnum)))
+    .items(
+      JoiHelper.AppCustomJoi()
+        .string()
+        .valid(...Object.values(UserStatisticsEnum))
+    )
     .required()
 }).required();

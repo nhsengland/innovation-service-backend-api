@@ -108,7 +108,7 @@ export default openApi(V1MeInfo.httpTrigger as AzureFunction, '/v1/me', {
     description: 'Retrieves the user profile information.',
     operationId: 'v1-me-info',
     tags: ['[v1] Users'],
-    parameters: SwaggerHelper.paramJ2S({ path: QueryParamsSchema }),
+    parameters: SwaggerHelper.paramJ2S({ query: QueryParamsSchema }),
     responses: {
       200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
         description: 'Successful operation'

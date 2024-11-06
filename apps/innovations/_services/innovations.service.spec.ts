@@ -995,27 +995,6 @@ describe('Innovations / _services / innovations suite', () => {
               name: scenario.users.samAccessor.name
             }
           ]
-        },
-        {
-          id: innovation.id,
-          status: InnovationSupportStatusEnum.SUGGESTED,
-          organisation: {
-            id: scenario.organisations.innovTechOrg.id,
-            name: scenario.organisations.innovTechOrg.name,
-            acronym: scenario.organisations.innovTechOrg.acronym,
-            unit: {
-              id: scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.id,
-              name: scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.name,
-              acronym: scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.acronym
-            }
-          },
-          recipients: [
-            {
-              id: scenario.users.lisaQualifyingAccessor.id,
-              roleId: scenario.users.lisaQualifyingAccessor.roles.qaRole.id,
-              name: scenario.users.lisaQualifyingAccessor.name
-            }
-          ]
         }
       ]);
     });
@@ -1064,32 +1043,6 @@ describe('Innovations / _services / innovations suite', () => {
               id: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id,
               name: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.name,
               acronym: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.acronym
-            }
-          }
-        },
-        {
-          status: InnovationSupportStatusEnum.SUGGESTED,
-          organisation: {
-            id: scenario.organisations.innovTechOrg.id,
-            name: scenario.organisations.innovTechOrg.name,
-            acronym: scenario.organisations.innovTechOrg.acronym,
-            unit: {
-              id: scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.id,
-              name: scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.name,
-              acronym: scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.acronym
-            }
-          }
-        },
-        {
-          status: InnovationSupportStatusEnum.SUGGESTED,
-          organisation: {
-            id: scenario.organisations.innovTechOrg.id,
-            name: scenario.organisations.innovTechOrg.name,
-            acronym: scenario.organisations.innovTechOrg.acronym,
-            unit: {
-              id: scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.id,
-              name: scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.name,
-              acronym: scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.acronym
             }
           }
         }

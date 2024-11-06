@@ -396,7 +396,7 @@ paths:
         - "[v1] Users"
       parameters:
         - name: forceRefresh
-          in: path
+          in: query
           required: false
           schema:
             type: boolean

@@ -23,7 +23,7 @@ export class ValidationService extends BaseService {
     checkIfSupportHadAlreadyStartedAtDate: {
       handler: this.checkIfSupportHadAlreadyStartedAtDate.bind(this),
       joiDefinition: Joi.object({
-        unitId: Joi.string().guid().required(),
+        unitId: JoiHelper.AppCustomJoi().string().guid().required(),
         date: Joi.date().required()
       }).required()
     }

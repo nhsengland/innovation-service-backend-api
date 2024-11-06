@@ -10,6 +10,7 @@ import {
 } from '../_handlers/validations';
 import { DeleteUserValidationsHandler } from '../_handlers/validations/delete-user-validations.handler';
 import type { AdminValidationsTemplatesType, ValidationResult } from '../types/validation.types';
+import { JoiHelper } from '@admin/shared/helpers';
 
 export enum AdminOperationEnum {
   DELETE_USER = 'DELETE_USER',
@@ -47,43 +48,44 @@ export const ADMIN_OPERATIONS_CONFIG: {
   [AdminOperationEnum.DELETE_USER]: {
     handler: DeleteUserValidationsHandler,
     joiDefinition: Joi.object<AdminValidationsTemplatesType[AdminOperationEnum.LOCK_USER]>({
-      userId: Joi.string().guid().required()
+      userId: JoiHelper.AppCustomJoi().string().guid().required()
     }).required()
   },
 
   [AdminOperationEnum.LOCK_USER]: {
     handler: LockUserValidationsHandler,
     joiDefinition: Joi.object<AdminValidationsTemplatesType[AdminOperationEnum.LOCK_USER]>({
-      userId: Joi.string().guid().required()
+      userId: JoiHelper.AppCustomJoi().string().guid().required()
     }).required()
   },
 
   [AdminOperationEnum.INACTIVATE_USER_ROLE]: {
     handler: InactivateUserRoleValidationsHandler,
     joiDefinition: Joi.object<AdminValidationsTemplatesType[AdminOperationEnum.INACTIVATE_USER_ROLE]>({
-      userId: Joi.string().guid().required(),
-      userRoleId: Joi.string().guid().required()
+      userId: JoiHelper.AppCustomJoi().string().guid().required(),
+      userRoleId: JoiHelper.AppCustomJoi().string().guid().required()
     }).required()
   },
 
   [AdminOperationEnum.ACTIVATE_USER_ROLE]: {
     handler: ActivateUserRoleValidationsHandler,
     joiDefinition: Joi.object<AdminValidationsTemplatesType[AdminOperationEnum.ACTIVATE_USER_ROLE]>({
-      userId: Joi.string().guid().required(),
-      userRoleId: Joi.string().guid().required()
+      userId: JoiHelper.AppCustomJoi().string().guid().required(),
+      userRoleId: JoiHelper.AppCustomJoi().string().guid().required()
     }).required()
   },
 
   [AdminOperationEnum.ADD_USER_ROLE]: {
     handler: AddUserRoleValidationsHandler,
     joiDefinition: Joi.object<AdminValidationsTemplatesType[AdminOperationEnum.ADD_USER_ROLE]>({
-      userId: Joi.string().guid().required(),
-      role: Joi.string()
+      userId: JoiHelper.AppCustomJoi().string().guid().required(),
+      role: JoiHelper.AppCustomJoi()
+        .string()
         .valid(...Object.values(ServiceRoleEnum))
         .required(),
       organisationUnitIds: Joi.alternatives().conditional('role', {
-        is: Joi.string().valid(ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR),
-        then: Joi.array().items(Joi.string().guid()).required()
+        is: JoiHelper.AppCustomJoi().string().valid(ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR),
+        then: Joi.array().items(JoiHelper.AppCustomJoi().string().guid()).required()
       })
     }).required()
   },
@@ -91,7 +93,7 @@ export const ADMIN_OPERATIONS_CONFIG: {
   [AdminOperationEnum.ADD_ANY_USER_ROLE]: {
     handler: AddAnyUserRoleValidationsHandler,
     joiDefinition: Joi.object<AdminValidationsTemplatesType[AdminOperationEnum.ADD_ANY_USER_ROLE]>({
-      userId: Joi.string().guid().required()
+      userId: JoiHelper.AppCustomJoi().string().guid().required()
     }).required()
   }
 };

@@ -7,7 +7,7 @@ export type ParamsType = {
   userId: string;
 };
 export const ParamsSchema = Joi.object<ParamsType>({
-  userId: Joi.string().guid().required().description('Id of the user.')
+  userId: JoiHelper.AppCustomJoi().string().guid().required().description('Id of the user.')
 }).required();
 
 export type QueryParamsType = {
@@ -17,22 +17,26 @@ export type QueryParamsType = {
   organisationUnitIds?: string[];
 };
 export const QueryParamsSchema = Joi.object<QueryParamsType>({
-  operation: Joi.string()
+  operation: JoiHelper.AppCustomJoi()
+    .string()
     .valid(...Object.values(AdminOperationEnum))
     .required()
     .description('Type of the operation to validate.'),
   roleId: Joi.alternatives().conditional('operation', {
-    is: Joi.string().valid(AdminOperationEnum.INACTIVATE_USER_ROLE, AdminOperationEnum.ACTIVATE_USER_ROLE),
-    then: Joi.string().guid().required()
+    is: JoiHelper.AppCustomJoi()
+      .string()
+      .valid(AdminOperationEnum.INACTIVATE_USER_ROLE, AdminOperationEnum.ACTIVATE_USER_ROLE),
+    then: JoiHelper.AppCustomJoi().string().guid().required()
   }),
   role: Joi.alternatives().conditional('operation', {
-    is: Joi.string().valid(AdminOperationEnum.ADD_USER_ROLE),
-    then: Joi.string()
+    is: JoiHelper.AppCustomJoi().string().valid(AdminOperationEnum.ADD_USER_ROLE),
+    then: JoiHelper.AppCustomJoi()
+      .string()
       .valid(ServiceRoleEnum.ASSESSMENT, ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR)
       .required()
   }),
   organisationUnitIds: Joi.alternatives().conditional('role', {
-    is: Joi.string().valid(ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR),
-    then: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().guid()).required()
+    is: JoiHelper.AppCustomJoi().string().valid(ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR),
+    then: JoiHelper.AppCustomJoi().stringArray().items(JoiHelper.AppCustomJoi().string().guid()).required()
   })
 }).required();

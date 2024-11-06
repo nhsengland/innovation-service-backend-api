@@ -2,6 +2,7 @@ import Joi from 'joi';
 
 import type { EmailTemplatesType } from '../_config/emails.config';
 import { EmailTemplates } from '../_config/emails.config';
+import { JoiHelper } from '@notifications/shared/helpers';
 
 export type MessageType = {
   data: {
@@ -13,10 +14,11 @@ export type MessageType = {
 
 export const MessageSchema = Joi.object<MessageType>({
   data: Joi.object<MessageType['data']>({
-    type: Joi.string()
+    type: JoiHelper.AppCustomJoi()
+      .string()
       .valid(...Object.keys(EmailTemplates))
       .required(),
-    to: Joi.string().required(),
+    to: JoiHelper.AppCustomJoi().string().required(),
     params: Joi.object().required()
   }).required()
 }).required();

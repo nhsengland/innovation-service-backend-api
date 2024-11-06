@@ -194,8 +194,7 @@ export class ChangesToSupportMultipleSupportsPerInnovation1727438455380 implemen
       UPDATE innovation_support
       SET started_at = started_at.min_started_at
       FROM started_at
-      WHERE innovation_support.id = started_at.id
-      AND status != 'SUGGESTED';
+      WHERE innovation_support.id = started_at.id;
     `);
   }
 

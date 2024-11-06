@@ -10,7 +10,7 @@ enum OrderFields {
 
 export type ParamsType = { innovationId: string };
 export const ParamsSchema = Joi.object<ParamsType>({
-  innovationId: Joi.string().guid().required()
+  innovationId: JoiHelper.AppCustomJoi().string().guid().required()
 });
 
 export type QueryParamsType = PaginationQueryParamsType<OrderFields> & {
@@ -22,7 +22,9 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
 })
   .append({ subject: JoiHelper.AppCustomJoi().decodeURIString().trim().max(100).optional() })
   .when('$userType', {
-    is: Joi.string().valid(ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR, ServiceRoleEnum.ASSESSMENT),
+    is: JoiHelper.AppCustomJoi()
+      .string()
+      .valid(ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR, ServiceRoleEnum.ASSESSMENT),
     then: Joi.object({
       following: Joi.boolean().optional()
     })

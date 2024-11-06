@@ -16,45 +16,52 @@ import Joi from 'joi';
 
 //#region CreateDTO
 const SupportUpdatedSchema = Joi.object<SupportUpdated>({
-  eventType: Joi.string().valid('SUPPORT_UPDATED').required(),
-  subscriptionType: Joi.string().valid('INSTANTLY', 'ONCE').default('INSTANTLY'),
+  eventType: JoiHelper.AppCustomJoi().string().valid('SUPPORT_UPDATED').required(),
+  subscriptionType: JoiHelper.AppCustomJoi().string().valid('INSTANTLY', 'ONCE').default('INSTANTLY'),
   preConditions: Joi.object({
-    units: Joi.array().items(Joi.string().uuid()).min(1).required(),
+    units: Joi.array().items(JoiHelper.AppCustomJoi().string().uuid()).min(1).required(),
     status: Joi.array()
       .items(
-        Joi.string().valid(
-          ...Object.values(InnovationSupportStatusEnum).filter(v => v !== InnovationSupportStatusEnum.SUGGESTED)
-        )
+        JoiHelper.AppCustomJoi()
+          .string()
+          .valid(...Object.values(InnovationSupportStatusEnum).filter(v => v !== InnovationSupportStatusEnum.SUGGESTED))
       )
       .min(1)
       .required()
   }).required(),
-  notificationType: Joi.string().valid('SUPPORT_UPDATED', 'SUGGESTED_SUPPORT_UPDATED').default('SUPPORT_UPDATED')
+  notificationType: JoiHelper.AppCustomJoi()
+    .string()
+    .valid('SUPPORT_UPDATED', 'SUGGESTED_SUPPORT_UPDATED')
+    .default('SUPPORT_UPDATED')
 }).required();
 
 const ProgressUpdateCreatedSchema = Joi.object<ProgressUpdateCreated>({
-  eventType: Joi.string().valid('PROGRESS_UPDATE_CREATED').required(),
-  subscriptionType: Joi.string().valid('INSTANTLY').default('INSTANTLY'),
+  eventType: JoiHelper.AppCustomJoi().string().valid('PROGRESS_UPDATE_CREATED').required(),
+  subscriptionType: JoiHelper.AppCustomJoi().string().valid('INSTANTLY').default('INSTANTLY'),
   preConditions: Joi.object({
-    units: Joi.array().items(Joi.string().uuid()).min(1).required()
+    units: Joi.array().items(JoiHelper.AppCustomJoi().string().uuid()).min(1).required()
   }).required()
 }).required();
 
 const InnovationRecordUpdatedSchema = Joi.object<InnovationRecordUpdated>({
-  eventType: Joi.string().valid('INNOVATION_RECORD_UPDATED').required(),
-  subscriptionType: Joi.string().valid('INSTANTLY').default('INSTANTLY'),
+  eventType: JoiHelper.AppCustomJoi().string().valid('INNOVATION_RECORD_UPDATED').required(),
+  subscriptionType: JoiHelper.AppCustomJoi().string().valid('INSTANTLY').default('INSTANTLY'),
   preConditions: Joi.object({
     sections: Joi.array()
-      .items(Joi.string().valid(...CurrentCatalogTypes.InnovationSections))
+      .items(
+        JoiHelper.AppCustomJoi()
+          .string()
+          .valid(...CurrentCatalogTypes.InnovationSections)
+      )
       .min(1)
       .optional()
   }).required()
 }).required();
 
 const ReminderSchema = Joi.object<Reminder>({
-  eventType: Joi.string().valid('REMINDER').required(),
-  subscriptionType: Joi.string().valid('SCHEDULED').default('SCHEDULED'),
-  customMessage: Joi.string().required(),
+  eventType: JoiHelper.AppCustomJoi().string().valid('REMINDER').required(),
+  subscriptionType: JoiHelper.AppCustomJoi().string().valid('SCHEDULED').default('SCHEDULED'),
+  customMessage: JoiHelper.AppCustomJoi().string().required(),
   date: JoiHelper.AppCustomJoi().dateWithDefaultTime().defaultTime('07:00').required()
 });
 
