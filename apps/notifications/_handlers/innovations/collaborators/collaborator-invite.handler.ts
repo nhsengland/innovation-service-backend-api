@@ -1,9 +1,10 @@
 import type { Context } from '@azure/functions';
-import type { NotifierTypeEnum} from '@notifications/shared/enums';
+import type { NotifierTypeEnum } from '@notifications/shared/enums';
 import { ServiceRoleEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { collaboratorInfoUrl, createAccountUrl } from '../../../_helpers/url.helper';
 import { BaseHandler } from '../../base.handler';
+import { randomUUID } from 'crypto';
 
 export class CollaboratorInviteHandler extends BaseHandler<
   NotifierTypeEnum.COLLABORATOR_INVITE,
@@ -39,13 +40,20 @@ export class CollaboratorInviteHandler extends BaseHandler<
     const recipient = await this.recipientsService.getUsersRecipient(collaborator.userId, ServiceRoleEnum.INNOVATOR);
     if (recipient) {
       const requestUserName = await this.getRequestUserName();
+      const notificationId = randomUUID();
+
       this.notify('MC01_COLLABORATOR_INVITE_EXISTING_USER', [recipient], {
         email: {
           notificationPreferenceType: 'INNOVATION_MANAGEMENT',
           params: {
             innovation_name: innovation.name,
             innovator_name: requestUserName,
-            invitation_url: collaboratorInfoUrl(ServiceRoleEnum.INNOVATOR, innovation.id, collaborator.id)
+            invitation_url: collaboratorInfoUrl(
+              ServiceRoleEnum.INNOVATOR,
+              innovation.id,
+              collaborator.id,
+              notificationId
+            )
           }
         },
         inApp: {
@@ -55,7 +63,12 @@ export class CollaboratorInviteHandler extends BaseHandler<
             detail: 'MC01_COLLABORATOR_INVITE_EXISTING_USER'
           },
           innovationId: innovation.id,
-          params: { innovationName: innovation.name, requestUserName: requestUserName, collaboratorId: collaborator.id }
+          params: {
+            innovationName: innovation.name,
+            requestUserName: requestUserName,
+            collaboratorId: collaborator.id
+          },
+          notificationId
         }
       });
     }

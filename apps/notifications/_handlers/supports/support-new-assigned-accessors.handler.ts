@@ -5,6 +5,7 @@ import { HandlersHelper } from '../../_helpers/handlers.helper';
 import { innovationOverviewUrl, threadUrl } from '../../_helpers/url.helper';
 import type { RecipientType } from '../../_services/recipients.service';
 import { BaseHandler } from '../base.handler';
+import { randomUUID } from 'crypto';
 
 export class SupportNewAssignedAccessorsHandler extends BaseHandler<
   NotifierTypeEnum.SUPPORT_NEW_ASSIGN_ACCESSORS,
@@ -75,6 +76,8 @@ export class SupportNewAssignedAccessorsHandler extends BaseHandler<
     const accessorNames: string[] = [];
     accessorsInfo.forEach(a => accessorNames.push(a.displayName));
 
+    const notificationId = randomUUID();
+
     this.addEmails('ST04_SUPPORT_NEW_ASSIGNED_ACCESSORS_TO_INNOVATOR', recipients, {
       notificationPreferenceType: 'SUPPORT',
       params: {
@@ -82,7 +85,7 @@ export class SupportNewAssignedAccessorsHandler extends BaseHandler<
         innovation_name: innovation.name,
         message: this.inputData.message,
         unit_name: unitName,
-        message_url: threadUrl(ServiceRoleEnum.INNOVATOR, innovation.id, this.inputData.threadId)
+        message_url: threadUrl(ServiceRoleEnum.INNOVATOR, innovation.id, this.inputData.threadId, notificationId)
       }
     });
 
@@ -97,7 +100,8 @@ export class SupportNewAssignedAccessorsHandler extends BaseHandler<
         innovationName: innovation.name,
         threadId: this.inputData.threadId,
         unitName: unitName
-      }
+      },
+      notificationId
     });
   }
 
@@ -107,13 +111,14 @@ export class SupportNewAssignedAccessorsHandler extends BaseHandler<
   ): Promise<void> {
     const addedRecipients = recipients.filter(r => this.inputData.newAssignedAccessorsRoleIds.includes(r.roleId));
     const requestUserName = await this.getRequestUserName();
+    const notificationId = randomUUID();
 
     this.addEmails('ST05_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_NEW_QA', addedRecipients, {
       notificationPreferenceType: 'SUPPORT',
       params: {
         innovation_name: innovation.name,
         qa_name: requestUserName,
-        innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, innovation.id)
+        innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, innovation.id, notificationId)
       }
     });
 
@@ -124,7 +129,8 @@ export class SupportNewAssignedAccessorsHandler extends BaseHandler<
         id: this.inputData.supportId
       },
       innovationId: innovation.id,
-      params: { innovationName: innovation.name }
+      params: { innovationName: innovation.name },
+      notificationId
     });
   }
 
@@ -133,6 +139,7 @@ export class SupportNewAssignedAccessorsHandler extends BaseHandler<
     recipients: RecipientType[]
   ): Promise<void> {
     const removedRecipients = recipients.filter(r => this.inputData.removedAssignedAccessorsRoleIds.includes(r.roleId));
+    const notificationId = randomUUID();
 
     this.addEmails('ST06_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_OLD_QA', removedRecipients, {
       notificationPreferenceType: 'SUPPORT',
@@ -146,7 +153,8 @@ export class SupportNewAssignedAccessorsHandler extends BaseHandler<
         id: this.inputData.supportId
       },
       innovationId: innovation.id,
-      params: { innovationName: innovation.name }
+      params: { innovationName: innovation.name },
+      notificationId
     });
   }
 
@@ -156,6 +164,7 @@ export class SupportNewAssignedAccessorsHandler extends BaseHandler<
   ): Promise<void> {
     const requestUserName = await this.getRequestUserName();
     const addedRecipients = recipients.filter(r => this.inputData.newAssignedAccessorsRoleIds.includes(r.roleId));
+    const notificationId = randomUUID();
 
     this.notify('ST08_SUPPORT_NEW_ASSIGNED_WAITING_INNOVATION_TO_QA', addedRecipients, {
       email: {
@@ -172,7 +181,8 @@ export class SupportNewAssignedAccessorsHandler extends BaseHandler<
           id: this.inputData.supportId
         },
         innovationId: innovation.id,
-        params: { innovationName: innovation.name }
+        params: { innovationName: innovation.name },
+        notificationId
       }
     });
   }

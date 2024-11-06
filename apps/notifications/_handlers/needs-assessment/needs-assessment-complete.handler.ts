@@ -3,6 +3,7 @@ import { ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/en
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { assessmentUrl, dataSharingPreferencesUrl } from '../../_helpers/url.helper';
 import { BaseHandler } from '../base.handler';
+import { randomUUID } from 'crypto';
 
 export class NeedsAssessmentCompleteHandler extends BaseHandler<
   NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED,
@@ -22,6 +23,7 @@ export class NeedsAssessmentCompleteHandler extends BaseHandler<
       this.inputData.innovationId
     );
     const recipients = await this.recipientsService.getUsersRecipient(innovators, ServiceRoleEnum.INNOVATOR);
+    const notificationId = randomUUID();
 
     this.notify('NA04_NEEDS_ASSESSMENT_COMPLETE_TO_INNOVATOR', recipients, {
       email: {
@@ -31,11 +33,13 @@ export class NeedsAssessmentCompleteHandler extends BaseHandler<
           needs_assessment_url: assessmentUrl(
             ServiceRoleEnum.INNOVATOR,
             this.inputData.innovationId,
-            this.inputData.assessmentId
+            this.inputData.assessmentId,
+            notificationId
           ),
           data_sharing_preferences_url: dataSharingPreferencesUrl(
             ServiceRoleEnum.INNOVATOR,
-            this.inputData.innovationId
+            this.inputData.innovationId,
+            notificationId
           )
         }
       },
@@ -49,7 +53,8 @@ export class NeedsAssessmentCompleteHandler extends BaseHandler<
         params: {
           innovationName: innovation.name,
           assessmentId: this.inputData.assessmentId
-        }
+        },
+        notificationId
       }
     });
 

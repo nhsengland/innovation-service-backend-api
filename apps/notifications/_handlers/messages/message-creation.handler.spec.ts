@@ -1,3 +1,4 @@
+import * as crypto from 'crypto';
 import { ServiceRoleEnum } from '@notifications/shared/enums';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { HandlersHelper } from '../../_helpers/handlers.helper';
@@ -6,6 +7,10 @@ import { threadUrl } from '../../_helpers/url.helper';
 import { RecipientsService } from '../../_services/recipients.service';
 import { NotificationsTestsHelper } from '../../_tests/notifications-test.helper';
 import { MessageCreationHandler } from './message-creation.handler';
+
+jest.mock('crypto');
+const notificationId = '00001234-1234-1234-1234-123456789012';
+jest.spyOn(crypto, 'randomUUID').mockImplementation(() => notificationId);
 
 describe('Notifications / _handlers / message-creation suite', () => {
   const testsHelper = new NotificationsTestsHelper();
@@ -49,7 +54,7 @@ describe('Notifications / _handlers / message-creation suite', () => {
             outputData: recipients.map(r => ({
               innovation_name: innovation.name,
               sender: sender,
-              thread_url: threadUrl(r.role, innovation.id, thread.id)
+              thread_url: threadUrl(r.role, innovation.id, thread.id, notificationId)
             }))
           });
         });
@@ -73,7 +78,8 @@ describe('Notifications / _handlers / message-creation suite', () => {
               innovationName: innovation.name,
               threadId: thread.id,
               messageId: thread.messages.johnMessage.id
-            }
+            },
+            notificationId
           });
         });
       });

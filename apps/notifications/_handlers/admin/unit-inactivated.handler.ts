@@ -3,6 +3,7 @@ import { ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/en
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { dataSharingPreferencesUrl } from '../../_helpers/url.helper';
 import { BaseHandler } from '../base.handler';
+import { randomUUID } from 'crypto';
 
 export class UnitInactivatedHandler extends BaseHandler<
   NotifierTypeEnum.UNIT_INACTIVATED,
@@ -35,12 +36,14 @@ export class UnitInactivatedHandler extends BaseHandler<
     for (const innovation of innovations.values()) {
       const owner = recipients.find(r => r.userId === innovation.ownerId);
       if (owner) {
+        const notificationId = randomUUID();
+
         this.notify('AP07_UNIT_INACTIVATED_TO_ENGAGING_INNOVATIONS', [owner], {
           email: {
             notificationPreferenceType: 'ADMIN',
             params: {
               innovation_name: innovation.name,
-              support_url: dataSharingPreferencesUrl(ServiceRoleEnum.INNOVATOR, innovation.id),
+              support_url: dataSharingPreferencesUrl(ServiceRoleEnum.INNOVATOR, innovation.id, notificationId),
               unit_name: unitInfo.organisationUnit.name
             }
           },
@@ -54,7 +57,8 @@ export class UnitInactivatedHandler extends BaseHandler<
             params: {
               innovationName: innovation.name,
               unitName: unitInfo.organisationUnit.name
-            }
+            },
+            notificationId
           }
         });
       }

@@ -3,6 +3,7 @@ import { ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/en
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import type { RecipientType } from '../../_services/recipients.service';
 import { BaseHandler } from '../base.handler';
+import { randomUUID } from 'crypto';
 
 export class LockUserHandler extends BaseHandler<
   NotifierTypeEnum.LOCK_USER,
@@ -43,6 +44,7 @@ export class LockUserHandler extends BaseHandler<
 
   private async AP02_INNOVATOR_LOCKED_TO_ASSIGNED_USERS(lockedUserId: string): Promise<void> {
     const innovations = await this.recipientsService.userInnovationsWithAssignedRecipients(lockedUserId);
+    const notificationId = randomUUID();
 
     for (const innovation of innovations) {
       this.addInApp('AP02_INNOVATOR_LOCKED_TO_ASSIGNED_USERS', innovation.assignedUsers, {
@@ -52,7 +54,8 @@ export class LockUserHandler extends BaseHandler<
           type: 'ADMIN'
         },
         innovationId: innovation.id,
-        params: { innovationName: innovation.name }
+        params: { innovationName: innovation.name },
+        notificationId
       });
     }
   }

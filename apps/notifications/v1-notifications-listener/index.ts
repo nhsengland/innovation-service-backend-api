@@ -69,7 +69,8 @@ class V1NotificationsListener {
             innovationId: item.innovationId,
             context: { type: item.context.type, detail: item.context.detail, id: item.context.id },
             userRoleIds: item.userRoleIds,
-            params: item.params
+            params: item.params,
+            notificationId: item.notificationId
           }
         });
       }

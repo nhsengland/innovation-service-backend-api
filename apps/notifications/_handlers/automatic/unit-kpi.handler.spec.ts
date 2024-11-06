@@ -5,6 +5,11 @@ import { innovationOverviewUrl } from '../../_helpers/url.helper';
 import { RecipientsService } from '../../_services/recipients.service';
 import { NotificationsTestsHelper } from '../../_tests/notifications-test.helper';
 import { UnitKPIHandler } from './unit-kpi.handler';
+import * as crypto from 'crypto';
+
+jest.mock('crypto');
+const notificationId = '00001234-1234-1234-1234-123456789012';
+jest.spyOn(crypto, 'randomUUID').mockImplementation(() => notificationId);
 
 describe('Notifications / _handlers / organisation unit kpi suite', () => {
   const testsHelper = new NotificationsTestsHelper();
@@ -56,7 +61,7 @@ describe('Notifications / _handlers / organisation unit kpi suite', () => {
           to: DTOsHelper.getRecipientUser(scenario.users.ingridAccessor),
           params: {
             innovation_name: 'Innovation 1',
-            innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, 'innovation1')
+            innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, 'innovation1', notificationId)
           }
         },
         {
@@ -65,7 +70,7 @@ describe('Notifications / _handlers / organisation unit kpi suite', () => {
           to: DTOsHelper.getRecipientUser(scenario.users.bartQualifyingAccessor),
           params: {
             innovation_name: 'Innovation 1',
-            innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, 'innovation1')
+            innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, 'innovation1', notificationId)
           }
         },
         {
@@ -74,7 +79,7 @@ describe('Notifications / _handlers / organisation unit kpi suite', () => {
           to: DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor),
           params: {
             innovation_name: 'Innovation 1',
-            innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, 'innovation1')
+            innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, 'innovation1', notificationId)
           }
         },
         {
@@ -83,7 +88,7 @@ describe('Notifications / _handlers / organisation unit kpi suite', () => {
           to: DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor),
           params: {
             innovation_name: 'Innovation 2',
-            innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, 'innovation2')
+            innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, 'innovation2', notificationId)
           }
         }
       ]);
@@ -102,7 +107,8 @@ describe('Notifications / _handlers / organisation unit kpi suite', () => {
           },
           params: {
             innovationName: 'Innovation 1'
-          }
+          },
+          notificationId
         },
         {
           innovationId: 'innovation1',
@@ -114,7 +120,8 @@ describe('Notifications / _handlers / organisation unit kpi suite', () => {
           },
           params: {
             innovationName: 'Innovation 1'
-          }
+          },
+          notificationId
         },
         {
           innovationId: 'innovation2',
@@ -126,7 +133,8 @@ describe('Notifications / _handlers / organisation unit kpi suite', () => {
           },
           params: {
             innovationName: 'Innovation 2'
-          }
+          },
+          notificationId
         }
       ]);
     });

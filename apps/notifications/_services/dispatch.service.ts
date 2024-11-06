@@ -40,12 +40,14 @@ export class DispatchService extends BaseService {
       id: string;
     },
     userRoleIds: string[],
-    params: Record<string, unknown>
+    params: Record<string, unknown>,
+    notificationId: string
   ): Promise<{ id: string }> {
     return this.sqlConnection.transaction(async transactionManager => {
       const dbNotification = await transactionManager.save(
         NotificationEntity,
         NotificationEntity.new({
+          id: notificationId,
           contextType: context.type,
           contextDetail: context.detail,
           contextId: context.id,

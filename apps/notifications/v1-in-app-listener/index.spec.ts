@@ -2,10 +2,11 @@ import { randUuid } from '@ngneat/falso';
 
 import V1SendInAppListener from '.'; // Must be imported first to start inversify configurations.
 
-import type { CompleteScenarioType} from '@notifications/shared/tests';
+import type { CompleteScenarioType } from '@notifications/shared/tests';
 import { AzureQueueTriggerBuilder, TestsHelper } from '@notifications/shared/tests';
 
 import { DispatchService } from '../_services/dispatch.service';
+import { randomUUID } from 'crypto';
 
 describe('Notifications / v1-in-app-listener / index suite', () => {
   let testsHelper: TestsHelper;
@@ -34,7 +35,8 @@ describe('Notifications / v1-in-app-listener / index suite', () => {
           id: scenario.users.johnInnovator.innovations.johnInnovation.id
         },
         userRoleIds: [scenario.users.johnInnovator.roles['innovatorRole']?.id],
-        params: {}
+        params: {},
+        notificationId: randomUUID()
       })
       .call<{ done: boolean }>(V1SendInAppListener);
 
@@ -57,7 +59,8 @@ describe('Notifications / v1-in-app-listener / index suite', () => {
             id: scenario.users.johnInnovator.innovations.johnInnovation.id
           },
           userRoleIds: [scenario.users.johnInnovator.roles['innovatorRole']?.id],
-          params: {}
+          params: {},
+          notificationId: randomUUID()
         })
         .call<{ done: boolean }>(V1SendInAppListener);
 

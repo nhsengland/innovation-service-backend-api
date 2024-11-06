@@ -6,6 +6,11 @@ import { testEmails, testInApps } from '../../_helpers/tests.helper';
 import { createAccountUrl, dashboardUrl } from '../../_helpers/url.helper';
 import { NotificationsTestsHelper } from '../../_tests/notifications-test.helper';
 import { InnovationTransferOwnershipReminderHandler } from './innovation-transfer-ownership-reminder.handler';
+import * as crypto from 'crypto';
+
+jest.mock('crypto');
+const notificationId = '00001234-1234-1234-1234-123456789012';
+jest.spyOn(crypto, 'randomUUID').mockImplementation(() => notificationId);
 
 describe('Notifications / _handlers / innovation-transfer-ownership-reminder handler suite', () => {
   const testsHelper = new NotificationsTestsHelper();
@@ -27,7 +32,7 @@ describe('Notifications / _handlers / innovation-transfer-ownership-reminder han
         },
         notificationPreferenceType: 'AUTOMATIC',
         outputData: {
-          dashboard_url: dashboardUrl(ServiceRoleEnum.INNOVATOR),
+          dashboard_url: dashboardUrl(ServiceRoleEnum.INNOVATOR, notificationId),
           innovation_name: innovation.name
         },
         recipients: [DTOsHelper.getRecipientUser(scenario.users.janeInnovator)],
@@ -51,7 +56,8 @@ describe('Notifications / _handlers / innovation-transfer-ownership-reminder han
           innovationName: innovation.name
         },
         recipients: [DTOsHelper.getRecipientUser(scenario.users.janeInnovator)],
-        requestUser: SYSTEM_CRON_SENDER
+        requestUser: SYSTEM_CRON_SENDER,
+        notificationId
       });
     });
   });

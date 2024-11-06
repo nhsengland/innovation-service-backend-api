@@ -1,9 +1,14 @@
+import * as crypto from 'crypto';
 import { ServiceRoleEnum } from '@notifications/shared/enums';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { testEmails, testInApps } from '../../../_helpers/tests.helper';
 import { dataSharingPreferencesUrl } from '../../../_helpers/url.helper';
 import { NotificationsTestsHelper } from '../../../_tests/notifications-test.helper';
 import { InnovationStopSharingHandler } from './innovation-stop-sharing.handler';
+
+jest.mock('crypto');
+const notificationId = '00001234-1234-1234-1234-123456789012';
+jest.spyOn(crypto, 'randomUUID').mockImplementation(() => notificationId);
 
 describe('Notifications / _handlers / innovation-stop-sharing suite', () => {
   const testsHelper = new NotificationsTestsHelper();
@@ -31,7 +36,11 @@ describe('Notifications / _handlers / innovation-stop-sharing suite', () => {
         outputData: {
           innovation_name: innovation.name,
           organisation_name: organisationName,
-          data_sharing_preferences_url: dataSharingPreferencesUrl(ServiceRoleEnum.INNOVATOR, innovation.id)
+          data_sharing_preferences_url: dataSharingPreferencesUrl(
+            ServiceRoleEnum.INNOVATOR,
+            innovation.id,
+            notificationId
+          )
         },
         options: { includeSelf: true }
       });
@@ -48,7 +57,8 @@ describe('Notifications / _handlers / innovation-stop-sharing suite', () => {
           organisationId: organisationId
         },
         outputData: { innovationName: innovation.name, organisationName: organisationName },
-        options: { includeSelf: true }
+        options: { includeSelf: true },
+        notificationId
       });
     });
   });
@@ -86,7 +96,8 @@ describe('Notifications / _handlers / innovation-stop-sharing suite', () => {
           organisationId: organisationId,
           affectedUsers: { roleIds: [...innovation.supports.supportByHealthOrgUnit.userRoles] }
         },
-        outputData: { innovationName: innovation.name }
+        outputData: { innovationName: innovation.name },
+        notificationId
       });
     });
   });

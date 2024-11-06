@@ -4,6 +4,7 @@ import type { DomainContextType, NotifierTemplatesType } from '@notifications/sh
 import { HandlersHelper } from '../../../_helpers/handlers.helper';
 import { exportRequestUrl } from '../../../_helpers/url.helper';
 import { BaseHandler } from '../../base.handler';
+import { randomUUID } from 'crypto';
 
 export class ExportRequestSubmittedHandler extends BaseHandler<
   NotifierTypeEnum.EXPORT_REQUEST_SUBMITTED,
@@ -28,6 +29,7 @@ export class ExportRequestSubmittedHandler extends BaseHandler<
     const displayTag = HandlersHelper.getNotificationDisplayTag(this.requestUser.currentRole.role, {
       unitName: this.requestUser.organisation?.organisationUnit?.name
     });
+    const notificationId = randomUUID();
 
     this.notify('RE01_EXPORT_REQUEST_SUBMITTED', [recipient], {
       email: {
@@ -35,7 +37,12 @@ export class ExportRequestSubmittedHandler extends BaseHandler<
         params: {
           comment: this.inputData.comment,
           innovation_name: innovation.name,
-          request_url: exportRequestUrl(ServiceRoleEnum.INNOVATOR, innovation.id, this.inputData.exportRequestId),
+          request_url: exportRequestUrl(
+            ServiceRoleEnum.INNOVATOR,
+            innovation.id,
+            this.inputData.exportRequestId,
+            notificationId
+          ),
           sender: `${senderName} (${displayTag})`
         }
       },
@@ -50,7 +57,8 @@ export class ExportRequestSubmittedHandler extends BaseHandler<
           exportRequestId: this.inputData.exportRequestId,
           innovationName: innovation.name,
           unitName: displayTag
-        }
+        },
+        notificationId
       }
     });
 
