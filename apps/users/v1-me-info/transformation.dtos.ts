@@ -1,7 +1,7 @@
 import { PhoneUserPreferenceEnum } from '@users/shared/enums';
 import type { RoleType } from '@users/shared/types';
 import Joi from 'joi';
-import { ServiceRoleEnum } from 'libs/shared/enums/user.enums';
+import { ServiceRoleEnum } from '@users/shared/enums';
 
 export type ResponseDTO = {
   id: string;
