@@ -3,7 +3,7 @@ import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { Audit, ElasticSearchDocumentUpdate, JwtDecoder } from '@innovations/shared/decorators';
 import { InnovationStatusEnum } from '@innovations/shared/enums';
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import type { AuthorizationService } from '@innovations/shared/services';
 import { ActionEnum, TargetEnum } from '@innovations/shared/services/integrations/audit.service';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
@@ -13,7 +13,7 @@ import { container } from '../_config';
 
 import type { InnovationAssessmentsService } from '../_services/innovation-assessments.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 
 class CreateInnovationAssessment {
@@ -61,55 +61,12 @@ export default openApi(CreateInnovationAssessment.httpTrigger as AzureFunction, 
     description: 'Create an innovation assessment.',
     operationId: 'v1-innovation-assessment-create',
     tags: ['Innovation Assessment'],
-    parameters: [
-      {
-        name: 'innovationId',
-        in: 'path',
-        description: 'The innovation id.',
-        required: true,
-        schema: {
-          type: 'string',
-          format: 'uuid'
-        }
-      }
-    ],
-    requestBody: {
-      description: 'The innovation assessment data.',
-      required: true,
-      content: {
-        'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              comment: {
-                type: 'string',
-                description: 'The comment for the assessment.'
-              }
-            },
-            required: ['comment']
-          }
-        }
-      }
-    },
+    parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
+    requestBody: SwaggerHelper.bodyJ2S(BodySchema, { description: 'The innovation assessment data.', required: true }),
     responses: {
-      200: {
-        description: 'The innovation assessment has been created.',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                id: {
-                  type: 'string',
-                  format: 'uuid',
-                  description: 'The innovation assessment id.'
-                }
-              },
-              required: ['id']
-            }
-          }
-        }
-      },
+      200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: 'The innovation assessment has been created.'
+      }),
       400: {
         description: 'The innovation assessment has not been created.'
       },

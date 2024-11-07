@@ -11,7 +11,7 @@ import { container } from '../_config';
 
 import type { InnovationTasksService } from '../_services/innovation-tasks.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1InnovationTaskInfo {
@@ -70,50 +70,9 @@ export default openApi(V1InnovationTaskInfo.httpTrigger as AzureFunction, '/v1/{
     tags: ['[v1] Innovation Tasks'],
     parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     responses: {
-      200: {
-        description: 'The innovation task.',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                id: {
-                  type: 'string',
-                  format: 'uuid'
-                },
-                displayId: {
-                  type: 'string'
-                },
-                status: {
-                  type: 'string',
-                  enum: ['OPEN', 'DONE', 'CANCELED', 'DECLINED']
-                },
-                description: {
-                  type: 'string'
-                },
-                section: {
-                  type: 'string'
-                },
-                createdAt: {
-                  type: 'string',
-                  format: 'date-time'
-                },
-                createdBy: {
-                  type: 'object',
-                  properties: {
-                    name: {
-                      type: 'string'
-                    },
-                    organisationUnit: {
-                      type: 'string'
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
+      200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: 'The innovation task.'
+      }),
       401: {
         description: 'Unauthorized'
       },

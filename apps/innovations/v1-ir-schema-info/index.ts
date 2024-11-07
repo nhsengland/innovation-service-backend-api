@@ -2,14 +2,14 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
-import { ResponseHelper } from '@innovations/shared/helpers';
+import { ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import type { AuthorizationService, IRSchemaService } from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
 
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 
 class V1IrSchemaInfo {
   @JwtDecoder()
@@ -43,14 +43,9 @@ export default openApi(V1IrSchemaInfo.httpTrigger as AzureFunction, '/v1/ir-sche
     description: 'Get current ir schema',
     tags: ['[v1] IR Schema'],
     responses: {
-      200: {
-        description: 'Success',
-        content: {
-          'application/json': {
-            schema: { type: 'object', properties: {} }
-          }
-        }
-      },
+      200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: 'Success'
+      }),
       400: { description: 'Bad request' },
       401: { description: 'Not authorized' },
       403: { description: 'Forbidden' },

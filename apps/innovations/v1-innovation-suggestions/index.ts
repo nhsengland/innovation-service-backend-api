@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import type { AuthorizationService } from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { CustomContextType } from '@innovations/shared/types';
@@ -50,16 +50,7 @@ export default openApi(V1InnovationsSuggestionList.httpTrigger as AzureFunction,
     description: 'Get suggestions list of an Innovation',
     operationId: 'v1-innovation-suggestions',
     tags: ['Innovation Suggestions'],
-    parameters: [
-      {
-        in: 'path',
-        name: 'innovationId',
-        required: true,
-        schema: {
-          type: 'string'
-        }
-      }
-    ],
+    parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     responses: {
       200: {
         description: 'OK'

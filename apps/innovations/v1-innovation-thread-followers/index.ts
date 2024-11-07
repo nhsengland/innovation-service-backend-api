@@ -10,7 +10,7 @@ import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
 
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import type { ParamsType } from './validation.schemas';
 import { ParamsSchema } from './validation.schemas';
 
@@ -71,46 +71,9 @@ export default openApi(
       operationId: 'v1-innovation-thread-followers',
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       responses: {
-        200: {
-          description: 'Success',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  participants: {
-                    type: 'array',
-                    items: {
-                      type: 'object',
-                      properties: {
-                        id: {
-                          type: 'string'
-                        },
-                        name: {
-                          type: 'string'
-                        },
-                        type: {
-                          type: 'string'
-                        },
-                        organisationUnit: {
-                          type: 'object',
-                          properties: {
-                            id: {
-                              type: 'string'
-                            },
-                            acronym: {
-                              type: 'string'
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
+        200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+          description: 'Success'
+        }),
         401: {
           description: 'Unauthorized'
         },

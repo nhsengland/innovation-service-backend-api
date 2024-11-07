@@ -11,7 +11,7 @@ import { container } from '../_config';
 
 import type { InnovationAssessmentsService } from '../_services/innovation-assessments.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1InnovationAssessmentKPIExemptionInfo {
@@ -56,27 +56,9 @@ export default openApi(
       tags: ['[v1] Innovation Assessment'],
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       responses: {
-        200: {
-          description: 'Success',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  isExempted: { type: 'boolean' },
-                  exemption: {
-                    type: 'object',
-                    properties: {
-                      reason: { type: 'string' },
-                      message: { type: 'string' },
-                      exemptedAt: { type: 'string', format: 'date-time' }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
+        200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+          description: 'Success'
+        }),
         400: { description: 'The request is invalid.' },
         401: { description: 'The user is not authenticated.' },
         403: { description: 'The user is not authorized to access this resource.' },

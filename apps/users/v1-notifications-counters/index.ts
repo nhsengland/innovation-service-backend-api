@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@users/shared/decorators';
-import { ResponseHelper } from '@users/shared/helpers';
+import { ResponseHelper, SwaggerHelper } from '@users/shared/helpers';
 import type { AuthorizationService } from '@users/shared/services';
 import SHARED_SYMBOLS from '@users/shared/services/symbols';
 import type { CustomContextType } from '@users/shared/types';
@@ -11,7 +11,7 @@ import { container } from '../_config';
 
 import type { NotificationsService } from '../_services/notifications.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 
 class V1UserNotificationsCounter {
   @JwtDecoder()
@@ -40,22 +40,9 @@ export default openApi(V1UserNotificationsCounter.httpTrigger as AzureFunction, 
     tags: ['[v1] Notifications'],
     parameters: [],
     responses: {
-      200: {
-        description: 'Success',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                total: {
-                  type: 'number',
-                  description: 'The total of active notifications'
-                }
-              }
-            }
-          }
-        }
-      }
+      200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: 'Success'
+      })
     }
   }
 });

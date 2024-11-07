@@ -2,14 +2,14 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@admin/shared/decorators';
-import { ResponseHelper } from '@admin/shared/helpers';
+import { ResponseHelper, SwaggerHelper } from '@admin/shared/helpers';
 import type { AuthorizationService } from '@admin/shared/services';
 import type { CustomContextType } from '@admin/shared/types';
 
 import { container } from '../_config';
 
 import SHARED_SYMBOLS from '@admin/shared/services/symbols';
-import type { ResponseDTO } from './transformation';
+import { ResponseBodySchema, type ResponseDTO } from './transformation';
 
 class V1Health {
   @JwtDecoder()
@@ -33,19 +33,9 @@ export default openApi(V1Health.httpTrigger as AzureFunction, '/v1/health', {
     tags: ['[v1] health'],
     parameters: [],
     responses: {
-      200: {
-        description: 'Success',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                status: { type: 'string', enum: ['OK', 'WARN'] }
-              }
-            }
-          }
-        }
-      },
+      200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: 'Success'
+      }),
       401: {
         description: 'Unauthorized'
       },

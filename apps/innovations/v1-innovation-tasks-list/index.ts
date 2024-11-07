@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import type { AuthorizationService } from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { CustomContextType } from '@innovations/shared/types';
@@ -11,7 +11,7 @@ import { container } from '../_config';
 
 import type { InnovationTasksService } from '../_services/innovation-tasks.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { QueryParamsSchema, QueryParamsType } from './validation.schemas';
 
 class V1InnovationTasksList {
@@ -68,149 +68,11 @@ export default openApi(V1InnovationTasksList.httpTrigger as AzureFunction, '/v1/
     description: 'Get a list of innovation tasks.',
     operationId: 'v1-innovation-tasks-list',
     tags: ['[v1] Innovation Tasks'],
-    parameters: [
-      {
-        name: 'skip',
-        in: 'query',
-        required: false,
-        description: 'The number of records to skip.',
-        schema: {
-          type: 'integer',
-          minimum: 0
-        }
-      },
-      {
-        name: 'take',
-        in: 'query',
-        required: false,
-        description: 'The number of records to take.',
-        schema: {
-          type: 'integer',
-          minimum: 1,
-          maximum: 100
-        }
-      },
-      {
-        name: 'order',
-        in: 'query',
-        required: false,
-        description: 'The order of the records.',
-        schema: {
-          type: 'string'
-        }
-      },
-      {
-        name: 'status',
-        in: 'query',
-        required: false,
-        description: 'The status of the task.',
-        schema: {
-          type: 'string'
-        }
-      },
-      {
-        name: 'section',
-        in: 'query',
-        required: false,
-        description: 'The section of the task.',
-        schema: {
-          type: 'string'
-        }
-      },
-      {
-        name: 'innovationId',
-        in: 'query',
-        required: false,
-        description: 'The innovation id of the task.',
-        schema: {
-          type: 'string'
-        }
-      },
-      {
-        name: 'innovationName',
-        in: 'query',
-        required: false,
-        description: 'The innovation name of the task.',
-        schema: {
-          type: 'string'
-        }
-      }
-    ],
+    parameters: SwaggerHelper.paramJ2S({ query: QueryParamsSchema }),
     responses: {
-      200: {
-        description: 'The list of innovation tasks.',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                count: {
-                  type: 'integer',
-                  description: 'The total number of records.'
-                },
-                data: {
-                  type: 'array',
-                  items: {
-                    type: 'object',
-                    properties: {
-                      id: {
-                        type: 'string',
-                        description: 'The id of the task.'
-                      },
-                      displayId: {
-                        type: 'string',
-                        description: 'The display id of the task.'
-                      },
-                      status: {
-                        type: 'string',
-                        description: 'The status of the task.'
-                      },
-                      description: {
-                        type: 'string',
-                        description: 'The description of the task.'
-                      },
-                      section: {
-                        type: 'string',
-                        description: 'The section of the task.'
-                      },
-                      createdAt: {
-                        type: 'string',
-                        description: 'The date the task was created.'
-                      },
-                      updatedAt: {
-                        type: 'string',
-                        description: 'The date the task was last updated.'
-                      },
-                      innovation: {
-                        type: 'object',
-                        properties: {
-                          id: {
-                            type: 'string',
-                            description: 'The id of the innovation.'
-                          },
-                          name: {
-                            type: 'string',
-                            description: 'The name of the innovation.'
-                          }
-                        }
-                      },
-                      notifications: {
-                        type: 'object',
-                        properties: {
-                          count: {
-                            type: 'integer',
-                            description: 'The number of notifications for the task.'
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
+      200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: 'The list of innovation tasks.'
+      }),
       400: {
         description: 'The request is invalid.'
       },

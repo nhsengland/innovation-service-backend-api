@@ -2,17 +2,16 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import type { AuthorizationService } from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
 
-import { InnovationSupportStatusEnum } from '@innovations/shared/enums';
 import type { InnovationSupportsService } from '../_services/innovation-supports.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { BodySchema, ParamsSchema, type BodyType, type ParamsType } from './validation.schemas';
 
 class V1InnovationSupportChangeRequest {
@@ -60,59 +59,12 @@ export default openApi(
       description: 'Request Change Support for a given innovation.',
       operationId: 'v1-innovation-support-change-request',
       tags: ['Innovation Support'],
-      parameters: [
-        {
-          in: 'path',
-          name: 'innovationId',
-          description: 'Unique innovation ID',
-          required: true
-        },
-        {
-          in: 'path',
-          name: 'supportId',
-          required: true
-        }
-      ],
-      requestBody: {
-        description: '',
-        required: true,
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                status: {
-                  type: 'string',
-                  enum: Object.values(InnovationSupportStatusEnum)
-                },
-                message: {
-                  type: 'string',
-                  maxLength: 400
-                }
-              },
-              required: ['status', 'message']
-            }
-          }
-        }
-      },
+      parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
+      requestBody: SwaggerHelper.bodyJ2S(BodySchema),
       responses: {
-        '200': {
-          description: 'Innovation ID',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  id: {
-                    type: 'string',
-                    format: 'uuid'
-                  }
-                },
-                required: ['id']
-              }
-            }
-          }
-        }
+        '200': SwaggerHelper.responseJ2S(ResponseBodySchema, {
+          description: 'Innovation ID'
+        })
       }
     }
   }
