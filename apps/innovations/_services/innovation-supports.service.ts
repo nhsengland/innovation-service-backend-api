@@ -951,13 +951,13 @@ export class InnovationSupportsService extends BaseService {
         transaction
       );
 
+      // Create satisfaction survey if the support was closed
+      if (data.status === InnovationSupportStatusEnum.CLOSED) {
+        await this.surveysService.createSurvey('SUPPORT_END', innovationId, savedSupport.id, transaction);
+      }
+
       return { id: savedSupport.id, newAssignedAccessors: new Set(newAssignedAccessors), threadId: thread.thread.id };
     });
-
-    // Create satisfaction survey if the support was closed
-    if (data.status === InnovationSupportStatusEnum.CLOSED) {
-      await this.surveysService.createSurvey('SUPPORT_END', innovationId, result.id, connection);
-    }
 
     // Notify the innovator
     await this.notifierService.send(domainContext, NotifierTypeEnum.SUPPORT_STATUS_UPDATE, {

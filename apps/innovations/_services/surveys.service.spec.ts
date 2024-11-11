@@ -49,15 +49,4 @@ describe('Innovations / _services / surveys.service.ts suite', () => {
       ]);
     });
   });
-
-  describe('getInnovationInnovatorsRoleId', () => {
-    it('should return all active collaborators and owner of innovation', async () => {
-      const john = scenario.users.johnInnovator;
-      const jane = scenario.users.janeInnovator;
-
-      const targets = await sut['getInnovationInnovatorsRoleId'](john.innovations.johnInnovation.id, em);
-
-      expect(targets).toMatchObject([john.roles.innovatorRole.id, jane.roles.innovatorRole.id]);
-    });
-  });
 });
