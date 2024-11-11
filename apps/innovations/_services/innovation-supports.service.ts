@@ -58,6 +58,7 @@ import type { InnovationFileService } from './innovation-file.service';
 import type { InnovationThreadsService } from './innovation-threads.service';
 import SYMBOLS from './symbols';
 import type { ValidationService } from './validation.service';
+import { SurveysService } from './surveys.service';
 
 type UnitSupportInformationType = {
   id: string;
@@ -101,7 +102,8 @@ export class InnovationSupportsService extends BaseService {
     @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
     @inject(SYMBOLS.InnovationThreadsService) private innovationThreadsService: InnovationThreadsService,
     @inject(SYMBOLS.InnovationFileService) private innovationFileService: InnovationFileService,
-    @inject(SYMBOLS.ValidationService) private validationService: ValidationService
+    @inject(SYMBOLS.ValidationService) private validationService: ValidationService,
+    @inject(SYMBOLS.SurveysService) private surveysService: SurveysService
   ) {
     super();
   }
@@ -948,6 +950,11 @@ export class InnovationSupportsService extends BaseService {
         thread.thread.id,
         transaction
       );
+
+      // Create satisfaction survey if the support was closed
+      if (data.status === InnovationSupportStatusEnum.CLOSED) {
+        await this.surveysService.createSurvey('SUPPORT_END', innovationId, savedSupport.id, transaction);
+      }
 
       return { id: savedSupport.id, newAssignedAccessors: new Set(newAssignedAccessors), threadId: thread.thread.id };
     });
