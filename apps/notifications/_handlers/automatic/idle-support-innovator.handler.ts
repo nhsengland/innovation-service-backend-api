@@ -1,7 +1,7 @@
 import type { Context } from '@azure/functions';
 import { ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
-import { howToProceedUrl, innovationRecordUrl } from '../../_helpers/url.helper';
+import { innovationOverviewUrl, innovationRecordUrl } from '../../_helpers/url.helper';
 import { BaseHandler } from '../base.handler';
 
 export class IdleSupportInnovatorHandler extends BaseHandler<
@@ -17,7 +17,8 @@ export class IdleSupportInnovatorHandler extends BaseHandler<
   }
 
   async run(): Promise<this> {
-    const idleInnovations = await this.recipientsService.innovationsWithoutSupportForNDays([30, 210]); // 1 month ; 7 months
+    const notificationDates = [30, 90, 150];
+    const idleInnovations = await this.recipientsService.innovationsWithoutSupportForNDays(notificationDates);
 
     for (const innovation of idleInnovations) {
       const innovators = await this.recipientsService.getInnovationActiveOwnerAndCollaborators(innovation.id);
@@ -28,7 +29,8 @@ export class IdleSupportInnovatorHandler extends BaseHandler<
           params: {
             innovation_name: innovation.name,
             innovation_record_url: innovationRecordUrl(ServiceRoleEnum.INNOVATOR, innovation.id),
-            how_to_proceed_page_url: howToProceedUrl(ServiceRoleEnum.INNOVATOR, innovation.id)
+            expected_archive_date: innovation.expectedArchiveDate,
+            innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.INNOVATOR, innovation.id)
           }
         },
         inApp: {
@@ -39,7 +41,8 @@ export class IdleSupportInnovatorHandler extends BaseHandler<
           },
           innovationId: innovation.id,
           params: {
-            innovationName: innovation.name
+            innovationName: innovation.name,
+            expectedArchiveDate: innovation.expectedArchiveDate
           }
         }
       });

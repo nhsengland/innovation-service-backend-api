@@ -1,7 +1,7 @@
 import { ServiceRoleEnum } from '@notifications/shared/enums';
 import { MocksHelper, type CompleteScenarioType } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
-import { howToProceedUrl, innovationRecordUrl } from '../../_helpers/url.helper';
+import { howToProceedUrl, innovationOverviewUrl, innovationRecordUrl } from '../../_helpers/url.helper';
 import { RecipientsService } from '../../_services/recipients.service';
 import { NotificationsTestsHelper } from '../../_tests/notifications-test.helper';
 import { IdleSupportInnovatorHandler } from './idle-support-innovator.handler';
@@ -17,11 +17,15 @@ describe('Notifications / _handlers / idle support handler suite', () => {
   jest.spyOn(RecipientsService.prototype, 'innovationsWithoutSupportForNDays').mockResolvedValue([
     {
       id: scenario.users.johnInnovator.innovations.johnInnovation.id,
-      name: scenario.users.johnInnovator.innovations.johnInnovation.name
+      name: scenario.users.johnInnovator.innovations.johnInnovation.name,
+      daysPassedSinceLastSupport: '30',
+      expectedArchiveDate: new Date().toLocaleDateString('en-GB')
     },
     {
       id: scenario.users.ottoOctaviusInnovator.innovations.chestHarnessInnovation.id,
-      name: scenario.users.ottoOctaviusInnovator.innovations.chestHarnessInnovation.name
+      name: scenario.users.ottoOctaviusInnovator.innovations.chestHarnessInnovation.name,
+      daysPassedSinceLastSupport: '90',
+      expectedArchiveDate: new Date().toLocaleDateString('en-GB')
     }
   ]);
 
@@ -41,7 +45,8 @@ describe('Notifications / _handlers / idle support handler suite', () => {
               ServiceRoleEnum.INNOVATOR,
               scenario.users.johnInnovator.innovations.johnInnovation.id
             ),
-            how_to_proceed_page_url: howToProceedUrl(
+            expected_archive_date: new Date().toLocaleDateString('en-GB'),
+            innovation_overview_url: innovationOverviewUrl(
               ServiceRoleEnum.INNOVATOR,
               scenario.users.johnInnovator.innovations.johnInnovation.id
             )
@@ -57,7 +62,8 @@ describe('Notifications / _handlers / idle support handler suite', () => {
               ServiceRoleEnum.INNOVATOR,
               scenario.users.johnInnovator.innovations.johnInnovation.id
             ),
-            how_to_proceed_page_url: howToProceedUrl(
+            expected_archive_date: new Date().toLocaleDateString('en-GB'),
+            how_to_proceed_page_url: innovationOverviewUrl(
               ServiceRoleEnum.INNOVATOR,
               scenario.users.johnInnovator.innovations.johnInnovation.id
             )
@@ -73,7 +79,8 @@ describe('Notifications / _handlers / idle support handler suite', () => {
               ServiceRoleEnum.INNOVATOR,
               scenario.users.ottoOctaviusInnovator.innovations.chestHarnessInnovation.id
             ),
-            how_to_proceed_page_url: howToProceedUrl(
+            expected_archive_date: new Date().toLocaleDateString('en-GB'),
+            how_to_proceed_page_url: innovationOverviewUrl(
               ServiceRoleEnum.INNOVATOR,
               scenario.users.ottoOctaviusInnovator.innovations.chestHarnessInnovation.id
             )
@@ -94,7 +101,8 @@ describe('Notifications / _handlers / idle support handler suite', () => {
           ],
           innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
           params: {
-            innovationName: scenario.users.johnInnovator.innovations.johnInnovation.name
+            innovationName: scenario.users.johnInnovator.innovations.johnInnovation.name,
+            expectedArchiveDate: new Date().toLocaleDateString('en-GB')
           }
         },
         {
@@ -106,7 +114,8 @@ describe('Notifications / _handlers / idle support handler suite', () => {
           userRoleIds: [scenario.users.ottoOctaviusInnovator.roles.innovatorRole.id],
           innovationId: scenario.users.ottoOctaviusInnovator.innovations.chestHarnessInnovation.id,
           params: {
-            innovationName: scenario.users.ottoOctaviusInnovator.innovations.chestHarnessInnovation.name
+            innovationName: scenario.users.ottoOctaviusInnovator.innovations.chestHarnessInnovation.name,
+            expectedArchiveDate: new Date().toLocaleDateString('en-GB')
           }
         }
       ]);

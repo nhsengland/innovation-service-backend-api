@@ -111,6 +111,45 @@ export class DomainInnovationsService {
   }
 
   /**
+   * archive innovations without active support
+   * This method is used by the cron job.
+   * @param entityManager optional entity manager
+   */
+  //TODO: Change the query for this
+  async archiveInnovationsWithoutSupport(entityManager?: EntityManager): Promise<void> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const dbInnovations = await em
+      .createQueryBuilder(InnovationEntity, 'innovations')
+      .select(['innovations.id', 'innovations.expires_at'])
+      .leftJoin('innovations.supports', 'supports', 'supports.status = :status', {
+        status: InnovationSupportStatusEnum.ENGAGING
+      })
+      .where('innovations.expires_at < :now', { now: new Date().toISOString() })
+      .groupBy('innovations.id, innovations.expires_at')
+      .having('COUNT(supports.id) = 0')
+      .getMany();
+
+    for (const innovation of dbInnovations) {
+      const domainContext = await this.domainUsersService.getInnovatorDomainContextByRoleId(innovation.createdBy, em);
+      if (!domainContext) {
+        return; // this will never happen
+      }
+
+      await this.archiveInnovationsWithDeleteSideffects(
+        domainContext,
+        [
+          {
+            id: innovation.id,
+            reason: 'There was no active support on the innovation for 6 months.'
+          }
+        ],
+        em
+      );
+    }
+  }
+
+  /**
    * expire transfer for all innovations with pending transfer expired.
    * This method is used by the cron job.
    * @param entityManager optional entity manager

@@ -797,46 +797,49 @@ export class RecipientsService extends BaseService {
    * @param days number of days to check (ex: 1 month 30 | 7 months 210)
    */
   async innovationsWithoutSupportForNDays(
-    days: number[],
-    entityManager?: EntityManager
-  ): Promise<{ id: string; name: string }[]> {
+    days: number[]
+    // entityManager?: EntityManager
+  ): Promise<{ id: string; name: string; daysPassedSinceLastSupport: string; expectedArchiveDate: string }[]> {
     if (!days.length) {
       throw new UnprocessableEntityError(GenericErrorsEnum.INVALID_PAYLOAD, { details: { error: 'days is required' } });
     }
 
-    const em = entityManager ?? this.sqlConnection.manager;
+    //const em = entityManager ?? this.sqlConnection.manager;
 
-    const query = em
-      .createQueryBuilder(InnovationEntity, 'innovation')
-      .select(['innovation.id', 'innovation.name'])
-      .innerJoin(
-        `(SELECT innovationId,MAX(statusChangedAt) as statusChangedAt
-        FROM last_support_status_view_entity
-        GROUP BY innovationId)`,
-        'lastEngagement',
-        'lastEngagement.innovationId = innovation.id'
-      )
-      .leftJoin(
-        'innovation.innovationSupports',
-        'supports',
-        'supports.status IN (:...engagingStatus) AND supports.isMostRecent = 1',
-        {
-          engagingStatus: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.WAITING]
-        }
-      )
-      .where('innovation.status = :innovationStatus', { innovationStatus: InnovationStatusEnum.IN_PROGRESS })
-      .andWhere('supports.id IS NULL')
-      .andWhere(
-        new Brackets(qb => {
-          const [first, ...reminder] = days;
-          qb.where(`DATEDIFF(DAY, lastEngagement.statusChangedAt, DATEADD(DAY, -1, GETDATE())) = ${first}`);
-          reminder?.forEach(day => {
-            qb.orWhere(`DATEDIFF(DAY, lastEngagement.statusChangedAt, DATEADD(DAY, -1, GETDATE())) = ${day}`);
-          });
-        })
-      );
+    return [
+      {
+        id: 'innovationId',
+        name: 'innovationName',
+        daysPassedSinceLastSupport: '30',
+        expectedArchiveDate: '22.10.2025'
+      },
+      {
+        id: 'innovationId-2',
+        name: 'innovationName-2',
+        daysPassedSinceLastSupport: '90',
+        expectedArchiveDate: '01.05.2025'
+      }
+    ];
 
-    return (await query.getMany()).map(innovation => ({ id: innovation.id, name: innovation.name }));
+    // const query = em
+    //   .createQueryBuilder(InnovationEntity, 'innovation')
+    //   .select(['innovation.id', 'innovation.name', 'innovation.expectedArchiveDate'])
+    //   .from(InnovationEntity, 'innovation') // change to the new view
+    //   .where(
+    //     new Brackets(qb => {
+    //       const [first, ...reminder] = days;
+    //       qb.where(`DATEDIFF(DAY, lastEngagement.statusChangedAt, DATEADD(DAY, -1, GETDATE())) = ${first}`);
+    //       reminder?.forEach(day => {
+    //         qb.orWhere(`DATEDIFF(DAY, lastEngagement.statusChangedAt, DATEADD(DAY, -1, GETDATE())) = ${day}`);
+    //       });
+    //     })
+    // //   );
+
+    // return (await query.getMany()).map(innovation => ({
+    //   id: innovation.id,
+    //   name: innovation.name,
+    //   expectedArchiveDate: innovation.expectedArchiveDate
+    // }));
   }
 
   /**

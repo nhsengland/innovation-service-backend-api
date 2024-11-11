@@ -135,6 +135,7 @@ export type InAppTemplatesType = {
   };
   AU03_INNOVATOR_IDLE_SUPPORT: {
     innovationName: string;
+    expectedArchiveDate: string;
   };
   AU04_SUPPORT_KPI_REMINDER: {
     innovationName: string;
