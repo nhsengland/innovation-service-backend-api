@@ -13,8 +13,6 @@ import type { InnovationRecordDocumentType } from './document.types';
 export type ElasticSearchDocumentType = {
   id: string;
   status: InnovationStatusEnum;
-  rawStatus: InnovationStatusEnum;
-  archivedStatus: InnovationStatusEnum | null;
   statusUpdatedAt: Date;
   groupedStatus: InnovationGroupedStatusEnum;
   hasBeenAssessed: boolean;
@@ -89,8 +87,6 @@ export const ElasticSearchSchema: CreateIndexParams = {
       },
 
       status: { type: 'keyword' },
-      archivedStatus: { type: 'keyword' },
-      rawStatus: { type: 'keyword' },
       statusUpdatedAt: { type: 'date' },
       groupedStatus: { type: 'keyword' },
       hasBeenAssessed: { type: 'boolean' },

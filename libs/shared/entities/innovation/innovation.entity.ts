@@ -25,7 +25,7 @@ import { InnovationSupportLogEntity } from './innovation-support-log.entity';
 import { InnovationSupportEntity } from './innovation-support.entity';
 import { InnovationTransferEntity } from './innovation-transfer.entity';
 
-import { InnovationStatusEnum } from '../../enums/innovation.enums';
+import { InnovationArchiveReasonEnum, InnovationStatusEnum } from '../../enums/innovation.enums';
 import { InnovationSuggestedUnitsView } from '../views/innovation-suggested-units.view.entity';
 import { InnovationDocumentDraftEntity } from './innovation-document-draft.entity';
 
@@ -40,9 +40,6 @@ export class InnovationEntity extends BaseEntity {
   @Column({ type: 'simple-enum', enum: InnovationStatusEnum, nullable: false })
   status: InnovationStatusEnum;
 
-  @Column({ name: 'archived_status', type: 'simple-enum', enum: InnovationStatusEnum, nullable: true })
-  archivedStatus: null | InnovationStatusEnum;
-
   @Column({ name: 'status_updated_at', type: 'datetime2' })
   statusUpdatedAt: Date;
 
@@ -56,7 +53,7 @@ export class InnovationEntity extends BaseEntity {
   lastAssessmentRequestAt: null | Date;
 
   @Column({ name: 'archive_reason', type: 'nvarchar', nullable: true })
-  archiveReason: null | string;
+  archiveReason: null | InnovationArchiveReasonEnum;
 
   @Column({ name: 'has_been_assessed', type: 'bit', default: false })
   hasBeenAssessed: boolean;

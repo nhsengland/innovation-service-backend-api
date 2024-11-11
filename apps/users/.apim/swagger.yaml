@@ -1229,6 +1229,10 @@ paths:
                                   - WAITING
                                   - UNSUITABLE
                                   - CLOSED
+                                not:
+                                  enum:
+                                    - SUGGESTED
+                                    - UNASSIGNED
                               minItems: 1
                           required:
                             - units
@@ -1491,6 +1495,10 @@ paths:
                               - WAITING
                               - UNSUITABLE
                               - CLOSED
+                            not:
+                              enum:
+                                - SUGGESTED
+                                - UNASSIGNED
                           minItems: 1
                       required:
                         - units

@@ -2,7 +2,7 @@ import { randUuid } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 import { container } from '../../config/inversify.config';
 import { InnovationDocumentEntity, InnovationEntity } from '../../entities';
-import { InnovationGroupedStatusEnum, InnovationStatusEnum, UserStatusEnum } from '../../enums';
+import { InnovationGroupedStatusEnum, UserStatusEnum } from '../../enums';
 import { BadRequestError, InnovationErrorsEnum } from '../../errors';
 import { TestsHelper } from '../../tests';
 import SHARED_SYMBOLS from '../symbols';
@@ -44,8 +44,6 @@ describe('Shared / services / innovations suite', () => {
       expect(innovationResult).toMatchObject({
         id: innovation.id,
         status: innovation.status,
-        rawStatus: innovation.status, // not archived
-        archivedStatus: null,
         statusUpdatedAt: expect.any(Date),
         groupedStatus: InnovationGroupedStatusEnum.RECEIVING_SUPPORT,
         submittedAt: expect.any(Date),
@@ -94,18 +92,6 @@ describe('Shared / services / innovations suite', () => {
           isExempt: false
         },
         suggestions: expect.anything() // hard to create the schema
-      });
-    });
-
-    it('should map rawStatus to archivedStatus if archived', async () => {
-      const result = await sut.getESDocumentsInformation();
-      const user = scenario.users.johnInnovator;
-      const innovation = user.innovations.johnInnovationArchived;
-      const innovationResult = result.find(x => x.id === innovation.id);
-      expect(innovationResult).toMatchObject({
-        status: innovation.status,
-        archivedStatus: InnovationStatusEnum.IN_PROGRESS,
-        rawStatus: InnovationStatusEnum.IN_PROGRESS
       });
     });
 

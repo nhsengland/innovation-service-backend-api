@@ -687,7 +687,7 @@ export class SearchService extends BaseService {
 
   private addPermissionGuards(domainContext: DomainContextType, builder: ElasticSearchQueryBuilder): void {
     if (domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT) {
-      builder.addFilter(boolQuery({ mustNot: { term: { rawStatus: InnovationStatusEnum.CREATED } } }));
+      builder.addFilter({ exists: { field: 'submittedAt' } });
     }
 
     if (isAccessorDomainContextType(domainContext)) {
@@ -724,7 +724,7 @@ export class SearchService extends BaseService {
     }
 
     if (domainContext.currentRole.role !== ServiceRoleEnum.ADMIN) {
-      builder.addFilter(boolQuery({ mustNot: { term: { rawStatus: InnovationStatusEnum.WITHDRAWN } } }));
+      builder.addFilter(boolQuery({ mustNot: { term: { status: InnovationStatusEnum.WITHDRAWN } } }));
     }
   }
 

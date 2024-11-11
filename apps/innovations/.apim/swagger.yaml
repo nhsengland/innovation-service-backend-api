@@ -201,11 +201,21 @@ paths:
             schema:
               type: object
               properties:
-                message:
+                reason:
                   type: string
-                  maxLength: 2000
+                  enum:
+                    - DEVELOP_FURTHER
+                    - HAVE_ALL_SUPPORT
+                    - DECIDED_NOT_TO_PURSUE
+                    - ALREADY_LIVE_NHS
+                    - OTHER_DONT_WANT_TO_SAY
+                    - OWNER_ACCOUNT_DELETED
+                  not:
+                    enum:
+                      - LEGACY
+                      - SIX_MONTHS_INACTIVITY
               required:
-                - message
+                - reason
               additionalProperties: false
       responses:
         "204":
