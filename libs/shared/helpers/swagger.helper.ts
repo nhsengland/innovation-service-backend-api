@@ -18,7 +18,7 @@ export class SwaggerHelper {
           res.push({
             name: property,
             in: type,
-            required: swagger['required']?.includes(property) || false,
+            required: type === 'path' || swagger['required']?.includes(property) || false,
             schema: schema as OpenAPIV3.SchemaObject
           });
         });
@@ -64,6 +64,23 @@ export class SwaggerHelper {
     return {
       ...(options?.description && { description: options?.description }),
       required: options?.required ?? true,
+      content: {
+        'application/json': {
+          schema: swaggerSchema
+        }
+      }
+    };
+  };
+
+  /**
+   * conver joi schema for response body into a swagger schema
+   *
+   */
+  static responseJ2S = (data: Schema, options: { description: string }): OpenAPIV3.ResponseObject => {
+    const swaggerSchema = j2s(data).swagger;
+
+    return {
+      description: options.description,
       content: {
         'application/json': {
           schema: swaggerSchema

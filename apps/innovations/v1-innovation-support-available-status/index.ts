@@ -9,11 +9,10 @@ import { isAccessorDomainContextType, type CustomContextType } from '@innovation
 
 import { container } from '../_config';
 
-import { InnovationSupportStatusEnum } from '@innovations/shared/enums';
 import { BadRequestError, UserErrorsEnum } from '@innovations/shared/errors';
 import type { InnovationSupportsService } from '../_services/innovation-supports.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, type ParamsType } from './validation.schemas';
 
 class V1InnovationSupportAvailableStatus {
@@ -59,22 +58,9 @@ export default openApi(
       tags: ['[v1] Innovation Support'],
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       responses: {
-        200: {
-          description: 'OK',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  availableStatus: {
-                    type: 'array',
-                    items: { type: 'string', enum: Object.keys(InnovationSupportStatusEnum) }
-                  }
-                }
-              }
-            }
-          }
-        },
+        200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+          description: 'OK'
+        }),
         400: { description: 'Bad Request' },
         401: { description: 'Unauthorized' },
         403: { description: 'Forbidden' },

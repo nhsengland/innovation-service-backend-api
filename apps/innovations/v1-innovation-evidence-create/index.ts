@@ -11,7 +11,7 @@ import { container } from '../_config';
 
 import type { InnovationSectionsService } from '../_services/innovation-sections.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1InnovationEvidenceCreate {
@@ -60,19 +60,9 @@ export default openApi(V1InnovationEvidenceCreate.httpTrigger as AzureFunction, 
       description: 'The evidence data to create.'
     }),
     responses: {
-      200: {
-        description: 'Innovation evidence info.',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                id: { type: 'string', description: 'Evidence id.' }
-              }
-            }
-          }
-        }
-      },
+      200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: 'Innovation evidence info.'
+      }),
       400: {
         description: 'Bad Request'
       },

@@ -1,3 +1,4 @@
+import * as crypto from 'crypto';
 import { InnovationSubmittedHandler } from './innovation-submitted.handler';
 
 import { ServiceRoleEnum } from '@notifications/shared/enums';
@@ -5,6 +6,10 @@ import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { testEmails, testInApps } from '../../_helpers/tests.helper';
 import { innovationOverviewUrl } from '../../_helpers/url.helper';
 import { NotificationsTestsHelper } from '../../_tests/notifications-test.helper';
+
+jest.mock('crypto');
+const notificationId = '00001234-1234-1234-1234-123456789012';
+jest.spyOn(crypto, 'randomUUID').mockImplementation(() => notificationId);
 
 describe('Notifications / _handlers / innovation-submitted suite', () => {
   const testsHelper = new NotificationsTestsHelper();
@@ -59,7 +64,8 @@ describe('Notifications / _handlers / innovation-submitted suite', () => {
           requestUser: DTOsHelper.getUserRequestContext(scenario.users.ottoOctaviusInnovator),
           options: {
             includeSelf: true
-          }
+          },
+          notificationId
         });
       });
     });
@@ -73,7 +79,7 @@ describe('Notifications / _handlers / innovation-submitted suite', () => {
           notificationPreferenceType: 'NEEDS_ASSESSMENT',
           outputData: {
             innovation_name: innovation.name,
-            innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ASSESSMENT, innovation.id),
+            innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ASSESSMENT, innovation.id, notificationId),
             assessment_type: 'assessment'
           },
           recipients: naRecipients,
@@ -97,7 +103,8 @@ describe('Notifications / _handlers / innovation-submitted suite', () => {
             assessmentType: 'assessment'
           },
           recipients: naRecipients,
-          requestUser: DTOsHelper.getUserRequestContext(scenario.users.ottoOctaviusInnovator)
+          requestUser: DTOsHelper.getUserRequestContext(scenario.users.ottoOctaviusInnovator),
+          notificationId
         });
       });
     });
@@ -143,7 +150,8 @@ describe('Notifications / _handlers / innovation-submitted suite', () => {
           requestUser: DTOsHelper.getUserRequestContext(scenario.users.ottoOctaviusInnovator),
           options: {
             includeSelf: true
-          }
+          },
+          notificationId
         });
       });
     });
@@ -157,7 +165,7 @@ describe('Notifications / _handlers / innovation-submitted suite', () => {
           notificationPreferenceType: 'NEEDS_ASSESSMENT',
           outputData: {
             innovation_name: innovation.name,
-            innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ASSESSMENT, innovation.id),
+            innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ASSESSMENT, innovation.id, notificationId),
             assessment_type: 'reassessment'
           },
           recipients: naRecipients,
@@ -181,7 +189,8 @@ describe('Notifications / _handlers / innovation-submitted suite', () => {
             assessmentType: 'reassessment'
           },
           recipients: naRecipients,
-          requestUser: DTOsHelper.getUserRequestContext(scenario.users.ottoOctaviusInnovator)
+          requestUser: DTOsHelper.getUserRequestContext(scenario.users.ottoOctaviusInnovator),
+          notificationId
         });
       });
     });

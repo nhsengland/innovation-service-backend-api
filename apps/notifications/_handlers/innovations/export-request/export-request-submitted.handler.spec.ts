@@ -1,3 +1,4 @@
+import * as crypto from 'crypto';
 import { randText } from '@ngneat/falso';
 import { ServiceRoleEnum } from '@notifications/shared/enums';
 import { MocksHelper } from '@notifications/shared/tests';
@@ -9,6 +10,10 @@ import { exportRequestUrl } from '../../../_helpers/url.helper';
 import { RecipientsService } from '../../../_services/recipients.service';
 import { NotificationsTestsHelper } from '../../../_tests/notifications-test.helper';
 import { ExportRequestSubmittedHandler } from './export-request-submitted.handler';
+
+jest.mock('crypto');
+const notificationId = '00001234-1234-1234-1234-123456789012';
+jest.spyOn(crypto, 'randomUUID').mockImplementation(() => notificationId);
 
 describe('Notifications / _handlers / export-request-submitted suite', () => {
   const testsHelper = new NotificationsTestsHelper();
@@ -40,7 +45,7 @@ describe('Notifications / _handlers / export-request-submitted suite', () => {
           innovation_name: innovation.name,
           comment: exportRequest.comment,
           sender: `${requestUser.name} (${displayTag})`,
-          request_url: exportRequestUrl(ServiceRoleEnum.INNOVATOR, innovation.id, exportRequest.id)
+          request_url: exportRequestUrl(ServiceRoleEnum.INNOVATOR, innovation.id, exportRequest.id, notificationId)
         }
       });
     });
@@ -63,7 +68,8 @@ describe('Notifications / _handlers / export-request-submitted suite', () => {
           innovationName: innovation.name,
           unitName: displayTag,
           exportRequestId: exportRequest.id
-        }
+        },
+        notificationId
       });
     });
 

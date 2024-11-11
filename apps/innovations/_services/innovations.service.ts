@@ -195,7 +195,7 @@ export type InnovationListFilters = {
   latestWorkedByMe?: boolean;
   locations?: InnovationLocationEnum[];
   search?: string;
-  supportStatuses?: (InnovationSupportStatusEnum | 'UNASSIGNED')[];
+  supportStatuses?: InnovationSupportStatusEnum[];
   supportUnit?: string;
   closedByMyOrganisation?: boolean;
 };
@@ -906,7 +906,7 @@ export class InnovationsService extends BaseService {
   private addSupportFilter(
     domainContext: DomainContextType,
     query: SelectQueryBuilder<InnovationListView>,
-    supportStatuses: (InnovationSupportStatusEnum | 'UNASSIGNED')[]
+    supportStatuses: InnovationSupportStatusEnum[]
   ): void {
     if (supportStatuses.length) {
       // sanity check to ensure we're joining with the support

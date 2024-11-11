@@ -5,6 +5,7 @@ import { HandlersHelper } from '../../_helpers/handlers.helper';
 import { dashboardUrl } from '../../_helpers/url.helper';
 import type { RecipientType } from '../../_services/recipients.service';
 import { BaseHandler } from '../base.handler';
+import { randomUUID } from 'crypto';
 
 export class AccountCreationHandler extends BaseHandler<
   NotifierTypeEnum.ACCOUNT_CREATION,
@@ -42,10 +43,12 @@ export class AccountCreationHandler extends BaseHandler<
   }
 
   private async CA01_ACCOUNT_CREATION_OF_INNOVATOR(recipient: RecipientType): Promise<void> {
+    const notificationId = randomUUID();
+
     this.addEmails('CA01_ACCOUNT_CREATION_OF_INNOVATOR', [recipient], {
       notificationPreferenceType: 'ACCOUNT',
       params: {
-        dashboard_url: dashboardUrl(ServiceRoleEnum.INNOVATOR)
+        dashboard_url: dashboardUrl(ServiceRoleEnum.INNOVATOR, notificationId)
       },
       options: { includeSelf: true }
     });
@@ -55,12 +58,14 @@ export class AccountCreationHandler extends BaseHandler<
     recipient: RecipientType,
     innovationNames: string[]
   ): Promise<void> {
+    const notificationId = randomUUID();
+
     this.addEmails('CA02_ACCOUNT_CREATION_OF_COLLABORATOR', [recipient], {
       notificationPreferenceType: 'ACCOUNT',
       params: {
         innovations_name: HandlersHelper.transformIntoBullet(innovationNames),
         multiple_innovations: innovationNames.length > 1 ? 'yes' : 'no',
-        dashboard_url: dashboardUrl(ServiceRoleEnum.INNOVATOR)
+        dashboard_url: dashboardUrl(ServiceRoleEnum.INNOVATOR, notificationId)
       },
       options: { includeSelf: true }
     });

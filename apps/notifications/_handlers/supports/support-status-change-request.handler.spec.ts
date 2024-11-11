@@ -1,3 +1,4 @@
+import * as crypto from 'crypto';
 import { randText } from '@ngneat/falso';
 import { InnovationSupportStatusEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { TranslationHelper } from '@notifications/shared/helpers';
@@ -6,6 +7,10 @@ import { testEmails, testInApps } from '../../_helpers/tests.helper';
 import { innovationOverviewUrl } from '../../_helpers/url.helper';
 import { NotificationsTestsHelper } from '../../_tests/notifications-test.helper';
 import { SupportStatusChangeRequestHandler } from './support-status-change-request.handler';
+
+jest.mock('crypto');
+const notificationId = '00001234-1234-1234-1234-123456789012';
+jest.spyOn(crypto, 'randomUUID').mockImplementation(() => notificationId);
 
 describe('Notifications / _handlers / support-new-assigned-accessors suite', () => {
   const testsHelper = new NotificationsTestsHelper();
@@ -38,7 +43,7 @@ describe('Notifications / _handlers / support-new-assigned-accessors suite', () 
         outputData: {
           accessor_name: requestUser.name,
           innovation_name: innovation.name,
-          innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, innovation.id),
+          innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, innovation.id, notificationId),
           proposed_status: status,
           request_comment: message
         }
@@ -64,7 +69,8 @@ describe('Notifications / _handlers / support-new-assigned-accessors suite', () 
           accessorName: requestUser.name,
           innovationName: innovation.name,
           status
-        }
+        },
+        notificationId
       });
     });
   });

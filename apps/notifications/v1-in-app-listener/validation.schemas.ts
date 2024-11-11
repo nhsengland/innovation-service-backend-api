@@ -14,6 +14,7 @@ export type MessageType = {
     };
     userRoleIds: string[];
     params: Record<string, unknown>;
+    notificationId: string;
   };
 };
 
@@ -26,10 +27,12 @@ export const MessageSchema = Joi.object<MessageType>({
     innovationId: JoiHelper.AppCustomJoi().string().guid().required(),
 
     context: Joi.object<MessageType['data']['context']>({
-      type: JoiHelper.AppCustomJoi().string()
+      type: JoiHelper.AppCustomJoi()
+        .string()
         .valid(...NotificationCategoryType)
         .required(),
-      detail: JoiHelper.AppCustomJoi().string()
+      detail: JoiHelper.AppCustomJoi()
+        .string()
         .valid(...NotificationDetailType)
         .required(),
       id: JoiHelper.AppCustomJoi().string().guid().required()
@@ -37,6 +40,7 @@ export const MessageSchema = Joi.object<MessageType>({
 
     userRoleIds: Joi.array().items(JoiHelper.AppCustomJoi().string().guid()).required(),
 
-    params: Joi.object().required()
+    params: Joi.object().required(),
+    notificationId: JoiHelper.AppCustomJoi().string().guid().required()
   }).required()
 }).required();

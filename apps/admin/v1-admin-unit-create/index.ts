@@ -11,7 +11,7 @@ import { container } from '../_config';
 import SHARED_SYMBOLS from '@admin/shared/services/symbols';
 import type { OrganisationsService } from '../_services/organisations.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1AdminUnitCreate {
@@ -46,29 +46,16 @@ export default openApi(V1AdminUnitCreate.httpTrigger as AzureFunction, '/v1/orga
       description: 'The organisation unit to be created.'
     }),
     responses: {
-      '200': {
-        description: 'The organisation unit has been created.',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                unitId: {
-                  type: 'string',
-                  description: 'The organisation id.'
-                }
-              }
-            }
-          }
-        }
-      },
-      '400': {
+      200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: 'The organisation unit has been created.'
+      }),
+      400: {
         description: 'Bad request.'
       },
-      '401': {
+      401: {
         description: 'The user is not authorized to create an organisation unit.'
       },
-      '500': {
+      500: {
         description: 'An error occurred while creating the organisation unit.'
       }
     }

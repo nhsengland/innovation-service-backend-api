@@ -1,14 +1,15 @@
 import { container } from '../_config'; // inversify container
 
 import { randUuid } from '@ngneat/falso';
-import type { NotificationCategoryType} from '@notifications/shared/enums';
+import type { NotificationCategoryType } from '@notifications/shared/enums';
 import { NotificationPreferenceEnum } from '@notifications/shared/enums';
-import type { CompleteScenarioType} from '@notifications/shared/tests';
+import type { CompleteScenarioType } from '@notifications/shared/tests';
 import { MocksHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { cloneDeep } from 'lodash';
 import { NotificationsTestsHelper } from '../_tests/notifications-test.helper';
 import { BaseHandler } from './base.handler';
+import { randomUUID } from 'crypto';
 
 class TestHandler extends BaseHandler<any, any> {
   async run(): Promise<this> {
@@ -245,7 +246,8 @@ describe('Notifications / _handlers / base handler suite', () => {
           },
           innovationId: randUuid(),
           params: {},
-          userRoleIds: [randUuid(), randUuid()]
+          userRoleIds: [randUuid(), randUuid()],
+          notificationId: randomUUID()
         }
       ];
       baseHandler.inApp = example;

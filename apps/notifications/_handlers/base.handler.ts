@@ -1,13 +1,8 @@
 import type { Context } from '@azure/functions';
-import type {
-  NotificationCategoryType,
-  NotificationDetailType,
-  NotifierTypeEnum} from '@notifications/shared/enums';
-import {
-  ServiceRoleEnum
-} from '@notifications/shared/enums';
+import type { NotificationCategoryType, NotificationDetailType, NotifierTypeEnum } from '@notifications/shared/enums';
+import { ServiceRoleEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
-import type { EmailTemplates, EmailTemplatesType} from '../_config';
+import type { EmailTemplates, EmailTemplatesType } from '../_config';
 import { container } from '../_config';
 import type { InAppTemplatesType } from '../_config/inapp.config';
 import { HandlersHelper } from '../_helpers/handlers.helper';
@@ -51,6 +46,7 @@ type HandlerInAppType<T> = Array<{
   options?: {
     includeSelf?: boolean; // send email to the user that made the request
   };
+  notificationId: string;
 }>;
 
 export abstract class BaseHandler<
@@ -187,7 +183,8 @@ export abstract class BaseHandler<
       innovationId: data.innovationId,
       params: data.params,
       userRoleIds: userRoleIds,
-      ...(data.options && { options: data.options })
+      ...(data.options && { options: data.options }),
+      notificationId: data.notificationId
     });
   }
 
@@ -217,7 +214,9 @@ export abstract class BaseHandler<
   }
 
   protected async getUserName(identityId?: string | null, role?: ServiceRoleEnum): Promise<string> {
-    const name = identityId ? (await this.recipientsService.usersIdentityInfo(identityId))?.displayName ?? null : null;
+    const name = identityId
+      ? ((await this.recipientsService.usersIdentityInfo(identityId))?.displayName ?? null)
+      : null;
     if (name) {
       return name;
     }

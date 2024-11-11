@@ -12,6 +12,7 @@ import SHARED_SYMBOLS from '@admin/shared/services/symbols';
 import SYMBOLS from '../_services/symbols';
 import type { UsersService } from '../_services/users.service';
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
+import { ResponseBodySchema } from './transformation.dtos';
 
 class V1AdminUserRolesCreate {
   @JwtDecoder()
@@ -43,22 +44,9 @@ export default openApi(V1AdminUserRolesCreate.httpTrigger as AzureFunction, '/v1
     parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     requestBody: SwaggerHelper.bodyJ2S(BodySchema),
     responses: {
-      204: {
-        description: 'Updated the user role',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  id: { type: 'string', description: 'The role id.' }
-                }
-              }
-            }
-          }
-        }
-      },
+      204: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: 'Updated the user role'
+      }),
       400: { description: 'The request is invalid.' },
       401: { description: 'The user is not authenticated.' },
       403: { description: 'The user is not authorized to access this resource.' },

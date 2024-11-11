@@ -3,7 +3,7 @@ import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@users/shared/decorators';
 import { ServiceRoleEnum } from '@users/shared/enums';
-import { JoiHelper, ResponseHelper } from '@users/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@users/shared/helpers';
 import type { AuthorizationService } from '@users/shared/services';
 import SHARED_SYMBOLS from '@users/shared/services/symbols';
 import type { CustomContextType } from '@users/shared/types';
@@ -12,7 +12,7 @@ import { container } from '../_config';
 
 import type { OrganisationsService } from '../_services/organisations.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { QueryParamsSchema, QueryParamsType } from './validation.schemas';
 
 class V1OrganisationsList {
@@ -74,19 +74,9 @@ export default openApi(V1OrganisationsList.httpTrigger as AzureFunction, '/v1/or
     tags: ['[v1] Organisations'],
     parameters: [],
     responses: {
-      200: {
-        description: 'Ok',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'array',
-              items: {
-                type: 'object'
-              }
-            }
-          }
-        }
-      }
+      200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: 'Ok'
+      })
     }
   }
 });

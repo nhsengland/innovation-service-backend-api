@@ -1,9 +1,14 @@
+import * as crypto from 'crypto';
 import { ServiceRoleEnum } from '@notifications/shared/enums';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { testEmails, testInApps } from '../../_helpers/tests.helper';
 import { supportSummaryUrl } from '../../_helpers/url.helper';
 import { NotificationsTestsHelper } from '../../_tests/notifications-test.helper';
 import { SupportSummaryUpdateHandler } from './support-summary-update.handler';
+
+jest.mock('crypto');
+const notificationId = '00001234-1234-1234-1234-123456789012';
+jest.spyOn(crypto, 'randomUUID').mockImplementation(() => notificationId);
 
 describe('Notifications / _handlers / support-summary-update suite', () => {
   const testsHelper = new NotificationsTestsHelper();
@@ -35,7 +40,12 @@ describe('Notifications / _handlers / support-summary-update suite', () => {
         outputData: {
           innovation_name: innovation.name,
           unit_name: requestUserUnit.name,
-          support_summary_update_url: supportSummaryUrl(ServiceRoleEnum.INNOVATOR, innovation.id, requestUserUnit.id)
+          support_summary_update_url: supportSummaryUrl(
+            ServiceRoleEnum.INNOVATOR,
+            innovation.id,
+            notificationId,
+            requestUserUnit.id
+          )
         }
       });
     });
@@ -51,7 +61,8 @@ describe('Notifications / _handlers / support-summary-update suite', () => {
           innovationName: innovation.name,
           unitName: requestUserUnit.name,
           unitId: requestUserUnit.id
-        }
+        },
+        notificationId
       });
     });
   });
@@ -66,7 +77,12 @@ describe('Notifications / _handlers / support-summary-update suite', () => {
         outputData: {
           innovation_name: innovation.name,
           unit_name: requestUserUnit.name,
-          support_summary_update_url: supportSummaryUrl(ServiceRoleEnum.ACCESSOR, innovation.id, requestUserUnit.id)
+          support_summary_update_url: supportSummaryUrl(
+            ServiceRoleEnum.ACCESSOR,
+            innovation.id,
+            notificationId,
+            requestUserUnit.id
+          )
         }
       });
     });
@@ -78,7 +94,8 @@ describe('Notifications / _handlers / support-summary-update suite', () => {
         requestUser: DTOsHelper.getUserRequestContext(requestUser),
         inputData: { innovationId: innovation.id, supportId: support.id },
         recipients: assignedAccessorsRecipients,
-        outputData: { innovationName: innovation.name, unitName: requestUserUnit.name, unitId: requestUserUnit.id }
+        outputData: { innovationName: innovation.name, unitName: requestUserUnit.name, unitId: requestUserUnit.id },
+        notificationId
       });
     });
   });

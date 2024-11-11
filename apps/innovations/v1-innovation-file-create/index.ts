@@ -12,7 +12,7 @@ import { container } from '../_config';
 import { ServiceRoleEnum } from '@innovations/shared/enums';
 import type { InnovationFileService } from '../_services/innovation-file.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1InnovationFileCreate {
@@ -59,20 +59,9 @@ export default openApi(V1InnovationFileCreate.httpTrigger as AzureFunction, '/v1
     parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     requestBody: SwaggerHelper.bodyJ2S(BodySchema),
     responses: {
-      200: {
-        description: 'The innovation file has been created.',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                id: { type: 'string' }
-              },
-              required: ['id']
-            }
-          }
-        }
-      },
+      200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: 'The innovation file has been created.'
+      }),
       400: {
         description: 'The innovation file could not be created.'
       },

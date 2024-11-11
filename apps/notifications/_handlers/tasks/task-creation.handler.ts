@@ -1,10 +1,11 @@
-import type { NotifierTypeEnum} from '@notifications/shared/enums';
+import type { NotifierTypeEnum } from '@notifications/shared/enums';
 import { ServiceRoleEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import type { Context } from '@azure/functions';
 import { taskUrl } from '../../_helpers/url.helper';
 import { BaseHandler } from '../base.handler';
+import { randomUUID } from 'crypto';
 
 export class TaskCreationHandler extends BaseHandler<
   NotifierTypeEnum.TASK_CREATION,
@@ -26,13 +27,19 @@ export class TaskCreationHandler extends BaseHandler<
 
     const innovatorRecipients = await this.recipientsService.getUsersRecipient(recipients, ServiceRoleEnum.INNOVATOR);
     const unitName = this.getRequestUnitName();
+    const notificationId = randomUUID();
 
     this.addEmails('TA01_TASK_CREATION_TO_INNOVATOR', innovatorRecipients, {
       notificationPreferenceType: 'TASK',
       params: {
         innovation_name: innovation.name,
         unit_name: unitName,
-        task_url: taskUrl(ServiceRoleEnum.INNOVATOR, this.inputData.innovationId, this.inputData.task.id)
+        task_url: taskUrl(
+          ServiceRoleEnum.INNOVATOR,
+          this.inputData.innovationId,
+          this.inputData.task.id,
+          notificationId
+        )
       }
     });
 
@@ -47,7 +54,8 @@ export class TaskCreationHandler extends BaseHandler<
         innovationName: innovation.name,
         unitName: unitName,
         taskId: this.inputData.task.id
-      }
+      },
+      notificationId
     });
 
     return this;

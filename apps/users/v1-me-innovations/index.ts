@@ -1,13 +1,13 @@
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 import type { AzureFunction } from '@azure/functions';
 import { JwtDecoder } from '@users/shared/decorators';
-import { ResponseHelper } from '@users/shared/helpers';
+import { ResponseHelper, SwaggerHelper } from '@users/shared/helpers';
 import type { AuthorizationService, DomainService } from '@users/shared/services';
 import SHARED_SYMBOLS from '@users/shared/services/symbols';
 import type { CustomContextType } from '@users/shared/types';
 
 import { container } from '../_config';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 
 class V1MeInnovationsInfo {
   @JwtDecoder()
@@ -36,33 +36,9 @@ export default openApi(V1MeInnovationsInfo.httpTrigger as AzureFunction, '/v1/me
     tags: ['[v1] Owned innovations information'],
     parameters: [],
     responses: {
-      200: {
-        description: 'Success',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  id: {
-                    type: 'string'
-                  },
-                  name: {
-                    type: 'string'
-                  },
-                  collaboratorsCount: {
-                    type: 'number'
-                  },
-                  expirationTransferDate: {
-                    type: 'string'
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
+      200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: 'Success'
+      }),
       400: { description: 'Bad request' }
     }
   }

@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction } from '@azure/functions';
 
 import { JwtDecoder } from '@users/shared/decorators';
-import { ResponseHelper } from '@users/shared/helpers';
+import { ResponseHelper, SwaggerHelper } from '@users/shared/helpers';
 import type { AuthorizationService } from '@users/shared/services';
 import SHARED_SYMBOLS from '@users/shared/services/symbols';
 import type { CustomContextType } from '@users/shared/types';
@@ -10,7 +10,7 @@ import type { CustomContextType } from '@users/shared/types';
 import { container } from '../_config';
 import SYMBOLS from '../_services/symbols';
 import type { UsersService } from '../_services/users.service';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 
 class V1UserInvitesList {
   @JwtDecoder()
@@ -38,19 +38,9 @@ export default openApi(V1UserInvitesList.httpTrigger as AzureFunction, '/v1/invi
     operationId: 'v1-invites-list',
     parameters: [],
     responses: {
-      200: {
-        description: 'Success',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'array',
-              items: {
-                type: 'object'
-              }
-            }
-          }
-        }
-      }
+      200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: 'Success'
+      })
     }
   }
 });

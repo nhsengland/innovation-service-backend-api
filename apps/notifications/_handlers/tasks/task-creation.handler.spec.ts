@@ -1,11 +1,15 @@
- 
+import * as crypto from 'crypto';
 import { TranslationHelper } from '@notifications/shared/helpers';
-import { UrlModel } from '@notifications/shared/models';
-import type { CompleteScenarioType} from '@notifications/shared/tests';
+import type { CompleteScenarioType } from '@notifications/shared/tests';
 import { MocksHelper, TestsHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
-import { ENV } from '../../_config';
 import { TaskCreationHandler } from './task-creation.handler';
+import { taskUrl } from '../../_helpers/url.helper';
+import { ServiceRoleEnum } from '@notifications/shared/enums';
+
+jest.mock('crypto');
+const notificationId = '00001234-1234-1234-1234-123456789012';
+jest.spyOn(crypto, 'randomUUID').mockImplementation(() => notificationId);
 
 describe('Notifications / _handlers / task-creation suite', () => {
   const testsHelper = new TestsHelper();
@@ -39,13 +43,7 @@ describe('Notifications / _handlers / task-creation suite', () => {
           params: {
             innovation_name: innovation.name,
             unit_name: requestUser.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
-            task_url: new UrlModel(ENV.webBaseTransactionalUrl)
-              .addPath('innovator/innovations/:innovationId/tasks/:taskId')
-              .setPathParams({
-                innovationId: innovation.id,
-                taskId: task.id
-              })
-              .buildUrl()
+            task_url: taskUrl(ServiceRoleEnum.INNOVATOR, innovation.id, task.id, notificationId)
           }
         },
         {
@@ -55,13 +53,7 @@ describe('Notifications / _handlers / task-creation suite', () => {
           params: {
             innovation_name: innovation.name,
             unit_name: requestUser.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
-            task_url: new UrlModel(ENV.webBaseTransactionalUrl)
-              .addPath('innovator/innovations/:innovationId/tasks/:taskId')
-              .setPathParams({
-                innovationId: innovation.id,
-                taskId: task.id
-              })
-              .buildUrl()
+            task_url: taskUrl(ServiceRoleEnum.INNOVATOR, innovation.id, task.id, notificationId)
           }
         }
       ]);
@@ -95,7 +87,8 @@ describe('Notifications / _handlers / task-creation suite', () => {
             innovationName: innovation.name,
             unitName: requestUser.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
             taskId: task.id
-          }
+          },
+          notificationId
         }
       ]);
     });

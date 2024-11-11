@@ -11,7 +11,7 @@ import { container } from '../_config';
 import SHARED_SYMBOLS from '@admin/shared/services/symbols';
 import type { OrganisationsService } from '../_services/organisations.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType } from './validation.schemas';
 
 class V1AdminOrganisationCreate {
@@ -44,26 +44,9 @@ export default openApi(V1AdminOrganisationCreate.httpTrigger as AzureFunction, '
       description: 'The organisation to be created.'
     }),
     responses: {
-      '200': {
-        description: 'The organisation has been created.',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                id: {
-                  type: 'string',
-                  description: 'The organisation id.'
-                },
-                units: {
-                  type: 'string',
-                  description: 'Ids of the organisation units belonging to the organisation.'
-                }
-              }
-            }
-          }
-        }
-      },
+      '200': SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: 'The organisation has been created.'
+      }),
       '400': {
         description: 'Bad request.'
       },

@@ -1,3 +1,4 @@
+import * as crypto from 'crypto';
 import { randFutureDate } from '@ngneat/falso';
 import { ServiceRoleEnum } from '@notifications/shared/enums';
 import { MocksHelper } from '@notifications/shared/tests';
@@ -6,6 +7,10 @@ import { testEmails, testInApps } from '../../../_helpers/tests.helper';
 import { innovationOverviewUrl } from '../../../_helpers/url.helper';
 import { NotificationsTestsHelper } from '../../../_tests/notifications-test.helper';
 import { AccountDeletionHandler } from './account-deletion.handler';
+
+jest.mock('crypto');
+const notificationId = '00001234-1234-1234-1234-123456789012';
+jest.spyOn(crypto, 'randomUUID').mockImplementation(() => notificationId);
 
 describe('Notifications / _handlers / account-deletion suite', () => {
   const testsHelper = new NotificationsTestsHelper();
@@ -39,7 +44,7 @@ describe('Notifications / _handlers / account-deletion suite', () => {
           outputData: {
             expiry_date: transferExpireDate,
             innovation_name: innovation.name,
-            innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.INNOVATOR, innovation.id)
+            innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.INNOVATOR, innovation.id, notificationId)
           }
         });
       });
@@ -58,7 +63,8 @@ describe('Notifications / _handlers / account-deletion suite', () => {
               }
             ]
           },
-          outputData: { innovationName: innovation.name }
+          outputData: { innovationName: innovation.name },
+          notificationId
         });
       });
     });
@@ -141,7 +147,8 @@ describe('Notifications / _handlers / account-deletion suite', () => {
                 }
               ]
             },
-            outputData: { innovationName: innovation.name }
+            outputData: { innovationName: innovation.name },
+            notificationId
           }
         );
       });

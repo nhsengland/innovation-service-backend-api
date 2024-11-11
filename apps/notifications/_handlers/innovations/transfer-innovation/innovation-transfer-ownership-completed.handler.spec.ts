@@ -1,3 +1,4 @@
+import * as crypto from 'crypto';
 import { InnovationTransferStatusEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { MocksHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
@@ -6,6 +7,10 @@ import { manageInnovationUrl } from '../../../_helpers/url.helper';
 import { RecipientsService } from '../../../_services/recipients.service';
 import { NotificationsTestsHelper } from '../../../_tests/notifications-test.helper';
 import { InnovationTransferOwnershipCompletedHandler } from './innovation-transfer-ownership-completed.handler';
+
+jest.mock('crypto');
+const notificationId = '00001234-1234-1234-1234-123456789012';
+jest.spyOn(crypto, 'randomUUID').mockImplementation(() => notificationId);
 
 describe('Notifications / _handlers / innovation-transfer-ownership-completed handler suite', () => {
   const testsHelper = new NotificationsTestsHelper();
@@ -82,7 +87,8 @@ describe('Notifications / _handlers / innovation-transfer-ownership-completed ha
               newInnovationOwner: newInnovationOwner.name
             },
             recipients: [DTOsHelper.getRecipientUser(previousInnovationOwner)],
-            requestUser: DTOsHelper.getUserRequestContext(newInnovationOwner)
+            requestUser: DTOsHelper.getUserRequestContext(newInnovationOwner),
+            notificationId
           }
         );
       });
@@ -126,7 +132,8 @@ describe('Notifications / _handlers / innovation-transfer-ownership-completed ha
               oldInnovationOwnerName: previousInnovationOwner.name
             },
             recipients: assignedAccessors,
-            requestUser: DTOsHelper.getUserRequestContext(newInnovationOwner)
+            requestUser: DTOsHelper.getUserRequestContext(newInnovationOwner),
+            notificationId
           }
         );
       });
@@ -162,7 +169,7 @@ describe('Notifications / _handlers / innovation-transfer-ownership-completed ha
             outputData: {
               innovation_name: innovation.name,
               new_innovation_owner: newInnovationOwner.name,
-              manage_innovation_url: manageInnovationUrl(ServiceRoleEnum.INNOVATOR, innovation.id)
+              manage_innovation_url: manageInnovationUrl(ServiceRoleEnum.INNOVATOR, innovation.id, notificationId)
             },
             recipients: [DTOsHelper.getRecipientUser(previousInnovationOwner)],
             requestUser: DTOsHelper.getUserRequestContext(newInnovationOwner)
@@ -188,7 +195,8 @@ describe('Notifications / _handlers / innovation-transfer-ownership-completed ha
               innovationName: innovation.name
             },
             recipients: [DTOsHelper.getRecipientUser(previousInnovationOwner)],
-            requestUser: DTOsHelper.getUserRequestContext(newInnovationOwner)
+            requestUser: DTOsHelper.getUserRequestContext(newInnovationOwner),
+            notificationId
           }
         );
       });
@@ -245,7 +253,8 @@ describe('Notifications / _handlers / innovation-transfer-ownership-completed ha
               innovationOwner: previousInnovationOwner.name
             },
             recipients: [DTOsHelper.getRecipientUser(newInnovationOwner)],
-            requestUser: DTOsHelper.getUserRequestContext(previousInnovationOwner)
+            requestUser: DTOsHelper.getUserRequestContext(previousInnovationOwner),
+            notificationId
           });
         });
       });

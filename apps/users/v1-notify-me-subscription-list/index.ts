@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@users/shared/decorators';
-import { JoiHelper, ResponseHelper } from '@users/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@users/shared/helpers';
 import type { AuthorizationService } from '@users/shared/services';
 import SHARED_SYMBOLS from '@users/shared/services/symbols';
 import type { CustomContextType } from '@users/shared/types';
@@ -11,7 +11,7 @@ import { container } from '../_config';
 
 import type { NotifyMeService } from '../_services/notify-me.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { QuerySchema, type QueryType } from './validation.schemas';
 
 class V1NotifyMeSubscriptionList {
@@ -41,7 +41,9 @@ export default openApi(V1NotifyMeSubscriptionList.httpTrigger as AzureFunction, 
     operationId: 'v1-notify-me-subscription-list',
     tags: ['[v1] Notify Me'],
     responses: {
-      200: { description: 'List of user custom notifications' },
+      200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: 'List of user custom notifications'
+      }),
       400: { description: 'Bad Request' },
       401: { description: 'Unauthorized' },
       403: { description: 'Forbidden' },

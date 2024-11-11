@@ -101,6 +101,11 @@ export class UrlModel {
     return this;
   }
 
+  addQueryParams(queryParams: { [key: string]: any }): UrlModel {
+    this.queryParams = { ...this.queryParams, ...queryParams };
+    return this;
+  }
+
   buildUrl(): string {
     // Replace pathParams.
     for (const [key, value] of Object.entries(this.pathParams)) {

@@ -1,13 +1,18 @@
+import * as crypto from 'crypto';
 import { DocumentUploadHandler } from './document-upload.handler';
 
 import { ServiceRoleEnum } from '@notifications/shared/enums';
-import type { CompleteScenarioType} from '@notifications/shared/tests';
+import type { CompleteScenarioType } from '@notifications/shared/tests';
 import { MocksHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 
 import { TranslationHelper } from '@notifications/shared/helpers';
 import { documentUrl } from '../../_helpers/url.helper';
 import { NotificationsTestsHelper } from '../../_tests/notifications-test.helper';
+
+jest.mock('crypto');
+const notificationId = '00001234-1234-1234-1234-123456789012';
+jest.spyOn(crypto, 'randomUUID').mockImplementation(() => notificationId);
 
 describe('Notifications / _handlers / document-upload suite', () => {
   const testsHelper = new NotificationsTestsHelper();
@@ -45,7 +50,7 @@ describe('Notifications / _handlers / document-upload suite', () => {
             params: {
               accessor_name: requestUser.name,
               unit_name: requestUser.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
-              document_url: documentUrl(ServiceRoleEnum.INNOVATOR, innovation.id, file.id)
+              document_url: documentUrl(ServiceRoleEnum.INNOVATOR, innovation.id, file.id, notificationId)
             }
           },
           {
@@ -55,7 +60,7 @@ describe('Notifications / _handlers / document-upload suite', () => {
             params: {
               accessor_name: requestUser.name,
               unit_name: requestUser.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
-              document_url: documentUrl(ServiceRoleEnum.INNOVATOR, innovation.id, file.id)
+              document_url: documentUrl(ServiceRoleEnum.INNOVATOR, innovation.id, file.id, notificationId)
             }
           }
         ]);
@@ -77,7 +82,8 @@ describe('Notifications / _handlers / document-upload suite', () => {
             params: {
               fileId: file.id,
               unitName: requestUser.organisations.healthOrg.organisationUnits.healthOrgUnit.name
-            }
+            },
+            notificationId
           }
         ]);
       });

@@ -11,7 +11,7 @@ import { container } from '../_config';
 
 import type { InnovationCollaboratorsService } from '../_services/innovation-collaborators.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1InnovationCollaboratorUpdate {
@@ -67,24 +67,9 @@ export default openApi(
         description: 'The information to update collaborator invite.'
       }),
       responses: {
-        200: {
-          description: 'The collaborator has been updated.',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  id: {
-                    type: 'string',
-                    description: 'The collaborator id.',
-                    example: 'c0a80121-7ac0-464e-b8f6-27b88b0cda7f'
-                  }
-                },
-                required: ['id']
-              }
-            }
-          }
-        },
+        200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+          description: 'The collaborator has been updated.'
+        }),
         400: {
           description: 'The collaborator could not be updated.'
         },

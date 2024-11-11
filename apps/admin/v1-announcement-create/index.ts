@@ -11,7 +11,7 @@ import type { AnnouncementsService } from '../_services/announcements.service';
 import SYMBOLS from '../_services/symbols';
 
 import SHARED_SYMBOLS from '@admin/shared/services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType } from './validation.schemas';
 import type { FilterPayload } from '@admin/shared/models/schema-engine/schema.model';
 
@@ -50,19 +50,9 @@ export default openApi(V1AnnouncementsCreate.httpTrigger as AzureFunction, '/v1/
     operationId: 'v1-announcement-create',
     requestBody: SwaggerHelper.bodyJ2S(BodySchema),
     responses: {
-      '200': {
-        description: 'Announcement created.',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                id: { type: 'string' }
-              }
-            }
-          }
-        }
-      },
+      '200': SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: 'Announcement created.'
+      }),
       '400': { description: 'Bad Request' },
       '401': { description: 'Unauthorized' },
       '403': { description: 'Forbidden' },

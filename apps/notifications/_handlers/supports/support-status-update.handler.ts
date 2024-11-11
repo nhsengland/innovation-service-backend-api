@@ -6,6 +6,7 @@ import { HandlersHelper } from '../../_helpers/handlers.helper';
 import { supportSummaryUrl, threadUrl } from '../../_helpers/url.helper';
 import type { RecipientType } from '../../_services/recipients.service';
 import { BaseHandler } from '../base.handler';
+import { randomUUID } from 'crypto';
 
 export class SupportStatusUpdateHandler extends BaseHandler<
   NotifierTypeEnum.SUPPORT_STATUS_UPDATE,
@@ -57,8 +58,8 @@ export class SupportStatusUpdateHandler extends BaseHandler<
     recipients: RecipientType[]
   ): Promise<void> {
     const accessorNames: string[] = await this.getAccessorNames();
-
     const unitName = this.getRequestUnitName();
+    const notificationId = randomUUID();
 
     this.addEmails('ST01_SUPPORT_STATUS_TO_ENGAGING', recipients, {
       notificationPreferenceType: 'SUPPORT',
@@ -67,7 +68,7 @@ export class SupportStatusUpdateHandler extends BaseHandler<
         innovation_name: innovation.name,
         message: this.inputData.support.message,
         unit_name: unitName,
-        message_url: threadUrl(ServiceRoleEnum.INNOVATOR, innovation.id, this.inputData.threadId)
+        message_url: threadUrl(ServiceRoleEnum.INNOVATOR, innovation.id, this.inputData.threadId, notificationId)
       }
     });
 
@@ -82,7 +83,8 @@ export class SupportStatusUpdateHandler extends BaseHandler<
         innovationName: innovation.name,
         threadId: this.inputData.threadId,
         unitName: unitName
-      }
+      },
+      notificationId
     });
   }
 
@@ -91,6 +93,7 @@ export class SupportStatusUpdateHandler extends BaseHandler<
     recipients: RecipientType[]
   ): Promise<void> {
     const unitName = this.getRequestUnitName();
+    const notificationId = randomUUID();
 
     this.addEmails('ST02_SUPPORT_STATUS_TO_OTHER', recipients, {
       notificationPreferenceType: 'SUPPORT',
@@ -102,6 +105,7 @@ export class SupportStatusUpdateHandler extends BaseHandler<
         support_summary_url: supportSummaryUrl(
           ServiceRoleEnum.INNOVATOR,
           innovation.id,
+          notificationId,
           this.requestUser.organisation?.organisationUnit?.id
         )
       }
@@ -119,7 +123,8 @@ export class SupportStatusUpdateHandler extends BaseHandler<
         status: this.translateSupportStatus(this.inputData.support.status),
         unitId: this.requestUser.organisation?.organisationUnit?.id ?? '',
         unitName: unitName
-      }
+      },
+      notificationId
     });
   }
 
@@ -128,8 +133,8 @@ export class SupportStatusUpdateHandler extends BaseHandler<
     recipients: RecipientType[]
   ): Promise<void> {
     const unitName = this.getRequestUnitName();
-
     const accessorNames: string[] = await this.getAccessorNames();
+    const notificationId = randomUUID();
 
     this.addEmails('ST03_SUPPORT_STATUS_TO_WAITING', recipients, {
       notificationPreferenceType: 'SUPPORT',
@@ -140,6 +145,7 @@ export class SupportStatusUpdateHandler extends BaseHandler<
         support_summary_url: supportSummaryUrl(
           ServiceRoleEnum.INNOVATOR,
           innovation.id,
+          notificationId,
           this.requestUser.organisation?.organisationUnit?.id
         ),
         accessors_name: HandlersHelper.transformIntoBullet(accessorNames)
@@ -158,7 +164,8 @@ export class SupportStatusUpdateHandler extends BaseHandler<
         status: this.translateSupportStatus(this.inputData.support.status),
         unitId: this.requestUser.organisation?.organisationUnit?.id ?? '',
         unitName: unitName
-      }
+      },
+      notificationId
     });
   }
 

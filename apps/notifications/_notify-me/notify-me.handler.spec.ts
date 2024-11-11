@@ -1,11 +1,15 @@
+import * as crypto from 'crypto';
 import { NotifyMeHandler } from './notify-me.handler';
-
 import { randUuid } from '@ngneat/falso';
 import { InnovationSupportStatusEnum, NotificationPreferenceEnum } from '@notifications/shared/enums';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import type { EntityManager } from 'typeorm';
 import { supportSummaryUrl } from '../_helpers/url.helper';
 import { NotificationsTestsHelper } from '../_tests/notifications-test.helper';
+
+jest.mock('crypto');
+const notificationId = '00001234-1234-1234-1234-123456789012';
+jest.spyOn(crypto, 'randomUUID').mockImplementation(() => notificationId);
 
 describe('NotifyMe Handler Suite', () => {
   const testsHelper = new NotificationsTestsHelper();
@@ -503,14 +507,15 @@ describe('NotifyMe Handler Suite', () => {
               notificationType: 'SUPPORT_UPDATED'
             }
           },
-          { id: innovationId, name: 'Test Innovation' }
+          { id: innovationId, name: 'Test Innovation' },
+          notificationId
         );
 
         expect(res).toEqual({
           innovation: 'Test Innovation',
           organisation: 'Health Org Unit',
           supportStatus: 'engaging',
-          supportSummaryUrl: supportSummaryUrl(recipient.role, innovationId, unit)
+          supportSummaryUrl: supportSummaryUrl(recipient.role, innovationId, notificationId, unit)
         });
       });
     });

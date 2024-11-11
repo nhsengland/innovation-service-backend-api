@@ -1,3 +1,4 @@
+import * as crypto from 'crypto';
 import { randText } from '@ngneat/falso';
 import { InnovationTaskStatusEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
@@ -6,6 +7,10 @@ import { testEmails, testInApps } from '../../_helpers/tests.helper';
 import { taskUrl, threadUrl } from '../../_helpers/url.helper';
 import { NotificationsTestsHelper } from '../../_tests/notifications-test.helper';
 import { TaskUpdateHandler } from './task-update.handler';
+
+jest.mock('crypto');
+const notificationId = '00001234-1234-1234-1234-123456789012';
+jest.spyOn(crypto, 'randomUUID').mockImplementation(() => notificationId);
 
 describe('Notifications / _handlers / task-update suite', () => {
   const testsHelper = new NotificationsTestsHelper();
@@ -46,7 +51,7 @@ describe('Notifications / _handlers / task-update suite', () => {
               innovation_name: innovation.name,
               innovator_name: scenario.users.johnInnovator.name,
               task_status: status === InnovationTaskStatusEnum.DONE ? 'done' : 'declined',
-              message_url: threadUrl(ServiceRoleEnum.INNOVATOR, innovation.id, threadId)
+              message_url: threadUrl(ServiceRoleEnum.INNOVATOR, innovation.id, threadId, notificationId)
             }
           });
         }
@@ -76,7 +81,8 @@ describe('Notifications / _handlers / task-update suite', () => {
               status: status === InnovationTaskStatusEnum.DONE ? 'done' : 'declined',
               messageId: messageId,
               threadId: threadId
-            }
+            },
+            notificationId
           });
         }
       );
@@ -99,8 +105,8 @@ describe('Notifications / _handlers / task-update suite', () => {
             innovation_name: innovation.name,
             innovator_name: scenario.users.johnInnovator.name,
             message: message,
-            message_url: threadUrl(ServiceRoleEnum.QUALIFYING_ACCESSOR, innovation.id, threadId),
-            task_url: taskUrl(ServiceRoleEnum.QUALIFYING_ACCESSOR, innovation.id, task.id)
+            message_url: threadUrl(ServiceRoleEnum.QUALIFYING_ACCESSOR, innovation.id, threadId, notificationId),
+            task_url: taskUrl(ServiceRoleEnum.QUALIFYING_ACCESSOR, innovation.id, task.id, notificationId)
           }
         });
       });
@@ -123,7 +129,8 @@ describe('Notifications / _handlers / task-update suite', () => {
             innovationName: innovation.name,
             messageId: messageId,
             threadId: threadId
-          }
+          },
+          notificationId
         });
       });
     });
@@ -145,7 +152,7 @@ describe('Notifications / _handlers / task-update suite', () => {
             innovation_name: innovation.name,
             innovator_name: scenario.users.johnInnovator.name,
             message: message,
-            message_url: threadUrl(ServiceRoleEnum.QUALIFYING_ACCESSOR, innovation.id, threadId)
+            message_url: threadUrl(ServiceRoleEnum.QUALIFYING_ACCESSOR, innovation.id, threadId, notificationId)
           }
         });
       });
@@ -168,7 +175,8 @@ describe('Notifications / _handlers / task-update suite', () => {
             innovationName: innovation.name,
             messageId: messageId,
             threadId: threadId
-          }
+          },
+          notificationId
         });
       });
     });
@@ -198,7 +206,7 @@ describe('Notifications / _handlers / task-update suite', () => {
             unit_name: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
             innovation_name: innovation.name,
             message: message,
-            message_url: threadUrl(ServiceRoleEnum.INNOVATOR, innovation.id, threadId)
+            message_url: threadUrl(ServiceRoleEnum.INNOVATOR, innovation.id, threadId, notificationId)
           }
         });
       });
@@ -225,7 +233,8 @@ describe('Notifications / _handlers / task-update suite', () => {
             innovationName: innovation.name,
             messageId: messageId,
             threadId: threadId
-          }
+          },
+          notificationId
         });
       });
     });
@@ -251,7 +260,7 @@ describe('Notifications / _handlers / task-update suite', () => {
             unit_name: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
             innovation_name: innovation.name,
             message: message,
-            message_url: threadUrl(ServiceRoleEnum.INNOVATOR, innovation.id, threadId)
+            message_url: threadUrl(ServiceRoleEnum.INNOVATOR, innovation.id, threadId, notificationId)
           }
         });
       });
@@ -281,7 +290,8 @@ describe('Notifications / _handlers / task-update suite', () => {
             innovationName: innovation.name,
             messageId: messageId,
             threadId: threadId
-          }
+          },
+          notificationId
         });
       });
     });

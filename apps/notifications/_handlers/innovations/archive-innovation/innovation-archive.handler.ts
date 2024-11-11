@@ -3,6 +3,7 @@ import { ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/en
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { innovationOverviewUrl } from '../../../_helpers/url.helper';
 import { BaseHandler } from '../../base.handler';
+import { randomUUID } from 'crypto';
 
 export class InnovationArchiveHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_ARCHIVE,
@@ -50,6 +51,8 @@ export class InnovationArchiveHandler extends BaseHandler<
       return;
     }
 
+    const notificationId = randomUUID();
+
     this.notify('AI01_INNOVATION_ARCHIVED_TO_SELF', [owner], {
       email: {
         notificationPreferenceType: 'INNOVATION_MANAGEMENT',
@@ -66,7 +69,8 @@ export class InnovationArchiveHandler extends BaseHandler<
         },
         innovationId: innovation.id,
         params: { innovationName: innovation.name },
-        options: { includeSelf: true }
+        options: { includeSelf: true },
+        notificationId
       }
     });
   }
@@ -83,6 +87,7 @@ export class InnovationArchiveHandler extends BaseHandler<
     }
 
     const recipients = await this.recipientsService.getUsersRecipient(collaborators, ServiceRoleEnum.INNOVATOR);
+    const notificationId = randomUUID();
 
     this.notify('AI02_INNOVATION_ARCHIVED_TO_COLLABORATORS', recipients, {
       email: {
@@ -98,7 +103,8 @@ export class InnovationArchiveHandler extends BaseHandler<
           detail: 'AI02_INNOVATION_ARCHIVED_TO_COLLABORATORS'
         },
         innovationId: innovation.id,
-        params: { innovationName: innovation.name }
+        params: { innovationName: innovation.name },
+        notificationId
       }
     });
   }
@@ -117,13 +123,14 @@ export class InnovationArchiveHandler extends BaseHandler<
         }))
         .filter(u => [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR].includes(u.userType))
     );
+    const notificationId = randomUUID();
 
     this.notify('AI03_INNOVATION_ARCHIVED_TO_ENGAGING_QA_A', recipients, {
       email: {
         notificationPreferenceType: 'INNOVATION_MANAGEMENT',
         params: {
           innovation_name: innovation.name,
-          archived_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, innovation.id)
+          archived_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, innovation.id, notificationId)
         }
       },
       inApp: {
@@ -135,8 +142,9 @@ export class InnovationArchiveHandler extends BaseHandler<
         innovationId: innovation.id,
         params: {
           innovationName: innovation.name,
-          archivedUrl: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, innovation.id)
-        }
+          archivedUrl: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, innovation.id, notificationId)
+        },
+        notificationId
       }
     });
   }
@@ -159,6 +167,8 @@ export class InnovationArchiveHandler extends BaseHandler<
       return;
     }
 
+    const notificationId = randomUUID();
+
     this.notify('AI04_INNOVATION_ARCHIVED_TO_NA_DURING_NEEDS_ASSESSMENT', previousAssessor, {
       email: {
         notificationPreferenceType: 'INNOVATION_MANAGEMENT',
@@ -177,7 +187,8 @@ export class InnovationArchiveHandler extends BaseHandler<
         params: {
           innovationName: innovation.name,
           assessmentType: this.inputData.reassessment ? 'reassessment' : 'assessment'
-        }
+        },
+        notificationId
       }
     });
   }

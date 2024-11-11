@@ -1,3 +1,4 @@
+import * as crypto from 'crypto';
 import { randUuid } from '@ngneat/falso';
 import { ServiceRoleEnum } from '@notifications/shared/enums';
 import { MocksHelper } from '@notifications/shared/tests';
@@ -6,6 +7,10 @@ import { testEmails, testInApps } from '../../_helpers/tests.helper';
 import { innovationOverviewUrl } from '../../_helpers/url.helper';
 import { NotificationsTestsHelper } from '../../_tests/notifications-test.helper';
 import { NeedsAssessmentAssessorUpdateHandler } from './needs-assessment-assessor-update.handler';
+
+jest.mock('crypto');
+const notificationId = '00001234-1234-1234-1234-123456789012';
+jest.spyOn(crypto, 'randomUUID').mockImplementation(() => notificationId);
 
 describe('Notifications / _handlers / needs assessment assessors update suite', () => {
   const testsHelper = new NotificationsTestsHelper();
@@ -32,7 +37,7 @@ describe('Notifications / _handlers / needs assessment assessors update suite', 
           inputData: inputData,
           outputData: {
             innovation_name: innovation.name,
-            innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ASSESSMENT, innovation.id)
+            innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ASSESSMENT, innovation.id, notificationId)
           },
           requestUser: DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
           recipients: [DTOsHelper.getRecipientUser(scenario.users.paulNeedsAssessor)]
@@ -51,7 +56,8 @@ describe('Notifications / _handlers / needs assessment assessors update suite', 
             innovationName: innovation.name
           },
           requestUser: DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
-          recipients: [DTOsHelper.getRecipientUser(scenario.users.paulNeedsAssessor)]
+          recipients: [DTOsHelper.getRecipientUser(scenario.users.paulNeedsAssessor)],
+          notificationId
         });
       });
 
@@ -79,7 +85,7 @@ describe('Notifications / _handlers / needs assessment assessors update suite', 
           inputData: inputData,
           outputData: {
             innovation_name: innovation.name,
-            innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ASSESSMENT, innovation.id)
+            innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ASSESSMENT, innovation.id, notificationId)
           },
           requestUser: DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
           recipients: [DTOsHelper.getRecipientUser(scenario.users.seanNeedsAssessor)]
@@ -98,7 +104,8 @@ describe('Notifications / _handlers / needs assessment assessors update suite', 
             innovationName: innovation.name
           },
           requestUser: DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
-          recipients: [DTOsHelper.getRecipientUser(scenario.users.seanNeedsAssessor)]
+          recipients: [DTOsHelper.getRecipientUser(scenario.users.seanNeedsAssessor)],
+          notificationId
         });
       });
     });
