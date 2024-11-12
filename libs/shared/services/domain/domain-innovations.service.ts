@@ -20,7 +20,8 @@ import { NotificationUserEntity } from '../../entities/user/notification-user.en
 import { NotificationEntity } from '../../entities/user/notification.entity';
 import { UserRoleEntity } from '../../entities/user/user-role.entity';
 import { InnovationGroupedStatusViewEntity } from '../../entities/views/innovation-grouped-status.view.entity';
-import type { InnovationGroupedStatusEnum, NotificationCategoryType } from '../../enums';
+import type { NotificationCategoryType } from '../../enums';
+import { InnovationGroupedStatusEnum } from '../../enums';
 import {
   ActivityEnum,
   ActivityTypeEnum,
@@ -115,22 +116,20 @@ export class DomainInnovationsService {
    * This method is used by the cron job.
    * @param entityManager optional entity manager
    */
-  //TODO: Change the query for this
+
   async archiveInnovationsWithoutSupport(entityManager?: EntityManager): Promise<void> {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const dbInnovations = await em
-      .createQueryBuilder(InnovationEntity, 'innovations')
-      .select(['innovations.id', 'innovations.expires_at'])
-      .leftJoin('innovations.supports', 'supports', 'supports.status = :status', {
-        status: InnovationSupportStatusEnum.ENGAGING
+      .createQueryBuilder(InnovationGroupedStatusViewEntity, 'innovationGroupedStatus')
+      .where('innovationGroupedStatus.groupedStatus = :groupedStatus', {
+        groupedStatus: InnovationGroupedStatusEnum.NO_ACTIVE_SUPPORT
       })
-      .where('innovations.expires_at < :now', { now: new Date().toISOString() })
-      .groupBy('innovations.id, innovations.expires_at')
-      .having('COUNT(supports.id) = 0')
+      .andWhere('innovationGroupedStatus.expected_archive_date < GETDATE()')
       .getMany();
 
     for (const innovation of dbInnovations) {
+      //TODO: Change domainContext to a system user
       const domainContext = await this.domainUsersService.getInnovatorDomainContextByRoleId(innovation.createdBy, em);
       if (!domainContext) {
         return; // this will never happen
@@ -140,7 +139,7 @@ export class DomainInnovationsService {
         domainContext,
         [
           {
-            id: innovation.id,
+            id: innovation.innovationId,
             reason: 'There was no active support on the innovation for 6 months.'
           }
         ],

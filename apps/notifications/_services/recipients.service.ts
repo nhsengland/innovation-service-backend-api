@@ -3,6 +3,7 @@ import {
   AnnouncementUserEntity,
   InnovationEntity,
   InnovationExportRequestEntity,
+  InnovationGroupedStatusViewEntity,
   InnovationSupportEntity,
   InnovationTaskEntity,
   InnovationThreadEntity,
@@ -17,6 +18,7 @@ import {
   AnnouncementParamsType,
   InnovationCollaboratorStatusEnum,
   InnovationExportRequestStatusEnum,
+  InnovationGroupedStatusEnum,
   InnovationStatusEnum,
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
@@ -45,7 +47,7 @@ import { InnovationCollaboratorEntity } from '@notifications/shared/entities/inn
 import { DatesHelper } from '@notifications/shared/helpers';
 import { addToArrayValueInMap } from '@notifications/shared/helpers/misc.helper';
 import type { IdentityUserInfo, NotificationPreferences } from '@notifications/shared/types';
-import { Brackets, type EntityManager } from 'typeorm';
+import type { EntityManager } from 'typeorm';
 
 export type RecipientType = {
   roleId: string;
@@ -797,49 +799,28 @@ export class RecipientsService extends BaseService {
    * @param days number of days to check (ex: 1 month 30 | 7 months 210)
    */
   async innovationsWithoutSupportForNDays(
-    days: number[]
-    // entityManager?: EntityManager
-  ): Promise<{ id: string; name: string; daysPassedSinceLastSupport: string; expectedArchiveDate: string }[]> {
+    days: number[],
+    entityManager?: EntityManager
+  ): Promise<{ id: string; name: string; daysSinceLastSupport: number; expectedArchiveDate: Date }[]> {
     if (!days.length) {
       throw new UnprocessableEntityError(GenericErrorsEnum.INVALID_PAYLOAD, { details: { error: 'days is required' } });
     }
 
-    //const em = entityManager ?? this.sqlConnection.manager;
+    const em = entityManager ?? this.sqlConnection.manager;
 
-    return [
-      {
-        id: 'innovationId',
-        name: 'innovationName',
-        daysPassedSinceLastSupport: '30',
-        expectedArchiveDate: '22.10.2025'
-      },
-      {
-        id: 'innovationId-2',
-        name: 'innovationName-2',
-        daysPassedSinceLastSupport: '90',
-        expectedArchiveDate: '01.05.2025'
-      }
-    ];
+    const query = em
+      .createQueryBuilder(InnovationGroupedStatusViewEntity, 'innovationGroupedStatus')
+      .where('innovationGroupedStatus.groupedStatus = :groupedStatus', {
+        groupedStatus: InnovationGroupedStatusEnum.NO_ACTIVE_SUPPORT
+      })
+      .andWhere('innovationGroupedStatus.days_since_last_support IN (:...days)', { days });
 
-    // const query = em
-    //   .createQueryBuilder(InnovationEntity, 'innovation')
-    //   .select(['innovation.id', 'innovation.name', 'innovation.expectedArchiveDate'])
-    //   .from(InnovationEntity, 'innovation') // change to the new view
-    //   .where(
-    //     new Brackets(qb => {
-    //       const [first, ...reminder] = days;
-    //       qb.where(`DATEDIFF(DAY, lastEngagement.statusChangedAt, DATEADD(DAY, -1, GETDATE())) = ${first}`);
-    //       reminder?.forEach(day => {
-    //         qb.orWhere(`DATEDIFF(DAY, lastEngagement.statusChangedAt, DATEADD(DAY, -1, GETDATE())) = ${day}`);
-    //       });
-    //     })
-    // //   );
-
-    // return (await query.getMany()).map(innovation => ({
-    //   id: innovation.id,
-    //   name: innovation.name,
-    //   expectedArchiveDate: innovation.expectedArchiveDate
-    // }));
+    return (await query.getMany()).map(innovation => ({
+      id: innovation.innovationId,
+      name: innovation.name,
+      daysSinceLastSupport: innovation.daysSinceLastSupport,
+      expectedArchiveDate: innovation.expectedArchiveDate
+    }));
   }
 
   /**

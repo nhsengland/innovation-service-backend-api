@@ -32,7 +32,7 @@ export class IdleSupportInnovatorHandler extends BaseHandler<
           params: {
             innovation_name: innovation.name,
             innovation_record_url: innovationRecordUrl(ServiceRoleEnum.INNOVATOR, innovation.id, notificationId),
-            expected_archive_date: innovation.expectedArchiveDate,
+            expected_archive_date: innovation.expectedArchiveDate.toLocaleDateString('en-GB'),
             innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.INNOVATOR, innovation.id, notificationId)
           }
         },
@@ -45,7 +45,7 @@ export class IdleSupportInnovatorHandler extends BaseHandler<
           innovationId: innovation.id,
           params: {
             innovationName: innovation.name,
-            expectedArchiveDate: innovation.expectedArchiveDate
+            expectedArchiveDate: innovation.expectedArchiveDate.toLocaleDateString('en-GB')
           },
           notificationId
         }

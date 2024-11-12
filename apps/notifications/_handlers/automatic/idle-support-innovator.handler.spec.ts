@@ -1,7 +1,7 @@
 import { ServiceRoleEnum } from '@notifications/shared/enums';
 import { MocksHelper, type CompleteScenarioType } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
-import { howToProceedUrl, innovationOverviewUrl, innovationRecordUrl } from '../../_helpers/url.helper';
+import { innovationOverviewUrl, innovationRecordUrl } from '../../_helpers/url.helper';
 import { RecipientsService } from '../../_services/recipients.service';
 import { NotificationsTestsHelper } from '../../_tests/notifications-test.helper';
 import { IdleSupportInnovatorHandler } from './idle-support-innovator.handler';
@@ -23,14 +23,14 @@ describe('Notifications / _handlers / idle support handler suite', () => {
     {
       id: scenario.users.johnInnovator.innovations.johnInnovation.id,
       name: scenario.users.johnInnovator.innovations.johnInnovation.name,
-      daysPassedSinceLastSupport: '30',
-      expectedArchiveDate: new Date().toLocaleDateString('en-GB')
+      daysSinceLastSupport: 30,
+      expectedArchiveDate: new Date()
     },
     {
       id: scenario.users.ottoOctaviusInnovator.innovations.chestHarnessInnovation.id,
       name: scenario.users.ottoOctaviusInnovator.innovations.chestHarnessInnovation.name,
-      daysPassedSinceLastSupport: '90',
-      expectedArchiveDate: new Date().toLocaleDateString('en-GB')
+      daysSinceLastSupport: 90,
+      expectedArchiveDate: new Date()
     }
   ]);
 
@@ -71,7 +71,7 @@ describe('Notifications / _handlers / idle support handler suite', () => {
               notificationId
             ),
             expected_archive_date: new Date().toLocaleDateString('en-GB'),
-            how_to_proceed_page_url: innovationOverviewUrl(
+            innovation_overview_url: innovationOverviewUrl(
               ServiceRoleEnum.INNOVATOR,
               scenario.users.johnInnovator.innovations.johnInnovation.id,
               notificationId
@@ -90,7 +90,7 @@ describe('Notifications / _handlers / idle support handler suite', () => {
               notificationId
             ),
             expected_archive_date: new Date().toLocaleDateString('en-GB'),
-            how_to_proceed_page_url: innovationOverviewUrl(
+            innovation_overview_url: innovationOverviewUrl(
               ServiceRoleEnum.INNOVATOR,
               scenario.users.ottoOctaviusInnovator.innovations.chestHarnessInnovation.id,
               notificationId
