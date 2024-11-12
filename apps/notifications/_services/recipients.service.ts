@@ -813,7 +813,7 @@ export class RecipientsService extends BaseService {
       .where('innovationGroupedStatus.groupedStatus = :groupedStatus', {
         groupedStatus: InnovationGroupedStatusEnum.NO_ACTIVE_SUPPORT
       })
-      .andWhere('innovationGroupedStatus.days_since_no_active_support IN (:...days)', { days });
+      .andWhere('innovationGroupedStatus.days_since_no_active_support_or_deploy IN (:...days)', { days });
 
     return (await query.getMany()).map(innovation => ({
       id: innovation.innovationId,
