@@ -16,9 +16,6 @@ export const ResponseBodySchema = Joi.object<ResponseDTO>({
   status: Joi.string()
     .valid(...Object.values(InnovationStatusEnum))
     .required(),
-  archivedStatus: Joi.string()
-    .valid(...Object.values(InnovationStatusEnum))
-    .optional(),
   groupedStatus: Joi.string()
     .valid(...Object.values(InnovationGroupedStatusEnum))
     .required(),

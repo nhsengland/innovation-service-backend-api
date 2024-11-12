@@ -257,11 +257,6 @@ paths:
                     - DECIDED_NOT_TO_PURSUE
                     - ALREADY_LIVE_NHS
                     - OTHER_DONT_WANT_TO_SAY
-                    - OWNER_ACCOUNT_DELETED
-                  not:
-                    enum:
-                      - LEGACY
-                      - SIX_MONTHS_INACTIVITY
               required:
                 - reason
               additionalProperties: false
@@ -2445,15 +2440,6 @@ paths:
                   version:
                     type: string
                   status:
-                    type: string
-                    enum:
-                      - CREATED
-                      - WAITING_NEEDS_ASSESSMENT
-                      - NEEDS_ASSESSMENT
-                      - IN_PROGRESS
-                      - WITHDRAWN
-                      - ARCHIVED
-                  archivedStatus:
                     type: string
                     enum:
                       - CREATED
