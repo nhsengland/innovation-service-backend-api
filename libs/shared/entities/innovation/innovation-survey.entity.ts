@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { UserRoleEntity } from '../user/user-role.entity';
 import { InnovationEntity } from './innovation.entity';
+import { InnovationSupportEntity } from './innovation-support.entity';
 
 type SurveysMapperType = {
   SUPPORT_END: {
@@ -34,7 +35,7 @@ export class InnovationSurveyEntity {
    * Type to ContextId mapping:
    * - SUPPORT_END -> supportId
    */
-  @Column({ name: 'context_id', type: 'nvarchar', length: 100 })
+  @Column({ name: 'context_id', type: 'nvarchar' })
   contextId: string;
 
   // NOTE: If we need to make this general in the feature we can transform this entity into survey and this field to be nullable.
@@ -47,7 +48,11 @@ export class InnovationSurveyEntity {
 
   @ManyToOne(() => UserRoleEntity)
   @JoinColumn({ name: 'target_user_role_id' })
-  targetUserRoleId: UserRoleEntity;
+  targetUserRole: UserRoleEntity;
+
+  @ManyToOne(() => InnovationSupportEntity, { nullable: true })
+  @JoinColumn({ name: 'context_id' })
+  support: null | InnovationSupportEntity;
 
   @CreateDateColumn({ name: 'created_at', type: 'datetime2', update: false })
   createdAt: Date;
