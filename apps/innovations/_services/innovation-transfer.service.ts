@@ -4,6 +4,7 @@ import type { EntityManager, SelectQueryBuilder } from 'typeorm';
 import { InnovationEntity, InnovationTransferEntity, UserEntity } from '@innovations/shared/entities';
 import {
   ActivityEnum,
+  InnovationArchiveReasonEnum,
   InnovationCollaboratorStatusEnum,
   InnovationTransferStatusEnum,
   NotifierTypeEnum,
@@ -359,7 +360,7 @@ export class InnovationTransferService extends BaseService {
               [
                 {
                   id: innovation.id,
-                  reason: 'The owner deleted their account and the request to transfer ownership was declined.'
+                  reason: InnovationArchiveReasonEnum.OWNER_ACCOUNT_DELETED
                 }
               ],
               transaction

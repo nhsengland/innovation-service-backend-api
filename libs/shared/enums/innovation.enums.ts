@@ -20,6 +20,20 @@ export enum InnovationGroupedStatusEnum {
   ARCHIVED = 'ARCHIVED'
 }
 
+export enum InnovationArchiveReasonEnum {
+  // User archive reasons
+  DEVELOP_FURTHER = 'DEVELOP_FURTHER',
+  HAVE_ALL_SUPPORT = 'HAVE_ALL_SUPPORT',
+  DECIDED_NOT_TO_PURSUE = 'DECIDED_NOT_TO_PURSUE',
+  ALREADY_LIVE_NHS = 'ALREADY_LIVE_NHS',
+  OTHER_DONT_WANT_TO_SAY = 'OTHER_DONT_WANT_TO_SAY',
+  // Automatic archive reasons
+  SIX_MONTHS_INACTIVITY = 'SIX_MONTHS_INACTIVITY',
+  OWNER_ACCOUNT_DELETED = 'OWNER_ACCOUNT_DELETED',
+  // Legacy archive reasons
+  LEGACY = 'LEGACY' // previous archive reasons updated to this, still available in history if required.
+}
+
 export enum InnovationTaskStatusEnum {
   OPEN = 'OPEN',
   DONE = 'DONE',

@@ -12,6 +12,18 @@ export class InnovationGroupedStatusViewEntity {
   @ViewColumn({ name: 'grouped_status' })
   groupedStatus: InnovationGroupedStatusEnum;
 
+  @ViewColumn({ name: 'name' })
+  name: string;
+
+  @ViewColumn({ name: 'created_by' })
+  createdBy: string;
+
+  @ViewColumn({ name: 'days_since_last_support' })
+  daysSinceLastSupport: number;
+
+  @ViewColumn({ name: 'expected_archive_date' })
+  expectedArchiveDate: Date;
+
   @OneToOne(() => InnovationEntity, record => record.id)
   @JoinColumn({ name: 'id' })
   innovation: InnovationEntity;

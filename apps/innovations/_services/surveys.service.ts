@@ -7,6 +7,14 @@ import { InnovationSurveyEntity, SurveyType } from '@innovations/shared/entities
 import { InnovationEntity, UserRoleEntity } from '@innovations/shared/entities';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import { DomainService } from '@innovations/shared/services';
+import { DomainContextType } from '@innovations/shared/types';
+
+export type SurveyInfoPayload = {
+  type: 'SUPPORT_END';
+  supportId: string;
+  supportUnit: string;
+  supportFinishedAt: null | Date;
+};
 
 @injectable()
 export class SurveysService extends BaseService {
@@ -36,9 +44,49 @@ export class SurveysService extends BaseService {
           type,
           contextId,
           innovation: InnovationEntity.new({ id: innovationId }),
-          targetUserRoleId: UserRoleEntity.new({ id: roleId })
+          targetUserRole: UserRoleEntity.new({ id: roleId })
         })
       )
     );
+  }
+
+  /**
+   * Method used to get all unanswered surveys for a innovation.
+   *
+   * It takes into consideration how different types have different payload outputs.
+   */
+  async getUnansweredSurveys(
+    domainContext: DomainContextType,
+    innovationId: string,
+    entityManager?: EntityManager
+  ): Promise<{ id: string; createdAt: Date; info?: SurveyInfoPayload }[]> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const surveys = await em
+      .createQueryBuilder(InnovationSurveyEntity, 'survey')
+      .select(['survey.id', 'survey.type', 'survey.createdAt', 'support.id', 'support.finishedAt', 'supportUnit.name'])
+      .leftJoin('survey.support', 'support', 'survey.type = :ctxIdIsSupport', {
+        ctxIdIsSupport: 'SUPPORT_END'
+      })
+      .leftJoin('support.organisationUnit', 'supportUnit')
+      .where('survey.innovation_id = :innovationId', { innovationId })
+      .andWhere('survey.target_user_role_id = :targetRoleId', { targetRoleId: domainContext.currentRole.id })
+      .andWhere('survey.answers IS NULL')
+      .getMany();
+
+    return surveys.map(s => ({
+      id: s.id,
+      createdAt: s.createdAt,
+      // NOTE: If we have more types this should be moved to another function getSurveyInfoPayload() or something.
+      ...(s.type === 'SUPPORT_END' &&
+        s.support && {
+          info: {
+            type: s.type,
+            supportId: s.support.id,
+            supportUnit: s.support.organisationUnit.name,
+            supportFinishedAt: s.support.finishedAt
+          }
+        })
+    }));
   }
 }
