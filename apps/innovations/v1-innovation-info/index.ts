@@ -79,7 +79,7 @@ class V1InnovationInfo {
                   : {})
               }
             }),
-        lastEndSupportAt: result.lastEndSupportAt,
+        daysSinceNoActiveSupport: result.daysSinceNoActiveSupport,
         ...(result.assessment === undefined ? {} : { assessment: result.assessment }),
         ...(result.supports === undefined
           ? {}

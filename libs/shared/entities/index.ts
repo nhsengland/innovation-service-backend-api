@@ -80,7 +80,6 @@ export { UserEntity } from './user/user.entity';
 
 // Views
 import { InnovationGroupedStatusViewEntity } from './views/innovation-grouped-status.view.entity';
-import { LastSupportStatusViewEntity } from './views/last-support-status.view.entity';
 import { InnovationListView } from './views/innovation-list-view.entity';
 import { InnovationTaskDescriptionsViewEntity } from './views/innovation-task-descriptions.view.entity';
 import { SupportLastActivityUpdateView } from './views/support-last-activity-update.view.entity';
@@ -89,7 +88,6 @@ import { InnovationSuggestedUnitsView } from './views/innovation-suggested-units
 import { InnovationProgressView } from './views/innovation-progress.view.entity';
 import { InnovationRelevantOrganisationsStatusView } from './views/innovation_relevant_organisations_status_view.entity';
 export { InnovationGroupedStatusViewEntity } from './views/innovation-grouped-status.view.entity';
-export { LastSupportStatusViewEntity } from './views/last-support-status.view.entity';
 export { InnovationListView } from './views/innovation-list-view.entity';
 export { InnovationTaskDescriptionsViewEntity } from './views/innovation-task-descriptions.view.entity';
 export { SupportLastActivityUpdateView } from './views/support-last-activity-update.view.entity';
@@ -138,7 +136,6 @@ export const USER_ENTITIES = [
 export const VIEW_ENTITIES = [
   InnovationGroupedStatusViewEntity,
   InnovationTaskDescriptionsViewEntity,
-  LastSupportStatusViewEntity,
   SupportLastActivityUpdateView,
   DocumentsStatisticsViewEntity,
   InnovationSuggestedUnitsView,

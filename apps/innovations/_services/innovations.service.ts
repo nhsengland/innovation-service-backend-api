@@ -13,7 +13,6 @@ import {
   InnovationSectionEntity,
   InnovationSupportEntity,
   InnovationTaskEntity,
-  LastSupportStatusViewEntity,
   NotificationEntity,
   NotificationUserEntity,
   OrganisationEntity,
@@ -27,7 +26,7 @@ import {
   InnovationArchiveReasonEnum,
   InnovationCollaboratorStatusEnum,
   InnovationExportRequestStatusEnum,
-  type InnovationGroupedStatusEnum,
+  InnovationGroupedStatusEnum,
   InnovationSectionStatusEnum,
   InnovationStatusEnum,
   InnovationSupportCloseReasonEnum,
@@ -1130,7 +1129,7 @@ export class InnovationsService extends BaseService {
       lastLoginAt?: null | Date;
       organisation?: { name: string; size: null | string; registrationNumber: null | string };
     };
-    lastEndSupportAt: null | Date;
+    daysSinceNoActiveSupport?: number;
     assessment?: null | {
       id: string;
       currentMajorAssessmentId: string;
@@ -1165,6 +1164,7 @@ export class InnovationsService extends BaseService {
         'innovationOwnerOrganisation.registrationNumber',
         'reassessmentRequests.id',
         'innovationGroupedStatus.groupedStatus',
+        'innovationGroupedStatus.daysSinceNoActiveSupport',
         'collaborator.id'
       ])
       .leftJoin('innovation.owner', 'innovationOwner')
@@ -1325,7 +1325,9 @@ export class InnovationsService extends BaseService {
             }
           }
         : {}),
-      lastEndSupportAt: await this.lastSupportStatusTransitionFromEngaging(innovation.id),
+      ...(innovation.innovationGroupedStatus.groupedStatus === InnovationGroupedStatusEnum.AWAITING_SUPPORT && {
+        daysSinceNoActiveSupport: innovation.innovationGroupedStatus.daysSinceNoActiveSupport
+      }),
       assessment,
       ...(!filters.fields?.includes('supports')
         ? {}
@@ -2026,20 +2028,6 @@ export class InnovationsService extends BaseService {
         acc[key] = value;
         return acc;
       }, {} as InnovationListViewWithoutNull);
-  }
-
-  // view recipients service innovationsWithoutSupportForNDays to maintain consistency
-  private async lastSupportStatusTransitionFromEngaging(innovationId: string): Promise<Date | null> {
-    const result = await this.sqlConnection
-      .createQueryBuilder(LastSupportStatusViewEntity, 'lastSupportStatus')
-      .select('TOP 1 lastSupportStatus.statusChangedAt', 'statusChangedAt')
-      .where('lastSupportStatus.innovationId = :innovationId', { innovationId })
-      .orderBy('lastSupportStatus.statusChangedAt', 'DESC')
-      .getRawOne<{ statusChangedAt: string }>();
-
-    if (!result) return null;
-
-    return new Date(result.statusChangedAt);
   }
 
   private getInnovationSectionMetadata(

@@ -2548,10 +2548,9 @@ paths:
                       - isActive
                       - contactByPhoneTimeFrame
                     additionalProperties: false
-                  lastEndSupportAt:
-                    type: string
-                    format: date-time
-                    nullable: true
+                  daysSinceNoActiveSupport:
+                    type: number
+                    format: float
                   assessment:
                     type: object
                     properties:
@@ -2628,7 +2627,6 @@ paths:
                   - postCode
                   - categories
                   - otherCategoryDescription
-                  - lastEndSupportAt
                   - collaboratorId
                   - createdAt
                 additionalProperties: false
