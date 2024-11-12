@@ -13,7 +13,6 @@ import {
   InnovationSectionEntity,
   InnovationSupportEntity,
   InnovationTaskEntity,
-  LastSupportStatusViewEntity,
   NotificationEntity,
   NotificationUserEntity,
   OrganisationEntity,
@@ -1327,7 +1326,7 @@ export class InnovationsService extends BaseService {
             }
           }
         : {}),
-      lastEndSupportAt: await this.lastSupportStatusTransitionFromEngaging(innovation.id),
+      lastEndSupportAt: 1, // TODO this will come from the grouped status view
       assessment,
       ...(!filters.fields?.includes('supports')
         ? {}
@@ -2030,20 +2029,6 @@ export class InnovationsService extends BaseService {
         acc[key] = value;
         return acc;
       }, {} as InnovationListViewWithoutNull);
-  }
-
-  // view recipients service innovationsWithoutSupportForNDays to maintain consistency
-  private async lastSupportStatusTransitionFromEngaging(innovationId: string): Promise<Date | null> {
-    const result = await this.sqlConnection
-      .createQueryBuilder(LastSupportStatusViewEntity, 'lastSupportStatus')
-      .select('TOP 1 lastSupportStatus.statusChangedAt', 'statusChangedAt')
-      .where('lastSupportStatus.innovationId = :innovationId', { innovationId })
-      .orderBy('lastSupportStatus.statusChangedAt', 'DESC')
-      .getRawOne<{ statusChangedAt: string }>();
-
-    if (!result) return null;
-
-    return new Date(result.statusChangedAt);
   }
 
   private getInnovationSectionMetadata(
