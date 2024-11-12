@@ -3364,6 +3364,7 @@ paths:
                 - UNREAD_MESSAGES_THREADS_INITIATED_BY_COUNTER
                 - PENDING_EXPORT_REQUESTS_COUNTER
                 - DOCUMENTS_STATISTICS_COUNTER
+                - UNANSWERED_SURVEYS_BY_UNIT_COUNTER
       responses:
         "200":
           description: Ok.

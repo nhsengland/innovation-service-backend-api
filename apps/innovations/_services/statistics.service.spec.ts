@@ -20,6 +20,7 @@ import { InnovationFileBuilder } from '@innovations/shared/tests/builders/innova
 import { container } from '../_config';
 import type { StatisticsService } from './statistics.service';
 import SYMBOLS from './symbols';
+import { InnovationSurveyBuilder } from '@innovations/shared/tests/builders/innovation-survey.builder';
 
 describe('Innovations / _services / innovation statistics suite', () => {
   let sut: StatisticsService;
@@ -366,6 +367,33 @@ describe('Innovations / _services / innovation statistics suite', () => {
         uploadedByUnits: [],
         locations: []
       });
+    });
+  });
+
+  describe('getUnansweredSurveysByUnitStatistics', () => {
+    const john = scenario.users.johnInnovator;
+    const innovation = john.innovations.johnInnovation;
+    beforeEach(async () => {
+      await new InnovationSurveyBuilder(em)
+        .setInnovation(innovation.id)
+        .setTypeAndContext('SUPPORT_END', innovation.supports.supportByHealthOrgUnit.id)
+        .setTarget(john.roles.innovatorRole.id)
+        .save();
+      await new InnovationSurveyBuilder(em)
+        .setInnovation(innovation.id)
+        .setTypeAndContext('SUPPORT_END', innovation.supports.supportByHealthOrgUnit.id)
+        .setTarget(john.roles.innovatorRole.id)
+        .save();
+    });
+
+    it('should get pending request for the given innovation', async () => {
+      const nSurveysByUnit = await sut.getUnansweredSurveysByUnitStatistics(
+        DTOsHelper.getUserRequestContext(john),
+        innovation.id,
+        em
+      );
+
+      expect(nSurveysByUnit).toBe(1);
     });
   });
 });
