@@ -801,7 +801,7 @@ export class RecipientsService extends BaseService {
   async innovationsWithoutSupportForNDays(
     days: number[],
     entityManager?: EntityManager
-  ): Promise<{ id: string; name: string; daysSinceLastSupport: number; expectedArchiveDate: Date }[]> {
+  ): Promise<{ id: string; name: string; daysSinceNoActiveSupport: number; expectedArchiveDate: Date }[]> {
     if (!days.length) {
       throw new UnprocessableEntityError(GenericErrorsEnum.INVALID_PAYLOAD, { details: { error: 'days is required' } });
     }
@@ -813,12 +813,12 @@ export class RecipientsService extends BaseService {
       .where('innovationGroupedStatus.groupedStatus = :groupedStatus', {
         groupedStatus: InnovationGroupedStatusEnum.NO_ACTIVE_SUPPORT
       })
-      .andWhere('innovationGroupedStatus.days_since_last_support IN (:...days)', { days });
+      .andWhere('innovationGroupedStatus.days_since_no_active_support IN (:...days)', { days });
 
     return (await query.getMany()).map(innovation => ({
       id: innovation.innovationId,
       name: innovation.name,
-      daysSinceLastSupport: innovation.daysSinceLastSupport,
+      daysSinceNoActiveSupport: innovation.daysSinceNoActiveSupport,
       expectedArchiveDate: innovation.expectedArchiveDate
     }));
   }

@@ -1,11 +1,11 @@
 import { ServiceRoleEnum } from '@notifications/shared/enums';
 import { MocksHelper, type CompleteScenarioType } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
+import * as crypto from 'crypto';
 import { innovationOverviewUrl, innovationRecordUrl } from '../../_helpers/url.helper';
 import { RecipientsService } from '../../_services/recipients.service';
 import { NotificationsTestsHelper } from '../../_tests/notifications-test.helper';
 import { IdleSupportInnovatorHandler } from './idle-support-innovator.handler';
-import * as crypto from 'crypto';
 
 jest.mock('crypto');
 const notificationId = '00001234-1234-1234-1234-123456789012';
@@ -23,13 +23,13 @@ describe('Notifications / _handlers / idle support handler suite', () => {
     {
       id: scenario.users.johnInnovator.innovations.johnInnovation.id,
       name: scenario.users.johnInnovator.innovations.johnInnovation.name,
-      daysSinceLastSupport: 30,
+      daysSinceNoActiveSupport: 30,
       expectedArchiveDate: new Date()
     },
     {
       id: scenario.users.ottoOctaviusInnovator.innovations.chestHarnessInnovation.id,
       name: scenario.users.ottoOctaviusInnovator.innovations.chestHarnessInnovation.name,
-      daysSinceLastSupport: 90,
+      daysSinceNoActiveSupport: 90,
       expectedArchiveDate: new Date()
     }
   ]);

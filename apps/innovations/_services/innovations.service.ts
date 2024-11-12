@@ -26,7 +26,7 @@ import {
   InnovationArchiveReasonEnum,
   InnovationCollaboratorStatusEnum,
   InnovationExportRequestStatusEnum,
-  type InnovationGroupedStatusEnum,
+  InnovationGroupedStatusEnum,
   InnovationSectionStatusEnum,
   InnovationStatusEnum,
   InnovationSupportCloseReasonEnum,
@@ -1129,7 +1129,7 @@ export class InnovationsService extends BaseService {
       lastLoginAt?: null | Date;
       organisation?: { name: string; size: null | string; registrationNumber: null | string };
     };
-    lastEndSupportAt: null | Date;
+    daysSinceNoActiveSupport?: number;
     assessment?: null | {
       id: string;
       currentMajorAssessmentId: string;
@@ -1164,6 +1164,7 @@ export class InnovationsService extends BaseService {
         'innovationOwnerOrganisation.registrationNumber',
         'reassessmentRequests.id',
         'innovationGroupedStatus.groupedStatus',
+        'innovationGroupedStatus.daysSinceNoActiveSupport',
         'collaborator.id'
       ])
       .leftJoin('innovation.owner', 'innovationOwner')
@@ -1324,7 +1325,9 @@ export class InnovationsService extends BaseService {
             }
           }
         : {}),
-      lastEndSupportAt: 1, // TODO this will come from the grouped status view
+      ...(innovation.innovationGroupedStatus.groupedStatus === InnovationGroupedStatusEnum.AWAITING_SUPPORT && {
+        daysSinceNoActiveSupport: innovation.innovationGroupedStatus.daysSinceNoActiveSupport
+      }),
       assessment,
       ...(!filters.fields?.includes('supports')
         ? {}
