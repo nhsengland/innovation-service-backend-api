@@ -6,5 +6,5 @@ export class RemoveOldAU031731420402122 implements MigrationInterface {
       `UPDATE notification SET deleted_at=GETDATE() WHERE context_detail='AU03_INNOVATOR_IDLE_SUPPORT'`
     );
   }
-  async down(_queryRunner: QueryRunner): Promise<void> {}
+  async down(): Promise<void> {}
 }
