@@ -4,9 +4,15 @@ import { TestsHelper } from '@innovations/shared/tests';
 
 import { container } from '../_config';
 import SYMBOLS from './symbols';
-import { SurveysService } from './surveys.service';
+import type { SurveysService } from './surveys.service';
+import { InnovationSupportEntity, InnovationSurveyEntity } from '@innovations/shared/entities';
+import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
+import {
+  InnovationSurveyBuilder,
+  type TestInnovationSurveyType
+} from '@innovations/shared/tests/builders/innovation-survey.builder';
+import { InnovationSupportStatusEnum } from '@innovations/shared/enums';
 import { randUuid } from '@ngneat/falso';
-import { InnovationSurveyEntity } from '@innovations/shared/entities';
 
 describe('Innovations / _services / surveys.service.ts suite', () => {
   let sut: SurveysService;
@@ -35,17 +41,66 @@ describe('Innovations / _services / surveys.service.ts suite', () => {
       const jane = scenario.users.janeInnovator;
       const innovation = john.innovations.johnInnovation;
 
-      await sut.createSurvey('SUPPORT_END', innovation.id, randUuid(), em);
+      await sut.createSurvey('SUPPORT_END', innovation.id, innovation.supports.supportByHealthOrgUnit.id, em);
 
       const dbSurveys = await em
         .createQueryBuilder(InnovationSurveyEntity, 'survey')
-        .select('survey.targetUserRoleId', 'target')
+        .select('survey.targetUserRole', 'target')
         .where('survey.innovation_id = :innovationId', { innovationId: innovation.id })
         .getRawMany();
 
       expect(dbSurveys).toMatchObject([
         { target: john.roles.innovatorRole.id },
         { target: jane.roles.innovatorRole.id }
+      ]);
+    });
+  });
+
+  describe('getUnansweredSurveys', () => {
+    const john = scenario.users.johnInnovator;
+    const innovation = john.innovations.johnInnovation;
+    const support = innovation.supports.supportByHealthOrgUnit;
+    const closedDate = new Date();
+
+    let survey: TestInnovationSurveyType;
+
+    beforeEach(async () => {
+      await em.update(
+        InnovationSupportEntity,
+        { id: support.id },
+        { finishedAt: closedDate, status: InnovationSupportStatusEnum.CLOSED }
+      );
+
+      // One survey that was answered.
+      await new InnovationSurveyBuilder(em)
+        .setTarget(john.roles.innovatorRole.id)
+        .setTypeAndContext('SUPPORT_END', randUuid())
+        .setInnovation(innovation.id)
+        .setAnswers({} as any)
+        .save();
+
+      // One that is unanswered
+      survey = await new InnovationSurveyBuilder(em)
+        .setTarget(john.roles.innovatorRole.id)
+        .setTypeAndContext('SUPPORT_END', support.id)
+        .setInnovation(innovation.id)
+        .save();
+    });
+
+    it('should return all unanswered surveys for an innovation', async () => {
+      const surveys = await sut.getUnansweredSurveys(DTOsHelper.getUserRequestContext(john), innovation.id, em);
+
+      expect(surveys).toMatchObject([
+        {
+          id: survey.id,
+          createdAt: survey.createdAt,
+          info: {
+            type: 'SUPPORT_END',
+            supportId: support.id,
+            supportUnit: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
+            supportFinishedAt: closedDate
+          }
+        }
       ]);
     });
   });
