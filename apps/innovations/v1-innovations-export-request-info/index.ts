@@ -9,10 +9,9 @@ import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
 
-import { InnovationExportRequestStatusEnum } from '@innovations/shared/enums';
 import type { InnovationExportRequestService } from '../_services/innovation-export-request.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1InnovationsExportRequestInfo {
@@ -55,36 +54,9 @@ export default openApi(
       tags: ['[v1] Innovation Export Requests'],
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       responses: {
-        200: {
-          description: 'Success',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  id: { type: 'string', format: 'uuid' },
-                  status: { type: 'string', enum: Object.values(InnovationExportRequestStatusEnum) },
-                  requestReason: { type: 'string' },
-                  rejectReason: { type: 'string' },
-                  createdBy: {
-                    type: 'object',
-                    properties: {
-                      name: { type: 'string' },
-                      displayRole: { type: 'string' },
-                      displayTeam: { type: 'string' }
-                    }
-                  },
-                  createdAt: { type: 'string', format: 'date-time' },
-                  updatedBy: {
-                    type: 'object',
-                    properties: { name: { type: 'string' } }
-                  },
-                  updatedAt: { type: 'string', format: 'date-time' }
-                }
-              }
-            }
-          }
-        },
+        200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+          description: 'Success'
+        }),
         400: { description: 'The request is invalid.' },
         401: { description: 'The user is not authenticated.' },
         403: { description: 'The user is not authorized to access this resource.' },

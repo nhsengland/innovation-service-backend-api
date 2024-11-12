@@ -9,10 +9,9 @@ import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
 
-import { InnovationFileContextTypeEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 import type { InnovationFileService } from '../_services/innovation-file.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1InnovationFileInfo {
@@ -72,54 +71,9 @@ export default openApi(V1InnovationFileInfo.httpTrigger as AzureFunction, '/v1/{
     tags: ['[v1] Innovation Files'],
     parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     responses: {
-      200: {
-        description: 'Success',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                id: { type: 'string' },
-                context: {
-                  type: 'object',
-                  properties: {
-                    id: { type: 'string' },
-                    type: {
-                      type: 'string',
-                      enum: Object.values(InnovationFileContextTypeEnum)
-                    }
-                  }
-                },
-                name: { type: 'string' },
-                description: { type: 'string' },
-                createdAt: { type: 'string' },
-                createdBy: {
-                  type: 'object',
-                  properties: {
-                    name: { type: 'string' },
-                    role: {
-                      type: 'string',
-                      enum: Object.values(ServiceRoleEnum)
-                    },
-                    isOwner: { type: 'boolean' },
-                    orgUnitName: { type: 'string' }
-                  }
-                },
-                file: {
-                  type: 'object',
-                  properties: {
-                    id: { type: 'string', description: 'Storage Id' },
-                    name: { type: 'string' },
-                    size: { type: 'number' },
-                    extension: { type: 'string' },
-                    url: { type: 'string' }
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
+      200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: 'Success'
+      }),
       400: {
         description: 'The request is invalid.'
       },

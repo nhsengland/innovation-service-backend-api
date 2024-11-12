@@ -11,7 +11,7 @@ import { container } from '../_config';
 
 import type { InnovationAssessmentsService } from '../_services/innovation-assessments.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1InnovationAssessmentsList {
@@ -50,7 +50,9 @@ export default openApi(V1InnovationAssessmentsList.httpTrigger as AzureFunction,
     operationId: 'v1-innovation-assessments-list',
     parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     responses: {
-      200: { description: 'Returns the complete assessments' },
+      200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: 'Returns the complete assessments'
+      }),
       400: { description: 'Bad Request' },
       401: { description: 'Unauthorized' },
       403: { description: 'Forbidden' },

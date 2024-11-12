@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { Audit, JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import type { AuthorizationService } from '@innovations/shared/services';
 import { ActionEnum, TargetEnum } from '@innovations/shared/services/integrations/audit.service';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
@@ -13,7 +13,7 @@ import { container } from '../_config';
 import { InnovationStatusEnum } from '@innovations/shared/enums';
 import type { InnovationThreadsService } from '../_services/innovation-threads.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1InnovationThreadCreate {
@@ -67,84 +67,12 @@ export default openApi(V1InnovationThreadCreate.httpTrigger as AzureFunction, '/
     description: 'Create a new editable thread.',
     tags: ['Innovation Threads'],
     operationId: 'v1-innovation-thread-create',
-    parameters: [
-      {
-        name: 'innovationId',
-        in: 'path',
-        description: 'The innovation id.',
-        required: true,
-        schema: {
-          type: 'string'
-        }
-      }
-    ],
-    requestBody: {
-      description: 'The thread details.',
-      required: true,
-      content: {
-        'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              subject: {
-                type: 'string',
-                description: 'The thread subject.',
-                example: 'Subject'
-              },
-              message: {
-                type: 'string',
-                description: 'The thread message.',
-                example: 'Message'
-              }
-            },
-            required: ['subject', 'message']
-          }
-        }
-      }
-    },
+    parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
+    requestBody: SwaggerHelper.bodyJ2S(BodySchema, { description: 'The thread details.' }),
     responses: {
-      '200': {
-        description: 'The thread was created successfully.',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                thread: {
-                  type: 'object',
-                  properties: {
-                    id: {
-                      type: 'string',
-                      description: 'The thread id.',
-                      example: '00000000-0000-0000-0000-000000000000'
-                    },
-                    subject: {
-                      type: 'string',
-                      description: 'The thread subject.',
-                      example: 'Subject'
-                    },
-                    createdBy: {
-                      type: 'object',
-                      properties: {
-                        id: {
-                          type: 'string',
-                          description: 'The user id.',
-                          example: '00000000-0000-0000-0000-000000000000'
-                        }
-                      }
-                    },
-                    createdAt: {
-                      type: 'string',
-                      description: 'The thread creation date.',
-                      example: '2021-01-01T00:00:00.000Z'
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
+      '200': SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: 'The thread was created successfully.'
+      }),
       '400': {
         description: 'The request was invalid.'
       },

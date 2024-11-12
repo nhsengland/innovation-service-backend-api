@@ -11,7 +11,7 @@ import { container } from '../_config';
 
 import type { InnovationSectionsService } from '../_services/innovation-sections.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType, QueryParamsSchema, QueryParamsType } from './validation.schemas';
 
 class GetInnovationSectionInfo {
@@ -70,80 +70,9 @@ export default openApi(
       operationId: 'v1-innovation-section-info',
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       responses: {
-        200: {
-          description: 'Innovation section info.',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  id: {
-                    type: 'string',
-                    description: 'Innovation section id.',
-                    example: '1'
-                  },
-                  section: {
-                    type: 'string',
-                    description: 'Innovation section key.',
-                    example: 'access'
-                  },
-                  status: {
-                    type: 'string',
-                    description: 'Innovation section status.',
-                    example: 'COMPLETED'
-                  },
-                  submittedAt: {
-                    type: 'string',
-                    description: 'Innovation section submission date.',
-                    example: '2021-01-01T00:00:00.000Z'
-                  },
-                  data: {
-                    type: 'object',
-                    description: 'Innovation section data.',
-                    properties: {
-                      name: {
-                        type: 'string',
-                        description: 'Innovation section name.',
-                        example: 'Access'
-                      },
-                      description: {
-                        type: 'string',
-                        description: 'Innovation section description.',
-                        example: 'Access description'
-                      },
-                      questions: {
-                        type: 'array',
-                        description: 'Innovation section questions.',
-                        items: {
-                          type: 'object',
-                          properties: {
-                            id: {
-                              type: 'string',
-                              description: 'Innovation section question id.',
-                              example: '1'
-                            },
-                            text: {
-                              type: 'string',
-                              description: 'Innovation section question text.',
-                              example: 'Question text'
-                            }
-                          }
-                        }
-                      }
-                    }
-                  },
-                  actionsIds: {
-                    type: 'array',
-                    items: {
-                      type: 'string',
-                      description: 'The id of the action.'
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
+        200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+          description: 'Innovation section info.'
+        }),
         401: {
           description: 'Unauthorized'
         },

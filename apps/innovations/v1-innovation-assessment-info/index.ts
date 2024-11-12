@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { Audit, JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import type { AuthorizationService } from '@innovations/shared/services';
 import { ActionEnum, TargetEnum } from '@innovations/shared/services/integrations/audit.service';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
@@ -12,7 +12,7 @@ import { container } from '../_config';
 
 import type { InnovationAssessmentsService } from '../_services/innovation-assessments.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1InnovationAssessmentInfo {
@@ -98,106 +98,11 @@ export default openApi(
       description: 'Get Innovation Assessment Info',
       tags: ['Innovation Assessment Info'],
       operationId: 'v1-innovation-assessment-info',
-      parameters: [
-        {
-          name: 'innovationId',
-          in: 'path',
-          description: 'Innovation Id',
-          required: true,
-          schema: {
-            type: 'string',
-            format: 'uuid'
-          }
-        },
-        {
-          name: 'assessmentId',
-          in: 'path',
-          description: 'Assessment Id',
-          required: true,
-          schema: {
-            type: 'string',
-            format: 'uuid'
-          }
-        }
-      ],
+      parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       responses: {
-        200: {
-          description: 'Success',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  id: { type: 'string', format: 'uuid' },
-                  summary: { type: 'string' },
-                  description: { type: 'string' },
-                  finishedAt: { type: 'string', format: 'date-time' },
-                  assignTo: {
-                    type: 'object',
-                    properties: {
-                      id: { type: 'string', format: 'uuid' },
-                      name: { type: 'string' }
-                    }
-                  },
-                  maturityLevel: { type: 'string' },
-                  maturityLevelComment: { type: 'string' },
-                  hasRegulatoryApprovals: { type: 'boolean' },
-                  hasRegulatoryApprovalsComment: { type: 'string' },
-                  hasEvidence: { type: 'boolean' },
-                  hasEvidenceComment: { type: 'string' },
-                  hasValidation: { type: 'boolean' },
-                  hasValidationComment: { type: 'string' },
-                  hasProposition: { type: 'boolean' },
-                  hasPropositionComment: { type: 'string' },
-                  hasCompetitionKnowledge: { type: 'boolean' },
-                  hasCompetitionKnowledgeComment: { type: 'string' },
-                  hasImplementationPlan: { type: 'boolean' },
-                  hasImplementationPlanComment: { type: 'string' },
-                  hasScaleResource: { type: 'boolean' },
-                  hasScaleResourceComment: { type: 'string' },
-                  suggestedOrganisations: {
-                    type: 'array',
-                    items: {
-                      type: 'object',
-                      properties: {
-                        id: { type: 'string', format: 'uuid' },
-                        name: { type: 'string' },
-                        acronym: { type: 'string' },
-                        units: {
-                          type: 'array',
-                          items: {
-                            type: 'object',
-                            properties: {
-                              id: { type: 'string', format: 'uuid' },
-                              name: { type: 'string' },
-                              acronym: { type: 'string' },
-                              organisation: {
-                                type: 'object',
-                                properties: {
-                                  id: { type: 'string', format: 'uuid' },
-                                  name: { type: 'string' },
-                                  acronym: { type: 'string' }
-                                }
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  },
-                  updatedAt: { type: 'string', format: 'date-time' },
-                  updatedBy: {
-                    type: 'object',
-                    properties: {
-                      id: { type: 'string', format: 'uuid' },
-                      name: { type: 'string' }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
+        200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+          description: 'Success'
+        }),
         400: {
           description: 'Bad Request'
         },

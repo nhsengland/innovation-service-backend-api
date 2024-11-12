@@ -27,6 +27,7 @@ import { InnovationTransferEntity } from './innovation/innovation-transfer.entit
 import { InnovationUserTestEntity } from './innovation/innovation-user-test.entity';
 import { InnovationEntity } from './innovation/innovation.entity';
 import { InnovationRecordSchemaEntity } from './innovation/innovation-record-schema.entity';
+import { InnovationSurveyEntity } from './innovation/innovation-survey.entity';
 export { ActivityLogEntity } from './innovation/activity-log.entity';
 export { InnovationTaskEntity } from './innovation/innovation-task.entity';
 export { InnovationAssessmentEntity } from './innovation/innovation-assessment.entity';
@@ -47,6 +48,7 @@ export { InnovationTransferEntity } from './innovation/innovation-transfer.entit
 export { InnovationUserTestEntity } from './innovation/innovation-user-test.entity';
 export { InnovationEntity } from './innovation/innovation.entity';
 export { InnovationRecordSchemaEntity } from './innovation/innovation-record-schema.entity';
+export { InnovationSurveyEntity } from './innovation/innovation-survey.entity';
 
 // Organisation.
 import { OrganisationUnitEntity } from './organisation/organisation-unit.entity';
@@ -117,7 +119,8 @@ export const INNOVATION_ENTITIES = [
   InnovationTransferEntity,
   InnovationUserTestEntity,
   InnovationEntity,
-  InnovationRecordSchemaEntity
+  InnovationRecordSchemaEntity,
+  InnovationSurveyEntity
 ];
 export const ORGANISATION_ENTITIES = [OrganisationUnitEntity, OrganisationEntity];
 export const USER_ENTITIES = [

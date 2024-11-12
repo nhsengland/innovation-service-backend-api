@@ -2,7 +2,6 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
-import { InnovationExportRequestStatusEnum } from '@innovations/shared/enums';
 import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import type { AuthorizationService } from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
@@ -12,7 +11,7 @@ import { container } from '../_config';
 
 import type { InnovationExportRequestService } from '../_services/innovation-export-request.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType, QueryParamsSchema, QueryParamsType } from './validation.schemas';
 
 class V1InnovationsExportRequestList {
@@ -64,38 +63,9 @@ export default openApi(
       tags: ['[v1] Innovation Export Requests'],
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema, query: QueryParamsSchema }),
       responses: {
-        200: {
-          description: 'Success',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  count: { type: 'number' },
-                  data: {
-                    type: 'array',
-                    items: {
-                      type: 'object',
-                      properties: {
-                        id: { type: 'string', format: 'uuid' },
-                        status: { type: 'string', enum: Object.values(InnovationExportRequestStatusEnum) },
-                        createdBy: {
-                          type: 'object',
-                          properties: {
-                            name: { type: 'string' },
-                            displayRole: { type: 'string' },
-                            displayTeam: { type: 'string' }
-                          }
-                        },
-                        createdAt: { type: 'string', format: 'date-time' }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
+        200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+          description: 'Success'
+        }),
         400: { description: 'The request is invalid.' },
         401: { description: 'The user is not authenticated.' },
         403: { description: 'The user is not authorized to access this resource.' },

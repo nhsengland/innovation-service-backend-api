@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import type { AuthorizationService } from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { CustomContextType } from '@innovations/shared/types';
@@ -10,7 +10,7 @@ import type { CustomContextType } from '@innovations/shared/types';
 import { container } from '../_config';
 
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, type ParamsType } from './validation.schemas';
 import type { InnovationsService } from '../_services/innovations.service';
 
@@ -72,20 +72,11 @@ export default openApi(
       description: `Get a list with a list of thread recipients for a respective innovation.`,
       operationId: 'v1-innovations-threads-available-recipients',
       tags: ['[v1] Innovation Threads Available Recipients'],
-      parameters: [
-        {
-          in: 'path',
-          name: 'innovationId',
-          required: true,
-          schema: {
-            type: 'string'
-          }
-        }
-      ],
+      parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       responses: {
-        200: {
+        200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
           description: 'Success'
-        },
+        }),
         404: {
           description: 'Not found'
         }

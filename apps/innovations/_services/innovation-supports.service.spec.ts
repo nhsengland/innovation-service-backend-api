@@ -40,6 +40,7 @@ import type { InnovationSupportsService } from './innovation-supports.service';
 import { InnovationThreadsService } from './innovation-threads.service';
 import SYMBOLS from './symbols';
 import { ValidationService } from './validation.service';
+import { SurveysService } from './surveys.service';
 
 describe('Innovations / _services / innovation-supports suite', () => {
   let sut: InnovationSupportsService;
@@ -57,6 +58,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
   const threadMessageMock = jest.spyOn(InnovationThreadsService.prototype, 'createThreadMessage').mockResolvedValue({
     threadMessage: InnovationThreadMessageEntity.new({ id: randUuid() })
   });
+  const createSurveySpy = jest.spyOn(SurveysService.prototype, 'createSurvey').mockResolvedValue();
 
   beforeAll(async () => {
     sut = container.get<InnovationSupportsService>(SYMBOLS.InnovationSupportsService);
@@ -74,6 +76,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
     notifierSendSpy.mockClear();
     notifierSendNotifyMeSpy.mockClear();
     threadMessageMock.mockClear();
+    createSurveySpy.mockClear();
   });
 
   describe('getInnovationSupportsList', () => {
@@ -1256,6 +1259,23 @@ describe('Innovations / _services / innovation-supports suite', () => {
           em
         )
       ).rejects.toThrow(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UPDATE_INACTIVE));
+    });
+
+    it('should create a survey when a support is closed', async () => {
+      const context = DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor);
+      await sut.updateInnovationSupport(
+        context,
+        innovation.id,
+        innovation.supports.supportByHealthOrgUnit.id,
+        { status: InnovationSupportStatusEnum.CLOSED, message: randText({ charCount: 10 }) },
+        em
+      );
+      expect(createSurveySpy).toHaveBeenCalledWith(
+        'SUPPORT_END',
+        innovation.id,
+        innovation.supports.supportByHealthOrgUnit.id,
+        expect.any(Object)
+      );
     });
 
     it('should send a notifyMe when status is changed', async () => {

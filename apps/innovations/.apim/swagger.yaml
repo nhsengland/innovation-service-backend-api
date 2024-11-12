@@ -88,14 +88,19 @@ paths:
                 type: object
                 properties:
                   count:
-                    type: number
+                    type: integer
                   innovation:
                     type: object
                     properties:
                       id:
                         type: string
+                        format: uuid
                       name:
                         type: string
+                    required:
+                      - id
+                      - name
+                    additionalProperties: false
                   data:
                     type: array
                     items:
@@ -103,53 +108,56 @@ paths:
                       properties:
                         type:
                           type: string
+                          enum:
+                            - INNOVATION_MANAGEMENT
+                            - INNOVATION_RECORD
+                            - NEEDS_ASSESSMENT
+                            - SUPPORT
+                            - COMMENTS
+                            - TASKS
+                            - THREADS
                         activity:
                           type: string
+                          enum:
+                            - INNOVATION_CREATION
+                            - OWNERSHIP_TRANSFER
+                            - SHARING_PREFERENCES_UPDATE
+                            - SECTION_DRAFT_UPDATE
+                            - SECTION_SUBMISSION
+                            - INNOVATION_SUBMISSION
+                            - NEEDS_ASSESSMENT_START
+                            - NEEDS_ASSESSMENT_START_EDIT
+                            - NEEDS_ASSESSMENT_COMPLETED
+                            - NEEDS_ASSESSMENT_EDITED
+                            - ORGANISATION_SUGGESTION
+                            - SUPPORT_STATUS_UPDATE
+                            - COMMENT_CREATION
+                            - TASK_CREATION
+                            - TASK_STATUS_DONE_UPDATE
+                            - TASK_STATUS_DECLINED_UPDATE
+                            - TASK_STATUS_OPEN_UPDATE
+                            - TASK_STATUS_CANCELLED_UPDATE
+                            - THREAD_CREATION
+                            - THREAD_MESSAGE_CREATION
+                            - NEEDS_ASSESSMENT_REASSESSMENT_REQUESTED
+                            - INNOVATION_PAUSE
                         date:
-                          type: number
+                          type: string
+                          format: date-time
                         params:
                           type: object
-                          properties:
-                            actionUserId:
-                              type: string
-                            interveningUserId:
-                              type: string
-                            assessmentId:
-                              type: string
-                            sectionId:
-                              type: string
-                            actionId:
-                              type: string
-                            innovationSupportStatus:
-                              type: string
-                            organisations:
-                              type: array
-                              items:
-                                type: string
-                            organisationUnit:
-                              type: string
-                            comment:
-                              type: object
-                              properties:
-                                id:
-                                  type: string
-                                value:
-                                  type: string
-                            totalActions:
-                              type: number
-                            thread:
-                              type: object
-                              properties:
-                                id:
-                                  type: string
-                                subject:
-                                  type: string
-                                messageId:
-                                  type: string
-                            actionUserName:
-                              type: string
-                            interveningUserName:
-                              type: string
+                          properties: {}
+                          additionalProperties: false
+                      required:
+                        - type
+                        - date
+                        - params
+                      additionalProperties: false
+                required:
+                  - count
+                  - innovation
+                  - data
+                additionalProperties: false
         "500":
           description: An error occurred while processing the request.
   /v1/{innovationId}/all-sections:
@@ -160,18 +168,58 @@ paths:
       summary: Get an innovation sections list details.
       operationId: v1-innovation-all-sections-list
       parameters:
-        - in: path
-          name: innovationId
+        - name: innovationId
+          in: path
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         "200":
           description: Success
           content:
             application/json:
               schema:
-                type: object
+                type: array
+                items:
+                  type: object
+                  properties:
+                    section:
+                      type: object
+                      properties:
+                        section:
+                          type: string
+                        status:
+                          type: string
+                          enum:
+                            - NOT_STARTED
+                            - DRAFT
+                            - SUBMITTED
+                        submittedAt:
+                          type: string
+                          format: date-time
+                        submittedBy:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                            displayTag:
+                              type: string
+                          required:
+                            - name
+                            - displayTag
+                          additionalProperties: false
+                        openTasksCount:
+                          type: integer
+                      required:
+                        - section
+                        - openTasksCount
+                      additionalProperties: false
+                    data:
+                      type: object
+                      properties: {}
+                      additionalProperties: false
+                  additionalProperties: false
         "401":
           description: Unauthorized
         "403":
@@ -269,6 +317,10 @@ paths:
                   assessorId:
                     type: string
                     format: uuid
+                required:
+                  - assessmentId
+                  - assessorId
+                additionalProperties: false
         "400":
           description: Bad request. Validation error.
         "401":
@@ -288,14 +340,12 @@ paths:
       parameters:
         - name: innovationId
           in: path
-          description: Innovation Id
           required: true
           schema:
             type: string
             format: uuid
         - name: assessmentId
           in: path
-          description: Assessment Id
           required: true
           schema:
             type: string
@@ -311,13 +361,73 @@ paths:
                   id:
                     type: string
                     format: uuid
+                  majorVersion:
+                    type: integer
+                  minorVersion:
+                    type: integer
+                  editReason:
+                    type: string
+                    nullable: true
+                  previousAssessment:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      majorVersion:
+                        type: integer
+                      minorVersion:
+                        type: integer
+                    required:
+                      - id
+                      - majorVersion
+                      - minorVersion
+                    additionalProperties: false
+                  reassessment:
+                    type: object
+                    properties:
+                      reassessmentReason:
+                        type: array
+                        items:
+                          type: string
+                          enum:
+                            - NO_SUPPORT
+                            - PREVIOUSLY_ARCHIVED
+                            - HAS_PROGRESSED_SIGNIFICANTLY
+                            - OTHER
+                        nullable: true
+                      otherReassessmentReason:
+                        type: string
+                      description:
+                        type: string
+                      whatSupportDoYouNeed:
+                        type: string
+                        nullable: true
+                      sectionsUpdatedSinceLastAssessment:
+                        type: array
+                        items:
+                          type: string
+                    required:
+                      - reassessmentReason
+                      - otherReassessmentReason
+                      - description
+                      - whatSupportDoYouNeed
+                      - sectionsUpdatedSinceLastAssessment
+                    additionalProperties: false
                   summary:
                     type: string
+                    nullable: true
                   description:
                     type: string
+                    nullable: true
+                  startedAt:
+                    type: string
+                    format: date-time
+                    nullable: true
                   finishedAt:
                     type: string
                     format: date-time
+                    nullable: true
                   assignTo:
                     type: object
                     properties:
@@ -326,75 +436,96 @@ paths:
                         format: uuid
                       name:
                         type: string
+                    required:
+                      - id
+                      - name
+                    additionalProperties: false
                   maturityLevel:
                     type: string
+                    nullable: true
                   maturityLevelComment:
                     type: string
+                    nullable: true
                   hasRegulatoryApprovals:
-                    type: boolean
+                    type: string
+                    nullable: true
                   hasRegulatoryApprovalsComment:
                     type: string
+                    nullable: true
                   hasEvidence:
-                    type: boolean
+                    type: string
+                    nullable: true
                   hasEvidenceComment:
                     type: string
+                    nullable: true
                   hasValidation:
-                    type: boolean
+                    type: string
+                    nullable: true
                   hasValidationComment:
                     type: string
+                    nullable: true
                   hasProposition:
-                    type: boolean
+                    type: string
+                    nullable: true
                   hasPropositionComment:
                     type: string
+                    nullable: true
                   hasCompetitionKnowledge:
-                    type: boolean
+                    type: string
+                    nullable: true
                   hasCompetitionKnowledgeComment:
                     type: string
+                    nullable: true
                   hasImplementationPlan:
-                    type: boolean
+                    type: string
+                    nullable: true
                   hasImplementationPlanComment:
                     type: string
+                    nullable: true
                   hasScaleResource:
-                    type: boolean
+                    type: string
+                    nullable: true
                   hasScaleResourceComment:
                     type: string
+                    nullable: true
                   suggestedOrganisations:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                          format: uuid
-                        name:
-                          type: string
-                        acronym:
-                          type: string
-                        units:
-                          type: array
-                          items:
-                            type: object
-                            properties:
-                              id:
-                                type: string
-                                format: uuid
-                              name:
-                                type: string
-                              acronym:
-                                type: string
-                              organisation:
-                                type: object
-                                properties:
-                                  id:
-                                    type: string
-                                    format: uuid
-                                  name:
-                                    type: string
-                                  acronym:
-                                    type: string
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      name:
+                        type: string
+                      acronym:
+                        type: string
+                        nullable: true
+                      units:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                            name:
+                              type: string
+                            acronym:
+                              type: string
+                          required:
+                            - id
+                            - name
+                            - acronym
+                          additionalProperties: false
+                    required:
+                      - id
+                      - name
+                      - acronym
+                      - units
+                    additionalProperties: false
                   updatedAt:
                     type: string
                     format: date-time
+                    nullable: true
                   updatedBy:
                     type: object
                     properties:
@@ -403,6 +534,41 @@ paths:
                         format: uuid
                       name:
                         type: string
+                    required:
+                      - id
+                      - name
+                    additionalProperties: false
+                  isLatest:
+                    type: boolean
+                required:
+                  - id
+                  - majorVersion
+                  - minorVersion
+                  - summary
+                  - description
+                  - startedAt
+                  - finishedAt
+                  - maturityLevel
+                  - maturityLevelComment
+                  - hasRegulatoryApprovals
+                  - hasRegulatoryApprovalsComment
+                  - hasEvidence
+                  - hasEvidenceComment
+                  - hasValidation
+                  - hasValidationComment
+                  - hasProposition
+                  - hasPropositionComment
+                  - hasCompetitionKnowledge
+                  - hasCompetitionKnowledgeComment
+                  - hasImplementationPlan
+                  - hasImplementationPlanComment
+                  - hasScaleResource
+                  - hasScaleResourceComment
+                  - suggestedOrganisations
+                  - updatedAt
+                  - updatedBy
+                  - isLatest
+                additionalProperties: false
         "400":
           description: Bad Request
         "401":
@@ -420,14 +586,12 @@ paths:
       parameters:
         - name: innovationId
           in: path
-          description: Innovation ID
           required: true
           schema:
             type: string
             format: uuid
         - name: assessmentId
           in: path
-          description: Assessment ID
           required: true
           schema:
             type: string
@@ -440,16 +604,112 @@ paths:
             schema:
               type: object
               properties:
-                status:
+                summary:
+                  type: string
+                  maxLength: 2000
+                  nullable: true
+                description:
+                  type: string
+                  maxLength: 2000
+                  nullable: true
+                maturityLevel:
                   type: string
                   enum:
-                    - APPROVED
-                    - REJECTED
-                comment:
+                    - DISCOVERY
+                    - ADVANCED
+                    - READY
+                  nullable: true
+                maturityLevelComment:
                   type: string
-                  maxLength: 1000
-              required:
-                - status
+                  maxLength: 200
+                  nullable: true
+                hasRegulatoryApprovals:
+                  type: string
+                  enum:
+                    - YES
+                    - PARTIALLY
+                    - NO
+                  nullable: true
+                hasRegulatoryApprovalsComment:
+                  type: string
+                  maxLength: 200
+                  nullable: true
+                hasEvidence:
+                  type: string
+                  enum:
+                    - YES
+                    - PARTIALLY
+                    - NO
+                  nullable: true
+                hasEvidenceComment:
+                  type: string
+                  maxLength: 200
+                  nullable: true
+                hasValidation:
+                  type: string
+                  enum:
+                    - YES
+                    - PARTIALLY
+                    - NO
+                  nullable: true
+                hasValidationComment:
+                  type: string
+                  maxLength: 200
+                  nullable: true
+                hasProposition:
+                  type: string
+                  enum:
+                    - YES
+                    - PARTIALLY
+                    - NO
+                  nullable: true
+                hasPropositionComment:
+                  type: string
+                  maxLength: 200
+                  nullable: true
+                hasCompetitionKnowledge:
+                  type: string
+                  enum:
+                    - YES
+                    - PARTIALLY
+                    - NO
+                  nullable: true
+                hasCompetitionKnowledgeComment:
+                  type: string
+                  maxLength: 200
+                  nullable: true
+                hasImplementationPlan:
+                  type: string
+                  enum:
+                    - YES
+                    - PARTIALLY
+                    - NO
+                  nullable: true
+                hasImplementationPlanComment:
+                  type: string
+                  maxLength: 200
+                  nullable: true
+                hasScaleResource:
+                  type: string
+                  enum:
+                    - YES
+                    - PARTIALLY
+                    - NO
+                  nullable: true
+                hasScaleResourceComment:
+                  type: string
+                  maxLength: 200
+                  nullable: true
+                suggestedOrganisationUnitsIds:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  nullable: true
+                isSubmission:
+                  type: boolean
+                  default: false
+              additionalProperties: false
       responses:
         "200":
           description: Returns the updated innovation assessment.
@@ -461,26 +721,9 @@ paths:
                   id:
                     type: string
                     format: uuid
-                  innovationId:
-                    type: string
-                    format: uuid
-                  assessmentId:
-                    type: string
-                    format: uuid
-                  status:
-                    type: string
-                    enum:
-                      - APPROVED
-                      - REJECTED
-                  comment:
-                    type: string
-                    maxLength: 1000
-                  createdAt:
-                    type: string
-                    format: date-time
-                  updatedAt:
-                    type: string
-                    format: date-time
+                required:
+                  - id
+                additionalProperties: false
         "400":
           description: Bad request. Validation error.
         "401":
@@ -502,7 +745,6 @@ paths:
       parameters:
         - name: innovationId
           in: path
-          description: The innovation id.
           required: true
           schema:
             type: string
@@ -515,11 +757,12 @@ paths:
             schema:
               type: object
               properties:
-                comment:
+                message:
                   type: string
-                  description: The comment for the assessment.
+                  maxLength: 4000
               required:
-                - comment
+                - message
+              additionalProperties: false
       responses:
         "200":
           description: The innovation assessment has been created.
@@ -531,9 +774,9 @@ paths:
                   id:
                     type: string
                     format: uuid
-                    description: The innovation assessment id.
                 required:
                   - id
+                additionalProperties: false
         "400":
           description: The innovation assessment has not been created.
         "401":
@@ -557,6 +800,33 @@ paths:
       responses:
         "200":
           description: Returns the complete assessments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    majorVersion:
+                      type: integer
+                    minorVersion:
+                      type: integer
+                    startedAt:
+                      type: string
+                      format: date-time
+                    finishedAt:
+                      type: string
+                      format: date-time
+                  required:
+                    - id
+                    - majorVersion
+                    - minorVersion
+                    - startedAt
+                    - finishedAt
+                  additionalProperties: false
         "400":
           description: Bad Request
         "401":
@@ -605,9 +875,9 @@ paths:
                   id:
                     type: string
                     format: uuid
-                    description: The innovation assessment id.
                 required:
                   - id
+                additionalProperties: false
         "400":
           description: The minor assessment version has not been created.
         "401":
@@ -652,11 +922,23 @@ paths:
                     properties:
                       reason:
                         type: string
+                        enum:
+                          - NO_RESPONSE
+                          - TECHNICAL_DIFFICULTIES
+                          - INCORRECT_DETAILS
+                          - SERVICE_UNAVAILABLE
+                          - CAPACITY
                       message:
                         type: string
                       exemptedAt:
                         type: string
                         format: date-time
+                    required:
+                      - reason
+                    additionalProperties: false
+                required:
+                  - isExempted
+                additionalProperties: false
         "400":
           description: The request is invalid.
         "401":
@@ -738,10 +1020,19 @@ paths:
                 properties:
                   userExists:
                     type: boolean
-                    description: User exists in service
                   collaboratorStatus:
                     type: string
-                    description: Status of the collaborator invite
+                    enum:
+                      - PENDING
+                      - ACTIVE
+                      - DECLINED
+                      - CANCELLED
+                      - REMOVED
+                      - LEFT
+                      - EXPIRED
+                required:
+                  - userExists
+                additionalProperties: false
         "404":
           description: Not Found
   /v1/{innovationId}/collaborators:
@@ -785,10 +1076,10 @@ paths:
                 properties:
                   id:
                     type: string
-                    description: The collaborator id.
-                    example: c0a80121-7ac0-464e-b8f6-27b88b0cda7f
+                    format: uuid
                 required:
                   - id
+                additionalProperties: false
         "400":
           description: The collaborator could not be created.
         "401":
@@ -821,7 +1112,6 @@ paths:
                 properties:
                   count:
                     type: integer
-                    description: The total number of records.
                   data:
                     type: array
                     items:
@@ -829,6 +1119,7 @@ paths:
                       properties:
                         id:
                           type: string
+                          format: uuid
                         name:
                           type: string
                         role:
@@ -837,6 +1128,23 @@ paths:
                           type: string
                         status:
                           type: string
+                          enum:
+                            - PENDING
+                            - ACTIVE
+                            - DECLINED
+                            - CANCELLED
+                            - REMOVED
+                            - LEFT
+                            - EXPIRED
+                        isActive:
+                          type: boolean
+                      required:
+                        - id
+                      additionalProperties: false
+                required:
+                  - count
+                  - data
+                additionalProperties: false
         "400":
           description: The request is invalid.
         "401":
@@ -891,9 +1199,6 @@ paths:
                       - REMOVED
                       - LEFT
                       - EXPIRED
-                  invitedAt:
-                    type: string
-                    format: date-time
                   innovation:
                     type: object
                     properties:
@@ -912,6 +1217,22 @@ paths:
                             format: uuid
                           name:
                             type: string
+                        required:
+                          - id
+                        additionalProperties: false
+                    required:
+                      - id
+                      - name
+                    additionalProperties: false
+                  invitedAt:
+                    type: string
+                    format: date-time
+                required:
+                  - id
+                  - email
+                  - innovation
+                  - invitedAt
+                additionalProperties: false
         "401":
           description: Unauthorized
         "403":
@@ -971,10 +1292,10 @@ paths:
                 properties:
                   id:
                     type: string
-                    description: The collaborator id.
-                    example: c0a80121-7ac0-464e-b8f6-27b88b0cda7f
+                    format: uuid
                 required:
                   - id
+                additionalProperties: false
         "400":
           description: The collaborator could not be updated.
         "401":
@@ -1021,7 +1342,10 @@ paths:
                 properties:
                   id:
                     type: string
-                    description: Unique identifier for innovation object
+                    format: uuid
+                required:
+                  - id
+                additionalProperties: false
         "400":
           description: Invalid innovation payload
         "422":
@@ -1417,7 +1741,10 @@ paths:
                 properties:
                   id:
                     type: string
-                    description: Evidence id.
+                    format: uuid
+                required:
+                  - id
+                additionalProperties: false
         "400":
           description: Bad Request
         "401":
@@ -1689,8 +2016,10 @@ paths:
                 properties:
                   id:
                     type: string
+                    format: uuid
                 required:
                   - id
+                additionalProperties: false
         "400":
           description: The innovation file could not be created.
         "401":
@@ -1949,11 +2278,13 @@ paths:
                 properties:
                   id:
                     type: string
+                    format: uuid
                   context:
                     type: object
                     properties:
                       id:
                         type: string
+                        format: uuid
                       type:
                         type: string
                         enum:
@@ -1962,12 +2293,18 @@ paths:
                           - INNOVATION_MESSAGE
                           - INNOVATION_PROGRESS_UPDATE
                           - INNOVATION_SECTION
+                      name:
+                        type: string
+                    required:
+                      - id
+                    additionalProperties: false
                   name:
                     type: string
                   description:
                     type: string
                   createdAt:
                     type: string
+                    format: date-time
                   createdBy:
                     type: object
                     properties:
@@ -1985,20 +2322,40 @@ paths:
                         type: boolean
                       orgUnitName:
                         type: string
+                    required:
+                      - name
+                      - role
+                    additionalProperties: false
                   file:
                     type: object
                     properties:
                       id:
                         type: string
-                        description: Storage Id
+                        format: uuid
                       name:
                         type: string
                       size:
                         type: number
+                        format: float
                       extension:
                         type: string
                       url:
                         type: string
+                    required:
+                      - id
+                      - name
+                      - extension
+                      - url
+                    additionalProperties: false
+                  canDelete:
+                    type: boolean
+                required:
+                  - id
+                  - name
+                  - createdAt
+                  - file
+                  - canDelete
+                additionalProperties: false
         "400":
           description: The request is invalid.
         "401":
@@ -2042,11 +2399,16 @@ paths:
                 properties:
                   id:
                     type: string
+                    format: uuid
                   name:
                     type: string
                   url:
                     type: string
-                    description: url for file upload
+                required:
+                  - id
+                  - name
+                  - url
+                additionalProperties: false
         "400":
           description: Invalid payload
         "404":
@@ -2061,13 +2423,229 @@ paths:
         - name: innovationId
           in: path
           required: true
-          description: Innovation ID
           schema:
             type: string
             format: uuid
       responses:
         "200":
           description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  name:
+                    type: string
+                  description:
+                    type: string
+                    nullable: true
+                  version:
+                    type: string
+                  status:
+                    type: string
+                    enum:
+                      - CREATED
+                      - WAITING_NEEDS_ASSESSMENT
+                      - NEEDS_ASSESSMENT
+                      - IN_PROGRESS
+                      - WITHDRAWN
+                      - ARCHIVED
+                  archivedStatus:
+                    type: string
+                    enum:
+                      - CREATED
+                      - WAITING_NEEDS_ASSESSMENT
+                      - NEEDS_ASSESSMENT
+                      - IN_PROGRESS
+                      - WITHDRAWN
+                      - ARCHIVED
+                  groupedStatus:
+                    type: string
+                    enum:
+                      - RECORD_NOT_SHARED
+                      - AWAITING_NEEDS_ASSESSMENT
+                      - NEEDS_ASSESSMENT
+                      - AWAITING_SUPPORT
+                      - RECEIVING_SUPPORT
+                      - NO_ACTIVE_SUPPORT
+                      - AWAITING_NEEDS_REASSESSMENT
+                      - WITHDRAWN
+                      - ARCHIVED
+                  hasBeenAssessed:
+                    type: boolean
+                  statusUpdatedAt:
+                    type: string
+                    format: date-time
+                  submittedAt:
+                    type: string
+                    format: date-time
+                    nullable: true
+                  countryName:
+                    type: string
+                    nullable: true
+                  postCode:
+                    type: string
+                    nullable: true
+                  categories:
+                    type: array
+                    items:
+                      type: string
+                      enum:
+                        - MEDICAL_DEVICE
+                        - IN_VITRO_DIAGNOSTIC
+                        - PHARMACEUTICAL
+                        - DIGITAL
+                        - AI
+                        - EDUCATION
+                        - PPE
+                        - MODELS_CARE
+                        - ESTATES_FACILITIES
+                        - TRAVEL_TRANSPORT
+                        - FOOD_NUTRITION
+                        - DATA_MONITORING
+                        - OTHER
+                  otherCategoryDescription:
+                    type: string
+                    nullable: true
+                  owner:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      name:
+                        type: string
+                      isActive:
+                        type: boolean
+                      email:
+                        type: string
+                      contactByEmail:
+                        type: boolean
+                      contactByPhone:
+                        type: boolean
+                      contactByPhoneTimeFrame:
+                        type: string
+                        enum:
+                          - MORNING
+                          - AFTERNOON
+                          - DAILY
+                        nullable: true
+                      mobilePhone:
+                        type: string
+                        nullable: true
+                      lastLoginAt:
+                        type: string
+                        format: date-time
+                        nullable: true
+                      organisation:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          size:
+                            type: string
+                            nullable: true
+                          registrationNumber:
+                            type: string
+                            nullable: true
+                        required:
+                          - name
+                          - size
+                          - registrationNumber
+                        additionalProperties: false
+                    required:
+                      - id
+                      - name
+                      - isActive
+                      - contactByPhoneTimeFrame
+                    additionalProperties: false
+                  lastEndSupportAt:
+                    type: string
+                    format: date-time
+                    nullable: true
+                  assessment:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      createdAt:
+                        type: string
+                        format: date-time
+                      finishedAt:
+                        type: string
+                        format: date-time
+                        nullable: true
+                      assignedTo:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          name:
+                            type: string
+                          userRoleId:
+                            type: string
+                        required:
+                          - id
+                          - name
+                          - userRoleId
+                        additionalProperties: false
+                    required:
+                      - id
+                      - createdAt
+                      - finishedAt
+                    additionalProperties: false
+                  supports:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        status:
+                          type: string
+                          enum:
+                            - SUGGESTED
+                            - ENGAGING
+                            - WAITING
+                            - UNASSIGNED
+                            - UNSUITABLE
+                            - CLOSED
+                        organisationUnitId:
+                          type: string
+                      required:
+                        - id
+                        - organisationUnitId
+                      additionalProperties: false
+                    nullable: true
+                  collaboratorId:
+                    type: string
+                  createdAt:
+                    type: string
+                    format: date-time
+                required:
+                  - id
+                  - name
+                  - description
+                  - version
+                  - status
+                  - groupedStatus
+                  - hasBeenAssessed
+                  - statusUpdatedAt
+                  - submittedAt
+                  - countryName
+                  - postCode
+                  - categories
+                  - otherCategoryDescription
+                  - lastEndSupportAt
+                  - collaboratorId
+                  - createdAt
+                additionalProperties: false
         "400":
           description: Invalid innovation payload
   /v1/{innovationId}/notifications/dismiss:
@@ -2078,7 +2656,6 @@ paths:
         - name: innovationId
           in: path
           required: true
-          description: Innovation ID
           schema:
             type: string
             format: uuid
@@ -2095,27 +2672,117 @@ paths:
                   items:
                     type: string
                     format: uuid
-                notificationContext:
-                  type: object
-                  properties:
-                    id:
-                      type: string
-                      format: uuid
-                    type:
-                      type: string
-                      enum:
-                        - TASK
-                        - DOCUMENTS
-                        - MESSAGES
-                        - SUPPORT
-                        - NEEDS_ASSESSMENT
-                        - ORGANISATION_SUGGESTIONS
-                        - INNOVATION_MANAGEMENT
-                        - ADMIN
-                        - ACCOUNT
-                        - AUTOMATIC
-                        - NOTIFY_ME
-                        - ANNOUNCEMENTS
+                  default: []
+                contextTypes:
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                      - TASK
+                      - DOCUMENTS
+                      - MESSAGES
+                      - SUPPORT
+                      - NEEDS_ASSESSMENT
+                      - ORGANISATION_SUGGESTIONS
+                      - INNOVATION_MANAGEMENT
+                      - ADMIN
+                      - ACCOUNT
+                      - AUTOMATIC
+                      - NOTIFY_ME
+                      - ANNOUNCEMENTS
+                  default: []
+                contextDetails:
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                      - TA01_TASK_CREATION_TO_INNOVATOR
+                      - TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS
+                      - TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT
+                      - TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT
+                      - TA05_TASK_CANCELLED_TO_INNOVATOR
+                      - TA06_TASK_REOPEN_TO_INNOVATOR
+                      - DC01_UPLOADED_DOCUMENT_TO_INNOVATOR
+                      - ME01_THREAD_CREATION
+                      - ME02_THREAD_ADD_FOLLOWERS
+                      - ME03_THREAD_MESSAGE_CREATION
+                      - ST01_SUPPORT_STATUS_TO_ENGAGING
+                      - ST02_SUPPORT_STATUS_TO_OTHER
+                      - ST03_SUPPORT_STATUS_TO_WAITING
+                      - ST04_SUPPORT_NEW_ASSIGNED_ACCESSORS_TO_INNOVATOR
+                      - ST05_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_NEW_QA
+                      - ST06_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_OLD_QA
+                      - ST07_SUPPORT_STATUS_CHANGE_REQUEST
+                      - ST08_SUPPORT_NEW_ASSIGNED_WAITING_INNOVATION_TO_QA
+                      - SS01_SUPPORT_SUMMARY_UPDATE_TO_INNOVATORS
+                      - SS02_SUPPORT_SUMMARY_UPDATE_TO_OTHER_ENGAGING_ACCESSORS
+                      - NA01_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_INNOVATOR
+                      - NA02_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_ASSESSMENT
+                      - NA03_NEEDS_ASSESSMENT_STARTED_TO_INNOVATOR
+                      - NA04_NEEDS_ASSESSMENT_COMPLETE_TO_INNOVATOR
+                      - NA06_NEEDS_ASSESSOR_REMOVED
+                      - NA07_NEEDS_ASSESSOR_ASSIGNED
+                      - OS01_UNITS_SUGGESTION_TO_SUGGESTED_UNITS_QA
+                      - OS02_UNITS_SUGGESTION_NOT_SHARED_TO_INNOVATOR
+                      - OS03_INNOVATION_DELAYED_SHARED_SUGGESTION
+                      - RE01_EXPORT_REQUEST_SUBMITTED
+                      - RE02_EXPORT_REQUEST_APPROVED
+                      - RE03_EXPORT_REQUEST_REJECTED
+                      - AI01_INNOVATION_ARCHIVED_TO_SELF
+                      - AI02_INNOVATION_ARCHIVED_TO_COLLABORATORS
+                      - AI03_INNOVATION_ARCHIVED_TO_ENGAGING_QA_A
+                      - AI04_INNOVATION_ARCHIVED_TO_NA_DURING_NEEDS_ASSESSMENT
+                      - SH04_INNOVATION_STOPPED_SHARING_WITH_INDIVIDUAL_ORG_TO_OWNER
+                      - SH05_INNOVATION_STOPPED_SHARING_WITH_INDIVIDUAL_ORG_TO_QA_A
+                      - DA01_OWNER_DELETED_ACCOUNT_WITH_PENDING_TRANSFER_TO_COLLABORATOR
+                      - DA02_OWNER_DELETED_ACCOUNT_WITHOUT_PENDING_TRANSFER_TO_COLLABORATOR
+                      - MC01_COLLABORATOR_INVITE_EXISTING_USER
+                      - MC02_COLLABORATOR_INVITE_NEW_USER
+                      - MC03_COLLABORATOR_UPDATE_CANCEL_INVITE
+                      - MC04_COLLABORATOR_UPDATE_ACCEPTS_INVITE
+                      - MC05_COLLABORATOR_UPDATE_DECLINES_INVITE
+                      - MC06_COLLABORATOR_UPDATE_REMOVED_COLLABORATOR
+                      - MC07_COLLABORATOR_UPDATE_COLLABORATOR_LEFT_TO_INNOVATORS
+                      - MC08_COLLABORATOR_UPDATE_COLLABORATOR_LEFT_TO_SELF
+                      - TO01_TRANSFER_OWNERSHIP_NEW_USER
+                      - TO02_TRANSFER_OWNERSHIP_EXISTING_USER
+                      - TO06_TRANSFER_OWNERSHIP_ACCEPTS_PREVIOUS_OWNER
+                      - TO07_TRANSFER_OWNERSHIP_ACCEPTS_ASSIGNED_ACCESSORS
+                      - TO08_TRANSFER_OWNERSHIP_DECLINES_PREVIOUS_OWNER
+                      - TO09_TRANSFER_OWNERSHIP_CANCELED_NEW_OWNER
+                      - AP02_INNOVATOR_LOCKED_TO_ASSIGNED_USERS
+                      - AP03_USER_LOCKED_TO_LOCKED_USER
+                      - AP07_UNIT_INACTIVATED_TO_ENGAGING_INNOVATIONS
+                      - AP08_USER_EMAIL_ADDRESS_UPDATED
+                      - AP09_NEW_SUPPORTING_ACCOUNT
+                      - CA01_ACCOUNT_CREATION_OF_INNOVATOR
+                      - CA02_ACCOUNT_CREATION_OF_COLLABORATOR
+                      - AU01_INNOVATOR_INCOMPLETE_RECORD
+                      - AU02_ACCESSOR_IDLE_ENGAGING_SUPPORT
+                      - AU03_INNOVATOR_IDLE_SUPPORT
+                      - AU04_SUPPORT_KPI_REMINDER
+                      - AU05_SUPPORT_KPI_OVERDUE
+                      - AU06_ACCESSOR_IDLE_WAITING
+                      - AU07_TRANSFER_ONE_WEEK_REMINDER_NEW_USER
+                      - AU08_TRANSFER_ONE_WEEK_REMINDER_EXISTING_USER
+                      - AU09_TRANSFER_EXPIRED
+                      - AU10_ACCESSOR_IDLE_ENGAGING_SUPPORT_FOR_SIX_WEEKS
+                      - AU11_ACCESSOR_IDLE_WAITING_SUPPORT_FOR_SIX_WEEKS
+                      - SUPPORT_UPDATED
+                      - PROGRESS_UPDATE_CREATED
+                      - INNOVATION_RECORD_UPDATED
+                      - REMINDER
+                      - SUGGESTED_SUPPORT_UPDATED
+                      - AP10_NEW_ANNOUNCEMENT
+                      - AP11_NEW_ANNOUNCEMENT_WITH_INNOVATIONS_NAME
+                  default: []
+                contextIds:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  default: []
+              additionalProperties: false
       responses:
         "204":
           description: Success
@@ -2264,6 +2931,17 @@ paths:
       responses:
         "200":
           description: Returns the reassessment request and the cloned assessment id
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                required:
+                  - id
+                additionalProperties: false
         "400":
           description: Bad request
         "401":
@@ -2317,51 +2995,61 @@ paths:
                 properties:
                   id:
                     type: string
-                    description: Innovation section id.
-                    example: "1"
+                    format: uuid
+                    nullable: true
                   section:
                     type: string
-                    description: Innovation section key.
-                    example: access
+                    enum:
+                      - INNOVATION_DESCRIPTION
+                      - UNDERSTANDING_OF_NEEDS
+                      - EVIDENCE_OF_EFFECTIVENESS
+                      - MARKET_RESEARCH
+                      - CURRENT_CARE_PATHWAY
+                      - TESTING_WITH_USERS
+                      - REGULATIONS_AND_STANDARDS
+                      - INTELLECTUAL_PROPERTY
+                      - REVENUE_MODEL
+                      - COST_OF_INNOVATION
+                      - DEPLOYMENT
                   status:
                     type: string
-                    description: Innovation section status.
-                    example: COMPLETED
+                    enum:
+                      - NOT_STARTED
+                      - DRAFT
+                      - SUBMITTED
                   submittedAt:
                     type: string
-                    description: Innovation section submission date.
-                    example: 2021-01-01T00:00:00.000Z
-                  data:
+                    format: date-time
+                    nullable: true
+                  submittedBy:
                     type: object
-                    description: Innovation section data.
                     properties:
                       name:
                         type: string
-                        description: Innovation section name.
-                        example: Access
-                      description:
+                      displayTag:
                         type: string
-                        description: Innovation section description.
-                        example: Access description
-                      questions:
-                        type: array
-                        description: Innovation section questions.
-                        items:
-                          type: object
-                          properties:
-                            id:
-                              type: string
-                              description: Innovation section question id.
-                              example: "1"
-                            text:
-                              type: string
-                              description: Innovation section question text.
-                              example: Question text
-                  actionsIds:
+                    required:
+                      - name
+                      - displayTag
+                    additionalProperties: false
+                    nullable: true
+                  data:
+                    type: object
+                    properties: {}
+                    additionalProperties: false
+                    nullable: true
+                  tasksIds:
                     type: array
                     items:
                       type: string
-                      description: The id of the action.
+                required:
+                  - id
+                  - section
+                  - status
+                  - submittedAt
+                  - submittedBy
+                  - data
+                additionalProperties: false
         "401":
           description: Unauthorized
         "403":
@@ -2423,6 +3111,8 @@ paths:
                 properties:
                   id:
                     type: string
+                    format: uuid
+                additionalProperties: false
         "400":
           description: Bad request.
         "401":
@@ -2464,20 +3154,20 @@ paths:
               - REVENUE_MODEL
               - COST_OF_INNOVATION
               - DEPLOYMENT
-      requestBody:
-        description: Innovation section submit request body.
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                id:
-                  type: string
-                  description: Innovation section id.
-                  example: "1"
       responses:
         "200":
           description: Innovation section submit response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                required:
+                  - id
+                additionalProperties: false
   /v1/{innovationId}/sections:
     get:
       description: Get an innovation sections list.
@@ -2486,46 +3176,69 @@ paths:
       summary: Get an innovation sections list.
       operationId: v1-innovation-sections-list
       parameters:
-        - in: path
-          name: innovationId
+        - name: innovationId
+          in: path
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         "200":
           description: Success
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    description: Innovation id.
-                  name:
-                    type: string
-                    description: Innovation name.
-                  status:
-                    type: string
-                    description: Innovation status.
-                  sections:
-                    type: array
-                    description: Innovation sections.
-                    items:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                      nullable: true
+                    section:
+                      type: string
+                      enum:
+                        - INNOVATION_DESCRIPTION
+                        - UNDERSTANDING_OF_NEEDS
+                        - EVIDENCE_OF_EFFECTIVENESS
+                        - MARKET_RESEARCH
+                        - CURRENT_CARE_PATHWAY
+                        - TESTING_WITH_USERS
+                        - REGULATIONS_AND_STANDARDS
+                        - INTELLECTUAL_PROPERTY
+                        - REVENUE_MODEL
+                        - COST_OF_INNOVATION
+                        - DEPLOYMENT
+                    status:
+                      type: string
+                      enum:
+                        - NOT_STARTED
+                        - DRAFT
+                        - SUBMITTED
+                    submittedAt:
+                      type: string
+                      format: date-time
+                      nullable: true
+                    submittedBy:
                       type: object
                       properties:
-                        id:
+                        name:
                           type: string
-                          description: Innovation section id.
-                        section:
-                          type: string
-                          description: Innovation section name.
-                        status:
-                          type: string
-                          description: Innovation section status.
-                        submittedAt:
-                          type: string
-                          description: Innovation section submitted date.
+                        isOwner:
+                          type: boolean
+                      required:
+                        - name
+                      additionalProperties: false
+                      nullable: true
+                    openTasksCount:
+                      type: integer
+                  required:
+                    - id
+                    - submittedAt
+                    - submittedBy
+                    - openTasksCount
+                  additionalProperties: false
         "401":
           description: Unauthorized
         "403":
@@ -2542,11 +3255,12 @@ paths:
       summary: Get all the shares for an innovation.
       operationId: v1-innovation-shares
       parameters:
-        - in: path
-          name: innovationId
+        - name: innovationId
+          in: path
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         "200":
           description: OK
@@ -2557,33 +3271,23 @@ paths:
                 items:
                   type: object
                   properties:
-                    id:
-                      type: string
-                      description: The unique identifier of the share.
-                    innovationId:
-                      type: string
-                      description: The unique identifier of the innovation.
-                    organisationId:
-                      type: string
-                      description: The unique identifier of the organisation.
-                    organisationName:
-                      type: string
-                      description: The name of the organisation.
-                    organisationUnitId:
-                      type: string
-                      description: The unique identifier of the organisation unit.
-                    organisationUnitName:
-                      type: string
-                      description: The name of the organisation unit.
-                    status:
-                      type: string
-                      description: The status of the share.
-                    createdAt:
-                      type: string
-                      description: The date and time when the share was created.
-                    updatedAt:
-                      type: string
-                      description: The date and time when the share was last updated.
+                    organisation:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        name:
+                          type: string
+                        acronym:
+                          type: string
+                          nullable: true
+                      required:
+                        - id
+                        - name
+                        - acronym
+                      additionalProperties: false
+                  additionalProperties: false
         "401":
           description: Unauthorized
         "403":
@@ -2631,7 +3335,11 @@ paths:
                 properties:
                   id:
                     type: string
+                    format: uuid
                     description: The unique identifier of the innovation.
+                required:
+                  - id
+                additionalProperties: false
         "401":
           description: Unauthorized
         "403":
@@ -2683,13 +3391,25 @@ paths:
         - name: innovationId
           in: path
           required: true
-          description: Innovation ID
           schema:
             type: string
             format: uuid
       responses:
         "200":
           description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  submittedAllSections:
+                    type: boolean
+                  submittedForNeedsAssessment:
+                    type: boolean
+                required:
+                  - submittedAllSections
+                  - submittedForNeedsAssessment
+                additionalProperties: false
         "400":
           description: Invalid innovation payload
   /v1/{innovationId}/submit:
@@ -2716,10 +3436,20 @@ paths:
                 properties:
                   id:
                     type: string
-                    description: Innovation ID
+                    format: uuid
                   status:
                     type: string
-                    description: Innovation status
+                    enum:
+                      - CREATED
+                      - WAITING_NEEDS_ASSESSMENT
+                      - NEEDS_ASSESSMENT
+                      - IN_PROGRESS
+                      - WITHDRAWN
+                      - ARCHIVED
+                required:
+                  - id
+                  - status
+                additionalProperties: false
         "400":
           description: Bad request.
         "401":
@@ -2737,11 +3467,12 @@ paths:
       tags:
         - Innovation Suggestions
       parameters:
-        - in: path
-          name: innovationId
+        - name: innovationId
+          in: path
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         "200":
           description: OK
@@ -2755,11 +3486,31 @@ paths:
       tags:
         - Create Innovation Suggestion
       parameters:
-        - in: path
-          name: innovationId
+        - name: innovationId
+          in: path
           required: true
           schema:
             type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                description:
+                  type: string
+                  maxLength: 2000
+                organisationUnits:
+                  type: array
+                  items:
+                    type: string
+                  minItems: 1
+              required:
+                - description
+                - organisationUnits
+              additionalProperties: false
       responses:
         "201":
           description: Creates a suggestion.
@@ -2799,6 +3550,7 @@ paths:
                         - UNASSIGNED
                         - UNSUITABLE
                         - CLOSED
+                additionalProperties: false
         "400":
           description: Bad Request
         "401":
@@ -2880,15 +3632,19 @@ paths:
       tags:
         - Innovation Support
       parameters:
-        - in: path
-          name: innovationId
-          description: Unique innovation ID
+        - name: innovationId
+          in: path
           required: true
-        - in: path
-          name: supportId
+          schema:
+            type: string
+            format: uuid
+        - name: supportId
+          in: path
           required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
-        description: ""
         required: true
         content:
           application/json:
@@ -2898,18 +3654,21 @@ paths:
                 status:
                   type: string
                   enum:
-                    - SUGGESTED
                     - ENGAGING
                     - WAITING
-                    - UNASSIGNED
                     - UNSUITABLE
                     - CLOSED
+                  not:
+                    enum:
+                      - SUGGESTED
+                      - UNASSIGNED
                 message:
                   type: string
-                  maxLength: 400
+                  maxLength: 2000
               required:
                 - status
                 - message
+              additionalProperties: false
       responses:
         "200":
           description: Innovation ID
@@ -2918,11 +3677,11 @@ paths:
               schema:
                 type: object
                 properties:
-                  id:
-                    type: string
-                    format: uuid
+                  success:
+                    type: boolean
                 required:
-                  - id
+                  - success
+                additionalProperties: false
   /v1/{innovationId}/supports/{supportId}:
     get:
       description: Get supporting information for an Innovation
@@ -2930,19 +3689,59 @@ paths:
       tags:
         - "[v1] Innovation Support"
       parameters:
-        - in: path
-          name: innovationId
+        - name: innovationId
+          in: path
           required: true
           schema:
             type: string
-        - in: path
-          name: supportId
+            format: uuid
+        - name: supportId
+          in: path
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         "200":
           description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                    enum:
+                      - SUGGESTED
+                      - ENGAGING
+                      - WAITING
+                      - UNASSIGNED
+                      - UNSUITABLE
+                      - CLOSED
+                  engagingAccessors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        userRoleId:
+                          type: string
+                          format: uuid
+                        name:
+                          type: string
+                      required:
+                        - id
+                        - userRoleId
+                        - name
+                      additionalProperties: false
+                required:
+                  - id
+                additionalProperties: false
         "400":
           description: Bad Request
         "404":
@@ -2953,19 +3752,19 @@ paths:
       tags:
         - "[v1] Innovation Support"
       parameters:
-        - in: path
-          name: innovationId
-          description: Unique innovation ID
+        - name: innovationId
+          in: path
           required: true
           schema:
             type: string
-        - in: path
-          name: supportId
+            format: uuid
+        - name: supportId
+          in: path
           required: true
           schema:
             type: string
+            format: uuid
       requestBody:
-        description: ""
         required: true
         content:
           application/json:
@@ -2975,26 +3774,30 @@ paths:
                 status:
                   type: string
                   enum:
-                    - SUGGESTED
                     - ENGAGING
                     - WAITING
-                    - UNASSIGNED
                     - UNSUITABLE
                     - CLOSED
                 message:
                   type: string
-                  maxLength: 400
+                  maxLength: 4000
                 accessors:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      accessorId:
-                        type: string
-                        format: uuid
-                      organisationalUnitId:
-                        type: string
-                        format: uuid
+                  oneOf:
+                    - type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          userRoleId:
+                            type: string
+                            format: uuid
+                        required:
+                          - id
+                          - userRoleId
+                        additionalProperties: false
+                      x-required: true
               required:
                 - status
                 - message
@@ -3012,6 +3815,7 @@ paths:
                     format: uuid
                 required:
                   - id
+                additionalProperties: false
   /v1/{innovationId}/supports:
     post:
       description: Starts support in innovation.
@@ -3019,15 +3823,98 @@ paths:
       tags:
         - "[v1] Innovation Support"
       parameters:
-        - in: path
-          name: innovationId
+        - name: innovationId
+          in: path
           required: true
           schema:
             type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - ENGAGING
+                    - WAITING
+                    - UNSUITABLE
+                message:
+                  type: string
+                  maxLength: 4000
+                file:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      maxLength: 100
+                    description:
+                      type: string
+                      maxLength: 500
+                    file:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          maxLength: 100
+                        name:
+                          type: string
+                          maxLength: 100
+                        size:
+                          type: number
+                          format: float
+                        extension:
+                          type: string
+                          maxLength: 4
+                      required:
+                        - id
+                        - name
+                        - size
+                        - extension
+                      additionalProperties: false
+                  required:
+                    - name
+                    - file
+                  additionalProperties: false
+                accessors:
+                  oneOf:
+                    - type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          userRoleId:
+                            type: string
+                            format: uuid
+                        required:
+                          - id
+                          - userRoleId
+                        additionalProperties: false
+                      x-required: true
+              required:
+                - status
+                - message
+              additionalProperties: false
       responses:
         "201":
           description: Creates a new innovation support request for the innovation
             identified by the supplied Innovation ID.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                required:
+                  - id
+                additionalProperties: false
         "401":
           description: Unauthorised.
     get:
@@ -3036,19 +3923,88 @@ paths:
       tags:
         - "[v1] Innovation Support"
       parameters:
-        - in: path
-          name: innovationId
+        - name: innovationId
+          in: path
           required: true
           schema:
             type: string
-        - in: query
-          name: status
-          required: false
-          schema:
-            type: string
+            format: uuid
       responses:
         "200":
           description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    status:
+                      type: string
+                      enum:
+                        - SUGGESTED
+                        - ENGAGING
+                        - WAITING
+                        - UNASSIGNED
+                        - UNSUITABLE
+                        - CLOSED
+                    organisation:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        name:
+                          type: string
+                        acronym:
+                          type: string
+                        unit:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                            name:
+                              type: string
+                            acronym:
+                              type: string
+                          required:
+                            - id
+                            - name
+                            - acronym
+                          additionalProperties: false
+                      required:
+                        - id
+                        - name
+                        - acronym
+                      additionalProperties: false
+                    engagingAccessors:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          userRoleId:
+                            type: string
+                          name:
+                            type: string
+                          isActive:
+                            type: boolean
+                        required:
+                          - id
+                          - userRoleId
+                          - name
+                          - isActive
+                        additionalProperties: false
+                  required:
+                    - id
+                    - status
+                  additionalProperties: false
         "404":
           description: Not found
   /v1/{innovationId}/support-summary:
@@ -3464,10 +4420,12 @@ paths:
                 properties:
                   id:
                     type: string
+                    format: uuid
                     description: The innovation task id.
                     example: c0a80121-7ac0-464e-b8f6-27b88b0cda7f
                 required:
                   - id
+                additionalProperties: false
         "400":
           description: The innovation task could not be created.
         "401":
@@ -3515,22 +4473,88 @@ paths:
                     enum:
                       - OPEN
                       - DONE
-                      - CANCELED
                       - DECLINED
-                  description:
-                    type: string
+                      - CANCELLED
                   section:
                     type: string
+                    enum:
+                      - INNOVATION_DESCRIPTION
+                      - UNDERSTANDING_OF_NEEDS
+                      - EVIDENCE_OF_EFFECTIVENESS
+                      - MARKET_RESEARCH
+                      - CURRENT_CARE_PATHWAY
+                      - TESTING_WITH_USERS
+                      - REGULATIONS_AND_STANDARDS
+                      - INTELLECTUAL_PROPERTY
+                      - REVENUE_MODEL
+                      - COST_OF_INNOVATION
+                      - DEPLOYMENT
+                  descriptions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        description:
+                          type: string
+                        createdAt:
+                          type: string
+                          format: date-time
+                        name:
+                          type: string
+                        displayTag:
+                          type: string
+                      required:
+                        - description
+                        - createdAt
+                        - name
+                        - displayTag
+                      additionalProperties: false
+                  sameOrganisation:
+                    type: boolean
+                  threadId:
+                    type: string
+                    format: uuid
                   createdAt:
                     type: string
                     format: date-time
+                  updatedAt:
+                    type: string
+                    format: date-time
+                  updatedBy:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      displayTag:
+                        type: string
+                    required:
+                      - name
+                      - displayTag
+                    additionalProperties: false
                   createdBy:
                     type: object
                     properties:
                       name:
                         type: string
-                      organisationUnit:
+                      displayTag:
                         type: string
+                    required:
+                      - name
+                      - displayTag
+                    additionalProperties: false
+                required:
+                  - id
+                  - displayId
+                  - status
+                  - section
+                  - descriptions
+                  - sameOrganisation
+                  - threadId
+                  - createdAt
+                  - updatedAt
+                  - updatedBy
+                  - createdBy
+                additionalProperties: false
         "401":
           description: Unauthorized
         "403":
@@ -3545,16 +4569,16 @@ paths:
       parameters:
         - name: innovationId
           in: path
-          description: The innovation id.
           required: true
           schema:
             type: string
+            format: uuid
         - name: taskId
           in: path
-          description: The innovation task id.
           required: true
           schema:
             type: string
+            format: uuid
       requestBody:
         description: The innovation task data.
         required: true
@@ -3563,24 +4587,24 @@ paths:
             schema:
               type: object
               properties:
-                name:
-                  type: string
-                  description: The name of the task.
-                description:
-                  type: string
-                  description: The description of the task.
                 status:
+                  oneOf:
+                    - type: string
+                      enum:
+                        - OPEN
+                        - CANCELLED
+                      x-required: true
+                    - type: string
+                      enum:
+                        - DONE
+                        - DECLINED
+                      x-required: true
+                message:
                   type: string
-                  description: The status of the task.
-                assignee:
-                  type: string
-                  description: The assignee of the task.
-                dueDate:
-                  type: string
-                  description: The due date of the task.
-                comment:
-                  type: string
-                  description: The comment of the task.
+                  maxLength: 500
+              required:
+                - message
+              additionalProperties: false
       responses:
         "200":
           description: The innovation task has been updated.
@@ -3591,31 +4615,10 @@ paths:
                 properties:
                   id:
                     type: string
-                    description: The innovation task id.
-                  name:
-                    type: string
-                    description: The name of the task.
-                  description:
-                    type: string
-                    description: The description of the task.
-                  status:
-                    type: string
-                    description: The status of the task.
-                  assignee:
-                    type: string
-                    description: The assignee of the task.
-                  dueDate:
-                    type: string
-                    description: The due date of the task.
-                  comment:
-                    type: string
-                    description: The comment of the task.
-                  createdAt:
-                    type: string
-                    description: The date when the task was created.
-                  updatedAt:
-                    type: string
-                    description: The date when the task was updated.
+                    format: uuid
+                required:
+                  - id
+                additionalProperties: false
         "400":
           description: The innovation task data is invalid.
         "401":
@@ -3634,48 +4637,104 @@ paths:
         - name: skip
           in: query
           required: false
-          description: The number of records to skip.
           schema:
             type: integer
-            minimum: 0
         - name: take
           in: query
           required: false
-          description: The number of records to take.
           schema:
             type: integer
-            minimum: 1
             maximum: 100
+            default: 20
         - name: order
           in: query
           required: false
-          description: The order of the records.
           schema:
-            type: string
-        - name: status
-          in: query
-          required: false
-          description: The status of the task.
-          schema:
-            type: string
-        - name: section
-          in: query
-          required: false
-          description: The section of the task.
-          schema:
-            type: string
+            type: object
+            properties: {}
+            additionalProperties:
+              type: string
+              enum:
+                - ASC
+                - DESC
+            default:
+              default: DESC
         - name: innovationId
           in: query
           required: false
-          description: The innovation id of the task.
           schema:
             type: string
+            format: uuid
         - name: innovationName
           in: query
           required: false
-          description: The innovation name of the task.
           schema:
             type: string
+            nullable: true
+        - name: sections
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - INNOVATION_DESCRIPTION
+                - UNDERSTANDING_OF_NEEDS
+                - EVIDENCE_OF_EFFECTIVENESS
+                - MARKET_RESEARCH
+                - CURRENT_CARE_PATHWAY
+                - TESTING_WITH_USERS
+                - REGULATIONS_AND_STANDARDS
+                - INTELLECTUAL_PROPERTY
+                - REVENUE_MODEL
+                - COST_OF_INNOVATION
+                - DEPLOYMENT
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - OPEN
+                - DONE
+                - DECLINED
+                - CANCELLED
+        - name: innovationStatus
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - CREATED
+                - WAITING_NEEDS_ASSESSMENT
+                - NEEDS_ASSESSMENT
+                - IN_PROGRESS
+                - WITHDRAWN
+                - ARCHIVED
+        - name: createdByMe
+          in: query
+          required: false
+          schema:
+            type: boolean
+        - name: allTasks
+          in: query
+          required: false
+          schema:
+            type: boolean
+        - name: fields
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - notifications
       responses:
         "200":
           description: The list of innovation tasks.
@@ -3686,48 +4745,95 @@ paths:
                 properties:
                   count:
                     type: integer
-                    description: The total number of records.
                   data:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                          description: The id of the task.
-                        displayId:
-                          type: string
-                          description: The display id of the task.
-                        status:
-                          type: string
-                          description: The status of the task.
-                        description:
-                          type: string
-                          description: The description of the task.
-                        section:
-                          type: string
-                          description: The section of the task.
-                        createdAt:
-                          type: string
-                          description: The date the task was created.
-                        updatedAt:
-                          type: string
-                          description: The date the task was last updated.
-                        innovation:
-                          type: object
-                          properties:
-                            id:
-                              type: string
-                              description: The id of the innovation.
-                            name:
-                              type: string
-                              description: The name of the innovation.
-                        notifications:
-                          type: object
-                          properties:
-                            count:
-                              type: integer
-                              description: The number of notifications for the task.
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      displayId:
+                        type: string
+                      innovation:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          name:
+                            type: string
+                        required:
+                          - id
+                          - name
+                        additionalProperties: false
+                      status:
+                        type: string
+                        enum:
+                          - OPEN
+                          - DONE
+                          - DECLINED
+                          - CANCELLED
+                      section:
+                        type: string
+                        enum:
+                          - INNOVATION_DESCRIPTION
+                          - UNDERSTANDING_OF_NEEDS
+                          - EVIDENCE_OF_EFFECTIVENESS
+                          - MARKET_RESEARCH
+                          - CURRENT_CARE_PATHWAY
+                          - TESTING_WITH_USERS
+                          - REGULATIONS_AND_STANDARDS
+                          - INTELLECTUAL_PROPERTY
+                          - REVENUE_MODEL
+                          - COST_OF_INNOVATION
+                          - DEPLOYMENT
+                      sameOrganisation:
+                        type: boolean
+                      notifications:
+                        type: integer
+                      createdAt:
+                        type: string
+                        format: date-time
+                      createdBy:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          displayTag:
+                            type: string
+                        required:
+                          - name
+                          - displayTag
+                        additionalProperties: false
+                      updatedAt:
+                        type: string
+                        format: date-time
+                      updatedBy:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          displayTag:
+                            type: string
+                        required:
+                          - name
+                          - displayTag
+                        additionalProperties: false
+                    required:
+                      - id
+                      - displayId
+                      - innovation
+                      - status
+                      - section
+                      - sameOrganisation
+                      - notifications
+                      - createdAt
+                      - createdBy
+                      - updatedAt
+                      - updatedBy
+                    additionalProperties: false
+                required:
+                  - count
+                additionalProperties: false
         "400":
           description: The request is invalid.
         "401":
@@ -3743,14 +4849,78 @@ paths:
       tags:
         - "[v1] Innovation Threads Available Recipients"
       parameters:
-        - in: path
-          name: innovationId
+        - name: innovationId
+          in: path
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         "200":
           description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    status:
+                      type: string
+                      enum:
+                        - ENGAGING
+                        - WAITING
+                        - SUGGESTED
+                        - PREVIOUS_ENGAGED
+                    organisation:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        name:
+                          type: string
+                        acronym:
+                          type: string
+                        unit:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                            name:
+                              type: string
+                            acronym:
+                              type: string
+                          required:
+                            - id
+                            - name
+                            - acronym
+                          additionalProperties: false
+                      required:
+                        - id
+                        - name
+                        - acronym
+                      additionalProperties: false
+                    recipients:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        name:
+                          type: string
+                      required:
+                        - id
+                        - name
+                      additionalProperties: false
+                  required:
+                    - id
+                    - organisation
+                  additionalProperties: false
         "404":
           description: Not found
   /v1/{innovationId}/threads:
@@ -3763,10 +4933,10 @@ paths:
       parameters:
         - name: innovationId
           in: path
-          description: The innovation id.
           required: true
           schema:
             type: string
+            format: uuid
       requestBody:
         description: The thread details.
         required: true
@@ -3777,15 +4947,54 @@ paths:
               properties:
                 subject:
                   type: string
-                  description: The thread subject.
-                  example: Subject
+                  maxLength: 200
                 message:
                   type: string
-                  description: The thread message.
-                  example: Message
+                  maxLength: 4000
+                file:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      maxLength: 100
+                    description:
+                      type: string
+                      maxLength: 500
+                    file:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          maxLength: 100
+                        name:
+                          type: string
+                          maxLength: 100
+                        size:
+                          type: number
+                          format: float
+                        extension:
+                          type: string
+                          maxLength: 4
+                      required:
+                        - id
+                        - name
+                        - size
+                        - extension
+                      additionalProperties: false
+                  required:
+                    - name
+                    - file
+                  additionalProperties: false
+                followerUserRoleIds:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
               required:
                 - subject
                 - message
+                - followerUserRoleIds
+              additionalProperties: false
       responses:
         "200":
           description: The thread was created successfully.
@@ -3794,28 +5003,12 @@ paths:
               schema:
                 type: object
                 properties:
-                  thread:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                        description: The thread id.
-                        example: 00000000-0000-0000-0000-000000000000
-                      subject:
-                        type: string
-                        description: The thread subject.
-                        example: Subject
-                      createdBy:
-                        type: object
-                        properties:
-                          id:
-                            type: string
-                            description: The user id.
-                            example: 00000000-0000-0000-0000-000000000000
-                      createdAt:
-                        type: string
-                        description: The thread creation date.
-                        example: 2021-01-01T00:00:00.000Z
+                  id:
+                    type: string
+                    format: uuid
+                required:
+                  - id
+                additionalProperties: false
         "400":
           description: The request was invalid.
         "401":
@@ -3879,7 +5072,7 @@ paths:
                 type: object
                 properties:
                   count:
-                    type: number
+                    type: integer
                   data:
                     type: array
                     items:
@@ -3887,33 +5080,57 @@ paths:
                       properties:
                         id:
                           type: string
+                          format: uuid
                         subject:
                           type: string
-                        messageCount:
-                          type: number
-                        hasUnreadNotifications:
-                          type: boolean
                         createdBy:
                           type: object
                           properties:
                             id:
                               type: string
+                              format: uuid
                             displayTeam:
                               type: string
+                          required:
+                            - id
+                          additionalProperties: false
                         lastMessage:
                           type: object
                           properties:
                             id:
                               type: string
+                              format: uuid
                             createdAt:
                               type: string
+                              format: date-time
                             createdBy:
                               type: object
                               properties:
                                 id:
                                   type: string
+                                  format: uuid
                                 displayTeam:
                                   type: string
+                              required:
+                                - id
+                              additionalProperties: false
+                          required:
+                            - id
+                            - createdAt
+                          additionalProperties: false
+                        messageCount:
+                          type: integer
+                        hasUnreadNotifications:
+                          type: boolean
+                      required:
+                        - id
+                        - subject
+                        - messageCount
+                        - hasUnreadNotifications
+                      additionalProperties: false
+                required:
+                  - count
+                additionalProperties: false
         "401":
           description: Unauthorized
         "403":
@@ -3948,26 +5165,63 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  participants:
-                    type: array
-                    items:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    followers:
                       type: object
                       properties:
                         id:
                           type: string
+                          format: uuid
                         name:
                           type: string
-                        type:
-                          type: string
+                        isLocked:
+                          type: boolean
+                        isOwner:
+                          type: boolean
+                        role:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                            role:
+                              type: string
+                              enum:
+                                - ADMIN
+                                - INNOVATOR
+                                - ACCESSOR
+                                - ASSESSMENT
+                                - QUALIFYING_ACCESSOR
+                          required:
+                            - id
+                            - role
+                          additionalProperties: false
                         organisationUnit:
                           type: object
                           properties:
                             id:
                               type: string
+                              format: uuid
+                            name:
+                              type: string
                             acronym:
                               type: string
+                          required:
+                            - id
+                            - name
+                            - acronym
+                          additionalProperties: false
+                          nullable: true
+                      required:
+                        - id
+                        - name
+                        - isLocked
+                        - organisationUnit
+                      additionalProperties: false
+                  additionalProperties: false
         "401":
           description: Unauthorized
         "403":
@@ -4067,16 +5321,16 @@ paths:
       parameters:
         - name: innovationId
           in: path
-          description: Innovation Id
           required: true
           schema:
             type: string
+            format: uuid
         - name: threadId
           in: path
-          description: Thread Id
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         "200":
           description: Success
@@ -4087,19 +5341,46 @@ paths:
                 properties:
                   id:
                     type: string
+                    format: uuid
                   subject:
                     type: string
+                  context:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        enum:
+                          - NEEDS_ASSESSMENT
+                          - SUPPORT
+                          - TASK
+                          - ORGANISATION_SUGGESTION
+                      id:
+                        type: string
+                        format: uuid
+                    required:
+                      - type
+                      - id
+                    additionalProperties: false
                   createdAt:
                     type: string
+                    format: date-time
                   createdBy:
                     type: object
                     properties:
                       id:
                         type: string
+                        format: uuid
                       name:
                         type: string
-                      type:
-                        type: string
+                    required:
+                      - id
+                      - name
+                    additionalProperties: false
+                required:
+                  - id
+                  - subject
+                  - createdAt
+                additionalProperties: false
         "401":
           description: Unauthorized
         "403":
@@ -4117,16 +5398,16 @@ paths:
       parameters:
         - name: innovationId
           in: path
-          description: Innovation ID
           required: true
           schema:
             type: string
+            format: uuid
         - name: threadId
           in: path
-          description: Thread ID
           required: true
           schema:
             type: string
+            format: uuid
       requestBody:
         description: Message to be created.
         required: true
@@ -4137,7 +5418,44 @@ paths:
               properties:
                 message:
                   type: string
-                  description: Message to be created.
+                  maxLength: 4000
+                file:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      maxLength: 100
+                    description:
+                      type: string
+                      maxLength: 500
+                    file:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          maxLength: 100
+                        name:
+                          type: string
+                          maxLength: 100
+                        size:
+                          type: number
+                          format: float
+                        extension:
+                          type: string
+                          maxLength: 4
+                      required:
+                        - id
+                        - name
+                        - size
+                        - extension
+                      additionalProperties: false
+                  required:
+                    - name
+                    - file
+                  additionalProperties: false
+              required:
+                - message
+              additionalProperties: false
       responses:
         "200":
           description: Message created.
@@ -4149,27 +5467,37 @@ paths:
                   threadMessage:
                     type: object
                     properties:
-                      id:
-                        type: string
-                        description: Message ID.
-                      message:
-                        type: string
-                        description: Message.
                       createdBy:
                         type: object
                         properties:
                           id:
                             type: string
-                            description: User ID.
+                            format: uuid
                           identityId:
                             type: string
-                            description: User identity ID.
-                      createdAt:
+                        required:
+                          - id
+                          - identityId
+                        additionalProperties: false
+                      id:
                         type: string
-                        description: Date when the message was created.
+                        format: uuid
+                      message:
+                        type: string
                       isEditable:
                         type: boolean
-                        description: Flag to indicate if the message can be edited.
+                      createdAt:
+                        type: string
+                        format: date-time
+                    required:
+                      - id
+                      - message
+                      - isEditable
+                      - createdAt
+                    additionalProperties: false
+                required:
+                  - threadMessage
+                additionalProperties: false
         "400":
           description: Bad request.
         "401":
@@ -4208,7 +5536,7 @@ paths:
                 type: object
                 properties:
                   count:
-                    type: number
+                    type: integer
                   messages:
                     type: array
                     items:
@@ -4216,43 +5544,7 @@ paths:
                       properties:
                         id:
                           type: string
-                        createdAt:
-                          type: string
-                        createdBy:
-                          type: object
-                          properties:
-                            id:
-                              type: string
-                            name:
-                              type: string
-                            type:
-                              type: string
-                              enum:
-                                - INNOVATOR
-                                - ASSESSOR
-                                - ACCESSOR
-                            organisationUnit:
-                              type: object
-                              properties:
-                                id:
-                                  type: string
-                                name:
-                                  type: string
-                                acronym:
-                                  type: string
-                            organisation:
-                              type: object
-                              properties:
-                                id:
-                                  type: string
-                                name:
-                                  type: string
-                                acronym:
-                                  type: string
-                        isEditable:
-                          type: boolean
-                        isNew:
-                          type: boolean
+                          format: uuid
                         message:
                           type: string
                         file:
@@ -4260,12 +5552,87 @@ paths:
                           properties:
                             id:
                               type: string
+                              format: uuid
                             name:
                               type: string
                             url:
                               type: string
+                          required:
+                            - id
+                            - name
+                            - url
+                          additionalProperties: false
+                        createdAt:
+                          type: string
+                          format: date-time
+                        isNew:
+                          type: boolean
+                        isEditable:
+                          type: boolean
+                        createdBy:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                            name:
+                              type: string
+                            role:
+                              type: string
+                            isOwner:
+                              type: boolean
+                            organisation:
+                              type: object
+                              properties:
+                                id:
+                                  type: string
+                                  format: uuid
+                                name:
+                                  type: string
+                                acronym:
+                                  type: string
+                                  nullable: true
+                              required:
+                                - id
+                                - name
+                                - acronym
+                              additionalProperties: false
+                            organisationUnit:
+                              type: object
+                              properties:
+                                id:
+                                  type: string
+                                  format: uuid
+                                name:
+                                  type: string
+                                acronym:
+                                  type: string
+                                  nullable: true
+                              required:
+                                - id
+                                - name
+                                - acronym
+                              additionalProperties: false
+                          required:
+                            - id
+                            - name
+                            - role
+                            - isOwner
+                          additionalProperties: false
                         updatedAt:
                           type: string
+                          format: date-time
+                      required:
+                        - id
+                        - message
+                        - createdAt
+                        - isNew
+                        - isEditable
+                        - updatedAt
+                      additionalProperties: false
+                required:
+                  - count
+                additionalProperties: false
         "400":
           description: Bad request
         "401":
@@ -4285,22 +5652,22 @@ paths:
       parameters:
         - name: innovationId
           in: path
-          description: Innovation ID
           required: true
           schema:
             type: string
+            format: uuid
         - name: threadId
           in: path
-          description: Thread ID
           required: true
           schema:
             type: string
+            format: uuid
         - name: messageId
           in: path
-          description: Message ID
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         "200":
           description: Success
@@ -4311,13 +5678,17 @@ paths:
                 properties:
                   id:
                     type: string
-                    description: Message ID
+                    format: uuid
                   message:
                     type: string
-                    description: Message
                   createdAt:
                     type: string
-                    description: Message creation date
+                    format: date-time
+                required:
+                  - id
+                  - message
+                  - createdAt
+                additionalProperties: false
         "401":
           description: Unauthorized
         "403":
@@ -4335,24 +5706,23 @@ paths:
       parameters:
         - name: innovationId
           in: path
-          description: Innovation Id
           required: true
           schema:
             type: string
+            format: uuid
         - name: threadId
           in: path
-          description: Thread Id
           required: true
           schema:
             type: string
+            format: uuid
         - name: messageId
           in: path
-          description: Message Id
           required: true
           schema:
             type: string
+            format: uuid
       requestBody:
-        description: Message
         required: true
         content:
           application/json:
@@ -4361,7 +5731,10 @@ paths:
               properties:
                 message:
                   type: string
-                  description: Message
+                  maxLength: 4000
+              required:
+                - message
+              additionalProperties: false
       responses:
         "200":
           description: Success
@@ -4372,7 +5745,11 @@ paths:
                 properties:
                   id:
                     type: string
+                    format: uuid
                     description: Message Id
+                required:
+                  - id
+                additionalProperties: false
         "400":
           description: Bad Request
         "401":
@@ -4388,11 +5765,12 @@ paths:
       description: Get details of pending innovations transfers
       operationId: v1-innovation-transfer-check
       parameters:
-        - in: path
-          name: transferId
+        - name: transferId
+          in: path
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         "200":
           description: Ok
@@ -4403,7 +5781,9 @@ paths:
                 properties:
                   userExists:
                     type: boolean
-                    description: User exists in service
+                required:
+                  - userExists
+                additionalProperties: false
         "404":
           description: The innovation transfer does not exist
   /v1/transfers:
@@ -4412,10 +5792,25 @@ paths:
       operationId: createInnovationTransfer
       parameters: []
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                innovationId:
+                  type: string
+                  format: uuid
+                ownerToCollaborator:
+                  type: boolean
+              required:
+                - email
+                - innovationId
+                - ownerToCollaborator
+              additionalProperties: false
       responses:
         "200":
           description: Success
@@ -4423,6 +5818,13 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                required:
+                  - id
+                additionalProperties: false
         "400":
           description: Bad Request
           content:
@@ -4437,13 +5839,38 @@ paths:
       parameters: []
       responses:
         "200":
-          description: Success
+          description: The innovation assessment has been created.
           content:
             application/json:
               schema:
                 type: array
                 items:
                   type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    email:
+                      type: string
+                    innovation:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        name:
+                          type: string
+                        owner:
+                          type: string
+                      required:
+                        - id
+                        - name
+                      additionalProperties: false
+                  required:
+                    - id
+                    - email
+                    - innovation
+                  additionalProperties: false
   /v1/transfers/{transferId}:
     get:
       description: Get an innovation transfer
@@ -4454,6 +5881,7 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         "200":
           description: Success
@@ -4461,6 +5889,38 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  email:
+                    type: string
+                  innovation:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      name:
+                        type: string
+                      owner:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                        required:
+                          - name
+                        additionalProperties: false
+                    required:
+                      - id
+                      - name
+                      - owner
+                    additionalProperties: false
+                required:
+                  - id
+                  - email
+                  - innovation
+                additionalProperties: false
         "404":
           description: Not Found
           content:
@@ -4474,9 +5934,9 @@ paths:
         - name: transferId
           in: path
           required: true
-          description: The innovation transfer id
           schema:
             type: string
+            format: uuid
       requestBody:
         description: The innovation transfer status
         required: true
@@ -4484,9 +5944,30 @@ paths:
           application/json:
             schema:
               type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - CANCELED
+                    - DECLINED
+                    - COMPLETED
+              required:
+                - status
+              additionalProperties: false
       responses:
         "204":
           description: The innovation transfer status has been updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                required:
+                  - id
+                additionalProperties: false
         "400":
           description: The innovation transfer status is invalid
         "401":
@@ -4552,6 +6033,10 @@ paths:
                 properties:
                   id:
                     type: string
+                    format: uuid
+                required:
+                  - id
+                additionalProperties: false
         "400":
           description: The request is invalid.
         "401":
@@ -4615,13 +6100,13 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  count:
-                    type: number
-                  data:
-                    type: array
-                    items:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    count:
+                      type: integer
+                    data:
                       type: object
                       properties:
                         id:
@@ -4643,9 +6128,19 @@ paths:
                               type: string
                             displayTeam:
                               type: string
+                          required:
+                            - name
+                          additionalProperties: false
                         createdAt:
                           type: string
                           format: date-time
+                      required:
+                        - id
+                        - createdAt
+                      additionalProperties: false
+                  required:
+                    - count
+                  additionalProperties: false
         "400":
           description: The request is invalid.
         "401":
@@ -4698,12 +6193,12 @@ paths:
                   createdBy:
                     type: object
                     properties:
-                      name:
-                        type: string
+                      name: {}
                       displayRole:
                         type: string
-                      displayTeam:
+                      displayType:
                         type: string
+                    additionalProperties: false
                   createdAt:
                     type: string
                     format: date-time
@@ -4712,9 +6207,18 @@ paths:
                     properties:
                       name:
                         type: string
+                    required:
+                      - name
+                    additionalProperties: false
                   updatedAt:
                     type: string
                     format: date-time
+                required:
+                  - id
+                  - requestReason
+                  - createdAt
+                  - updatedAt
+                additionalProperties: false
         "400":
           description: The request is invalid.
         "401":
@@ -4789,9 +6293,11 @@ paths:
               schema:
                 type: object
                 properties:
-                  id:
-                    type: string
-                    description: Unique identifier for innovation object
+                  overdue:
+                    type: integer
+                required:
+                  - overdue
+                additionalProperties: false
         "400":
           description: Invalid innovation payload
   /v1/search:
@@ -5064,15 +6570,27 @@ paths:
             description: Id of the innovation.
       responses:
         "200":
-          description: OK
+          description: The innovation assessment has been created.
           content:
             application/json:
               schema:
                 type: object
                 properties:
                   validations:
-                    type: object
-                    description: Validation data.
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        rule:
+                          type: string
+                        valid:
+                          type: boolean
+                        details: {}
+                      required:
+                        - rule
+                        - valid
+                      additionalProperties: false
+                additionalProperties: false
         "400":
           description: Bad request.
         "401":
@@ -5092,7 +6610,17 @@ paths:
             application/json:
               schema:
                 type: object
-                properties: {}
+                properties:
+                  version:
+                    type: integer
+                  schema:
+                    type: object
+                    properties: {}
+                    additionalProperties: false
+                required:
+                  - version
+                  - schema
+                additionalProperties: false
         "400":
           description: Bad request
         "401":

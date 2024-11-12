@@ -11,7 +11,7 @@ import { container } from '../_config';
 
 import type { InnovationExportRequestService } from '../_services/innovation-export-request.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1InnovationsExportRequestsCreate {
@@ -54,17 +54,9 @@ export default openApi(
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       requestBody: SwaggerHelper.bodyJ2S(BodySchema),
       responses: {
-        201: {
-          description: 'Creates a new export request',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: { id: { type: 'string' } }
-              }
-            }
-          }
-        },
+        201: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+          description: 'Creates a new export request'
+        }),
         400: { description: 'The request is invalid.' },
         401: { description: 'The user is not authenticated.' },
         403: { description: 'The user is not authorized to access this resource.' },

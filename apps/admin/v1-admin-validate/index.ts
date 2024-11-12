@@ -10,7 +10,7 @@ import { container } from '../_config';
 
 import SHARED_SYMBOLS from '@admin/shared/services/symbols';
 import { validationsHelper } from '../_config/admin-operations.config';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType, QueryParamsSchema, QueryParamsType } from './validation.schemas';
 import { ValidationHandlersHelper } from '../_handlers/validations/validations.handlers.helper';
 
@@ -48,22 +48,9 @@ export default openApi(V1AdminValidate.httpTrigger as AzureFunction, '/v1/users/
     operationId: 'v1-admin-validate',
     parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     responses: {
-      '200': {
-        description: 'OK',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                validations: {
-                  type: 'object',
-                  description: 'Validation data.'
-                }
-              }
-            }
-          }
-        }
-      },
+      '200': SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: 'OK'
+      }),
       '400': { description: 'Bad request.' },
       '401': { description: 'The user is not authorized to access validation data.' },
       '500': { description: 'An error occurred while fetching the validation data.' }

@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@users/shared/decorators';
-import {  ResponseHelper } from '@users/shared/helpers';
+import { ResponseHelper, SwaggerHelper } from '@users/shared/helpers';
 import type { AuthorizationService } from '@users/shared/services';
 import SHARED_SYMBOLS from '@users/shared/services/symbols';
 import type { CustomContextType } from '@users/shared/types';
@@ -11,7 +11,7 @@ import { container } from '../_config';
 
 import SYMBOLS from '../_services/symbols';
 import type { UsersService } from '../_services/users.service';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 
 class V1MeMfaInfo {
   @JwtDecoder()
@@ -20,12 +20,13 @@ class V1MeMfaInfo {
     const usersService = container.get<UsersService>(SYMBOLS.UsersService);
 
     try {
-      const auth = await authorizationService.validate(context)
-      .checkInnovatorType()
-      .checkAssessmentType()
-      .checkAccessorType()
-      .checkAdminType()
-      .verify();
+      const auth = await authorizationService
+        .validate(context)
+        .checkInnovatorType()
+        .checkAssessmentType()
+        .checkAccessorType()
+        .checkAdminType()
+        .verify();
 
       const result = await usersService.getUserMfaInfo(auth.getContext());
 
@@ -44,20 +45,9 @@ export default openApi(V1MeMfaInfo.httpTrigger as AzureFunction, '/v1/me/mfa', {
     operationId: 'v1-me-mfa-info',
     tags: ['[v1] Users'],
     responses: {
-      200: {
-        description: 'Success',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                type: { type: 'string', enum: ['none', 'email', 'phone'] },
-                phoneNumber: { type: 'string' },
-              }
-            }
-          }
-        }
-      },
+      200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: 'Success'
+      }),
       400: { description: 'Bad Request' },
       401: { description: 'Unauthorized' },
       403: { description: 'Forbidden' },
