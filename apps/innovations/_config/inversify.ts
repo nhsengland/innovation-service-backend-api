@@ -1,5 +1,7 @@
 import { container } from '@innovations/shared/config/inversify.config';
 
+import SYMBOLS from '../_services/symbols';
+
 import { ExportFileService } from '../_services/export-file-service';
 import { InnovationAssessmentsService } from '../_services/innovation-assessments.service';
 import { InnovationCollaboratorsService } from '../_services/innovation-collaborators.service';
@@ -15,7 +17,7 @@ import { InnovationsService } from '../_services/innovations.service';
 import { StatisticsService } from '../_services/statistics.service';
 import { SearchService } from '../_services/search.service';
 import { ValidationService } from '../_services/validation.service';
-import SYMBOLS from '../_services/symbols';
+import { SurveysService } from '../_services/surveys.service';
 
 // Specific inversify container configuration.
 container.bind<InnovationTasksService>(SYMBOLS.InnovationTasksService).to(InnovationTasksService).inSingletonScope();
@@ -57,5 +59,6 @@ container.bind<ExportFileService>(SYMBOLS.ExportFileService).to(ExportFileServic
 container.bind<StatisticsService>(SYMBOLS.StatisticsService).to(StatisticsService).inSingletonScope();
 container.bind<ValidationService>(SYMBOLS.ValidationService).to(ValidationService).inSingletonScope();
 container.bind<SearchService>(SYMBOLS.SearchService).to(SearchService).inSingletonScope();
+container.bind<SurveysService>(SYMBOLS.SurveysService).to(SurveysService).inSingletonScope();
 
 export { container };

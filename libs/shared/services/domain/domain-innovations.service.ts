@@ -1,5 +1,5 @@
 import type { DataSource, EntityManager, Repository } from 'typeorm';
-import { In } from 'typeorm';
+import { In, Brackets } from 'typeorm';
 
 import { cloneDeep } from 'lodash';
 import { EXPIRATION_DATES } from '../../constants';
@@ -1067,6 +1067,35 @@ export class DomainInnovationsService {
       .getRawMany(); // Using raw to avoid needless columns and Promise.all cause of lazy
 
     return res.map(r => r.unit_id);
+  }
+
+  // NOTE: For now is just retorning roleId, but can be further extended for other things if needed.
+  async getInnovationInnovatorsRoleId(innovationId: string, entityManager?: EntityManager): Promise<string[]> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const users = await em
+      .createQueryBuilder(UserRoleEntity, 'role')
+      .select(['role.id'])
+      .innerJoinAndMapOne(
+        'innovation',
+        InnovationEntity,
+        'innovation',
+        'innovation.id = :innovationId AND innovation.deleted_at IS NULL',
+        { innovationId }
+      )
+      .leftJoin('innovation.collaborators', 'collaborator', 'collaborator.status = :activeStatus', {
+        activeStatus: InnovationCollaboratorStatusEnum.ACTIVE
+      })
+      .where('role.isActive = 1')
+      .andWhere(
+        new Brackets(qp => {
+          qp.where('role.user_id = innovation.owner_id');
+          qp.orWhere('role.user_id = collaborator.user_id');
+        })
+      )
+      .getMany();
+
+    return users.map(r => r.id);
   }
 
   /**

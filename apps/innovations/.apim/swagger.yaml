@@ -2603,6 +2603,7 @@ paths:
                             - SUGGESTED
                             - ENGAGING
                             - WAITING
+                            - UNASSIGNED
                             - UNSUITABLE
                             - CLOSED
                         organisationUnitId:
@@ -3645,12 +3646,12 @@ paths:
                   enum:
                     - ENGAGING
                     - WAITING
-                    - UNASSIGNED
                     - UNSUITABLE
                     - CLOSED
                   not:
                     enum:
                       - SUGGESTED
+                      - UNASSIGNED
                 message:
                   type: string
                   maxLength: 2000
@@ -3707,6 +3708,7 @@ paths:
                       - SUGGESTED
                       - ENGAGING
                       - WAITING
+                      - UNASSIGNED
                       - UNSUITABLE
                       - CLOSED
                   engagingAccessors:
@@ -3764,7 +3766,6 @@ paths:
                   enum:
                     - ENGAGING
                     - WAITING
-                    - UNASSIGNED
                     - UNSUITABLE
                     - CLOSED
                 message:
@@ -3937,6 +3938,7 @@ paths:
                         - SUGGESTED
                         - ENGAGING
                         - WAITING
+                        - UNASSIGNED
                         - UNSUITABLE
                         - CLOSED
                     organisation:
