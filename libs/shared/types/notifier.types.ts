@@ -59,7 +59,6 @@ export type NotifierTemplatesType = {
   // // Archive
   [NotifierTypeEnum.INNOVATION_ARCHIVE]: {
     innovationId: string;
-    message: string;
     previousStatus: InnovationStatusEnum;
     reassessment: boolean;
     affectedUsers: {

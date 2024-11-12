@@ -674,7 +674,6 @@ export class InnovationAssessmentsService extends BaseService {
           lastAssessmentRequestAt: now,
           status: InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
           statusUpdatedAt: now,
-          archivedStatus: null,
           archiveReason: null,
           updatedBy: assessment.createdBy,
           currentAssessment: { id: assessment.id },

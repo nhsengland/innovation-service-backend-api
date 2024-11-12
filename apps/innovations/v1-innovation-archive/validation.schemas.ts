@@ -1,6 +1,6 @@
 import Joi from 'joi';
 
-import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
+import { InnovationArchiveReasonEnum } from '@innovations/shared/enums';
 import { JoiHelper } from '@innovations/shared/helpers';
 
 export type ParamsType = {
@@ -11,8 +11,16 @@ export const ParamsSchema = Joi.object<ParamsType>({
 }).required();
 
 export type BodyType = {
-  message: string;
+  reason: InnovationArchiveReasonEnum;
 };
 export const BodySchema = Joi.object<BodyType>({
-  message: JoiHelper.AppCustomJoi().string().max(TEXTAREA_LENGTH_LIMIT.xl).required()
+  reason: Joi.string()
+    .valid(
+      InnovationArchiveReasonEnum.DEVELOP_FURTHER,
+      InnovationArchiveReasonEnum.HAVE_ALL_SUPPORT,
+      InnovationArchiveReasonEnum.DECIDED_NOT_TO_PURSUE,
+      InnovationArchiveReasonEnum.ALREADY_LIVE_NHS,
+      InnovationArchiveReasonEnum.OTHER_DONT_WANT_TO_SAY
+    )
+    .required()
 }).required();

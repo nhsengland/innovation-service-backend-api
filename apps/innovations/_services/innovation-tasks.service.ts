@@ -134,17 +134,18 @@ export class InnovationTasksService extends BaseService {
       if (!filters.allTasks) {
         query.andWhere('task.innovation_support_id IS NULL');
       }
-      query.andWhere(
-        '(innovation.status IN (:...assessmentInnovationStatus) OR (innovation.status = :innovationArchivedStatus AND innovation.archivedStatus IN (:...assessmentInnovationStatus)))',
-        {
-          assessmentInnovationStatus: [
-            InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
-            InnovationStatusEnum.NEEDS_ASSESSMENT,
-            InnovationStatusEnum.IN_PROGRESS
-          ],
-          innovationArchivedStatus: InnovationStatusEnum.ARCHIVED
-        }
-      );
+      query
+        // leaving for now but almost sure it's equivalent to not withdrawn
+        // .andWhere('innovation.status IN (:...assessmentInnovationStatus)', {
+        //   assessmentInnovationStatus: [
+        //     InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
+        //     InnovationStatusEnum.NEEDS_ASSESSMENT,
+        //     InnovationStatusEnum.IN_PROGRESS,
+        //     InnovationStatusEnum.ARCHIVED
+        //   ]
+        // })
+        .andWhere('innovation.status != :withdrawn', { withdrawn: InnovationStatusEnum.WITHDRAWN })
+        .andWhere('innovation.submittedAt IS NOT NULL');
     }
 
     if (isAccessorDomainContextType(domainContext)) {

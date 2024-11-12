@@ -51,9 +51,6 @@ export class InnovationListView {
   @ViewColumn({ name: 'status_updated_at' })
   statusUpdatedAt: Date;
 
-  @ViewColumn({ name: 'archived_status' })
-  archivedStatus: InnovationStatusEnum | null;
-
   @ViewColumn({ name: 'grouped_status' })
   groupedStatus: InnovationGroupedStatusEnum;
 
