@@ -1,9 +1,9 @@
 import azureFunction from '.';
 
+import { InnovationArchiveReasonEnum } from '@innovations/shared/enums';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@innovations/shared/tests';
 import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@innovations/shared/types';
-import { randText } from '@ngneat/falso';
 import { InnovationsService } from '../_services/innovations.service';
 import type { BodyType, ParamsType } from './validation.schemas';
 
@@ -38,7 +38,7 @@ describe('v1-innovation-archive Suite', () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.johnInnovator)
         .setParams<ParamsType>({ innovationId })
-        .setBody<BodyType>({ message: randText() })
+        .setBody<BodyType>({ reason: InnovationArchiveReasonEnum.ALREADY_LIVE_NHS })
         .call<never>(azureFunction);
 
       expect(result.body).toBeUndefined();
@@ -59,7 +59,7 @@ describe('v1-innovation-archive Suite', () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(user)
         .setParams<ParamsType>({ innovationId })
-        .setBody<BodyType>({ message: randText() })
+        .setBody<BodyType>({ reason: InnovationArchiveReasonEnum.ALREADY_LIVE_NHS })
         .call<ErrorResponseType>(azureFunction);
 
       expect(result.status).toBe(status);

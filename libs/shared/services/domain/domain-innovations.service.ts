@@ -1,5 +1,5 @@
 import type { DataSource, EntityManager, Repository } from 'typeorm';
-import { In, Brackets } from 'typeorm';
+import { Brackets, In } from 'typeorm';
 
 import { cloneDeep } from 'lodash';
 import { EXPIRATION_DATES } from '../../constants';
@@ -25,6 +25,7 @@ import { InnovationGroupedStatusEnum } from '../../enums';
 import {
   ActivityEnum,
   ActivityTypeEnum,
+  InnovationArchiveReasonEnum,
   InnovationCollaboratorStatusEnum,
   InnovationExportRequestStatusEnum,
   InnovationStatusEnum,
@@ -102,7 +103,7 @@ export class DomainInnovationsService {
           [
             {
               id: innovation.id,
-              reason: 'The owner deleted their account and the request to transfer ownership expired.'
+              reason: InnovationArchiveReasonEnum.OWNER_ACCOUNT_DELETED
             }
           ],
           em
@@ -244,13 +245,13 @@ export class DomainInnovationsService {
    */
   async archiveInnovations(
     domainContext: DomainContextType,
-    innovations: { id: string; reason: string }[],
+    innovations: { id: string; reason: InnovationArchiveReasonEnum }[],
     entityManager?: EntityManager
   ): Promise<
     {
       id: string;
       prevStatus: InnovationStatusEnum;
-      reason: string;
+      reason: InnovationArchiveReasonEnum;
       affectedUsers: { userId: string; userType: ServiceRoleEnum; unitId?: string }[];
       isReassessment: boolean;
     }[]
@@ -408,7 +409,6 @@ export class DomainInnovationsService {
           InnovationEntity,
           { id: innovation.id },
           {
-            archivedStatus: () => 'status',
             status: InnovationStatusEnum.ARCHIVED,
             archiveReason: innovation.reason,
             statusUpdatedAt: archivedAt,
@@ -456,7 +456,7 @@ export class DomainInnovationsService {
    */
   async archiveInnovationsWithDeleteSideffects(
     domainContext: DomainContextType,
-    innovations: { id: string; reason: string }[],
+    innovations: { id: string; reason: InnovationArchiveReasonEnum }[],
     entityManager?: EntityManager
   ): Promise<
     {
@@ -1111,7 +1111,7 @@ export class DomainInnovationsService {
   ): Promise<CurrentElasticSearchDocumentType | undefined | CurrentElasticSearchDocumentType[]> {
     let sql = `WITH
       innovations AS (
-        SELECT i.id, i.status, archived_status, status_updated_at, submitted_at, i.updated_at, i.current_assessment_id,
+        SELECT i.id, i.status, status_updated_at, submitted_at, i.updated_at, i.current_assessment_id,
         i.has_been_assessed, last_assessment_request_at, grouped_status, u.id AS owner_id,
         u.external_id AS owner_external_id, u.status AS owner_status, o.name AS owner_company
         FROM innovation i
@@ -1142,8 +1142,6 @@ export class DomainInnovationsService {
     SELECT
       i.id,
       i.status,
-      i.archived_status AS archivedStatus,
-      IIF(i.status = 'ARCHIVED', i.archived_status, i.status) AS rawStatus,
       i.status_updated_at AS statusUpdatedAt,
       i.grouped_status AS groupedStatus,
       i.has_been_assessed AS hasBeenAssessed,
@@ -1213,8 +1211,6 @@ export class DomainInnovationsService {
       return {
         id: innovation.id,
         status: innovation.status,
-        archivedStatus: innovation.archivedStatus,
-        rawStatus: innovation.rawStatus,
         statusUpdatedAt: innovation.statusUpdatedAt,
         groupedStatus: innovation.groupedStatus,
         hasBeenAssessed: !!innovation.hasBeenAssessed,

@@ -249,11 +249,16 @@ paths:
             schema:
               type: object
               properties:
-                message:
+                reason:
                   type: string
-                  maxLength: 2000
+                  enum:
+                    - DEVELOP_FURTHER
+                    - HAVE_ALL_SUPPORT
+                    - DECIDED_NOT_TO_PURSUE
+                    - ALREADY_LIVE_NHS
+                    - OTHER_DONT_WANT_TO_SAY
               required:
-                - message
+                - reason
               additionalProperties: false
       responses:
         "204":
@@ -2435,15 +2440,6 @@ paths:
                   version:
                     type: string
                   status:
-                    type: string
-                    enum:
-                      - CREATED
-                      - WAITING_NEEDS_ASSESSMENT
-                      - NEEDS_ASSESSMENT
-                      - IN_PROGRESS
-                      - WITHDRAWN
-                      - ARCHIVED
-                  archivedStatus:
                     type: string
                     enum:
                       - CREATED

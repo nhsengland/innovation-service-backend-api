@@ -42,7 +42,7 @@ class V1InnovationPause {
         })
         .verify();
 
-      await innovationsService.archiveInnovation(auth.getContext(), params.innovationId, { message: body.message });
+      await innovationsService.archiveInnovation(auth.getContext(), params.innovationId, { reason: body.reason });
 
       context.res = ResponseHelper.NoContent();
       return;

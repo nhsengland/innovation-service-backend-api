@@ -1,7 +1,13 @@
 import type { DataSource, EntityManager, Repository } from 'typeorm';
 
 import type { PhoneUserPreferenceEnum } from '../../enums';
-import { InnovationCollaboratorStatusEnum, NotifierTypeEnum, ServiceRoleEnum, UserStatusEnum } from '../../enums';
+import {
+  InnovationArchiveReasonEnum,
+  InnovationCollaboratorStatusEnum,
+  NotifierTypeEnum,
+  ServiceRoleEnum,
+  UserStatusEnum
+} from '../../enums';
 import {
   GenericErrorsEnum,
   InternalServerError,
@@ -599,7 +605,9 @@ export class DomainUsersService {
 
         const archiveResponse = await this.domainInnovationService.archiveInnovationsWithDeleteSideffects(
           domainContext,
-          dbInnovations.filter(i => i.expirationTransferDate === null).map(i => ({ id: i.id, reason: data.reason })),
+          dbInnovations
+            .filter(i => i.expirationTransferDate === null)
+            .map(i => ({ id: i.id, reason: InnovationArchiveReasonEnum.OWNER_ACCOUNT_DELETED })),
           transaction
         );
 

@@ -53,7 +53,6 @@ class V1InnovationInfo {
         postCode: result.postCode,
         categories: result.categories,
         otherCategoryDescription: result.otherCategoryDescription,
-        ...(result.archivedStatus ? { archivedStatus: result.archivedStatus } : {}),
         ...(result.owner === undefined
           ? {}
           : {
