@@ -141,7 +141,7 @@ export class DomainInnovationsService {
         [
           {
             id: innovation.innovationId,
-            reason: 'There was no active support on the innovation for 6 months.'
+            reason: InnovationArchiveReasonEnum.SIX_MONTHS_INACTIVITY
           }
         ],
         em
