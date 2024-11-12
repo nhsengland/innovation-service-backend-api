@@ -20,7 +20,8 @@ import { NotificationUserEntity } from '../../entities/user/notification-user.en
 import { NotificationEntity } from '../../entities/user/notification.entity';
 import { UserRoleEntity } from '../../entities/user/user-role.entity';
 import { InnovationGroupedStatusViewEntity } from '../../entities/views/innovation-grouped-status.view.entity';
-import type { InnovationGroupedStatusEnum, NotificationCategoryType } from '../../enums';
+import type { NotificationCategoryType } from '../../enums';
+import { InnovationGroupedStatusEnum } from '../../enums';
 import {
   ActivityEnum,
   ActivityTypeEnum,
@@ -108,6 +109,43 @@ export class DomainInnovationsService {
           em
         );
       }
+    }
+  }
+
+  /**
+   * archive innovations without active support
+   * This method is used by the cron job.
+   * @param entityManager optional entity manager
+   */
+
+  async archiveInnovationsWithoutSupport(entityManager?: EntityManager): Promise<void> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const dbInnovations = await em
+      .createQueryBuilder(InnovationGroupedStatusViewEntity, 'innovationGroupedStatus')
+      .where('innovationGroupedStatus.groupedStatus = :groupedStatus', {
+        groupedStatus: InnovationGroupedStatusEnum.NO_ACTIVE_SUPPORT
+      })
+      .andWhere('innovationGroupedStatus.expected_archive_date < GETDATE()')
+      .getMany();
+
+    for (const innovation of dbInnovations) {
+      //TODO: Change domainContext to a system user
+      const domainContext = await this.domainUsersService.getInnovatorDomainContextByRoleId(innovation.createdBy, em);
+      if (!domainContext) {
+        return; // this will never happen
+      }
+
+      await this.archiveInnovationsWithDeleteSideffects(
+        domainContext,
+        [
+          {
+            id: innovation.innovationId,
+            reason: InnovationArchiveReasonEnum.SIX_MONTHS_INACTIVITY
+          }
+        ],
+        em
+      );
     }
   }
 

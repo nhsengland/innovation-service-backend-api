@@ -11,6 +11,7 @@ class V1InnovationsSystemScheduleArchiveInnovations {
 
     logger.log('Running cron job: V1InnovationsSystemSchedule - Archive Innovations');
     await domainService.innovations.archiveExpiredInnovations();
+    await domainService.innovations.archiveInnovationsWithoutSupport();
     logger.log('Finished cron job: V1InnovationsSystemSchedule - Archive Innovations');
   }
 }
