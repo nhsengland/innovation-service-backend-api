@@ -945,8 +945,10 @@ describe('Notifications / _services / recipients service suite', () => {
       expect(res).toHaveLength(0);
     });
 
-    it.skip('returns innovations if there are idle innovations', async () => {
-      // having trouble with this test since it depends on history table
+    it('returns innovations if there are idle innovations', async () => {
+      //const innovation = scenario.users.adamInnovator.innovations.adamInnovationNoActiveSupport;
+      const res = await sut.innovationsWithoutSupportForNDays([30], em);
+      expect(res).toHaveLength(1);
     });
 
     it('throws error if array is empty', async () => {

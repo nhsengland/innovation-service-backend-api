@@ -787,6 +787,21 @@ export class CompleteScenarioBuilder {
         .suggestOrganisationUnits(healthOrgUnit, innovTechOrgUnit)
         .save();
 
+      const adamInnovationNoActiveSupport = await new InnovationBuilder(entityManager)
+        .setName('Adam Innovation No Active Support')
+        .setOwner(adamInnovator.id)
+        .setStatus(InnovationStatusEnum.IN_PROGRESS)
+        .shareWith([healthOrg])
+        .save();
+
+      const adamInnovationAssessmentByPaulBatman = await new InnovationAssessmentBuilder(entityManager)
+        .setInnovation(adamInnovationNoActiveSupport.id)
+        .setNeedsAssessor(paulNeedsAssessor.id)
+        .setUpdatedBy(paulNeedsAssessor.id)
+        .setFinishedAt()
+        .suggestOrganisationUnits(healthOrgUnit, innovTechOrgUnit)
+        .save();
+
       const adamInnovationEmpty = await new InnovationBuilder(entityManager)
         .setName('Adam Innovation Empty')
         .setOwner(adamInnovator.id)
@@ -814,6 +829,16 @@ export class CompleteScenarioBuilder {
         .setStatus(InnovationSupportStatusEnum.ENGAGING)
         .setInnovation(adamInnovation.id)
         .setMajorAssessment(adamInnovationAssessmentByPaul.id)
+        .setOrganisationUnit(healthOrgUnit.id)
+        .setAccessors([aliceQualifyingAccessor, jamieMadroxAccessor])
+        .setCreatedAndUpdatedBy(aliceQualifyingAccessor.id, aliceQualifyingAccessor.roles['qaRole']!.id)
+        .save();
+
+      const adamInnovationWithClosedSupport = await new InnovationSupportBuilder(entityManager)
+        .setStatus(InnovationSupportStatusEnum.CLOSED)
+        .setFinishedAt(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000))
+        .setInnovation(adamInnovationNoActiveSupport.id)
+        .setMajorAssessment(adamInnovationAssessmentByPaulBatman.id)
         .setOrganisationUnit(healthOrgUnit.id)
         .setAccessors([aliceQualifyingAccessor, jamieMadroxAccessor])
         .setCreatedAndUpdatedBy(aliceQualifyingAccessor.id, aliceQualifyingAccessor.roles['qaRole']!.id)
@@ -1219,7 +1244,12 @@ export class CompleteScenarioBuilder {
                   adamInnovationSupportByHealthOrgUnit: adamInnovationSupportByHealthOrgUnit
                 }
               },
-              adamInnovationEmpty: adamInnovationEmpty
+              adamInnovationEmpty: adamInnovationEmpty,
+              adamInnovationNoActiveSupport: {
+                ...adamInnovationNoActiveSupport,
+                assessment: adamInnovationAssessmentByPaulBatman,
+                supports: { adamInnovationWithClosedSupport: adamInnovationWithClosedSupport }
+              }
             }
           },
           sebastiaoDeletedInnovator: {
