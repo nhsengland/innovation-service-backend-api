@@ -840,7 +840,7 @@ export class CompleteScenarioBuilder {
         .setInnovation(adamInnovationNoActiveSupport.id)
         .setMajorAssessment(adamInnovationAssessmentByPaulBatman.id)
         .setOrganisationUnit(healthOrgUnit.id)
-        .setAccessors([aliceQualifyingAccessor, jamieMadroxAccessor])
+        .setAccessors([aliceQualifyingAccessor])
         .setCreatedAndUpdatedBy(aliceQualifyingAccessor.id, aliceQualifyingAccessor.roles['qaRole']!.id)
         .save();
 

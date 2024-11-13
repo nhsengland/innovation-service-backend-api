@@ -941,7 +941,7 @@ describe('Notifications / _services / recipients service suite', () => {
 
   describe('idleInnovations', () => {
     it('returns empty array of idle innovations if there are no innovations', async () => {
-      const res = await sut.innovationsWithoutSupportForNDays([30], em);
+      const res = await sut.innovationsWithoutSupportForNDays([90], em);
       expect(res).toHaveLength(0);
     });
 
