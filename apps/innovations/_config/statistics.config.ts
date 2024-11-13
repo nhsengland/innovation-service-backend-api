@@ -9,6 +9,7 @@ import { TasksOpenStatisticsHandler } from '../_handlers/statistics/tasks-open.h
 import { TasksRespondedStatisticsHandler } from '../_handlers/statistics/tasks-responded.handler';
 import { UnreadMessagesThreadsInitiatedByStatisticsHandler } from '../_handlers/statistics/unread-messages-initiated-by.handler';
 import { UnreadMessagesStatisticsHandler } from '../_handlers/statistics/unread-messages.handler';
+import { UnansweredSurveysByUnitStatisticsHandler } from '../_handlers/statistics/unanswered-surveys-by-unit.handler';
 import type { InnovationsStatisticsHandler } from '../_types/statistics-handlers.types';
 
 export const INNOVATION_STATISTICS_CONFIG: Record<
@@ -43,6 +44,9 @@ export const INNOVATION_STATISTICS_CONFIG: Record<
   },
   [InnovationStatisticsEnum.DOCUMENTS_STATISTICS_COUNTER]: {
     handler: DocumentsStatisticsHandler
+  },
+  [InnovationStatisticsEnum.UNANSWERED_SURVEYS_BY_UNIT_COUNTER]: {
+    handler: UnansweredSurveysByUnitStatisticsHandler
   }
 };
 
@@ -93,6 +97,7 @@ export type InnovationStatisticsTemplateType = {
     uploadedByUnits: { id: string; unit: string; count: number }[];
     locations: { location: InnovationFileContextTypeEnum; count: number }[];
   };
+  [InnovationStatisticsEnum.UNANSWERED_SURVEYS_BY_UNIT_COUNTER]: { count: number };
 };
 
 export type InnovationStatisticsParamsTemplateType = {
@@ -110,4 +115,5 @@ export type InnovationStatisticsParamsTemplateType = {
   [InnovationStatisticsEnum.UNREAD_MESSAGES_THREADS_INITIATED_BY_COUNTER]: { innovationId: string };
   [InnovationStatisticsEnum.PENDING_EXPORT_REQUESTS_COUNTER]: { innovationId: string };
   [InnovationStatisticsEnum.DOCUMENTS_STATISTICS_COUNTER]: { innovationId: string };
+  [InnovationStatisticsEnum.UNANSWERED_SURVEYS_BY_UNIT_COUNTER]: { innovationId: string };
 };
