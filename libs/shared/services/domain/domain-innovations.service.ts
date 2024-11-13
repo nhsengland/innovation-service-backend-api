@@ -1,5 +1,5 @@
 import type { DataSource, EntityManager, Repository } from 'typeorm';
-import { In } from 'typeorm';
+import { Brackets, In } from 'typeorm';
 
 import { cloneDeep } from 'lodash';
 import { EXPIRATION_DATES } from '../../constants';
@@ -20,10 +20,12 @@ import { NotificationUserEntity } from '../../entities/user/notification-user.en
 import { NotificationEntity } from '../../entities/user/notification.entity';
 import { UserRoleEntity } from '../../entities/user/user-role.entity';
 import { InnovationGroupedStatusViewEntity } from '../../entities/views/innovation-grouped-status.view.entity';
-import type { InnovationGroupedStatusEnum, NotificationCategoryType } from '../../enums';
+import type { NotificationCategoryType } from '../../enums';
+import { InnovationGroupedStatusEnum } from '../../enums';
 import {
   ActivityEnum,
   ActivityTypeEnum,
+  InnovationArchiveReasonEnum,
   InnovationCollaboratorStatusEnum,
   InnovationExportRequestStatusEnum,
   InnovationStatusEnum,
@@ -101,12 +103,49 @@ export class DomainInnovationsService {
           [
             {
               id: innovation.id,
-              reason: 'The owner deleted their account and the request to transfer ownership expired.'
+              reason: InnovationArchiveReasonEnum.OWNER_ACCOUNT_DELETED
             }
           ],
           em
         );
       }
+    }
+  }
+
+  /**
+   * archive innovations without active support
+   * This method is used by the cron job.
+   * @param entityManager optional entity manager
+   */
+
+  async archiveInnovationsWithoutSupport(entityManager?: EntityManager): Promise<void> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const dbInnovations = await em
+      .createQueryBuilder(InnovationGroupedStatusViewEntity, 'innovationGroupedStatus')
+      .where('innovationGroupedStatus.groupedStatus = :groupedStatus', {
+        groupedStatus: InnovationGroupedStatusEnum.NO_ACTIVE_SUPPORT
+      })
+      .andWhere('innovationGroupedStatus.expected_archive_date < GETDATE()')
+      .getMany();
+
+    for (const innovation of dbInnovations) {
+      //TODO: Change domainContext to a system user
+      const domainContext = await this.domainUsersService.getInnovatorDomainContextByRoleId(innovation.createdBy, em);
+      if (!domainContext) {
+        return; // this will never happen
+      }
+
+      await this.archiveInnovationsWithDeleteSideffects(
+        domainContext,
+        [
+          {
+            id: innovation.innovationId,
+            reason: InnovationArchiveReasonEnum.SIX_MONTHS_INACTIVITY
+          }
+        ],
+        em
+      );
     }
   }
 
@@ -206,13 +245,13 @@ export class DomainInnovationsService {
    */
   async archiveInnovations(
     domainContext: DomainContextType,
-    innovations: { id: string; reason: string }[],
+    innovations: { id: string; reason: InnovationArchiveReasonEnum }[],
     entityManager?: EntityManager
   ): Promise<
     {
       id: string;
       prevStatus: InnovationStatusEnum;
-      reason: string;
+      reason: InnovationArchiveReasonEnum;
       affectedUsers: { userId: string; userType: ServiceRoleEnum; unitId?: string }[];
       isReassessment: boolean;
     }[]
@@ -370,7 +409,6 @@ export class DomainInnovationsService {
           InnovationEntity,
           { id: innovation.id },
           {
-            archivedStatus: () => 'status',
             status: InnovationStatusEnum.ARCHIVED,
             archiveReason: innovation.reason,
             statusUpdatedAt: archivedAt,
@@ -418,7 +456,7 @@ export class DomainInnovationsService {
    */
   async archiveInnovationsWithDeleteSideffects(
     domainContext: DomainContextType,
-    innovations: { id: string; reason: string }[],
+    innovations: { id: string; reason: InnovationArchiveReasonEnum }[],
     entityManager?: EntityManager
   ): Promise<
     {
@@ -1031,6 +1069,35 @@ export class DomainInnovationsService {
     return res.map(r => r.unit_id);
   }
 
+  // NOTE: For now is just retorning roleId, but can be further extended for other things if needed.
+  async getInnovationInnovatorsRoleId(innovationId: string, entityManager?: EntityManager): Promise<string[]> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const users = await em
+      .createQueryBuilder(UserRoleEntity, 'role')
+      .select(['role.id'])
+      .innerJoinAndMapOne(
+        'innovation',
+        InnovationEntity,
+        'innovation',
+        'innovation.id = :innovationId AND innovation.deleted_at IS NULL',
+        { innovationId }
+      )
+      .leftJoin('innovation.collaborators', 'collaborator', 'collaborator.status = :activeStatus', {
+        activeStatus: InnovationCollaboratorStatusEnum.ACTIVE
+      })
+      .where('role.isActive = 1')
+      .andWhere(
+        new Brackets(qp => {
+          qp.where('role.user_id = innovation.owner_id');
+          qp.orWhere('role.user_id = collaborator.user_id');
+        })
+      )
+      .getMany();
+
+    return users.map(r => r.id);
+  }
+
   /**
    * Fetches all the information needed for the document type.
    * If innovationIds are passed it will only return the information for those ids,
@@ -1044,7 +1111,7 @@ export class DomainInnovationsService {
   ): Promise<CurrentElasticSearchDocumentType | undefined | CurrentElasticSearchDocumentType[]> {
     let sql = `WITH
       innovations AS (
-        SELECT i.id, i.status, archived_status, status_updated_at, submitted_at, i.updated_at, i.current_assessment_id,
+        SELECT i.id, i.status, status_updated_at, submitted_at, i.updated_at, i.current_assessment_id,
         i.has_been_assessed, last_assessment_request_at, grouped_status, u.id AS owner_id,
         u.external_id AS owner_external_id, u.status AS owner_status, o.name AS owner_company
         FROM innovation i
@@ -1075,8 +1142,6 @@ export class DomainInnovationsService {
     SELECT
       i.id,
       i.status,
-      i.archived_status AS archivedStatus,
-      IIF(i.status = 'ARCHIVED', i.archived_status, i.status) AS rawStatus,
       i.status_updated_at AS statusUpdatedAt,
       i.grouped_status AS groupedStatus,
       i.has_been_assessed AS hasBeenAssessed,
@@ -1146,8 +1211,6 @@ export class DomainInnovationsService {
       return {
         id: innovation.id,
         status: innovation.status,
-        archivedStatus: innovation.archivedStatus,
-        rawStatus: innovation.rawStatus,
         statusUpdatedAt: innovation.statusUpdatedAt,
         groupedStatus: innovation.groupedStatus,
         hasBeenAssessed: !!innovation.hasBeenAssessed,

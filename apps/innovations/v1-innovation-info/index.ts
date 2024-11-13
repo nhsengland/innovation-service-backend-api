@@ -53,7 +53,6 @@ class V1InnovationInfo {
         postCode: result.postCode,
         categories: result.categories,
         otherCategoryDescription: result.otherCategoryDescription,
-        ...(result.archivedStatus ? { archivedStatus: result.archivedStatus } : {}),
         ...(result.owner === undefined
           ? {}
           : {
@@ -80,7 +79,7 @@ class V1InnovationInfo {
                   : {})
               }
             }),
-        lastEndSupportAt: result.lastEndSupportAt,
+        daysSinceNoActiveSupport: result.daysSinceNoActiveSupport,
         ...(result.assessment === undefined ? {} : { assessment: result.assessment }),
         ...(result.supports === undefined
           ? {}

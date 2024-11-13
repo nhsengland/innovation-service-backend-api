@@ -3,6 +3,7 @@ import {
   AnnouncementUserEntity,
   InnovationEntity,
   InnovationExportRequestEntity,
+  InnovationGroupedStatusViewEntity,
   InnovationSupportEntity,
   InnovationTaskEntity,
   InnovationThreadEntity,
@@ -17,6 +18,7 @@ import {
   AnnouncementParamsType,
   InnovationCollaboratorStatusEnum,
   InnovationExportRequestStatusEnum,
+  InnovationGroupedStatusEnum,
   InnovationStatusEnum,
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
@@ -45,7 +47,7 @@ import { InnovationCollaboratorEntity } from '@notifications/shared/entities/inn
 import { DatesHelper } from '@notifications/shared/helpers';
 import { addToArrayValueInMap } from '@notifications/shared/helpers/misc.helper';
 import type { IdentityUserInfo, NotificationPreferences } from '@notifications/shared/types';
-import { Brackets, type EntityManager } from 'typeorm';
+import type { EntityManager } from 'typeorm';
 
 export type RecipientType = {
   roleId: string;
@@ -799,7 +801,7 @@ export class RecipientsService extends BaseService {
   async innovationsWithoutSupportForNDays(
     days: number[],
     entityManager?: EntityManager
-  ): Promise<{ id: string; name: string }[]> {
+  ): Promise<{ id: string; name: string; daysSinceNoActiveSupport: number; expectedArchiveDate: Date }[]> {
     if (!days.length) {
       throw new UnprocessableEntityError(GenericErrorsEnum.INVALID_PAYLOAD, { details: { error: 'days is required' } });
     }
@@ -807,36 +809,18 @@ export class RecipientsService extends BaseService {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const query = em
-      .createQueryBuilder(InnovationEntity, 'innovation')
-      .select(['innovation.id', 'innovation.name'])
-      .innerJoin(
-        `(SELECT innovationId,MAX(statusChangedAt) as statusChangedAt
-        FROM last_support_status_view_entity
-        GROUP BY innovationId)`,
-        'lastEngagement',
-        'lastEngagement.innovationId = innovation.id'
-      )
-      .leftJoin(
-        'innovation.innovationSupports',
-        'supports',
-        'supports.status IN (:...engagingStatus) AND supports.isMostRecent = 1',
-        {
-          engagingStatus: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.WAITING]
-        }
-      )
-      .where('innovation.status = :innovationStatus', { innovationStatus: InnovationStatusEnum.IN_PROGRESS })
-      .andWhere('supports.id IS NULL')
-      .andWhere(
-        new Brackets(qb => {
-          const [first, ...reminder] = days;
-          qb.where(`DATEDIFF(DAY, lastEngagement.statusChangedAt, DATEADD(DAY, -1, GETDATE())) = ${first}`);
-          reminder?.forEach(day => {
-            qb.orWhere(`DATEDIFF(DAY, lastEngagement.statusChangedAt, DATEADD(DAY, -1, GETDATE())) = ${day}`);
-          });
-        })
-      );
+      .createQueryBuilder(InnovationGroupedStatusViewEntity, 'innovationGroupedStatus')
+      .where('innovationGroupedStatus.groupedStatus = :groupedStatus', {
+        groupedStatus: InnovationGroupedStatusEnum.NO_ACTIVE_SUPPORT
+      })
+      .andWhere('innovationGroupedStatus.days_since_no_active_support_or_deploy IN (:...days)', { days });
 
-    return (await query.getMany()).map(innovation => ({ id: innovation.id, name: innovation.name }));
+    return (await query.getMany()).map(innovation => ({
+      id: innovation.innovationId,
+      name: innovation.name,
+      daysSinceNoActiveSupport: innovation.daysSinceNoActiveSupport,
+      expectedArchiveDate: innovation.expectedArchiveDate
+    }));
   }
 
   /**

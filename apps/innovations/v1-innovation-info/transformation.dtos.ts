@@ -16,9 +16,6 @@ export const ResponseBodySchema = Joi.object<ResponseDTO>({
   status: Joi.string()
     .valid(...Object.values(InnovationStatusEnum))
     .required(),
-  archivedStatus: Joi.string()
-    .valid(...Object.values(InnovationStatusEnum))
-    .optional(),
   groupedStatus: Joi.string()
     .valid(...Object.values(InnovationGroupedStatusEnum))
     .required(),
@@ -50,7 +47,7 @@ export const ResponseBodySchema = Joi.object<ResponseDTO>({
       registrationNumber: Joi.string().allow(null).required()
     }).optional()
   }).optional(),
-  lastEndSupportAt: Joi.date().allow(null).required(),
+  daysSinceNoActiveSupport: Joi.number(),
   assessment: Joi.object({
     id: Joi.string().uuid().required(),
     createdAt: Joi.date().required(),
@@ -81,7 +78,6 @@ export type ResponseDTO = {
   description: null | string;
   version: string;
   status: InnovationStatusEnum;
-  archivedStatus?: InnovationStatusEnum;
   groupedStatus: InnovationGroupedStatusEnum;
   hasBeenAssessed: boolean;
   statusUpdatedAt: Date;
@@ -102,7 +98,7 @@ export type ResponseDTO = {
     lastLoginAt?: null | Date;
     organisation?: { name: string; size: null | string; registrationNumber: null | string };
   };
-  lastEndSupportAt: null | Date;
+  daysSinceNoActiveSupport?: number;
   assessment?: null | {
     id: string;
     createdAt: Date;

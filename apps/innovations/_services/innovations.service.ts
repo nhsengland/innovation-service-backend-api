@@ -13,7 +13,6 @@ import {
   InnovationSectionEntity,
   InnovationSupportEntity,
   InnovationTaskEntity,
-  LastSupportStatusViewEntity,
   NotificationEntity,
   NotificationUserEntity,
   OrganisationEntity,
@@ -24,9 +23,10 @@ import {
 import {
   ActivityEnum,
   type ActivityTypeEnum,
+  InnovationArchiveReasonEnum,
   InnovationCollaboratorStatusEnum,
   InnovationExportRequestStatusEnum,
-  type InnovationGroupedStatusEnum,
+  InnovationGroupedStatusEnum,
   InnovationSectionStatusEnum,
   InnovationStatusEnum,
   InnovationSupportCloseReasonEnum,
@@ -234,21 +234,20 @@ export class InnovationsService extends BaseService {
   async archiveInnovation(
     domainContext: DomainContextType,
     innovationId: string,
-    data: { message: string },
+    data: { reason: InnovationArchiveReasonEnum },
     entityManager?: EntityManager
   ): Promise<void> {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const archivedInnovations = await this.domainService.innovations.archiveInnovations(
       domainContext,
-      [{ id: innovationId, reason: data.message }],
+      [{ id: innovationId, reason: data.reason }],
       em
     );
 
     for (const innovation of archivedInnovations) {
       await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_ARCHIVE, {
         innovationId: innovation.id,
-        message: innovation.reason,
         previousStatus: innovation.prevStatus,
         reassessment: innovation.isReassessment,
         affectedUsers: innovation.affectedUsers
@@ -363,16 +362,17 @@ export class InnovationsService extends BaseService {
     }
 
     if (isAssessmentDomainContextType(domainContext)) {
-      query.andWhere(
-        '(innovation.status IN (:...assessmentInnovationStatus) OR innovation.archivedStatus IN (:...assessmentInnovationStatus))',
-        {
-          assessmentInnovationStatus: [
-            InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
-            InnovationStatusEnum.NEEDS_ASSESSMENT,
-            InnovationStatusEnum.IN_PROGRESS
-          ]
-        }
-      );
+      query
+        // leaving for now but since it's not widrawn because it's not admin this shouldn't be needed
+        // .andWhere('innovation.status IN (:...assessmentInnovationStatus)', {
+        //   assessmentInnovationStatus: [
+        //     InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
+        //     InnovationStatusEnum.NEEDS_ASSESSMENT,
+        //     InnovationStatusEnum.IN_PROGRESS,
+        //     InnovationStatusEnum.ARCHIVED
+        //   ]
+        // })
+        .andWhere('innovation.submittedAt IS NOT NULL');
     }
 
     // Exclude withdrawn innovations from non admin users (at least for now). This state is still present for old innovations
@@ -1108,7 +1108,6 @@ export class InnovationsService extends BaseService {
     description: null | string;
     version: string;
     status: InnovationStatusEnum;
-    archivedStatus?: InnovationStatusEnum;
     groupedStatus: InnovationGroupedStatusEnum;
     hasBeenAssessed: boolean;
     statusUpdatedAt: Date;
@@ -1130,7 +1129,7 @@ export class InnovationsService extends BaseService {
       lastLoginAt?: null | Date;
       organisation?: { name: string; size: null | string; registrationNumber: null | string };
     };
-    lastEndSupportAt: null | Date;
+    daysSinceNoActiveSupport?: number;
     assessment?: null | {
       id: string;
       currentMajorAssessmentId: string;
@@ -1153,7 +1152,6 @@ export class InnovationsService extends BaseService {
         'innovation.name',
         'innovation.status',
         'innovation.statusUpdatedAt',
-        'innovation.archivedStatus',
         'innovation.hasBeenAssessed',
         'innovation.lastAssessmentRequestAt',
         'innovation.createdAt',
@@ -1166,6 +1164,7 @@ export class InnovationsService extends BaseService {
         'innovationOwnerOrganisation.registrationNumber',
         'reassessmentRequests.id',
         'innovationGroupedStatus.groupedStatus',
+        'innovationGroupedStatus.daysSinceNoActiveSupport',
         'collaborator.id'
       ])
       .leftJoin('innovation.owner', 'innovationOwner')
@@ -1301,7 +1300,6 @@ export class InnovationsService extends BaseService {
       postCode: documentData.postcode,
       categories,
       otherCategoryDescription: documentData.otherCategoryDescription,
-      ...(innovation.archivedStatus ? { archivedStatus: innovation.archivedStatus } : {}),
       ...(innovation.owner && ownerPreferences
         ? {
             owner: {
@@ -1327,7 +1325,9 @@ export class InnovationsService extends BaseService {
             }
           }
         : {}),
-      lastEndSupportAt: await this.lastSupportStatusTransitionFromEngaging(innovation.id),
+      ...(innovation.innovationGroupedStatus.groupedStatus === InnovationGroupedStatusEnum.NO_ACTIVE_SUPPORT && {
+        daysSinceNoActiveSupport: innovation.innovationGroupedStatus.daysSinceNoActiveSupport
+      }),
       assessment,
       ...(!filters.fields?.includes('supports')
         ? {}
@@ -1754,8 +1754,6 @@ export class InnovationsService extends BaseService {
           status: InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
           statusUpdatedAt: now,
           updatedBy: domainContext.id,
-          // In case the innovation was archived during the CREATED status
-          archivedStatus: null,
           archiveReason: null
         }
       );
@@ -2030,20 +2028,6 @@ export class InnovationsService extends BaseService {
         acc[key] = value;
         return acc;
       }, {} as InnovationListViewWithoutNull);
-  }
-
-  // view recipients service innovationsWithoutSupportForNDays to maintain consistency
-  private async lastSupportStatusTransitionFromEngaging(innovationId: string): Promise<Date | null> {
-    const result = await this.sqlConnection
-      .createQueryBuilder(LastSupportStatusViewEntity, 'lastSupportStatus')
-      .select('TOP 1 lastSupportStatus.statusChangedAt', 'statusChangedAt')
-      .where('lastSupportStatus.innovationId = :innovationId', { innovationId })
-      .orderBy('lastSupportStatus.statusChangedAt', 'DESC')
-      .getRawOne<{ statusChangedAt: string }>();
-
-    if (!result) return null;
-
-    return new Date(result.statusChangedAt);
   }
 
   private getInnovationSectionMetadata(

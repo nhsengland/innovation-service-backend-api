@@ -4,6 +4,7 @@ import {
   InnovationExportRequestEntity,
   InnovationSectionEntity,
   InnovationSupportEntity,
+  InnovationSurveyEntity,
   InnovationTaskEntity,
   InnovationThreadMessageEntity,
   NotificationEntity,
@@ -300,5 +301,26 @@ export class StatisticsService extends BaseService {
       uploadedByUnits: statistics?.uploadedByUnits ?? [],
       locations: statistics?.locations ?? []
     };
+  }
+
+  async getUnansweredSurveysByUnitStatistics(
+    domainContext: DomainContextType,
+    innovationId: string,
+    entityManager?: EntityManager
+  ): Promise<number> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const surveys = await em
+      .createQueryBuilder(InnovationSurveyEntity, 'survey')
+      .select(['survey.id', 'support.id', 'unit.name'])
+      .innerJoin('survey.support', 'support')
+      .innerJoin('support.organisationUnit', 'unit')
+      .where('survey.innovation_id = :innovationId', { innovationId })
+      .andWhere('survey.target_user_role_id = :targetRoleId', { targetRoleId: domainContext.currentRole.id })
+      .andWhere('survey.answers IS NULL')
+      .getMany();
+    const uniqueUnits = new Set(surveys.map(s => s.support!.organisationUnit.name));
+
+    return uniqueUnits.size;
   }
 }

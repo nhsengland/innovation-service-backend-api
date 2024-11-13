@@ -27,6 +27,7 @@ import { InnovationTransferEntity } from './innovation/innovation-transfer.entit
 import { InnovationUserTestEntity } from './innovation/innovation-user-test.entity';
 import { InnovationEntity } from './innovation/innovation.entity';
 import { InnovationRecordSchemaEntity } from './innovation/innovation-record-schema.entity';
+import { InnovationSurveyEntity } from './innovation/innovation-survey.entity';
 export { ActivityLogEntity } from './innovation/activity-log.entity';
 export { InnovationTaskEntity } from './innovation/innovation-task.entity';
 export { InnovationAssessmentEntity } from './innovation/innovation-assessment.entity';
@@ -47,6 +48,7 @@ export { InnovationTransferEntity } from './innovation/innovation-transfer.entit
 export { InnovationUserTestEntity } from './innovation/innovation-user-test.entity';
 export { InnovationEntity } from './innovation/innovation.entity';
 export { InnovationRecordSchemaEntity } from './innovation/innovation-record-schema.entity';
+export { InnovationSurveyEntity } from './innovation/innovation-survey.entity';
 
 // Organisation.
 import { OrganisationUnitEntity } from './organisation/organisation-unit.entity';
@@ -78,7 +80,6 @@ export { UserEntity } from './user/user.entity';
 
 // Views
 import { InnovationGroupedStatusViewEntity } from './views/innovation-grouped-status.view.entity';
-import { LastSupportStatusViewEntity } from './views/last-support-status.view.entity';
 import { InnovationListView } from './views/innovation-list-view.entity';
 import { InnovationTaskDescriptionsViewEntity } from './views/innovation-task-descriptions.view.entity';
 import { SupportLastActivityUpdateView } from './views/support-last-activity-update.view.entity';
@@ -87,7 +88,6 @@ import { InnovationSuggestedUnitsView } from './views/innovation-suggested-units
 import { InnovationProgressView } from './views/innovation-progress.view.entity';
 import { InnovationRelevantOrganisationsStatusView } from './views/innovation_relevant_organisations_status_view.entity';
 export { InnovationGroupedStatusViewEntity } from './views/innovation-grouped-status.view.entity';
-export { LastSupportStatusViewEntity } from './views/last-support-status.view.entity';
 export { InnovationListView } from './views/innovation-list-view.entity';
 export { InnovationTaskDescriptionsViewEntity } from './views/innovation-task-descriptions.view.entity';
 export { SupportLastActivityUpdateView } from './views/support-last-activity-update.view.entity';
@@ -117,7 +117,8 @@ export const INNOVATION_ENTITIES = [
   InnovationTransferEntity,
   InnovationUserTestEntity,
   InnovationEntity,
-  InnovationRecordSchemaEntity
+  InnovationRecordSchemaEntity,
+  InnovationSurveyEntity
 ];
 export const ORGANISATION_ENTITIES = [OrganisationUnitEntity, OrganisationEntity];
 export const USER_ENTITIES = [
@@ -135,7 +136,6 @@ export const USER_ENTITIES = [
 export const VIEW_ENTITIES = [
   InnovationGroupedStatusViewEntity,
   InnovationTaskDescriptionsViewEntity,
-  LastSupportStatusViewEntity,
   SupportLastActivityUpdateView,
   DocumentsStatisticsViewEntity,
   InnovationSuggestedUnitsView,

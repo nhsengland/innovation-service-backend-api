@@ -447,16 +447,18 @@ export class AuthorizationValidationModel {
     }
 
     if (context.currentRole.role === ServiceRoleEnum.ASSESSMENT) {
-      query.andWhere(
-        '(innovation.status IN (:...assessmentInnovationStatus) OR innovation.archivedStatus IN (:...assessmentInnovationStatus))',
-        {
-          assessmentInnovationStatus: [
-            InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
-            InnovationStatusEnum.NEEDS_ASSESSMENT,
-            InnovationStatusEnum.IN_PROGRESS
-          ]
-        }
-      );
+      query
+        // leaving for now but almost sure it's equivalent to not withdrawn
+        // .andWhere('innovation.status IN (:...assessmentInnovationStatus)', {
+        //   assessmentInnovationStatus: [
+        //     InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
+        //     InnovationStatusEnum.NEEDS_ASSESSMENT,
+        //     InnovationStatusEnum.IN_PROGRESS,
+        //     InnovationStatusEnum.ARCHIVED
+        //   ]
+        // })
+        .andWhere('innovation.status != :withdrawn', { withdrawn: InnovationStatusEnum.WITHDRAWN })
+        .andWhere('innovation.submittedAt IS NOT NULL');
     }
 
     if (

@@ -11,6 +11,7 @@ import {
 } from '@notifications/shared/enums';
 import type { NotifierTemplatesType } from '@notifications/shared/types';
 
+import { JoiHelper } from '@notifications/shared/helpers';
 import {
   AccountCreationHandler,
   AccountDeletionHandler,
@@ -50,7 +51,6 @@ import {
   UnitKPIHandler,
   UserEmailAddressUpdatedHandler
 } from '../_handlers';
-import { JoiHelper } from '@notifications/shared/helpers';
 
 export const NOTIFICATIONS_CONFIG = {
   // Account
@@ -312,7 +312,6 @@ export const NOTIFICATIONS_CONFIG = {
     handler: InnovationArchiveHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_ARCHIVE]>({
       innovationId: JoiHelper.AppCustomJoi().string().guid().required(),
-      message: JoiHelper.AppCustomJoi().string().max(TEXTAREA_LENGTH_LIMIT.xl).required(),
       reassessment: Joi.boolean().strict().required(),
       previousStatus: JoiHelper.AppCustomJoi()
         .string()

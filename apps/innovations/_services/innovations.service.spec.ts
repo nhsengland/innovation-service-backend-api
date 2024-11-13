@@ -8,6 +8,7 @@ import {
 } from '@innovations/shared/entities';
 import { ActivityEnum, ActivityTypeEnum } from '@innovations/shared/enums';
 import {
+  InnovationArchiveReasonEnum,
   InnovationExportRequestStatusEnum,
   InnovationSectionStatusEnum,
   InnovationStatusEnum,
@@ -471,20 +472,19 @@ describe('Innovations / _services / innovations suite', () => {
   describe('archiveInnovation', () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
     const context = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator);
-    const message = randText({ charCount: 10 });
+    const reason = InnovationArchiveReasonEnum.ALREADY_LIVE_NHS;
 
     it('should archive the innovation', async () => {
-      await sut.archiveInnovation(context, innovation.id, { message: message }, em);
+      await sut.archiveInnovation(context, innovation.id, { reason }, em);
 
       const dbInnovation = await em
         .createQueryBuilder(InnovationEntity, 'innovation')
-        .select(['innovation.status', 'innovation.archiveReason', 'innovation.archivedStatus'])
+        .select(['innovation.status', 'innovation.archiveReason'])
         .where('innovation.id = :innovationId', { innovationId: innovation.id })
         .getOneOrFail();
 
       expect(dbInnovation.status).toBe(InnovationStatusEnum.ARCHIVED);
-      expect(dbInnovation.archivedStatus).toBe(innovation.status);
-      expect(dbInnovation.archiveReason).toBe(message);
+      expect(dbInnovation.archiveReason).toBe(reason);
     });
 
     it('should cancel all open tasks', async () => {
@@ -499,7 +499,7 @@ describe('Innovations / _services / innovations suite', () => {
         })
         .getMany();
 
-      await sut.archiveInnovation(context, innovation.id, { message: message }, em);
+      await sut.archiveInnovation(context, innovation.id, { reason }, em);
 
       const dbCancelledTasks = await em
         .createQueryBuilder(InnovationTaskEntity, 'task')
@@ -524,7 +524,7 @@ describe('Innovations / _services / innovations suite', () => {
         .andWhere('support.isMostRecent = 1')
         .getMany();
 
-      await sut.archiveInnovation(context, innovation.id, { message: message }, em);
+      await sut.archiveInnovation(context, innovation.id, { reason }, em);
 
       const dbSupports = await em
         .createQueryBuilder(InnovationSupportEntity, 'support')
@@ -550,7 +550,7 @@ describe('Innovations / _services / innovations suite', () => {
           { status: InnovationExportRequestStatusEnum.PENDING }
         );
 
-      await sut.archiveInnovation(context, innovation.id, { message: message }, em);
+      await sut.archiveInnovation(context, innovation.id, { reason }, em);
 
       const dbRequest = await em
         .createQueryBuilder(InnovationExportRequestEntity, 'request')
@@ -568,7 +568,7 @@ describe('Innovations / _services / innovations suite', () => {
         .where('innovation_id = :innovationId', { innovationId: innovation.id })
         .getCount();
 
-      await sut.archiveInnovation(context, innovation.id, { message: message }, em);
+      await sut.archiveInnovation(context, innovation.id, { reason }, em);
 
       expect(supportLogSpy).toHaveBeenCalledTimes(nPreviousSupports);
       expect(supportLogSpy).toHaveBeenLastCalledWith(
@@ -577,7 +577,7 @@ describe('Innovations / _services / innovations suite', () => {
         innovation.id,
         {
           type: InnovationSupportLogTypeEnum.INNOVATION_ARCHIVED,
-          description: message,
+          description: reason,
           unitId: expect.any(String),
           supportStatus: InnovationSupportStatusEnum.CLOSED
         }
@@ -590,7 +590,7 @@ describe('Innovations / _services / innovations suite', () => {
       it('should and complete assessment when innovation is in NEEDS_ASSESSMENT', async () => {
         const naInProgress = ottoOctavius.innovations.brainComputerInterfaceInnovation;
 
-        await sut.archiveInnovation(DTOsHelper.getUserRequestContext(ottoOctavius), naInProgress.id, { message }, em);
+        await sut.archiveInnovation(DTOsHelper.getUserRequestContext(ottoOctavius), naInProgress.id, { reason }, em);
 
         const dbAssessment = await em
           .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
@@ -606,7 +606,7 @@ describe('Innovations / _services / innovations suite', () => {
       it('should create and complete an assessment when innovation is in WAITING_NEEDS_ASSESSMENT', async () => {
         const waitingNa = ottoOctavius.innovations.powerSourceInnovation;
 
-        await sut.archiveInnovation(DTOsHelper.getUserRequestContext(ottoOctavius), waitingNa.id, { message }, em);
+        await sut.archiveInnovation(DTOsHelper.getUserRequestContext(ottoOctavius), waitingNa.id, { reason }, em);
 
         const dbAssessment = await em
           .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
