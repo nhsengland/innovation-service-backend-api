@@ -1325,7 +1325,7 @@ export class InnovationsService extends BaseService {
             }
           }
         : {}),
-      ...(innovation.innovationGroupedStatus.groupedStatus === InnovationGroupedStatusEnum.AWAITING_SUPPORT && {
+      ...(innovation.innovationGroupedStatus.groupedStatus === InnovationGroupedStatusEnum.NO_ACTIVE_SUPPORT && {
         daysSinceNoActiveSupport: innovation.innovationGroupedStatus.daysSinceNoActiveSupport
       }),
       assessment,
