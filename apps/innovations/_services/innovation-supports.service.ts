@@ -56,9 +56,9 @@ import type { SupportSummaryUnitInfo } from '../_types/support.types';
 import { BaseService } from './base.service';
 import type { InnovationFileService } from './innovation-file.service';
 import type { InnovationThreadsService } from './innovation-threads.service';
+import { SurveysService } from './surveys.service';
 import SYMBOLS from './symbols';
 import type { ValidationService } from './validation.service';
-import { SurveysService } from './surveys.service';
 
 type UnitSupportInformationType = {
   id: string;
@@ -496,6 +496,7 @@ export class InnovationSupportsService extends BaseService {
       organisationUnit: { id: organisationUnitId },
       majorAssessment: { id: innovation.currentMajorAssessment.id },
       userRoles: [],
+      createdAt: now,
       ...(status !== InnovationSupportStatusEnum.SUGGESTED && { startedAt: now }),
       ...(status === InnovationSupportStatusEnum.UNSUITABLE && { finishedAt: now })
     });
