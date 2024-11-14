@@ -721,7 +721,7 @@ export class InnovationAssessmentsService extends BaseService {
 
       await transaction.query(
         `UPDATE innovation_document_draft
-             SET document = JSON_MODIFY(document, @0, @1), updated_by=@2, updated_at=@3, is_snapshot=0, description=NULL WHERE id = @4`,
+             SET document = JSON_MODIFY(document, @0, @1), updated_by=@2, updated_at=@3 WHERE id = @4`,
         [
           `$.INNOVATION_DESCRIPTION.supportDescription`,
           data['whatSupportDoYouNeed'],
