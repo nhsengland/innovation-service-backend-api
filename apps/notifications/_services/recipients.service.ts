@@ -48,6 +48,8 @@ import { DatesHelper } from '@notifications/shared/helpers';
 import { addToArrayValueInMap } from '@notifications/shared/helpers/misc.helper';
 import type { IdentityUserInfo, NotificationPreferences } from '@notifications/shared/types';
 import type { EntityManager } from 'typeorm';
+import { InnovationSurveyEntity } from '@notifications/shared/entities';
+import { SurveyType } from '@notifications/shared/entities/innovation/innovation-survey.entity';
 
 export type RecipientType = {
   roleId: string;
@@ -1376,5 +1378,44 @@ export class RecipientsService extends BaseService {
       },
       {} as { [key in ServiceRoleEnum]?: RecipientType[] }
     );
+  }
+
+  /**
+   * returns the surveys that didn't have a feedback in n days,
+   * repeats every m days afterwards (if m is defined)
+   * @param days number of days to check (default: 60)
+   * @param repeat repeat the notification every n days (if defined)
+   * @param entityManager optional entityManager
+   * @returns surveys without feedback for n days
+   */
+  async surveyWithoutFeedbackForNDays(
+    type: SurveyType,
+    days = 60,
+    repeat?: number,
+    entityManager?: EntityManager
+  ): Promise<{ surveyId: string; innovation: { id: string; name: string } }[]> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    // TODO: Check query to be used
+    const query = em
+      .createQueryBuilder(InnovationSurveyEntity, 'survey')
+      .select(['survey.id', 'survey.targetUserRole', 'survey.created_at', 'innovation.id', 'innovation.name'])
+      .innerJoin('suvery.innovation', 'innovation')
+      .where('survey.type = :type', { type })
+      .andWhere('survey.answers IS NOT NULL');
+
+    if (repeat) {
+      query
+        .andWhere('DATEDIFF(day, survey.created_at, GETDATE()) >= :days', { days })
+        .andWhere('DATEDIFF(day, survey.created_at, GETDATE()) % :repeat = 0', { repeat });
+    } else {
+      query.andWhere('DATEDIFF(day, survey.created_at, GETDATE()) = :days', { days });
+    }
+
+    const rows = await query.getMany();
+    return rows.map(row => ({
+      surveyId: row.id,
+      innovation: { id: row.innovation.id, name: row.innovation.name }
+    }));
   }
 }

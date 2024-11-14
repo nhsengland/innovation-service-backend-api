@@ -163,6 +163,10 @@ export type InAppTemplatesType = {
   AU09_TRANSFER_EXPIRED: {
     innovationName: string;
   };
+  // Automatic / Surveys
+  AU12_INNOVATOR_SURVEY_END_SUPPORT_TWO_MONTHS_REMINDER: {
+    innovationName: string;
+  };
 
   // Support Summary
   SS01_SUPPORT_SUMMARY_UPDATE_TO_INNOVATORS: {
