@@ -3,14 +3,17 @@ import { InnovationSupportStatusEnum, ServiceRoleEnum, type NotifierTypeEnum } f
 import { TranslationHelper } from '@notifications/shared/helpers';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { HandlersHelper } from '../../_helpers/handlers.helper';
-import { supportSummaryUrl, threadUrl } from '../../_helpers/url.helper';
+import { supportSummaryUrl, surveysInitialPage, threadUrl } from '../../_helpers/url.helper';
 import type { RecipientType } from '../../_services/recipients.service';
 import { BaseHandler } from '../base.handler';
 import { randomUUID } from 'crypto';
 
 export class SupportStatusUpdateHandler extends BaseHandler<
   NotifierTypeEnum.SUPPORT_STATUS_UPDATE,
-  'ST01_SUPPORT_STATUS_TO_ENGAGING' | 'ST02_SUPPORT_STATUS_TO_OTHER' | 'ST03_SUPPORT_STATUS_TO_WAITING'
+  | 'ST01_SUPPORT_STATUS_TO_ENGAGING'
+  | 'ST02_SUPPORT_STATUS_TO_OTHER'
+  | 'ST03_SUPPORT_STATUS_TO_WAITING'
+  | 'ST09_SUPPORT_STATUS_TO_CLOSED'
 > {
   constructor(
     requestUser: DomainContextType,
@@ -35,8 +38,10 @@ export class SupportStatusUpdateHandler extends BaseHandler<
         await this.ST03_SUPPORT_STATUS_TO_WAITING(innovation, recipients);
         break;
       case InnovationSupportStatusEnum.UNSUITABLE:
-      case InnovationSupportStatusEnum.CLOSED:
         await this.ST02_SUPPORT_STATUS_TO_OTHER(innovation, recipients);
+        break;
+      case InnovationSupportStatusEnum.CLOSED:
+        await this.ST09_SUPPORT_STATUS_TO_CLOSED(innovation, recipients);
         break;
     }
 
@@ -166,6 +171,40 @@ export class SupportStatusUpdateHandler extends BaseHandler<
         unitName: unitName
       },
       notificationId
+    });
+  }
+
+  private async ST09_SUPPORT_STATUS_TO_CLOSED(
+    innovation: { id: string; name: string },
+    recipients: RecipientType[]
+  ): Promise<void> {
+    const unitName = this.getRequestUnitName();
+    const notificationId = randomUUID();
+
+    this.notify('ST09_SUPPORT_STATUS_TO_CLOSED', recipients, {
+      email: {
+        notificationPreferenceType: 'SUPPORT',
+        params: {
+          innovation_name: innovation.name,
+          message: this.inputData.support.message,
+          unit_name: unitName,
+          start_survey_page: surveysInitialPage(ServiceRoleEnum.INNOVATOR, innovation.id, notificationId)
+        }
+      },
+      inApp: {
+        context: {
+          type: 'SUPPORT',
+          detail: 'ST09_SUPPORT_STATUS_TO_CLOSED',
+          id: this.inputData.support.id
+        },
+        innovationId: innovation.id,
+        params: {
+          innovationName: innovation.name,
+          unitId: this.requestUser.organisation?.organisationUnit?.id ?? '',
+          unitName: unitName
+        },
+        notificationId
+      }
     });
   }
 

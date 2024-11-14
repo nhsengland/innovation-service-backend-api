@@ -88,7 +88,7 @@ export class NotifyMeHandler {
         email: {
           ...this.getEmailParams(recipient, subscription, innovation, notificationId),
           displayName: identity.displayName,
-          unsubscribeUrl: unsubscribeUrl(notificationId)
+          unsubscribeUrl: unsubscribeUrl
         }
       };
 

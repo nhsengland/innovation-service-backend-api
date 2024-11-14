@@ -226,12 +226,9 @@ export const nhsInnovationServiceUrl = (): string => {
   return new UrlModel(ENV.webBaseTransactionalUrl).buildUrl();
 };
 
-export const unsubscribeUrl = (notificationId: string): string => {
-  return new UrlModel(ENV.webBaseTransactionalUrl)
-    .addPath('account/email-notifications')
-    .setQueryParams({ dismissNotification: notificationId })
-    .buildUrl();
-};
+export const unsubscribeUrl = new UrlModel(ENV.webBaseTransactionalUrl)
+  .addPath('account/email-notifications')
+  .buildUrl();
 
 export const frontendBaseUrl = (role: ServiceRoleEnum): string => {
   switch (role) {
@@ -249,4 +246,17 @@ export const frontendBaseUrl = (role: ServiceRoleEnum): string => {
       throw new Error(`Unknown role: ${x}`); // never happens
     }
   }
+};
+
+export const surveysInitialPage = (
+  role: ServiceRoleEnum.INNOVATOR,
+  innovationId: string,
+  notificationId: string
+): string => {
+  const baseUrl = frontendBaseUrl(role);
+  return new UrlModel(ENV.webBaseTransactionalUrl)
+    .addPath(':baseUrl/innovations/:innovationId/surveys')
+    .setPathParams({ baseUrl, innovationId })
+    .setQueryParams({ dismissNotification: notificationId })
+    .buildUrl();
 };
