@@ -84,6 +84,11 @@ export class InnovationSupportBuilder extends BaseBuilder {
     return this;
   }
 
+  setFinishedAt(date: Date): this {
+    this.support.finishedAt = date;
+    return this;
+  }
+
   async save(): Promise<TestInnovationSupportType> {
     const required = ['innovation', 'organisationUnit', 'majorAssessment'] as const;
     for (const prop of required) {

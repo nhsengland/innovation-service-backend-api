@@ -36,6 +36,7 @@ import { In, type EntityManager } from 'typeorm';
 import { container } from '../_config';
 import type { RecipientsService } from './recipients.service';
 import { SYMBOLS } from './symbols';
+import _ from 'lodash';
 
 describe('Notifications / _services / recipients service suite', () => {
   let sut: RecipientsService;
@@ -941,12 +942,15 @@ describe('Notifications / _services / recipients service suite', () => {
 
   describe('idleInnovations', () => {
     it('returns empty array of idle innovations if there are no innovations', async () => {
-      const res = await sut.innovationsWithoutSupportForNDays([30], em);
+      const res = await sut.innovationsWithoutSupportForNDays([90], em);
       expect(res).toHaveLength(0);
     });
 
-    it.skip('returns innovations if there are idle innovations', async () => {
-      // having trouble with this test since it depends on history table
+    it('returns innovations if there are idle innovations', async () => {
+      //TODO: Remove the numbersArray and use the actual number of days(30). This should be done 6 months after the deployment of this feature.
+      const numbersArray = _.range(0, 181);
+      const res = await sut.innovationsWithoutSupportForNDays(numbersArray, em);
+      expect(res).toHaveLength(1);
     });
 
     it('throws error if array is empty', async () => {
