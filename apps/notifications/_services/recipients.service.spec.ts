@@ -36,7 +36,7 @@ import { In, type EntityManager } from 'typeorm';
 import { container } from '../_config';
 import type { RecipientsService } from './recipients.service';
 import { SYMBOLS } from './symbols';
-import _ from 'lodash';
+import range from 'lodash/range';
 
 describe('Notifications / _services / recipients service suite', () => {
   let sut: RecipientsService;
@@ -948,7 +948,7 @@ describe('Notifications / _services / recipients service suite', () => {
 
     it('returns innovations if there are idle innovations', async () => {
       //TODO: Remove the numbersArray and use the actual number of days(30). This should be done 6 months after the deployment of this feature.
-      const numbersArray = _.range(0, 181);
+      const numbersArray = range(0, 181);
       const res = await sut.innovationsWithoutSupportForNDays(numbersArray, em);
       expect(res).toHaveLength(1);
     });
