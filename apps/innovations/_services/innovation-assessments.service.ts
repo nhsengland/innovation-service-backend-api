@@ -705,6 +705,32 @@ export class InnovationAssessmentsService extends BaseService {
         { assessment: { id: assessment.id }, reassessment: { id: reassessment.id } }
       );
 
+      // Update supportDescription on innovation_document and innovation_document_draft
+      const updatedAt = new Date();
+      await transaction.query(
+        `UPDATE innovation_document
+             SET document = JSON_MODIFY(document, @0, @1), updated_by=@2, updated_at=@3, is_snapshot=0, description=NULL WHERE id = @4`,
+        [
+          `$.INNOVATION_DESCRIPTION.supportDescription`,
+          data['whatSupportDoYouNeed'],
+          domainContext.id,
+          updatedAt,
+          innovationId
+        ]
+      );
+
+      await transaction.query(
+        `UPDATE innovation_document_draft
+             SET document = JSON_MODIFY(document, @0, @1), updated_by=@2, updated_at=@3 WHERE id = @4`,
+        [
+          `$.INNOVATION_DESCRIPTION.supportDescription`,
+          data['whatSupportDoYouNeed'],
+          domainContext.id,
+          updatedAt,
+          innovationId
+        ]
+      );
+
       return { assessment: { id: assessment.id }, reassessment: { id: reassessment.id } };
     });
 
