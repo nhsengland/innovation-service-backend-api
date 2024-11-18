@@ -19,13 +19,11 @@ describe('Notifications / _handlers / satisfaction-survey-reminder handler suite
   const surveyId = crypto.randomUUID();
   const surveyInnovation = scenario.users.johnInnovator.innovations.johnInnovation;
 
-  jest.spyOn(RecipientsService.prototype, 'surveyWithoutFeedbackForNDays').mockResolvedValue([
+  jest.spyOn(RecipientsService.prototype, 'innovationsMissingSurveyFeedback').mockResolvedValue([
     {
-      surveyId: surveyId,
-      innovation: {
-        id: surveyInnovation.id,
-        name: surveyInnovation.name
-      }
+      innovationId: surveyId,
+      innovationName: surveyInnovation.name,
+      roleIds: [scenario.users.johnInnovator.roles.innovatorRole.id]
     }
   ]);
 

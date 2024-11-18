@@ -1,8 +1,8 @@
 import type { Context } from '@azure/functions';
-import { ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/enums';
+import { type NotifierTypeEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
-import { BaseHandler } from '../base.handler';
 import { randomUUID } from 'crypto';
+import { BaseHandler } from '../base.handler';
 
 export class SatisfactionSurveyReminderHandler extends BaseHandler<
   NotifierTypeEnum.SURVEY_END_SUPPORT_REMINDER,
@@ -17,24 +17,19 @@ export class SatisfactionSurveyReminderHandler extends BaseHandler<
   }
 
   async run(): Promise<this> {
-    // TODO: Implement logic
-    const surveysWithoutFeedback = await this.recipientsService.surveyWithoutFeedbackForNDays('SUPPORT_END', 60, 60);
+    const surveysWithoutFeedback = await this.recipientsService.innovationsMissingSurveyFeedback('SUPPORT_END', 60, 60);
 
     for (const survey of surveysWithoutFeedback) {
       const notificationId = randomUUID();
 
-      const innovation = await this.recipientsService.innovationInfo(survey.innovation.id);
-      const innovators = await this.recipientsService.getInnovationActiveOwnerAndCollaborators(innovation.id);
-      const recipients = await this.recipientsService.getUsersRecipient(innovators, ServiceRoleEnum.INNOVATOR);
-
-      this.addInApp('AU12_INNOVATOR_SURVEY_END_SUPPORT_TWO_MONTHS_REMINDER', recipients, {
+      this.addInApp('AU12_INNOVATOR_SURVEY_END_SUPPORT_TWO_MONTHS_REMINDER', survey.roleIds, {
         context: {
           detail: 'AU12_INNOVATOR_SURVEY_END_SUPPORT_TWO_MONTHS_REMINDER',
-          id: survey.innovation.id,
+          id: survey.innovationId,
           type: 'AUTOMATIC'
         },
-        innovationId: survey.innovation.id,
-        params: { innovationName: innovation.name },
+        innovationId: survey.innovationId,
+        params: { innovationName: survey.innovationName },
         notificationId
       });
     }

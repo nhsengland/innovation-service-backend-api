@@ -51,6 +51,7 @@ import {
   UnitKPIHandler,
   UserEmailAddressUpdatedHandler
 } from '../_handlers';
+import { SatisfactionSurveyReminderHandler } from '../_handlers/automatic/satisfaction-survey-reminder.handler';
 
 export const NOTIFICATIONS_CONFIG = {
   // Account
@@ -416,7 +417,7 @@ export const NOTIFICATIONS_CONFIG = {
     }).required()
   },
   [NotifierTypeEnum.SURVEY_END_SUPPORT_REMINDER]: {
-    handler: IdleSupportAccessorHandler,
+    handler: SatisfactionSurveyReminderHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.SURVEY_END_SUPPORT_REMINDER]>({})
   }
 } as const;
