@@ -32,11 +32,11 @@ import { TestsHelper } from '@notifications/shared/tests';
 import { InnovationSupportBuilder } from '@notifications/shared/tests/builders/innovation-support.builder';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import type { Role2PreferencesType } from '@notifications/shared/types';
+import range from 'lodash/range';
 import { In, type EntityManager } from 'typeorm';
 import { container } from '../_config';
 import type { RecipientsService } from './recipients.service';
 import { SYMBOLS } from './symbols';
-import range from 'lodash/range';
 
 describe('Notifications / _services / recipients service suite', () => {
   let sut: RecipientsService;
@@ -1490,6 +1490,42 @@ describe('Notifications / _services / recipients service suite', () => {
           [scenario.users.adamInnovator.id, [scenario.users.adamInnovator.innovations.adamInnovation.name]]
         ])
       );
+    });
+  });
+
+  describe('innovationsMissingSurveyFeedback', () => {
+    const user = scenario.users.ottoOctaviusInnovator;
+    const innovation = user.innovations.tentaclesInnovation;
+    const survey = innovation.surveys.unansweredSurveyToOtto;
+
+    it('should return innovation with roles if matching deadline', async () => {
+      const previousDate = new Date();
+      previousDate.setDate(previousDate.getDate() - 7);
+      await em.query('UPDATE innovation_survey SET created_at = @0 WHERE id = @1', [previousDate, survey.id]);
+      const res = await sut.innovationsMissingSurveyFeedback('SUPPORT_END', 7, undefined, em);
+      expect(res).toHaveLength(1);
+      expect(res).toMatchObject([
+        { innovationId: innovation.id, innovationName: innovation.name, roleIds: [user.roles.innovatorRole.id] }
+      ]);
+    });
+
+    it('should return innovation with roles if matching recurring', async () => {
+      const previousDate = new Date();
+      previousDate.setDate(previousDate.getDate() - 14);
+      await em.query('UPDATE innovation_survey SET created_at = @0 WHERE id = @1', [previousDate, survey.id]);
+      const res = await sut.innovationsMissingSurveyFeedback('SUPPORT_END', 7, 7, em);
+      expect(res).toHaveLength(1);
+      expect(res).toMatchObject([
+        { innovationId: innovation.id, innovationName: innovation.name, roleIds: [user.roles.innovatorRole.id] }
+      ]);
+    });
+
+    it('should not return innovation with roles if not matching deadline', async () => {
+      const previousDate = new Date();
+      previousDate.setDate(previousDate.getDate() - 13);
+      await em.query('UPDATE innovation_survey SET created_at = @0 WHERE id = @1', [previousDate, survey.id]);
+      const res = await sut.innovationsMissingSurveyFeedback('SUPPORT_END', 7, 7, em);
+      expect(res).toHaveLength(0);
     });
   });
 });
