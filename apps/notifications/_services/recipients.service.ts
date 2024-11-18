@@ -1400,7 +1400,7 @@ export class RecipientsService extends BaseService {
     const query = em
       .createQueryBuilder(InnovationSurveyEntity, 'survey')
       .select(['survey.id', 'survey.targetUserRole', 'survey.created_at', 'innovation.id', 'innovation.name'])
-      .innerJoin('suvery.innovation', 'innovation')
+      .innerJoin('survey.innovation', 'innovation')
       .where('survey.type = :type', { type })
       .andWhere('survey.answers IS NOT NULL');
 
