@@ -8,6 +8,8 @@ import { InnovationEntity, UserRoleEntity } from '@innovations/shared/entities';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import { DomainService } from '@innovations/shared/services';
 import { DomainContextType } from '@innovations/shared/types';
+import { SurveyAnswersType } from '@innovations/shared/entities/innovation/innovation-survey.entity';
+import { ForbiddenError, ConflictError, InnovationErrorsEnum, NotFoundError } from '@innovations/shared/errors';
 
 export type SurveyInfoPayload = {
   type: 'SUPPORT_END';
@@ -48,6 +50,34 @@ export class SurveysService extends BaseService {
         })
       )
     );
+  }
+
+  async answerSurvey(
+    domainContext: DomainContextType,
+    surveyId: string,
+    body: SurveyAnswersType,
+    entityManager?: EntityManager
+  ): Promise<void> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const survey = await em
+      .createQueryBuilder(InnovationSurveyEntity, 'survey')
+      .select(['survey.id', 'survey.answers', 'target.id'])
+      .innerJoin('survey.targetUserRole', 'target')
+      .where('survey.id = :surveyId', { surveyId })
+      .getOne();
+
+    if (!survey) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SURVEY_NOT_FOUND);
+    }
+    if (survey.targetUserRole.id !== domainContext.currentRole.id) {
+      throw new ForbiddenError(InnovationErrorsEnum.INNOVATION_SURVEY_INVALID_TARGET);
+    }
+    if (survey.answers !== null) {
+      throw new ConflictError(InnovationErrorsEnum.INNOVATION_SURVEY_ALREADY_ANSWERED);
+    }
+
+    await em.update(InnovationSurveyEntity, { id: surveyId }, { answers: body, updatedAt: new Date() });
   }
 
   /**
