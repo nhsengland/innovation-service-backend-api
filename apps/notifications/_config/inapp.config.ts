@@ -100,6 +100,11 @@ export type InAppTemplatesType = {
   ST08_SUPPORT_NEW_ASSIGNED_WAITING_INNOVATION_TO_QA: {
     innovationName: string;
   };
+  ST09_SUPPORT_STATUS_TO_CLOSED: {
+    unitId: string;
+    unitName: string;
+    innovationName: string;
+  };
 
   // Needs assessment
   NA01_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_INNOVATOR: {

@@ -4352,6 +4352,85 @@ paths:
           description: The user is not authorized to access this resource.
         "500":
           description: An error occurred while processing the request.
+  /v1/{innovationId}/surveys/{surveyId}:
+    patch:
+      description: Answer a survey
+      operationId: v1-innovation-survey-answer
+      tags:
+        - "[v1] Innovation Surveys"
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: surveyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                supportSatisfaction:
+                  type: string
+                  enum:
+                    - "1"
+                    - "2"
+                    - "3"
+                    - "4"
+                    - "5"
+                    - "6"
+                    - "7"
+                    - "8"
+                    - "9"
+                    - "10"
+                ideaOnHowToProceed:
+                  type: string
+                  enum:
+                    - YES
+                    - NO
+                howLikelyWouldYouRecommendIS:
+                  type: string
+                  enum:
+                    - "1"
+                    - "2"
+                    - "3"
+                    - "4"
+                    - "5"
+                    - "6"
+                    - "7"
+                    - "8"
+                    - "9"
+                    - "10"
+                comment:
+                  type: string
+                  maxLength: 4000
+                  nullable: true
+              required:
+                - supportSatisfaction
+                - ideaOnHowToProceed
+                - howLikelyWouldYouRecommendIS
+              additionalProperties: false
+      responses:
+        "204":
+          description: Survey answered successfuly
+        "400":
+          description: Bad request.
+        "401":
+          description: Unauthorized.
+        "403":
+          description: Forbidden.
+        "404":
+          description: Not found.
+        "500":
+          description: Internal server error.
   /v1/{innovationId}/surveys:
     get:
       description: Get a list of all unanswered surveys
