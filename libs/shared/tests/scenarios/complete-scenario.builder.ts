@@ -43,6 +43,7 @@ import { NotifyMeSubscriptionBuilder } from '../builders/notify-me-subscription.
 import { OrganisationUnitBuilder } from '../builders/organisation-unit.builder';
 import { OrganisationBuilder } from '../builders/organisation.builder';
 import { type TestUserType, UserBuilder } from '../builders/user.builder';
+import { InnovationSurveyBuilder } from '../builders/innovation-survey.builder';
 
 export type CompleteScenarioType = Awaited<ReturnType<CompleteScenarioBuilder['createScenario']>>;
 
@@ -943,6 +944,33 @@ export class CompleteScenarioBuilder {
         .setCreatedAndUpdatedBy(aliceQualifyingAccessor.id, aliceQualifyingAccessor.roles['qaRole']!.id)
         .save();
 
+      // closed support on tentaclesInnovation by innovTechHeavy
+      const tentaclesInnovationClosedSupport = await new InnovationSupportBuilder(entityManager)
+        .setStatus(InnovationSupportStatusEnum.CLOSED)
+        .setInnovation(tentaclesInnovation.id)
+        .setMajorAssessment(tentaclesInnovationAssessmentByPaul.id)
+        .setOrganisationUnit(innovTechHeavyOrgUnit.id)
+        .setCreatedAndUpdatedBy(paulNeedsAssessor.id, paulNeedsAssessor.roles['assessmentRole']!.id)
+        .setFinishedAt(new Date())
+        .save();
+
+      const tentaclesInnovationEndSupportUnansweredSurvey = await new InnovationSurveyBuilder(entityManager)
+        .setTarget(ottoOctaviusInnovator.roles['innovatorRole']!.id)
+        .setTypeAndContext('SUPPORT_END', tentaclesInnovationClosedSupport.id)
+        .setInnovation(tentaclesInnovation.id)
+        .save();
+      const tentaclesInnovationEndSupportAnsweredSurvey = await new InnovationSurveyBuilder(entityManager)
+        .setTarget(ottoOctaviusInnovator.roles['innovatorRole']!.id)
+        .setTypeAndContext('SUPPORT_END', tentaclesInnovationClosedSupport.id)
+        .setInnovation(tentaclesInnovation.id)
+        .setAnswers({
+          comment: randText(),
+          ideaOnHowToProceed: 'YES',
+          supportSatisfaction: '10',
+          howLikelyWouldYouRecommendIS: '10'
+        })
+        .save();
+
       const brainComputerInterfaceInnovation = await new InnovationBuilder(entityManager)
         .setName('Brain Computer Interface')
         .setOwner(ottoOctaviusInnovator.id)
@@ -1272,7 +1300,14 @@ export class CompleteScenarioBuilder {
               },
               tentaclesInnovation: {
                 ...tentaclesInnovation,
-                supports: { tentaclesInnovationSupport: tentaclesInnovationSupport }
+                supports: {
+                  tentaclesInnovationSupport: tentaclesInnovationSupport,
+                  tentaclesInnovationSupportClosed: tentaclesInnovationClosedSupport
+                },
+                surveys: {
+                  unansweredSurveyToOtto: tentaclesInnovationEndSupportUnansweredSurvey,
+                  answeredSurveyToOtto: tentaclesInnovationEndSupportAnsweredSurvey
+                }
               },
               brainComputerInterfaceInnovation: {
                 ...brainComputerInterfaceInnovation,
