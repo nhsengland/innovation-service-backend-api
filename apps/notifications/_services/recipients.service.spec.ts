@@ -1500,9 +1500,9 @@ describe('Notifications / _services / recipients service suite', () => {
 
     it('should return innovation with roles if matching deadline', async () => {
       const previousDate = new Date();
-      previousDate.setDate(previousDate.getDate() - 7);
+      previousDate.setDate(previousDate.getDate() - 60);
       await em.query('UPDATE innovation_survey SET created_at = @0 WHERE id = @1', [previousDate, survey.id]);
-      const res = await sut.innovationsMissingSurveyFeedback('SUPPORT_END', 7, undefined, em);
+      const res = await sut.innovationsMissingSurveyFeedback('SUPPORT_END', 60, undefined, em);
       expect(res).toHaveLength(1);
       expect(res).toMatchObject([
         { innovationId: innovation.id, innovationName: innovation.name, roleIds: [user.roles.innovatorRole.id] }
@@ -1511,9 +1511,9 @@ describe('Notifications / _services / recipients service suite', () => {
 
     it('should return innovation with roles if matching recurring', async () => {
       const previousDate = new Date();
-      previousDate.setDate(previousDate.getDate() - 14);
+      previousDate.setDate(previousDate.getDate() - 60);
       await em.query('UPDATE innovation_survey SET created_at = @0 WHERE id = @1', [previousDate, survey.id]);
-      const res = await sut.innovationsMissingSurveyFeedback('SUPPORT_END', 7, 7, em);
+      const res = await sut.innovationsMissingSurveyFeedback('SUPPORT_END', 60, 60, em);
       expect(res).toHaveLength(1);
       expect(res).toMatchObject([
         { innovationId: innovation.id, innovationName: innovation.name, roleIds: [user.roles.innovatorRole.id] }
@@ -1522,9 +1522,9 @@ describe('Notifications / _services / recipients service suite', () => {
 
     it('should not return innovation with roles if not matching deadline', async () => {
       const previousDate = new Date();
-      previousDate.setDate(previousDate.getDate() - 13);
+      previousDate.setDate(previousDate.getDate() - 59);
       await em.query('UPDATE innovation_survey SET created_at = @0 WHERE id = @1', [previousDate, survey.id]);
-      const res = await sut.innovationsMissingSurveyFeedback('SUPPORT_END', 7, 7, em);
+      const res = await sut.innovationsMissingSurveyFeedback('SUPPORT_END', 60, 60, em);
       expect(res).toHaveLength(0);
     });
   });
