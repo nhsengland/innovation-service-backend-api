@@ -1130,6 +1130,7 @@ export class InnovationsService extends BaseService {
       organisation?: { name: string; size: null | string; registrationNumber: null | string };
     };
     daysSinceNoActiveSupport?: number;
+    expectedArchiveDate?: Date;
     assessment?: null | {
       id: string;
       currentMajorAssessmentId: string;
@@ -1165,6 +1166,7 @@ export class InnovationsService extends BaseService {
         'reassessmentRequests.id',
         'innovationGroupedStatus.groupedStatus',
         'innovationGroupedStatus.daysSinceNoActiveSupport',
+        'innovationGroupedStatus.expectedArchiveDate',
         'collaborator.id'
       ])
       .leftJoin('innovation.owner', 'innovationOwner')
@@ -1326,7 +1328,8 @@ export class InnovationsService extends BaseService {
           }
         : {}),
       ...(innovation.innovationGroupedStatus.groupedStatus === InnovationGroupedStatusEnum.NO_ACTIVE_SUPPORT && {
-        daysSinceNoActiveSupport: innovation.innovationGroupedStatus.daysSinceNoActiveSupport
+        daysSinceNoActiveSupport: innovation.innovationGroupedStatus.daysSinceNoActiveSupport,
+        expectedArchiveDate: innovation.innovationGroupedStatus.expectedArchiveDate
       }),
       assessment,
       ...(!filters.fields?.includes('supports')

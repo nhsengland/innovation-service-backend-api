@@ -80,6 +80,7 @@ class V1InnovationInfo {
               }
             }),
         daysSinceNoActiveSupport: result.daysSinceNoActiveSupport,
+        expectedArchiveDate: result.expectedArchiveDate,
         ...(result.assessment === undefined ? {} : { assessment: result.assessment }),
         ...(result.supports === undefined
           ? {}
