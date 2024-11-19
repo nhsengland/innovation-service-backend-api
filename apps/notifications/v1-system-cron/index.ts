@@ -19,6 +19,8 @@ class V1SystemSchedule {
       await notifierService.sendSystemNotification(NotifierTypeEnum.IDLE_SUPPORT_INNOVATOR, {});
 
       await notifierService.sendSystemNotification(NotifierTypeEnum.UNIT_KPI, {});
+
+      await notifierService.sendSystemNotification(NotifierTypeEnum.SURVEY_END_SUPPORT_REMINDER, {});
     }
   }
 }

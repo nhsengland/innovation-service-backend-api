@@ -42,8 +42,9 @@ import { inject, injectable } from 'inversify';
 
 import { BaseService } from './base.service';
 
-import { InnovationSupportLogEntity } from '@notifications/shared/entities';
+import { InnovationSupportLogEntity, InnovationSurveyEntity } from '@notifications/shared/entities';
 import { InnovationCollaboratorEntity } from '@notifications/shared/entities/innovation/innovation-collaborator.entity';
+import { SurveyType } from '@notifications/shared/entities/innovation/innovation-survey.entity';
 import { DatesHelper } from '@notifications/shared/helpers';
 import { addToArrayValueInMap } from '@notifications/shared/helpers/misc.helper';
 import type { IdentityUserInfo, NotificationPreferences } from '@notifications/shared/types';
@@ -1376,5 +1377,62 @@ export class RecipientsService extends BaseService {
       },
       {} as { [key in ServiceRoleEnum]?: RecipientType[] }
     );
+  }
+
+  /**
+   * returns the surveys that didn't have a feedback in n days,
+   * repeats every m days afterwards (if m is defined)
+   * @param days number of days to check (default: 60)
+   * @param repeat repeat the notification every n days (if defined)
+   * @param entityManager optional entityManager
+   * @returns surveys without feedback for n days
+   */
+  async innovationsMissingSurveyFeedback(
+    type: SurveyType,
+    days = 60,
+    repeat?: number,
+    entityManager?: EntityManager
+  ): Promise<{ innovationId: string; innovationName: string; roleIds: string[] }[]> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const query = em
+      .createQueryBuilder(InnovationSurveyEntity, 'survey')
+      .select(['role.id', 'innovation.id', 'innovation.name'])
+      .addSelect('MIN(survey.created_at)', 'createdAt')
+      .innerJoin('survey.innovation', 'innovation', 'innovation.status != :status', {
+        status: InnovationStatusEnum.WITHDRAWN
+      })
+      .innerJoin('survey.targetUserRole', 'role')
+      .where('survey.type = :type', { type })
+      .andWhere('survey.answers IS NULL')
+      .andWhere('role.isActive = 1')
+      .groupBy('role.id, innovation.id, innovation.name');
+
+    if (repeat) {
+      query
+        .having('DATEDIFF(day, MIN("survey"."created_at"), GETDATE()) >= :days', { days })
+        .andHaving('DATEDIFF(day, MIN("survey"."created_at"), GETDATE()) % :repeat = 0', { repeat });
+    } else {
+      query.having('DATEDIFF(day, MIN("survey"."created_at"), GETDATE()) = :days', { days });
+    }
+
+    const rows = await query.getRawMany();
+
+    const res = rows.reduce(
+      (acc, cur) => {
+        if (!acc[cur['innovation_id']]) {
+          acc[cur['innovation_id']] = {
+            innovationId: cur['innovation_id'],
+            innovationName: cur['innovation_name'],
+            roleIds: []
+          };
+        }
+        acc[cur['innovation_id']]?.roleIds.push(cur['role_id']);
+        return acc;
+      },
+      {} as { [k in string]: { innovationId: string; innovationName: string; roleIds: string[] } }
+    );
+
+    return Object.values(res);
   }
 }
