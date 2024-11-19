@@ -1,44 +1,44 @@
 # File: simple-param.yml
 parameters:
-- name: appName
-  type: string
-- name: hasApim
-  type: boolean
-  default: true
+  - name: appName
+    type: string
+  - name: hasApim
+    type: boolean
+    default: true
 
 steps:
-- task: NodeTool@0
-  displayName: 'Install Node 18'
-  inputs:
-    versionSpec: '18.x'
-
-- task: CmdLine@2
-  displayName: 'Build APP'
-  inputs:
-    script: |
-      npm install &&
-      npm run app:configure --function-app=${{parameters.appName}} &&
-      npm run app:build --function-app=${{parameters.appName}} &&
-      cp -r node_modules dist/apps/${{parameters.appName}}
-
-- ${{ if eq(parameters.hasApim, true) }}:
-  - task: CmdLine@2
-    displayName: 'Copy apim'
+  - task: NodeTool@0
+    displayName: "Install Node 20"
     inputs:
-      script: cp -r apps/${{parameters.appName}}/.apim dist/apps/${{parameters.appName}}
+      versionSpec: "20.x"
 
-- task: ArchiveFiles@2
-  displayName: 'Archive files'
-  inputs:
-    rootFolderOrFile: 'dist/apps/${{parameters.appName}}'
-    includeRootFolder: false
-    archiveType: 'zip'
-    archiveFile: '$(Build.ArtifactStagingDirectory)/${{parameters.appName}}.zip'
-    replaceExistingArchive: true
+  - task: CmdLine@2
+    displayName: "Build APP"
+    inputs:
+      script: |
+        npm install &&
+        npm run app:configure --function-app=${{parameters.appName}} &&
+        npm run app:build --function-app=${{parameters.appName}} &&
+        cp -r node_modules dist/apps/${{parameters.appName}}
 
-- task: PublishBuildArtifacts@1
-  displayName: 'Publish artifact'
-  inputs:
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)/${{parameters.appName}}.zip'
-    ArtifactName: 'drop'
-    publishLocation: 'Container'
+  - ${{ if eq(parameters.hasApim, true) }}:
+      - task: CmdLine@2
+        displayName: "Copy apim"
+        inputs:
+          script: cp -r apps/${{parameters.appName}}/.apim dist/apps/${{parameters.appName}}
+
+  - task: ArchiveFiles@2
+    displayName: "Archive files"
+    inputs:
+      rootFolderOrFile: "dist/apps/${{parameters.appName}}"
+      includeRootFolder: false
+      archiveType: "zip"
+      archiveFile: "$(Build.ArtifactStagingDirectory)/${{parameters.appName}}.zip"
+      replaceExistingArchive: true
+
+  - task: PublishBuildArtifacts@1
+    displayName: "Publish artifact"
+    inputs:
+      PathtoPublish: "$(Build.ArtifactStagingDirectory)/${{parameters.appName}}.zip"
+      ArtifactName: "drop"
+      publishLocation: "Container"
