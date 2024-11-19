@@ -7,7 +7,7 @@
     "app:lint": "eslint apps/$npm_config_function_app/**/*.ts",
     "app:build": "rimraf dist/apps/$npm_config_function_app && tsc -p apps/$npm_config_function_app/tsconfig.json && tsc-alias -p apps/$npm_config_function_app/tsconfig.json && npm run app:postbuild",
     "app:postbuild": "copyfiles -u 1 apps/$npm_config_function_app/**/function.json dist/apps && copyfiles package.json host.json local.settings.json dist/apps/$npm_config_function_app && copyfiles -u 3 apps/$npm_config_function_app/**/_fonts/*.ttf dist/apps/$npm_config_function_app/_fonts/",
-    "app:watch": "npm run app:build && npm-run-all --parallel app:watch:*",
+    "app:watch": "npm run app:build && concurrently \"npm run app:watch:tsc\" \"npm run app:watch:tsc-alias\" \"npm run app:watch:func-start\"",
     "app:watch:tsc": "tsc --w --project apps/$npm_config_function_app/tsconfig.json --pretty",
     "app:watch:tsc-alias": "tsc-alias -w -p apps/$npm_config_function_app/tsconfig.json",
     "app:watch:func-start": "func host start --script-root dist/apps/$npm_config_function_app --port $npm_config_port --javascript",
@@ -25,6 +25,9 @@
     "prettier:check": "prettier -c apps/ libs/",
     "test": "jest --forceExit --runInBand",
     "test:coverage": "jest --runInBand --forceExit --coverage --collectCoverageFrom='apps/**/*.ts' --collectCoverageFrom='libs/**/*.ts'"
+  },
+  "engines": {
+    "node": ">=20.18.0 < 21.0.0"
   },
   "dependencies": {
     "@aaronpowell/azure-functions-nodejs-openapi": "^0.4.0",
@@ -45,7 +48,7 @@
     "redis": "^4.7.0",
     "reflect-metadata": "^0.1.14",
     "typeorm": "^0.3.20",
-    "uuid": "^9.0.1",
+    "uuid": "^11.0.3",
     "yaml": "^2.5.1"
   },
   "devDependencies": {
@@ -57,16 +60,15 @@
     "@types/jest": "^29.5.12",
     "@types/jsonwebtoken": "^9.0.6",
     "@types/lodash": "^4.17.7",
-    "@types/node": "^18.19.49",
+    "@types/node": "^20.17.6",
     "@types/pdfmake": "^0.2.9",
-    "@types/uuid": "^8.3.4",
+    "concurrently": "^9.1.0",
     "copyfiles": "^2.4.1",
     "eslint": "^9.10.0",
     "eslint-config-prettier": "^9.1.0",
     "husky": "^8.0.3",
     "jest": "^29.7.0",
     "jest-junit": "^16.0.0",
-    "npm-run-all": "^4.1.5",
     "prettier": "^3.3.3",
     "rimraf": "^2.7.1",
     "ts-jest": "^29.2.5",
