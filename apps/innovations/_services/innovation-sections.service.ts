@@ -96,7 +96,7 @@ export class InnovationSectionsService extends BaseService {
         'submittedBy.status'
       ])
       .leftJoin('innovation.owner', 'owner')
-      .innerJoin('innovation.sections', 'sections')
+      .leftJoin('innovation.sections', 'sections')
       .leftJoin('sections.submittedBy', 'submittedBy')
       .where('innovation.id = :innovationId', { innovationId })
       .getOne();
