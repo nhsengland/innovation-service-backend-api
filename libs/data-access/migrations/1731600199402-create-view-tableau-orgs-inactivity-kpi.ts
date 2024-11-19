@@ -1,6 +1,6 @@
 import { type MigrationInterface, type QueryRunner } from 'typeorm';
 
-export class CreateWorkdaysBetweenFunctoin implements MigrationInterface {
+export class CreateViewTableauOrgsInactivityKPI1731600199402 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
 WITH activities AS (

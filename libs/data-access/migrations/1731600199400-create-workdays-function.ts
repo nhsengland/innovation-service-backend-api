@@ -1,6 +1,6 @@
 import { type MigrationInterface, type QueryRunner } from 'typeorm';
 
-export class CreateWorkdaysBetweenFunctoin implements MigrationInterface {
+export class CreateWorkdaysBetweenFunction1731600199400 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       CREATE OR ALTER FUNCTION workdaysBetween(@start DATETIME2, @end DATETIME2)
