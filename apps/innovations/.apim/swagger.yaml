@@ -2551,6 +2551,9 @@ paths:
                   daysSinceNoActiveSupport:
                     type: number
                     format: float
+                  expectedArchiveDate:
+                    type: string
+                    format: date-time
                   assessment:
                     type: object
                     properties:

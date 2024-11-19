@@ -52,6 +52,7 @@ const expected: Awaited<ReturnType<InnovationsService['getInnovationInfo']>> = {
   groupedStatus: InnovationGroupedStatusEnum.AWAITING_NEEDS_ASSESSMENT,
   hasBeenAssessed: false,
   daysSinceNoActiveSupport: randNumber(),
+  expectedArchiveDate: undefined,
   otherCategoryDescription: null,
   postCode: null,
   status: InnovationStatusEnum.IN_PROGRESS,
