@@ -2,7 +2,8 @@ import { type MigrationInterface, type QueryRunner } from 'typeorm';
 
 export class CreateViewAnalyticsSupportMetrics1731600199401 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
-    /*
+    await queryRunner.query(`
+      /*
       this view is used to provide basic information around the support metrics, including the:
       - suggestion_time: time when the support was suggested or null if self created (started_at = created_at)
       - started_at: when the organisation picked the support
@@ -11,12 +12,12 @@ export class CreateViewAnalyticsSupportMetrics1731600199401 implements Migration
       - days_to_support: the number of days from the suggestion to the start of the support
       - workdays_to_support: the number of workdays from the suggestion to the start of the support
 
-    The results are filtered to only include supports created after the deployment of the new supports as previous data
-    included supports with negative time from suggestion, issues around state transitions as the support could have been
-    engaged more than once, ... This was not only agreed with the client as they mentioned they'd prefer to start from
-    scratch and disregard the older data.
-    */
-    await queryRunner.query(`
+      The results are filtered to only include supports created after the deployment of the new supports as previous data
+      included supports with negative time from suggestion, issues around state transitions as the support could have been
+      engaged more than once, ... This was not only agreed with the client as they mentioned they'd prefer to start from
+      scratch and disregard the older data.
+      */
+
       CREATE OR ALTER VIEW analytics_support_metrics_view AS
       SELECT 
       i.id as innovation_id,

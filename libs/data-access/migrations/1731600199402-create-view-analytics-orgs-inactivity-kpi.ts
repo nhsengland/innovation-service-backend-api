@@ -2,31 +2,31 @@ import { type MigrationInterface, type QueryRunner } from 'typeorm';
 
 export class CreateViewAnalyticsOrgsInactivityKPI1731600199402 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
-    /*
-    This is a very specific view to provide the data for the Tableau dashboard around the organisations 3 months 
-    inactivity KPI.
-
-    The query is a bit heavy (10-15 sec) in production and we might need to change this to a persisted table in the future
-
-    This view does:
-    - Get the days of activities from the activity_log table per organisation unit and innovation
-    - Get support engagements (ENGAGING and WAITING) per organisation unit and innovation
-    - For the engagments get the days they were engaged and year-month
-    - Get the breaches where there are no activities in the last 3 months for each of those days
-    - Join the breaches with the engaging days to get the breached flag for each month organisation unit and innovation
-
-    In order to consume the view we need to set the OPTION (MAXRECURSION 0) as the recursion limit in MSSQL is 100 and the supports
-    might have been ongoing for a long time.
-
-    Fields: breached (0 or 1), year, month, organisation, organisation_id, organisation_unit, organisation_unit_id, innovation_id, innovation_name
-
-    Example:
-    SELECT * FROM analytics_organisation_inactivity_kpi_view
-    ORDER BY year, month, organisation_unit, innovation_name
-    OPTION (MAXRECURSION 0);  -- default MSSQL recursion limit is 100 which is not enough as the supports might have been ongoing for a long time
-
-    */
     await queryRunner.query(`
+/*
+This is a very specific view to provide the data for the Tableau dashboard around the organisations 3 months 
+inactivity KPI.
+
+The query is a bit heavy (10-15 sec) in production and we might need to change this to a persisted table in the future
+
+This view does:
+- Get the days of activities from the activity_log table per organisation unit and innovation
+- Get support engagements (ENGAGING and WAITING) per organisation unit and innovation
+- For the engagments get the days they were engaged and year-month
+- Get the breaches where there are no activities in the last 3 months for each of those days
+- Join the breaches with the engaging days to get the breached flag for each month organisation unit and innovation
+
+In order to consume the view we need to set the OPTION (MAXRECURSION 0) as the recursion limit in MSSQL is 100 and the supports
+might have been ongoing for a long time.
+
+Fields: breached (0 or 1), year, month, organisation, organisation_id, organisation_unit, organisation_unit_id, innovation_id, innovation_name
+
+Example:
+SELECT * FROM analytics_organisation_inactivity_kpi_view
+ORDER BY year, month, organisation_unit, innovation_name
+OPTION (MAXRECURSION 0);  -- default MSSQL recursion limit is 100 which is not enough as the supports might have been ongoing for a long time
+
+*/
 CREATE OR ALTER VIEW analytics_organisation_inactivity_kpi_view AS
 WITH activities AS (
   -- activities are anything where the organisation writes in the log (messages, progress updates, tasks, support status changes) which usually
