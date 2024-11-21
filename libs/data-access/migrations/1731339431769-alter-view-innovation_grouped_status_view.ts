@@ -39,7 +39,7 @@ export class AlterViewInnovationGroupedStatusView1731339431769 implements Migrat
                 WHEN i.status = 'NEEDS_ASSESSMENT' THEN 'NEEDS_ASSESSMENT'
                 WHEN i.status = 'WITHDRAWN' THEN 'WITHDRAWN'
                 WHEN i.status = 'ARCHIVED' THEN 'ARCHIVED'
-                WHEN i.status = 'WAITING_NEEDS_ASSESSMENT' THEN IIF(i.major_version > 1, 'AWAITING_NEEDS_ASSESSMENT', 'AWAITING_NEEDS_REASSESSMENT')
+                WHEN i.status = 'WAITING_NEEDS_ASSESSMENT' THEN IIF(i.major_version > 1, 'AWAITING_NEEDS_REASSESSMENT', 'AWAITING_NEEDS_ASSESSMENT')
                 WHEN i.status = 'IN_PROGRESS' THEN
                     CASE
                         WHEN e.innovation_id IS NOT NULL THEN 'RECEIVING_SUPPORT'
