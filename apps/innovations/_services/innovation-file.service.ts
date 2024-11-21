@@ -436,6 +436,12 @@ export class InnovationFileService extends BaseService {
       });
     }
 
+    if (domainContext.currentRole.role === ServiceRoleEnum.INNOVATOR) {
+      await this.notifierService.sendNotifyMe(domainContext, innovationId, 'DOCUMENT_UPLOADED', {
+        documentName: file.name
+      });
+    }
+
     return { id: file.id };
   }
 

@@ -45,6 +45,11 @@ export type InnovationRecordUpdated = {
   };
 };
 
+export type DocumentUploaded = {
+  eventType: 'DOCUMENT_UPLOADED';
+  subscriptionType: 'INSTANTLY';
+};
+
 export type Reminder = {
   eventType: 'REMINDER';
   subscriptionType: 'SCHEDULED';
@@ -52,7 +57,12 @@ export type Reminder = {
   customMessage: string;
 };
 
-export type SubscriptionConfig = SupportUpdated | ProgressUpdateCreated | InnovationRecordUpdated | Reminder;
+export type SubscriptionConfig =
+  | SupportUpdated
+  | ProgressUpdateCreated
+  | InnovationRecordUpdated
+  | DocumentUploaded
+  | Reminder;
 
 export const isSupportUpdated = (config: SubscriptionConfig): config is SupportUpdated => {
   return config.eventType === 'SUPPORT_UPDATED';
@@ -79,6 +89,9 @@ export type EventPayloads = {
   INNOVATION_RECORD_UPDATED: {
     sections: CurrentCatalogTypes.InnovationSections;
   };
+  DOCUMENT_UPLOADED: {
+    documentName: string;
+  };
   REMINDER: {
     subscriptionId: string;
   };
@@ -87,6 +100,7 @@ export const EventType = [
   'SUPPORT_UPDATED',
   'PROGRESS_UPDATE_CREATED',
   'INNOVATION_RECORD_UPDATED',
+  'DOCUMENT_UPLOADED',
   'REMINDER'
 ] as const;
 export type EventType = (typeof EventType)[number];

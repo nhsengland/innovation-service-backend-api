@@ -1062,6 +1062,7 @@ paths:
                       - SUPPORT_UPDATED
                       - PROGRESS_UPDATE_CREATED
                       - INNOVATION_RECORD_UPDATED
+                      - DOCUMENT_UPLOADED
                       - REMINDER
                       - SUGGESTED_SUPPORT_UPDATED
                       - AP10_NEW_ANNOUNCEMENT
@@ -1285,6 +1286,7 @@ paths:
                             - SUPPORT_UPDATED
                             - PROGRESS_UPDATE_CREATED
                             - INNOVATION_RECORD_UPDATED
+                            - DOCUMENT_UPLOADED
                             - REMINDER
                             - SUGGESTED_SUPPORT_UPDATED
                             - AP10_NEW_ANNOUNCEMENT
@@ -1473,6 +1475,20 @@ paths:
                         - preConditions
                       additionalProperties: false
                       x-required: true
+                    - type: object
+                      properties:
+                        eventType:
+                          type: string
+                          enum:
+                            - DOCUMENT_UPLOADED
+                        subscriptionType:
+                          type: string
+                          enum:
+                            - INSTANTLY
+                          default: INSTANTLY
+                      required:
+                        - eventType
+                      additionalProperties: false
                     - type: object
                       properties:
                         eventType:
@@ -1762,6 +1778,20 @@ paths:
                     - preConditions
                   additionalProperties: false
                   x-required: true
+                - type: object
+                  properties:
+                    eventType:
+                      type: string
+                      enum:
+                        - DOCUMENT_UPLOADED
+                    subscriptionType:
+                      type: string
+                      enum:
+                        - INSTANTLY
+                      default: INSTANTLY
+                  required:
+                    - eventType
+                  additionalProperties: false
                 - type: object
                   properties:
                     eventType:

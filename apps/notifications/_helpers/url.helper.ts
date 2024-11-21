@@ -126,6 +126,15 @@ export const documentUrl = (
     .buildUrl();
 };
 
+export const documentsUrl = (role: ServiceRoleEnum, innovationId: string, notificationId: string): string => {
+  const baseUrl = frontendBaseUrl(role);
+  return new UrlModel(ENV.webBaseTransactionalUrl)
+    .addPath(':baseUrl/innovations/:innovationId/documents')
+    .setPathParams({ baseUrl, innovationId })
+    .setQueryParams({ dismissNotification: notificationId })
+    .buildUrl();
+};
+
 export const supportStatusUrl = (
   role: ServiceRoleEnum.ACCESSOR | ServiceRoleEnum.QUALIFYING_ACCESSOR,
   innovationId: string,

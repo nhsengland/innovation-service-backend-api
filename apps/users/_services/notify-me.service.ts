@@ -110,6 +110,7 @@ export class NotifyMeService extends BaseService {
     INNOVATION_RECORD_UPDATED: this.defaultSubscriptionResponseDTO('INNOVATION_RECORD_UPDATED', ['sections']).bind(
       this
     ),
+    DOCUMENT_UPLOADED: this.defaultSubscriptionResponseDTO('DOCUMENT_UPLOADED', []).bind(this),
     REMINDER: this.defaultSubscriptionResponseDTO('REMINDER', ['date', 'customMessage']).bind(this)
   };
 
@@ -271,7 +272,7 @@ export class NotifyMeService extends BaseService {
 
     if (withDetails) {
       query.addSelect(`JSON_QUERY((
-        SELECT id, event_type as eventType, subscription_type as subscriptionType, JSON_QUERY(config) as config, updated_at as updatedAt 
+        SELECT id, event_type as eventType, subscription_type as subscriptionType, JSON_QUERY(config) as config, updated_at as updatedAt
         FROM notify_me_subscription
         WHERE innovation_id=innovation.id
         AND user_role_id=:roleId

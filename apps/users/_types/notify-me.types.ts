@@ -59,6 +59,11 @@ const InnovationRecordUpdatedSchema = Joi.object<InnovationRecordUpdated>({
   }).required()
 }).required();
 
+const DocumentUploadedSchema = Joi.object<Reminder>({
+  eventType: JoiHelper.AppCustomJoi().string().valid('DOCUMENT_UPLOADED').required(),
+  subscriptionType: JoiHelper.AppCustomJoi().string().valid('INSTANTLY').default('INSTANTLY')
+});
+
 const ReminderSchema = Joi.object<Reminder>({
   eventType: JoiHelper.AppCustomJoi().string().valid('REMINDER').required(),
   subscriptionType: JoiHelper.AppCustomJoi().string().valid('SCHEDULED').default('SCHEDULED'),
@@ -70,6 +75,7 @@ export const NotifyMeConfigSchema = Joi.alternatives(
   SupportUpdatedSchema,
   ProgressUpdateCreatedSchema,
   InnovationRecordUpdatedSchema,
+  DocumentUploadedSchema,
   ReminderSchema
 ).required();
 //#endregion
@@ -151,6 +157,7 @@ export type NotifyMeResponseTypes = {
   SUPPORT_UPDATED: SupportUpdatedResponseDTO;
   PROGRESS_UPDATE_CREATED: ProgressUpdateCreatedResponseDTO;
   INNOVATION_RECORD_UPDATED: DefaultResponseDTO<'INNOVATION_RECORD_UPDATED', 'sections'>;
+  DOCUMENT_UPLOADED: DefaultResponseDTO<'DOCUMENT_UPLOADED', never>;
   REMINDER: DefaultResponseDTO<'REMINDER', 'customMessage' | 'date'>;
 };
 

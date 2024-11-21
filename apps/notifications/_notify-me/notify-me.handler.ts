@@ -7,6 +7,7 @@ import type { EmailTemplatesType } from '../_config';
 import type { InAppTemplatesType } from '../_config/inapp.config';
 import { HandlersHelper } from '../_helpers/handlers.helper';
 import {
+  documentsUrl,
   innovationOverviewUrl,
   innovationRecordSectionUrl,
   supportSummaryUrl,
@@ -159,6 +160,13 @@ export class NotifyMeHandler {
           event: this.event.type
         };
 
+      case 'DOCUMENT_UPLOADED':
+        return {
+          innovationName: innovation.name,
+          documentName: this.event.params.documentName,
+          event: this.event.type
+        };
+
       case 'REMINDER': {
         let message = 'This is a default description for the inApp';
         if (subscription.config.subscriptionType === 'SCHEDULED' && subscription.config.customMessage) {
@@ -218,6 +226,12 @@ export class NotifyMeHandler {
             this.event.params.sections,
             notificationId
           )
+        };
+      case 'DOCUMENT_UPLOADED':
+        return {
+          innovation_name: innovation.name,
+          document_name: this.event.params.documentName,
+          documents_url: documentsUrl(recipient.role, innovation.id, notificationId)
         };
       case 'REMINDER': {
         let message = 'This is a default description for the email';

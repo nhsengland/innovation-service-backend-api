@@ -79,6 +79,13 @@ describe('Users / _services / notify me service suite', () => {
           },
           subscriptionType: 'INSTANTLY' as const
         }
+      ],
+      [
+        'DOCUMENT_UPLOADED',
+        {
+          eventType: 'DOCUMENT_UPLOADED' as const,
+          subscriptionType: 'INSTANTLY' as const
+        }
       ]
     ])('should create a %s subscription', async (_type, data) => {
       await sut.createSubscription(
