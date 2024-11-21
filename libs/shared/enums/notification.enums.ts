@@ -88,6 +88,7 @@ export const NotificationTypes = {
     'SUPPORT_UPDATED',
     'PROGRESS_UPDATE_CREATED',
     'INNOVATION_RECORD_UPDATED',
+    'DOCUMENT_UPLOADED',
     'REMINDER',
     'SUGGESTED_SUPPORT_UPDATED'
   ] as const,

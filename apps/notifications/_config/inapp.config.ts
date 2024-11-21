@@ -323,6 +323,11 @@ export type InAppTemplatesType = {
     section: CurrentCatalogTypes.InnovationSections;
     sectionLabel: string;
   };
+  DOCUMENT_UPLOADED: {
+    event: string;
+    innovationName: string;
+    documentName: string;
+  };
   REMINDER: {
     event: string;
     innovation: string;

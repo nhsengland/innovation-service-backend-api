@@ -100,6 +100,7 @@ export const EmailTemplates = {
   // NOTIFY ME
   INNOVATION_RECORD_UPDATED: '2dce9787-9a38-4d51-9e33-6ddf7683397d',
   PROGRESS_UPDATE_CREATED: '27f2a823-b8e4-4861-a208-8a5834c93516',
+  DOCUMENT_UPLOADED: '89b92be5-578a-4ea5-a639-66bcbdfbeef1',
   REMINDER: 'e8c593a4-2341-4177-89b5-b92aaaeac595',
   SUGGESTED_SUPPORT_UPDATED: '6d442fc5-2056-4515-9afc-e32a790ef231',
   SUPPORT_UPDATED: 'c24edce0-69cb-463d-bd65-d05304847dec'
@@ -507,6 +508,11 @@ export type EmailTemplatesType = {
     innovation: string;
     section: string;
     sectionUrl: string;
+  };
+  DOCUMENT_UPLOADED: {
+    innovation_name: string;
+    document_name: string;
+    documents_url: string;
   };
   REMINDER: {
     innovation: string;

@@ -51,6 +51,9 @@ export const EventParamsSchema: { [key in EventType]: ObjectSchema<EventPayloads
       .string()
       .valid(...CurrentCatalogTypes.InnovationSections)
   }).required(),
+  DOCUMENT_UPLOADED: Joi.object<EventPayloads['DOCUMENT_UPLOADED']>({
+    documentName: JoiHelper.AppCustomJoi().string().required()
+  }).required(),
   REMINDER: Joi.object<EventPayloads['REMINDER']>({
     subscriptionId: JoiHelper.AppCustomJoi().string().guid().required()
   }).required()
