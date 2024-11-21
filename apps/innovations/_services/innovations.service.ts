@@ -13,8 +13,6 @@ import {
   InnovationSectionEntity,
   InnovationSupportEntity,
   InnovationTaskEntity,
-  NotificationEntity,
-  NotificationUserEntity,
   OrganisationEntity,
   OrganisationUnitEntity,
   UserEntity,
@@ -1901,73 +1899,6 @@ export class InnovationsService extends BaseService {
         };
       })
     };
-  }
-
-  /**
-   * dismisses innovation notification for the requestUser according to optional conditions
-   *
-   * @param domainContext the user that is dismissing the notification
-   * @param innovationId the innovation id
-   * @param conditions extra conditions that control the dismissal
-   *  - if notificationIds is set, only the notifications with the given ids will be dismissed
-   *  - if notificationContext.id is set, only the notifications with the given context id will be dismissed
-   *  - if notificationContext.type is set, only the notifications with the given context type will be dismissed
-   */
-  async dismissNotifications(
-    domainContext: DomainContextType,
-    innovationId: string,
-    conditions: {
-      notificationIds: string[];
-      contextTypes: string[];
-      contextDetails: string[];
-      contextIds: string[];
-    },
-    entityManager?: EntityManager
-  ): Promise<void> {
-    const connection = entityManager ?? this.sqlConnection.manager;
-
-    const params: {
-      roleId: string;
-      innovationId: string;
-      notificationIds?: string[];
-      contextIds?: string[];
-      contextTypes?: string[];
-      contextDetails?: string[];
-      organisationUnitId?: string;
-    } = { roleId: domainContext.currentRole.id, innovationId };
-
-    const query = connection
-      .createQueryBuilder(NotificationEntity, 'notification')
-      .select('notification.id')
-      .where('notification.innovation_id = :innovationId', { innovationId });
-
-    if (conditions.notificationIds.length > 0) {
-      query.andWhere('notification.id IN (:...notificationIds)');
-      params.notificationIds = conditions.notificationIds;
-    }
-    if (conditions.contextIds.length > 0) {
-      query.andWhere('notification.contextId IN (:...contextIds)');
-      params.contextIds = conditions.contextIds;
-    }
-
-    if (conditions.contextDetails.length > 0) {
-      query.andWhere('notification.contextDetail IN (:...contextDetails)');
-      params.contextDetails = conditions.contextDetails;
-    }
-
-    if (conditions.contextTypes.length > 0) {
-      query.andWhere('notification.contextType IN (:...contextTypes)');
-      params.contextTypes = conditions.contextTypes;
-    }
-
-    const updateQuery = connection
-      .createQueryBuilder(NotificationUserEntity, 'user')
-      .update()
-      .set({ readAt: () => 'CURRENT_TIMESTAMP' })
-      .where('notification_id IN ( ' + query.getQuery() + ' )')
-      .andWhere('user_role_id = :roleId AND read_at IS NULL');
-
-    await updateQuery.setParameters(params).execute();
   }
 
   async getInnovationSubmissionsState(
