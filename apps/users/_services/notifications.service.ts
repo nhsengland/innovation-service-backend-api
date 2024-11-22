@@ -156,7 +156,10 @@ export class NotificationsService extends BaseService {
           id: n.notification.innovation.id,
           name: n.notification.innovation.name,
           status: n.notification.innovation.status,
-          ownerName: innovationOwners.get(n.notification.innovation.owner?.identityId ?? '')?.displayName ?? ''
+          ownerName: innovationOwners.getDisplayName(
+            n.notification.innovation.owner?.identityId,
+            ServiceRoleEnum.INNOVATOR
+          )
         },
         contextType: n.notification.contextType,
         contextDetail: n.notification.contextDetail,

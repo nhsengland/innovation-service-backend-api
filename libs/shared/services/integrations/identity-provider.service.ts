@@ -11,6 +11,7 @@ import {
   UserErrorsEnum
 } from '../../errors';
 
+import { ServiceRoleEnum } from '../../enums';
 import type { IdentityUserInfo } from '../../types/domain.types';
 import type { CacheConfigType, CacheService } from '../storage/cache.service';
 import SHARED_SYMBOLS from '../symbols';
@@ -62,6 +63,15 @@ type b2cGetUsersListDTO = {
   }[];
 };
 
+// TODO CHANGE THIS and remove the exclude
+// TODO tests
+class UserMap extends Map<string, Exclude<IdentityUserInfo, 'displayName'>> {
+  getDisplayName(identityId?: string | null, _role?: ServiceRoleEnum): string {
+    // TODO CHANGE THIS and remember translate
+    return this.get(identityId ?? '')?.displayName ?? '';
+  }
+}
+
 @injectable()
 export class IdentityProviderService {
   private tenantName = process.env['AD_TENANT_NAME'] || '';
@@ -86,6 +96,14 @@ export class IdentityProviderService {
     @inject(SHARED_SYMBOLS.StorageQueueService) private storageQueueService: StorageQueueService
   ) {
     this.cache = cacheService.get('IdentityUserInfo');
+  }
+
+  // TODO tests
+  // TODO ROLE no displayName qdo só há 1
+  public async displayName(identityId?: string, role?: ServiceRoleEnum): Promise<string>;
+  public displayName(data?: { displayName: string }, role?: ServiceRoleEnum): string;
+  public displayName(_data?: string | { displayName: string }, _role?: ServiceRoleEnum): string | Promise<string> {
+    throw new Error('Method not implemented.');
   }
 
   private encodeAuthData(): string {
@@ -217,9 +235,9 @@ export class IdentityProviderService {
    * @param identityIds the user identities
    * @returns list of users as a map
    */
-  async getUsersMap(identityIds: string[]): Promise<Map<string, IdentityUserInfo>> {
+  async getUsersMap(identityIds: string[]): Promise<UserMap> {
     const users = await this.getUsersList(identityIds);
-    return new Map(users.map(u => [u.identityId, u]));
+    return new UserMap(users.map(u => [u.identityId, u]));
   }
 
   /**

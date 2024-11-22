@@ -288,16 +288,14 @@ export class InnovationTasksService extends BaseService {
       createdAt: task.createdAt,
       updatedAt: task.updatedAt,
       updatedBy: {
-        name:
-          (task.updatedByUserRole && usersInfo.get(task.updatedByUserRole.user.identityId)?.displayName) ??
-          '[deleted account]',
+        name: usersInfo.getDisplayName(task.updatedByUserRole.user.identityId),
         displayTag: this.domainService.users.getDisplayTag(task.updatedByUserRole.role, {
           unitName: task.innovationSupport?.organisationUnit?.name,
           isOwner: task.innovationSection.innovation.owner?.id === task.updatedByUserRole.user.id
         })
       },
       createdBy: {
-        name: usersInfo.get(task.createdByUserRole.user.identityId)?.displayName ?? '[deleted account]',
+        name: usersInfo.getDisplayName(task.createdByUserRole.user.identityId),
         displayTag: this.domainService.users.getDisplayTag(task.createdByUserRole.role, {
           unitName: task.innovationSupport?.organisationUnit?.name
         })
@@ -397,15 +395,14 @@ export class InnovationTasksService extends BaseService {
     ].filter((s): s is string => !!s);
     const usersMap = await this.identityProviderService.getUsersMap(users);
 
-    let createdByUserName = '[deleted user]';
-    if (dbTask.createdByUserRole.user.status !== UserStatusEnum.DELETED) {
-      createdByUserName = usersMap.get(dbTask.createdByUserRole.user.identityId)?.displayName ?? '';
-    }
-
-    let lastUpdatedByUserName = '[deleted user]';
-    if (dbTask.updatedByUserRole && dbTask.updatedByUserRole.user.status !== UserStatusEnum.DELETED) {
-      lastUpdatedByUserName = usersMap.get(dbTask.updatedByUserRole.user.identityId)?.displayName ?? '';
-    }
+    const createdByUserName = usersMap.getDisplayName(
+      dbTask.createdByUserRole.user.identityId,
+      dbTask.createdByUserRole.role
+    );
+    const lastUpdatedByUserName = usersMap.getDisplayName(
+      dbTask.updatedByUserRole.user.identityId,
+      dbTask.updatedByUserRole.role
+    );
 
     // Tasks only have one unit so using this shortcut
     const unitName = dbTask.createdByUserRole.organisationUnit?.name;
@@ -417,7 +414,7 @@ export class InnovationTasksService extends BaseService {
       descriptions: dbTask.descriptions.map(d => ({
         description: d.description,
         createdAt: d.createdAt,
-        name: usersMap.get(d.createdByIdentityId ?? '')?.displayName ?? 'deleted user',
+        name: usersMap.getDisplayName(d.createdByIdentityId),
         displayTag: this.domainService.users.getDisplayTag(d.createdByRole, {
           unitName: d.createdByOrganisationUnitName
         })

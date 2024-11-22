@@ -46,7 +46,7 @@ import {
 } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import { TranslationHelper } from '@innovations/shared/helpers';
-import type { DomainUsersService } from '@innovations/shared/services';
+import type { DomainUsersService, IdentityProviderService } from '@innovations/shared/services';
 import { DomainService, IRSchemaService, NotifierService } from '@innovations/shared/services';
 import {
   type ActivityLogListParamsType,
@@ -220,6 +220,7 @@ type UserWithRoleDTO = { id: string; name: string | null }; // role: ServiceRole
 @injectable()
 export class InnovationsService extends BaseService {
   constructor(
+    @inject(SHARED_SYMBOLS.IdentityProviderService) private identityProviderService: IdentityProviderService,
     @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
     @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
     @inject(SHARED_SYMBOLS.IRSchemaService) private irSchemaService: IRSchemaService,
@@ -1304,7 +1305,7 @@ export class InnovationsService extends BaseService {
         ? {
             owner: {
               id: innovation.owner.id,
-              name: ownerInfo?.displayName ?? '',
+              name: this.identityProviderService.displayName(ownerInfo, ServiceRoleEnum.INNOVATOR),
               email: ownerInfo?.email ?? '',
               contactByEmail: ownerPreferences.contactByEmail,
               contactByPhone: ownerPreferences.contactByPhone,
@@ -1883,10 +1884,12 @@ export class InnovationsService extends BaseService {
       data: dbActivities.map(item => {
         const params = item.param as ActivityLogListParamsType;
 
-        params.actionUserName = usersInfo.get(item.createdBy)?.displayName ?? '[deleted account]';
+        params.actionUserName = this.identityProviderService.displayName(usersInfo.get(item.createdBy));
 
         if (params.interveningUserId !== undefined) {
-          params.interveningUserName = usersInfo.get(params.interveningUserId)?.displayName ?? '[deleted account]';
+          params.interveningUserName = this.identityProviderService.displayName(
+            usersInfo.get(params.interveningUserId)
+          );
         }
 
         params.actionUserRole = item.userRole.role;
@@ -2059,7 +2062,7 @@ export class InnovationsService extends BaseService {
         recipients = item.userData.map(user => ({
           id: user.userId,
           roleId: user.roleId,
-          name: usersInfo.get(user.userId)?.displayName ?? '[unavailable account]'
+          name: this.identityProviderService.displayName(usersInfo.get(user.userId))
         }));
       }
 

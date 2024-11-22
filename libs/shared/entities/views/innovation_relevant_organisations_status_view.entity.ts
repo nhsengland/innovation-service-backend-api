@@ -1,9 +1,9 @@
-import { InnovationRelevantOrganisationsStatusEnum } from '../../enums';
 import { Column, ViewColumn, ViewEntity } from 'typeorm';
+import { InnovationRelevantOrganisationsStatusEnum } from '../../enums';
 
 /**
- * This view is used to retrieve the organisations, units and respective users that are in the followind relational status:
- * - ENGANGING
+ * This view is used to retrieve the organisations, units and respective users that are in the following relational status:
+ * - ENGAGING
  * - WAITING
  * - SUGGESTED
  * - PREVIOUS_ENGAGED

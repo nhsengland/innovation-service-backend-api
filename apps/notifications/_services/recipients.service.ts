@@ -87,6 +87,7 @@ export class RecipientsService extends BaseService {
    * @returns list of users identity info
    */
   async usersIdentityInfo(userIdentityIds: string[]): Promise<Map<string, IdentityUserInfo>>;
+  // This needs to be duplicated because of jest
   async usersIdentityInfo(
     userIdentityIds?: string | string[]
   ): Promise<null | IdentityUserInfo | Map<string, IdentityUserInfo>>;

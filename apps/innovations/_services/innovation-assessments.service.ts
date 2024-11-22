@@ -28,7 +28,12 @@ import {
   UnprocessableEntityError,
   UserErrorsEnum
 } from '@innovations/shared/errors';
-import type { DomainService, IRSchemaService, NotifierService } from '@innovations/shared/services';
+import type {
+  DomainService,
+  IdentityProviderService,
+  IRSchemaService,
+  NotifierService
+} from '@innovations/shared/services';
 import type { DomainContextType, InnovationAssessmentKPIExemptionType } from '@innovations/shared/types';
 
 import { InnovationHelper } from '../_helpers/innovation.helper';
@@ -46,6 +51,7 @@ import SYMBOLS from './symbols';
 @injectable()
 export class InnovationAssessmentsService extends BaseService {
   constructor(
+    @inject(SHARED_SYMBOLS.IdentityProviderService) private identityProviderService: IdentityProviderService,
     @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
     @inject(SHARED_SYMBOLS.IRSchemaService) private irSchemaService: IRSchemaService,
     @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
@@ -177,9 +183,10 @@ export class InnovationAssessmentsService extends BaseService {
     }
 
     // Fetch users names.
-    const usersInfo = await this.domainService.users.getUsersList({
-      userIds: [...(assessment.assignTo ? [assessment.assignTo.id] : []), assessment.updatedBy]
-    });
+    const usersInfo = await this.identityProviderService.getUsersMap([
+      ...(assessment.assignTo ? [assessment.assignTo.id] : []),
+      assessment.updatedBy
+    ]);
 
     return {
       id: assessment.id,
@@ -219,7 +226,7 @@ export class InnovationAssessmentsService extends BaseService {
       ...(assessment.assignTo && {
         assignTo: {
           id: assessment.assignTo.id,
-          name: usersInfo.find(user => user.id === assessment.assignTo?.id)?.displayName || ''
+          name: usersInfo.getDisplayName(assessment.assignTo.id, ServiceRoleEnum.ASSESSMENT)
         }
       }),
       maturityLevel: assessment.maturityLevel,
@@ -253,7 +260,7 @@ export class InnovationAssessmentsService extends BaseService {
       updatedAt: assessment.updatedAt,
       updatedBy: {
         id: assessment.updatedBy,
-        name: usersInfo.find(user => user.id === assessment.updatedBy)?.displayName || ''
+        name: usersInfo.getDisplayName(assessment.updatedBy, ServiceRoleEnum.ASSESSMENT)
       },
       isLatest: assessment.id === assessment.innovation.currentAssessment?.id
     };

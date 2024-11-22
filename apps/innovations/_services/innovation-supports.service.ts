@@ -33,7 +33,7 @@ import {
   OrganisationErrorsEnum,
   UnprocessableEntityError
 } from '@innovations/shared/errors';
-import type { DomainService, DomainUsersService, NotifierService } from '@innovations/shared/services';
+import type { DomainService, IdentityProviderService, NotifierService } from '@innovations/shared/services';
 import {
   isAccessorDomainContextType,
   type DomainContextType,
@@ -98,6 +98,7 @@ type SupportLogSuggestion = {
 @injectable()
 export class InnovationSupportsService extends BaseService {
   constructor(
+    @inject(SHARED_SYMBOLS.IdentityProviderService) private identityProviderService: IdentityProviderService,
     @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
     @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
     @inject(SYMBOLS.InnovationThreadsService) private innovationThreadsService: InnovationThreadsService,
@@ -147,19 +148,16 @@ export class InnovationSupportsService extends BaseService {
     const innovationSupports = innovation.innovationSupports;
 
     // Fetch users names.
-    let usersInfo: Awaited<ReturnType<DomainUsersService['getUsersMap']>> = new Map();
-
-    if (filters.fields.includes('engagingAccessors')) {
-      const assignedAccessorsIds = innovationSupports
-        .filter(
-          support =>
-            support.status === InnovationSupportStatusEnum.ENGAGING ||
-            support.status === InnovationSupportStatusEnum.WAITING
-        )
-        .flatMap(support => support.userRoles.filter(item => item.isActive).map(item => item.user.id));
-
-      usersInfo = await this.domainService.users.getUsersMap({ userIds: assignedAccessorsIds });
-    }
+    const assignedAccessorsIds = filters.fields.includes('engagingAccessors')
+      ? innovationSupports
+          .filter(
+            support =>
+              support.status === InnovationSupportStatusEnum.ENGAGING ||
+              support.status === InnovationSupportStatusEnum.WAITING
+          )
+          .flatMap(support => support.userRoles.filter(item => item.isActive).map(item => item.user.identityId))
+      : [];
+    const usersInfo = await this.identityProviderService.getUsersMap(assignedAccessorsIds);
 
     return innovationSupports.map(support => {
       let engagingAccessors: { id: string; userRoleId: string; name: string; isActive: boolean }[] | undefined =
@@ -170,7 +168,7 @@ export class InnovationSupportsService extends BaseService {
           .map(supportUserRole => ({
             id: supportUserRole.user.id,
             userRoleId: supportUserRole.id,
-            name: usersInfo.get(supportUserRole.user.id)?.displayName ?? '',
+            name: usersInfo.getDisplayName(supportUserRole.user.id, supportUserRole.role),
             isActive: supportUserRole.isActive
           }))
           .filter(authUser => authUser.name);
@@ -430,8 +428,8 @@ export class InnovationSupportsService extends BaseService {
 
     const assignedAccessorsIds = innovationSupport.userRoles
       .filter(item => item.user.status === UserStatusEnum.ACTIVE)
-      .map(item => item.user.id);
-    const usersInfo = await this.domainService.users.getUsersMap({ userIds: assignedAccessorsIds });
+      .map(item => item.user.identityId);
+    const usersInfo = await this.identityProviderService.getUsersMap(assignedAccessorsIds);
 
     return {
       id: innovationSupport.id,
@@ -440,7 +438,7 @@ export class InnovationSupportsService extends BaseService {
         .map(su => ({
           id: su.user.id,
           userRoleId: su.id,
-          name: usersInfo.get(su.user.id)?.displayName ?? ''
+          name: usersInfo.getDisplayName(su.user.id)
         }))
         .filter(authUser => authUser.name)
     };
@@ -1282,7 +1280,9 @@ export class InnovationSupportsService extends BaseService {
         'log.params',
         'unit.id',
         'unit.name',
-        'createdByUserRole.role'
+        'createdByUserRole.role',
+        'createdBy.id',
+        'createdBy.identityId'
       ])
       .leftJoin(
         'innovation_support_log_organisation_unit',
@@ -1292,6 +1292,7 @@ export class InnovationSupportsService extends BaseService {
       )
       .leftJoin('log.organisationUnit', 'unit')
       .innerJoin('log.createdByUserRole', 'createdByUserRole')
+      .innerJoin('createdByUserRole.user', 'createdBy')
       .where('log.innovation_id = :innovationId', { innovationId })
       .andWhere(
         new Brackets(qb => {
@@ -1313,19 +1314,17 @@ export class InnovationSupportsService extends BaseService {
       )
       .getMany();
 
-    const createdByUserIds = new Set([...unitSupportLogs.map(s => s.createdBy)]);
-    const usersInfo = await this.domainService.users.getUsersMap({ userIds: Array.from(createdByUserIds.values()) });
+    const createdByUserIds = new Set([...unitSupportLogs.map(s => s.createdByUserRole.user.identityId)]);
+    const usersInfo = await this.identityProviderService.getUsersMap(Array.from(createdByUserIds.values()));
 
     const summary: SupportSummaryUnitInfo[] = [];
     for (const supportLog of unitSupportLogs) {
-      const createdByUser = usersInfo.get(supportLog.createdBy);
-
       const defaultSummary = {
         id: supportLog.id,
         createdAt: supportLog.createdAt,
         createdBy: {
           id: supportLog.createdBy,
-          name: createdByUser?.displayName ?? '[deleted user]',
+          name: usersInfo.getDisplayName(supportLog.createdByUserRole.user.identityId),
           displayRole: this.domainService.users.getDisplayRoleInformation(
             supportLog.createdBy,
             supportLog.createdByUserRole.role,
@@ -1339,7 +1338,7 @@ export class InnovationSupportsService extends BaseService {
             ...defaultSummary,
             type: 'SUPPORT_UPDATE',
             params: {
-              supportStatus: supportLog.innovationSupportStatus ?? InnovationSupportStatusEnum.UNASSIGNED, // Not needed, we are veryfing in the switch case that is a type that always has supportStatus
+              supportStatus: supportLog.innovationSupportStatus ?? InnovationSupportStatusEnum.UNASSIGNED, // Not needed, we are verifying in the switch case that is a type that always has supportStatus
               message: supportLog.description
             }
           });

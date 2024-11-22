@@ -537,7 +537,7 @@ export class UsersService extends BaseService {
           innovation: { id: support.innovation.id, name: support.innovation.name },
           supportedBy: support.userRoles.map(r => ({
             id: r.user.id,
-            name: usersInfoMap.get(r.user.identityId)?.displayName ?? '[deleted user]',
+            name: usersInfoMap.getDisplayName(r.user.identityId),
             role: r.role
           })),
           unit: this.domainService.users.getDisplayTag(role.role, { unitName: role.organisationUnit?.name })
@@ -556,7 +556,7 @@ export class UsersService extends BaseService {
 
       const userInfo = {
         id: user.id,
-        name: usersInfoMap.get(user.identityId)?.displayName ?? '[deleted user]',
+        name: usersInfoMap.getDisplayName(user.identityId),
         role: ServiceRoleEnum.ASSESSMENT
       };
       for (const assessment of assessments) {

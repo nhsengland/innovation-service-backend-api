@@ -34,7 +34,7 @@ import type {
   IdentityProviderService,
   NotifierService
 } from '@innovations/shared/services';
-import type { DomainContextType, DomainUserInfoType, IdentityUserInfo } from '@innovations/shared/types';
+import type { DomainContextType, DomainUserInfoType } from '@innovations/shared/types';
 
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
@@ -478,18 +478,15 @@ export class InnovationThreadsService extends BaseService {
         'thread.contextId',
         'author.id',
         'author.identityId',
-        'author.status'
+        'author.status',
+        'authorUserRole.role'
       ])
       .leftJoin('thread.author', 'author')
+      .leftJoin('thread.authorUserRole', 'authorUserRole')
       .where('thread.id = :threadId', { threadId })
       .getOne();
     if (!thread) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND);
-    }
-
-    let author: null | IdentityUserInfo = null;
-    if (thread.author.status !== UserStatusEnum.DELETED) {
-      author = await this.identityProvider.getUserInfo(thread.author.identityId);
     }
 
     return {
@@ -499,7 +496,7 @@ export class InnovationThreadsService extends BaseService {
       createdAt: thread.createdAt,
       createdBy: {
         id: thread.author.id,
-        name: author ? author?.displayName || 'unknown user' : '[deleted user]'
+        name: await this.identityProvider.displayName(thread.author.identityId, thread.authorUserRole.role)
       }
     };
   }
@@ -657,10 +654,7 @@ export class InnovationThreadsService extends BaseService {
         isEditable: tm.isEditable,
         createdBy: {
           id: tm.author?.id,
-          name:
-            tm.author && tm.author.status !== UserStatusEnum.DELETED
-              ? authorsMap.get(tm.author.identityId)?.displayName || 'unknown user'
-              : '[deleted user]',
+          name: authorsMap.getDisplayName(tm.author.identityId),
           role: tm.authorUserRole?.role,
           ...(tm.authorUserRole?.role === ServiceRoleEnum.INNOVATOR && {
             isOwner: tm.author.id === tm.thread.innovation.owner?.id

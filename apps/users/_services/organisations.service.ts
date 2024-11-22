@@ -5,8 +5,8 @@ import {
   InnovationSupportEntity,
   OrganisationEntity,
   OrganisationUnitEntity,
-  UserRoleEntity,
-  UserEntity
+  UserEntity,
+  UserRoleEntity
 } from '@users/shared/entities';
 import {
   InnovationSupportStatusEnum,
@@ -16,17 +16,17 @@ import {
 } from '@users/shared/enums';
 import {
   BadRequestError,
+  ForbiddenError,
   NotFoundError,
   OrganisationErrorsEnum,
-  UserErrorsEnum,
-  ForbiddenError
+  UserErrorsEnum
 } from '@users/shared/errors';
 
-import { BaseService } from './base.service';
-import { DomainContextType, isAccessorDomainContextType } from '@users/shared/types';
 import { addToArrayValueInMap } from '@users/shared/helpers/misc.helper';
-import SHARED_SYMBOLS from '@users/shared/services/symbols';
 import type { IdentityProviderService } from '@users/shared/services';
+import SHARED_SYMBOLS from '@users/shared/services/symbols';
+import { DomainContextType, isAccessorDomainContextType } from '@users/shared/types';
+import { BaseService } from './base.service';
 
 @injectable()
 export class OrganisationsService extends BaseService {
@@ -232,7 +232,7 @@ export class OrganisationsService extends BaseService {
     const identityInfoMap = new Map<string, { name: string; role: ServiceRoleEnum }>(
       allUnitUsers.map(u => [
         u.identityId,
-        { name: usersInfoMap.get(u.identityId)?.displayName ?? '[deleted user]', role: u.serviceRoles[0]!.role }
+        { name: usersInfoMap.getDisplayName(u.identityId), role: u.serviceRoles[0]!.role }
       ])
     );
 

@@ -12,13 +12,14 @@ import {
   UnprocessableEntityError
 } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
-import type { DomainService, NotifierService } from '@innovations/shared/services';
+import type { DomainService, IdentityProviderService, NotifierService } from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { DomainContextType } from '@innovations/shared/types';
 
 @injectable()
 export class InnovationExportRequestService extends BaseService {
   constructor(
+    @inject(SHARED_SYMBOLS.IdentityProviderService) private identityService: IdentityProviderService,
     @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
     @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService
   ) {
@@ -121,7 +122,7 @@ export class InnovationExportRequestService extends BaseService {
       rejectReason: request.rejectReason ?? undefined,
       createdAt: request.createdAt,
       createdBy: {
-        name: usersInfo.get(request.createdBy)?.displayName ?? '[deleted user]',
+        name: this.identityService.displayName(usersInfo.get(request.createdBy)),
         displayRole: this.domainService.users.getDisplayRoleInformation(
           request.createdBy,
           request.createdByUserRole.role
@@ -133,7 +134,7 @@ export class InnovationExportRequestService extends BaseService {
       },
       updatedAt: request.updatedAt,
       updatedBy: {
-        name: usersInfo.get(request.updatedBy)?.displayName ?? '[deleted user]'
+        name: this.identityService.displayName(usersInfo.get(request.updatedBy))
       }
     };
   }
@@ -221,7 +222,7 @@ export class InnovationExportRequestService extends BaseService {
         status: r.status,
         createdAt: r.createdAt,
         createdBy: {
-          name: usersInfo.get(r.createdBy)?.displayName ?? '[deleted user]',
+          name: this.identityService.displayName(usersInfo.get(r.createdBy)),
           displayRole: this.domainService.users.getDisplayRoleInformation(r.createdBy, r.createdByUserRole.role),
           displayTeam: this.domainService.users.getDisplayTeamInformation(
             r.createdByUserRole.role,

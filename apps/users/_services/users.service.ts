@@ -363,9 +363,9 @@ export class UsersService extends BaseService {
           id: dbUser.id,
           isActive: dbUser.status === UserStatusEnum.ACTIVE,
           roles: dbUser.serviceRoles,
-          name: identityUser.displayName ?? 'N/A',
+          name: identityUser.displayName,
           lockedAt: dbUser.lockedAt,
-          ...(fieldSet.has('email') ? { email: identityUser?.email ?? 'N/A' } : {})
+          ...(fieldSet.has('email') && { email: identityUser.email })
         };
       })
     );

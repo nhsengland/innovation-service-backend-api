@@ -1,11 +1,6 @@
 import { InnovationEntity, UserEntity } from '@innovations/shared/entities';
 import { InnovationCollaboratorEntity } from '@innovations/shared/entities/innovation/innovation-collaborator.entity';
-import {
-  InnovationCollaboratorStatusEnum,
-  NotifierTypeEnum,
-  ServiceRoleEnum,
-  UserStatusEnum
-} from '@innovations/shared/enums';
+import { InnovationCollaboratorStatusEnum, NotifierTypeEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 import {
   ConflictError,
   ForbiddenError,
@@ -138,6 +133,16 @@ export class InnovationCollaboratorsService extends BaseService {
 
     const query = em
       .createQueryBuilder(InnovationCollaboratorEntity, 'collaborators')
+      .select([
+        'collaborators.id',
+        'collaborators.email',
+        'collaborators.status',
+        'collaborators.collaboratorRole',
+        'user.id',
+        'user.identityId',
+        'user.status'
+      ])
+      .leftJoin('collaborators.user', 'user')
       .where('collaborators.innovation_id = :innovationId', { innovationId });
 
     // Filters
@@ -229,17 +234,16 @@ export class InnovationCollaboratorsService extends BaseService {
       return { count: 0, data: [] };
     }
 
-    const userIds = collaborators.map(c => c.userId).filter((u): u is string => u !== null);
-
-    const usersInfo = await this.domainService.users.getUsersMap({ userIds });
+    const userIdentityIds = collaborators.map(c => c.user?.identityId).filter((u): u is string => u !== null);
+    const usersInfo = await this.identityProviderService.getUsersMap(userIdentityIds);
 
     const data = collaborators.map(collaborator => ({
       id: collaborator.id,
       email: collaborator.email,
       status: collaborator.status,
-      ...(collaborator.userId && {
-        name: usersInfo.get(collaborator.userId)?.displayName ?? '',
-        isActive: usersInfo.get(collaborator.userId)?.isActive ?? false
+      ...(collaborator.user && {
+        name: usersInfo.getDisplayName(collaborator.user.identityId, ServiceRoleEnum.INNOVATOR),
+        isActive: usersInfo.get(collaborator.user.identityId)?.isActive ?? false
       }),
       ...(collaborator.collaboratorRole && { role: collaborator.collaboratorRole })
     }));
@@ -310,18 +314,16 @@ export class InnovationCollaboratorsService extends BaseService {
       }
     }
 
-    let collaboratorName = collaborator.user ? '[deleted user]' : undefined;
-    if (collaborator.user && collaborator.user.status !== UserStatusEnum.DELETED) {
-      const collaboratorUser = await this.identityProviderService.getUserInfo(collaborator.user.identityId);
-      collaboratorName = collaboratorUser?.displayName; // TODO CHANGE THIS after displayName
-    }
+    const names = await this.identityProviderService.getUsersMap(
+      [collaborator.user?.identityId, collaborator.innovation.owner?.identityId].filter((id): id is string => !!id)
+    );
 
     return {
       id: collaborator.id,
       email: collaborator.email,
       status: collaborator.status,
       role: collaborator.collaboratorRole ?? undefined,
-      name: collaboratorName,
+      name: names.getDisplayName(collaborator.user?.identityId, ServiceRoleEnum.INNOVATOR),
       innovation: {
         id: collaborator.innovation.id,
         name: collaborator.innovation.name,
@@ -329,11 +331,7 @@ export class InnovationCollaboratorsService extends BaseService {
         ...(collaborator.innovation.owner && {
           owner: {
             id: collaborator.innovation.owner.id,
-            name:
-              collaborator.innovation.owner.status !== UserStatusEnum.DELETED
-                ? (await this.identityProviderService.getUserInfo(collaborator.innovation.owner.identityId))
-                    ?.displayName // TODO CHANGE THIS after displayName
-                : undefined
+            name: names.getDisplayName(collaborator.innovation.owner.identityId, ServiceRoleEnum.INNOVATOR)
           }
         })
       },
