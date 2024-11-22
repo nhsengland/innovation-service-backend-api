@@ -166,6 +166,11 @@ export class DomainUsersService {
 
     const user = await this.identityProviderService.getUserInfo(dbUser.identityId, options?.forceRefresh);
 
+    if (!user) {
+      // This should never happen, but just in case.
+      throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
+    }
+
     return {
       id: dbUser.id,
       identityId: user.identityId,

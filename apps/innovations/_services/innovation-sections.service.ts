@@ -240,7 +240,7 @@ export class InnovationSectionsService extends BaseService {
     try {
       submittedBy =
         dbSection?.submittedBy && dbSection.submittedBy.status !== UserStatusEnum.DELETED
-          ? (await this.identityService.getUserInfo(dbSection.submittedBy.identityId)).displayName
+          ? ((await this.identityService.getUserInfo(dbSection.submittedBy.identityId))?.displayName ?? '') // TODO CHANGE THIS after displayName
           : null;
     } catch {
       submittedBy = null;

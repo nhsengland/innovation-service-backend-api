@@ -279,7 +279,7 @@ export class InnovationTransferService extends BaseService {
         break;
       case InnovationTransferStatusEnum.COMPLETED:
       case InnovationTransferStatusEnum.DECLINED:
-        filter.email = (await this.identityProviderService.getUserInfo(requestUser.identityId)).email;
+        filter.email = (await this.identityProviderService.getUserInfo(requestUser.identityId))?.email; // TODO CHANGE THIS
         break;
       default:
         throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD);
@@ -309,7 +309,7 @@ export class InnovationTransferService extends BaseService {
             domainContext,
             {
               innovationId: transfer.innovation.id,
-              email: (await this.identityProviderService.getUserInfo(innovation.owner.identityId)).email,
+              email: (await this.identityProviderService.getUserInfo(innovation.owner.identityId))?.email ?? '', // TODO CHANGE THIS
               userId: innovation.owner.id,
               status: transfer.ownerToCollaborator
                 ? InnovationCollaboratorStatusEnum.ACTIVE

@@ -148,11 +148,10 @@ export class IdentityProviderService {
    * @param identityId the user identity id
    * @returns the user
    */
-  async getUserInfo(identityId: string, forceRefresh?: boolean): Promise<IdentityUserInfo> {
+  async getUserInfo(identityId: string, forceRefresh?: boolean): Promise<IdentityUserInfo | null> {
     const users = await this.getUsersList([identityId], forceRefresh);
-    if (!users[0]) throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
 
-    return users[0];
+    return users[0] ?? null;
   }
 
   async getUserInfoByEmail(email: string): Promise<null | {
@@ -186,6 +185,8 @@ export class IdentityProviderService {
   }
   /**
    * this function checks the cache for the users and if they are not found it will fetch them from the identity provider
+   *
+   * Note: This function shouldn't be used directly, use `getUsersMap` instead, not making private because of tests.
    *
    * @param identityIds the user identities
    * @returns list of users

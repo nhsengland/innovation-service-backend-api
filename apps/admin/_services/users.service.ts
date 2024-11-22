@@ -3,23 +3,23 @@ import Joi from 'joi';
 import type { EntityManager } from 'typeorm';
 
 import {
+  InnovationAssessmentEntity,
   OrganisationEntity,
   OrganisationUnitEntity,
   UserEntity,
-  UserRoleEntity,
-  InnovationAssessmentEntity
+  UserRoleEntity
 } from '@admin/shared/entities';
 import { NotifierTypeEnum, ServiceRoleEnum, UserStatusEnum } from '@admin/shared/enums';
 import {
   BadRequestError,
+  ConflictError,
   ForbiddenError,
   GenericErrorsEnum,
   NotFoundError,
   NotImplementedError,
   OrganisationErrorsEnum,
   UnprocessableEntityError,
-  UserErrorsEnum,
-  ConflictError
+  UserErrorsEnum
 } from '@admin/shared/errors';
 import {
   CacheConfigType,
@@ -35,11 +35,11 @@ import {
   type RoleType
 } from '@admin/shared/types';
 
+import { JoiHelper } from '@admin/shared/helpers';
 import SHARED_SYMBOLS from '@admin/shared/services/symbols';
 import { AdminOperationEnum, validationsHelper } from '../_config/admin-operations.config';
 import type { ValidationResult } from '../types/validation.types';
 import { BaseService } from './base.service';
-import { JoiHelper } from '@admin/shared/helpers';
 
 @injectable()
 export class UsersService extends BaseService {
@@ -129,6 +129,10 @@ export class UsersService extends BaseService {
 
       if (data.email) {
         const userInfo = await this.identityProviderService.getUserInfo(dbUser.identityId);
+        if (!userInfo) {
+          // This should never happen, but just in case.
+          throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
+        }
         await this.identityProviderService.updateUserEmail(dbUser.identityId, data.email);
         await this.notifierService.send(context, NotifierTypeEnum.USER_EMAIL_ADDRESS_UPDATED, {
           identityId: dbUser.identityId,
