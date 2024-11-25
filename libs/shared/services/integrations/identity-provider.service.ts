@@ -298,6 +298,8 @@ export class IdentityProviderService {
           headers: { Authorization: `Bearer ${this.sessionData.token}` }
         });
 
+        // TODO FIX when users are deleted (return 0 users)
+
         return response.data.value.map(u => ({
           identityId: u.id,
           displayName: u.displayName,
