@@ -24,6 +24,7 @@ export class InnovationSupportLogBuilder extends BaseBuilder {
   constructor(entityManager: EntityManager) {
     super(entityManager);
     this.supportLog = {
+      createdAt: new Date(), // setting the created at so that they are different for the sorts
       type: InnovationSupportLogTypeEnum.STATUS_UPDATE,
       innovationSupportStatus: InnovationSupportStatusEnum.SUGGESTED,
       description: randText({ charCount: 10 })
