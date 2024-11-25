@@ -48,6 +48,7 @@ export const ResponseBodySchema = Joi.object<ResponseDTO>({
     }).optional()
   }).optional(),
   daysSinceNoActiveSupport: Joi.number(),
+  expectedArchiveDate: Joi.date(),
   assessment: Joi.object({
     id: Joi.string().uuid().required(),
     createdAt: Joi.date().required(),
@@ -99,6 +100,7 @@ export type ResponseDTO = {
     organisation?: { name: string; size: null | string; registrationNumber: null | string };
   };
   daysSinceNoActiveSupport?: number;
+  expectedArchiveDate?: Date;
   assessment?: null | {
     id: string;
     createdAt: Date;

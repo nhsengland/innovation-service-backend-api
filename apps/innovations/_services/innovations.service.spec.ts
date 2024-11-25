@@ -3,8 +3,7 @@ import {
   InnovationEntity,
   InnovationExportRequestEntity,
   InnovationSupportEntity,
-  InnovationTaskEntity,
-  NotificationUserEntity
+  InnovationTaskEntity
 } from '@innovations/shared/entities';
 import { ActivityEnum, ActivityTypeEnum } from '@innovations/shared/enums';
 import {
@@ -789,108 +788,6 @@ describe('Innovations / _services / innovations suite', () => {
           }
         ]
       });
-    });
-  });
-
-  describe('dismissNotifications', () => {
-    const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
-
-    it('should dismiss all unread notifications', async () => {
-      await sut.dismissNotifications(
-        DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
-        innovation.id,
-        {
-          notificationIds: [],
-          contextTypes: [],
-          contextDetails: [],
-          contextIds: []
-        },
-        em
-      );
-
-      const dbNotifications = await em
-        .createQueryBuilder(NotificationUserEntity, 'notificationUser')
-        .innerJoin('notificationUser.notification', 'notification')
-        .where('notification.innovation_id = :innovationId', { innovationId: innovation.id })
-        .getMany();
-
-      expect(dbNotifications.filter(n => n.readAt === null)).toHaveLength(0);
-    });
-
-    it('should dismiss all unread notifications with given notificationIds', async () => {
-      await sut.dismissNotifications(DTOsHelper.getUserRequestContext(scenario.users.johnInnovator), innovation.id, {
-        notificationIds: [innovation.notifications.notificationFromSupport.id],
-        contextTypes: [],
-        contextDetails: [],
-        contextIds: []
-      });
-
-      const dbNotification = await em
-        .createQueryBuilder(NotificationUserEntity, 'notificationUser')
-        .innerJoin('notificationUser.notification', 'notification')
-        .where('notification.id = :notificationId', {
-          notificationId: innovation.notifications.notificationFromSupport.id
-        })
-        .getOne();
-
-      expect(dbNotification?.readAt).not.toBeNull();
-    });
-
-    it('should dismiss all unread notifications with given notification context types', async () => {
-      await sut.dismissNotifications(DTOsHelper.getUserRequestContext(scenario.users.johnInnovator), innovation.id, {
-        notificationIds: [],
-        contextTypes: [innovation.notifications.notificationFromSupport.context.type],
-        contextDetails: [],
-        contextIds: []
-      });
-
-      const dbNotifications = await em
-        .createQueryBuilder(NotificationUserEntity, 'notificationUser')
-        .innerJoin('notificationUser.notification', 'notification')
-        .where('notification.contextType = :notificationContextType', {
-          notificationContextType: innovation.notifications.notificationFromSupport.context.type
-        })
-        .getMany();
-
-      expect(dbNotifications.filter(n => n.readAt === null)).toHaveLength(0);
-    });
-
-    it('should dismiss all unread notifications with given notification context details', async () => {
-      await sut.dismissNotifications(DTOsHelper.getUserRequestContext(scenario.users.johnInnovator), innovation.id, {
-        notificationIds: [],
-        contextTypes: [],
-        contextDetails: [innovation.notifications.notificationFromSupport.context.detail],
-        contextIds: []
-      });
-
-      const dbNotifications = await em
-        .createQueryBuilder(NotificationUserEntity, 'notificationUser')
-        .innerJoin('notificationUser.notification', 'notification')
-        .where('notification.contextDetail = :notificationContextDetail', {
-          notificationContextDetail: innovation.notifications.notificationFromSupport.context.detail
-        })
-        .getMany();
-
-      expect(dbNotifications.filter(n => n.readAt === null)).toHaveLength(0);
-    });
-
-    it('should dismiss all unread notifications with given notification contextIds', async () => {
-      await sut.dismissNotifications(DTOsHelper.getUserRequestContext(scenario.users.johnInnovator), innovation.id, {
-        notificationIds: [],
-        contextTypes: [],
-        contextDetails: [],
-        contextIds: [innovation.notifications.notificationFromSupport.context.id]
-      });
-
-      const dbNotifications = await em
-        .createQueryBuilder(NotificationUserEntity, 'notificationUser')
-        .innerJoin('notificationUser.notification', 'notification')
-        .where('notification.contextId = :notificationContextId', {
-          notificationContextId: innovation.notifications.notificationFromSupport.context.id
-        })
-        .getMany();
-
-      expect(dbNotifications.filter(n => n.readAt === null)).toHaveLength(0);
     });
   });
 

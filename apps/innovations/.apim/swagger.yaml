@@ -2551,6 +2551,9 @@ paths:
                   daysSinceNoActiveSupport:
                     type: number
                     format: float
+                  expectedArchiveDate:
+                    type: string
+                    format: date-time
                   assessment:
                     type: object
                     properties:
@@ -2632,147 +2635,6 @@ paths:
                 additionalProperties: false
         "400":
           description: Invalid innovation payload
-  /v1/{innovationId}/notifications/dismiss:
-    patch:
-      operationId: v1-innovation-notifications-dismiss
-      description: Dismisses innovation notifications.
-      parameters:
-        - name: innovationId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        description: Dismiss innovation notifications request body.
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                notificationIds:
-                  type: array
-                  items:
-                    type: string
-                    format: uuid
-                  default: []
-                contextTypes:
-                  type: array
-                  items:
-                    type: string
-                    enum:
-                      - TASK
-                      - DOCUMENTS
-                      - MESSAGES
-                      - SUPPORT
-                      - NEEDS_ASSESSMENT
-                      - ORGANISATION_SUGGESTIONS
-                      - INNOVATION_MANAGEMENT
-                      - ADMIN
-                      - ACCOUNT
-                      - AUTOMATIC
-                      - NOTIFY_ME
-                      - ANNOUNCEMENTS
-                  default: []
-                contextDetails:
-                  type: array
-                  items:
-                    type: string
-                    enum:
-                      - TA01_TASK_CREATION_TO_INNOVATOR
-                      - TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS
-                      - TA03_TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT
-                      - TA04_TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT
-                      - TA05_TASK_CANCELLED_TO_INNOVATOR
-                      - TA06_TASK_REOPEN_TO_INNOVATOR
-                      - DC01_UPLOADED_DOCUMENT_TO_INNOVATOR
-                      - ME01_THREAD_CREATION
-                      - ME02_THREAD_ADD_FOLLOWERS
-                      - ME03_THREAD_MESSAGE_CREATION
-                      - ST01_SUPPORT_STATUS_TO_ENGAGING
-                      - ST02_SUPPORT_STATUS_TO_OTHER
-                      - ST03_SUPPORT_STATUS_TO_WAITING
-                      - ST04_SUPPORT_NEW_ASSIGNED_ACCESSORS_TO_INNOVATOR
-                      - ST05_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_NEW_QA
-                      - ST06_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_OLD_QA
-                      - ST07_SUPPORT_STATUS_CHANGE_REQUEST
-                      - ST08_SUPPORT_NEW_ASSIGNED_WAITING_INNOVATION_TO_QA
-                      - ST09_SUPPORT_STATUS_TO_CLOSED
-                      - SS01_SUPPORT_SUMMARY_UPDATE_TO_INNOVATORS
-                      - SS02_SUPPORT_SUMMARY_UPDATE_TO_OTHER_ENGAGING_ACCESSORS
-                      - NA01_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_INNOVATOR
-                      - NA02_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_ASSESSMENT
-                      - NA03_NEEDS_ASSESSMENT_STARTED_TO_INNOVATOR
-                      - NA04_NEEDS_ASSESSMENT_COMPLETE_TO_INNOVATOR
-                      - NA06_NEEDS_ASSESSOR_REMOVED
-                      - NA07_NEEDS_ASSESSOR_ASSIGNED
-                      - OS01_UNITS_SUGGESTION_TO_SUGGESTED_UNITS_QA
-                      - OS02_UNITS_SUGGESTION_NOT_SHARED_TO_INNOVATOR
-                      - OS03_INNOVATION_DELAYED_SHARED_SUGGESTION
-                      - RE01_EXPORT_REQUEST_SUBMITTED
-                      - RE02_EXPORT_REQUEST_APPROVED
-                      - RE03_EXPORT_REQUEST_REJECTED
-                      - AI01_INNOVATION_ARCHIVED_TO_SELF
-                      - AI02_INNOVATION_ARCHIVED_TO_COLLABORATORS
-                      - AI03_INNOVATION_ARCHIVED_TO_ENGAGING_QA_A
-                      - AI04_INNOVATION_ARCHIVED_TO_NA_DURING_NEEDS_ASSESSMENT
-                      - SH04_INNOVATION_STOPPED_SHARING_WITH_INDIVIDUAL_ORG_TO_OWNER
-                      - SH05_INNOVATION_STOPPED_SHARING_WITH_INDIVIDUAL_ORG_TO_QA_A
-                      - DA01_OWNER_DELETED_ACCOUNT_WITH_PENDING_TRANSFER_TO_COLLABORATOR
-                      - DA02_OWNER_DELETED_ACCOUNT_WITHOUT_PENDING_TRANSFER_TO_COLLABORATOR
-                      - MC01_COLLABORATOR_INVITE_EXISTING_USER
-                      - MC02_COLLABORATOR_INVITE_NEW_USER
-                      - MC03_COLLABORATOR_UPDATE_CANCEL_INVITE
-                      - MC04_COLLABORATOR_UPDATE_ACCEPTS_INVITE
-                      - MC05_COLLABORATOR_UPDATE_DECLINES_INVITE
-                      - MC06_COLLABORATOR_UPDATE_REMOVED_COLLABORATOR
-                      - MC07_COLLABORATOR_UPDATE_COLLABORATOR_LEFT_TO_INNOVATORS
-                      - MC08_COLLABORATOR_UPDATE_COLLABORATOR_LEFT_TO_SELF
-                      - TO01_TRANSFER_OWNERSHIP_NEW_USER
-                      - TO02_TRANSFER_OWNERSHIP_EXISTING_USER
-                      - TO06_TRANSFER_OWNERSHIP_ACCEPTS_PREVIOUS_OWNER
-                      - TO07_TRANSFER_OWNERSHIP_ACCEPTS_ASSIGNED_ACCESSORS
-                      - TO08_TRANSFER_OWNERSHIP_DECLINES_PREVIOUS_OWNER
-                      - TO09_TRANSFER_OWNERSHIP_CANCELED_NEW_OWNER
-                      - AP02_INNOVATOR_LOCKED_TO_ASSIGNED_USERS
-                      - AP03_USER_LOCKED_TO_LOCKED_USER
-                      - AP07_UNIT_INACTIVATED_TO_ENGAGING_INNOVATIONS
-                      - AP08_USER_EMAIL_ADDRESS_UPDATED
-                      - AP09_NEW_SUPPORTING_ACCOUNT
-                      - CA01_ACCOUNT_CREATION_OF_INNOVATOR
-                      - CA02_ACCOUNT_CREATION_OF_COLLABORATOR
-                      - AU01_INNOVATOR_INCOMPLETE_RECORD
-                      - AU02_ACCESSOR_IDLE_ENGAGING_SUPPORT
-                      - AU03_INNOVATOR_IDLE_SUPPORT
-                      - AU04_SUPPORT_KPI_REMINDER
-                      - AU05_SUPPORT_KPI_OVERDUE
-                      - AU06_ACCESSOR_IDLE_WAITING
-                      - AU07_TRANSFER_ONE_WEEK_REMINDER_NEW_USER
-                      - AU08_TRANSFER_ONE_WEEK_REMINDER_EXISTING_USER
-                      - AU09_TRANSFER_EXPIRED
-                      - AU10_ACCESSOR_IDLE_ENGAGING_SUPPORT_FOR_SIX_WEEKS
-                      - AU11_ACCESSOR_IDLE_WAITING_SUPPORT_FOR_SIX_WEEKS
-                      - SUPPORT_UPDATED
-                      - PROGRESS_UPDATE_CREATED
-                      - INNOVATION_RECORD_UPDATED
-                      - REMINDER
-                      - SUGGESTED_SUPPORT_UPDATED
-                      - AP10_NEW_ANNOUNCEMENT
-                      - AP11_NEW_ANNOUNCEMENT_WITH_INNOVATIONS_NAME
-                  default: []
-                contextIds:
-                  type: array
-                  items:
-                    type: string
-                    format: uuid
-                  default: []
-              additionalProperties: false
-      responses:
-        "204":
-          description: Success
-        "400":
-          description: Invalid payload
   /v1/{innovationId}/pdf:
     post:
       description: Generate PDF for an innovation
