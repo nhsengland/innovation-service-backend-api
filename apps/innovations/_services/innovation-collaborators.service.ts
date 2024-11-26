@@ -298,8 +298,10 @@ export class InnovationCollaboratorsService extends BaseService {
     }
 
     // Check if user is not the invited collaborator and the he is not the innovation owner
-    if (collaborator.innovation.owner && collaborator.innovation.owner.id !== domainContext.id) {
-      const domainUserInfo = await this.domainService.users.xpto({ identityId: domainContext.identityId });
+    if (collaborator.innovation.owner?.id !== domainContext.id) {
+      const domainUserInfo = await this.domainService.users.getIdentityUserInfo({
+        identityId: domainContext.identityId
+      });
       if (collaborator.email.toLowerCase() !== domainUserInfo?.email.toLowerCase()) {
         throw new ForbiddenError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_NO_ACCESS);
       }

@@ -63,6 +63,9 @@ export class DomainUsersService {
     this.userRepository = this.sqlConnection.getRepository(UserEntity);
   }
 
+  /**
+   * helper to display a user's name. This function doesn't return error when the user is not found/deleted
+   */
   async getDisplayName(
     data: { userId: string | undefined } | { identityId: string | undefined },
     role?: ServiceRoleEnum
@@ -74,7 +77,21 @@ export class DomainUsersService {
       return displayName((await this.getUsersList({ identityIds: [data.identityId] }))[0], role);
     }
 
-    return undefined;
+    return displayName(undefined, role);
+  }
+
+  /**
+   * wrapper for identityInfo with extra checks. This will throw an error if the user is not found
+   */
+  async getIdentityUserInfo(data: { userId: string } | { identityId: string }): Promise<UserInfo> {
+    const res = await ('userId' in data
+      ? this.getUsersList({ userIds: [data.userId] })
+      : this.getUsersList({ identityIds: [data.identityId] }));
+
+    if (!res[0]) {
+      throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND);
+    }
+    return res[0];
   }
 
   async getUserInfo(

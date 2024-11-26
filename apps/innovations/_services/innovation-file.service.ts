@@ -22,6 +22,7 @@ import {
 } from '@innovations/shared/errors';
 import { TranslationHelper, type PaginationQueryParamsType } from '@innovations/shared/helpers';
 import type {
+  DomainService,
   FileStorageService,
   IdentityProviderService,
   IRSchemaService,
@@ -31,8 +32,7 @@ import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import {
   isAccessorDomainContextType,
   isAssessmentDomainContextType,
-  type DomainContextType,
-  type IdentityUserInfo
+  type DomainContextType
 } from '@innovations/shared/types';
 
 import { AuthErrorsEnum } from '@innovations/shared/services/auth/authorization-validation.model';
@@ -42,12 +42,13 @@ import type {
   InnovationFileTypeWithContext
 } from '../_types/innovation.types';
 import { BaseService } from './base.service';
-import SYMBOLS from './symbols';
 import type { InnovationDocumentService } from './innovation-document.service';
+import SYMBOLS from './symbols';
 
 @injectable()
 export class InnovationFileService extends BaseService {
   constructor(
+    @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
     @inject(SHARED_SYMBOLS.FileStorageService) private fileStorageService: FileStorageService,
     @inject(SHARED_SYMBOLS.IdentityProviderService) private identityProviderService: IdentityProviderService,
     @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
@@ -309,11 +310,6 @@ export class InnovationFileService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_FILE_NOT_FOUND);
     }
 
-    let createdByUser: null | IdentityUserInfo = null;
-    if (file.createdByUserRole.user.status !== UserStatusEnum.DELETED) {
-      createdByUser = await this.identityProviderService.getUserInfo(file.createdByUserRole.user.identityId);
-    }
-
     const [fileContext] = await this.contextMapper[file.contextType](
       [file.contextId],
       innovationId,
@@ -329,10 +325,10 @@ export class InnovationFileService extends BaseService {
       description: file.description ?? undefined,
       createdAt: file.createdAt,
       createdBy: {
-        name: createdByUser?.displayName ?? '[deleted user]',
+        name: await this.domainService.users.getDisplayName({ identityId: file.createdByUserRole.user.identityId }),
         role: file.createdByUserRole.role,
         isOwner:
-          file.createdByUserRole.role === ServiceRoleEnum.INNOVATOR && createdByUser && file.innovation.owner
+          file.createdByUserRole.role === ServiceRoleEnum.INNOVATOR && file.innovation.owner
             ? file.createdByUserRole.user.id === file.innovation.owner.id
             : undefined,
         orgUnitName:

@@ -235,17 +235,6 @@ export class InnovationSectionsService extends BaseService {
       tasks = await tasksQuery.orderBy('tasks.updated_at', 'DESC').getMany();
     }
 
-    let submittedBy: null | string;
-    // Avoid throwing an error if the user is not found.
-    try {
-      submittedBy =
-        dbSection?.submittedBy && dbSection.submittedBy.status !== UserStatusEnum.DELETED
-          ? (await this.identityService.getUserInfo(dbSection.submittedBy.identityId)).displayName
-          : null;
-    } catch {
-      submittedBy = null;
-    }
-
     return {
       id: dbSection?.id ?? null,
       section: sectionKey,
@@ -253,7 +242,10 @@ export class InnovationSectionsService extends BaseService {
       submittedAt: dbSection?.submittedAt ?? null,
       submittedBy: dbSection?.submittedBy
         ? {
-            name: submittedBy ?? 'unknown user',
+            name: await this.domainService.users.getDisplayName(
+              { identityId: dbSection.submittedBy.identityId },
+              ServiceRoleEnum.INNOVATOR
+            ),
             displayTag: this.domainService.users.getDisplayTag(ServiceRoleEnum.INNOVATOR, {
               isOwner:
                 innovation.owner && dbSection.submittedBy ? innovation.owner.id === dbSection.submittedBy.id : undefined

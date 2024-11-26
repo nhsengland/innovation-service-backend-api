@@ -92,7 +92,7 @@ export class InnovationTransferService extends BaseService {
     const filter: TransferQueryFilterType = { status: InnovationTransferStatusEnum.PENDING };
 
     if (assignedToMe) {
-      filter.email = (await this.domainService.users.getUserInfo({ userId: requestUserId })).email;
+      filter.email = (await this.domainService.users.getIdentityUserInfo({ userId: requestUserId })).email;
     } else {
       filter.createdBy = requestUserId;
     }
@@ -100,32 +100,18 @@ export class InnovationTransferService extends BaseService {
     const transfers = await this.buildTransferQuery(filter, entityManager).getMany();
 
     return Promise.all(
-      transfers.map(async transfer => {
-        try {
-          const createdBy = await this.domainService.users.getUserInfo({
-            userId: transfer.createdBy
-          });
-
-          return {
-            id: transfer.id,
-            email: transfer.email,
-            innovation: {
-              id: transfer.innovation.id,
-              name: transfer.innovation.name,
-              owner: createdBy.displayName
-            }
-          };
-        } catch {
-          return {
-            id: transfer.id,
-            email: transfer.email,
-            innovation: {
-              id: transfer.innovation.id,
-              name: transfer.innovation.name
-            }
-          };
+      transfers.map(async transfer => ({
+        id: transfer.id,
+        email: transfer.email,
+        innovation: {
+          id: transfer.innovation.id,
+          name: transfer.innovation.name,
+          owner: await this.domainService.users.getDisplayName(
+            { userId: transfer.createdBy },
+            ServiceRoleEnum.INNOVATOR
+          )
         }
-      })
+      }))
     );
   }
 
@@ -166,17 +152,20 @@ export class InnovationTransferService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_TRANSFER_NOT_FOUND);
     }
 
-    const transferOwner = await this.domainService.users.getUserInfo({
-      userId: transfer.createdBy
-    });
-
     return {
       id: transfer.id,
       email: transfer.email,
       innovation: {
         id: transfer.innovation.id,
         name: transfer.innovation.name,
-        owner: { name: transferOwner.displayName }
+        owner: {
+          name: await this.domainService.users.getDisplayName(
+            {
+              userId: transfer.createdBy
+            },
+            ServiceRoleEnum.INNOVATOR
+          )
+        }
       }
     };
   }
@@ -279,7 +268,9 @@ export class InnovationTransferService extends BaseService {
         break;
       case InnovationTransferStatusEnum.COMPLETED:
       case InnovationTransferStatusEnum.DECLINED:
-        filter.email = (await this.identityProviderService.getUserInfo(requestUser.identityId)).email;
+        filter.email = (
+          await this.domainService.users.getIdentityUserInfo({ identityId: requestUser.identityId })
+        ).email;
         break;
       default:
         throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD);
@@ -309,7 +300,8 @@ export class InnovationTransferService extends BaseService {
             domainContext,
             {
               innovationId: transfer.innovation.id,
-              email: (await this.identityProviderService.getUserInfo(innovation.owner.identityId)).email,
+              email: (await this.domainService.users.getIdentityUserInfo({ identityId: innovation.owner.identityId }))
+                .email,
               userId: innovation.owner.id,
               status: transfer.ownerToCollaborator
                 ? InnovationCollaboratorStatusEnum.ACTIVE
