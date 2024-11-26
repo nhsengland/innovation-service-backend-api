@@ -27,6 +27,30 @@ import type { IdentityProviderService } from '../integrations/identity-provider.
 import type { NotifierService } from '../integrations/notifier.service';
 import type { DomainInnovationsService } from './domain-innovations.service';
 
+export const displayName = (data?: UserInfo): string => {
+  return data?.displayName ?? 'todo';
+};
+
+type UserInfo = {
+  id: string;
+  identityId: string;
+  displayName: string;
+  roles: Pick<RoleType, 'id' | 'isActive' | 'role'>[];
+  email: string;
+  mobilePhone: null | string;
+  isActive: boolean;
+  lastLoginAt: null | Date;
+};
+
+export class UserMap extends Map<string, UserInfo> {
+  getDisplayName(id?: string, _role?: ServiceRoleEnum): string {
+    // 00000
+    // roles
+    //...
+    return displayName(this.get(id ?? ''));
+  }
+}
+
 export class DomainUsersService {
   private userRepository: Repository<UserEntity>;
 
@@ -181,19 +205,8 @@ export class DomainUsersService {
     };
   }
 
-  async getUsersList(data: { userIds?: string[]; identityIds?: string[] }): Promise<
-    {
-      id: string;
-      identityId: string;
-      displayName: string;
-      roles: UserRoleEntity[];
-      email: string;
-      mobilePhone: null | string;
-      isActive: boolean;
-      lastLoginAt: null | Date;
-    }[]
-  > {
-    // [TechDebt]: This function breaks with more than 2100 users (probably shoulnd't happen anyway)
+  protected async getUsersList(data: { userIds?: string[]; identityIds?: string[] }): Promise<UserInfo[]> {
+    // [TechDebt]: This function breaks with more than 2100 users (probably shouldn't happen anyway)
     // However we're doing needless query since we could force the identityId (only place calling it has it)
     // and it would also be easy to do in chunks of 1000 users or so.
     // My suggestion is parameter becomes identity: string[]; if there really is a need in the future to have
@@ -210,7 +223,8 @@ export class DomainUsersService {
 
     const query = this.userRepository
       .createQueryBuilder('users')
-      .innerJoinAndSelect('users.serviceRoles', 'serviceRoles')
+      .select(['users.id', 'users.identityId', 'users.status', 'roles.id', 'roles.role', 'roles.isActive'])
+      .innerJoin('users.serviceRoles', 'serviceRoles')
       .where('users.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED });
     if (data.userIds) {
       query.andWhere('users.id IN (:...userIds)', { userIds: data.userIds });
@@ -224,6 +238,7 @@ export class DomainUsersService {
     return dbUsers.map(dbUser => {
       const identityUser = identityUsers.get(dbUser.identityId);
       if (!identityUser) {
+        // This should never happen, but just in case.
         throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND, { details: { context: 'S.DU.gUL' } });
       }
 
@@ -231,7 +246,7 @@ export class DomainUsersService {
         id: dbUser.id,
         identityId: dbUser.identityId,
         displayName: identityUser.displayName,
-        roles: dbUser.serviceRoles,
+        roles: dbUser.serviceRoles.map(r => ({ id: r.id, role: r.role, isActive: r.isActive })),
         email: identityUser.email,
         mobilePhone: identityUser.mobilePhone,
         isActive: dbUser.status === UserStatusEnum.ACTIVE,
@@ -240,12 +255,10 @@ export class DomainUsersService {
     });
   }
 
-  async getUsersMap(
-    data: { userIds: string[] } | { identityIds: string[] }
-  ): Promise<Map<string, Awaited<ReturnType<DomainUsersService['getUsersList']>>[number]>> {
+  async getUsersMap(data: { userIds: string[] } | { identityIds: string[] }): Promise<UserMap> {
     const res = await this.getUsersList(data);
     const resKey = 'userIds' in data ? 'id' : 'identityId';
-    return new Map(res.map(item => [item[resKey], item]));
+    return new UserMap(res.map(item => [item[resKey], item]));
   }
 
   async getUserPreferences(userId: string): Promise<{

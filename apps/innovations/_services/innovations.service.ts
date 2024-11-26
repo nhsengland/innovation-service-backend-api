@@ -1187,9 +1187,14 @@ export class InnovationsService extends BaseService {
       query.leftJoin('currentAssessment.assignTo', 'assignTo', 'assignTo.status != :deletedStatus', {
         deletedStatus: UserStatusEnum.DELETED
       });
-      query.leftJoin('assignTo.serviceRoles', 'assignToRoles', 'assignToRoles.role = :assessmentRole', {
-        assessmentRole: ServiceRoleEnum.ASSESSMENT
-      });
+      query.leftJoin(
+        'assignTo.serviceRoles',
+        'assignToRoles',
+        'assignToRoles.role = :assessmentRole AND assignToRoles.isActive = 1',
+        {
+          assessmentRole: ServiceRoleEnum.ASSESSMENT
+        }
+      );
       query.addSelect([
         'currentAssessment.id',
         'currentAssessment.majorVersion',
@@ -1237,20 +1242,19 @@ export class InnovationsService extends BaseService {
       .getRawOne();
 
     // Fetch users names.
-    const assessmentUsersId = innovation.currentAssessment?.assignTo?.id;
+    const assessmentUser = innovation.currentAssessment?.assignTo;
     const categories = documentData.categories ? JSON.parse(documentData.categories) : [];
-    let usersInfo: Awaited<ReturnType<DomainService['users']['getUsersList']>> = [];
-    let ownerInfo = undefined;
     let ownerPreferences = undefined;
+
+    const userIds = [
+      ...(innovation.owner?.id ? [innovation.owner.id] : []),
+      ...(assessmentUser ? [assessmentUser.id] : [])
+    ];
+
+    const usersInfo = await this.domainService.users.getUsersMap({ userIds });
 
     if (innovation.owner && innovation.owner.status !== UserStatusEnum.DELETED) {
       ownerPreferences = await this.domainService.users.getUserPreferences(innovation.owner.id);
-      usersInfo = await this.domainService.users.getUsersList({
-        userIds: [innovation.owner.id, ...(assessmentUsersId ? [assessmentUsersId] : [])]
-      });
-      ownerInfo = usersInfo.find(item => item.id === innovation.owner?.id);
-    } else if (assessmentUsersId) {
-      usersInfo = await this.domainService.users.getUsersList({ userIds: [assessmentUsersId] });
     }
 
     // Assessment parsing.
@@ -1268,7 +1272,6 @@ export class InnovationsService extends BaseService {
         };
 
     if (filters.fields?.includes('assessment')) {
-      const assignTo = usersInfo.find(item => item.id === innovation.currentAssessment?.assignTo?.id && item.isActive);
       assessment =
         innovation.currentAssessment && innovation.currentMajorAssessment
           ? {
@@ -1278,13 +1281,19 @@ export class InnovationsService extends BaseService {
               minorVersion: innovation.currentAssessment.minorVersion,
               createdAt: innovation.currentAssessment.createdAt,
               finishedAt: innovation.currentAssessment.finishedAt,
-              ...(assignTo &&
-                assignTo.roles[0] && {
-                  assignedTo: { id: assignTo.id, name: assignTo.displayName, userRoleId: assignTo.roles[0].id }
+              ...(assessmentUser &&
+                assessmentUser.serviceRoles[0] && {
+                  assignedTo: {
+                    id: assessmentUser.id,
+                    name: usersInfo.getDisplayName(assessmentUser.id, ServiceRoleEnum.ASSESSMENT),
+                    userRoleId: assessmentUser.serviceRoles[0].id
+                  }
                 })
             }
           : null;
     }
+
+    const ownerInfo = innovation.owner?.id ? usersInfo.get(innovation.owner.id) : null;
 
     return {
       id: innovation.id,
@@ -1304,7 +1313,7 @@ export class InnovationsService extends BaseService {
         ? {
             owner: {
               id: innovation.owner.id,
-              name: ownerInfo?.displayName ?? '',
+              name: usersInfo.getDisplayName(innovation.owner.id, ServiceRoleEnum.INNOVATOR),
               email: ownerInfo?.email ?? '',
               contactByEmail: ownerPreferences.contactByEmail,
               contactByPhone: ownerPreferences.contactByPhone,

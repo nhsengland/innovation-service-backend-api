@@ -33,7 +33,7 @@ import {
   OrganisationErrorsEnum,
   UnprocessableEntityError
 } from '@innovations/shared/errors';
-import type { DomainService, DomainUsersService, NotifierService } from '@innovations/shared/services';
+import type { DomainService, NotifierService } from '@innovations/shared/services';
 import {
   isAccessorDomainContextType,
   type DomainContextType,
@@ -51,6 +51,7 @@ import type {
 
 import { DatesHelper } from '@innovations/shared/helpers';
 import { AuthErrorsEnum } from '@innovations/shared/services/auth/authorization-validation.model';
+import { UserMap } from '@innovations/shared/services/domain/domain-users.service';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { SupportSummaryUnitInfo } from '../_types/support.types';
 import { BaseService } from './base.service';
@@ -147,7 +148,7 @@ export class InnovationSupportsService extends BaseService {
     const innovationSupports = innovation.innovationSupports;
 
     // Fetch users names.
-    let usersInfo: Awaited<ReturnType<DomainUsersService['getUsersMap']>> = new Map();
+    let usersInfo = new UserMap();
 
     if (filters.fields.includes('engagingAccessors')) {
       const assignedAccessorsIds = innovationSupports
@@ -170,7 +171,7 @@ export class InnovationSupportsService extends BaseService {
           .map(supportUserRole => ({
             id: supportUserRole.user.id,
             userRoleId: supportUserRole.id,
-            name: usersInfo.get(supportUserRole.user.id)?.displayName ?? '',
+            name: usersInfo.getDisplayName(supportUserRole.user.id, supportUserRole.role),
             isActive: supportUserRole.isActive
           }))
           .filter(authUser => authUser.name);
