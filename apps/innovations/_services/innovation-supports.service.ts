@@ -498,7 +498,9 @@ export class InnovationSupportsService extends BaseService {
       userRoles: [],
       createdAt: now,
       ...(status !== InnovationSupportStatusEnum.SUGGESTED && { startedAt: now }),
-      ...(status === InnovationSupportStatusEnum.UNSUITABLE && { finishedAt: now })
+      ...([InnovationSupportStatusEnum.UNSUITABLE, InnovationSupportStatusEnum.CLOSED].includes(status) && {
+        finishedAt: now
+      })
     });
   }
 
@@ -611,6 +613,9 @@ export class InnovationSupportsService extends BaseService {
         newSupport.updatedByUserRole = domainContext.currentRole.id;
         newSupport.startedAt = new Date();
         newSupport.userRoles = [];
+        if ([InnovationSupportStatusEnum.UNSUITABLE, InnovationSupportStatusEnum.CLOSED].includes(data.status)) {
+          newSupport.finishedAt = new Date();
+        }
         savedSupport = await transaction.save(InnovationSupportEntity, newSupport);
       } else {
         savedSupport = await this.createInnovationSupport(
