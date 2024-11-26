@@ -3,23 +3,23 @@ import Joi from 'joi';
 import type { EntityManager } from 'typeorm';
 
 import {
+  InnovationAssessmentEntity,
   OrganisationEntity,
   OrganisationUnitEntity,
   UserEntity,
-  UserRoleEntity,
-  InnovationAssessmentEntity
+  UserRoleEntity
 } from '@admin/shared/entities';
 import { NotifierTypeEnum, ServiceRoleEnum, UserStatusEnum } from '@admin/shared/enums';
 import {
   BadRequestError,
+  ConflictError,
   ForbiddenError,
   GenericErrorsEnum,
   NotFoundError,
   NotImplementedError,
   OrganisationErrorsEnum,
   UnprocessableEntityError,
-  UserErrorsEnum,
-  ConflictError
+  UserErrorsEnum
 } from '@admin/shared/errors';
 import {
   CacheConfigType,
@@ -35,11 +35,11 @@ import {
   type RoleType
 } from '@admin/shared/types';
 
+import { JoiHelper } from '@admin/shared/helpers';
 import SHARED_SYMBOLS from '@admin/shared/services/symbols';
 import { AdminOperationEnum, validationsHelper } from '../_config/admin-operations.config';
 import type { ValidationResult } from '../types/validation.types';
 import { BaseService } from './base.service';
-import { JoiHelper } from '@admin/shared/helpers';
 
 @injectable()
 export class UsersService extends BaseService {

@@ -27,7 +27,7 @@ import type { IdentityProviderService } from '../integrations/identity-provider.
 import type { NotifierService } from '../integrations/notifier.service';
 import type { DomainInnovationsService } from './domain-innovations.service';
 
-export const displayName = (data?: UserInfo): string => {
+export const displayName = (data?: UserInfo, role?: ServiceRoleEnum): string => {
   return data?.displayName ?? 'todo';
 };
 
@@ -61,6 +61,20 @@ export class DomainUsersService {
     private sqlConnection: DataSource
   ) {
     this.userRepository = this.sqlConnection.getRepository(UserEntity);
+  }
+
+  async getDisplayName(
+    data: { userId: string | undefined } | { identityId: string | undefined },
+    role?: ServiceRoleEnum
+  ): Promise<string> {
+    if ('userId' in data && data.userId !== undefined) {
+      return displayName((await this.getUsersList({ userIds: [data.userId] }))[0], role);
+    }
+    if ('identityId' in data && data.identityId !== undefined) {
+      return displayName((await this.getUsersList({ identityIds: [data.identityId] }))[0], role);
+    }
+
+    return undefined;
   }
 
   async getUserInfo(

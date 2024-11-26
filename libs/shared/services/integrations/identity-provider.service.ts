@@ -144,6 +144,8 @@ export class IdentityProviderService {
   /**
    * get a user from the identity provider
    *
+   * @see DomainUsersService.xpto // TODO
+   *
    * this function is an envelope for the getUsersList function
    * @param identityId the user identity id
    * @returns the user
