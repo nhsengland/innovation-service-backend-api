@@ -6,8 +6,7 @@ import {
   InnovationStatusEnum,
   NotificationCategoryType,
   NotificationDetailType,
-  ServiceRoleEnum,
-  UserStatusEnum
+  ServiceRoleEnum
 } from '@users/shared/enums';
 import { GenericErrorsEnum, NotImplementedError, UnprocessableEntityError } from '@users/shared/errors';
 import type { PaginationQueryParamsType } from '@users/shared/helpers';
@@ -72,7 +71,7 @@ export class NotificationsService extends BaseService {
     total: number;
     data: {
       id: string;
-      innovation: { id: string; name: string; status: InnovationStatusEnum; ownerName?: string };
+      innovation: { id: string; name: string; status: InnovationStatusEnum };
       contextType: NotificationCategoryType;
       contextDetail: NotificationDetailType;
       contextId: string;
@@ -140,12 +139,6 @@ export class NotificationsService extends BaseService {
 
     const [notifications, count] = await query.getManyAndCount();
 
-    const userIds = notifications
-      .filter(n => n.notification.innovation.owner && n.notification.innovation.owner.status !== UserStatusEnum.DELETED)
-      .map(n => n.notification.innovation.owner!.identityId); // We are filtering before, so it will exist
-
-    const innovationOwners = await this.domainService.users.getUsersMap({ identityIds: userIds }, em);
-
     return {
       total: count,
       data: notifications.map(n => ({
@@ -153,13 +146,7 @@ export class NotificationsService extends BaseService {
         innovation: {
           id: n.notification.innovation.id,
           name: n.notification.innovation.name,
-          status: n.notification.innovation.status,
-          ...(n.notification.innovation.owner && {
-            ownerName: innovationOwners.getDisplayName(
-              n.notification.innovation.owner.identityId,
-              ServiceRoleEnum.INNOVATOR
-            )
-          })
+          status: n.notification.innovation.status
         },
         contextType: n.notification.contextType,
         contextDetail: n.notification.contextDetail,

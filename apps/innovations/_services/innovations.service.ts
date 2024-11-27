@@ -1883,7 +1883,7 @@ export class InnovationsService extends BaseService {
       const p: string[] = [];
 
       p.push(item.createdBy);
-      if (params.interveningUserId !== undefined) {
+      if (params.interveningUserId) {
         p.push(params.interveningUserId);
       }
 

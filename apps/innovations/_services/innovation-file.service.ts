@@ -225,7 +225,7 @@ export class InnovationFileService extends BaseService {
         ...(filters.fields?.includes('description') && { description: file.description ?? undefined }),
         createdAt: file.createdAt,
         createdBy: {
-          name: usersInfo.get(file.createdByUserRole.user.identityId)?.displayName ?? '[deleted user]',
+          name: usersInfo.getDisplayName(file.createdByUserRole.user.identityId),
           role: file.createdByUserRole.role,
           isOwner:
             file.createdByUserRole.role === ServiceRoleEnum.INNOVATOR && file.innovation.owner

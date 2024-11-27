@@ -39,7 +39,7 @@ class V1InnovationThreadFollowers {
       context.res = ResponseHelper.Ok<ResponseDTO>({
         followers: result.map(follower => ({
           id: follower.id,
-          name: follower?.name ?? '',
+          name: follower.name,
           isLocked: follower.locked,
           isOwner: follower.isOwner,
           role: { id: follower.userRole.id, role: follower.userRole.role },

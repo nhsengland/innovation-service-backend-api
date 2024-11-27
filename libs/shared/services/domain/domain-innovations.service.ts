@@ -690,7 +690,7 @@ export class DomainInnovationsService {
     {
       id: string;
       identityId: string;
-      name?: string;
+      name: string;
       locked: boolean;
       isOwner?: boolean;
       userRole: { id: string; role: ServiceRoleEnum };
