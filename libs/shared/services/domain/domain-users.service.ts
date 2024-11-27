@@ -237,7 +237,7 @@ export class DomainUsersService {
     const query = em
       .createQueryBuilder(UserEntity, 'users')
       .select(['users.id', 'users.identityId', 'users.status', 'roles.id', 'roles.role', 'roles.isActive'])
-      .innerJoin('users.serviceRoles', 'serviceRoles')
+      .innerJoin('users.serviceRoles', 'roles')
       .where('users.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED });
     if (data.userIds) {
       query.andWhere('users.id IN (:...userIds)', { userIds: data.userIds });
