@@ -67,6 +67,18 @@ export type DomainUserInfoType = {
   firstTimeSignInAt: null | Date;
 };
 
+// This is mostly the same as DomainUserInfoType, but with some fields removed.
+export type DomainUserIdentityInfo = {
+  id: string;
+  identityId: string;
+  displayName: string;
+  roles: Pick<RoleType, 'id' | 'isActive' | 'role'>[];
+  email: string;
+  mobilePhone: null | string;
+  isActive: boolean;
+  lastLoginAt: null | Date;
+};
+
 export type InnovatorDomainContextType = {
   id: string;
   identityId: string;

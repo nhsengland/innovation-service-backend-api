@@ -10,6 +10,7 @@ import type { InnovationListView } from '@innovations/shared/entities';
 import { InnovationStatusEnum, InnovationSupportStatusEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 import { GenericErrorsEnum, NotImplementedError } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
+import { displayName, UserMap } from '@innovations/shared/models/user.map';
 import type { CurrentElasticSearchDocumentType } from '@innovations/shared/schemas/innovation-record';
 import type { DomainService, ElasticSearchService } from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
@@ -18,7 +19,6 @@ import {
   isAccessorDomainContextType,
   isAssessmentDomainContextType
 } from '@innovations/shared/types';
-import { displayName, UserMap } from '@notifications/shared/services/domain/domain-users.service';
 import { inject, injectable } from 'inversify';
 import { groupBy, isArray, isString, mapValues, pick } from 'lodash';
 import { InnovationLocationEnum } from '../_enums/innovation.enums';

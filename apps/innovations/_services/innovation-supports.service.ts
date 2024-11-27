@@ -50,8 +50,8 @@ import type {
 } from '../_types/innovation.types';
 
 import { DatesHelper } from '@innovations/shared/helpers';
+import { UserMap } from '@innovations/shared/models/user.map';
 import { AuthErrorsEnum } from '@innovations/shared/services/auth/authorization-validation.model';
-import { UserMap } from '@innovations/shared/services/domain/domain-users.service';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { SupportSummaryUnitInfo } from '../_types/support.types';
 import { BaseService } from './base.service';

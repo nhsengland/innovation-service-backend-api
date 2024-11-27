@@ -66,8 +66,8 @@ import { InnovationRelevantOrganisationsStatusView } from '@innovations/shared/e
 import { createDocumentFromInnovation } from '@innovations/shared/entities/innovation/innovation-document.entity';
 import type { InnovationListViewWithoutNull } from '@innovations/shared/entities/views/innovation-progress.view.entity';
 import { InnovationProgressView } from '@innovations/shared/entities/views/innovation-progress.view.entity';
+import { displayName, UserMap } from '@innovations/shared/models/user.map';
 import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
-import { displayName, UserMap } from '@innovations/shared/services/domain/domain-users.service';
 import { ActionEnum } from '@innovations/shared/services/integrations/audit.service';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import { groupBy, isString, mapValues, omit, pick, snakeCase } from 'lodash';

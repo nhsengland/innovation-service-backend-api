@@ -16,40 +16,17 @@ import {
   UserErrorsEnum
 } from '../../errors';
 import { TranslationHelper } from '../../helpers';
-import type { DomainContextType, InnovatorDomainContextType, RoleType } from '../../types';
+import type { DomainContextType, DomainUserIdentityInfo, InnovatorDomainContextType, RoleType } from '../../types';
 
 import { InnovationEntity } from '../../entities/innovation/innovation.entity';
 import { UserPreferenceEntity } from '../../entities/user/user-preference.entity';
-import { UserRoleEntity, roleEntity2RoleType } from '../../entities/user/user-role.entity';
+import { roleEntity2RoleType, UserRoleEntity } from '../../entities/user/user-role.entity';
 import { UserEntity } from '../../entities/user/user.entity';
+import { displayName, UserMap } from '../../models/user.map';
 import { AuthErrorsEnum } from '../auth/authorization-validation.model';
 import type { IdentityProviderService } from '../integrations/identity-provider.service';
 import type { NotifierService } from '../integrations/notifier.service';
 import type { DomainInnovationsService } from './domain-innovations.service';
-
-export const displayName = (data?: UserInfo, _role?: ServiceRoleEnum): string => {
-  return data?.displayName ?? 'todo';
-};
-
-type UserInfo = {
-  id: string;
-  identityId: string;
-  displayName: string;
-  roles: Pick<RoleType, 'id' | 'isActive' | 'role'>[];
-  email: string;
-  mobilePhone: null | string;
-  isActive: boolean;
-  lastLoginAt: null | Date;
-};
-
-export class UserMap extends Map<string, UserInfo> {
-  getDisplayName(id?: string | null, _role?: ServiceRoleEnum): string {
-    // 00000
-    // roles
-    //...
-    return displayName(this.get(id ?? ''));
-  }
-}
 
 export class DomainUsersService {
   constructor(
@@ -80,7 +57,10 @@ export class DomainUsersService {
   /**
    * wrapper for identityInfo with extra checks. This will throw an error if the user is not found
    */
-  async getIdentityUserInfo(data: { userId: string } | { identityId: string }, em?: EntityManager): Promise<UserInfo> {
+  async getIdentityUserInfo(
+    data: { userId: string } | { identityId: string },
+    em?: EntityManager
+  ): Promise<DomainUserIdentityInfo> {
     const res = await ('userId' in data
       ? this.getUsersList({ userIds: [data.userId] }, em)
       : this.getUsersList({ identityIds: [data.identityId] }, em));
@@ -236,7 +216,7 @@ export class DomainUsersService {
   protected async getUsersList(
     data: { userIds?: string[]; identityIds?: string[] },
     entityManager?: EntityManager
-  ): Promise<UserInfo[]> {
+  ): Promise<DomainUserIdentityInfo[]> {
     const em = entityManager ?? this.sqlConnection.manager;
 
     // [TechDebt]: This function breaks with more than 2100 users (probably shouldn't happen anyway)
