@@ -21,13 +21,13 @@ import { NotificationEntity } from '../../entities/user/notification.entity';
 import { UserRoleEntity } from '../../entities/user/user-role.entity';
 import { InnovationGroupedStatusViewEntity } from '../../entities/views/innovation-grouped-status.view.entity';
 import type { NotificationCategoryType } from '../../enums';
-import { InnovationGroupedStatusEnum } from '../../enums';
 import {
   ActivityEnum,
   ActivityTypeEnum,
   InnovationArchiveReasonEnum,
   InnovationCollaboratorStatusEnum,
   InnovationExportRequestStatusEnum,
+  InnovationGroupedStatusEnum,
   InnovationStatusEnum,
   InnovationSupportCloseReasonEnum,
   InnovationSupportLogTypeEnum,
@@ -48,11 +48,11 @@ import {
 import { TranslationHelper } from '../../helpers';
 import type { FilterPayload } from '../../models/schema-engine/schema.model';
 import type { CurrentElasticSearchDocumentType } from '../../schemas/innovation-record/index';
-import type { ActivitiesParamsType, DomainContextType, IdentityUserInfo, SupportLogParams } from '../../types';
+import type { ActivitiesParamsType, DomainContextType, SupportLogParams } from '../../types';
 import type { IdentityProviderService } from '../integrations/identity-provider.service';
 import type { NotifierService } from '../integrations/notifier.service';
 import type { IRSchemaService } from '../storage/ir-schema.service';
-import type { DomainUsersService } from './domain-users.service';
+import { UserMap, type DomainUsersService } from './domain-users.service';
 
 export class DomainInnovationsService {
   innovationRepository: Repository<InnovationEntity>;
@@ -750,13 +750,18 @@ export class DomainInnovationsService {
       .filter(collaboratorIsUser)
       .filter(u => u.id !== thread.innovation.owner?.id);
 
-    const usersInfo: Map<string, IdentityUserInfo> = withUserNames
-      ? await this.identityProviderService.getUsersMap([
-          ...(thread.innovation.owner ? [thread.innovation.owner.identityId] : []),
-          ...collaboratorUsers.map(u => u.identityId),
-          ...thread.followers.map(f => f.user.identityId)
-        ])
-      : new Map();
+    const usersInfo = withUserNames
+      ? await this.domainUsersService.getUsersMap(
+          {
+            identityIds: [
+              ...(thread.innovation.owner ? [thread.innovation.owner.identityId] : []),
+              ...collaboratorUsers.map(u => u.identityId),
+              ...thread.followers.map(f => f.user.identityId)
+            ]
+          },
+          em
+        )
+      : new UserMap();
 
     const followers: Awaited<ReturnType<DomainInnovationsService['threadFollowers']>> = [];
 
@@ -765,7 +770,7 @@ export class DomainInnovationsService {
       followers.push({
         id: thread.innovation.owner.id,
         identityId: thread.innovation.owner.identityId,
-        name: usersInfo.get(thread.innovation.owner.identityId)?.displayName,
+        name: usersInfo.getDisplayName(thread.innovation.owner.identityId, ServiceRoleEnum.INNOVATOR),
         locked: !thread.innovation.owner.serviceRoles[0].isActive,
         isOwner: true,
         userRole: { id: thread.innovation.owner.serviceRoles[0].id, role: ServiceRoleEnum.INNOVATOR },
@@ -778,7 +783,7 @@ export class DomainInnovationsService {
       followers.push({
         id: collaboratorUser.id,
         identityId: collaboratorUser.identityId,
-        name: usersInfo.get(collaboratorUser.identityId)?.displayName,
+        name: usersInfo.getDisplayName(collaboratorUser.identityId, ServiceRoleEnum.INNOVATOR),
         locked: !collaboratorUser.serviceRoles[0]?.isActive,
         isOwner: false,
         userRole: { id: collaboratorUser.serviceRoles[0]!.id, role: ServiceRoleEnum.INNOVATOR }, //assuming innovators can only have 1 role
@@ -790,7 +795,7 @@ export class DomainInnovationsService {
       ...thread.followers.map(followerRole => ({
         id: followerRole.user.id,
         identityId: followerRole.user.identityId,
-        name: usersInfo.get(followerRole.user.identityId)?.displayName,
+        name: usersInfo.getDisplayName(followerRole.user.identityId),
         locked: !followerRole.isActive,
         isOwner: false,
         userRole: {

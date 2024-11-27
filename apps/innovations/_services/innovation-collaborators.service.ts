@@ -226,14 +226,14 @@ export class InnovationCollaboratorsService extends BaseService {
 
     const userIds = collaborators.map(c => c.userId).filter((u): u is string => u !== null);
 
-    const usersInfo = await this.domainService.users.getUsersMap({ userIds });
+    const usersInfo = await this.domainService.users.getUsersMap({ userIds }, em);
 
     const data = collaborators.map(collaborator => ({
       id: collaborator.id,
       email: collaborator.email,
       status: collaborator.status,
       ...(collaborator.userId && {
-        name: usersInfo.get(collaborator.userId)?.displayName ?? '',
+        name: usersInfo.getDisplayName(collaborator.userId, ServiceRoleEnum.INNOVATOR),
         isActive: usersInfo.get(collaborator.userId)?.isActive ?? false
       }),
       ...(collaborator.collaboratorRole && { role: collaborator.collaboratorRole })

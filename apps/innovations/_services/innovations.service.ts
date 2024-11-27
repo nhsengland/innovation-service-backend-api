@@ -46,7 +46,6 @@ import {
 } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import { TranslationHelper } from '@innovations/shared/helpers';
-import type { DomainUsersService } from '@innovations/shared/services';
 import { DomainService, IRSchemaService, NotifierService } from '@innovations/shared/services';
 import {
   type ActivityLogListParamsType,
@@ -68,6 +67,7 @@ import { createDocumentFromInnovation } from '@innovations/shared/entities/innov
 import type { InnovationListViewWithoutNull } from '@innovations/shared/entities/views/innovation-progress.view.entity';
 import { InnovationProgressView } from '@innovations/shared/entities/views/innovation-progress.view.entity';
 import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
+import { displayName, UserMap } from '@innovations/shared/services/domain/domain-users.service';
 import { ActionEnum } from '@innovations/shared/services/integrations/audit.service';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import { groupBy, isString, mapValues, omit, pick, snakeCase } from 'lodash';
@@ -639,8 +639,8 @@ export class InnovationsService extends BaseService {
     _domainContext: DomainContextType,
     innovations: InnovationListView[],
     _fields: unknown[],
-    _entityManager: EntityManager
-  ): ReturnType<DomainUsersService['getUsersMap']> {
+    entityManager: EntityManager
+  ): Promise<UserMap> {
     const usersSet = new Set<string>();
     // Add the owners and the engaging units accessors
     innovations.forEach(i => {
@@ -656,9 +656,12 @@ export class InnovationsService extends BaseService {
           usersSet.add(u);
         });
     });
-    return this.domainService.users.getUsersMap({
-      userIds: [...usersSet]
-    });
+    return this.domainService.users.getUsersMap(
+      {
+        userIds: [...usersSet]
+      },
+      entityManager
+    );
   }
 
   //#endregion
@@ -990,7 +993,7 @@ export class InnovationsService extends BaseService {
         assignedAccessors:
           unit.assignedAccessors?.map(userId => ({
             id: userId,
-            name: extra.users.get(userId)?.displayName ?? null
+            name: extra.users.getDisplayName(userId)
           })) ?? null,
         name: unit.name,
         unitId: unit.unitId
@@ -1007,7 +1010,9 @@ export class InnovationsService extends BaseService {
     fields.forEach(field => {
       switch (field) {
         case 'assignedTo':
-          res[field] = extra.users.get(item.currentAssessment?.assignTo?.id ?? '')?.displayName ?? null;
+          res[field] = item.currentAssessment?.assignTo?.id
+            ? extra.users.getDisplayName(item.currentAssessment.assignTo.id, ServiceRoleEnum.ASSESSMENT)
+            : null;
           break;
         case 'isExempt':
           res[field] = !!item.currentAssessment?.exemptedAt;
@@ -1027,8 +1032,8 @@ export class InnovationsService extends BaseService {
     const support = item.supports?.[0];
     if (!support) return {};
 
-    const updatedBy = extra.users?.get(support.updatedBy) ?? null;
-    const displayName =
+    const updatedBy = extra.users?.get(support.updatedBy);
+    const name =
       // Ensuring that updatedBy is always innovator if the innovation is archived or not shared
       item.status === InnovationStatusEnum.ARCHIVED ||
       !item.organisationShares?.length ||
@@ -1036,7 +1041,7 @@ export class InnovationsService extends BaseService {
       // distinguish if there's multiple roles for the same user
       updatedBy?.roles.some(r => r.role === ServiceRoleEnum.INNOVATOR)
         ? 'Innovator'
-        : (updatedBy?.displayName ?? null);
+        : displayName(updatedBy);
 
     // support is handled differently to remove the nested array since it's only 1 element in this case
     return {
@@ -1045,7 +1050,7 @@ export class InnovationsService extends BaseService {
       ...(fields.includes('isShared') && { isShared: !!item.organisationShares?.length }),
       ...(fields.includes('status') && { status: support.status }),
       ...(fields.includes('updatedAt') && { updatedAt: support.updatedAt }),
-      ...(fields.includes('updatedBy') && { updatedBy: displayName })
+      ...(fields.includes('updatedBy') && { updatedBy: name })
     };
   }
 
@@ -1074,7 +1079,7 @@ export class InnovationsService extends BaseService {
     return {
       ...(fields.includes('id') && { id: item.ownerId }),
       ...(fields.includes('name') && {
-        name: extra.users.get(item.ownerId)?.displayName ?? null
+        name: extra.users.getDisplayName(item.ownerId, ServiceRoleEnum.INNOVATOR)
       }),
       ...(fields.includes('companyName') && {
         companyName: item.ownerCompanyName ?? null
@@ -1251,7 +1256,7 @@ export class InnovationsService extends BaseService {
       ...(assessmentUser ? [assessmentUser.id] : [])
     ];
 
-    const usersInfo = await this.domainService.users.getUsersMap({ userIds });
+    const usersInfo = await this.domainService.users.getUsersMap({ userIds }, connection);
 
     if (innovation.owner && innovation.owner.status !== UserStatusEnum.DELETED) {
       ownerPreferences = await this.domainService.users.getUserPreferences(innovation.owner.id);
@@ -1885,28 +1890,22 @@ export class InnovationsService extends BaseService {
       return p;
     });
 
-    const usersInfo = await this.domainService.users.getUsersMap({ userIds: [...usersIds] });
+    const usersInfo = await this.domainService.users.getUsersMap({ userIds: [...usersIds] }, connection);
 
     return {
       count: dbActivitiesCount,
-      data: dbActivities.map(item => {
-        const params = item.param as ActivityLogListParamsType;
-
-        params.actionUserName = usersInfo.get(item.createdBy)?.displayName ?? '[deleted account]';
-
-        if (params.interveningUserId !== undefined) {
-          params.interveningUserName = usersInfo.get(params.interveningUserId)?.displayName ?? '[deleted account]';
+      data: dbActivities.map(item => ({
+        activity: item.activity,
+        type: item.type,
+        date: item.createdAt,
+        params: {
+          actionUserName: usersInfo.getDisplayName(item.createdBy),
+          actionUserRole: item.param.actionUserRole,
+          ...(item.param.interveningUserId && {
+            interveningUserId: usersInfo.getDisplayName(item.param.interveningUserId)
+          })
         }
-
-        params.actionUserRole = item.userRole.role;
-
-        return {
-          activity: item.activity,
-          type: item.type,
-          date: item.createdAt,
-          params
-        };
-      })
+      }))
     };
   }
 
@@ -2054,9 +2053,12 @@ export class InnovationsService extends BaseService {
       organisationsAndUsers = organisationsAndUsers.filter(item => item.userData !== null && item.userData.length > 0);
     }
 
-    const usersInfo = await this.domainService.users.getUsersMap({
-      userIds: organisationsAndUsers.flatMap(item => item.userData?.map(user => user.userId) ?? [])
-    });
+    const usersInfo = await this.domainService.users.getUsersMap(
+      {
+        userIds: organisationsAndUsers.flatMap(item => item.userData?.map(user => user.userId) ?? [])
+      },
+      connection
+    );
 
     const result = organisationsAndUsers.map(item => {
       const organisation = item.organisationData;
@@ -2068,7 +2070,7 @@ export class InnovationsService extends BaseService {
         recipients = item.userData.map(user => ({
           id: user.userId,
           roleId: user.roleId,
-          name: usersInfo.get(user.userId)?.displayName ?? '[unavailable account]'
+          name: usersInfo.getDisplayName(user.userId)
         }));
       }
 

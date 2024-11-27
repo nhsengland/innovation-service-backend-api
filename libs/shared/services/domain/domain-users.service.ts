@@ -1,4 +1,4 @@
-import type { DataSource, EntityManager, Repository } from 'typeorm';
+import type { DataSource, EntityManager } from 'typeorm';
 
 import type { PhoneUserPreferenceEnum } from '../../enums';
 import {
@@ -27,7 +27,7 @@ import type { IdentityProviderService } from '../integrations/identity-provider.
 import type { NotifierService } from '../integrations/notifier.service';
 import type { DomainInnovationsService } from './domain-innovations.service';
 
-export const displayName = (data?: UserInfo, role?: ServiceRoleEnum): string => {
+export const displayName = (data?: UserInfo, _role?: ServiceRoleEnum): string => {
   return data?.displayName ?? 'todo';
 };
 
@@ -43,7 +43,7 @@ type UserInfo = {
 };
 
 export class UserMap extends Map<string, UserInfo> {
-  getDisplayName(id?: string, _role?: ServiceRoleEnum): string {
+  getDisplayName(id?: string | null, _role?: ServiceRoleEnum): string {
     // 00000
     // roles
     //...
@@ -52,29 +52,26 @@ export class UserMap extends Map<string, UserInfo> {
 }
 
 export class DomainUsersService {
-  private userRepository: Repository<UserEntity>;
-
   constructor(
     private domainInnovationService: DomainInnovationsService,
     private identityProviderService: IdentityProviderService,
     private notifierService: NotifierService,
     private sqlConnection: DataSource
-  ) {
-    this.userRepository = this.sqlConnection.getRepository(UserEntity);
-  }
+  ) {}
 
   /**
    * helper to display a user's name. This function doesn't return error when the user is not found/deleted
    */
   async getDisplayName(
     data: { userId: string | undefined } | { identityId: string | undefined },
-    role?: ServiceRoleEnum
+    role?: ServiceRoleEnum,
+    em?: EntityManager
   ): Promise<string> {
     if ('userId' in data && data.userId !== undefined) {
-      return displayName((await this.getUsersList({ userIds: [data.userId] }))[0], role);
+      return displayName((await this.getUsersList({ userIds: [data.userId] }, em))[0], role);
     }
     if ('identityId' in data && data.identityId !== undefined) {
-      return displayName((await this.getUsersList({ identityIds: [data.identityId] }))[0], role);
+      return displayName((await this.getUsersList({ identityIds: [data.identityId] }, em))[0], role);
     }
 
     return displayName(undefined, role);
@@ -83,10 +80,10 @@ export class DomainUsersService {
   /**
    * wrapper for identityInfo with extra checks. This will throw an error if the user is not found
    */
-  async getIdentityUserInfo(data: { userId: string } | { identityId: string }): Promise<UserInfo> {
+  async getIdentityUserInfo(data: { userId: string } | { identityId: string }, em?: EntityManager): Promise<UserInfo> {
     const res = await ('userId' in data
-      ? this.getUsersList({ userIds: [data.userId] })
-      : this.getUsersList({ identityIds: [data.identityId] }));
+      ? this.getUsersList({ userIds: [data.userId] }, em)
+      : this.getUsersList({ identityIds: [data.identityId] }, em));
 
     if (!res[0]) {
       throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND);
@@ -236,7 +233,12 @@ export class DomainUsersService {
     };
   }
 
-  protected async getUsersList(data: { userIds?: string[]; identityIds?: string[] }): Promise<UserInfo[]> {
+  protected async getUsersList(
+    data: { userIds?: string[]; identityIds?: string[] },
+    entityManager?: EntityManager
+  ): Promise<UserInfo[]> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
     // [TechDebt]: This function breaks with more than 2100 users (probably shouldn't happen anyway)
     // However we're doing needless query since we could force the identityId (only place calling it has it)
     // and it would also be easy to do in chunks of 1000 users or so.
@@ -252,8 +254,8 @@ export class DomainUsersService {
       return [];
     }
 
-    const query = this.userRepository
-      .createQueryBuilder('users')
+    const query = em
+      .createQueryBuilder(UserEntity, 'users')
       .select(['users.id', 'users.identityId', 'users.status', 'roles.id', 'roles.role', 'roles.isActive'])
       .innerJoin('users.serviceRoles', 'serviceRoles')
       .where('users.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED });
@@ -286,8 +288,8 @@ export class DomainUsersService {
     });
   }
 
-  async getUsersMap(data: { userIds: string[] } | { identityIds: string[] }): Promise<UserMap> {
-    const res = await this.getUsersList(data);
+  async getUsersMap(data: { userIds: string[] } | { identityIds: string[] }, em?: EntityManager): Promise<UserMap> {
+    const res = await this.getUsersList(data, em);
     const resKey = 'userIds' in data ? 'id' : 'identityId';
     return new UserMap(res.map(item => [item[resKey], item]));
   }

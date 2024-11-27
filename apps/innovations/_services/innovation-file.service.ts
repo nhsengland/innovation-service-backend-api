@@ -21,13 +21,7 @@ import {
   UnprocessableEntityError
 } from '@innovations/shared/errors';
 import { TranslationHelper, type PaginationQueryParamsType } from '@innovations/shared/helpers';
-import type {
-  DomainService,
-  FileStorageService,
-  IdentityProviderService,
-  IRSchemaService,
-  NotifierService
-} from '@innovations/shared/services';
+import type { DomainService, FileStorageService, IRSchemaService, NotifierService } from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import {
   isAccessorDomainContextType,
@@ -50,7 +44,6 @@ export class InnovationFileService extends BaseService {
   constructor(
     @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
     @inject(SHARED_SYMBOLS.FileStorageService) private fileStorageService: FileStorageService,
-    @inject(SHARED_SYMBOLS.IdentityProviderService) private identityProviderService: IdentityProviderService,
     @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
     @inject(SHARED_SYMBOLS.IRSchemaService) private irSchemaService: IRSchemaService,
     @inject(SYMBOLS.InnovationDocumentService) private innovationDocumentService: InnovationDocumentService
@@ -214,7 +207,7 @@ export class InnovationFileService extends BaseService {
           : undefined
       ])
       .filter((u): u is string => u !== undefined);
-    const usersInfo = await this.identityProviderService.getUsersMap(usersIds);
+    const usersInfo = await this.domainService.users.getUsersMap({ identityIds: usersIds }, connection);
 
     const contextMap = await this.files2ResolvedContexts(domainContext, files, innovationId, connection);
 

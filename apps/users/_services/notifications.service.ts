@@ -11,7 +11,7 @@ import {
 } from '@users/shared/enums';
 import { GenericErrorsEnum, NotImplementedError, UnprocessableEntityError } from '@users/shared/errors';
 import type { PaginationQueryParamsType } from '@users/shared/helpers';
-import type { IdentityProviderService } from '@users/shared/services';
+import type { DomainService } from '@users/shared/services';
 import SHARED_SYMBOLS from '@users/shared/services/symbols';
 import {
   ANotificationCategories,
@@ -28,9 +28,7 @@ import { BaseService } from './base.service';
 
 @injectable()
 export class NotificationsService extends BaseService {
-  constructor(
-    @inject(SHARED_SYMBOLS.IdentityProviderService) private identityProviderService: IdentityProviderService
-  ) {
+  constructor(@inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService) {
     super();
   }
 
@@ -74,7 +72,7 @@ export class NotificationsService extends BaseService {
     total: number;
     data: {
       id: string;
-      innovation: { id: string; name: string; status: InnovationStatusEnum; ownerName: string };
+      innovation: { id: string; name: string; status: InnovationStatusEnum; ownerName?: string };
       contextType: NotificationCategoryType;
       contextDetail: NotificationDetailType;
       contextId: string;
@@ -146,7 +144,7 @@ export class NotificationsService extends BaseService {
       .filter(n => n.notification.innovation.owner && n.notification.innovation.owner.status !== UserStatusEnum.DELETED)
       .map(n => n.notification.innovation.owner!.identityId); // We are filtering before, so it will exist
 
-    const innovationOwners = await this.identityProviderService.getUsersMap(userIds);
+    const innovationOwners = await this.domainService.users.getUsersMap({ identityIds: userIds }, em);
 
     return {
       total: count,
@@ -156,7 +154,12 @@ export class NotificationsService extends BaseService {
           id: n.notification.innovation.id,
           name: n.notification.innovation.name,
           status: n.notification.innovation.status,
-          ownerName: innovationOwners.get(n.notification.innovation.owner?.identityId ?? '')?.displayName ?? ''
+          ...(n.notification.innovation.owner && {
+            ownerName: innovationOwners.getDisplayName(
+              n.notification.innovation.owner.identityId,
+              ServiceRoleEnum.INNOVATOR
+            )
+          })
         },
         contextType: n.notification.contextType,
         contextDetail: n.notification.contextDetail,

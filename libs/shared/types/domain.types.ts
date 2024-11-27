@@ -225,7 +225,7 @@ export type OrganisationWithUnitsType = {
 // Innovation domain types.
 // // This is the type of the params column on ActivityLog table.
 export type ActivityLogDBParamsType = {
-  interveningUserId?: string;
+  interveningUserId?: string | null;
 
   assessmentId?: string;
   sectionId?: CurrentCatalogTypes.InnovationSections;
@@ -251,6 +251,8 @@ export type ActivityLogDBParamsType = {
   reassessment?: {
     id: string;
   };
+
+  message?: string | { id: string };
 };
 
 // // This is the type of the list of activities.

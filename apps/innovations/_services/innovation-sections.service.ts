@@ -128,15 +128,13 @@ export class InnovationSectionsService extends BaseService {
       .filter(s => s.submittedBy && s.submittedBy.status !== UserStatusEnum.DELETED)
       .map(s => s.submittedBy?.identityId)
       .filter((u): u is string => !!u);
-    const innovatorNames = await this.identityService.getUsersMap(innovators);
+    const innovatorNames = await this.domainService.users.getUsersMap({ identityIds: innovators }, connection);
 
     return CurrentCatalogTypes.InnovationSections.map(sectionKey => {
       const section = sections.find(item => item.section === sectionKey);
 
       if (section) {
         const openTasksCount = openTasks.find(item => item.section === sectionKey)?.tasksCount ?? 0;
-
-        const submittedByName = section.submittedBy && innovatorNames.get(section.submittedBy.identityId)?.displayName;
 
         return {
           id: section.id,
@@ -145,10 +143,8 @@ export class InnovationSectionsService extends BaseService {
           submittedAt: section.submittedAt,
           submittedBy: section.submittedBy
             ? {
-                name: submittedByName ?? 'unknown user',
-                ...(submittedByName && {
-                  isOwner: section.submittedBy.id === innovation.owner?.id
-                })
+                name: innovatorNames.getDisplayName(section.submittedBy.identityId),
+                isOwner: section.submittedBy.id === innovation.owner?.id
               }
             : null,
           openTasksCount: openTasksCount
@@ -802,7 +798,7 @@ export class InnovationSectionsService extends BaseService {
       .filter(s => s.submittedBy && s.submittedBy.status !== UserStatusEnum.DELETED)
       .map(s => s.submittedBy?.identityId)
       .filter((id): id is string => !!id);
-    const users = await this.identityService.getUsersMap(innovators);
+    const users = await this.domainService.users.getUsersMap({ identityIds: innovators }, em);
 
     return new Map(
       sections.map(s => [
@@ -812,7 +808,7 @@ export class InnovationSectionsService extends BaseService {
           status: s.status,
           ...(s.submittedAt && { submittedAt: s.submittedAt }),
           submittedBy: {
-            name: users.get(s.submittedBy?.identityId ?? '')?.displayName ?? '[unknown user]',
+            name: users.getDisplayName(s.submittedBy?.identityId),
             displayTag: this.domainService.users.getDisplayTag(ServiceRoleEnum.INNOVATOR, {
               isOwner: s.innovation.owner && s.submittedBy ? s.innovation.owner.id === s.submittedBy.id : undefined
             })

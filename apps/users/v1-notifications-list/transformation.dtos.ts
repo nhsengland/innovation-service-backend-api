@@ -5,7 +5,7 @@ export type ResponseDTO = {
   count: number;
   data: {
     id: string;
-    innovation: { id: string; name: string; status: InnovationStatusEnum; ownerName: string };
+    innovation: { id: string; name: string; status: InnovationStatusEnum; ownerName?: string };
     contextType: NotificationCategoryType;
     contextDetail: NotificationDetailType;
     contextId: string;
@@ -26,7 +26,7 @@ export const ResponseBodySchema = Joi.object<ResponseDTO>({
         status: Joi.string()
           .valid(...Object.values(InnovationStatusEnum))
           .required(),
-        ownerName: Joi.string().required()
+        ownerName: Joi.string()
       }),
       contextType: Joi.string().valid(...NotificationCategoryType),
       contextDetail: Joi.string().valid(...NotificationDetailType),

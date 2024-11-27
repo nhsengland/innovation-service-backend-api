@@ -525,7 +525,7 @@ export class UsersService extends BaseService {
       r.innovationSupports.forEach(s => s.userRoles.forEach(r => userIdsSet.add(r.user.identityId)))
     );
 
-    const usersInfoMap = await this.identityProviderService.getUsersMap(Array.from(userIdsSet));
+    const usersInfoMap = await this.domainService.users.getUsersMap({ userIds: Array.from(userIdsSet) }, em);
 
     for (const role of roleAndSupports) {
       for (const support of role.innovationSupports) {

@@ -11,17 +11,18 @@ import { InnovationStatusEnum, InnovationSupportStatusEnum, ServiceRoleEnum } fr
 import { GenericErrorsEnum, NotImplementedError } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import type { CurrentElasticSearchDocumentType } from '@innovations/shared/schemas/innovation-record';
-import type { DomainService, DomainUsersService, ElasticSearchService } from '@innovations/shared/services';
+import type { DomainService, ElasticSearchService } from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import {
   DomainContextType,
   isAccessorDomainContextType,
   isAssessmentDomainContextType
 } from '@innovations/shared/types';
+import { displayName, UserMap } from '@notifications/shared/services/domain/domain-users.service';
 import { inject, injectable } from 'inversify';
 import { groupBy, isArray, isString, mapValues, pick } from 'lodash';
 import { InnovationLocationEnum } from '../_enums/innovation.enums';
-import { ElasticSearchQueryBuilder, boolQuery, nestedQuery, orQuery } from '../_helpers/es-query-builder.helper';
+import { boolQuery, ElasticSearchQueryBuilder, nestedQuery, orQuery } from '../_helpers/es-query-builder.helper';
 import { BaseService } from './base.service';
 import type {
   DateFilterFieldsType,
@@ -293,7 +294,9 @@ export class SearchService extends BaseService {
     fields.forEach(field => {
       switch (field) {
         case 'assignedTo':
-          res[field] = extra.users.get(item.assessment?.assignedToId ?? '')?.displayName ?? null;
+          res[field] = item.assessment?.assignedToId
+            ? extra.users.getDisplayName(item.assessment?.assignedToId, ServiceRoleEnum.ASSESSMENT)
+            : null;
           break;
         default:
           res[field] = item.assessment?.[field] ?? null;
@@ -315,7 +318,7 @@ export class SearchService extends BaseService {
         assignedAccessors:
           unit.assignedAccessors?.map(({ userId: id }) => ({
             id,
-            name: extra.users.get(id)?.displayName ?? null
+            name: extra.users.getDisplayName(id)
           })) ?? null,
         name: unit.name,
         unitId: unit.unitId
@@ -333,8 +336,8 @@ export class SearchService extends BaseService {
       const support = item.supports?.find(s => s.unitId === domainContext.organisation.organisationUnit.id);
       if (!support) return null;
 
-      const updatedBy = extra.users?.get(support.updatedBy) ?? null;
-      const displayName =
+      const updatedBy = extra.users?.get(support.updatedBy);
+      const name =
         // Ensuring that updatedBy is always innovator if the innovation is archived or not shared
         item.status === InnovationStatusEnum.ARCHIVED ||
         !item.shares?.length ||
@@ -342,14 +345,14 @@ export class SearchService extends BaseService {
         // distinguish if there's multiple roles for the same user
         updatedBy?.roles.some(r => r.role === ServiceRoleEnum.INNOVATOR)
           ? 'Innovator'
-          : (updatedBy?.displayName ?? null);
+          : displayName(updatedBy);
 
       // support is handled differently to remove the nested array since it's only 1 element in this case
       return {
         ...(fields.includes('id') && { id: support.id }),
         ...(fields.includes('status') && { status: support.status }),
         ...(fields.includes('updatedAt') && { updatedAt: support.updatedAt }),
-        ...(fields.includes('updatedBy') && { updatedBy: displayName }),
+        ...(fields.includes('updatedBy') && { updatedBy: name }),
         ...(fields.includes('closeReason') && { closeReason: support.closeReason })
       };
     }
@@ -368,7 +371,7 @@ export class SearchService extends BaseService {
     }
     return {
       ...(fields.includes('id') && { id: item.owner.id }),
-      ...(fields.includes('name') && { name: extra.users.get(item.owner.id ?? '')?.displayName ?? null }),
+      ...(fields.includes('name') && { name: extra.users.getDisplayName(item.owner.id, ServiceRoleEnum.INNOVATOR) }),
       ...(fields.includes('companyName') && { companyName: item.owner.companyName ?? null })
     };
   }
@@ -665,9 +668,7 @@ export class SearchService extends BaseService {
     users: this.withUsers.bind(this)
   };
 
-  private async withUsers(
-    results: SearchHit<CurrentElasticSearchDocumentType>[]
-  ): ReturnType<DomainUsersService['getUsersMap']> {
+  private async withUsers(results: SearchHit<CurrentElasticSearchDocumentType>[]): Promise<UserMap> {
     const usersSet = new Set<string>();
     for (const hit of results) {
       const doc = hit._source;
