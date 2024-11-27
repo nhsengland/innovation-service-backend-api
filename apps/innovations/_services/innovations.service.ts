@@ -1899,6 +1899,7 @@ export class InnovationsService extends BaseService {
         type: item.type,
         date: item.createdAt,
         params: {
+          ...item.param,
           actionUserName: usersInfo.getDisplayName(item.createdBy),
           actionUserRole: item.param.actionUserRole,
           ...(item.param.interveningUserId && {

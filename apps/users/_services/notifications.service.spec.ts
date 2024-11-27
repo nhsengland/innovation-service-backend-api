@@ -62,8 +62,7 @@ describe('Users / _services / notifications service suite', () => {
             innovation: {
               id: scenario.users.johnInnovator.innovations.johnInnovation.id,
               name: scenario.users.johnInnovator.innovations.johnInnovation.name,
-              status: scenario.users.johnInnovator.innovations.johnInnovation.status,
-              ownerName: scenario.users.johnInnovator.name
+              status: scenario.users.johnInnovator.innovations.johnInnovation.status
             },
             contextType:
               scenario.users.johnInnovator.innovations.johnInnovation.notifications.notificationFromSupport.context
@@ -84,8 +83,7 @@ describe('Users / _services / notifications service suite', () => {
             innovation: {
               id: scenario.users.johnInnovator.innovations.johnInnovation.id,
               name: scenario.users.johnInnovator.innovations.johnInnovation.name,
-              status: scenario.users.johnInnovator.innovations.johnInnovation.status,
-              ownerName: scenario.users.johnInnovator.name
+              status: scenario.users.johnInnovator.innovations.johnInnovation.status
             },
             contextType:
               scenario.users.johnInnovator.innovations.johnInnovation.notifications.notificationsFromMessage.context
@@ -122,8 +120,7 @@ describe('Users / _services / notifications service suite', () => {
             innovation: {
               id: scenario.users.johnInnovator.innovations.johnInnovation.id,
               name: scenario.users.johnInnovator.innovations.johnInnovation.name,
-              status: scenario.users.johnInnovator.innovations.johnInnovation.status,
-              ownerName: scenario.users.johnInnovator.name
+              status: scenario.users.johnInnovator.innovations.johnInnovation.status
             },
             contextType:
               scenario.users.johnInnovator.innovations.johnInnovation.notifications.notificationsFromMessage.context
@@ -169,8 +166,7 @@ describe('Users / _services / notifications service suite', () => {
             innovation: {
               id: scenario.users.johnInnovator.innovations.johnInnovation.id,
               name: scenario.users.johnInnovator.innovations.johnInnovation.name,
-              status: scenario.users.johnInnovator.innovations.johnInnovation.status,
-              ownerName: scenario.users.johnInnovator.name
+              status: scenario.users.johnInnovator.innovations.johnInnovation.status
             },
             contextType:
               scenario.users.johnInnovator.innovations.johnInnovation.notifications.notificationsFromMessage.context

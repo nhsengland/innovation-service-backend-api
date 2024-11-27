@@ -312,10 +312,12 @@ export class InnovationCollaboratorsService extends BaseService {
       email: collaborator.email,
       status: collaborator.status,
       role: collaborator.collaboratorRole ?? undefined,
-      name: await this.domainService.users.getDisplayName(
-        { identityId: collaborator?.user?.identityId },
-        ServiceRoleEnum.INNOVATOR
-      ),
+      name: collaborator.user
+        ? await this.domainService.users.getDisplayName(
+            { identityId: collaborator.user?.identityId },
+            ServiceRoleEnum.INNOVATOR
+          )
+        : undefined, // if the collaborator doesn't have a user it's because it's an invited collaborator that hasn't created yet
       innovation: {
         id: collaborator.innovation.id,
         name: collaborator.innovation.name,
