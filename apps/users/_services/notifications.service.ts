@@ -1,4 +1,4 @@
-import { inject, injectable } from 'inversify';
+import { injectable } from 'inversify';
 import type { EntityManager } from 'typeorm';
 
 import { NotificationEntity, NotificationPreferenceEntity, NotificationUserEntity } from '@users/shared/entities';
@@ -10,8 +10,6 @@ import {
 } from '@users/shared/enums';
 import { GenericErrorsEnum, NotImplementedError, UnprocessableEntityError } from '@users/shared/errors';
 import type { PaginationQueryParamsType } from '@users/shared/helpers';
-import type { DomainService } from '@users/shared/services';
-import SHARED_SYMBOLS from '@users/shared/services/symbols';
 import {
   ANotificationCategories,
   INotificationCategories,
@@ -27,10 +25,6 @@ import { BaseService } from './base.service';
 
 @injectable()
 export class NotificationsService extends BaseService {
-  constructor(@inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService) {
-    super();
-  }
-
   /**
    * gets the user active notifications counters
    * @param userId the user id

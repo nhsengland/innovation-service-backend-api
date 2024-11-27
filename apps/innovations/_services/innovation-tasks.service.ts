@@ -29,7 +29,7 @@ import {
   UserErrorsEnum
 } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
-import type { DomainService, IdentityProviderService, NotifierService } from '@innovations/shared/services';
+import type { DomainService, NotifierService } from '@innovations/shared/services';
 import { DomainContextType, isAccessorDomainContextType } from '@innovations/shared/types';
 
 import { CurrentCatalogTypes, InnovationSectionAliasEnum } from '@innovations/shared/schemas/innovation-record';
@@ -44,8 +44,6 @@ export class InnovationTasksService extends BaseService {
   constructor(
     @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
     @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
-    @inject(SHARED_SYMBOLS.IdentityProviderService)
-    private identityProviderService: IdentityProviderService,
     @inject(SYMBOLS.InnovationThreadsService)
     private innovationThreadsService: InnovationThreadsService
   ) {

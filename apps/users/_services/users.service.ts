@@ -44,8 +44,7 @@ export class UsersService extends BaseService {
 
   constructor(
     @inject(SHARED_SYMBOLS.CacheService) cacheService: CacheService,
-    @inject(SHARED_SYMBOLS.IdentityProviderService)
-    private identityProviderService: IdentityProviderService,
+    @inject(SHARED_SYMBOLS.IdentityProviderService) private identityProviderService: IdentityProviderService,
     @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
     @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
     @inject(SHARED_SYMBOLS.RedisService) private redisService: RedisService

@@ -36,8 +36,7 @@ type TransferQueryFilterType = {
 @injectable()
 export class InnovationTransferService extends BaseService {
   constructor(
-    @inject(SHARED_SYMBOLS.IdentityProviderService)
-    private identityProviderService: IdentityProviderService,
+    @inject(SHARED_SYMBOLS.IdentityProviderService) private identityProviderService: IdentityProviderService,
     @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
     @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
     @inject(SYMBOLS.InnovationCollaboratorsService)

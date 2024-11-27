@@ -32,8 +32,7 @@ export class DomainService {
   }
 
   constructor(
-    @inject(SHARED_SYMBOLS.IdentityProviderService)
-    private identityProviderService: IdentityProviderService,
+    @inject(SHARED_SYMBOLS.IdentityProviderService) private identityProviderService: IdentityProviderService,
     @inject(SHARED_SYMBOLS.SqlProvider) public sqlProvider: SqlProvider,
     @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
     @inject(SHARED_SYMBOLS.IRSchemaService) private irSchemaService: IRSchemaService
@@ -42,7 +41,6 @@ export class DomainService {
   setConnection(connection: DataSource): void {
     this._innovations = new DomainInnovationsService(
       connection,
-      this.identityProviderService,
       this.notifierService,
       this._users,
       this.irSchemaService

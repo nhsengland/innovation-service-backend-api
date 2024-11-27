@@ -925,19 +925,8 @@ paths:
             format: uuid
             description: The notification ID
       responses:
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    format: uuid
-                required:
-                  - id
-                additionalProperties: false
+        "204":
+          description: Notification deleted
   /v1/notifications/dismiss:
     patch:
       description: Returns the number of affected notifications
@@ -1059,6 +1048,7 @@ paths:
                       - AU09_TRANSFER_EXPIRED
                       - AU10_ACCESSOR_IDLE_ENGAGING_SUPPORT_FOR_SIX_WEEKS
                       - AU11_ACCESSOR_IDLE_WAITING_SUPPORT_FOR_SIX_WEEKS
+                      - AU12_INNOVATOR_SURVEY_END_SUPPORT_TWO_MONTHS_REMINDER
                       - SUPPORT_UPDATED
                       - PROGRESS_UPDATE_CREATED
                       - INNOVATION_RECORD_UPDATED
@@ -1184,13 +1174,10 @@ paths:
                                 - IN_PROGRESS
                                 - WITHDRAWN
                                 - ARCHIVED
-                            ownerName:
-                              type: string
                           required:
                             - id
                             - name
                             - status
-                            - ownerName
                           additionalProperties: false
                         contextType:
                           type: string
@@ -1283,6 +1270,7 @@ paths:
                             - AU09_TRANSFER_EXPIRED
                             - AU10_ACCESSOR_IDLE_ENGAGING_SUPPORT_FOR_SIX_WEEKS
                             - AU11_ACCESSOR_IDLE_WAITING_SUPPORT_FOR_SIX_WEEKS
+                            - AU12_INNOVATOR_SURVEY_END_SUPPORT_TWO_MONTHS_REMINDER
                             - SUPPORT_UPDATED
                             - PROGRESS_UPDATE_CREATED
                             - INNOVATION_RECORD_UPDATED
