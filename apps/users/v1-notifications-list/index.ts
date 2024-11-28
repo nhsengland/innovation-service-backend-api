@@ -44,8 +44,7 @@ class V1UserNotifications {
           innovation: {
             id: notification.innovation.id,
             name: notification.innovation.name,
-            status: notification.innovation.status,
-            ownerName: notification.innovation.ownerName
+            status: notification.innovation.status
           },
           contextType: notification.contextType,
           contextDetail: notification.contextDetail,

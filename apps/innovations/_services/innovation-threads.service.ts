@@ -607,7 +607,7 @@ export class InnovationThreadsService extends BaseService {
 
     const authors = [...new Set([...threadMessagesAuthors])];
 
-    const authorsMap = await this.identityProvider.getUsersMap(authors);
+    const authorsMap = await this.domainService.users.getUsersMap({ identityIds: authors }, em);
 
     const notifications = new Set(
       (
@@ -657,10 +657,7 @@ export class InnovationThreadsService extends BaseService {
         isEditable: tm.isEditable,
         createdBy: {
           id: tm.author?.id,
-          name:
-            tm.author && tm.author.status !== UserStatusEnum.DELETED
-              ? authorsMap.get(tm.author.identityId)?.displayName || 'unknown user'
-              : '[deleted user]',
+          name: authorsMap.getDisplayName(tm.author.identityId),
           role: tm.authorUserRole?.role,
           ...(tm.authorUserRole?.role === ServiceRoleEnum.INNOVATOR && {
             isOwner: tm.author.id === tm.thread.innovation.owner?.id

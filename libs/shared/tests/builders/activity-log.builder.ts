@@ -1,8 +1,8 @@
- 
 import type { EntityManager } from 'typeorm';
-import { BaseBuilder } from './base.builder';
+import { ActivityLogEntity, InnovationEntity, UserRoleEntity } from '../../entities';
 import type { ActivityEnum, ActivityTypeEnum } from '../../enums';
-import { InnovationEntity, ActivityLogEntity, UserRoleEntity } from '../../entities';
+import { ActivityLogDBParamsType } from '../../types';
+import { BaseBuilder } from './base.builder';
 import type { TestUserType } from './user.builder';
 
 export type TestActivityLogType = {
@@ -67,7 +67,7 @@ export class ActivityLogBuilder extends BaseBuilder {
         param: {
           actionUserName: this.actionUserName,
           interveningUserName: this.interveningUserName
-        }
+        } as ActivityLogDBParamsType
       });
 
     const result = await this.getEntityManager()

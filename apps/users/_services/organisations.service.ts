@@ -5,8 +5,8 @@ import {
   InnovationSupportEntity,
   OrganisationEntity,
   OrganisationUnitEntity,
-  UserRoleEntity,
-  UserEntity
+  UserEntity,
+  UserRoleEntity
 } from '@users/shared/entities';
 import {
   InnovationSupportStatusEnum,
@@ -16,23 +16,21 @@ import {
 } from '@users/shared/enums';
 import {
   BadRequestError,
+  ForbiddenError,
   NotFoundError,
   OrganisationErrorsEnum,
-  UserErrorsEnum,
-  ForbiddenError
+  UserErrorsEnum
 } from '@users/shared/errors';
 
-import { BaseService } from './base.service';
-import { DomainContextType, isAccessorDomainContextType } from '@users/shared/types';
 import { addToArrayValueInMap } from '@users/shared/helpers/misc.helper';
+import type { DomainService } from '@users/shared/services';
 import SHARED_SYMBOLS from '@users/shared/services/symbols';
-import type { IdentityProviderService } from '@users/shared/services';
+import { DomainContextType, isAccessorDomainContextType } from '@users/shared/types';
+import { BaseService } from './base.service';
 
 @injectable()
 export class OrganisationsService extends BaseService {
-  constructor(
-    @inject(SHARED_SYMBOLS.IdentityProviderService) private identityProviderService: IdentityProviderService
-  ) {
+  constructor(@inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService) {
     super();
   }
 
@@ -226,13 +224,16 @@ export class OrganisationsService extends BaseService {
       .innerJoin('user.serviceRoles', 'role', 'role.organisation_unit_id = :unitId', { unitId })
       .where('user.status != :deletedStatus', { deletedStatus: UserStatusEnum.DELETED })
       .getMany();
-    const usersInfoMap = await this.identityProviderService.getUsersMap(
-      Array.from(new Set(allUnitUsers.map(u => u.identityId)))
+    const usersInfoMap = await this.domainService.users.getUsersMap(
+      {
+        identityIds: Array.from(new Set(allUnitUsers.map(u => u.identityId)))
+      },
+      em
     );
     const identityInfoMap = new Map<string, { name: string; role: ServiceRoleEnum }>(
       allUnitUsers.map(u => [
         u.identityId,
-        { name: usersInfoMap.get(u.identityId)?.displayName ?? '[deleted user]', role: u.serviceRoles[0]!.role }
+        { name: usersInfoMap.getDisplayName(u.identityId), role: u.serviceRoles[0]!.role }
       ])
     );
 

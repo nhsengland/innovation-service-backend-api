@@ -144,6 +144,8 @@ export class IdentityProviderService {
   /**
    * get a user from the identity provider
    *
+   * @see DomainUsersService.getIdentityUserInfo
+   *
    * this function is an envelope for the getUsersList function
    * @param identityId the user identity id
    * @returns the user
@@ -187,6 +189,8 @@ export class IdentityProviderService {
   /**
    * this function checks the cache for the users and if they are not found it will fetch them from the identity provider
    *
+   * @see DomainUsersService.getUsersMap
+   *
    * @param identityIds the user identities
    * @returns list of users
    */
@@ -212,6 +216,8 @@ export class IdentityProviderService {
 
   /**
    * this function checks the cache for the users and if they are not found it will fetch them from the identity provider
+   *
+   * @see DomainUsersService.getUsersMap
    *
    * @param identityIds the user identities
    * @returns list of users as a map

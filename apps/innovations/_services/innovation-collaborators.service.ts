@@ -1,11 +1,6 @@
 import { InnovationEntity, UserEntity } from '@innovations/shared/entities';
 import { InnovationCollaboratorEntity } from '@innovations/shared/entities/innovation/innovation-collaborator.entity';
-import {
-  InnovationCollaboratorStatusEnum,
-  NotifierTypeEnum,
-  ServiceRoleEnum,
-  UserStatusEnum
-} from '@innovations/shared/enums';
+import { InnovationCollaboratorStatusEnum, NotifierTypeEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 import {
   ConflictError,
   ForbiddenError,
@@ -231,14 +226,14 @@ export class InnovationCollaboratorsService extends BaseService {
 
     const userIds = collaborators.map(c => c.userId).filter((u): u is string => u !== null);
 
-    const usersInfo = await this.domainService.users.getUsersMap({ userIds });
+    const usersInfo = await this.domainService.users.getUsersMap({ userIds }, em);
 
     const data = collaborators.map(collaborator => ({
       id: collaborator.id,
       email: collaborator.email,
       status: collaborator.status,
       ...(collaborator.userId && {
-        name: usersInfo.get(collaborator.userId)?.displayName ?? '',
+        name: usersInfo.getDisplayName(collaborator.userId, ServiceRoleEnum.INNOVATOR),
         isActive: usersInfo.get(collaborator.userId)?.isActive ?? false
       }),
       ...(collaborator.collaboratorRole && { role: collaborator.collaboratorRole })
@@ -303,17 +298,13 @@ export class InnovationCollaboratorsService extends BaseService {
     }
 
     // Check if user is not the invited collaborator and the he is not the innovation owner
-    if (collaborator.innovation.owner && collaborator.innovation.owner.id !== domainContext.id) {
-      const domainUserInfo = await this.identityProviderService.getUserInfo(domainContext.identityId);
-      if (collaborator.email.toLowerCase() !== domainUserInfo.email.toLowerCase()) {
+    if (collaborator.innovation.owner?.id !== domainContext.id) {
+      const domainUserInfo = await this.domainService.users.getIdentityUserInfo({
+        identityId: domainContext.identityId
+      });
+      if (collaborator.email.toLowerCase() !== domainUserInfo?.email.toLowerCase()) {
         throw new ForbiddenError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_NO_ACCESS);
       }
-    }
-
-    let collaboratorName = collaborator.user ? '[deleted user]' : undefined;
-    if (collaborator.user && collaborator.user.status !== UserStatusEnum.DELETED) {
-      const collaboratorUser = await this.identityProviderService.getUserInfo(collaborator.user.identityId);
-      collaboratorName = collaboratorUser.displayName;
     }
 
     return {
@@ -321,7 +312,12 @@ export class InnovationCollaboratorsService extends BaseService {
       email: collaborator.email,
       status: collaborator.status,
       role: collaborator.collaboratorRole ?? undefined,
-      name: collaboratorName,
+      name: collaborator.user
+        ? await this.domainService.users.getDisplayName(
+            { identityId: collaborator.user?.identityId },
+            ServiceRoleEnum.INNOVATOR
+          )
+        : undefined, // if the collaborator doesn't have a user it's because it's an invited collaborator that hasn't created yet
       innovation: {
         id: collaborator.innovation.id,
         name: collaborator.innovation.name,
@@ -329,10 +325,12 @@ export class InnovationCollaboratorsService extends BaseService {
         ...(collaborator.innovation.owner && {
           owner: {
             id: collaborator.innovation.owner.id,
-            name:
-              collaborator.innovation.owner.status !== UserStatusEnum.DELETED
-                ? (await this.identityProviderService.getUserInfo(collaborator.innovation.owner.identityId)).displayName
-                : undefined
+            name: await this.domainService.users.getDisplayName(
+              {
+                identityId: collaborator.innovation.owner.identityId
+              },
+              ServiceRoleEnum.INNOVATOR
+            )
           }
         })
       },

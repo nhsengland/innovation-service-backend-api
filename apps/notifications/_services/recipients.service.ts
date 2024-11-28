@@ -97,6 +97,7 @@ export class RecipientsService extends BaseService {
       return null;
     }
 
+    // Since notifications handle the users differently left the identityProviderService here instead of the domain
     if (typeof userIdentityIds === 'string') {
       return (await this.identityProviderService.getUsersList([userIdentityIds]))[0] ?? null;
     } else {

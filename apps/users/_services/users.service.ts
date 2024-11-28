@@ -44,8 +44,7 @@ export class UsersService extends BaseService {
 
   constructor(
     @inject(SHARED_SYMBOLS.CacheService) cacheService: CacheService,
-    @inject(SHARED_SYMBOLS.IdentityProviderService)
-    private identityProviderService: IdentityProviderService,
+    @inject(SHARED_SYMBOLS.IdentityProviderService) private identityProviderService: IdentityProviderService,
     @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
     @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
     @inject(SHARED_SYMBOLS.RedisService) private redisService: RedisService
@@ -348,7 +347,12 @@ export class UsersService extends BaseService {
 
     // Get users from database
     const [dbUsers, count] = await query.getManyAndCount();
-    const identityUsers = await this.identityProviderService.getUsersMap(dbUsers.map(items => items.identityId));
+    const identityUsers = await this.domainService.users.getUsersMap(
+      {
+        identityIds: dbUsers.map(items => items.identityId)
+      },
+      em
+    );
 
     const users = await Promise.all(
       dbUsers.map(async dbUser => {
@@ -363,9 +367,9 @@ export class UsersService extends BaseService {
           id: dbUser.id,
           isActive: dbUser.status === UserStatusEnum.ACTIVE,
           roles: dbUser.serviceRoles,
-          name: identityUser.displayName ?? 'N/A',
+          name: identityUser.displayName,
           lockedAt: dbUser.lockedAt,
-          ...(fieldSet.has('email') ? { email: identityUser?.email ?? 'N/A' } : {})
+          ...(fieldSet.has('email') ? { email: identityUser.email } : {})
         };
       })
     );

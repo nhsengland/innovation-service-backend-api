@@ -177,9 +177,12 @@ export class InnovationAssessmentsService extends BaseService {
     }
 
     // Fetch users names.
-    const usersInfo = await this.domainService.users.getUsersList({
-      userIds: [...(assessment.assignTo ? [assessment.assignTo.id] : []), assessment.updatedBy]
-    });
+    const usersInfo = await this.domainService.users.getUsersMap(
+      {
+        userIds: [...(assessment.assignTo ? [assessment.assignTo.id] : []), assessment.updatedBy]
+      },
+      connection
+    );
 
     return {
       id: assessment.id,
@@ -219,7 +222,7 @@ export class InnovationAssessmentsService extends BaseService {
       ...(assessment.assignTo && {
         assignTo: {
           id: assessment.assignTo.id,
-          name: usersInfo.find(user => user.id === assessment.assignTo?.id)?.displayName || ''
+          name: usersInfo.getDisplayName(assessment.assignTo.id, ServiceRoleEnum.ASSESSMENT)
         }
       }),
       maturityLevel: assessment.maturityLevel,
@@ -253,7 +256,7 @@ export class InnovationAssessmentsService extends BaseService {
       updatedAt: assessment.updatedAt,
       updatedBy: {
         id: assessment.updatedBy,
-        name: usersInfo.find(user => user.id === assessment.updatedBy)?.displayName || ''
+        name: usersInfo.getDisplayName(assessment.updatedBy)
       },
       isLatest: assessment.id === assessment.innovation.currentAssessment?.id
     };

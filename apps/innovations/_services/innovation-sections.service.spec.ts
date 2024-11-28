@@ -1,4 +1,3 @@
- 
 import { container } from '../_config';
 
 import { InnovationEntity, InnovationSectionEntity } from '@innovations/shared/entities';
@@ -223,7 +222,7 @@ describe('Innovation Sections Suite', () => {
             section: innovation.sections.INNOVATION_DESCRIPTION.section,
             status: innovation.sections.INNOVATION_DESCRIPTION.status,
             submittedAt: undefined,
-            submittedBy: { displayTag: 'Innovator', name: '[unknown user]' },
+            submittedBy: { displayTag: 'Innovator', name: '[deleted user]' },
             openTasksCount: 3 // John innovation has 4 tasks, 3 open and 1 done
           },
           data: expect.any(Object)
@@ -241,7 +240,7 @@ describe('Innovation Sections Suite', () => {
             section: innovation.sections.EVIDENCE_OF_EFFECTIVENESS.section,
             status: innovation.sections.EVIDENCE_OF_EFFECTIVENESS.status,
             submittedAt: undefined,
-            submittedBy: { displayTag: 'Innovator', name: '[unknown user]' },
+            submittedBy: { displayTag: 'Innovator', name: '[deleted user]' },
             openTasksCount: 0
           },
           data: {
@@ -286,7 +285,7 @@ describe('Innovation Sections Suite', () => {
             section: innovation.sections.INNOVATION_DESCRIPTION.section,
             status: innovation.sections.INNOVATION_DESCRIPTION.status,
             submittedAt: undefined,
-            submittedBy: { displayTag: 'Innovator', name: '[unknown user]' },
+            submittedBy: { displayTag: 'Innovator', name: '[deleted user]' },
             openTasksCount: 3 // John innovation has 4 tasks, 3 open and 1 done
           },
           data: expect.any(Object)
@@ -304,7 +303,7 @@ describe('Innovation Sections Suite', () => {
             section: innovation.sections.EVIDENCE_OF_EFFECTIVENESS.section,
             status: innovation.sections.EVIDENCE_OF_EFFECTIVENESS.status,
             submittedAt: undefined,
-            submittedBy: { displayTag: 'Innovator', name: '[unknown user]' },
+            submittedBy: { displayTag: 'Innovator', name: '[deleted user]' },
             openTasksCount: 0
           },
           data: expect.any(Object)
