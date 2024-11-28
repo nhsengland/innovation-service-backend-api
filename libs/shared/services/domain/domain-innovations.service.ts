@@ -2,7 +2,7 @@ import type { DataSource, EntityManager, Repository } from 'typeorm';
 import { Brackets, In } from 'typeorm';
 
 import { cloneDeep } from 'lodash';
-import { EXPIRATION_DATES } from '../../constants';
+import { EXPIRATION_DATES, SYSTEM_CONTEXT } from '../../constants';
 import type { UserEntity } from '../../entities';
 import { ActivityLogEntity } from '../../entities/innovation/activity-log.entity';
 import { InnovationAssessmentEntity } from '../../entities/innovation/innovation-assessment.entity';
@@ -89,16 +89,8 @@ export class DomainInnovationsService {
 
     for (const innovation of dbInnovations) {
       if (innovation.transfers[0]) {
-        const domainContext = await this.domainUsersService.getInnovatorDomainContextByRoleId(
-          innovation.transfers[0].createdBy,
-          em
-        );
-        if (!domainContext) {
-          return; // this will never happen
-        }
-
         await this.archiveInnovationsWithDeleteSideffects(
-          domainContext,
+          SYSTEM_CONTEXT,
           [
             {
               id: innovation.id,
@@ -129,14 +121,8 @@ export class DomainInnovationsService {
       .getMany();
 
     for (const innovation of dbInnovations) {
-      //TODO: Change domainContext to a system user
-      const domainContext = await this.domainUsersService.getInnovatorDomainContextByRoleId(innovation.createdBy, em);
-      if (!domainContext) {
-        return; // this will never happen
-      }
-
       await this.archiveInnovationsWithDeleteSideffects(
-        domainContext,
+        SYSTEM_CONTEXT,
         [
           {
             id: innovation.innovationId,
