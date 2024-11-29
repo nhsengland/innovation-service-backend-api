@@ -1,6 +1,6 @@
 import { type MigrationInterface, type QueryRunner } from 'typeorm';
 
-export class AlterViewInnovationRelevantOrganisations1729075195182 implements MigrationInterface {
+export class AlterViewInnovationRelevantOrganisations1729075195185 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
         CREATE OR ALTER   VIEW [dbo].[innovation_relevant_organisations_status_view] AS
@@ -35,18 +35,17 @@ export class AlterViewInnovationRelevantOrganisations1729075195182 implements Mi
     JSON_OBJECT('id': ou.id, 'name': ou.name, 'acronym': ou.acronym) AS organisation_unit_data,
     -- I want the assigned for the engaging/waiting and all the QAs for the other ones
     IIF(
-      s.support_id IS NULL,
-      -- if not support I want all the QAs
-      (SELECT id as roleId, user_id as userId FROM user_role WHERE organisation_unit_id = ou.id AND role='QUALIFYING_ACCESSOR' AND is_active = 1 FOR JSON AUTO),
-      -- if support I want the assigned
+      s.status IN ('ENGAGING', 'WAITING'),
+      -- if in ENGAGING or WAITING I want the assigned
       (SELECT id as roleId, user_id as userId FROM innovation_support_user su
-      INNER JOIN user_role r ON su.user_role_id=r.id AND r.is_active = 1 WHERE su.innovation_support_id = s.support_id FOR JSON AUTO)
+      INNER JOIN user_role r ON su.user_role_id=r.id AND r.is_active = 1 WHERE su.innovation_support_id = s.support_id FOR JSON AUTO),
+      -- if not I want all the QAs
+      (SELECT id as roleId, user_id as userId FROM user_role WHERE organisation_unit_id = ou.id AND role='QUALIFYING_ACCESSOR' AND is_active = 1 FOR JSON AUTO)
     ) as user_data
     FROM all_supports s
     INNER JOIN organisation_unit ou on s.organisation_unit_id = ou.id
     INNER JOIN organisation o on ou.organisation_id = o.id
     INNER JOIN innovation_share ish ON ish.innovation_id = s.innovation_id AND ish.organisation_id = ou.organisation_id
-
 `);
   }
   async down(_queryRunner: QueryRunner): Promise<void> {}
