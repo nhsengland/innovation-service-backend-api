@@ -48,6 +48,11 @@ describe('Shared / services / domain user suite', () => {
       const result = await sut.getDisplayName({ userId: randUuid() }, ServiceRoleEnum.INNOVATOR, em);
       expect(result).toBe('Innovator [deleted user]');
     });
+
+    it('should return the system user name', async () => {
+      const result = await sut.getDisplayName({ userId: '00000000-0000-0000-0000-000000000000' });
+      expect(result).toBe('System');
+    });
   });
 
   describe('getIdentityUserInfo', () => {

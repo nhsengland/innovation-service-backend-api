@@ -44,11 +44,11 @@ export class DomainUsersService {
     role?: ServiceRoleEnum,
     em?: EntityManager
   ): Promise<string> {
-    if ('userId' in data && data.userId !== undefined) {
-      return displayName((await this.getUsersList({ userIds: [data.userId] }, em))[0], role);
+    if ('userId' in data && data.userId) {
+      return displayName((await this.getUsersList({ userIds: [data.userId] }, em))[0] ?? data.userId, role);
     }
-    if ('identityId' in data && data.identityId !== undefined) {
-      return displayName((await this.getUsersList({ identityIds: [data.identityId] }, em))[0], role);
+    if ('identityId' in data && data.identityId) {
+      return displayName((await this.getUsersList({ identityIds: [data.identityId] }, em))[0] ?? data.identityId, role);
     }
 
     return displayName(undefined, role);
