@@ -49,7 +49,7 @@ import { TranslationHelper } from '../../helpers';
 import type { FilterPayload } from '../../models/schema-engine/schema.model';
 import { UserMap } from '../../models/user.map';
 import type { CurrentElasticSearchDocumentType } from '../../schemas/innovation-record/index';
-import { DomainUsersService } from '../../services';
+import { DomainUsersService, SQLConnectionService } from '../../services';
 import type { ActivitiesParamsType, DomainContextType, SupportLogParams } from '../../types';
 import type { NotifierService } from '../integrations/notifier.service';
 import type { IRSchemaService } from '../storage/ir-schema.service';
@@ -59,10 +59,25 @@ export class DomainInnovationsService {
   innovationSupportRepository: Repository<InnovationSupportEntity>;
   activityLogRepository: Repository<ActivityLogEntity>;
 
+  #sqlConnection: DataSource;
+  get sqlConnection(): DataSource {
+    if (!this.#sqlConnection) {
+      this.#sqlConnection = this.sqlConnectionService.getConnection();
+    }
+    return this.#sqlConnection;
+  }
+
+  #domainUsersService: DomainUsersService;
+  get domainUsersService(): DomainUsersService {
+    return this.#domainUsersService;
+  }
+  set domainUsersService(value: DomainUsersService) {
+    this.#domainUsersService = value;
+  }
+
   constructor(
-    private sqlConnection: DataSource,
+    private sqlConnectionService: SQLConnectionService,
     private notifierService: NotifierService,
-    private domainUsersService: DomainUsersService,
     private irSchemaService: IRSchemaService
   ) {
     this.innovationRepository = this.sqlConnection.getRepository(InnovationEntity);
