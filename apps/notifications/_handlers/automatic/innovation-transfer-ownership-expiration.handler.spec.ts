@@ -2,12 +2,12 @@ import { ServiceRoleEnum } from '@notifications/shared/enums';
 import { SYSTEM_CRON_SENDER } from '@notifications/shared/services/integrations/notifier.service';
 import { MocksHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
+import * as crypto from 'crypto';
 import { testEmails, testInApps } from '../../_helpers/tests.helper';
 import { manageInnovationUrl } from '../../_helpers/url.helper';
 import { RecipientsService } from '../../_services/recipients.service';
 import { NotificationsTestsHelper } from '../../_tests/notifications-test.helper';
 import { InnovationTransferOwnershipExpirationHandler } from './innovation-transfer-ownership-expiration.handler';
-import * as crypto from 'crypto';
 
 jest.mock('crypto');
 const notificationId = '00001234-1234-1234-1234-123456789012';
@@ -25,7 +25,7 @@ describe('Notifications / _handlers / innovation-transfer-ownership-expiration h
   });
 
   describe('Innovation owner is found', () => {
-    beforeAll(async () => {
+    beforeEach(async () => {
       jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
         id: innovation.id,
         name: innovation.name,
@@ -76,14 +76,8 @@ describe('Notifications / _handlers / innovation-transfer-ownership-expiration h
   });
 
   describe('Innovation owner is not found', () => {
-    const handler = new InnovationTransferOwnershipExpirationHandler(
-      DTOsHelper.getUserRequestContext(innovationOwner, 'innovatorRole'),
-      {
-        innovationId: innovation.id
-      },
-      MocksHelper.mockContext()
-    );
-    const loggerSpy = jest.spyOn(handler.logger, 'error');
+    let handler: InnovationTransferOwnershipExpirationHandler;
+    let loggerSpy: jest.SpyInstance;
 
     beforeAll(async () => {
       jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
@@ -93,8 +87,18 @@ describe('Notifications / _handlers / innovation-transfer-ownership-expiration h
         ownerIdentityId: undefined
       });
 
+      handler = new InnovationTransferOwnershipExpirationHandler(
+        DTOsHelper.getUserRequestContext(innovationOwner, 'innovatorRole'),
+        {
+          innovationId: innovation.id
+        },
+        MocksHelper.mockContext()
+      );
+      loggerSpy = jest.spyOn(handler.logger, 'error');
+
       await handler.run();
     });
+
     it('Should log that the innovation owner was not found', () => {
       expect(loggerSpy).toHaveBeenCalled();
     });

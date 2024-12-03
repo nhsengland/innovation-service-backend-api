@@ -3,9 +3,9 @@ import { ServiceRoleEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import type { Context } from '@azure/functions';
+import { randomUUID } from 'crypto';
 import { manageInnovationUrl } from '../../_helpers/url.helper';
 import { BaseHandler } from '../base.handler';
-import { randomUUID } from 'crypto';
 
 export class InnovationTransferOwnershipExpirationHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_EXPIRATION,
