@@ -10,13 +10,13 @@ import { DomainUsersService } from './domain-users.service';
 
 @injectable()
 export class DomainService {
-  private _users: DomainUsersService;
+  #users: DomainUsersService;
   get users(): DomainUsersService {
-    return this._users;
+    return this.#users;
   }
-  private _innovations: DomainInnovationsService;
+  #innovations: DomainInnovationsService;
   get innovations(): DomainInnovationsService {
-    return this._innovations;
+    return this.#innovations;
   }
 
   constructor(
@@ -25,18 +25,16 @@ export class DomainService {
     @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
     @inject(SHARED_SYMBOLS.IRSchemaService) private irSchemaService: IRSchemaService
   ) {
-    this._users = new DomainUsersService(
-      this.innovations,
-      this.identityProviderService,
-      this.notifierService,
-      this.sqlConnectionService
-    );
+    this.#users = new DomainUsersService(this.identityProviderService, this.notifierService, this.sqlConnectionService);
 
-    this._innovations = new DomainInnovationsService(
+    this.#innovations = new DomainInnovationsService(
       this.sqlConnectionService,
       this.notifierService,
-      this._users,
       this.irSchemaService
     );
+
+    // Set up the circular dependencies
+    this.#innovations.domainUsersService = this.#users;
+    this.#users.domainInnovationService = this.#innovations;
   }
 }

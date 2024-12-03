@@ -59,18 +59,25 @@ export class DomainInnovationsService {
   innovationSupportRepository: Repository<InnovationSupportEntity>;
   activityLogRepository: Repository<ActivityLogEntity>;
 
-  private _sqlConnection: DataSource;
+  #sqlConnection: DataSource;
   get sqlConnection(): DataSource {
-    if (!this._sqlConnection) {
-      this._sqlConnection = this.sqlConnectionService.getConnection();
+    if (!this.#sqlConnection) {
+      this.#sqlConnection = this.sqlConnectionService.getConnection();
     }
-    return this._sqlConnection;
+    return this.#sqlConnection;
+  }
+
+  #domainUsersService: DomainUsersService;
+  get domainUsersService(): DomainUsersService {
+    return this.#domainUsersService;
+  }
+  set domainUsersService(value: DomainUsersService) {
+    this.#domainUsersService = value;
   }
 
   constructor(
     private sqlConnectionService: SQLConnectionService,
     private notifierService: NotifierService,
-    private domainUsersService: DomainUsersService,
     private irSchemaService: IRSchemaService
   ) {
     this.innovationRepository = this.sqlConnection.getRepository(InnovationEntity);

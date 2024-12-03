@@ -38,8 +38,15 @@ export class DomainUsersService {
     return this._sqlConnection;
   }
 
+  #domainInnovationService: DomainInnovationsService;
+  get domainInnovationService(): DomainInnovationsService {
+    return this.#domainInnovationService;
+  }
+  set domainInnovationService(value: DomainInnovationsService) {
+    this.#domainInnovationService = value;
+  }
+
   constructor(
-    private domainInnovationService: DomainInnovationsService,
     private identityProviderService: IdentityProviderService,
     private notifierService: NotifierService,
     private sqlConnectionService: SQLConnectionService
