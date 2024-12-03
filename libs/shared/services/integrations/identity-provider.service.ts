@@ -11,6 +11,7 @@ import {
   UserErrorsEnum
 } from '../../errors';
 
+import { SYSTEM_CONTEXT } from '../../constants';
 import type { IdentityUserInfo } from '../../types/domain.types';
 import type { CacheConfigType, CacheService } from '../storage/cache.service';
 import SHARED_SYMBOLS from '../symbols';
@@ -195,6 +196,9 @@ export class IdentityProviderService {
    * @returns list of users
    */
   async getUsersList(identityIds: string[], forceRefresh?: boolean): Promise<IdentityUserInfo[]> {
+    // Filter SYSTEM user
+    identityIds = identityIds.filter(id => id !== SYSTEM_CONTEXT.identityId);
+
     const uniqueUserIds = [...new Set(identityIds)]; // Remove duplicated entries.
 
     if (forceRefresh) {
