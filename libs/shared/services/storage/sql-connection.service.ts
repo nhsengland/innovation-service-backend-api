@@ -25,6 +25,10 @@ export class SQLConnectionService {
     this._connection.initialize();
   }
 
+  isInitialized(): boolean {
+    return this._connection.isInitialized;
+  }
+
   getConnection(): DataSource {
     if (!this._connection.isInitialized) {
       throw new ServiceUnavailableError(GenericErrorsEnum.SERVICE_SQL_UNAVAILABLE, {

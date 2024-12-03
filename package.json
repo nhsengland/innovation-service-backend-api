@@ -10,7 +10,7 @@
     "app:watch": "npm run app:build && concurrently -r \"npm run app:watch:tsc\" \"npm run app:watch:tsc-alias\" \"npm run app:watch:func-start\"",
     "app:watch:tsc": "tsc --w --project apps/$npm_config_function_app/tsconfig.json --pretty",
     "app:watch:tsc-alias": "tsc-alias -w -p apps/$npm_config_function_app/tsconfig.json",
-    "app:watch:func-start": "func host start --script-root dist/apps/$npm_config_function_app --port $npm_config_port --javascript",
+    "app:watch:func-start": "sleep 15; func host start --script-root dist/apps/$npm_config_function_app --port $npm_config_port --javascript",
     "app:test": "JEST_JUNIT_OUTPUT_DIR=coverage/$npm_config_function_app node --expose-gc node_modules/.bin/jest --runInBand --forceExit --passWithNoTests --reporters=default --reporters=jest-junit --silent --coverage --coverageDirectory=coverage/$npm_config_function_app --collectCoverageFrom=apps/$npm_config_function_app/**/*.ts apps/$npm_config_function_app",
     "libs:test": "JEST_JUNIT_OUTPUT_DIR=coverage/libs node --expose-gc node_modules/.bin/jest --runInBand --forceExit --passWithNoTests --reporters=default --reporters=jest-junit --silent --coverage --coverageDirectory=coverage/libs --collectCoverageFrom=libs/**/*.ts libs",
     "libs:lint": "eslint libs/**/*.ts",

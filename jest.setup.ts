@@ -14,11 +14,10 @@ import SHARED_SYMBOLS from './libs/shared/services/symbols';
   (global as any).completeScenarioData || JSON.parse(env['completeScenarioData'] as string);
 
 beforeAll(async () => {
-  // TODO
-  // const connection = await container.get<SqlProvider>(SHARED_SYMBOLS.SqlProvider)();
-  // while (!connection.isInitialized) {
-  //   await new Promise(resolve => setTimeout(resolve, 100));
-  // }
+  const connection = container.get<SQLConnectionService>(SHARED_SYMBOLS.SQLConnectionService);
+  while (!connection.isInitialized()) {
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
 });
 
 afterAll(async () => {

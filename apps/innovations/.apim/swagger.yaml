@@ -228,6 +228,41 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
+  /v1/{innovationId}/archive:
+    patch:
+      summary: Archive an innovation
+      description: Archive an innovation.
+      operationId: v1-innovation-archive
+      tags:
+        - Innovation
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  enum:
+                    - DEVELOP_FURTHER
+                    - HAVE_ALL_SUPPORT
+                    - DECIDED_NOT_TO_PURSUE
+                    - ALREADY_LIVE_NHS
+                    - OTHER_DONT_WANT_TO_SAY
+              required:
+                - reason
+              additionalProperties: false
+      responses:
+        "204":
+          description: Innovation archived successfully.
   /v1/{innovationId}/assessments/{assessmentId}:
     patch:
       summary: Update the assigned assessor of an innovation.
@@ -291,6 +326,563 @@ paths:
           description: Not found. Innovation or assessment not found.
         "500":
           description: Internal server error.
+    get:
+      summary: Get Innovation Assessment Info
+      description: Get Innovation Assessment Info
+      tags:
+        - Innovation Assessment Info
+      operationId: v1-innovation-assessment-info
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: assessmentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  majorVersion:
+                    type: integer
+                  minorVersion:
+                    type: integer
+                  editReason:
+                    type: string
+                    nullable: true
+                  previousAssessment:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      majorVersion:
+                        type: integer
+                      minorVersion:
+                        type: integer
+                    required:
+                      - id
+                      - majorVersion
+                      - minorVersion
+                    additionalProperties: false
+                  reassessment:
+                    type: object
+                    properties:
+                      reassessmentReason:
+                        type: array
+                        items:
+                          type: string
+                          enum:
+                            - NO_SUPPORT
+                            - PREVIOUSLY_ARCHIVED
+                            - HAS_PROGRESSED_SIGNIFICANTLY
+                            - OTHER
+                        nullable: true
+                      otherReassessmentReason:
+                        type: string
+                      description:
+                        type: string
+                      whatSupportDoYouNeed:
+                        type: string
+                        nullable: true
+                      sectionsUpdatedSinceLastAssessment:
+                        type: array
+                        items:
+                          type: string
+                    required:
+                      - reassessmentReason
+                      - otherReassessmentReason
+                      - description
+                      - whatSupportDoYouNeed
+                      - sectionsUpdatedSinceLastAssessment
+                    additionalProperties: false
+                  summary:
+                    type: string
+                    nullable: true
+                  description:
+                    type: string
+                    nullable: true
+                  startedAt:
+                    type: string
+                    format: date-time
+                    nullable: true
+                  finishedAt:
+                    type: string
+                    format: date-time
+                    nullable: true
+                  assignTo:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      name:
+                        type: string
+                    required:
+                      - id
+                      - name
+                    additionalProperties: false
+                  maturityLevel:
+                    type: string
+                    nullable: true
+                  maturityLevelComment:
+                    type: string
+                    nullable: true
+                  hasRegulatoryApprovals:
+                    type: string
+                    nullable: true
+                  hasRegulatoryApprovalsComment:
+                    type: string
+                    nullable: true
+                  hasEvidence:
+                    type: string
+                    nullable: true
+                  hasEvidenceComment:
+                    type: string
+                    nullable: true
+                  hasValidation:
+                    type: string
+                    nullable: true
+                  hasValidationComment:
+                    type: string
+                    nullable: true
+                  hasProposition:
+                    type: string
+                    nullable: true
+                  hasPropositionComment:
+                    type: string
+                    nullable: true
+                  hasCompetitionKnowledge:
+                    type: string
+                    nullable: true
+                  hasCompetitionKnowledgeComment:
+                    type: string
+                    nullable: true
+                  hasImplementationPlan:
+                    type: string
+                    nullable: true
+                  hasImplementationPlanComment:
+                    type: string
+                    nullable: true
+                  hasScaleResource:
+                    type: string
+                    nullable: true
+                  hasScaleResourceComment:
+                    type: string
+                    nullable: true
+                  suggestedOrganisations:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      name:
+                        type: string
+                      acronym:
+                        type: string
+                        nullable: true
+                      units:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                            name:
+                              type: string
+                            acronym:
+                              type: string
+                          required:
+                            - id
+                            - name
+                            - acronym
+                          additionalProperties: false
+                    required:
+                      - id
+                      - name
+                      - acronym
+                      - units
+                    additionalProperties: false
+                  updatedAt:
+                    type: string
+                    format: date-time
+                    nullable: true
+                  updatedBy:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      name:
+                        type: string
+                    required:
+                      - id
+                      - name
+                    additionalProperties: false
+                  isLatest:
+                    type: boolean
+                required:
+                  - id
+                  - majorVersion
+                  - minorVersion
+                  - summary
+                  - description
+                  - startedAt
+                  - finishedAt
+                  - maturityLevel
+                  - maturityLevelComment
+                  - hasRegulatoryApprovals
+                  - hasRegulatoryApprovalsComment
+                  - hasEvidence
+                  - hasEvidenceComment
+                  - hasValidation
+                  - hasValidationComment
+                  - hasProposition
+                  - hasPropositionComment
+                  - hasCompetitionKnowledge
+                  - hasCompetitionKnowledgeComment
+                  - hasImplementationPlan
+                  - hasImplementationPlanComment
+                  - hasScaleResource
+                  - hasScaleResourceComment
+                  - suggestedOrganisations
+                  - updatedAt
+                  - updatedBy
+                  - isLatest
+                additionalProperties: false
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+    put:
+      summary: Update an innovation assessment
+      description: Update an innovation assessment.
+      operationId: v1-innovation-assessment-update
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: assessmentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        description: Innovation assessment update request body.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                summary:
+                  type: string
+                  maxLength: 2000
+                  nullable: true
+                description:
+                  type: string
+                  maxLength: 2000
+                  nullable: true
+                maturityLevel:
+                  type: string
+                  enum:
+                    - DISCOVERY
+                    - ADVANCED
+                    - READY
+                  nullable: true
+                maturityLevelComment:
+                  type: string
+                  maxLength: 200
+                  nullable: true
+                hasRegulatoryApprovals:
+                  type: string
+                  enum:
+                    - YES
+                    - PARTIALLY
+                    - NO
+                  nullable: true
+                hasRegulatoryApprovalsComment:
+                  type: string
+                  maxLength: 200
+                  nullable: true
+                hasEvidence:
+                  type: string
+                  enum:
+                    - YES
+                    - PARTIALLY
+                    - NO
+                  nullable: true
+                hasEvidenceComment:
+                  type: string
+                  maxLength: 200
+                  nullable: true
+                hasValidation:
+                  type: string
+                  enum:
+                    - YES
+                    - PARTIALLY
+                    - NO
+                  nullable: true
+                hasValidationComment:
+                  type: string
+                  maxLength: 200
+                  nullable: true
+                hasProposition:
+                  type: string
+                  enum:
+                    - YES
+                    - PARTIALLY
+                    - NO
+                  nullable: true
+                hasPropositionComment:
+                  type: string
+                  maxLength: 200
+                  nullable: true
+                hasCompetitionKnowledge:
+                  type: string
+                  enum:
+                    - YES
+                    - PARTIALLY
+                    - NO
+                  nullable: true
+                hasCompetitionKnowledgeComment:
+                  type: string
+                  maxLength: 200
+                  nullable: true
+                hasImplementationPlan:
+                  type: string
+                  enum:
+                    - YES
+                    - PARTIALLY
+                    - NO
+                  nullable: true
+                hasImplementationPlanComment:
+                  type: string
+                  maxLength: 200
+                  nullable: true
+                hasScaleResource:
+                  type: string
+                  enum:
+                    - YES
+                    - PARTIALLY
+                    - NO
+                  nullable: true
+                hasScaleResourceComment:
+                  type: string
+                  maxLength: 200
+                  nullable: true
+                suggestedOrganisationUnitsIds:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  nullable: true
+                isSubmission:
+                  type: boolean
+                  default: false
+              additionalProperties: false
+      responses:
+        "200":
+          description: Returns the updated innovation assessment.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                required:
+                  - id
+                additionalProperties: false
+        "400":
+          description: Bad request. Validation error.
+        "401":
+          description: Unauthorized. Invalid authentication credentials.
+        "403":
+          description: Forbidden. User does not have permission to update the innovation
+            assessment.
+        "404":
+          description: Not found. Innovation or assessment not found.
+        "500":
+          description: Internal server error.
+  /v1/{innovationId}/assessments:
+    post:
+      summary: Create an innovation assessment
+      description: Create an innovation assessment.
+      operationId: v1-innovation-assessment-create
+      tags:
+        - Innovation Assessment
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        description: The innovation assessment data.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  maxLength: 4000
+              required:
+                - message
+              additionalProperties: false
+      responses:
+        "200":
+          description: The innovation assessment has been created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                required:
+                  - id
+                additionalProperties: false
+        "400":
+          description: The innovation assessment has not been created.
+        "401":
+          description: The user is not authenticated.
+        "403":
+          description: The user is not authorized to create an innovation assessment.
+        "404":
+          description: The innovation does not exist.
+        "500":
+          description: An error occurred while creating the innovation assessment.
+    get:
+      description: Get all completed assessments from an innovation
+      operationId: v1-innovation-assessments-list
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Returns the complete assessments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    majorVersion:
+                      type: integer
+                    minorVersion:
+                      type: integer
+                    startedAt:
+                      type: string
+                      format: date-time
+                    finishedAt:
+                      type: string
+                      format: date-time
+                  required:
+                    - id
+                    - majorVersion
+                    - minorVersion
+                    - startedAt
+                    - finishedAt
+                  additionalProperties: false
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+  /v1/{innovationId}/assessments/edit:
+    post:
+      summary: Create a new assessment when editing an assessment
+      description: Create a new assessment as a minor version of a previous assessment.
+      operationId: v1-innovation-assessment-edit
+      tags:
+        - Innovation Assessment
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  maxLength: 2000
+              required:
+                - reason
+              additionalProperties: false
+      responses:
+        "200":
+          description: The minor assessment version has been created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                required:
+                  - id
+                additionalProperties: false
+        "400":
+          description: The minor assessment version has not been created.
+        "401":
+          description: The user is not authenticated.
+        "403":
+          description: The user is not authorized to create a minor assessment version.
+        "404":
+          description: The innovation does not exist.
+        "500":
+          description: An error occurred while creating the minor assessment version.
   /v1/{innovationId}/assessments/{assessmentId}/exemption:
     get:
       description: Get an assessment kpi exemption.
@@ -400,57 +992,6 @@ paths:
           description: The user is not authorized to access this resource.
         "500":
           description: An error occurred while processing the request.
-  /v1/{innovationId}/assessments:
-    get:
-      description: Get all completed assessments from an innovation
-      operationId: v1-innovation-assessments-list
-      parameters:
-        - name: innovationId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: Returns the complete assessments
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    id:
-                      type: string
-                      format: uuid
-                    majorVersion:
-                      type: integer
-                    minorVersion:
-                      type: integer
-                    startedAt:
-                      type: string
-                      format: date-time
-                    finishedAt:
-                      type: string
-                      format: date-time
-                  required:
-                    - id
-                    - majorVersion
-                    - minorVersion
-                    - startedAt
-                    - finishedAt
-                  additionalProperties: false
-        "400":
-          description: Bad Request
-        "401":
-          description: Unauthorized
-        "403":
-          description: Forbidden
-        "404":
-          description: Not Found
-        "500":
-          description: Internal Server Error
   /v1/collaborators/{collaboratorId}/check:
     get:
       description: Check collaborator
@@ -760,6 +1301,304 @@ paths:
           description: The innovation could not be found.
         "500":
           description: An unexpected error occurred while updating the collaborator.
+  /v1:
+    post:
+      description: Create an innovation
+      operationId: v1-innovation-create
+      parameters: []
+      requestBody:
+        description: The innovation to be created.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: {}
+                description: {}
+                officeLocation: {}
+                countryLocation: {}
+                postcode: {}
+                hasWebsite: {}
+                website: {}
+              required:
+                - name
+                - description
+                - officeLocation
+                - hasWebsite
+              additionalProperties: false
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                required:
+                  - id
+                additionalProperties: false
+        "400":
+          description: Invalid innovation payload
+        "422":
+          description: Unprocessable entity
+    get:
+      operationId: v1-innovations-list
+      description: Get innovations list
+      parameters:
+        - name: skip
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: take
+          in: query
+          required: false
+          schema:
+            type: integer
+            maximum: 100
+            default: 20
+        - name: order
+          in: query
+          required: false
+          schema:
+            type: object
+            properties: {}
+            additionalProperties:
+              type: string
+              enum:
+                - ASC
+                - DESC
+            default: {}
+        - name: careSettings
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - ACADEMIA
+                - ACUTE_TRUSTS_INPATIENT
+                - ACUTE_TRUSTS_OUTPATIENT
+                - AMBULANCE
+                - CARE_HOMES_CARE_SETTING
+                - END_LIFE_CARE
+                - ICS
+                - INDUSTRY
+                - LOCAL_AUTHORITY_EDUCATION
+                - MENTAL_HEALTH
+                - PHARMACY
+                - PRIMARY_CARE
+                - SOCIAL_CARE
+                - THIRD_SECTOR_ORGANISATIONS
+                - URGENT_AND_EMERGENCY
+                - OTHER
+        - name: categories
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - MEDICAL_DEVICE
+                - IN_VITRO_DIAGNOSTIC
+                - PHARMACEUTICAL
+                - DIGITAL
+                - AI
+                - EDUCATION
+                - PPE
+                - MODELS_CARE
+                - ESTATES_FACILITIES
+                - TRAVEL_TRANSPORT
+                - FOOD_NUTRITION
+                - DATA_MONITORING
+                - OTHER
+        - name: dateFilters
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                field:
+                  type: string
+                  enum:
+                    - lastAssessmentRequestAt
+                    - submittedAt
+                    - updatedAt
+                    - support.updatedAt
+                startDate:
+                  type: string
+                  format: date-time
+                endDate:
+                  type: string
+                  format: date-time
+              required:
+                - field
+              additionalProperties: false
+        - name: diseasesAndConditions
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              maxLength: 100
+        - name: engagingOrganisations
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+        - name: engagingUnits
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              format: uuid
+        - name: fields
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - id
+                - name
+                - status
+                - statusUpdatedAt
+                - groupedStatus
+                - submittedAt
+                - updatedAt
+                - lastAssessmentRequestAt
+                - careSettings
+                - categories
+                - countryName
+                - diseasesAndConditions
+                - involvedAACProgrammes
+                - keyHealthInequalities
+                - mainCategory
+                - otherCareSetting
+                - otherCategoryDescription
+                - postcode
+                - assessment.id
+                - assessment.majorVersion
+                - assessment.minorVersion
+                - assessment.isExempt
+                - assessment.assignedTo
+                - assessment.updatedAt
+                - assessment.finishedAt
+                - engagingOrganisations
+                - engagingUnits
+                - suggestion.suggestedBy
+                - suggestion.suggestedOn
+                - support.closeReason
+                - support.id
+                - support.isShared
+                - support.status
+                - support.updatedAt
+                - support.updatedBy
+                - owner.id
+                - owner.name
+                - owner.companyName
+                - statistics.notifications
+                - statistics.tasks
+                - statistics.messages
+            minItems: 1
+        - name: groupedStatuses
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - RECORD_NOT_SHARED
+                - AWAITING_NEEDS_ASSESSMENT
+                - NEEDS_ASSESSMENT
+                - AWAITING_SUPPORT
+                - RECEIVING_SUPPORT
+                - NO_ACTIVE_SUPPORT
+                - AWAITING_NEEDS_REASSESSMENT
+                - ARCHIVED
+        - name: involvedAACProgrammes
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - No
+                - Health Innovation Network
+                - Artificial Intelligence in Health and Care Award
+                - Clinical Entrepreneur Programme
+                - Early Access to Medicines Scheme
+                - Innovation for Healthcare Inequalities Programme
+                - Innovation and Technology Payment Programme
+                - NHS Innovation Accelerator
+                - NHS Insights Prioritisation Programme
+                - Pathway Transformation Fund
+                - Rapid Uptake Products Programme
+                - Small Business Research Initiative for Healthcare
+                - Test beds
+        - name: keyHealthInequalities
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - MATERNITY
+                - SEVER_MENTAL_ILLNESS
+                - CHRONIC_RESPIRATORY_DISEASE
+                - EARLY_CANCER_DIAGNOSIS
+                - HYPERTENSION_CASE_FINDING
+                - NONE
+        - name: locations
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - England
+                - Scotland
+                - Wales
+                - Northern Ireland
+                - Based outside UK
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 200
+            nullable: true
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Unique identifier for innovation object
+        "400":
+          description: Invalid innovation payload
   /v1/{innovationId}/csv:
     post:
       description: Generate CSV for an innovation
@@ -1569,6 +2408,233 @@ paths:
           description: Invalid payload
         "404":
           description: Innovation not found
+  /v1/{innovationId}:
+    get:
+      operationId: v1-innovation-info
+      description: Get innovation information.
+      tags:
+        - "[v1] Innovation"
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  name:
+                    type: string
+                  description:
+                    type: string
+                    nullable: true
+                  version:
+                    type: string
+                  status:
+                    type: string
+                    enum:
+                      - CREATED
+                      - WAITING_NEEDS_ASSESSMENT
+                      - NEEDS_ASSESSMENT
+                      - IN_PROGRESS
+                      - WITHDRAWN
+                      - ARCHIVED
+                  groupedStatus:
+                    type: string
+                    enum:
+                      - RECORD_NOT_SHARED
+                      - AWAITING_NEEDS_ASSESSMENT
+                      - NEEDS_ASSESSMENT
+                      - AWAITING_SUPPORT
+                      - RECEIVING_SUPPORT
+                      - NO_ACTIVE_SUPPORT
+                      - AWAITING_NEEDS_REASSESSMENT
+                      - WITHDRAWN
+                      - ARCHIVED
+                  hasBeenAssessed:
+                    type: boolean
+                  statusUpdatedAt:
+                    type: string
+                    format: date-time
+                  submittedAt:
+                    type: string
+                    format: date-time
+                    nullable: true
+                  countryName:
+                    type: string
+                    nullable: true
+                  postCode:
+                    type: string
+                    nullable: true
+                  categories:
+                    type: array
+                    items:
+                      type: string
+                      enum:
+                        - MEDICAL_DEVICE
+                        - IN_VITRO_DIAGNOSTIC
+                        - PHARMACEUTICAL
+                        - DIGITAL
+                        - AI
+                        - EDUCATION
+                        - PPE
+                        - MODELS_CARE
+                        - ESTATES_FACILITIES
+                        - TRAVEL_TRANSPORT
+                        - FOOD_NUTRITION
+                        - DATA_MONITORING
+                        - OTHER
+                  otherCategoryDescription:
+                    type: string
+                    nullable: true
+                  owner:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      name:
+                        type: string
+                      isActive:
+                        type: boolean
+                      email:
+                        type: string
+                      contactByEmail:
+                        type: boolean
+                      contactByPhone:
+                        type: boolean
+                      contactByPhoneTimeFrame:
+                        type: string
+                        enum:
+                          - MORNING
+                          - AFTERNOON
+                          - DAILY
+                        nullable: true
+                      mobilePhone:
+                        type: string
+                        nullable: true
+                      lastLoginAt:
+                        type: string
+                        format: date-time
+                        nullable: true
+                      organisation:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          size:
+                            type: string
+                            nullable: true
+                          registrationNumber:
+                            type: string
+                            nullable: true
+                        required:
+                          - name
+                          - size
+                          - registrationNumber
+                        additionalProperties: false
+                    required:
+                      - id
+                      - name
+                      - isActive
+                      - contactByPhoneTimeFrame
+                    additionalProperties: false
+                  daysSinceNoActiveSupport:
+                    type: number
+                    format: float
+                  expectedArchiveDate:
+                    type: string
+                    format: date-time
+                  assessment:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      createdAt:
+                        type: string
+                        format: date-time
+                      finishedAt:
+                        type: string
+                        format: date-time
+                        nullable: true
+                      assignedTo:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          name:
+                            type: string
+                          userRoleId:
+                            type: string
+                        required:
+                          - id
+                          - name
+                          - userRoleId
+                        additionalProperties: false
+                    required:
+                      - id
+                      - createdAt
+                      - finishedAt
+                    additionalProperties: false
+                  supports:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        status:
+                          type: string
+                          enum:
+                            - SUGGESTED
+                            - ENGAGING
+                            - WAITING
+                            - UNASSIGNED
+                            - UNSUITABLE
+                            - CLOSED
+                        organisationUnitId:
+                          type: string
+                      required:
+                        - id
+                        - organisationUnitId
+                      additionalProperties: false
+                    nullable: true
+                  collaboratorId:
+                    type: string
+                  createdAt:
+                    type: string
+                    format: date-time
+                required:
+                  - id
+                  - name
+                  - description
+                  - version
+                  - status
+                  - groupedStatus
+                  - hasBeenAssessed
+                  - statusUpdatedAt
+                  - submittedAt
+                  - countryName
+                  - postCode
+                  - categories
+                  - otherCategoryDescription
+                  - collaboratorId
+                  - createdAt
+                additionalProperties: false
+        "400":
+          description: Invalid innovation payload
   /v1/{innovationId}/pdf:
     post:
       description: Generate PDF for an innovation
@@ -2165,6 +3231,83 @@ paths:
           description: Ok.
         "400":
           description: Bad request.
+  /v1/{innovationId}/submissions:
+    get:
+      operationId: v1-innovation-submission-states
+      description: Get innovation submission states.
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  submittedAllSections:
+                    type: boolean
+                  submittedForNeedsAssessment:
+                    type: boolean
+                required:
+                  - submittedAllSections
+                  - submittedForNeedsAssessment
+                additionalProperties: false
+        "400":
+          description: Invalid innovation payload
+  /v1/{innovationId}/submit:
+    patch:
+      summary: Submit an innovation
+      description: Submit an innovation for assessment.
+      operationId: v1-innovation-submit
+      tags:
+        - Innovation
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Innovation submitted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                    enum:
+                      - CREATED
+                      - WAITING_NEEDS_ASSESSMENT
+                      - NEEDS_ASSESSMENT
+                      - IN_PROGRESS
+                      - WITHDRAWN
+                      - ARCHIVED
+                required:
+                  - id
+                  - status
+                additionalProperties: false
+        "400":
+          description: Bad request.
+        "401":
+          description: Unauthorized.
+        "403":
+          description: Forbidden.
+        "404":
+          description: Not found.
+        "500":
+          description: Internal server error.
   /v1/{innovationId}/suggestions:
     get:
       description: Get suggestions list of an Innovation
@@ -3770,6 +4913,101 @@ paths:
         "404":
           description: Not found
   /v1/{innovationId}/threads:
+    post:
+      summary: Create a new editable thread
+      description: Create a new editable thread.
+      tags:
+        - Innovation Threads
+      operationId: v1-innovation-thread-create
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        description: The thread details.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                subject:
+                  type: string
+                  maxLength: 200
+                message:
+                  type: string
+                  maxLength: 4000
+                file:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      maxLength: 100
+                    description:
+                      type: string
+                      maxLength: 500
+                    file:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          maxLength: 100
+                        name:
+                          type: string
+                          maxLength: 100
+                        size:
+                          type: number
+                          format: float
+                        extension:
+                          type: string
+                          maxLength: 4
+                      required:
+                        - id
+                        - name
+                        - size
+                        - extension
+                      additionalProperties: false
+                  required:
+                    - name
+                    - file
+                  additionalProperties: false
+                followerUserRoleIds:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+              required:
+                - subject
+                - message
+                - followerUserRoleIds
+              additionalProperties: false
+      responses:
+        "200":
+          description: The thread was created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                required:
+                  - id
+                additionalProperties: false
+        "400":
+          description: The request was invalid.
+        "401":
+          description: The user is not authenticated.
+        "403":
+          description: The user is not authorized to create a thread.
+        "404":
+          description: The innovation does not exist.
+        "500":
+          description: An error occurred while creating the thread.
     get:
       summary: Get Innovation Threads
       description: Get Innovation Threads
@@ -3890,12 +5128,13 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
-  /v1/{innovationId}/threads/{threadId}/messages/{messageId}:
+  /v1/{innovationId}/threads/{threadId}/followers:
     get:
-      summary: Get a thread message info
-      description: Get a thread message info
+      summary: Get Innovation Thread Followers
+      description: Get Innovation Thread Followers
       tags:
-        - "[v1] Innovation Threads"
+        - Innovation Thread
+      operationId: v1-innovation-thread-followers
       parameters:
         - name: innovationId
           in: path
@@ -3904,12 +5143,6 @@ paths:
             type: string
             format: uuid
         - name: threadId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: messageId
           in: path
           required: true
           schema:
@@ -3921,21 +5154,63 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    format: uuid
-                  message:
-                    type: string
-                  createdAt:
-                    type: string
-                    format: date-time
-                required:
-                  - id
-                  - message
-                  - createdAt
-                additionalProperties: false
+                type: array
+                items:
+                  type: object
+                  properties:
+                    followers:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        name:
+                          type: string
+                        isLocked:
+                          type: boolean
+                        isOwner:
+                          type: boolean
+                        role:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                            role:
+                              type: string
+                              enum:
+                                - ADMIN
+                                - INNOVATOR
+                                - ACCESSOR
+                                - ASSESSMENT
+                                - QUALIFYING_ACCESSOR
+                          required:
+                            - id
+                            - role
+                          additionalProperties: false
+                        organisationUnit:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                            name:
+                              type: string
+                            acronym:
+                              type: string
+                          required:
+                            - id
+                            - name
+                            - acronym
+                          additionalProperties: false
+                          nullable: true
+                      required:
+                        - id
+                        - name
+                        - isLocked
+                        - organisationUnit
+                      additionalProperties: false
+                  additionalProperties: false
         "401":
           description: Unauthorized
         "403":
@@ -3944,12 +5219,12 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
-    put:
-      summary: Update a thread message
-      description: Update a thread message
+    patch:
+      summary: Update Innovation Thread Followers
+      description: Update Innovation Thread Followers
       tags:
-        - "[v1] Innovation Threads"
-      operationId: v1-innovation-thread-message-update
+        - Innovation Thread
+      operationId: v1-innovation-thread-followers-update
       parameters:
         - name: innovationId
           in: path
@@ -3958,12 +5233,6 @@ paths:
             type: string
             format: uuid
         - name: threadId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: messageId
           in: path
           required: true
           schema:
@@ -3976,12 +5245,81 @@ paths:
             schema:
               type: object
               properties:
-                message:
-                  type: string
-                  maxLength: 4000
+                followerUserRoleIds:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
               required:
-                - message
+                - followerUserRoleIds
               additionalProperties: false
+      responses:
+        "204":
+          description: Success
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+  /v1/{innovationId}/threads/{threadId}/followers/{roleId}:
+    delete:
+      description: Innovation Thread delete follower
+      tags:
+        - Innovation Thread
+      operationId: v1-innovation-thread-followers-delete
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: threadId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: roleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Success
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+  /v1/{innovationId}/threads/{threadId}:
+    get:
+      summary: Get Innovation Thread Info
+      description: Get Innovation Thread Info
+      tags:
+        - Innovation Thread
+      operationId: v1-innovation-thread-info
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: threadId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         "200":
           description: Success
@@ -3993,12 +5331,45 @@ paths:
                   id:
                     type: string
                     format: uuid
-                    description: Message Id
+                  subject:
+                    type: string
+                  context:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        enum:
+                          - NEEDS_ASSESSMENT
+                          - SUPPORT
+                          - TASK
+                          - ORGANISATION_SUGGESTION
+                      id:
+                        type: string
+                        format: uuid
+                    required:
+                      - type
+                      - id
+                    additionalProperties: false
+                  createdAt:
+                    type: string
+                    format: date-time
+                  createdBy:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      name:
+                        type: string
+                    required:
+                      - id
+                      - name
+                    additionalProperties: false
                 required:
                   - id
+                  - subject
+                  - createdAt
                 additionalProperties: false
-        "400":
-          description: Bad Request
         "401":
           description: Unauthorized
         "403":
@@ -4008,6 +5379,124 @@ paths:
         "500":
           description: Internal Server Error
   /v1/{innovationId}/threads/{threadId}/messages:
+    post:
+      description: Creates a new message in a thread.
+      operationId: v1-innovation-thread-message-create
+      tags:
+        - "[v1] Innovation Threads"
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: threadId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        description: Message to be created.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  maxLength: 4000
+                file:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      maxLength: 100
+                    description:
+                      type: string
+                      maxLength: 500
+                    file:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          maxLength: 100
+                        name:
+                          type: string
+                          maxLength: 100
+                        size:
+                          type: number
+                          format: float
+                        extension:
+                          type: string
+                          maxLength: 4
+                      required:
+                        - id
+                        - name
+                        - size
+                        - extension
+                      additionalProperties: false
+                  required:
+                    - name
+                    - file
+                  additionalProperties: false
+              required:
+                - message
+              additionalProperties: false
+      responses:
+        "200":
+          description: Message created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  threadMessage:
+                    type: object
+                    properties:
+                      createdBy:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          identityId:
+                            type: string
+                        required:
+                          - id
+                          - identityId
+                        additionalProperties: false
+                      id:
+                        type: string
+                        format: uuid
+                      message:
+                        type: string
+                      isEditable:
+                        type: boolean
+                      createdAt:
+                        type: string
+                        format: date-time
+                    required:
+                      - id
+                      - message
+                      - isEditable
+                      - createdAt
+                    additionalProperties: false
+                required:
+                  - threadMessage
+                additionalProperties: false
+        "400":
+          description: Bad request.
+        "401":
+          description: Unauthorized.
+        "403":
+          description: Forbidden.
+        "404":
+          description: Not found.
+        "500":
+          description: Internal server error.
     get:
       summary: Get a list of messages from a thread
       description: Get a list of messages from a thread
@@ -4143,6 +5632,123 @@ paths:
           description: Not found
         "500":
           description: Internal server error
+  /v1/{innovationId}/threads/{threadId}/messages/{messageId}:
+    get:
+      summary: Get a thread message info
+      description: Get a thread message info
+      tags:
+        - "[v1] Innovation Threads"
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: threadId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  message:
+                    type: string
+                  createdAt:
+                    type: string
+                    format: date-time
+                required:
+                  - id
+                  - message
+                  - createdAt
+                additionalProperties: false
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+    put:
+      summary: Update a thread message
+      description: Update a thread message
+      tags:
+        - "[v1] Innovation Threads"
+      operationId: v1-innovation-thread-message-update
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: threadId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  maxLength: 4000
+              required:
+                - message
+              additionalProperties: false
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                    description: Message Id
+                required:
+                  - id
+                additionalProperties: false
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
   /v1/transfers/{transferId}/check:
     get:
       description: Get details of pending innovations transfers
@@ -4663,261 +6269,6 @@ paths:
           description: The user is not authorized to access this resource.
         "500":
           description: An error occurred while processing the request.
-  /v1:
-    get:
-      operationId: v1-innovations-list
-      description: Get innovations list
-      parameters:
-        - name: skip
-          in: query
-          required: false
-          schema:
-            type: integer
-        - name: take
-          in: query
-          required: false
-          schema:
-            type: integer
-            maximum: 100
-            default: 20
-        - name: order
-          in: query
-          required: false
-          schema:
-            type: object
-            properties: {}
-            additionalProperties:
-              type: string
-              enum:
-                - ASC
-                - DESC
-            default: {}
-        - name: careSettings
-          in: query
-          required: false
-          schema:
-            type: array
-            items:
-              type: string
-              enum:
-                - ACADEMIA
-                - ACUTE_TRUSTS_INPATIENT
-                - ACUTE_TRUSTS_OUTPATIENT
-                - AMBULANCE
-                - CARE_HOMES_CARE_SETTING
-                - END_LIFE_CARE
-                - ICS
-                - INDUSTRY
-                - LOCAL_AUTHORITY_EDUCATION
-                - MENTAL_HEALTH
-                - PHARMACY
-                - PRIMARY_CARE
-                - SOCIAL_CARE
-                - THIRD_SECTOR_ORGANISATIONS
-                - URGENT_AND_EMERGENCY
-                - OTHER
-        - name: categories
-          in: query
-          required: false
-          schema:
-            type: array
-            items:
-              type: string
-              enum:
-                - MEDICAL_DEVICE
-                - IN_VITRO_DIAGNOSTIC
-                - PHARMACEUTICAL
-                - DIGITAL
-                - AI
-                - EDUCATION
-                - PPE
-                - MODELS_CARE
-                - ESTATES_FACILITIES
-                - TRAVEL_TRANSPORT
-                - FOOD_NUTRITION
-                - DATA_MONITORING
-                - OTHER
-        - name: dateFilters
-          in: query
-          required: false
-          schema:
-            type: array
-            items:
-              type: object
-              properties:
-                field:
-                  type: string
-                  enum:
-                    - lastAssessmentRequestAt
-                    - submittedAt
-                    - updatedAt
-                    - support.updatedAt
-                startDate:
-                  type: string
-                  format: date-time
-                endDate:
-                  type: string
-                  format: date-time
-              required:
-                - field
-              additionalProperties: false
-        - name: diseasesAndConditions
-          in: query
-          required: false
-          schema:
-            type: array
-            items:
-              type: string
-              maxLength: 100
-        - name: engagingOrganisations
-          in: query
-          required: false
-          schema:
-            type: array
-            items:
-              type: string
-        - name: engagingUnits
-          in: query
-          required: false
-          schema:
-            type: array
-            items:
-              type: string
-              format: uuid
-        - name: fields
-          in: query
-          required: true
-          schema:
-            type: array
-            items:
-              type: string
-              enum:
-                - id
-                - name
-                - status
-                - statusUpdatedAt
-                - groupedStatus
-                - submittedAt
-                - updatedAt
-                - lastAssessmentRequestAt
-                - careSettings
-                - categories
-                - countryName
-                - diseasesAndConditions
-                - involvedAACProgrammes
-                - keyHealthInequalities
-                - mainCategory
-                - otherCareSetting
-                - otherCategoryDescription
-                - postcode
-                - assessment.id
-                - assessment.majorVersion
-                - assessment.minorVersion
-                - assessment.isExempt
-                - assessment.assignedTo
-                - assessment.updatedAt
-                - assessment.finishedAt
-                - engagingOrganisations
-                - engagingUnits
-                - suggestion.suggestedBy
-                - suggestion.suggestedOn
-                - support.closeReason
-                - support.id
-                - support.isShared
-                - support.status
-                - support.updatedAt
-                - support.updatedBy
-                - owner.id
-                - owner.name
-                - owner.companyName
-                - statistics.notifications
-                - statistics.tasks
-                - statistics.messages
-            minItems: 1
-        - name: groupedStatuses
-          in: query
-          required: false
-          schema:
-            type: array
-            items:
-              type: string
-              enum:
-                - RECORD_NOT_SHARED
-                - AWAITING_NEEDS_ASSESSMENT
-                - NEEDS_ASSESSMENT
-                - AWAITING_SUPPORT
-                - RECEIVING_SUPPORT
-                - NO_ACTIVE_SUPPORT
-                - AWAITING_NEEDS_REASSESSMENT
-                - ARCHIVED
-        - name: involvedAACProgrammes
-          in: query
-          required: false
-          schema:
-            type: array
-            items:
-              type: string
-              enum:
-                - No
-                - Health Innovation Network
-                - Artificial Intelligence in Health and Care Award
-                - Clinical Entrepreneur Programme
-                - Early Access to Medicines Scheme
-                - Innovation for Healthcare Inequalities Programme
-                - Innovation and Technology Payment Programme
-                - NHS Innovation Accelerator
-                - NHS Insights Prioritisation Programme
-                - Pathway Transformation Fund
-                - Rapid Uptake Products Programme
-                - Small Business Research Initiative for Healthcare
-                - Test beds
-        - name: keyHealthInequalities
-          in: query
-          required: false
-          schema:
-            type: array
-            items:
-              type: string
-              enum:
-                - MATERNITY
-                - SEVER_MENTAL_ILLNESS
-                - CHRONIC_RESPIRATORY_DISEASE
-                - EARLY_CANCER_DIAGNOSIS
-                - HYPERTENSION_CASE_FINDING
-                - NONE
-        - name: locations
-          in: query
-          required: false
-          schema:
-            type: array
-            items:
-              type: string
-              enum:
-                - England
-                - Scotland
-                - Wales
-                - Northern Ireland
-                - Based outside UK
-        - name: search
-          in: query
-          required: false
-          schema:
-            type: string
-            maxLength: 200
-            nullable: true
-      responses:
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    description: Unique identifier for innovation object
-        "400":
-          description: Invalid innovation payload
   /v1/overdue-assessments:
     get:
       operationId: v1-innovations-overdue-assessments
