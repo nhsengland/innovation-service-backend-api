@@ -35,15 +35,19 @@ export type AuditEntry = {
 
 @injectable()
 export class AuditService {
-  private sqlConnection: DataSource;
+  private _sqlConnection: DataSource;
+  get sqlConnection(): DataSource {
+    if (!this._sqlConnection) {
+      this._sqlConnection = this.sqlConnectionService.getConnection();
+    }
+    return this._sqlConnection;
+  }
 
   constructor(
     @inject(SHARED_SYMBOLS.StorageQueueService) private readonly storageQueueService: StorageQueueService,
     @inject(SHARED_SYMBOLS.SQLConnectionService)
     private readonly sqlConnectionService: SQLConnectionService
-  ) {
-    this.sqlConnection = this.sqlConnectionService.getConnection();
-  }
+  ) {}
 
   /**
    * this function sends the audit entry to the audit queue

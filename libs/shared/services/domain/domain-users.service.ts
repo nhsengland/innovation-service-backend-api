@@ -26,14 +26,23 @@ import { displayName, UserMap } from '../../models/user.map';
 import { AuthErrorsEnum } from '../auth/authorization-validation.model';
 import type { IdentityProviderService } from '../integrations/identity-provider.service';
 import type { NotifierService } from '../integrations/notifier.service';
+import { SQLConnectionService } from '../storage/sql-connection.service';
 import type { DomainInnovationsService } from './domain-innovations.service';
 
 export class DomainUsersService {
+  private _sqlConnection: DataSource;
+  get sqlConnection(): DataSource {
+    if (!this._sqlConnection) {
+      this._sqlConnection = this.sqlConnectionService.getConnection();
+    }
+    return this._sqlConnection;
+  }
+
   constructor(
     private domainInnovationService: DomainInnovationsService,
     private identityProviderService: IdentityProviderService,
     private notifierService: NotifierService,
-    private sqlConnection: DataSource
+    private sqlConnectionService: SQLConnectionService
   ) {}
 
   /**

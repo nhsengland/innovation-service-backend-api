@@ -2,7 +2,6 @@ import type { RedisService } from '@notifications/shared/services';
 import { env } from 'process';
 import { container } from './libs/shared/config/inversify.config';
 import type { SQLConnectionService } from './libs/shared/services';
-import type { SqlProvider } from './libs/shared/services/storage/sql-connection.provider';
 import SHARED_SYMBOLS from './libs/shared/services/symbols';
 
 // Disable console.log in tests
@@ -15,10 +14,11 @@ import SHARED_SYMBOLS from './libs/shared/services/symbols';
   (global as any).completeScenarioData || JSON.parse(env['completeScenarioData'] as string);
 
 beforeAll(async () => {
-  const connection = await container.get<SqlProvider>(SHARED_SYMBOLS.SqlProvider)();
-  while (!connection.isInitialized) {
-    await new Promise(resolve => setTimeout(resolve, 100));
-  }
+  // TODO
+  // const connection = await container.get<SqlProvider>(SHARED_SYMBOLS.SqlProvider)();
+  // while (!connection.isInitialized) {
+  //   await new Promise(resolve => setTimeout(resolve, 100));
+  // }
 });
 
 afterAll(async () => {
