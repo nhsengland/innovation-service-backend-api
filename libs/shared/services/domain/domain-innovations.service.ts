@@ -49,7 +49,7 @@ import { TranslationHelper } from '../../helpers';
 import type { FilterPayload } from '../../models/schema-engine/schema.model';
 import { UserMap } from '../../models/user.map';
 import type { CurrentElasticSearchDocumentType } from '../../schemas/innovation-record/index';
-import { DomainUsersService, SQLConnectionService } from '../../services';
+import { DomainUsersService, RedisService, SQLConnectionService } from '../../services';
 import type { ActivitiesParamsType, DomainContextType, SupportLogParams } from '../../types';
 import type { NotifierService } from '../integrations/notifier.service';
 import type { IRSchemaService } from '../storage/ir-schema.service';
@@ -78,7 +78,8 @@ export class DomainInnovationsService {
   constructor(
     private sqlConnectionService: SQLConnectionService,
     private notifierService: NotifierService,
-    private irSchemaService: IRSchemaService
+    private irSchemaService: IRSchemaService,
+    private redisService: RedisService
   ) {
     this.innovationRepository = this.sqlConnection.getRepository(InnovationEntity);
     this.innovationSupportRepository = this.sqlConnection.getRepository(InnovationSupportEntity);
@@ -436,6 +437,12 @@ export class DomainInnovationsService {
         }
         await Promise.all(supportLogs);
       }
+
+      // Add to the elasticsearch queue so they update on advanced search
+      await this.redisService.addToSet(
+        'elasticsearch',
+        archivedInnovationsInfo.map(i => i.id)
+      );
 
       return archivedInnovationsInfo;
     });
