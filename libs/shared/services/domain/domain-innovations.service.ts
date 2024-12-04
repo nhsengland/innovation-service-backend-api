@@ -137,7 +137,7 @@ export class DomainInnovationsService {
       .getMany();
 
     for (const innovation of dbInnovations) {
-      await this.archiveInnovationsWithDeleteSideffects(
+      await this.archiveInnovations(
         SYSTEM_CONTEXT,
         [
           {
