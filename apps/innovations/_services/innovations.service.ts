@@ -1903,7 +1903,7 @@ export class InnovationsService extends BaseService {
           actionUserName: usersInfo.getDisplayName(item.createdBy),
           actionUserRole: item.param.actionUserRole,
           ...(item.param.interveningUserId && {
-            interveningUserId: usersInfo.getDisplayName(item.param.interveningUserId)
+            interveningUserName: usersInfo.getDisplayName(item.param.interveningUserId)
           })
         }
       }))
