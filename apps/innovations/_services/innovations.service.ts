@@ -1033,15 +1033,11 @@ export class InnovationsService extends BaseService {
     if (!support) return {};
 
     const updatedBy = extra.users?.get(support.updatedBy);
-    const name =
-      // Ensuring that updatedBy is always innovator if the innovation is archived or not shared
-      item.status === InnovationStatusEnum.ARCHIVED ||
-      !item.organisationShares?.length ||
-      // if the user has the innovator role (currently exclusive) as the updatedBy is not a role but user id and we can't
-      // distinguish if there's multiple roles for the same user
-      updatedBy?.roles.some(r => r.role === ServiceRoleEnum.INNOVATOR)
-        ? 'Innovator'
-        : displayName(updatedBy);
+    // if the user has the innovator role (currently exclusive) as the updatedBy is not a role but user id and we can't
+    // distinguish if there's multiple roles for the same user
+    const name = updatedBy?.roles.some(r => r.role === ServiceRoleEnum.INNOVATOR)
+      ? 'Innovator'
+      : displayName(updatedBy);
 
     // support is handled differently to remove the nested array since it's only 1 element in this case
     return {
