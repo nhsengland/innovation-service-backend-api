@@ -576,7 +576,7 @@ describe('Innovations / _services / innovations suite', () => {
         innovation.id,
         {
           type: InnovationSupportLogTypeEnum.INNOVATION_ARCHIVED,
-          description: reason,
+          description: TranslationHelper.translate(`ARCHIVE_REASONS.${reason}`),
           unitId: expect.any(String),
           supportStatus: InnovationSupportStatusEnum.CLOSED
         }
