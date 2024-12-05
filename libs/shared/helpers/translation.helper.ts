@@ -46,6 +46,16 @@ const TRANSLATIONS = {
   TEAMS: {
     ADMIN: 'Service administrators',
     ASSESSMENT: 'Needs assessment team'
+  },
+  ARCHIVE_REASONS: {
+    DEVELOP_FURTHER: 'Developing innovation further ',
+    HAVE_ALL_SUPPORT: 'I have all the support I need',
+    DECIDED_NOT_TO_PURSUE: 'I have decided not to pursue this innovation',
+    ALREADY_LIVE_NHS: 'Innovation already live in the NHS',
+    OTHER_DONT_WANT_TO_SAY: 'Other reason or I do not want to say',
+    SIX_MONTHS_INACTIVITY: 'Innovation inactive for 6 months',
+    OWNER_ACCOUNT_DELETED: 'Innovation owner deleted the account',
+    LEGACY: 'LEGACY'
   }
 };
 
