@@ -11,6 +11,7 @@ import {
   UserErrorsEnum
 } from '../../errors';
 
+import { SYSTEM_CONTEXT } from '../../constants';
 import type { IdentityUserInfo } from '../../types/domain.types';
 import type { CacheConfigType, CacheService } from '../storage/cache.service';
 import SHARED_SYMBOLS from '../symbols';
@@ -144,6 +145,8 @@ export class IdentityProviderService {
   /**
    * get a user from the identity provider
    *
+   * @see DomainUsersService.getIdentityUserInfo
+   *
    * this function is an envelope for the getUsersList function
    * @param identityId the user identity id
    * @returns the user
@@ -187,10 +190,15 @@ export class IdentityProviderService {
   /**
    * this function checks the cache for the users and if they are not found it will fetch them from the identity provider
    *
+   * @see DomainUsersService.getUsersMap
+   *
    * @param identityIds the user identities
    * @returns list of users
    */
   async getUsersList(identityIds: string[], forceRefresh?: boolean): Promise<IdentityUserInfo[]> {
+    // Filter SYSTEM user
+    identityIds = identityIds.filter(id => id !== SYSTEM_CONTEXT.identityId);
+
     const uniqueUserIds = [...new Set(identityIds)]; // Remove duplicated entries.
 
     if (forceRefresh) {
@@ -212,6 +220,8 @@ export class IdentityProviderService {
 
   /**
    * this function checks the cache for the users and if they are not found it will fetch them from the identity provider
+   *
+   * @see DomainUsersService.getUsersMap
    *
    * @param identityIds the user identities
    * @returns list of users as a map

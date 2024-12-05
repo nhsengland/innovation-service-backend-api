@@ -7,6 +7,7 @@ import type { EmailTemplatesType } from '../_config';
 import type { InAppTemplatesType } from '../_config/inapp.config';
 import { HandlersHelper } from '../_helpers/handlers.helper';
 import {
+  documentsUrl,
   innovationOverviewUrl,
   innovationRecordSectionUrl,
   supportSummaryUrl,
@@ -16,6 +17,7 @@ import type { NotifyMeService, NotifyMeSubscriptionType } from '../_services/not
 import type { RecipientType, RecipientsService } from '../_services/recipients.service';
 import type { MessageType as EmailMessageType } from '../v1-emails-listener/validation.schemas';
 import type { MessageType as InAppMessageType } from '../v1-in-app-listener/validation.schemas';
+import { randomUUID } from 'crypto';
 
 export type EventPayload = {
   requestUser: DomainContextType;
@@ -80,17 +82,18 @@ export class NotifyMeHandler {
       if (!identity) continue;
 
       const shouldSendEmail = HandlersHelper.shouldSendEmail('NOTIFY_ME', preferences.get(subscription.roleId));
+      const notificationId = randomUUID();
 
       const params = {
         inApp: this.getInAppParams(subscription, innovation),
         email: {
-          ...this.getEmailParams(recipient, subscription, innovation),
+          ...this.getEmailParams(recipient, subscription, innovation, notificationId),
           displayName: identity.displayName,
           unsubscribeUrl: unsubscribeUrl
         }
       };
 
-      const inAppPayload = this.buildInApp(subscription, params.inApp);
+      const inAppPayload = this.buildInApp(subscription, params.inApp, notificationId);
       const emailPayload = shouldSendEmail && this.buildEmail(identity.email, subscription, params.email);
 
       if (emailPayload) {
@@ -157,6 +160,13 @@ export class NotifyMeHandler {
           event: this.event.type
         };
 
+      case 'DOCUMENT_UPLOADED':
+        return {
+          innovationName: innovation.name,
+          documentName: this.event.params.documentName,
+          event: this.event.type
+        };
+
       case 'REMINDER': {
         let message = 'This is a default description for the inApp';
         if (subscription.config.subscriptionType === 'SCHEDULED' && subscription.config.customMessage) {
@@ -174,7 +184,8 @@ export class NotifyMeHandler {
   protected getEmailParams(
     recipient: RecipientType,
     subscription: NotifyMeSubscriptionType,
-    innovation: { id: string; name: string }
+    innovation: { id: string; name: string },
+    notificationId: string
   ): EmailTemplatesType[EventType] {
     switch (this.event.type) {
       case 'SUPPORT_UPDATED':
@@ -185,6 +196,7 @@ export class NotifyMeHandler {
           supportSummaryUrl: supportSummaryUrl(
             recipient.role,
             this.event.innovationId,
+            notificationId,
             this.event.requestUser.organisation?.organisationUnit?.id
           ),
           ...('notificationType' in subscription.config &&
@@ -200,6 +212,7 @@ export class NotifyMeHandler {
           supportSummaryUrl: supportSummaryUrl(
             recipient.role,
             this.event.innovationId,
+            notificationId,
             this.event.requestUser.organisation?.organisationUnit?.id
           )
         };
@@ -207,7 +220,18 @@ export class NotifyMeHandler {
         return {
           innovation: innovation.name,
           section: TranslationHelper.translate(`SECTION.${this.event.params.sections}`).toLowerCase(),
-          sectionUrl: innovationRecordSectionUrl(recipient.role, this.event.innovationId, this.event.params.sections)
+          sectionUrl: innovationRecordSectionUrl(
+            recipient.role,
+            this.event.innovationId,
+            this.event.params.sections,
+            notificationId
+          )
+        };
+      case 'DOCUMENT_UPLOADED':
+        return {
+          innovation_name: innovation.name,
+          document_name: this.event.params.documentName,
+          documents_url: documentsUrl(recipient.role, innovation.id, notificationId)
         };
       case 'REMINDER': {
         let message = 'This is a default description for the email';
@@ -217,7 +241,7 @@ export class NotifyMeHandler {
         return {
           innovation: innovation.name,
           reason: message,
-          innovation_overview_url: innovationOverviewUrl(recipient.role, innovation.id)
+          innovation_overview_url: innovationOverviewUrl(recipient.role, innovation.id, notificationId)
         };
       }
 
@@ -230,7 +254,8 @@ export class NotifyMeHandler {
 
   private buildInApp(
     subscription: NotifyMeSubscriptionType,
-    params: InAppTemplatesType[keyof InAppTemplatesType]
+    params: InAppTemplatesType[keyof InAppTemplatesType],
+    notificationId: string
   ): InAppMessageType {
     const type =
       'notificationType' in subscription.config ? subscription.config.notificationType : subscription.config.eventType;
@@ -240,7 +265,8 @@ export class NotifyMeHandler {
         innovationId: this.event.innovationId,
         context: { type: 'NOTIFY_ME', detail: type, id: subscription.id },
         userRoleIds: [subscription.roleId],
-        params
+        params,
+        notificationId
       }
     };
   }

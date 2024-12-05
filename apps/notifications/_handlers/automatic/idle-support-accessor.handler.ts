@@ -6,6 +6,7 @@ import type { DomainContextType, NotifierTemplatesType } from '@notifications/sh
 import { innovationOverviewUrl, supportStatusUrl, supportSummaryUrl, threadsUrl } from '../../_helpers/url.helper';
 import { BaseHandler } from '../base.handler';
 import type { RecipientType } from '../../_services/recipients.service';
+import { randomUUID } from 'crypto';
 
 export class IdleSupportAccessorHandler extends BaseHandler<
   NotifierTypeEnum.IDLE_SUPPORT_ACCESSOR,
@@ -33,6 +34,7 @@ export class IdleSupportAccessorHandler extends BaseHandler<
     const idleSupports = await this.recipientsService.idleSupports(90, [InnovationSupportStatusEnum.ENGAGING], 30);
     const idleInnovationsMap = groupBy(idleSupports, 'innovationId');
     const innovationsInfo = await this.recipientsService.getInnovationsInfo([...idleInnovationsMap.keys()]);
+
     for (const [innovationId, supports] of idleInnovationsMap) {
       const innovation = innovationsInfo.get(innovationId);
       if (!innovation) {
@@ -43,15 +45,26 @@ export class IdleSupportAccessorHandler extends BaseHandler<
         const recipients = await this.recipientsService.innovationAssignedRecipients(innovationId, {
           unitId: support.unitId
         });
+        const notificationId = randomUUID();
 
         this.notify('AU02_ACCESSOR_IDLE_ENGAGING_SUPPORT', recipients, {
           email: {
             notificationPreferenceType: 'AUTOMATIC',
             params: {
               innovation_name: innovation.name,
-              support_status_url: supportStatusUrl(ServiceRoleEnum.ACCESSOR, innovationId, support.supportId),
-              support_summary_url: supportSummaryUrl(ServiceRoleEnum.ACCESSOR, innovationId, support.unitId),
-              thread_url: threadsUrl(ServiceRoleEnum.ACCESSOR, innovationId)
+              support_status_url: supportStatusUrl(
+                ServiceRoleEnum.ACCESSOR,
+                innovationId,
+                support.supportId,
+                notificationId
+              ),
+              support_summary_url: supportSummaryUrl(
+                ServiceRoleEnum.ACCESSOR,
+                innovationId,
+                notificationId,
+                support.unitId
+              ),
+              thread_url: threadsUrl(ServiceRoleEnum.ACCESSOR, innovationId, notificationId)
             }
           },
           inApp: {
@@ -65,7 +78,8 @@ export class IdleSupportAccessorHandler extends BaseHandler<
               innovationName: innovation.name,
               supportId: support.supportId,
               unitId: support.unitId
-            }
+            },
+            notificationId
           }
         });
       }
@@ -86,14 +100,15 @@ export class IdleSupportAccessorHandler extends BaseHandler<
         const recipients = await this.recipientsService.innovationAssignedRecipients(innovationId, {
           unitId: support.unitId
         });
+        const notificationId = randomUUID();
 
         this.notify('AU06_ACCESSOR_IDLE_WAITING', recipients, {
           email: {
             notificationPreferenceType: 'AUTOMATIC',
             params: {
               innovation_name: innovation.name,
-              innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, innovationId),
-              thread_url: threadsUrl(ServiceRoleEnum.ACCESSOR, innovationId)
+              innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, innovationId, notificationId),
+              thread_url: threadsUrl(ServiceRoleEnum.ACCESSOR, innovationId, notificationId)
             }
           },
           inApp: {
@@ -106,7 +121,8 @@ export class IdleSupportAccessorHandler extends BaseHandler<
             params: {
               innovationName: innovation.name,
               supportId: support.supportId
-            }
+            },
+            notificationId
           }
         });
       }
@@ -144,6 +160,8 @@ export class IdleSupportAccessorHandler extends BaseHandler<
     innovation: { id: string; name: string; ownerId?: string },
     support: { innovationId: string; unitId: string; supportId: string; supportStatus: InnovationSupportStatusEnum }
   ): Promise<void> {
+    const notificationId = randomUUID();
+
     this.notify('AU10_ACCESSOR_IDLE_ENGAGING_SUPPORT_FOR_SIX_WEEKS', recipients, {
       email: { notificationPreferenceType: 'AUTOMATIC', params: { innovation_name: innovation.name } },
       inApp: {
@@ -157,7 +175,8 @@ export class IdleSupportAccessorHandler extends BaseHandler<
           innovationName: innovation.name,
           supportId: support.supportId,
           unitId: support.unitId
-        }
+        },
+        notificationId
       }
     });
   }
@@ -167,13 +186,15 @@ export class IdleSupportAccessorHandler extends BaseHandler<
     innovation: { id: string; name: string; ownerId?: string },
     support: { innovationId: string; unitId: string; supportId: string; supportStatus: InnovationSupportStatusEnum }
   ): Promise<void> {
+    const notificationId = randomUUID();
+
     this.notify('AU11_ACCESSOR_IDLE_WAITING_SUPPORT_FOR_SIX_WEEKS', recipients, {
       email: {
         notificationPreferenceType: 'AUTOMATIC',
         params: {
           innovation_name: innovation.name,
-          innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, innovation.id),
-          thread_url: threadsUrl(ServiceRoleEnum.ACCESSOR, innovation.id)
+          innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, innovation.id, notificationId),
+          thread_url: threadsUrl(ServiceRoleEnum.ACCESSOR, innovation.id, notificationId)
         }
       },
       inApp: {
@@ -186,7 +207,8 @@ export class IdleSupportAccessorHandler extends BaseHandler<
         params: {
           innovationName: innovation.name,
           supportId: support.supportId
-        }
+        },
+        notificationId
       }
     });
   }

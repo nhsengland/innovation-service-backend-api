@@ -1,4 +1,4 @@
-import type { NotifierTypeEnum} from '@notifications/shared/enums';
+import type { NotifierTypeEnum } from '@notifications/shared/enums';
 import { ServiceRoleEnum } from '@notifications/shared/enums';
 import type { IdentityProviderService } from '@notifications/shared/services';
 import SHARED_SYMBOLS from '@notifications/shared/services/symbols';
@@ -8,6 +8,7 @@ import type { Context } from '@azure/functions';
 import { container } from '../../../_config';
 import { createAccountUrl, dashboardUrl } from '../../../_helpers/url.helper';
 import { BaseHandler } from '../../base.handler';
+import { randomUUID } from 'crypto';
 
 export class InnovationTransferOwnershipCreationHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_CREATION,
@@ -63,11 +64,13 @@ export class InnovationTransferOwnershipCreationHandler extends BaseHandler<
     const recipientId = await this.recipientsService.identityId2UserId(newOwnerIdentityId);
     const recipient = await this.recipientsService.getUsersRecipient(recipientId, ServiceRoleEnum.INNOVATOR);
     if (recipient) {
+      const notificationId = randomUUID();
+
       this.notify('TO02_TRANSFER_OWNERSHIP_EXISTING_USER', [recipient], {
         email: {
           notificationPreferenceType: 'INNOVATION_MANAGEMENT',
           params: {
-            dashboard_url: dashboardUrl(ServiceRoleEnum.INNOVATOR),
+            dashboard_url: dashboardUrl(ServiceRoleEnum.INNOVATOR, notificationId),
             innovation_name: innovation.name,
             innovator_name: previousOwner
           }
@@ -82,7 +85,8 @@ export class InnovationTransferOwnershipCreationHandler extends BaseHandler<
           params: {
             innovationName: innovation.name,
             transferId: this.inputData.transferId
-          }
+          },
+          notificationId
         }
       });
     }

@@ -4,6 +4,7 @@ import type { DomainContextType, NotifierTemplatesType } from '@notifications/sh
 import { HandlersHelper } from '../../_helpers/handlers.helper';
 import { threadUrl } from '../../_helpers/url.helper';
 import { BaseHandler } from '../base.handler';
+import { randomUUID } from 'crypto';
 
 export class ThreadAddFollowersHandler extends BaseHandler<
   NotifierTypeEnum.THREAD_ADD_FOLLOWERS,
@@ -29,6 +30,7 @@ export class ThreadAddFollowersHandler extends BaseHandler<
     const displayTag = HandlersHelper.getNotificationDisplayTag(this.requestUser.currentRole.role, {
       unitName: this.requestUser.organisation?.organisationUnit?.name
     });
+    const notificationId = randomUUID();
 
     for (const [role, roleRecipients] of Object.entries(recipientsByRole)) {
       this.addEmails('ME02_THREAD_ADD_FOLLOWERS', roleRecipients, {
@@ -36,7 +38,7 @@ export class ThreadAddFollowersHandler extends BaseHandler<
         params: {
           innovation_name: innovation.name,
           sender: `${senderName} (${displayTag})`,
-          thread_url: threadUrl(role as ServiceRoleEnum, innovation.id, this.inputData.threadId)
+          thread_url: threadUrl(role as ServiceRoleEnum, innovation.id, this.inputData.threadId, notificationId)
         }
       });
     }
@@ -53,7 +55,8 @@ export class ThreadAddFollowersHandler extends BaseHandler<
         senderDisplayInformation:
           this.requestUser.currentRole.role === ServiceRoleEnum.INNOVATOR ? senderName : displayTag,
         threadId: this.inputData.threadId
-      }
+      },
+      notificationId
     });
 
     return this;

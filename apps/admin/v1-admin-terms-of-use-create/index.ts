@@ -11,7 +11,7 @@ import { container } from '../_config';
 import SHARED_SYMBOLS from '@admin/shared/services/symbols';
 import SYMBOLS from '../_services/symbols';
 import type { TermsOfUseService } from '../_services/terms-of-use.service';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType } from './validation.schemas';
 
 class V1AdminTermsOfUseCreate {
@@ -43,19 +43,9 @@ export default openApi(V1AdminTermsOfUseCreate.httpTrigger as AzureFunction, '/v
     operationId: 'v1-admin-terms-of-use-create',
     requestBody: SwaggerHelper.bodyJ2S(BodySchema, { description: 'The terms of use to create.' }),
     responses: {
-      '200': {
-        description: 'The terms of use have been created.',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                unitId: { type: 'string', description: 'Id of the created terms of use.' }
-              }
-            }
-          }
-        }
-      },
+      '200': SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: 'The terms of use have been created.'
+      }),
       '400': {
         description: 'Bad request.'
       },

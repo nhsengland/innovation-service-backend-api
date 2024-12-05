@@ -1,8 +1,9 @@
-import type { NotifierTypeEnum} from '@notifications/shared/enums';
+import type { NotifierTypeEnum } from '@notifications/shared/enums';
 import { ServiceRoleEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import type { Context } from '@azure/functions';
+import { randomUUID } from 'crypto';
 import { manageInnovationUrl } from '../../_helpers/url.helper';
 import { BaseHandler } from '../base.handler';
 
@@ -31,12 +32,18 @@ export class InnovationTransferOwnershipExpirationHandler extends BaseHandler<
     const targetUser = await this.recipientsService.getUsersRecipient(innovation.ownerId, ServiceRoleEnum.INNOVATOR);
 
     if (targetUser) {
+      const notificationId = randomUUID();
+
       this.notify('AU09_TRANSFER_EXPIRED', [targetUser], {
         email: {
           notificationPreferenceType: 'AUTOMATIC',
           params: {
             innovation_name: innovation.name,
-            manage_innovation_url: manageInnovationUrl(ServiceRoleEnum.INNOVATOR, this.inputData.innovationId)
+            manage_innovation_url: manageInnovationUrl(
+              ServiceRoleEnum.INNOVATOR,
+              this.inputData.innovationId,
+              notificationId
+            )
           }
         },
         inApp: {
@@ -48,7 +55,8 @@ export class InnovationTransferOwnershipExpirationHandler extends BaseHandler<
           innovationId: this.inputData.innovationId,
           params: {
             innovationName: innovation.name
-          }
+          },
+          notificationId
         }
       });
     }

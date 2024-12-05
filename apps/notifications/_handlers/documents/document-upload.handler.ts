@@ -1,11 +1,12 @@
 import type { Context } from '@azure/functions';
 
-import type { NotifierTypeEnum} from '@notifications/shared/enums';
+import type { NotifierTypeEnum } from '@notifications/shared/enums';
 import { ServiceRoleEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { documentUrl } from '../../_helpers/url.helper';
 import { BaseHandler } from '../base.handler';
+import { randomUUID } from 'crypto';
 
 export class DocumentUploadHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_DOCUMENT_UPLOADED,
@@ -25,13 +26,19 @@ export class DocumentUploadHandler extends BaseHandler<
     );
     const recipients = await this.recipientsService.getUsersRecipient(innovators, ServiceRoleEnum.INNOVATOR);
     const unitName = this.getRequestUnitName();
+    const notificationId = randomUUID();
 
     this.addEmails('DC01_UPLOADED_DOCUMENT_TO_INNOVATOR', recipients, {
       notificationPreferenceType: 'DOCUMENTS',
       params: {
         accessor_name: await this.getUserName(this.requestUser.identityId),
         unit_name: unitName,
-        document_url: documentUrl(ServiceRoleEnum.INNOVATOR, this.inputData.innovationId, this.inputData.file.id)
+        document_url: documentUrl(
+          ServiceRoleEnum.INNOVATOR,
+          this.inputData.innovationId,
+          this.inputData.file.id,
+          notificationId
+        )
       }
     });
 
@@ -42,7 +49,8 @@ export class DocumentUploadHandler extends BaseHandler<
         detail: 'DC01_UPLOADED_DOCUMENT_TO_INNOVATOR',
         id: this.inputData.file.id
       },
-      params: { fileId: this.inputData.file.id, unitName }
+      params: { fileId: this.inputData.file.id, unitName },
+      notificationId
     });
 
     return this;

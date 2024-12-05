@@ -3,150 +3,228 @@ import { UrlModel } from '@notifications/shared/models';
 import type { CurrentCatalogTypes } from '@notifications/shared/schemas/innovation-record';
 import { ENV } from '../_config';
 
-export const innovationOverviewUrl = (role: ServiceRoleEnum, innovationId: string): string => {
+export const innovationOverviewUrl = (role: ServiceRoleEnum, innovationId: string, notificationId: string): string => {
   const baseUrl = frontendBaseUrl(role);
   return new UrlModel(ENV.webBaseTransactionalUrl)
     .addPath(':baseUrl/innovations/:innovationId/overview')
     .setPathParams({ baseUrl, innovationId })
+    .setQueryParams({ dismissNotification: notificationId })
     .buildUrl();
 };
 
-export const innovationRecordUrl = (role: ServiceRoleEnum, innovationId: string): string => {
+export const innovationRecordUrl = (role: ServiceRoleEnum, innovationId: string, notificationId: string): string => {
   const baseUrl = frontendBaseUrl(role);
   return new UrlModel(ENV.webBaseTransactionalUrl)
     .addPath(':baseUrl/innovations/:innovationId/record')
     .setPathParams({ baseUrl, innovationId })
+    .setQueryParams({ dismissNotification: notificationId })
     .buildUrl();
 };
 
 export const innovationRecordSectionUrl = (
   role: ServiceRoleEnum,
   innovationId: string,
-  section: CurrentCatalogTypes.InnovationSections
+  section: CurrentCatalogTypes.InnovationSections,
+  notificationId: string
 ): string => {
   const baseUrl = frontendBaseUrl(role);
   return new UrlModel(ENV.webBaseTransactionalUrl)
     .addPath(':baseUrl/innovations/:innovationId/record/sections/:section')
     .setPathParams({ baseUrl, innovationId, section })
+    .setQueryParams({ dismissNotification: notificationId })
     .buildUrl();
 };
 
-export const howToProceedUrl = (role: ServiceRoleEnum.INNOVATOR, innovationId: string): string => {
+export const howToProceedUrl = (
+  role: ServiceRoleEnum.INNOVATOR,
+  innovationId: string,
+  notificationId: string
+): string => {
   const baseUrl = frontendBaseUrl(role);
   return new UrlModel(ENV.webBaseTransactionalUrl)
     .addPath(':baseUrl/innovations/:innovationId/how-to-proceed')
     .setPathParams({ baseUrl, innovationId })
+    .setQueryParams({ dismissNotification: notificationId })
     .buildUrl();
 };
 
-export const manageInnovationUrl = (role: ServiceRoleEnum.INNOVATOR, innovationId: string): string => {
+export const manageInnovationUrl = (
+  role: ServiceRoleEnum.INNOVATOR,
+  innovationId: string,
+  notificationId: string
+): string => {
   const baseUrl = frontendBaseUrl(role);
   return new UrlModel(ENV.webBaseTransactionalUrl)
     .addPath(':baseUrl/innovations/:innovationId/manage/innovation')
     .setPathParams({ baseUrl, innovationId })
+    .setQueryParams({ dismissNotification: notificationId })
     .buildUrl();
 };
 
-export const assessmentUrl = (role: ServiceRoleEnum, innovationId: string, assessmentId: string): string => {
+export const assessmentUrl = (
+  role: ServiceRoleEnum,
+  innovationId: string,
+  assessmentId: string,
+  notificationId: string
+): string => {
   const baseUrl = frontendBaseUrl(role);
   return new UrlModel(ENV.webBaseTransactionalUrl)
     .addPath(':baseUrl/innovations/:innovationId/assessments/:assessmentId')
     .setPathParams({ baseUrl, innovationId, assessmentId })
+    .setQueryParams({ dismissNotification: notificationId })
     .buildUrl();
 };
 
-export const taskUrl = (role: ServiceRoleEnum, innovationId: string, taskId: string): string => {
+export const taskUrl = (
+  role: ServiceRoleEnum,
+  innovationId: string,
+  taskId: string,
+  notificationId: string
+): string => {
   const baseUrl = frontendBaseUrl(role);
   return new UrlModel(ENV.webBaseTransactionalUrl)
     .addPath(':baseUrl/innovations/:innovationId/tasks/:taskId')
     .setPathParams({ baseUrl, innovationId, taskId })
+    .setQueryParams({ dismissNotification: notificationId })
     .buildUrl();
 };
 
-export const threadsUrl = (role: ServiceRoleEnum, innovationId: string): string => {
+export const threadsUrl = (role: ServiceRoleEnum, innovationId: string, notificationId: string): string => {
   const baseUrl = frontendBaseUrl(role);
   return new UrlModel(ENV.webBaseTransactionalUrl)
     .addPath(':baseUrl/innovations/:innovationId/threads')
     .setPathParams({ baseUrl, innovationId })
+    .setQueryParams({ dismissNotification: notificationId })
     .buildUrl();
 };
 
-export const threadUrl = (role: ServiceRoleEnum, innovationId: string, threadId: string): string => {
+export const threadUrl = (
+  role: ServiceRoleEnum,
+  innovationId: string,
+  threadId: string,
+  notificationId: string
+): string => {
   const baseUrl = frontendBaseUrl(role);
   return new UrlModel(ENV.webBaseTransactionalUrl)
     .addPath(':baseUrl/innovations/:innovationId/threads/:threadId')
     .setPathParams({ baseUrl, innovationId, threadId })
+    .setQueryParams({ dismissNotification: notificationId })
     .buildUrl();
 };
 
-export const documentUrl = (role: ServiceRoleEnum, innovationId: string, documentId: string): string => {
+export const documentUrl = (
+  role: ServiceRoleEnum,
+  innovationId: string,
+  documentId: string,
+  notificationId: string
+): string => {
   const baseUrl = frontendBaseUrl(role);
   return new UrlModel(ENV.webBaseTransactionalUrl)
     .addPath(':baseUrl/innovations/:innovationId/documents/:documentId')
     .setPathParams({ baseUrl, innovationId, documentId })
+    .setQueryParams({ dismissNotification: notificationId })
+    .buildUrl();
+};
+
+export const documentsUrl = (role: ServiceRoleEnum, innovationId: string, notificationId: string): string => {
+  const baseUrl = frontendBaseUrl(role);
+  return new UrlModel(ENV.webBaseTransactionalUrl)
+    .addPath(':baseUrl/innovations/:innovationId/documents')
+    .setPathParams({ baseUrl, innovationId })
+    .setQueryParams({ dismissNotification: notificationId })
     .buildUrl();
 };
 
 export const supportStatusUrl = (
   role: ServiceRoleEnum.ACCESSOR | ServiceRoleEnum.QUALIFYING_ACCESSOR,
   innovationId: string,
-  supportId: string
+  supportId: string,
+  notificationId: string
 ): string => {
   const baseUrl = frontendBaseUrl(role);
   return new UrlModel(ENV.webBaseTransactionalUrl)
     .addPath(':baseUrl/innovations/:innovationId/support/:supportId')
     .setPathParams({ baseUrl, innovationId, supportId })
+    .setQueryParams({ dismissNotification: notificationId })
     .buildUrl();
 };
 
-export const supportSummaryUrl = (role: ServiceRoleEnum, innovationId: string, unitId?: string): string => {
+export const supportSummaryUrl = (
+  role: ServiceRoleEnum,
+  innovationId: string,
+  notificationId: string,
+  unitId?: string
+): string => {
   const baseUrl = frontendBaseUrl(role);
   const urlModel = new UrlModel(ENV.webBaseTransactionalUrl)
     .addPath(':baseUrl/innovations/:innovationId/support-summary')
-    .setPathParams({ baseUrl, innovationId });
+    .setPathParams({ baseUrl, innovationId })
+    .setQueryParams({ dismissNotification: notificationId });
 
   if (unitId) {
-    urlModel.setQueryParams({ unitId });
+    urlModel.addQueryParams({ unitId });
   }
 
   return urlModel.buildUrl();
 };
 
-export const dataSharingPreferencesUrl = (role: ServiceRoleEnum, innovationId: string): string => {
+export const dataSharingPreferencesUrl = (
+  role: ServiceRoleEnum,
+  innovationId: string,
+  notificationId: string
+): string => {
   const baseUrl = frontendBaseUrl(role);
   return new UrlModel(ENV.webBaseTransactionalUrl)
     .addPath(':baseUrl/innovations/:innovationId/support')
     .setPathParams({ baseUrl, innovationId })
+    .setQueryParams({ dismissNotification: notificationId })
     .buildUrl();
 };
 
-export const exportRequestUrl = (role: ServiceRoleEnum, innovationId: string, requestId: string): string => {
+export const exportRequestUrl = (
+  role: ServiceRoleEnum,
+  innovationId: string,
+  requestId: string,
+  notificationId: string
+): string => {
   const baseUrl = frontendBaseUrl(role);
   return new UrlModel(ENV.webBaseTransactionalUrl)
     .addPath(':baseUrl/innovations/:innovationId/record/export-requests/:requestId')
     .setPathParams({ baseUrl, innovationId, requestId })
+    .setQueryParams({ dismissNotification: notificationId })
     .buildUrl();
 };
 
-export const collaboratorInfoUrl = (role: ServiceRoleEnum, innovationId: string, collaboratorId: string): string => {
+export const collaboratorInfoUrl = (
+  role: ServiceRoleEnum,
+  innovationId: string,
+  collaboratorId: string,
+  notificationId: string
+): string => {
   const baseUrl = frontendBaseUrl(role);
   return new UrlModel(ENV.webBaseTransactionalUrl)
     .addPath(':baseUrl/innovations/:innovationId/collaborations/:collaboratorId')
     .setPathParams({ baseUrl, innovationId, collaboratorId })
+    .setQueryParams({ dismissNotification: notificationId })
     .buildUrl();
 };
 
-export const manageCollaboratorsUrl = (innovationId: string): string => {
+export const manageCollaboratorsUrl = (innovationId: string, notificationId: string): string => {
   const baseUrl = frontendBaseUrl(ServiceRoleEnum.INNOVATOR);
   return new UrlModel(ENV.webBaseTransactionalUrl)
     .addPath(':baseUrl/innovations/:innovationId/manage/innovation/collaborators')
     .setPathParams({ baseUrl, innovationId })
+    .setQueryParams({ dismissNotification: notificationId })
     .buildUrl();
 };
 
-export const dashboardUrl = (role: ServiceRoleEnum): string => {
+export const dashboardUrl = (role: ServiceRoleEnum, notificationId: string): string => {
   const baseUrl = frontendBaseUrl(role);
-  return new UrlModel(ENV.webBaseTransactionalUrl).addPath(':baseUrl').setPathParams({ baseUrl }).buildUrl();
+  return new UrlModel(ENV.webBaseTransactionalUrl)
+    .addPath(':baseUrl')
+    .setPathParams({ baseUrl })
+    .setQueryParams({ dismissNotification: notificationId })
+    .buildUrl();
 };
 
 export const createAccountUrl = (): string => {
@@ -177,4 +255,17 @@ export const frontendBaseUrl = (role: ServiceRoleEnum): string => {
       throw new Error(`Unknown role: ${x}`); // never happens
     }
   }
+};
+
+export const surveysInitialPage = (
+  role: ServiceRoleEnum.INNOVATOR,
+  innovationId: string,
+  notificationId: string
+): string => {
+  const baseUrl = frontendBaseUrl(role);
+  return new UrlModel(ENV.webBaseTransactionalUrl)
+    .addPath(':baseUrl/innovations/:innovationId/surveys')
+    .setPathParams({ baseUrl, innovationId })
+    .setQueryParams({ dismissNotification: notificationId })
+    .buildUrl();
 };

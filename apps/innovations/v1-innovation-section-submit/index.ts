@@ -11,7 +11,7 @@ import { container } from '../_config';
 
 import type { InnovationSectionsService } from '../_services/innovation-sections.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1InnovationSectionSubmit {
@@ -55,27 +55,10 @@ export default openApi(
       summary: 'Submit an innovation section.',
       operationId: 'v1-innovation-section-submit',
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
-      requestBody: {
-        description: 'Innovation section submit request body.',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                id: {
-                  type: 'string',
-                  description: 'Innovation section id.',
-                  example: '1'
-                }
-              }
-            }
-          }
-        }
-      },
       responses: {
-        200: {
+        200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
           description: 'Innovation section submit response.'
-        }
+        })
       }
     }
   }

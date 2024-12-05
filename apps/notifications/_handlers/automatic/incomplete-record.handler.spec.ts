@@ -5,6 +5,11 @@ import { innovationRecordUrl } from '../../_helpers/url.helper';
 import { RecipientsService } from '../../_services/recipients.service';
 import { NotificationsTestsHelper } from '../../_tests/notifications-test.helper';
 import { IncompleteRecordHandler } from './incomplete-record.handler';
+import * as crypto from 'crypto';
+
+jest.mock('crypto');
+const notificationId = '00001234-1234-1234-1234-123456789012';
+jest.spyOn(crypto, 'randomUUID').mockImplementation(() => notificationId);
 
 describe('Notifications / _handlers / incomplete record suite', () => {
   const testsHelper = new NotificationsTestsHelper();
@@ -38,7 +43,8 @@ describe('Notifications / _handlers / incomplete record suite', () => {
           params: {
             innovation_record_url: innovationRecordUrl(
               ServiceRoleEnum.INNOVATOR,
-              scenario.users.johnInnovator.innovations.johnInnovation.id
+              scenario.users.johnInnovator.innovations.johnInnovation.id,
+              notificationId
             )
           }
         },
@@ -49,7 +55,8 @@ describe('Notifications / _handlers / incomplete record suite', () => {
           params: {
             innovation_record_url: innovationRecordUrl(
               ServiceRoleEnum.INNOVATOR,
-              scenario.users.johnInnovator.innovations.johnInnovation.id
+              scenario.users.johnInnovator.innovations.johnInnovation.id,
+              notificationId
             )
           }
         },
@@ -60,7 +67,8 @@ describe('Notifications / _handlers / incomplete record suite', () => {
           params: {
             innovation_record_url: innovationRecordUrl(
               ServiceRoleEnum.INNOVATOR,
-              scenario.users.ottoOctaviusInnovator.innovations.chestHarnessInnovation.id
+              scenario.users.ottoOctaviusInnovator.innovations.chestHarnessInnovation.id,
+              notificationId
             )
           }
         }
@@ -78,7 +86,8 @@ describe('Notifications / _handlers / incomplete record suite', () => {
             scenario.users.janeInnovator.roles.innovatorRole.id
           ],
           innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
-          params: {}
+          params: {},
+          notificationId
         },
         {
           context: {
@@ -88,7 +97,8 @@ describe('Notifications / _handlers / incomplete record suite', () => {
           },
           userRoleIds: [scenario.users.ottoOctaviusInnovator.roles.innovatorRole.id],
           innovationId: scenario.users.ottoOctaviusInnovator.innovations.chestHarnessInnovation.id,
-          params: {}
+          params: {},
+          notificationId
         }
       ]);
     });

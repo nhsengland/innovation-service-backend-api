@@ -33,7 +33,7 @@ import {
   OrganisationErrorsEnum,
   UnprocessableEntityError
 } from '@innovations/shared/errors';
-import type { DomainService, DomainUsersService, NotifierService } from '@innovations/shared/services';
+import type { DomainService, NotifierService } from '@innovations/shared/services';
 import {
   isAccessorDomainContextType,
   type DomainContextType,
@@ -50,12 +50,14 @@ import type {
 } from '../_types/innovation.types';
 
 import { DatesHelper } from '@innovations/shared/helpers';
+import { UserMap } from '@innovations/shared/models/user.map';
 import { AuthErrorsEnum } from '@innovations/shared/services/auth/authorization-validation.model';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { SupportSummaryUnitInfo } from '../_types/support.types';
 import { BaseService } from './base.service';
 import type { InnovationFileService } from './innovation-file.service';
 import type { InnovationThreadsService } from './innovation-threads.service';
+import { SurveysService } from './surveys.service';
 import SYMBOLS from './symbols';
 import type { ValidationService } from './validation.service';
 
@@ -101,7 +103,8 @@ export class InnovationSupportsService extends BaseService {
     @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
     @inject(SYMBOLS.InnovationThreadsService) private innovationThreadsService: InnovationThreadsService,
     @inject(SYMBOLS.InnovationFileService) private innovationFileService: InnovationFileService,
-    @inject(SYMBOLS.ValidationService) private validationService: ValidationService
+    @inject(SYMBOLS.ValidationService) private validationService: ValidationService,
+    @inject(SYMBOLS.SurveysService) private surveysService: SurveysService
   ) {
     super();
   }
@@ -145,7 +148,7 @@ export class InnovationSupportsService extends BaseService {
     const innovationSupports = innovation.innovationSupports;
 
     // Fetch users names.
-    let usersInfo: Awaited<ReturnType<DomainUsersService['getUsersMap']>> = new Map();
+    let usersInfo = new UserMap();
 
     if (filters.fields.includes('engagingAccessors')) {
       const assignedAccessorsIds = innovationSupports
@@ -156,7 +159,7 @@ export class InnovationSupportsService extends BaseService {
         )
         .flatMap(support => support.userRoles.filter(item => item.isActive).map(item => item.user.id));
 
-      usersInfo = await this.domainService.users.getUsersMap({ userIds: assignedAccessorsIds });
+      usersInfo = await this.domainService.users.getUsersMap({ userIds: assignedAccessorsIds }, connection);
     }
 
     return innovationSupports.map(support => {
@@ -168,7 +171,7 @@ export class InnovationSupportsService extends BaseService {
           .map(supportUserRole => ({
             id: supportUserRole.user.id,
             userRoleId: supportUserRole.id,
-            name: usersInfo.get(supportUserRole.user.id)?.displayName ?? '',
+            name: usersInfo.getDisplayName(supportUserRole.user.id, supportUserRole.role),
             isActive: supportUserRole.isActive
           }))
           .filter(authUser => authUser.name);
@@ -429,7 +432,7 @@ export class InnovationSupportsService extends BaseService {
     const assignedAccessorsIds = innovationSupport.userRoles
       .filter(item => item.user.status === UserStatusEnum.ACTIVE)
       .map(item => item.user.id);
-    const usersInfo = await this.domainService.users.getUsersMap({ userIds: assignedAccessorsIds });
+    const usersInfo = await this.domainService.users.getUsersMap({ userIds: assignedAccessorsIds }, connection);
 
     return {
       id: innovationSupport.id,
@@ -438,7 +441,7 @@ export class InnovationSupportsService extends BaseService {
         .map(su => ({
           id: su.user.id,
           userRoleId: su.id,
-          name: usersInfo.get(su.user.id)?.displayName ?? ''
+          name: usersInfo.getDisplayName(su.user.id, su.role)
         }))
         .filter(authUser => authUser.name)
     };
@@ -494,8 +497,11 @@ export class InnovationSupportsService extends BaseService {
       organisationUnit: { id: organisationUnitId },
       majorAssessment: { id: innovation.currentMajorAssessment.id },
       userRoles: [],
+      createdAt: now,
       ...(status !== InnovationSupportStatusEnum.SUGGESTED && { startedAt: now }),
-      ...(status === InnovationSupportStatusEnum.UNSUITABLE && { finishedAt: now })
+      ...([InnovationSupportStatusEnum.UNSUITABLE, InnovationSupportStatusEnum.CLOSED].includes(status) && {
+        finishedAt: now
+      })
     });
   }
 
@@ -608,6 +614,9 @@ export class InnovationSupportsService extends BaseService {
         newSupport.updatedByUserRole = domainContext.currentRole.id;
         newSupport.startedAt = new Date();
         newSupport.userRoles = [];
+        if ([InnovationSupportStatusEnum.UNSUITABLE, InnovationSupportStatusEnum.CLOSED].includes(data.status)) {
+          newSupport.finishedAt = new Date();
+        }
         savedSupport = await transaction.save(InnovationSupportEntity, newSupport);
       } else {
         savedSupport = await this.createInnovationSupport(
@@ -948,6 +957,11 @@ export class InnovationSupportsService extends BaseService {
         thread.thread.id,
         transaction
       );
+
+      // Create satisfaction survey if the support was closed
+      if (data.status === InnovationSupportStatusEnum.CLOSED) {
+        await this.surveysService.createSurvey('SUPPORT_END', innovationId, savedSupport.id, transaction);
+      }
 
       return { id: savedSupport.id, newAssignedAccessors: new Set(newAssignedAccessors), threadId: thread.thread.id };
     });
@@ -1306,18 +1320,19 @@ export class InnovationSupportsService extends BaseService {
       .getMany();
 
     const createdByUserIds = new Set([...unitSupportLogs.map(s => s.createdBy)]);
-    const usersInfo = await this.domainService.users.getUsersMap({ userIds: Array.from(createdByUserIds.values()) });
+    const usersInfo = await this.domainService.users.getUsersMap(
+      { userIds: Array.from(createdByUserIds.values()) },
+      em
+    );
 
     const summary: SupportSummaryUnitInfo[] = [];
     for (const supportLog of unitSupportLogs) {
-      const createdByUser = usersInfo.get(supportLog.createdBy);
-
       const defaultSummary = {
         id: supportLog.id,
         createdAt: supportLog.createdAt,
         createdBy: {
           id: supportLog.createdBy,
-          name: createdByUser?.displayName ?? '[deleted user]',
+          name: usersInfo.getDisplayName(supportLog.createdBy),
           displayRole: this.domainService.users.getDisplayRoleInformation(
             supportLog.createdBy,
             supportLog.createdByUserRole.role,

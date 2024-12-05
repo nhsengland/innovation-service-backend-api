@@ -3,6 +3,7 @@ import {
   AnnouncementUserEntity,
   InnovationEntity,
   InnovationExportRequestEntity,
+  InnovationGroupedStatusViewEntity,
   InnovationSupportEntity,
   InnovationTaskEntity,
   InnovationThreadEntity,
@@ -17,6 +18,7 @@ import {
   AnnouncementParamsType,
   InnovationCollaboratorStatusEnum,
   InnovationExportRequestStatusEnum,
+  InnovationGroupedStatusEnum,
   InnovationStatusEnum,
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
@@ -40,12 +42,13 @@ import { inject, injectable } from 'inversify';
 
 import { BaseService } from './base.service';
 
-import { InnovationSupportLogEntity } from '@notifications/shared/entities';
+import { InnovationSupportLogEntity, InnovationSurveyEntity } from '@notifications/shared/entities';
 import { InnovationCollaboratorEntity } from '@notifications/shared/entities/innovation/innovation-collaborator.entity';
+import { SurveyType } from '@notifications/shared/entities/innovation/innovation-survey.entity';
 import { DatesHelper } from '@notifications/shared/helpers';
 import { addToArrayValueInMap } from '@notifications/shared/helpers/misc.helper';
 import type { IdentityUserInfo, NotificationPreferences } from '@notifications/shared/types';
-import { Brackets, type EntityManager } from 'typeorm';
+import type { EntityManager } from 'typeorm';
 
 export type RecipientType = {
   roleId: string;
@@ -94,6 +97,7 @@ export class RecipientsService extends BaseService {
       return null;
     }
 
+    // Since notifications handle the users differently left the identityProviderService here instead of the domain
     if (typeof userIdentityIds === 'string') {
       return (await this.identityProviderService.getUsersList([userIdentityIds]))[0] ?? null;
     } else {
@@ -799,7 +803,7 @@ export class RecipientsService extends BaseService {
   async innovationsWithoutSupportForNDays(
     days: number[],
     entityManager?: EntityManager
-  ): Promise<{ id: string; name: string }[]> {
+  ): Promise<{ id: string; name: string; daysSinceNoActiveSupport: number; expectedArchiveDate: Date }[]> {
     if (!days.length) {
       throw new UnprocessableEntityError(GenericErrorsEnum.INVALID_PAYLOAD, { details: { error: 'days is required' } });
     }
@@ -807,36 +811,18 @@ export class RecipientsService extends BaseService {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const query = em
-      .createQueryBuilder(InnovationEntity, 'innovation')
-      .select(['innovation.id', 'innovation.name'])
-      .innerJoin(
-        `(SELECT innovationId,MAX(statusChangedAt) as statusChangedAt
-        FROM last_support_status_view_entity
-        GROUP BY innovationId)`,
-        'lastEngagement',
-        'lastEngagement.innovationId = innovation.id'
-      )
-      .leftJoin(
-        'innovation.innovationSupports',
-        'supports',
-        'supports.status IN (:...engagingStatus) AND supports.isMostRecent = 1',
-        {
-          engagingStatus: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.WAITING]
-        }
-      )
-      .where('innovation.status = :innovationStatus', { innovationStatus: InnovationStatusEnum.IN_PROGRESS })
-      .andWhere('supports.id IS NULL')
-      .andWhere(
-        new Brackets(qb => {
-          const [first, ...reminder] = days;
-          qb.where(`DATEDIFF(DAY, lastEngagement.statusChangedAt, DATEADD(DAY, -1, GETDATE())) = ${first}`);
-          reminder?.forEach(day => {
-            qb.orWhere(`DATEDIFF(DAY, lastEngagement.statusChangedAt, DATEADD(DAY, -1, GETDATE())) = ${day}`);
-          });
-        })
-      );
+      .createQueryBuilder(InnovationGroupedStatusViewEntity, 'innovationGroupedStatus')
+      .where('innovationGroupedStatus.groupedStatus = :groupedStatus', {
+        groupedStatus: InnovationGroupedStatusEnum.NO_ACTIVE_SUPPORT
+      })
+      .andWhere('innovationGroupedStatus.days_since_no_active_support_or_deploy IN (:...days)', { days });
 
-    return (await query.getMany()).map(innovation => ({ id: innovation.id, name: innovation.name }));
+    return (await query.getMany()).map(innovation => ({
+      id: innovation.innovationId,
+      name: innovation.name,
+      daysSinceNoActiveSupport: innovation.daysSinceNoActiveSupport,
+      expectedArchiveDate: innovation.expectedArchiveDate
+    }));
   }
 
   /**
@@ -1392,5 +1378,62 @@ export class RecipientsService extends BaseService {
       },
       {} as { [key in ServiceRoleEnum]?: RecipientType[] }
     );
+  }
+
+  /**
+   * returns the surveys that didn't have a feedback in n days,
+   * repeats every m days afterwards (if m is defined)
+   * @param days number of days to check (default: 60)
+   * @param repeat repeat the notification every n days (if defined)
+   * @param entityManager optional entityManager
+   * @returns surveys without feedback for n days
+   */
+  async innovationsMissingSurveyFeedback(
+    type: SurveyType,
+    days = 60,
+    repeat?: number,
+    entityManager?: EntityManager
+  ): Promise<{ innovationId: string; innovationName: string; roleIds: string[] }[]> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const query = em
+      .createQueryBuilder(InnovationSurveyEntity, 'survey')
+      .select(['role.id', 'innovation.id', 'innovation.name'])
+      .addSelect('MIN(survey.created_at)', 'createdAt')
+      .innerJoin('survey.innovation', 'innovation', 'innovation.status != :status', {
+        status: InnovationStatusEnum.WITHDRAWN
+      })
+      .innerJoin('survey.targetUserRole', 'role')
+      .where('survey.type = :type', { type })
+      .andWhere('survey.answers IS NULL')
+      .andWhere('role.isActive = 1')
+      .groupBy('role.id, innovation.id, innovation.name');
+
+    if (repeat) {
+      query
+        .having('DATEDIFF(day, MIN("survey"."created_at"), GETDATE()) >= :days', { days })
+        .andHaving('DATEDIFF(day, MIN("survey"."created_at"), GETDATE()) % :repeat = 0', { repeat });
+    } else {
+      query.having('DATEDIFF(day, MIN("survey"."created_at"), GETDATE()) = :days', { days });
+    }
+
+    const rows = await query.getRawMany();
+
+    const res = rows.reduce(
+      (acc, cur) => {
+        if (!acc[cur['innovation_id']]) {
+          acc[cur['innovation_id']] = {
+            innovationId: cur['innovation_id'],
+            innovationName: cur['innovation_name'],
+            roleIds: []
+          };
+        }
+        acc[cur['innovation_id']]?.roleIds.push(cur['role_id']);
+        return acc;
+      },
+      {} as { [k in string]: { innovationId: string; innovationName: string; roleIds: string[] } }
+    );
+
+    return Object.values(res);
   }
 }

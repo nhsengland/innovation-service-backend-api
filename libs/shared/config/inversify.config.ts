@@ -2,8 +2,6 @@ import 'reflect-metadata';
 
 import { Container } from 'inversify';
 
-import type { DataSource } from 'typeorm';
-
 import { AuthorizationService } from '../services/auth/authorization.service';
 import { DomainService } from '../services/domain/domain.service';
 import { AuditService } from '../services/integrations/audit.service';
@@ -15,16 +13,12 @@ import { NotifierService } from '../services/integrations/notifier.service';
 import { StorageQueueService } from '../services/integrations/storage-queue.service';
 import { CacheService } from '../services/storage/cache.service';
 import { FileStorageService } from '../services/storage/file-storage.service';
+import { IRSchemaService } from '../services/storage/ir-schema.service';
 import { RedisService } from '../services/storage/redis.service';
-import type { SqlProvider} from '../services/storage/sql-connection.provider';
-import { sqlProvider } from '../services/storage/sql-connection.provider';
 import { SQLConnectionService } from '../services/storage/sql-connection.service';
 import SHARED_SYMBOLS from '../services/symbols';
-import { IRSchemaService } from '../services/storage/ir-schema.service';
 
 export const container: Container = new Container();
-
-container.bind<SqlProvider>(SHARED_SYMBOLS.SqlProvider).toProvider<DataSource>(sqlProvider);
 
 container.bind<AuthorizationService>(SHARED_SYMBOLS.AuthorizationService).to(AuthorizationService).inSingletonScope();
 container.bind<DomainService>(SHARED_SYMBOLS.DomainService).to(DomainService).inSingletonScope();
@@ -43,29 +37,3 @@ container.bind<CacheService>(SHARED_SYMBOLS.CacheService).to(CacheService).inSin
 container.bind<ElasticSearchService>(SHARED_SYMBOLS.ElasticSearchService).to(ElasticSearchService).inSingletonScope();
 container.bind<RedisService>(SHARED_SYMBOLS.RedisService).to(RedisService).inSingletonScope();
 container.bind<IRSchemaService>(SHARED_SYMBOLS.IRSchemaService).to(IRSchemaService).inSingletonScope();
-
-const logger = container.get<LoggerService>(SHARED_SYMBOLS.LoggerService);
-
-// Initialize the services that depend on the SQL connection
-const domainService = container.get<DomainService>(SHARED_SYMBOLS.DomainService);
-domainService
-  .sqlProvider()
-  .then(connection => {
-    logger.log('DomainService INIT');
-    domainService.setConnection(connection);
-  })
-  .catch(error => {
-    logger.log('SQLConnection ERROR', error);
-    process.exit(1);
-  });
-const sqlService = container.get<SQLConnectionService>(SHARED_SYMBOLS.SQLConnectionService);
-sqlService
-  .sqlProvider()
-  .then(connection => {
-    logger.log('SQLConnection INIT');
-    sqlService.setConnection(connection);
-  })
-  .catch(error => {
-    logger.log('SQLConnection ERROR', error);
-    process.exit(1);
-  });

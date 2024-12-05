@@ -1,13 +1,12 @@
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 import { JwtDecoder } from '@users/shared/decorators';
-import { JoiHelper, ResponseHelper } from '@users/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@users/shared/helpers';
 import type { AuthorizationService } from '@users/shared/services';
 import SHARED_SYMBOLS from '@users/shared/services/symbols';
 import type { CustomContextType } from '@users/shared/types';
 
 import { container } from '../_config';
-import { UserStatisticsEnum } from '../_enums/user.enums';
 import { StatisticsHandlersHelper } from '../_helpers/handlers.helper';
 import type { ResponseDTO } from './transformation.dtos';
 import { QuerySchema, QueryType } from './validation.schemas';
@@ -45,14 +44,7 @@ export default openApi(GetUserStatistics.httpTrigger as AzureFunction, '/v1/stat
     description: 'Get an user statistics',
     operationId: 'v1-users-statistics',
     tags: ['[v1] User Statistics'],
-    parameters: [
-      {
-        in: 'query',
-        name: 'statistics',
-        required: false,
-        schema: { type: 'string', enum: Object.keys(UserStatisticsEnum) }
-      }
-    ],
+    parameters: SwaggerHelper.paramJ2S({ query: QuerySchema }),
     responses: {
       200: {
         description: 'Ok',

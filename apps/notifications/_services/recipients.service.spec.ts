@@ -32,6 +32,7 @@ import { TestsHelper } from '@notifications/shared/tests';
 import { InnovationSupportBuilder } from '@notifications/shared/tests/builders/innovation-support.builder';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import type { Role2PreferencesType } from '@notifications/shared/types';
+import range from 'lodash/range';
 import { In, type EntityManager } from 'typeorm';
 import { container } from '../_config';
 import type { RecipientsService } from './recipients.service';
@@ -941,12 +942,15 @@ describe('Notifications / _services / recipients service suite', () => {
 
   describe('idleInnovations', () => {
     it('returns empty array of idle innovations if there are no innovations', async () => {
-      const res = await sut.innovationsWithoutSupportForNDays([30], em);
+      const res = await sut.innovationsWithoutSupportForNDays([90], em);
       expect(res).toHaveLength(0);
     });
 
-    it.skip('returns innovations if there are idle innovations', async () => {
-      // having trouble with this test since it depends on history table
+    it('returns innovations if there are idle innovations', async () => {
+      //TODO: Remove the numbersArray and use the actual number of days(30). This should be done 6 months after the deployment of this feature.
+      const numbersArray = range(0, 181);
+      const res = await sut.innovationsWithoutSupportForNDays(numbersArray, em);
+      expect(res).toHaveLength(1);
     });
 
     it('throws error if array is empty', async () => {
@@ -1486,6 +1490,42 @@ describe('Notifications / _services / recipients service suite', () => {
           [scenario.users.adamInnovator.id, [scenario.users.adamInnovator.innovations.adamInnovation.name]]
         ])
       );
+    });
+  });
+
+  describe('innovationsMissingSurveyFeedback', () => {
+    const user = scenario.users.ottoOctaviusInnovator;
+    const innovation = user.innovations.tentaclesInnovation;
+    const survey = innovation.surveys.unansweredSurveyToOtto;
+
+    it('should return innovation with roles if matching deadline', async () => {
+      const previousDate = new Date();
+      previousDate.setDate(previousDate.getDate() - 60);
+      await em.query('UPDATE innovation_survey SET created_at = @0 WHERE id = @1', [previousDate, survey.id]);
+      const res = await sut.innovationsMissingSurveyFeedback('SUPPORT_END', 60, undefined, em);
+      expect(res).toHaveLength(1);
+      expect(res).toMatchObject([
+        { innovationId: innovation.id, innovationName: innovation.name, roleIds: [user.roles.innovatorRole.id] }
+      ]);
+    });
+
+    it('should return innovation with roles if matching recurring', async () => {
+      const previousDate = new Date();
+      previousDate.setDate(previousDate.getDate() - 60);
+      await em.query('UPDATE innovation_survey SET created_at = @0 WHERE id = @1', [previousDate, survey.id]);
+      const res = await sut.innovationsMissingSurveyFeedback('SUPPORT_END', 60, 60, em);
+      expect(res).toHaveLength(1);
+      expect(res).toMatchObject([
+        { innovationId: innovation.id, innovationName: innovation.name, roleIds: [user.roles.innovatorRole.id] }
+      ]);
+    });
+
+    it('should not return innovation with roles if not matching deadline', async () => {
+      const previousDate = new Date();
+      previousDate.setDate(previousDate.getDate() - 59);
+      await em.query('UPDATE innovation_survey SET created_at = @0 WHERE id = @1', [previousDate, survey.id]);
+      const res = await sut.innovationsMissingSurveyFeedback('SUPPORT_END', 60, 60, em);
+      expect(res).toHaveLength(0);
     });
   });
 });

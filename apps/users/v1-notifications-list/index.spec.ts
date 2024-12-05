@@ -1,6 +1,6 @@
 import azureFunction from '.';
 
-import { randFullName, randNumber, randPastDate, randProductName, randUuid } from '@ngneat/falso';
+import { randNumber, randPastDate, randProductName, randUuid } from '@ngneat/falso';
 import type { NotificationCategoryType, NotificationDetailType } from '@users/shared/enums';
 import { InnovationStatusEnum } from '@users/shared/enums';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@users/shared/tests';
@@ -34,8 +34,7 @@ const expected = {
       innovation: {
         id: randUuid(),
         name: randProductName(),
-        status: InnovationStatusEnum.CREATED,
-        ownerName: randFullName()
+        status: InnovationStatusEnum.CREATED
       },
       contextType: 'TASK' as NotificationCategoryType,
       contextDetail: 'TA01_TASK_CREATION_TO_INNOVATOR' as NotificationDetailType,

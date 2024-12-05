@@ -100,6 +100,11 @@ export type InAppTemplatesType = {
   ST08_SUPPORT_NEW_ASSIGNED_WAITING_INNOVATION_TO_QA: {
     innovationName: string;
   };
+  ST09_SUPPORT_STATUS_TO_CLOSED: {
+    unitId: string;
+    unitName: string;
+    innovationName: string;
+  };
 
   // Needs assessment
   NA01_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_INNOVATOR: {
@@ -135,6 +140,7 @@ export type InAppTemplatesType = {
   };
   AU03_INNOVATOR_IDLE_SUPPORT: {
     innovationName: string;
+    expectedArchiveDate: string;
   };
   AU04_SUPPORT_KPI_REMINDER: {
     innovationName: string;
@@ -160,6 +166,10 @@ export type InAppTemplatesType = {
     innovationName: string;
   };
   AU09_TRANSFER_EXPIRED: {
+    innovationName: string;
+  };
+  // Automatic / Surveys
+  AU12_INNOVATOR_SURVEY_END_SUPPORT_TWO_MONTHS_REMINDER: {
     innovationName: string;
   };
 
@@ -312,6 +322,11 @@ export type InAppTemplatesType = {
     innovation: string;
     section: CurrentCatalogTypes.InnovationSections;
     sectionLabel: string;
+  };
+  DOCUMENT_UPLOADED: {
+    event: string;
+    innovationName: string;
+    documentName: string;
   };
   REMINDER: {
     event: string;

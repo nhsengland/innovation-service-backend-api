@@ -11,7 +11,7 @@ import { container } from '../_config';
 
 import type { NotificationsService } from '../_services/notifications.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType } from './validation.schemas';
 
 class V1UserNotificationsDismiss {
@@ -49,19 +49,9 @@ export default openApi(V1UserNotificationsDismiss.httpTrigger as AzureFunction, 
     tags: ['[v1] Notifications'],
     requestBody: SwaggerHelper.bodyJ2S(BodySchema),
     responses: {
-      200: {
-        description: 'Success',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                affected: { type: 'number', description: 'The number of affected notifications' }
-              }
-            }
-          }
-        }
-      }
+      200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: 'Success'
+      })
     }
   }
 });

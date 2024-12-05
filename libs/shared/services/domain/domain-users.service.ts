@@ -1,7 +1,13 @@
-import type { DataSource, EntityManager, Repository } from 'typeorm';
+import type { DataSource, EntityManager } from 'typeorm';
 
 import type { PhoneUserPreferenceEnum } from '../../enums';
-import { InnovationCollaboratorStatusEnum, NotifierTypeEnum, ServiceRoleEnum, UserStatusEnum } from '../../enums';
+import {
+  InnovationArchiveReasonEnum,
+  InnovationCollaboratorStatusEnum,
+  NotifierTypeEnum,
+  ServiceRoleEnum,
+  UserStatusEnum
+} from '../../enums';
 import {
   GenericErrorsEnum,
   InternalServerError,
@@ -10,27 +16,75 @@ import {
   UserErrorsEnum
 } from '../../errors';
 import { TranslationHelper } from '../../helpers';
-import type { DomainContextType, InnovatorDomainContextType, RoleType } from '../../types';
+import type { DomainContextType, DomainUserIdentityInfo, InnovatorDomainContextType, RoleType } from '../../types';
 
 import { InnovationEntity } from '../../entities/innovation/innovation.entity';
 import { UserPreferenceEntity } from '../../entities/user/user-preference.entity';
-import { UserRoleEntity, roleEntity2RoleType } from '../../entities/user/user-role.entity';
+import { roleEntity2RoleType, UserRoleEntity } from '../../entities/user/user-role.entity';
 import { UserEntity } from '../../entities/user/user.entity';
+import { displayName, UserMap } from '../../models/user.map';
 import { AuthErrorsEnum } from '../auth/authorization-validation.model';
 import type { IdentityProviderService } from '../integrations/identity-provider.service';
 import type { NotifierService } from '../integrations/notifier.service';
+import { SQLConnectionService } from '../storage/sql-connection.service';
 import type { DomainInnovationsService } from './domain-innovations.service';
 
 export class DomainUsersService {
-  private userRepository: Repository<UserEntity>;
+  private _sqlConnection: DataSource;
+  get sqlConnection(): DataSource {
+    if (!this._sqlConnection) {
+      this._sqlConnection = this.sqlConnectionService.getConnection();
+    }
+    return this._sqlConnection;
+  }
+
+  #domainInnovationService: DomainInnovationsService;
+  get domainInnovationService(): DomainInnovationsService {
+    return this.#domainInnovationService;
+  }
+  set domainInnovationService(value: DomainInnovationsService) {
+    this.#domainInnovationService = value;
+  }
 
   constructor(
-    private domainInnovationService: DomainInnovationsService,
     private identityProviderService: IdentityProviderService,
     private notifierService: NotifierService,
-    private sqlConnection: DataSource
-  ) {
-    this.userRepository = this.sqlConnection.getRepository(UserEntity);
+    private sqlConnectionService: SQLConnectionService
+  ) {}
+
+  /**
+   * helper to display a user's name. This function doesn't return error when the user is not found/deleted
+   */
+  async getDisplayName(
+    data: { userId: string | undefined } | { identityId: string | undefined },
+    role?: ServiceRoleEnum,
+    em?: EntityManager
+  ): Promise<string> {
+    if ('userId' in data && data.userId) {
+      return displayName((await this.getUsersList({ userIds: [data.userId] }, em))[0] ?? data.userId, role);
+    }
+    if ('identityId' in data && data.identityId) {
+      return displayName((await this.getUsersList({ identityIds: [data.identityId] }, em))[0] ?? data.identityId, role);
+    }
+
+    return displayName(undefined, role);
+  }
+
+  /**
+   * wrapper for identityInfo with extra checks. This will throw an error if the user is not found
+   */
+  async getIdentityUserInfo(
+    data: { userId: string } | { identityId: string },
+    em?: EntityManager
+  ): Promise<DomainUserIdentityInfo> {
+    const res = await ('userId' in data
+      ? this.getUsersList({ userIds: [data.userId] }, em)
+      : this.getUsersList({ identityIds: [data.identityId] }, em));
+
+    if (!res[0]) {
+      throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND);
+    }
+    return res[0];
   }
 
   async getUserInfo(
@@ -175,19 +229,13 @@ export class DomainUsersService {
     };
   }
 
-  async getUsersList(data: { userIds?: string[]; identityIds?: string[] }): Promise<
-    {
-      id: string;
-      identityId: string;
-      displayName: string;
-      roles: UserRoleEntity[];
-      email: string;
-      mobilePhone: null | string;
-      isActive: boolean;
-      lastLoginAt: null | Date;
-    }[]
-  > {
-    // [TechDebt]: This function breaks with more than 2100 users (probably shoulnd't happen anyway)
+  protected async getUsersList(
+    data: { userIds?: string[]; identityIds?: string[] },
+    entityManager?: EntityManager
+  ): Promise<DomainUserIdentityInfo[]> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    // [TechDebt]: This function breaks with more than 2100 users (probably shouldn't happen anyway)
     // However we're doing needless query since we could force the identityId (only place calling it has it)
     // and it would also be easy to do in chunks of 1000 users or so.
     // My suggestion is parameter becomes identity: string[]; if there really is a need in the future to have
@@ -202,9 +250,10 @@ export class DomainUsersService {
       return [];
     }
 
-    const query = this.userRepository
-      .createQueryBuilder('users')
-      .innerJoinAndSelect('users.serviceRoles', 'serviceRoles')
+    const query = em
+      .createQueryBuilder(UserEntity, 'users')
+      .select(['users.id', 'users.identityId', 'users.status', 'roles.id', 'roles.role', 'roles.isActive'])
+      .innerJoin('users.serviceRoles', 'roles')
       .where('users.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED });
     if (data.userIds) {
       query.andWhere('users.id IN (:...userIds)', { userIds: data.userIds });
@@ -218,6 +267,7 @@ export class DomainUsersService {
     return dbUsers.map(dbUser => {
       const identityUser = identityUsers.get(dbUser.identityId);
       if (!identityUser) {
+        // This should never happen, but just in case.
         throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND, { details: { context: 'S.DU.gUL' } });
       }
 
@@ -225,7 +275,7 @@ export class DomainUsersService {
         id: dbUser.id,
         identityId: dbUser.identityId,
         displayName: identityUser.displayName,
-        roles: dbUser.serviceRoles,
+        roles: dbUser.serviceRoles.map(r => ({ id: r.id, role: r.role, isActive: r.isActive })),
         email: identityUser.email,
         mobilePhone: identityUser.mobilePhone,
         isActive: dbUser.status === UserStatusEnum.ACTIVE,
@@ -234,12 +284,10 @@ export class DomainUsersService {
     });
   }
 
-  async getUsersMap(
-    data: { userIds: string[] } | { identityIds: string[] }
-  ): Promise<Map<string, Awaited<ReturnType<DomainUsersService['getUsersList']>>[number]>> {
-    const res = await this.getUsersList(data);
+  async getUsersMap(data: { userIds: string[] } | { identityIds: string[] }, em?: EntityManager): Promise<UserMap> {
+    const res = await this.getUsersList(data, em);
     const resKey = 'userIds' in data ? 'id' : 'identityId';
-    return new Map(res.map(item => [item[resKey], item]));
+    return new UserMap(res.map(item => [item[resKey], item]));
   }
 
   async getUserPreferences(userId: string): Promise<{
@@ -599,7 +647,9 @@ export class DomainUsersService {
 
         const archiveResponse = await this.domainInnovationService.archiveInnovationsWithDeleteSideffects(
           domainContext,
-          dbInnovations.filter(i => i.expirationTransferDate === null).map(i => ({ id: i.id, reason: data.reason })),
+          dbInnovations
+            .filter(i => i.expirationTransferDate === null)
+            .map(i => ({ id: i.id, reason: InnovationArchiveReasonEnum.OWNER_ACCOUNT_DELETED })),
           transaction
         );
 

@@ -21,14 +21,14 @@ resources:
 name: Backend_API_PR__$(Date:yyyyMMdd)_$(Rev:r)
 
 pool:
-  vmImage: 'ubuntu-latest'
+  vmImage: "ubuntu-latest"
 
 trigger: none
 
 # Azure Devops doesn't support triggers and needs to be setup via policies
 pr:
-- develop
-- master
+  - develop
+  - master
 
 services:
   mssql: mssql
@@ -42,7 +42,7 @@ variables:
   DB_NAME: tests
   DB_TESTS_HOST: localhost
   DB_TESTS_USER: sa
-  DB_TESTS_PWD:  Pass@word
+  DB_TESTS_PWD: Pass@word
   DB_TESTS_NAME: tests
   ADMIN_OID: 00000000-0000-0000-0000-000000000000
   APPLICATIONINSIGHTS_CONNECTION_STRING: "InstrumentationKey=00000000-0000-0000-0000-000000000000;IngestionEndpoint=https://uksouth-0.in.applicationinsights.azure.com/;LiveEndpoint=https://uksouth.livediagnostics.monitor.azure.com/"
@@ -50,91 +50,91 @@ variables:
   AZURE_STORAGE_QUEUE_NAME: email-notification-queue
 
 steps:
-- script: |
-    RET=0
-    for APP in $(ls apps); do
-      ! grep -E -r '@(notifications|admin|innovations|users)/shared' apps/$APP | grep -v "@$APP/shared"
+  - script: |
+      RET=0
+      for APP in $(ls apps); do
+        ! grep -E -r '@(notifications|admin|innovations|users)/shared' apps/$APP | grep -v "@$APP/shared"
+        if [ $? -eq 1 ]; then
+          RET=1
+        fi
+      done
+      ! grep -E -r '((@(notifications|admin|innovations|users)/libs))/shared' libs/shared
       if [ $? -eq 1 ]; then
         RET=1
       fi
-    done
-    ! grep -E -r '((@(notifications|admin|innovations|users)/libs))/shared' libs/shared
-    if [ $? -eq 1 ]; then
-      RET=1
-    fi
-    exit $RET
-  displayName: 'Validate if wrong imports are present'
+      exit $RET
+    displayName: "Validate if wrong imports are present"
 
-- task: PowerShell@2
-  displayName: 'Wait for MSSQL Start'
-  inputs:
-    targetType: 'inline'
-    script: |
-      # Write your PowerShell commands here.
+  - task: PowerShell@2
+    displayName: "Wait for MSSQL Start"
+    inputs:
+      targetType: "inline"
+      script: |
+        # Write your PowerShell commands here.
 
-      start-sleep -s 10
+        start-sleep -s 10
 
-- script: |
-    sqlcmd -S localhost -U sa -P Pass@word -p -Q "CREATE DATABASE tests;"
-    sqlcmd -S localhost -U sa -P Pass@word -p -Q "ALTER DATABASE tests SET READ_COMMITTED_SNAPSHOT ON;"
-    sqlcmd -S localhost -U sa -P Pass@word -p -Q "SELECT @@VERSION;"
-  displayName: 'Setup SQL Container'
+  - script: |
+      sqlcmd -S localhost -U sa -P Pass@word -p -Q "CREATE DATABASE tests;"
+      sqlcmd -S localhost -U sa -P Pass@word -p -Q "ALTER DATABASE tests SET READ_COMMITTED_SNAPSHOT ON;"
+      sqlcmd -S localhost -U sa -P Pass@word -p -Q "SELECT @@VERSION;"
+    displayName: "Setup SQL Container"
 
-- task: NodeTool@0
-  inputs:
-    versionSpec: '18.x'
-  displayName: 'Install Node.js'
+  - task: NodeTool@0
+    inputs:
+      versionSpec: "20.x"
+    displayName: "Install Node.js"
 
-- task: Npm@1
-  inputs:
-    command: 'install'
-  displayName: 'Install dependencies'
+  - task: Npm@1
+    inputs:
+      command: "install"
+    displayName: "Install dependencies"
 
-- script: |
-    npm run migrations
-  displayName: 'Run Migrations against the Container'
+  - script: |
+      npm run migrations
+    displayName: "Run Migrations against the Container"
 
-- script: |
-    npm run seeds && echo "##vso[task.setvariable variable=testsReady;]true"
-  displayName: 'Run Seeds against the Container'
+  - script: |
+      npm run seeds && echo "##vso[task.setvariable variable=testsReady;]true"
+    displayName: "Run Seeds against the Container"
 
-- script: |
-    npm run app:test --function-app=innovations
-  displayName: 'Run innovations tests'
-  condition: eq(variables.testsReady, 'true')
+  - script: |
+      npm run app:test --function-app=innovations
+    displayName: "Run innovations tests"
+    condition: eq(variables.testsReady, 'true')
 
-- script: |
-    npm run app:test --function-app=users
-  displayName: 'Run users tests'
-  condition: eq(variables.testsReady, 'true')
+  - script: |
+      npm run app:test --function-app=users
+    displayName: "Run users tests"
+    condition: eq(variables.testsReady, 'true')
 
-- script: |
-    npm run app:test --function-app=admin
-  displayName: 'Run admin tests'
-  condition: eq(variables.testsReady, 'true')
+  - script: |
+      npm run app:test --function-app=admin
+    displayName: "Run admin tests"
+    condition: eq(variables.testsReady, 'true')
 
-- script: |
-    npm run app:test --function-app=notifications
-  displayName: 'Run notifications tests'
-  condition: eq(variables.testsReady, 'true')
+  - script: |
+      npm run app:test --function-app=notifications
+    displayName: "Run notifications tests"
+    condition: eq(variables.testsReady, 'true')
 
-- script: |
-    npm run libs:test
-  displayName: 'Run lib tests'
-  condition: eq(variables.testsReady, 'true')
+  - script: |
+      npm run libs:test
+    displayName: "Run lib tests"
+    condition: eq(variables.testsReady, 'true')
 
-- task: PublishCodeCoverageResults@1
-  displayName: 'Publish Unit Tests Coverage'
-  inputs:
-    codeCoverageTool: Cobertura
-    summaryFileLocation: coverage/**/cobertura-coverage.xml
-  condition: eq(variables.testsReady, 'true')
+  - task: PublishCodeCoverageResults@1
+    displayName: "Publish Unit Tests Coverage"
+    inputs:
+      codeCoverageTool: Cobertura
+      summaryFileLocation: coverage/**/cobertura-coverage.xml
+    condition: eq(variables.testsReady, 'true')
 
-- task: PublishTestResults@2
-  displayName: 'Publish Unit Tests Results'
-  inputs:
-    testResultsFiles: coverage/**/junit.xml
-    mergeTestResults: true
-    testRunTitle: 'Backend API Pull Request Unit Test Results'
-    failTaskOnFailedTests: true
-  condition: eq(variables.testsReady, 'true')
+  - task: PublishTestResults@2
+    displayName: "Publish Unit Tests Results"
+    inputs:
+      testResultsFiles: coverage/**/junit.xml
+      mergeTestResults: true
+      testRunTitle: "Backend API Pull Request Unit Test Results"
+      failTaskOnFailedTests: true
+    condition: eq(variables.testsReady, 'true')

@@ -59,7 +59,6 @@ export type NotifierTemplatesType = {
   // // Archive
   [NotifierTypeEnum.INNOVATION_ARCHIVE]: {
     innovationId: string;
-    message: string;
     previousStatus: InnovationStatusEnum;
     reassessment: boolean;
     affectedUsers: {
@@ -193,6 +192,7 @@ export type NotifierTemplatesType = {
   [NotifierTypeEnum.IDLE_SUPPORT_ACCESSOR]: Record<string, never>;
   [NotifierTypeEnum.IDLE_SUPPORT_INNOVATOR]: Record<string, never>;
   [NotifierTypeEnum.UNIT_KPI]: Record<string, never>;
+  [NotifierTypeEnum.SURVEY_END_SUPPORT_REMINDER]: Record<string, never>;
 
   // Automatic / Transfer
   [NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_EXPIRATION]: {

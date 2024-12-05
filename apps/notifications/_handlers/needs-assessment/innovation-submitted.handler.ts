@@ -1,9 +1,10 @@
 import type { Context } from '@azure/functions';
-import type { NotifierTypeEnum} from '@notifications/shared/enums';
+import type { NotifierTypeEnum } from '@notifications/shared/enums';
 import { ServiceRoleEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { innovationOverviewUrl } from '../../_helpers/url.helper';
 import { BaseHandler } from '../base.handler';
+import { randomUUID } from 'crypto';
 
 export class InnovationSubmittedHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_SUBMITTED,
@@ -35,6 +36,7 @@ export class InnovationSubmittedHandler extends BaseHandler<
       this.inputData.innovationId
     );
     const recipients = await this.recipientsService.getUsersRecipient(innovators, ServiceRoleEnum.INNOVATOR);
+    const notificationId = randomUUID();
 
     this.notify('NA01_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_INNOVATOR', recipients, {
       email: {
@@ -60,7 +62,8 @@ export class InnovationSubmittedHandler extends BaseHandler<
         },
         options: {
           includeSelf: true
-        }
+        },
+        notificationId
       }
     });
   }
@@ -70,12 +73,14 @@ export class InnovationSubmittedHandler extends BaseHandler<
     id: string;
   }): Promise<void> {
     const recipients = await this.recipientsService.needsAssessmentUsers();
+    const notificationId = randomUUID();
+
     this.notify('NA02_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_ASSESSMENT', recipients, {
       email: {
         notificationPreferenceType: 'NEEDS_ASSESSMENT',
         params: {
           innovation_name: innovation.name,
-          innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ASSESSMENT, innovation.id),
+          innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ASSESSMENT, innovation.id, notificationId),
           assessment_type: this.inputData.reassessment ? 'reassessment' : 'assessment'
         }
       },
@@ -89,7 +94,8 @@ export class InnovationSubmittedHandler extends BaseHandler<
         params: {
           innovationName: innovation.name,
           assessmentType: this.inputData.reassessment ? 'reassessment' : 'assessment'
-        }
+        },
+        notificationId
       }
     });
   }

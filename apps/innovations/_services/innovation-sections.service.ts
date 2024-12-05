@@ -16,13 +16,7 @@ import {
   UserStatusEnum
 } from '@innovations/shared/enums';
 import { InnovationErrorsEnum, InternalServerError, NotFoundError } from '@innovations/shared/errors';
-import type {
-  DomainService,
-  IdentityProviderService,
-  IRSchemaService,
-  NotifierService,
-  RedisService
-} from '@innovations/shared/services';
+import type { DomainService, IRSchemaService, NotifierService, RedisService } from '@innovations/shared/services';
 
 import { BaseService } from './base.service';
 
@@ -53,7 +47,6 @@ type SectionInfoType = {
 export class InnovationSectionsService extends BaseService {
   constructor(
     @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
-    @inject(SHARED_SYMBOLS.IdentityProviderService) private identityService: IdentityProviderService,
     @inject(SHARED_SYMBOLS.RedisService) private redisService: RedisService,
     @inject(SHARED_SYMBOLS.IRSchemaService) private irSchemaService: IRSchemaService,
     @inject(SYMBOLS.InnovationFileService) private innovationFileService: InnovationFileService,
@@ -96,7 +89,7 @@ export class InnovationSectionsService extends BaseService {
         'submittedBy.status'
       ])
       .leftJoin('innovation.owner', 'owner')
-      .innerJoin('innovation.sections', 'sections')
+      .leftJoin('innovation.sections', 'sections')
       .leftJoin('sections.submittedBy', 'submittedBy')
       .where('innovation.id = :innovationId', { innovationId })
       .getOne();
@@ -128,15 +121,13 @@ export class InnovationSectionsService extends BaseService {
       .filter(s => s.submittedBy && s.submittedBy.status !== UserStatusEnum.DELETED)
       .map(s => s.submittedBy?.identityId)
       .filter((u): u is string => !!u);
-    const innovatorNames = await this.identityService.getUsersMap(innovators);
+    const innovatorNames = await this.domainService.users.getUsersMap({ identityIds: innovators }, connection);
 
     return CurrentCatalogTypes.InnovationSections.map(sectionKey => {
       const section = sections.find(item => item.section === sectionKey);
 
       if (section) {
         const openTasksCount = openTasks.find(item => item.section === sectionKey)?.tasksCount ?? 0;
-
-        const submittedByName = section.submittedBy && innovatorNames.get(section.submittedBy.identityId)?.displayName;
 
         return {
           id: section.id,
@@ -145,10 +136,8 @@ export class InnovationSectionsService extends BaseService {
           submittedAt: section.submittedAt,
           submittedBy: section.submittedBy
             ? {
-                name: submittedByName ?? 'unknown user',
-                ...(submittedByName && {
-                  isOwner: section.submittedBy.id === innovation.owner?.id
-                })
+                name: innovatorNames.getDisplayName(section.submittedBy.identityId),
+                isOwner: section.submittedBy.id === innovation.owner?.id
               }
             : null,
           openTasksCount: openTasksCount
@@ -235,17 +224,6 @@ export class InnovationSectionsService extends BaseService {
       tasks = await tasksQuery.orderBy('tasks.updated_at', 'DESC').getMany();
     }
 
-    let submittedBy: null | string;
-    // Avoid throwing an error if the user is not found.
-    try {
-      submittedBy =
-        dbSection?.submittedBy && dbSection.submittedBy.status !== UserStatusEnum.DELETED
-          ? (await this.identityService.getUserInfo(dbSection.submittedBy.identityId)).displayName
-          : null;
-    } catch {
-      submittedBy = null;
-    }
-
     return {
       id: dbSection?.id ?? null,
       section: sectionKey,
@@ -253,7 +231,10 @@ export class InnovationSectionsService extends BaseService {
       submittedAt: dbSection?.submittedAt ?? null,
       submittedBy: dbSection?.submittedBy
         ? {
-            name: submittedBy ?? 'unknown user',
+            name: await this.domainService.users.getDisplayName(
+              { identityId: dbSection.submittedBy.identityId },
+              ServiceRoleEnum.INNOVATOR
+            ),
             displayTag: this.domainService.users.getDisplayTag(ServiceRoleEnum.INNOVATOR, {
               isOwner:
                 innovation.owner && dbSection.submittedBy ? innovation.owner.id === dbSection.submittedBy.id : undefined
@@ -810,7 +791,7 @@ export class InnovationSectionsService extends BaseService {
       .filter(s => s.submittedBy && s.submittedBy.status !== UserStatusEnum.DELETED)
       .map(s => s.submittedBy?.identityId)
       .filter((id): id is string => !!id);
-    const users = await this.identityService.getUsersMap(innovators);
+    const users = await this.domainService.users.getUsersMap({ identityIds: innovators }, em);
 
     return new Map(
       sections.map(s => [
@@ -820,7 +801,7 @@ export class InnovationSectionsService extends BaseService {
           status: s.status,
           ...(s.submittedAt && { submittedAt: s.submittedAt }),
           submittedBy: {
-            name: users.get(s.submittedBy?.identityId ?? '')?.displayName ?? '[unknown user]',
+            name: users.getDisplayName(s.submittedBy?.identityId),
             displayTag: this.domainService.users.getDisplayTag(ServiceRoleEnum.INNOVATOR, {
               isOwner: s.innovation.owner && s.submittedBy ? s.innovation.owner.id === s.submittedBy.id : undefined
             })

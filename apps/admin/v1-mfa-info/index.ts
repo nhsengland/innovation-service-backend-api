@@ -11,7 +11,7 @@ import { container } from '../_config';
 
 import SYMBOLS from '../_services/symbols';
 import type { UsersService } from '../_services/users.service';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType } from './validation';
 
 class V1MfaInfo {
@@ -43,20 +43,9 @@ export default openApi(V1MfaInfo.httpTrigger as AzureFunction, '/v1/{userId}/mfa
     tags: ['[v1] Users'],
     parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     responses: {
-      200: {
-        description: 'Success',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                type: { type: 'string', enum: ['none', 'email', 'phone'] },
-                phoneNumber: { type: 'string' }
-              }
-            }
-          }
-        }
-      },
+      200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: 'Success'
+      }),
       400: { description: 'Bad Request' },
       401: { description: 'Unauthorized' },
       403: { description: 'Forbidden' },

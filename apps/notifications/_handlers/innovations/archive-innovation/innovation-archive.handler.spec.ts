@@ -1,5 +1,5 @@
+import * as crypto from 'crypto';
 import { container } from '../../../_config/';
-
 import { randText } from '@ngneat/falso';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { testEmails, testInApps } from '../../../_helpers/tests.helper';
@@ -7,6 +7,10 @@ import { NotificationsTestsHelper } from '../../../_tests/notifications-test.hel
 import { InnovationArchiveHandler } from './innovation-archive.handler';
 import { innovationOverviewUrl } from '../../../_helpers/url.helper';
 import { InnovationStatusEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+
+jest.mock('crypto');
+const notificationId = '00001234-1234-1234-1234-123456789012';
+jest.spyOn(crypto, 'randomUUID').mockImplementation(() => notificationId);
 
 // this is needed to ensure that import is not removed by compiler and it's needed for inversify to work
 if (1 > Number(5)) console.log(container);
@@ -59,7 +63,8 @@ describe('Notifications / _handlers / innovation-archive suite', () => {
           affectedUsers: []
         },
         outputData: { innovationName: innovation.name },
-        options: { includeSelf: true }
+        options: { includeSelf: true },
+        notificationId
       });
     });
   });
@@ -98,7 +103,8 @@ describe('Notifications / _handlers / innovation-archive suite', () => {
           previousStatus: InnovationStatusEnum.IN_PROGRESS,
           affectedUsers: []
         },
-        outputData: { innovationName: innovation.name }
+        outputData: { innovationName: innovation.name },
+        notificationId
       });
     });
   });
@@ -129,7 +135,7 @@ describe('Notifications / _handlers / innovation-archive suite', () => {
         },
         outputData: {
           innovation_name: innovation.name,
-          archived_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, innovation.id)
+          archived_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, innovation.id, notificationId)
         }
       });
     });
@@ -155,8 +161,9 @@ describe('Notifications / _handlers / innovation-archive suite', () => {
         },
         outputData: {
           innovationName: innovation.name,
-          archivedUrl: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, innovation.id)
-        }
+          archivedUrl: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, innovation.id, notificationId)
+        },
+        notificationId
       });
     });
   });
@@ -207,7 +214,8 @@ describe('Notifications / _handlers / innovation-archive suite', () => {
         outputData: {
           innovationName: innovation.name,
           assessmentType: 'assessment'
-        }
+        },
+        notificationId
       });
     });
   });

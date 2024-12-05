@@ -4,7 +4,7 @@ import { get } from 'lodash';
 import { container } from '../config/inversify.config';
 import { GenericErrorsEnum } from '../errors';
 import { NotImplementedError } from '../errors/errors.config';
-import type { ActionEnum, AuditService} from '../services/integrations/audit.service';
+import type { ActionEnum, AuditService } from '../services/integrations/audit.service';
 import { TargetEnum } from '../services/integrations/audit.service';
 import type { SQLConnectionService } from '../services/storage/sql-connection.service';
 import SHARED_SYMBOLS from '../services/symbols';
@@ -42,7 +42,7 @@ export function Audit(params: AuditOptions | AuditOptions[]) {
     const original = descriptor.value;
     const auditService = container.get<AuditService>(SHARED_SYMBOLS.AuditService);
     // TODO - sqlConnection is used to get the user id from the externalId. This should be removed and a cached query should be used instead once implemented
-    const sqlConnection = container.get<SQLConnectionService>(SHARED_SYMBOLS.SQLConnectionService).getConnection();
+    const sqlConnectionService = container.get<SQLConnectionService>(SHARED_SYMBOLS.SQLConnectionService);
 
     // Support either single or array of audit options
     const auditOptions = Array.isArray(params) ? params : [params];
@@ -84,7 +84,8 @@ export function Audit(params: AuditOptions | AuditOptions[]) {
 
         // Get the user id from the externalId
         const user = (
-          await sqlConnection
+          await sqlConnectionService
+            .getConnection()
             .createQueryBuilder()
             .select('id')
             .from('user', 'user')

@@ -6,6 +6,7 @@ import { UserRoleEntity } from '../user/user-role.entity';
 import { InnovationEntity } from './innovation.entity';
 
 import { ActivityEnum, ActivityTypeEnum } from '../../enums/activity.enums';
+import { ActivityLogDBParamsType } from '../../types';
 
 @Entity('activity_log')
 export class ActivityLogEntity extends BaseEntity {
@@ -23,7 +24,7 @@ export class ActivityLogEntity extends BaseEntity {
   userRole: UserRoleEntity;
 
   @Column({ name: 'param', type: 'simple-json' })
-  param: Record<string, unknown>;
+  param: ActivityLogDBParamsType;
 
   @ManyToOne(() => InnovationEntity, { nullable: false })
   @JoinColumn({ name: 'innovation_id' })

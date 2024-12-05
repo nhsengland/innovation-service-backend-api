@@ -30,6 +30,7 @@ const expected = [
     id: randUuid(),
     identityId: randUuid(),
     locked: randBoolean(),
+    name: randFullName(),
     isOwner: true,
     userRole: { id: randUuid(), role: ServiceRoleEnum.INNOVATOR },
     organisationUnit: null

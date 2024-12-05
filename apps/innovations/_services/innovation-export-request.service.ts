@@ -112,7 +112,10 @@ export class InnovationExportRequestService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_EXPORT_REQUEST_NOT_FOUND);
     }
 
-    const usersInfo = await this.domainService.users.getUsersMap({ userIds: [request.createdBy, request.updatedBy] });
+    const usersInfo = await this.domainService.users.getUsersMap(
+      { userIds: [request.createdBy, request.updatedBy] },
+      em
+    );
 
     return {
       id: request.id,
@@ -121,7 +124,7 @@ export class InnovationExportRequestService extends BaseService {
       rejectReason: request.rejectReason ?? undefined,
       createdAt: request.createdAt,
       createdBy: {
-        name: usersInfo.get(request.createdBy)?.displayName ?? '[deleted user]',
+        name: usersInfo.getDisplayName(request.createdBy),
         displayRole: this.domainService.users.getDisplayRoleInformation(
           request.createdBy,
           request.createdByUserRole.role
@@ -133,7 +136,7 @@ export class InnovationExportRequestService extends BaseService {
       },
       updatedAt: request.updatedAt,
       updatedBy: {
-        name: usersInfo.get(request.updatedBy)?.displayName ?? '[deleted user]'
+        name: usersInfo.getDisplayName(request.updatedBy)
       }
     };
   }
@@ -212,7 +215,7 @@ export class InnovationExportRequestService extends BaseService {
       return { count: 0, data: [] };
     }
 
-    const usersInfo = await this.domainService.users.getUsersMap({ userIds: requests.map(r => r.createdBy) });
+    const usersInfo = await this.domainService.users.getUsersMap({ userIds: requests.map(r => r.createdBy) }, em);
 
     return {
       count,
@@ -221,7 +224,7 @@ export class InnovationExportRequestService extends BaseService {
         status: r.status,
         createdAt: r.createdAt,
         createdBy: {
-          name: usersInfo.get(r.createdBy)?.displayName ?? '[deleted user]',
+          name: usersInfo.getDisplayName(r.createdBy),
           displayRole: this.domainService.users.getDisplayRoleInformation(r.createdBy, r.createdByUserRole.role),
           displayTeam: this.domainService.users.getDisplayTeamInformation(
             r.createdByUserRole.role,

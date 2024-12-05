@@ -1,4 +1,4 @@
-import { inject, injectable } from 'inversify';
+import { injectable } from 'inversify';
 import type { EntityManager } from 'typeorm';
 
 import { NotificationEntity, NotificationPreferenceEntity, NotificationUserEntity } from '@users/shared/entities';
@@ -6,13 +6,10 @@ import {
   InnovationStatusEnum,
   NotificationCategoryType,
   NotificationDetailType,
-  ServiceRoleEnum,
-  UserStatusEnum
+  ServiceRoleEnum
 } from '@users/shared/enums';
 import { GenericErrorsEnum, NotImplementedError, UnprocessableEntityError } from '@users/shared/errors';
 import type { PaginationQueryParamsType } from '@users/shared/helpers';
-import type { IdentityProviderService } from '@users/shared/services';
-import SHARED_SYMBOLS from '@users/shared/services/symbols';
 import {
   ANotificationCategories,
   INotificationCategories,
@@ -28,12 +25,6 @@ import { BaseService } from './base.service';
 
 @injectable()
 export class NotificationsService extends BaseService {
-  constructor(
-    @inject(SHARED_SYMBOLS.IdentityProviderService) private identityProviderService: IdentityProviderService
-  ) {
-    super();
-  }
-
   /**
    * gets the user active notifications counters
    * @param userId the user id
@@ -74,7 +65,7 @@ export class NotificationsService extends BaseService {
     total: number;
     data: {
       id: string;
-      innovation: { id: string; name: string; status: InnovationStatusEnum; ownerName: string };
+      innovation: { id: string; name: string; status: InnovationStatusEnum };
       contextType: NotificationCategoryType;
       contextDetail: NotificationDetailType;
       contextId: string;
@@ -142,12 +133,6 @@ export class NotificationsService extends BaseService {
 
     const [notifications, count] = await query.getManyAndCount();
 
-    const userIds = notifications
-      .filter(n => n.notification.innovation.owner && n.notification.innovation.owner.status !== UserStatusEnum.DELETED)
-      .map(n => n.notification.innovation.owner!.identityId); // We are filtering before, so it will exist
-
-    const innovationOwners = await this.identityProviderService.getUsersMap(userIds);
-
     return {
       total: count,
       data: notifications.map(n => ({
@@ -155,8 +140,7 @@ export class NotificationsService extends BaseService {
         innovation: {
           id: n.notification.innovation.id,
           name: n.notification.innovation.name,
-          status: n.notification.innovation.status,
-          ownerName: innovationOwners.get(n.notification.innovation.owner?.identityId ?? '')?.displayName ?? ''
+          status: n.notification.innovation.status
         },
         contextType: n.notification.contextType,
         contextDetail: n.notification.contextDetail,

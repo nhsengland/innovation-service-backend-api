@@ -61,6 +61,7 @@ export const testInApps = async <
     recipients: RecipientType[];
     outputData: InAppTemplatesType[Notifications];
     options?: { includeSelf?: boolean };
+    notificationId: string;
   }
 ): Promise<void> => {
   const handler = new handlerClass(data.requestUser, data.inputData, MocksHelper.mockContext());
@@ -78,7 +79,8 @@ export const testInApps = async <
       },
       userRoleIds: data.recipients.map(r => r.roleId),
       params: data.outputData,
-      ...(data.options && { options: data.options })
+      ...(data.options && { options: data.options }),
+      notificationId: data.notificationId
     }
   ]);
 };

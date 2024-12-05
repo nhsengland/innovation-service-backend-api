@@ -24,6 +24,7 @@ class V1SendInAppListener {
         };
         userRoleIds: string[];
         params: Record<string, unknown>;
+        notificationId: string;
       };
     }
   ): Promise<void> {
@@ -39,7 +40,8 @@ class V1SendInAppListener {
         message.data.innovationId,
         message.data.context,
         message.data.userRoleIds,
-        message.data.params
+        message.data.params,
+        message.data.notificationId
       );
 
       context.res = { done: true };

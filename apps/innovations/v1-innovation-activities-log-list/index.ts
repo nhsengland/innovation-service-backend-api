@@ -11,7 +11,7 @@ import { container } from '../_config';
 
 import type { InnovationsService } from '../_services/innovations.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType, QueryParamsSchema, QueryParamsType } from './validation.schemas';
 
 class V1InnovationsActivitiesLogList {
@@ -67,117 +67,11 @@ export default openApi(V1InnovationsActivitiesLogList.httpTrigger as AzureFuncti
     operationId: 'v1-innovation-activities-log-list',
     description: 'Get activities log list of an Innovation',
     tags: ['[v1] Innovation Activities Log'],
-    parameters: SwaggerHelper.paramJ2S( { query: QueryParamsSchema, path: ParamsSchema }),
+    parameters: SwaggerHelper.paramJ2S({ query: QueryParamsSchema, path: ParamsSchema }),
     responses: {
-      200: {
-        description: 'Success',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                count: {
-                  type: 'number'
-                },
-                innovation: {
-                  type: 'object',
-                  properties: {
-                    id: {
-                      type: 'string'
-                    },
-                    name: {
-                      type: 'string'
-                    }
-                  }
-                },
-                data: {
-                  type: 'array',
-                  items: {
-                    type: 'object',
-                    properties: {
-                      type: {
-                        type: 'string'
-                      },
-                      activity: {
-                        type: 'string'
-                      },
-                      date: {
-                        type: 'number'
-                      },
-                      params: {
-                        type: 'object',
-                        properties: {
-                          actionUserId: {
-                            type: 'string'
-                          },
-                          interveningUserId: {
-                            type: 'string'
-                          },
-                          assessmentId: {
-                            type: 'string'
-                          },
-                          sectionId: {
-                            type: 'string'
-                          },
-                          actionId: {
-                            type: 'string'
-                          },
-                          innovationSupportStatus: {
-                            type: 'string'
-                          },
-                          organisations: {
-                            type: 'array',
-                            items: {
-                              type: 'string'
-                            }
-                          },
-                          organisationUnit: {
-                            type: 'string'
-                          },
-                          comment: {
-                            type: 'object',
-                            properties: {
-                              id: {
-                                type: 'string'
-                              },
-                              value: {
-                                type: 'string'
-                              }
-                            }
-                          },
-                          totalActions: {
-                            type: 'number'
-                          },
-                          thread: {
-                            type: 'object',
-                            properties: {
-                              id: {
-                                type: 'string'
-                              },
-                              subject: {
-                                type: 'string'
-                              },
-                              messageId: {
-                                type: 'string'
-                              }
-                            }
-                          },
-                          actionUserName: {
-                            type: 'string'
-                          },
-                          interveningUserName: {
-                            type: 'string'
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
+      200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: 'Success'
+      }),
       500: {
         description: 'An error occurred while processing the request.'
       }

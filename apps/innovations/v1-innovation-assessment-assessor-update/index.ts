@@ -13,7 +13,7 @@ import { container } from '../_config';
 
 import type { InnovationAssessmentsService } from '../_services/innovation-assessments.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1InnovationAssessmentAssessorUpdate {
@@ -67,26 +67,9 @@ export default openApi(
         description: 'The new assessor to be assigned.'
       }),
       responses: {
-        200: {
-          description: 'The assigned assessor has been successfully updated.',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  assessmentId: {
-                    type: 'string',
-                    format: 'uuid'
-                  },
-                  assessorId: {
-                    type: 'string',
-                    format: 'uuid'
-                  }
-                }
-              }
-            }
-          }
-        },
+        200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+          description: 'The assigned assessor has been successfully updated.'
+        }),
         400: {
           description: 'Bad request. Validation error.'
         },

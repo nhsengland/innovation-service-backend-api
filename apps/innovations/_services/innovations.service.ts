@@ -13,9 +13,6 @@ import {
   InnovationSectionEntity,
   InnovationSupportEntity,
   InnovationTaskEntity,
-  LastSupportStatusViewEntity,
-  NotificationEntity,
-  NotificationUserEntity,
   OrganisationEntity,
   OrganisationUnitEntity,
   UserEntity,
@@ -24,9 +21,10 @@ import {
 import {
   ActivityEnum,
   type ActivityTypeEnum,
+  InnovationArchiveReasonEnum,
   InnovationCollaboratorStatusEnum,
   InnovationExportRequestStatusEnum,
-  type InnovationGroupedStatusEnum,
+  InnovationGroupedStatusEnum,
   InnovationSectionStatusEnum,
   InnovationStatusEnum,
   InnovationSupportCloseReasonEnum,
@@ -48,7 +46,6 @@ import {
 } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import { TranslationHelper } from '@innovations/shared/helpers';
-import type { DomainUsersService } from '@innovations/shared/services';
 import { DomainService, IRSchemaService, NotifierService } from '@innovations/shared/services';
 import {
   type ActivityLogListParamsType,
@@ -69,6 +66,7 @@ import { InnovationRelevantOrganisationsStatusView } from '@innovations/shared/e
 import { createDocumentFromInnovation } from '@innovations/shared/entities/innovation/innovation-document.entity';
 import type { InnovationListViewWithoutNull } from '@innovations/shared/entities/views/innovation-progress.view.entity';
 import { InnovationProgressView } from '@innovations/shared/entities/views/innovation-progress.view.entity';
+import { displayName, UserMap } from '@innovations/shared/models/user.map';
 import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import { ActionEnum } from '@innovations/shared/services/integrations/audit.service';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
@@ -234,21 +232,20 @@ export class InnovationsService extends BaseService {
   async archiveInnovation(
     domainContext: DomainContextType,
     innovationId: string,
-    data: { message: string },
+    data: { reason: InnovationArchiveReasonEnum },
     entityManager?: EntityManager
   ): Promise<void> {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const archivedInnovations = await this.domainService.innovations.archiveInnovations(
       domainContext,
-      [{ id: innovationId, reason: data.message }],
+      [{ id: innovationId, reason: data.reason }],
       em
     );
 
     for (const innovation of archivedInnovations) {
       await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_ARCHIVE, {
         innovationId: innovation.id,
-        message: innovation.reason,
         previousStatus: innovation.prevStatus,
         reassessment: innovation.isReassessment,
         affectedUsers: innovation.affectedUsers
@@ -363,16 +360,17 @@ export class InnovationsService extends BaseService {
     }
 
     if (isAssessmentDomainContextType(domainContext)) {
-      query.andWhere(
-        '(innovation.status IN (:...assessmentInnovationStatus) OR innovation.archivedStatus IN (:...assessmentInnovationStatus))',
-        {
-          assessmentInnovationStatus: [
-            InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
-            InnovationStatusEnum.NEEDS_ASSESSMENT,
-            InnovationStatusEnum.IN_PROGRESS
-          ]
-        }
-      );
+      query
+        // leaving for now but since it's not widrawn because it's not admin this shouldn't be needed
+        // .andWhere('innovation.status IN (:...assessmentInnovationStatus)', {
+        //   assessmentInnovationStatus: [
+        //     InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
+        //     InnovationStatusEnum.NEEDS_ASSESSMENT,
+        //     InnovationStatusEnum.IN_PROGRESS,
+        //     InnovationStatusEnum.ARCHIVED
+        //   ]
+        // })
+        .andWhere('innovation.submittedAt IS NOT NULL');
     }
 
     // Exclude withdrawn innovations from non admin users (at least for now). This state is still present for old innovations
@@ -641,8 +639,8 @@ export class InnovationsService extends BaseService {
     _domainContext: DomainContextType,
     innovations: InnovationListView[],
     _fields: unknown[],
-    _entityManager: EntityManager
-  ): ReturnType<DomainUsersService['getUsersMap']> {
+    entityManager: EntityManager
+  ): Promise<UserMap> {
     const usersSet = new Set<string>();
     // Add the owners and the engaging units accessors
     innovations.forEach(i => {
@@ -658,9 +656,12 @@ export class InnovationsService extends BaseService {
           usersSet.add(u);
         });
     });
-    return this.domainService.users.getUsersMap({
-      userIds: [...usersSet]
-    });
+    return this.domainService.users.getUsersMap(
+      {
+        userIds: [...usersSet]
+      },
+      entityManager
+    );
   }
 
   //#endregion
@@ -992,7 +993,7 @@ export class InnovationsService extends BaseService {
         assignedAccessors:
           unit.assignedAccessors?.map(userId => ({
             id: userId,
-            name: extra.users.get(userId)?.displayName ?? null
+            name: extra.users.getDisplayName(userId)
           })) ?? null,
         name: unit.name,
         unitId: unit.unitId
@@ -1009,7 +1010,9 @@ export class InnovationsService extends BaseService {
     fields.forEach(field => {
       switch (field) {
         case 'assignedTo':
-          res[field] = extra.users.get(item.currentAssessment?.assignTo?.id ?? '')?.displayName ?? null;
+          res[field] = item.currentAssessment?.assignTo?.id
+            ? extra.users.getDisplayName(item.currentAssessment.assignTo.id, ServiceRoleEnum.ASSESSMENT)
+            : null;
           break;
         case 'isExempt':
           res[field] = !!item.currentAssessment?.exemptedAt;
@@ -1029,8 +1032,8 @@ export class InnovationsService extends BaseService {
     const support = item.supports?.[0];
     if (!support) return {};
 
-    const updatedBy = extra.users?.get(support.updatedBy) ?? null;
-    const displayName =
+    const updatedBy = extra.users?.get(support.updatedBy);
+    const name =
       // Ensuring that updatedBy is always innovator if the innovation is archived or not shared
       item.status === InnovationStatusEnum.ARCHIVED ||
       !item.organisationShares?.length ||
@@ -1038,7 +1041,7 @@ export class InnovationsService extends BaseService {
       // distinguish if there's multiple roles for the same user
       updatedBy?.roles.some(r => r.role === ServiceRoleEnum.INNOVATOR)
         ? 'Innovator'
-        : (updatedBy?.displayName ?? null);
+        : displayName(updatedBy);
 
     // support is handled differently to remove the nested array since it's only 1 element in this case
     return {
@@ -1047,7 +1050,7 @@ export class InnovationsService extends BaseService {
       ...(fields.includes('isShared') && { isShared: !!item.organisationShares?.length }),
       ...(fields.includes('status') && { status: support.status }),
       ...(fields.includes('updatedAt') && { updatedAt: support.updatedAt }),
-      ...(fields.includes('updatedBy') && { updatedBy: displayName })
+      ...(fields.includes('updatedBy') && { updatedBy: name })
     };
   }
 
@@ -1076,7 +1079,7 @@ export class InnovationsService extends BaseService {
     return {
       ...(fields.includes('id') && { id: item.ownerId }),
       ...(fields.includes('name') && {
-        name: extra.users.get(item.ownerId)?.displayName ?? null
+        name: extra.users.getDisplayName(item.ownerId, ServiceRoleEnum.INNOVATOR)
       }),
       ...(fields.includes('companyName') && {
         companyName: item.ownerCompanyName ?? null
@@ -1108,7 +1111,6 @@ export class InnovationsService extends BaseService {
     description: null | string;
     version: string;
     status: InnovationStatusEnum;
-    archivedStatus?: InnovationStatusEnum;
     groupedStatus: InnovationGroupedStatusEnum;
     hasBeenAssessed: boolean;
     statusUpdatedAt: Date;
@@ -1130,7 +1132,8 @@ export class InnovationsService extends BaseService {
       lastLoginAt?: null | Date;
       organisation?: { name: string; size: null | string; registrationNumber: null | string };
     };
-    lastEndSupportAt: null | Date;
+    daysSinceNoActiveSupport?: number;
+    expectedArchiveDate?: Date;
     assessment?: null | {
       id: string;
       currentMajorAssessmentId: string;
@@ -1153,7 +1156,6 @@ export class InnovationsService extends BaseService {
         'innovation.name',
         'innovation.status',
         'innovation.statusUpdatedAt',
-        'innovation.archivedStatus',
         'innovation.hasBeenAssessed',
         'innovation.lastAssessmentRequestAt',
         'innovation.createdAt',
@@ -1166,6 +1168,8 @@ export class InnovationsService extends BaseService {
         'innovationOwnerOrganisation.registrationNumber',
         'reassessmentRequests.id',
         'innovationGroupedStatus.groupedStatus',
+        'innovationGroupedStatus.daysSinceNoActiveSupport',
+        'innovationGroupedStatus.expectedArchiveDate',
         'collaborator.id'
       ])
       .leftJoin('innovation.owner', 'innovationOwner')
@@ -1188,9 +1192,14 @@ export class InnovationsService extends BaseService {
       query.leftJoin('currentAssessment.assignTo', 'assignTo', 'assignTo.status != :deletedStatus', {
         deletedStatus: UserStatusEnum.DELETED
       });
-      query.leftJoin('assignTo.serviceRoles', 'assignToRoles', 'assignToRoles.role = :assessmentRole', {
-        assessmentRole: ServiceRoleEnum.ASSESSMENT
-      });
+      query.leftJoin(
+        'assignTo.serviceRoles',
+        'assignToRoles',
+        'assignToRoles.role = :assessmentRole AND assignToRoles.isActive = 1',
+        {
+          assessmentRole: ServiceRoleEnum.ASSESSMENT
+        }
+      );
       query.addSelect([
         'currentAssessment.id',
         'currentAssessment.majorVersion',
@@ -1238,20 +1247,19 @@ export class InnovationsService extends BaseService {
       .getRawOne();
 
     // Fetch users names.
-    const assessmentUsersId = innovation.currentAssessment?.assignTo?.id;
+    const assessmentUser = innovation.currentAssessment?.assignTo;
     const categories = documentData.categories ? JSON.parse(documentData.categories) : [];
-    let usersInfo: Awaited<ReturnType<DomainService['users']['getUsersList']>> = [];
-    let ownerInfo = undefined;
     let ownerPreferences = undefined;
+
+    const userIds = [
+      ...(innovation.owner?.id ? [innovation.owner.id] : []),
+      ...(assessmentUser ? [assessmentUser.id] : [])
+    ];
+
+    const usersInfo = await this.domainService.users.getUsersMap({ userIds }, connection);
 
     if (innovation.owner && innovation.owner.status !== UserStatusEnum.DELETED) {
       ownerPreferences = await this.domainService.users.getUserPreferences(innovation.owner.id);
-      usersInfo = await this.domainService.users.getUsersList({
-        userIds: [innovation.owner.id, ...(assessmentUsersId ? [assessmentUsersId] : [])]
-      });
-      ownerInfo = usersInfo.find(item => item.id === innovation.owner?.id);
-    } else if (assessmentUsersId) {
-      usersInfo = await this.domainService.users.getUsersList({ userIds: [assessmentUsersId] });
     }
 
     // Assessment parsing.
@@ -1269,7 +1277,6 @@ export class InnovationsService extends BaseService {
         };
 
     if (filters.fields?.includes('assessment')) {
-      const assignTo = usersInfo.find(item => item.id === innovation.currentAssessment?.assignTo?.id && item.isActive);
       assessment =
         innovation.currentAssessment && innovation.currentMajorAssessment
           ? {
@@ -1279,13 +1286,19 @@ export class InnovationsService extends BaseService {
               minorVersion: innovation.currentAssessment.minorVersion,
               createdAt: innovation.currentAssessment.createdAt,
               finishedAt: innovation.currentAssessment.finishedAt,
-              ...(assignTo &&
-                assignTo.roles[0] && {
-                  assignedTo: { id: assignTo.id, name: assignTo.displayName, userRoleId: assignTo.roles[0].id }
+              ...(assessmentUser &&
+                assessmentUser.serviceRoles[0] && {
+                  assignedTo: {
+                    id: assessmentUser.id,
+                    name: usersInfo.getDisplayName(assessmentUser.id, ServiceRoleEnum.ASSESSMENT),
+                    userRoleId: assessmentUser.serviceRoles[0].id
+                  }
                 })
             }
           : null;
     }
+
+    const ownerInfo = innovation.owner?.id ? usersInfo.get(innovation.owner.id) : null;
 
     return {
       id: innovation.id,
@@ -1301,12 +1314,11 @@ export class InnovationsService extends BaseService {
       postCode: documentData.postcode,
       categories,
       otherCategoryDescription: documentData.otherCategoryDescription,
-      ...(innovation.archivedStatus ? { archivedStatus: innovation.archivedStatus } : {}),
       ...(innovation.owner && ownerPreferences
         ? {
             owner: {
               id: innovation.owner.id,
-              name: ownerInfo?.displayName ?? '',
+              name: usersInfo.getDisplayName(innovation.owner.id, ServiceRoleEnum.INNOVATOR),
               email: ownerInfo?.email ?? '',
               contactByEmail: ownerPreferences.contactByEmail,
               contactByPhone: ownerPreferences.contactByPhone,
@@ -1327,7 +1339,10 @@ export class InnovationsService extends BaseService {
             }
           }
         : {}),
-      lastEndSupportAt: await this.lastSupportStatusTransitionFromEngaging(innovation.id),
+      ...(innovation.innovationGroupedStatus.groupedStatus === InnovationGroupedStatusEnum.NO_ACTIVE_SUPPORT && {
+        daysSinceNoActiveSupport: innovation.innovationGroupedStatus.daysSinceNoActiveSupport,
+        expectedArchiveDate: innovation.innovationGroupedStatus.expectedArchiveDate
+      }),
       assessment,
       ...(!filters.fields?.includes('supports')
         ? {}
@@ -1754,8 +1769,6 @@ export class InnovationsService extends BaseService {
           status: InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
           statusUpdatedAt: now,
           updatedBy: domainContext.id,
-          // In case the innovation was archived during the CREATED status
-          archivedStatus: null,
           archiveReason: null
         }
       );
@@ -1870,103 +1883,31 @@ export class InnovationsService extends BaseService {
       const p: string[] = [];
 
       p.push(item.createdBy);
-      if (params.interveningUserId !== undefined) {
+      if (params.interveningUserId) {
         p.push(params.interveningUserId);
       }
 
       return p;
     });
 
-    const usersInfo = await this.domainService.users.getUsersMap({ userIds: [...usersIds] });
+    const usersInfo = await this.domainService.users.getUsersMap({ userIds: [...usersIds] }, connection);
 
     return {
       count: dbActivitiesCount,
-      data: dbActivities.map(item => {
-        const params = item.param as ActivityLogListParamsType;
-
-        params.actionUserName = usersInfo.get(item.createdBy)?.displayName ?? '[deleted account]';
-
-        if (params.interveningUserId !== undefined) {
-          params.interveningUserName = usersInfo.get(params.interveningUserId)?.displayName ?? '[deleted account]';
+      data: dbActivities.map(item => ({
+        activity: item.activity,
+        type: item.type,
+        date: item.createdAt,
+        params: {
+          ...item.param,
+          actionUserName: usersInfo.getDisplayName(item.createdBy),
+          actionUserRole: item.param.actionUserRole,
+          ...(item.param.interveningUserId && {
+            interveningUserName: usersInfo.getDisplayName(item.param.interveningUserId)
+          })
         }
-
-        params.actionUserRole = item.userRole.role;
-
-        return {
-          activity: item.activity,
-          type: item.type,
-          date: item.createdAt,
-          params
-        };
-      })
+      }))
     };
-  }
-
-  /**
-   * dismisses innovation notification for the requestUser according to optional conditions
-   *
-   * @param domainContext the user that is dismissing the notification
-   * @param innovationId the innovation id
-   * @param conditions extra conditions that control the dismissal
-   *  - if notificationIds is set, only the notifications with the given ids will be dismissed
-   *  - if notificationContext.id is set, only the notifications with the given context id will be dismissed
-   *  - if notificationContext.type is set, only the notifications with the given context type will be dismissed
-   */
-  async dismissNotifications(
-    domainContext: DomainContextType,
-    innovationId: string,
-    conditions: {
-      notificationIds: string[];
-      contextTypes: string[];
-      contextDetails: string[];
-      contextIds: string[];
-    },
-    entityManager?: EntityManager
-  ): Promise<void> {
-    const connection = entityManager ?? this.sqlConnection.manager;
-
-    const params: {
-      roleId: string;
-      innovationId: string;
-      notificationIds?: string[];
-      contextIds?: string[];
-      contextTypes?: string[];
-      contextDetails?: string[];
-      organisationUnitId?: string;
-    } = { roleId: domainContext.currentRole.id, innovationId };
-
-    const query = connection
-      .createQueryBuilder(NotificationEntity, 'notification')
-      .select('notification.id')
-      .where('notification.innovation_id = :innovationId', { innovationId });
-
-    if (conditions.notificationIds.length > 0) {
-      query.andWhere('notification.id IN (:...notificationIds)');
-      params.notificationIds = conditions.notificationIds;
-    }
-    if (conditions.contextIds.length > 0) {
-      query.andWhere('notification.contextId IN (:...contextIds)');
-      params.contextIds = conditions.contextIds;
-    }
-
-    if (conditions.contextDetails.length > 0) {
-      query.andWhere('notification.contextDetail IN (:...contextDetails)');
-      params.contextDetails = conditions.contextDetails;
-    }
-
-    if (conditions.contextTypes.length > 0) {
-      query.andWhere('notification.contextType IN (:...contextTypes)');
-      params.contextTypes = conditions.contextTypes;
-    }
-
-    const updateQuery = connection
-      .createQueryBuilder(NotificationUserEntity, 'user')
-      .update()
-      .set({ readAt: () => 'CURRENT_TIMESTAMP' })
-      .where('notification_id IN ( ' + query.getQuery() + ' )')
-      .andWhere('user_role_id = :roleId AND read_at IS NULL');
-
-    await updateQuery.setParameters(params).execute();
   }
 
   async getInnovationSubmissionsState(
@@ -2030,20 +1971,6 @@ export class InnovationsService extends BaseService {
         acc[key] = value;
         return acc;
       }, {} as InnovationListViewWithoutNull);
-  }
-
-  // view recipients service innovationsWithoutSupportForNDays to maintain consistency
-  private async lastSupportStatusTransitionFromEngaging(innovationId: string): Promise<Date | null> {
-    const result = await this.sqlConnection
-      .createQueryBuilder(LastSupportStatusViewEntity, 'lastSupportStatus')
-      .select('TOP 1 lastSupportStatus.statusChangedAt', 'statusChangedAt')
-      .where('lastSupportStatus.innovationId = :innovationId', { innovationId })
-      .orderBy('lastSupportStatus.statusChangedAt', 'DESC')
-      .getRawOne<{ statusChangedAt: string }>();
-
-    if (!result) return null;
-
-    return new Date(result.statusChangedAt);
   }
 
   private getInnovationSectionMetadata(
@@ -2127,9 +2054,12 @@ export class InnovationsService extends BaseService {
       organisationsAndUsers = organisationsAndUsers.filter(item => item.userData !== null && item.userData.length > 0);
     }
 
-    const usersInfo = await this.domainService.users.getUsersMap({
-      userIds: organisationsAndUsers.flatMap(item => item.userData?.map(user => user.userId) ?? [])
-    });
+    const usersInfo = await this.domainService.users.getUsersMap(
+      {
+        userIds: organisationsAndUsers.flatMap(item => item.userData?.map(user => user.userId) ?? [])
+      },
+      connection
+    );
 
     const result = organisationsAndUsers.map(item => {
       const organisation = item.organisationData;
@@ -2141,7 +2071,7 @@ export class InnovationsService extends BaseService {
         recipients = item.userData.map(user => ({
           id: user.userId,
           roleId: user.roleId,
-          name: usersInfo.get(user.userId)?.displayName ?? '[unavailable account]'
+          name: usersInfo.getDisplayName(user.userId)
         }));
       }
 

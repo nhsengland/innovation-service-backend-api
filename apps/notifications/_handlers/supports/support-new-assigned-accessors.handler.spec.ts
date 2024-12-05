@@ -1,3 +1,4 @@
+import * as crypto from 'crypto';
 import { randText } from '@ngneat/falso';
 import { ServiceRoleEnum } from '@notifications/shared/enums';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
@@ -7,6 +8,10 @@ import { testEmails, testInApps } from '../../_helpers/tests.helper';
 import { innovationOverviewUrl, threadUrl } from '../../_helpers/url.helper';
 import { NotificationsTestsHelper } from '../../_tests/notifications-test.helper';
 import { SupportNewAssignedAccessorsHandler } from './support-new-assigned-accessors.handler';
+
+jest.mock('crypto');
+const notificationId = '00001234-1234-1234-1234-123456789012';
+jest.spyOn(crypto, 'randomUUID').mockImplementation(() => notificationId);
 
 describe('Notifications / _handlers / support-new-assigned-accessors suite', () => {
   const testsHelper = new NotificationsTestsHelper();
@@ -61,7 +66,7 @@ describe('Notifications / _handlers / support-new-assigned-accessors suite', () 
           innovation_name: innovation.name,
           accessors_name: HandlersHelper.transformIntoBullet(support.accessors.map(a => a.name)),
           message: message,
-          message_url: threadUrl(ServiceRoleEnum.INNOVATOR, innovation.id, threadId)
+          message_url: threadUrl(ServiceRoleEnum.INNOVATOR, innovation.id, threadId, notificationId)
         }
       });
     });
@@ -85,7 +90,8 @@ describe('Notifications / _handlers / support-new-assigned-accessors suite', () 
           innovationName: innovation.name,
           unitName: requestUserUnit.name,
           threadId: threadId
-        }
+        },
+        notificationId
       });
     });
   });
@@ -108,7 +114,7 @@ describe('Notifications / _handlers / support-new-assigned-accessors suite', () 
         outputData: {
           innovation_name: innovation.name,
           qa_name: requestUser.name,
-          innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, innovation.id)
+          innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, innovation.id, notificationId)
         }
       });
     });
@@ -128,7 +134,8 @@ describe('Notifications / _handlers / support-new-assigned-accessors suite', () 
           changedStatus: false
         },
         recipients: assignedAccessorsRecipients,
-        outputData: { innovationName: innovation.name }
+        outputData: { innovationName: innovation.name },
+        notificationId
       });
     });
   });
@@ -167,7 +174,8 @@ describe('Notifications / _handlers / support-new-assigned-accessors suite', () 
           changedStatus: false
         },
         recipients: assignedAccessorsRecipients.filter(r => r.userId === scenario.users.jamieMadroxAccessor.id),
-        outputData: { innovationName: innovation.name }
+        outputData: { innovationName: innovation.name },
+        notificationId
       });
     });
   });
@@ -209,7 +217,8 @@ describe('Notifications / _handlers / support-new-assigned-accessors suite', () 
           changedStatus: true
         },
         recipients: assignedAccessorsRecipients.filter(r => r.userId === scenario.users.aliceQualifyingAccessor.id),
-        outputData: { innovationName: innovation.name }
+        outputData: { innovationName: innovation.name },
+        notificationId
       });
     });
   });

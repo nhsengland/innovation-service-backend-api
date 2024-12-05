@@ -6,6 +6,7 @@ import { HandlersHelper } from '../../_helpers/handlers.helper';
 import { dataSharingPreferencesUrl, innovationOverviewUrl } from '../../_helpers/url.helper';
 import type { RecipientType } from '../../_services/recipients.service';
 import { BaseHandler } from '../base.handler';
+import { randomUUID } from 'crypto';
 
 export class OrganisationUnitsSuggestionHandler extends BaseHandler<
   NotifierTypeEnum.ORGANISATION_UNITS_SUGGESTION,
@@ -47,6 +48,7 @@ export class OrganisationUnitsSuggestionHandler extends BaseHandler<
     const senderTag = HandlersHelper.getNotificationDisplayTag(this.requestUser.currentRole.role, {
       unitName: this.requestUser.organisation?.organisationUnit?.name
     });
+    const notificationId = randomUUID();
 
     this.notify('OS01_UNITS_SUGGESTION_TO_SUGGESTED_UNITS_QA', recipients, {
       email: {
@@ -55,7 +57,7 @@ export class OrganisationUnitsSuggestionHandler extends BaseHandler<
           innovation_name: innovation.name,
           comment: this.inputData.comment,
           organisation_unit: unitName,
-          innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, innovation.id),
+          innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, innovation.id, notificationId),
           showKPI: 'yes'
         }
       },
@@ -66,7 +68,8 @@ export class OrganisationUnitsSuggestionHandler extends BaseHandler<
           id: this.inputData.innovationId
         },
         innovationId: innovation.id,
-        params: { innovationName: innovation.name, senderDisplayInformation: senderTag }
+        params: { innovationName: innovation.name, senderDisplayInformation: senderTag },
+        notificationId
       }
     });
 
@@ -106,12 +109,17 @@ export class OrganisationUnitsSuggestionHandler extends BaseHandler<
   private async OS02_UNITS_SUGGESTION_NOT_SHARED_TO_INNOVATOR(innovation: { id: string; name: string }): Promise<void> {
     const innovators = await this.recipientsService.getInnovationActiveOwnerAndCollaborators(innovation.id);
     const recipients = await this.recipientsService.getUsersRecipient(innovators, ServiceRoleEnum.INNOVATOR);
+    const notificationId = randomUUID();
 
     this.addEmails('OS02_UNITS_SUGGESTION_NOT_SHARED_TO_INNOVATOR', recipients, {
       notificationPreferenceType: 'ORGANISATION_SUGGESTIONS',
       params: {
         innovation_name: innovation.name,
-        data_sharing_preferences_url: dataSharingPreferencesUrl(ServiceRoleEnum.INNOVATOR, innovation.id)
+        data_sharing_preferences_url: dataSharingPreferencesUrl(
+          ServiceRoleEnum.INNOVATOR,
+          innovation.id,
+          notificationId
+        )
       }
     });
 
@@ -122,7 +130,8 @@ export class OrganisationUnitsSuggestionHandler extends BaseHandler<
         id: this.inputData.innovationId
       },
       innovationId: innovation.id,
-      params: {}
+      params: {},
+      notificationId
     });
   }
 }

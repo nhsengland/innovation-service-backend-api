@@ -678,13 +678,13 @@ describe('Innovation Tasks Suite', () => {
                   scenario.users.johnInnovator.innovations.johnInnovation.tasks.taskByAliceOpen.id,
                   scenario.users.adamInnovator.innovations.adamInnovation.tasks.adamInnovationDoneTask.id
                 ].includes(a.id)
-                  ? '[deleted account]'
-                  : expect.not.stringMatching(/\[deleted account\]/)
+                  ? '[deleted user]'
+                  : expect.not.stringMatching(/\[deleted user\]/)
               }),
               updatedBy: expect.objectContaining({
                 name: [scenario.users.johnInnovator.innovations.johnInnovation.tasks.taskByAlice.id].includes(a.id)
-                  ? '[deleted account]'
-                  : expect.not.stringMatching(/\[deleted account\]/)
+                  ? '[deleted user]'
+                  : expect.not.stringMatching(/\[deleted user\]/)
               })
             })
           )

@@ -4,6 +4,7 @@ import type { DomainContextType, NotifierTemplatesType } from '@notifications/sh
 import { HandlersHelper } from '../../_helpers/handlers.helper';
 import { threadUrl } from '../../_helpers/url.helper';
 import { BaseHandler } from '../base.handler';
+import { randomUUID } from 'crypto';
 
 export class ThreadCreationHandler extends BaseHandler<NotifierTypeEnum.THREAD_CREATION, 'ME01_THREAD_CREATION'> {
   constructor(
@@ -24,6 +25,7 @@ export class ThreadCreationHandler extends BaseHandler<NotifierTypeEnum.THREAD_C
     const displayTag = HandlersHelper.getNotificationDisplayTag(this.requestUser.currentRole.role, {
       unitName: this.requestUser.organisation?.organisationUnit?.name
     });
+    const notificationId = randomUUID();
 
     for (const [role, roleRecipients] of Object.entries(recipientsByRole)) {
       this.addEmails('ME01_THREAD_CREATION', roleRecipients, {
@@ -31,7 +33,7 @@ export class ThreadCreationHandler extends BaseHandler<NotifierTypeEnum.THREAD_C
         params: {
           innovation_name: innovation.name,
           sender: `${senderName} (${displayTag})`,
-          thread_url: threadUrl(role as ServiceRoleEnum, innovation.id, this.inputData.threadId)
+          thread_url: threadUrl(role as ServiceRoleEnum, innovation.id, this.inputData.threadId, notificationId)
         }
       });
     }
@@ -49,7 +51,8 @@ export class ThreadCreationHandler extends BaseHandler<NotifierTypeEnum.THREAD_C
           this.requestUser.currentRole.role === ServiceRoleEnum.INNOVATOR ? senderName : displayTag,
         messageId: this.inputData.messageId,
         threadId: this.inputData.threadId
-      }
+      },
+      notificationId
     });
 
     return this;

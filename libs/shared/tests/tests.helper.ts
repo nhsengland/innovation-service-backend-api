@@ -28,11 +28,13 @@ export class TestsHelper {
   protected readonly completeScenarioBuilder: CompleteScenarioBuilder = new CompleteScenarioBuilder();
 
   async init(): Promise<this> {
-    this.sqlConnection = container.get<SQLConnectionService>(SHARED_SYMBOLS.SQLConnectionService).getConnection();
+    const SQLConnectionService = container.get<SQLConnectionService>(SHARED_SYMBOLS.SQLConnectionService);
 
-    while (!this.sqlConnection.isInitialized) {
+    while (!SQLConnectionService.isInitialized()) {
       await new Promise(resolve => setTimeout(resolve, 100));
     }
+
+    this.sqlConnection = SQLConnectionService.getConnection();
 
     // This is set when we're running the tests and not the global setup / teardown
     if (this.completeScenarioBuilder.getScenario() && this.options.mockFunctions) {

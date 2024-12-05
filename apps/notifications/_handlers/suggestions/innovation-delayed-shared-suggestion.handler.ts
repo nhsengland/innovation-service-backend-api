@@ -4,6 +4,7 @@ import type { DomainContextType, NotifierTemplatesType } from '@notifications/sh
 import type { Context } from '@azure/functions';
 import { innovationOverviewUrl } from '../../_helpers/url.helper';
 import { BaseHandler } from '../base.handler';
+import { randomUUID } from 'crypto';
 
 export class InnovationDelayedSharedSuggestionHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_DELAYED_SHARE,
@@ -26,13 +27,18 @@ export class InnovationDelayedSharedSuggestionHandler extends BaseHandler<
     const recipients = await this.recipientsService.organisationUnitsQualifyingAccessors(
       unitsToNotify.map(u => u.unitId)
     );
+    const notificationId = randomUUID();
 
     this.notify('OS03_INNOVATION_DELAYED_SHARED_SUGGESTION', recipients, {
       email: {
         notificationPreferenceType: 'ORGANISATION_SUGGESTIONS',
         params: {
           innovation_name: innovation.name,
-          innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, this.inputData.innovationId)
+          innovation_overview_url: innovationOverviewUrl(
+            ServiceRoleEnum.ACCESSOR,
+            this.inputData.innovationId,
+            notificationId
+          )
         }
       },
       inApp: {
@@ -42,7 +48,8 @@ export class InnovationDelayedSharedSuggestionHandler extends BaseHandler<
           id: innovation.id,
           detail: 'OS03_INNOVATION_DELAYED_SHARED_SUGGESTION'
         },
-        params: { innovationName: innovation.name }
+        params: { innovationName: innovation.name },
+        notificationId
       }
     });
 

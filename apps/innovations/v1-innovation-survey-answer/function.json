@@ -6,7 +6,7 @@
       "direction": "in",
       "name": "req",
       "methods": ["patch"],
-      "route": "v1/{innovationId:guid}/notifications/dismiss"
+      "route": "v1/{innovationId}/surveys/{surveyId}"
     },
     {
       "type": "http",

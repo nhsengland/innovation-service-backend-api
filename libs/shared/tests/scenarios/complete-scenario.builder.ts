@@ -43,6 +43,7 @@ import { NotifyMeSubscriptionBuilder } from '../builders/notify-me-subscription.
 import { OrganisationUnitBuilder } from '../builders/organisation-unit.builder';
 import { OrganisationBuilder } from '../builders/organisation.builder';
 import { type TestUserType, UserBuilder } from '../builders/user.builder';
+import { InnovationSurveyBuilder } from '../builders/innovation-survey.builder';
 
 export type CompleteScenarioType = Awaited<ReturnType<CompleteScenarioBuilder['createScenario']>>;
 
@@ -787,6 +788,21 @@ export class CompleteScenarioBuilder {
         .suggestOrganisationUnits(healthOrgUnit, innovTechOrgUnit)
         .save();
 
+      const adamInnovationNoActiveSupport = await new InnovationBuilder(entityManager)
+        .setName('Adam Innovation No Active Support')
+        .setOwner(adamInnovator.id)
+        .setStatus(InnovationStatusEnum.IN_PROGRESS)
+        .shareWith([healthOrg])
+        .save();
+
+      const adamInnovationAssessmentByPaulBatman = await new InnovationAssessmentBuilder(entityManager)
+        .setInnovation(adamInnovationNoActiveSupport.id)
+        .setNeedsAssessor(paulNeedsAssessor.id)
+        .setUpdatedBy(paulNeedsAssessor.id)
+        .setFinishedAt()
+        .suggestOrganisationUnits(healthOrgUnit, innovTechOrgUnit)
+        .save();
+
       const adamInnovationEmpty = await new InnovationBuilder(entityManager)
         .setName('Adam Innovation Empty')
         .setOwner(adamInnovator.id)
@@ -816,6 +832,16 @@ export class CompleteScenarioBuilder {
         .setMajorAssessment(adamInnovationAssessmentByPaul.id)
         .setOrganisationUnit(healthOrgUnit.id)
         .setAccessors([aliceQualifyingAccessor, jamieMadroxAccessor])
+        .setCreatedAndUpdatedBy(aliceQualifyingAccessor.id, aliceQualifyingAccessor.roles['qaRole']!.id)
+        .save();
+
+      const adamInnovationWithClosedSupport = await new InnovationSupportBuilder(entityManager)
+        .setStatus(InnovationSupportStatusEnum.CLOSED)
+        .setFinishedAt(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000))
+        .setInnovation(adamInnovationNoActiveSupport.id)
+        .setMajorAssessment(adamInnovationAssessmentByPaulBatman.id)
+        .setOrganisationUnit(healthOrgUnit.id)
+        .setAccessors([aliceQualifyingAccessor])
         .setCreatedAndUpdatedBy(aliceQualifyingAccessor.id, aliceQualifyingAccessor.roles['qaRole']!.id)
         .save();
 
@@ -916,6 +942,33 @@ export class CompleteScenarioBuilder {
         .setOrganisationUnit(healthOrgUnit.id)
         .setAccessors([jamieMadroxAccessor])
         .setCreatedAndUpdatedBy(aliceQualifyingAccessor.id, aliceQualifyingAccessor.roles['qaRole']!.id)
+        .save();
+
+      // closed support on tentaclesInnovation by innovTechHeavy
+      const tentaclesInnovationClosedSupport = await new InnovationSupportBuilder(entityManager)
+        .setStatus(InnovationSupportStatusEnum.CLOSED)
+        .setInnovation(tentaclesInnovation.id)
+        .setMajorAssessment(tentaclesInnovationAssessmentByPaul.id)
+        .setOrganisationUnit(innovTechHeavyOrgUnit.id)
+        .setCreatedAndUpdatedBy(paulNeedsAssessor.id, paulNeedsAssessor.roles['assessmentRole']!.id)
+        .setFinishedAt(new Date())
+        .save();
+
+      const tentaclesInnovationEndSupportUnansweredSurvey = await new InnovationSurveyBuilder(entityManager)
+        .setTarget(ottoOctaviusInnovator.roles['innovatorRole']!.id)
+        .setTypeAndContext('SUPPORT_END', tentaclesInnovationClosedSupport.id)
+        .setInnovation(tentaclesInnovation.id)
+        .save();
+      const tentaclesInnovationEndSupportAnsweredSurvey = await new InnovationSurveyBuilder(entityManager)
+        .setTarget(ottoOctaviusInnovator.roles['innovatorRole']!.id)
+        .setTypeAndContext('SUPPORT_END', tentaclesInnovationClosedSupport.id)
+        .setInnovation(tentaclesInnovation.id)
+        .setAnswers({
+          comment: randText(),
+          ideaOnHowToProceed: 'YES',
+          supportSatisfaction: '10',
+          howLikelyWouldYouRecommendIS: '10'
+        })
         .save();
 
       const brainComputerInterfaceInnovation = await new InnovationBuilder(entityManager)
@@ -1219,7 +1272,12 @@ export class CompleteScenarioBuilder {
                   adamInnovationSupportByHealthOrgUnit: adamInnovationSupportByHealthOrgUnit
                 }
               },
-              adamInnovationEmpty: adamInnovationEmpty
+              adamInnovationEmpty: adamInnovationEmpty,
+              adamInnovationNoActiveSupport: {
+                ...adamInnovationNoActiveSupport,
+                assessment: adamInnovationAssessmentByPaulBatman,
+                supports: { adamInnovationWithClosedSupport: adamInnovationWithClosedSupport }
+              }
             }
           },
           sebastiaoDeletedInnovator: {
@@ -1242,7 +1300,14 @@ export class CompleteScenarioBuilder {
               },
               tentaclesInnovation: {
                 ...tentaclesInnovation,
-                supports: { tentaclesInnovationSupport: tentaclesInnovationSupport }
+                supports: {
+                  tentaclesInnovationSupport: tentaclesInnovationSupport,
+                  tentaclesInnovationSupportClosed: tentaclesInnovationClosedSupport
+                },
+                surveys: {
+                  unansweredSurveyToOtto: tentaclesInnovationEndSupportUnansweredSurvey,
+                  answeredSurveyToOtto: tentaclesInnovationEndSupportAnsweredSurvey
+                }
               },
               brainComputerInterfaceInnovation: {
                 ...brainComputerInterfaceInnovation,

@@ -1,28 +1,16 @@
 import { inject, injectable } from 'inversify';
 
-import { NotifierTypeEnum, ServiceRoleEnum } from '../../enums';
-import type {
-  AdminDomainContextType,
-  DomainContextType,
-  EventPayloads,
-  NotifierTemplatesType,
-  NotifyMeMessageType
-} from '../../types';
+import { NotifierTypeEnum } from '../../enums';
+import type { DomainContextType, EventPayloads, NotifierTemplatesType, NotifyMeMessageType } from '../../types';
 
 import type { EventType } from '@notifications/shared/types';
+import { SYSTEM_CONTEXT } from '../../constants';
 import SHARED_SYMBOLS from '../symbols';
 import type { LoggerService } from './logger.service';
 import { QueuesEnum, StorageQueueService } from './storage-queue.service';
 
-// TechDebt: Allow for system domain_context (this might be a breaking change and require notifications typing). Keeping the 00000000-0000-0000-0000-000000000000 for now.
-//           It used to be F4D75573-47CF-EC11-B656-0050F25A2AF6
-
 // This should be reviewed in the future, notifications currently require a sender (additionally it used to be F4D75573-47CF-EC11-B656-0050F25A2AF6)
-export const SYSTEM_CRON_SENDER: AdminDomainContextType = {
-  currentRole: { id: '00000000-0000-0000-0000-000000000000', role: ServiceRoleEnum.ADMIN },
-  id: '00000000-0000-0000-0000-000000000000',
-  identityId: '00000000-0000-0000-0000-000000000000'
-};
+export const SYSTEM_CRON_SENDER = SYSTEM_CONTEXT;
 
 @injectable()
 export class NotifierService {

@@ -4,7 +4,7 @@ Explanation here
 
 ## Requirements
 
-- Node 18
+- Node 20
 - Docker and Docker compose
 
 ### Instructions to install docker + docker compose on a linux ubuntu flavored environment.

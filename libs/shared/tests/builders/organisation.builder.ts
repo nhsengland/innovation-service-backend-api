@@ -1,5 +1,6 @@
 import { randAlpha, randCompanyName } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
+import { SYSTEM_CONTEXT } from '../../constants';
 import { OrganisationEntity } from '../../entities';
 import { OrganisationTypeEnum } from '../../enums';
 import { BaseBuilder } from './base.builder';
@@ -21,7 +22,7 @@ export class OrganisationBuilder extends BaseBuilder {
     super(entityManager);
 
     this.organisation = OrganisationEntity.new({
-      createdBy: '00000000-0000-0000-0000-000000000000',
+      createdBy: SYSTEM_CONTEXT.id,
       name: randCompanyName(),
       acronym: randAlpha({ length: 5 }).join('.'),
       isShadow: false,

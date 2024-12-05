@@ -67,6 +67,18 @@ export type DomainUserInfoType = {
   firstTimeSignInAt: null | Date;
 };
 
+// This is mostly the same as DomainUserInfoType, but with some fields removed.
+export type DomainUserIdentityInfo = {
+  id: string;
+  identityId: string;
+  displayName: string;
+  roles: Pick<RoleType, 'id' | 'isActive' | 'role'>[];
+  email: string;
+  mobilePhone: null | string;
+  isActive: boolean;
+  lastLoginAt: null | Date;
+};
+
 export type InnovatorDomainContextType = {
   id: string;
   identityId: string;
@@ -225,7 +237,7 @@ export type OrganisationWithUnitsType = {
 // Innovation domain types.
 // // This is the type of the params column on ActivityLog table.
 export type ActivityLogDBParamsType = {
-  interveningUserId?: string;
+  interveningUserId?: string | null;
 
   assessmentId?: string;
   sectionId?: CurrentCatalogTypes.InnovationSections;
@@ -251,6 +263,8 @@ export type ActivityLogDBParamsType = {
   reassessment?: {
     id: string;
   };
+
+  message?: string | { id: string };
 };
 
 // // This is the type of the list of activities.

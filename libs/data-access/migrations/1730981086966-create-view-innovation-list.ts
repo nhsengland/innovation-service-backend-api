@@ -1,7 +1,7 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 // Note: Editing/Renaming view in place to make it easier to track changes
-export class CreateViewInnovationList1723654334279 implements MigrationInterface {
+export class CreateViewInnovationList1730981086966 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
     CREATE OR ALTER VIEW innovation_list_view AS
@@ -14,7 +14,6 @@ export class CreateViewInnovationList1723654334279 implements MigrationInterface
       o.name as owner_company_name,
       i.submitted_at,
       i.updated_at,
-      i.archived_status,
       i.status_updated_at,
       i.current_assessment_id,
       i.last_assessment_request_at,

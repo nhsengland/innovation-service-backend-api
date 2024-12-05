@@ -11,7 +11,7 @@ import { container } from '../_config';
 import SHARED_SYMBOLS from '@admin/shared/services/symbols';
 import SYMBOLS from '../_services/symbols';
 import type { UsersService } from '../_services/users.service';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1AdminUserUpdate {
@@ -44,22 +44,9 @@ export default openApi(V1AdminUserUpdate.httpTrigger as AzureFunction, '/v1/user
     parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     requestBody: SwaggerHelper.bodyJ2S(BodySchema),
     responses: {
-      '200': {
-        description: 'The user has been updated.',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                userId: {
-                  type: 'string',
-                  description: 'Id of the user.'
-                }
-              }
-            }
-          }
-        }
-      },
+      '200': SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: 'The user has been updated.'
+      }),
       '400': { description: 'Bad request.' },
       '401': { description: 'The user is not authorized to lock a user.' },
       '404': { description: 'The user does not exist.' },

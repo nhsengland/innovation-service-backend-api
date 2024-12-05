@@ -3,23 +3,23 @@ import Joi from 'joi';
 import type { EntityManager } from 'typeorm';
 
 import {
+  InnovationAssessmentEntity,
   OrganisationEntity,
   OrganisationUnitEntity,
   UserEntity,
-  UserRoleEntity,
-  InnovationAssessmentEntity
+  UserRoleEntity
 } from '@admin/shared/entities';
 import { NotifierTypeEnum, ServiceRoleEnum, UserStatusEnum } from '@admin/shared/enums';
 import {
   BadRequestError,
+  ConflictError,
   ForbiddenError,
   GenericErrorsEnum,
   NotFoundError,
   NotImplementedError,
   OrganisationErrorsEnum,
   UnprocessableEntityError,
-  UserErrorsEnum,
-  ConflictError
+  UserErrorsEnum
 } from '@admin/shared/errors';
 import {
   CacheConfigType,
@@ -35,11 +35,11 @@ import {
   type RoleType
 } from '@admin/shared/types';
 
+import { JoiHelper } from '@admin/shared/helpers';
 import SHARED_SYMBOLS from '@admin/shared/services/symbols';
 import { AdminOperationEnum, validationsHelper } from '../_config/admin-operations.config';
 import type { ValidationResult } from '../types/validation.types';
 import { BaseService } from './base.service';
-import { JoiHelper } from '@admin/shared/helpers';
 
 @injectable()
 export class UsersService extends BaseService {
@@ -525,7 +525,7 @@ export class UsersService extends BaseService {
       r.innovationSupports.forEach(s => s.userRoles.forEach(r => userIdsSet.add(r.user.identityId)))
     );
 
-    const usersInfoMap = await this.identityProviderService.getUsersMap(Array.from(userIdsSet));
+    const usersInfoMap = await this.domainService.users.getUsersMap({ identityIds: Array.from(userIdsSet) }, em);
 
     for (const role of roleAndSupports) {
       for (const support of role.innovationSupports) {
@@ -533,7 +533,7 @@ export class UsersService extends BaseService {
           innovation: { id: support.innovation.id, name: support.innovation.name },
           supportedBy: support.userRoles.map(r => ({
             id: r.user.id,
-            name: usersInfoMap.get(r.user.identityId)?.displayName ?? '[deleted user]',
+            name: usersInfoMap.getDisplayName(r.user.identityId),
             role: r.role
           })),
           unit: this.domainService.users.getDisplayTag(role.role, { unitName: role.organisationUnit?.name })
@@ -552,7 +552,7 @@ export class UsersService extends BaseService {
 
       const userInfo = {
         id: user.id,
-        name: usersInfoMap.get(user.identityId)?.displayName ?? '[deleted user]',
+        name: usersInfoMap.getDisplayName(user.identityId),
         role: ServiceRoleEnum.ASSESSMENT
       };
       for (const assessment of assessments) {

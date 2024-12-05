@@ -7,7 +7,7 @@ import SHARED_SYMBOLS from '@admin/shared/services/symbols';
 import type { CustomContextType } from '@admin/shared/types';
 
 import { container } from '../_config';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { JoiHelper, SwaggerHelper } from '@admin/shared/helpers';
 import { ParamsSchema, QueryParamsSchema, QueryParamsType, type ParamsType } from './validation.schemas';
 
@@ -46,30 +46,9 @@ export default openApi(V1MeInnovationsInfo.httpTrigger as AzureFunction, '/v1/us
     tags: ['[v1] Innovations owned by user'],
     parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     responses: {
-      200: {
-        description: 'Success',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  id: {
-                    type: 'string'
-                  },
-                  name: {
-                    type: 'string'
-                  },
-                  isOwner: {
-                    type: 'boolean'
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
+      200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: 'Success'
+      }),
       400: { description: 'Bad request' }
     }
   }

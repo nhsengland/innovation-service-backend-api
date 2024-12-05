@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import type { AuthorizationService } from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { CustomContextType } from '@innovations/shared/types';
@@ -12,7 +12,7 @@ import { container } from '../_config';
 import { InnovationStatusEnum } from '@innovations/shared/enums';
 import type { InnovationThreadsService } from '../_services/innovation-threads.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1InnovationThreadMessageUpdate {
@@ -69,69 +69,12 @@ export default openApi(
       description: 'Update a thread message',
       tags: ['[v1] Innovation Threads'],
       operationId: 'v1-innovation-thread-message-update',
-      parameters: [
-        {
-          name: 'innovationId',
-          in: 'path',
-          description: 'Innovation Id',
-          required: true,
-          schema: {
-            type: 'string'
-          }
-        },
-        {
-          name: 'threadId',
-          in: 'path',
-          description: 'Thread Id',
-          required: true,
-          schema: {
-            type: 'string'
-          }
-        },
-        {
-          name: 'messageId',
-          in: 'path',
-          description: 'Message Id',
-          required: true,
-          schema: {
-            type: 'string'
-          }
-        }
-      ],
-      requestBody: {
-        description: 'Message',
-        required: true,
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                message: {
-                  type: 'string',
-                  description: 'Message'
-                }
-              }
-            }
-          }
-        }
-      },
+      parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
+      requestBody: SwaggerHelper.bodyJ2S(BodySchema),
       responses: {
-        '200': {
-          description: 'Success',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  id: {
-                    type: 'string',
-                    description: 'Message Id'
-                  }
-                }
-              }
-            }
-          }
-        },
+        '200': SwaggerHelper.responseJ2S(ResponseBodySchema, {
+          description: 'Success'
+        }),
         '400': {
           description: 'Bad Request'
         },

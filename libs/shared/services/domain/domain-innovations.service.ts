@@ -1,8 +1,8 @@
 import type { DataSource, EntityManager, Repository } from 'typeorm';
-import { In } from 'typeorm';
+import { Brackets, In } from 'typeorm';
 
 import { cloneDeep } from 'lodash';
-import { EXPIRATION_DATES } from '../../constants';
+import { EXPIRATION_DATES, SYSTEM_CONTEXT } from '../../constants';
 import type { UserEntity } from '../../entities';
 import { ActivityLogEntity } from '../../entities/innovation/activity-log.entity';
 import { InnovationAssessmentEntity } from '../../entities/innovation/innovation-assessment.entity';
@@ -20,12 +20,14 @@ import { NotificationUserEntity } from '../../entities/user/notification-user.en
 import { NotificationEntity } from '../../entities/user/notification.entity';
 import { UserRoleEntity } from '../../entities/user/user-role.entity';
 import { InnovationGroupedStatusViewEntity } from '../../entities/views/innovation-grouped-status.view.entity';
-import type { InnovationGroupedStatusEnum, NotificationCategoryType } from '../../enums';
+import type { NotificationCategoryType } from '../../enums';
 import {
   ActivityEnum,
   ActivityTypeEnum,
+  InnovationArchiveReasonEnum,
   InnovationCollaboratorStatusEnum,
   InnovationExportRequestStatusEnum,
+  InnovationGroupedStatusEnum,
   InnovationStatusEnum,
   InnovationSupportCloseReasonEnum,
   InnovationSupportLogTypeEnum,
@@ -45,24 +47,39 @@ import {
 } from '../../errors';
 import { TranslationHelper } from '../../helpers';
 import type { FilterPayload } from '../../models/schema-engine/schema.model';
+import { UserMap } from '../../models/user.map';
 import type { CurrentElasticSearchDocumentType } from '../../schemas/innovation-record/index';
-import type { ActivitiesParamsType, DomainContextType, IdentityUserInfo, SupportLogParams } from '../../types';
-import type { IdentityProviderService } from '../integrations/identity-provider.service';
+import { DomainUsersService, RedisService, SQLConnectionService } from '../../services';
+import type { ActivitiesParamsType, DomainContextType, SupportLogParams } from '../../types';
 import type { NotifierService } from '../integrations/notifier.service';
 import type { IRSchemaService } from '../storage/ir-schema.service';
-import type { DomainUsersService } from './domain-users.service';
 
 export class DomainInnovationsService {
   innovationRepository: Repository<InnovationEntity>;
   innovationSupportRepository: Repository<InnovationSupportEntity>;
   activityLogRepository: Repository<ActivityLogEntity>;
 
+  #sqlConnection: DataSource;
+  get sqlConnection(): DataSource {
+    if (!this.#sqlConnection) {
+      this.#sqlConnection = this.sqlConnectionService.getConnection();
+    }
+    return this.#sqlConnection;
+  }
+
+  #domainUsersService: DomainUsersService;
+  get domainUsersService(): DomainUsersService {
+    return this.#domainUsersService;
+  }
+  set domainUsersService(value: DomainUsersService) {
+    this.#domainUsersService = value;
+  }
+
   constructor(
-    private sqlConnection: DataSource,
-    private identityProviderService: IdentityProviderService,
+    private sqlConnectionService: SQLConnectionService,
     private notifierService: NotifierService,
-    private domainUsersService: DomainUsersService,
-    private irSchemaService: IRSchemaService
+    private irSchemaService: IRSchemaService,
+    private redisService: RedisService
   ) {
     this.innovationRepository = this.sqlConnection.getRepository(InnovationEntity);
     this.innovationSupportRepository = this.sqlConnection.getRepository(InnovationSupportEntity);
@@ -88,25 +105,48 @@ export class DomainInnovationsService {
 
     for (const innovation of dbInnovations) {
       if (innovation.transfers[0]) {
-        const domainContext = await this.domainUsersService.getInnovatorDomainContextByRoleId(
-          innovation.transfers[0].createdBy,
-          em
-        );
-        if (!domainContext) {
-          return; // this will never happen
-        }
-
         await this.archiveInnovationsWithDeleteSideffects(
-          domainContext,
+          SYSTEM_CONTEXT,
           [
             {
               id: innovation.id,
-              reason: 'The owner deleted their account and the request to transfer ownership expired.'
+              reason: InnovationArchiveReasonEnum.OWNER_ACCOUNT_DELETED
             }
           ],
           em
         );
       }
+    }
+  }
+
+  /**
+   * archive innovations without active support
+   * This method is used by the cron job.
+   * @param entityManager optional entity manager
+   */
+
+  async archiveInnovationsWithoutSupport(entityManager?: EntityManager): Promise<void> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const dbInnovations = await em
+      .createQueryBuilder(InnovationGroupedStatusViewEntity, 'innovationGroupedStatus')
+      .where('innovationGroupedStatus.groupedStatus = :groupedStatus', {
+        groupedStatus: InnovationGroupedStatusEnum.NO_ACTIVE_SUPPORT
+      })
+      .andWhere('innovationGroupedStatus.expected_archive_date < GETDATE()')
+      .getMany();
+
+    for (const innovation of dbInnovations) {
+      await this.archiveInnovations(
+        SYSTEM_CONTEXT,
+        [
+          {
+            id: innovation.innovationId,
+            reason: InnovationArchiveReasonEnum.SIX_MONTHS_INACTIVITY
+          }
+        ],
+        em
+      );
     }
   }
 
@@ -206,13 +246,13 @@ export class DomainInnovationsService {
    */
   async archiveInnovations(
     domainContext: DomainContextType,
-    innovations: { id: string; reason: string }[],
+    innovations: { id: string; reason: InnovationArchiveReasonEnum }[],
     entityManager?: EntityManager
   ): Promise<
     {
       id: string;
       prevStatus: InnovationStatusEnum;
-      reason: string;
+      reason: InnovationArchiveReasonEnum;
       affectedUsers: { userId: string; userType: ServiceRoleEnum; unitId?: string }[];
       isReassessment: boolean;
     }[]
@@ -370,7 +410,6 @@ export class DomainInnovationsService {
           InnovationEntity,
           { id: innovation.id },
           {
-            archivedStatus: () => 'status',
             status: InnovationStatusEnum.ARCHIVED,
             archiveReason: innovation.reason,
             statusUpdatedAt: archivedAt,
@@ -389,7 +428,7 @@ export class DomainInnovationsService {
               innovation.id,
               {
                 type: InnovationSupportLogTypeEnum.INNOVATION_ARCHIVED,
-                description: innovation.reason,
+                description: TranslationHelper.translate(`ARCHIVE_REASONS.${innovation.reason}`),
                 unitId: support.organisationUnit.id,
                 supportStatus: InnovationSupportStatusEnum.CLOSED
               }
@@ -398,6 +437,12 @@ export class DomainInnovationsService {
         }
         await Promise.all(supportLogs);
       }
+
+      // Add to the elasticsearch queue so they update on advanced search
+      await this.redisService.addToSet(
+        'elasticsearch',
+        archivedInnovationsInfo.map(i => i.id)
+      );
 
       return archivedInnovationsInfo;
     });
@@ -418,7 +463,7 @@ export class DomainInnovationsService {
    */
   async archiveInnovationsWithDeleteSideffects(
     domainContext: DomainContextType,
-    innovations: { id: string; reason: string }[],
+    innovations: { id: string; reason: InnovationArchiveReasonEnum }[],
     entityManager?: EntityManager
   ): Promise<
     {
@@ -652,7 +697,7 @@ export class DomainInnovationsService {
     {
       id: string;
       identityId: string;
-      name?: string;
+      name: string;
       locked: boolean;
       isOwner?: boolean;
       userRole: { id: string; role: ServiceRoleEnum };
@@ -712,13 +757,18 @@ export class DomainInnovationsService {
       .filter(collaboratorIsUser)
       .filter(u => u.id !== thread.innovation.owner?.id);
 
-    const usersInfo: Map<string, IdentityUserInfo> = withUserNames
-      ? await this.identityProviderService.getUsersMap([
-          ...(thread.innovation.owner ? [thread.innovation.owner.identityId] : []),
-          ...collaboratorUsers.map(u => u.identityId),
-          ...thread.followers.map(f => f.user.identityId)
-        ])
-      : new Map();
+    const usersInfo = withUserNames
+      ? await this.domainUsersService.getUsersMap(
+          {
+            identityIds: [
+              ...(thread.innovation.owner ? [thread.innovation.owner.identityId] : []),
+              ...collaboratorUsers.map(u => u.identityId),
+              ...thread.followers.map(f => f.user.identityId)
+            ]
+          },
+          em
+        )
+      : new UserMap();
 
     const followers: Awaited<ReturnType<DomainInnovationsService['threadFollowers']>> = [];
 
@@ -727,7 +777,7 @@ export class DomainInnovationsService {
       followers.push({
         id: thread.innovation.owner.id,
         identityId: thread.innovation.owner.identityId,
-        name: usersInfo.get(thread.innovation.owner.identityId)?.displayName,
+        name: usersInfo.getDisplayName(thread.innovation.owner.identityId, ServiceRoleEnum.INNOVATOR),
         locked: !thread.innovation.owner.serviceRoles[0].isActive,
         isOwner: true,
         userRole: { id: thread.innovation.owner.serviceRoles[0].id, role: ServiceRoleEnum.INNOVATOR },
@@ -740,7 +790,7 @@ export class DomainInnovationsService {
       followers.push({
         id: collaboratorUser.id,
         identityId: collaboratorUser.identityId,
-        name: usersInfo.get(collaboratorUser.identityId)?.displayName,
+        name: usersInfo.getDisplayName(collaboratorUser.identityId, ServiceRoleEnum.INNOVATOR),
         locked: !collaboratorUser.serviceRoles[0]?.isActive,
         isOwner: false,
         userRole: { id: collaboratorUser.serviceRoles[0]!.id, role: ServiceRoleEnum.INNOVATOR }, //assuming innovators can only have 1 role
@@ -752,7 +802,7 @@ export class DomainInnovationsService {
       ...thread.followers.map(followerRole => ({
         id: followerRole.user.id,
         identityId: followerRole.user.identityId,
-        name: usersInfo.get(followerRole.user.identityId)?.displayName,
+        name: usersInfo.getDisplayName(followerRole.user.identityId),
         locked: !followerRole.isActive,
         isOwner: false,
         userRole: {
@@ -1031,6 +1081,35 @@ export class DomainInnovationsService {
     return res.map(r => r.unit_id);
   }
 
+  // NOTE: For now is just retorning roleId, but can be further extended for other things if needed.
+  async getInnovationInnovatorsRoleId(innovationId: string, entityManager?: EntityManager): Promise<string[]> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const users = await em
+      .createQueryBuilder(UserRoleEntity, 'role')
+      .select(['role.id'])
+      .innerJoinAndMapOne(
+        'innovation',
+        InnovationEntity,
+        'innovation',
+        'innovation.id = :innovationId AND innovation.deleted_at IS NULL',
+        { innovationId }
+      )
+      .leftJoin('innovation.collaborators', 'collaborator', 'collaborator.status = :activeStatus', {
+        activeStatus: InnovationCollaboratorStatusEnum.ACTIVE
+      })
+      .where('role.isActive = 1')
+      .andWhere(
+        new Brackets(qp => {
+          qp.where('role.user_id = innovation.owner_id');
+          qp.orWhere('role.user_id = collaborator.user_id');
+        })
+      )
+      .getMany();
+
+    return users.map(r => r.id);
+  }
+
   /**
    * Fetches all the information needed for the document type.
    * If innovationIds are passed it will only return the information for those ids,
@@ -1044,7 +1123,7 @@ export class DomainInnovationsService {
   ): Promise<CurrentElasticSearchDocumentType | undefined | CurrentElasticSearchDocumentType[]> {
     let sql = `WITH
       innovations AS (
-        SELECT i.id, i.status, archived_status, status_updated_at, submitted_at, i.updated_at, i.current_assessment_id,
+        SELECT i.id, i.status, status_updated_at, submitted_at, i.updated_at, i.current_assessment_id,
         i.has_been_assessed, last_assessment_request_at, grouped_status, u.id AS owner_id,
         u.external_id AS owner_external_id, u.status AS owner_status, o.name AS owner_company
         FROM innovation i
@@ -1075,8 +1154,6 @@ export class DomainInnovationsService {
     SELECT
       i.id,
       i.status,
-      i.archived_status AS archivedStatus,
-      IIF(i.status = 'ARCHIVED', i.archived_status, i.status) AS rawStatus,
       i.status_updated_at AS statusUpdatedAt,
       i.grouped_status AS groupedStatus,
       i.has_been_assessed AS hasBeenAssessed,
@@ -1146,8 +1223,6 @@ export class DomainInnovationsService {
       return {
         id: innovation.id,
         status: innovation.status,
-        archivedStatus: innovation.archivedStatus,
-        rawStatus: innovation.rawStatus,
         statusUpdatedAt: innovation.statusUpdatedAt,
         groupedStatus: innovation.groupedStatus,
         hasBeenAssessed: !!innovation.hasBeenAssessed,

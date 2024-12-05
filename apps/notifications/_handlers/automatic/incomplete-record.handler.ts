@@ -3,6 +3,7 @@ import { ServiceRoleEnum, type NotifierTypeEnum } from '@notifications/shared/en
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { innovationRecordUrl } from '../../_helpers/url.helper';
 import { BaseHandler } from '../base.handler';
+import { randomUUID } from 'crypto';
 
 export class IncompleteRecordHandler extends BaseHandler<
   NotifierTypeEnum.INCOMPLETE_INNOVATION_RECORD,
@@ -21,11 +22,17 @@ export class IncompleteRecordHandler extends BaseHandler<
     for (const innovation of innovations) {
       const innovators = await this.recipientsService.getInnovationActiveOwnerAndCollaborators(innovation.innovationId);
       const recipients = await this.recipientsService.getUsersRecipient(innovators, ServiceRoleEnum.INNOVATOR);
+      const notificationId = randomUUID();
+
       this.notify('AU01_INNOVATOR_INCOMPLETE_RECORD', recipients, {
         email: {
           notificationPreferenceType: 'AUTOMATIC',
           params: {
-            innovation_record_url: innovationRecordUrl(ServiceRoleEnum.INNOVATOR, innovation.innovationId)
+            innovation_record_url: innovationRecordUrl(
+              ServiceRoleEnum.INNOVATOR,
+              innovation.innovationId,
+              notificationId
+            )
           }
         },
         inApp: {
@@ -35,7 +42,8 @@ export class IncompleteRecordHandler extends BaseHandler<
             id: innovation.innovationId
           },
           innovationId: innovation.innovationId,
-          params: {}
+          params: {},
+          notificationId
         }
       });
     }

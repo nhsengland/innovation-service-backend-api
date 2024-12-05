@@ -26,6 +26,7 @@ export const EmailTemplates = {
   ST06_SUPPORT_NEW_ASSIGNED_ACCESSOR_TO_OLD_QA: 'cdb8e3b2-1f83-4ced-8fcb-3cf801262ae8',
   ST07_SUPPORT_STATUS_CHANGE_REQUEST: '7502777a-a1e7-4a63-bbfa-04eac9bca2ea',
   ST08_SUPPORT_NEW_ASSIGNED_WAITING_INNOVATION_TO_QA: 'a64f7c3e-f108-439e-8291-e7d1b08bec43',
+  ST09_SUPPORT_STATUS_TO_CLOSED: '34113715-af5d-49fa-bc28-a0911c26a6f1',
 
   // NEEDS ASSESSMENT
   NA01_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_INNOVATOR: 'fadfc3e8-d48e-446e-a81d-d573d774b725',
@@ -42,7 +43,7 @@ export const EmailTemplates = {
   // AUTOMATIC
   AU01_INNOVATOR_INCOMPLETE_RECORD: '37d20809-05ba-4878-9bbc-49689cc4fe51',
   AU02_ACCESSOR_IDLE_ENGAGING_SUPPORT: '99b47245-0b38-476a-8389-fd8ccecca0b0',
-  AU03_INNOVATOR_IDLE_SUPPORT: '53d609ef-30d4-4718-b20b-229924fa1e11',
+  AU03_INNOVATOR_IDLE_SUPPORT: '24a22c18-df7b-4708-ac29-373c56ec262a',
   AU04_SUPPORT_KPI_REMINDER: 'e1f0a2bc-3b15-4733-ba89-c0d5c9fec38a',
   AU05_SUPPORT_KPI_OVERDUE: '5fe24d48-8def-457d-a81f-56750f38c508',
   AU06_ACCESSOR_IDLE_WAITING: '34f06061-18a1-4b5c-9c35-1759192ff055',
@@ -99,6 +100,7 @@ export const EmailTemplates = {
   // NOTIFY ME
   INNOVATION_RECORD_UPDATED: '2dce9787-9a38-4d51-9e33-6ddf7683397d',
   PROGRESS_UPDATE_CREATED: '27f2a823-b8e4-4861-a208-8a5834c93516',
+  DOCUMENT_UPLOADED: '89b92be5-578a-4ea5-a639-66bcbdfbeef1',
   REMINDER: 'e8c593a4-2341-4177-89b5-b92aaaeac595',
   SUGGESTED_SUPPORT_UPDATED: '6d442fc5-2056-4515-9afc-e32a790ef231',
   SUPPORT_UPDATED: 'c24edce0-69cb-463d-bd65-d05304847dec'
@@ -221,6 +223,12 @@ export type EmailTemplatesType = {
     innovation_name: string;
     qa_name: string;
   };
+  ST09_SUPPORT_STATUS_TO_CLOSED: {
+    unit_name: string;
+    innovation_name: string;
+    message: string;
+    start_survey_page: string;
+  };
 
   // NEEDS ASSESSMENT
   NA01_INNOVATOR_SUBMITS_FOR_NEEDS_ASSESSMENT_TO_INNOVATOR: {
@@ -295,7 +303,8 @@ export type EmailTemplatesType = {
   AU03_INNOVATOR_IDLE_SUPPORT: {
     innovation_name: string;
     innovation_record_url: string;
-    how_to_proceed_page_url: string;
+    expected_archive_date: string;
+    innovation_overview_url: string;
   };
 
   AU04_SUPPORT_KPI_REMINDER: {
@@ -499,6 +508,11 @@ export type EmailTemplatesType = {
     innovation: string;
     section: string;
     sectionUrl: string;
+  };
+  DOCUMENT_UPLOADED: {
+    innovation_name: string;
+    document_name: string;
+    documents_url: string;
   };
   REMINDER: {
     innovation: string;

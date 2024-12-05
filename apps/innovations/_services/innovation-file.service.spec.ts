@@ -36,6 +36,7 @@ describe('Services / Innovation File service suite', () => {
   let em: EntityManager;
 
   const notifierSendSpy = jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
+  const notifierSendNotifyMeSpy = jest.spyOn(NotifierService.prototype, 'sendNotifyMe').mockResolvedValue(true);
 
   beforeAll(async () => {
     sut = container.get<InnovationFileService>(SYMBOLS.InnovationFileService);
@@ -48,6 +49,7 @@ describe('Services / Innovation File service suite', () => {
 
   afterEach(async () => {
     await testsHelper.releaseQueryRunnerEntityManager();
+    notifierSendNotifyMeSpy.mockClear();
   });
 
   describe('getFilesList', () => {
@@ -898,6 +900,37 @@ describe('Services / Innovation File service suite', () => {
             em
           )
         ).rejects.toThrow(new ConflictError(AuthErrorsEnum.AUTH_INNOVATION_ARCHIVED_CONFLICT));
+      });
+
+      it('should send the notifyMe notification', async () => {
+        const data = {
+          context: { id: innovation.id, type: InnovationFileContextTypeEnum.INNOVATION },
+          name: randFileName(),
+          file: {
+            id: randFileName(),
+            name: randFileName(),
+            size: randNumber(),
+            extension: 'pdf'
+          }
+        };
+
+        await sut.createFile(
+          DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, 'innovatorRole'),
+          innovation.id,
+          data,
+          innovation.status,
+          em
+        );
+
+        expect(notifierSendNotifyMeSpy).toHaveBeenCalledTimes(1);
+        expect(notifierSendNotifyMeSpy).toHaveBeenCalledWith(
+          DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, 'innovatorRole'),
+          innovation.id,
+          'DOCUMENT_UPLOADED',
+          {
+            documentName: data.name
+          }
+        );
       });
     });
 

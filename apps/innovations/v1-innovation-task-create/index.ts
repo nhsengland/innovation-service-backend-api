@@ -12,7 +12,7 @@ import { container } from '../_config';
 import { InnovationStatusEnum } from '@innovations/shared/enums';
 import type { InnovationTasksService } from '../_services/innovation-tasks.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1InnovationTaskCreate {
@@ -62,24 +62,9 @@ export default openApi(V1InnovationTaskCreate.httpTrigger as AzureFunction, '/v1
       description: 'The innovation task to create.'
     }),
     responses: {
-      200: {
-        description: 'The innovation task has been created.',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                id: {
-                  type: 'string',
-                  description: 'The innovation task id.',
-                  example: 'c0a80121-7ac0-464e-b8f6-27b88b0cda7f'
-                }
-              },
-              required: ['id']
-            }
-          }
-        }
-      },
+      200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: 'The innovation task has been created.'
+      }),
       400: {
         description: 'The innovation task could not be created.'
       },

@@ -4,6 +4,7 @@ import { TranslationHelper } from '@notifications/shared/helpers';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { innovationOverviewUrl } from '../../_helpers/url.helper';
 import { BaseHandler } from '../base.handler';
+import { randomUUID } from 'crypto';
 
 export class SupportStatusChangeRequestHandler extends BaseHandler<
   NotifierTypeEnum.SUPPORT_STATUS_CHANGE_REQUEST,
@@ -27,6 +28,7 @@ export class SupportStatusChangeRequestHandler extends BaseHandler<
       ]);
 
       const status = TranslationHelper.translate(`SUPPORT_STATUS.${this.inputData.proposedStatus}`).toLowerCase();
+      const notificationId = randomUUID();
 
       this.notify('ST07_SUPPORT_STATUS_CHANGE_REQUEST', qas, {
         email: {
@@ -34,7 +36,7 @@ export class SupportStatusChangeRequestHandler extends BaseHandler<
           params: {
             accessor_name: accessor,
             innovation_name: innovation.name,
-            innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, innovation.id),
+            innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, innovation.id, notificationId),
             proposed_status: status,
             request_comment: this.inputData.requestStatusUpdateComment
           }
@@ -50,7 +52,8 @@ export class SupportStatusChangeRequestHandler extends BaseHandler<
             accessorName: accessor,
             innovationName: innovation.name,
             status
-          }
+          },
+          notificationId
         }
       });
     }

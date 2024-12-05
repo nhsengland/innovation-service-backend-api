@@ -3,7 +3,6 @@ import azureFunction from '.';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@admin/shared/tests';
 import type { TestUserType } from '@admin/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@admin/shared/types';
-import { randPhoneNumber } from '@ngneat/falso';
 import { UsersService } from '../_services/users.service';
 import type { BodyType } from './validation.schemas';
 
@@ -36,7 +35,7 @@ describe('v1-me-mfa-upsert Suite', () => {
       if (type === 'phone') {
         body = {
           type,
-          phoneNumber: randPhoneNumber()
+          phoneNumber: '+447123456789'
         };
       } else {
         body = { type: type as 'none' | 'email' };

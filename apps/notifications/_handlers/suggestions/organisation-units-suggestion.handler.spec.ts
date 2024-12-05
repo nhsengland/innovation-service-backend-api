@@ -1,3 +1,4 @@
+import * as crypto from 'crypto';
 import { randText } from '@ngneat/falso';
 import { ServiceRoleEnum } from '@notifications/shared/enums';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
@@ -6,6 +7,10 @@ import { dataSharingPreferencesUrl, innovationOverviewUrl } from '../../_helpers
 import { RecipientsService } from '../../_services/recipients.service';
 import { NotificationsTestsHelper } from '../../_tests/notifications-test.helper';
 import { OrganisationUnitsSuggestionHandler } from './organisation-units-suggestion.handler';
+
+jest.mock('crypto');
+const notificationId = '00001234-1234-1234-1234-123456789012';
+jest.spyOn(crypto, 'randomUUID').mockImplementation(() => notificationId);
 
 describe('Notifications / _handlers / organisation-units-suggestion suite', () => {
   const testsHelper = new NotificationsTestsHelper();
@@ -58,7 +63,7 @@ describe('Notifications / _handlers / organisation-units-suggestion suite', () =
           innovation_name: innovation.name,
           organisation_unit: requestUserUnit.name,
           comment: comment,
-          innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, innovation.id),
+          innovation_overview_url: innovationOverviewUrl(ServiceRoleEnum.ACCESSOR, innovation.id, notificationId),
           showKPI: (r.unitId === healthOrgAiUnit.id ? 'yes' : 'yes') as any // TODO: If KPIs are optional for some this can be changed
         }))
       });
@@ -78,7 +83,8 @@ describe('Notifications / _handlers / organisation-units-suggestion suite', () =
         outputData: {
           innovationName: innovation.name,
           senderDisplayInformation: requestUserUnit.name
-        }
+        },
+        notificationId
       });
     });
   });
@@ -101,7 +107,11 @@ describe('Notifications / _handlers / organisation-units-suggestion suite', () =
         recipients: innovatorRecipients,
         outputData: {
           innovation_name: innovation.name,
-          data_sharing_preferences_url: dataSharingPreferencesUrl(ServiceRoleEnum.INNOVATOR, innovation.id)
+          data_sharing_preferences_url: dataSharingPreferencesUrl(
+            ServiceRoleEnum.INNOVATOR,
+            innovation.id,
+            notificationId
+          )
         }
       });
     });
@@ -117,7 +127,8 @@ describe('Notifications / _handlers / organisation-units-suggestion suite', () =
           comment: comment
         },
         recipients: innovatorRecipients,
-        outputData: {}
+        outputData: {},
+        notificationId
       });
     });
   });

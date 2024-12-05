@@ -3,7 +3,7 @@ import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { ElasticSearchDocumentUpdate, JwtDecoder } from '@innovations/shared/decorators';
 import { InnovationStatusEnum, ServiceRoleEnum } from '@innovations/shared/enums';
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import type { AuthorizationService } from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { CustomContextType } from '@innovations/shared/types';
@@ -54,16 +54,8 @@ export default openApi(V1InnovationSuggestionsCreate.httpTrigger as AzureFunctio
     description: 'Create suggestion for an Innovation',
     operationId: 'v1-innovation-suggestions-create',
     tags: ['Create Innovation Suggestion'],
-    parameters: [
-      {
-        in: 'path',
-        name: 'innovationId',
-        required: true,
-        schema: {
-          type: 'string'
-        }
-      }
-    ],
+    parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
+    requestBody: SwaggerHelper.bodyJ2S(BodySchema),
     responses: {
       201: {
         description: 'Creates a suggestion.'

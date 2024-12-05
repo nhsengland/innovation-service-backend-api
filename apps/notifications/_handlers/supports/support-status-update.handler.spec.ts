@@ -1,5 +1,5 @@
+import * as crypto from 'crypto';
 import { SupportStatusUpdateHandler } from './support-status-update.handler';
-
 import { randText } from '@ngneat/falso';
 import { InnovationSupportStatusEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { TranslationHelper } from '@notifications/shared/helpers';
@@ -7,8 +7,12 @@ import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { randomUUID } from 'crypto';
 import { HandlersHelper } from '../../_helpers/handlers.helper';
 import { testEmails, testInApps } from '../../_helpers/tests.helper';
-import { supportSummaryUrl, threadUrl } from '../../_helpers/url.helper';
+import { supportSummaryUrl, surveysInitialPage, threadUrl } from '../../_helpers/url.helper';
 import { NotificationsTestsHelper } from '../../_tests/notifications-test.helper';
+
+jest.mock('crypto');
+const notificationId = '00001234-1234-1234-1234-123456789012';
+jest.spyOn(crypto, 'randomUUID').mockImplementation(() => notificationId);
 
 describe('Notifications / _handlers / support-status-update suite', () => {
   const testsHelper = new NotificationsTestsHelper();
@@ -53,7 +57,7 @@ describe('Notifications / _handlers / support-status-update suite', () => {
           innovation_name: innovation.name,
           message: message,
           unit_name: requestUserUnit.name,
-          message_url: threadUrl(ServiceRoleEnum.INNOVATOR, innovation.id, threadId)
+          message_url: threadUrl(ServiceRoleEnum.INNOVATOR, innovation.id, threadId, notificationId)
         }
       });
     });
@@ -78,64 +82,118 @@ describe('Notifications / _handlers / support-status-update suite', () => {
           innovationName: innovation.name,
           threadId: threadId,
           unitName: requestUserUnit.name
-        }
+        },
+        notificationId
       });
     });
   });
 
   describe('ST02_SUPPORT_STATUS_TO_OTHER', () => {
-    describe.each([InnovationSupportStatusEnum.CLOSED, InnovationSupportStatusEnum.UNSUITABLE])(
-      'when changing status to %s',
-      supportStatus => {
-        it('should send an email to the innovators', async () => {
-          await testEmails(SupportStatusUpdateHandler, 'ST02_SUPPORT_STATUS_TO_OTHER', {
-            notificationPreferenceType: 'SUPPORT',
-            requestUser: DTOsHelper.getUserRequestContext(requestUser),
-            inputData: {
-              innovationId: innovation.id,
-              threadId: threadId,
-              support: {
-                id: support.id,
-                status: supportStatus,
-                message: message
-              }
-            },
-            recipients: recipients,
-            outputData: {
-              innovation_name: innovation.name,
-              unit_name: requestUserUnit.name,
-              message: message,
-              status: TranslationHelper.translate(`SUPPORT_STATUS.${supportStatus}`).toLowerCase(),
-              support_summary_url: supportSummaryUrl(ServiceRoleEnum.INNOVATOR, innovation.id, requestUserUnit.id)
-            }
-          });
-        });
+    const supportStatus = InnovationSupportStatusEnum.UNSUITABLE;
 
-        it('should send an in-app to the innovators', async () => {
-          await testInApps(SupportStatusUpdateHandler, 'ST02_SUPPORT_STATUS_TO_OTHER', {
-            innovationId: innovation.id,
-            context: { type: 'SUPPORT', id: support.id },
-            requestUser: DTOsHelper.getUserRequestContext(requestUser),
-            inputData: {
-              innovationId: innovation.id,
-              threadId: threadId,
-              support: {
-                id: support.id,
-                status: supportStatus,
-                message: message
-              }
-            },
-            recipients: recipients,
-            outputData: {
-              innovationName: innovation.name,
-              unitId: requestUserUnit.id,
-              unitName: requestUserUnit.name,
-              status: TranslationHelper.translate(`SUPPORT_STATUS.${supportStatus}`).toLowerCase()
-            }
-          });
-        });
-      }
-    );
+    it('when changing status to UNSUITABLE should send an email to the innovators', async () => {
+      await testEmails(SupportStatusUpdateHandler, 'ST02_SUPPORT_STATUS_TO_OTHER', {
+        notificationPreferenceType: 'SUPPORT',
+        requestUser: DTOsHelper.getUserRequestContext(requestUser),
+        inputData: {
+          innovationId: innovation.id,
+          threadId: threadId,
+          support: {
+            id: support.id,
+            status: supportStatus,
+            message: message
+          }
+        },
+        recipients: recipients,
+        outputData: {
+          innovation_name: innovation.name,
+          unit_name: requestUserUnit.name,
+          message: message,
+          status: TranslationHelper.translate(`SUPPORT_STATUS.${supportStatus}`).toLowerCase(),
+          support_summary_url: supportSummaryUrl(
+            ServiceRoleEnum.INNOVATOR,
+            innovation.id,
+            notificationId,
+            requestUserUnit.id
+          )
+        }
+      });
+    });
+
+    it('when changing status to UNSUITABLE should send an in-app to the innovators', async () => {
+      await testInApps(SupportStatusUpdateHandler, 'ST02_SUPPORT_STATUS_TO_OTHER', {
+        innovationId: innovation.id,
+        context: { type: 'SUPPORT', id: support.id },
+        requestUser: DTOsHelper.getUserRequestContext(requestUser),
+        inputData: {
+          innovationId: innovation.id,
+          threadId: threadId,
+          support: {
+            id: support.id,
+            status: supportStatus,
+            message: message
+          }
+        },
+        recipients: recipients,
+        outputData: {
+          innovationName: innovation.name,
+          unitId: requestUserUnit.id,
+          unitName: requestUserUnit.name,
+          status: TranslationHelper.translate(`SUPPORT_STATUS.${supportStatus}`).toLowerCase()
+        },
+        notificationId
+      });
+    });
+  });
+
+  describe('ST09_SUPPORT_STATUS_TO_CLOSED', () => {
+    const supportStatus = InnovationSupportStatusEnum.CLOSED;
+    it('when changing status to CLOSED should send an email to the innovators', async () => {
+      await testEmails(SupportStatusUpdateHandler, 'ST09_SUPPORT_STATUS_TO_CLOSED', {
+        notificationPreferenceType: 'SUPPORT',
+        requestUser: DTOsHelper.getUserRequestContext(requestUser),
+        inputData: {
+          innovationId: innovation.id,
+          threadId: threadId,
+          support: {
+            id: support.id,
+            status: supportStatus,
+            message: message
+          }
+        },
+        recipients: recipients,
+        outputData: {
+          innovation_name: innovation.name,
+          unit_name: requestUserUnit.name,
+          message: message,
+          start_survey_page: surveysInitialPage(ServiceRoleEnum.INNOVATOR, innovation.id, notificationId)
+        }
+      });
+    });
+
+    it('when changing status to CLOSED should send an in-app to the innovators', async () => {
+      await testInApps(SupportStatusUpdateHandler, 'ST09_SUPPORT_STATUS_TO_CLOSED', {
+        innovationId: innovation.id,
+        context: { type: 'SUPPORT', id: support.id },
+        requestUser: DTOsHelper.getUserRequestContext(requestUser),
+        inputData: {
+          innovationId: innovation.id,
+          threadId: threadId,
+          support: {
+            id: support.id,
+            status: supportStatus,
+            message: message
+          }
+        },
+        recipients: recipients,
+        outputData: {
+          innovationName: innovation.name,
+          unitId: requestUserUnit.id,
+          unitName: requestUserUnit.name
+        },
+        notificationId
+      });
+    });
   });
 
   describe('ST03_SUPPORT_STATUS_TO_WAITING', () => {
@@ -159,7 +217,12 @@ describe('Notifications / _handlers / support-status-update suite', () => {
           innovation_name: innovation.name,
           unit_name: requestUserUnit.name,
           message: message,
-          support_summary_url: supportSummaryUrl(ServiceRoleEnum.INNOVATOR, innovation.id, requestUserUnit.id)
+          support_summary_url: supportSummaryUrl(
+            ServiceRoleEnum.INNOVATOR,
+            innovation.id,
+            notificationId,
+            requestUserUnit.id
+          )
         }
       });
     });
@@ -184,7 +247,8 @@ describe('Notifications / _handlers / support-status-update suite', () => {
           unitId: requestUserUnit.id,
           unitName: requestUserUnit.name,
           status: TranslationHelper.translate(`SUPPORT_STATUS.${InnovationSupportStatusEnum.WAITING}`).toLowerCase()
-        }
+        },
+        notificationId
       });
     });
   });

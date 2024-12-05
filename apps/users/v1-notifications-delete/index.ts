@@ -11,7 +11,6 @@ import { container } from '../_config';
 
 import type { NotificationsService } from '../_services/notifications.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1UserNotificationsDelete {
@@ -32,9 +31,7 @@ class V1UserNotificationsDelete {
       const queryParams = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
       await notificationsService.deleteUserNotification(domainContext.currentRole.id, queryParams.notificationId);
-      context.res = ResponseHelper.Ok<ResponseDTO>({
-        id: queryParams.notificationId
-      });
+      context.res = ResponseHelper.NoContent();
       return;
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
@@ -50,19 +47,7 @@ export default openApi(V1UserNotificationsDelete.httpTrigger as AzureFunction, '
     tags: ['[v1] Notifications'],
     parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     responses: {
-      200: {
-        description: 'Success',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                id: { type: 'string', description: 'The notification id' }
-              }
-            }
-          }
-        }
-      }
+      204: { description: 'Notification deleted' }
     }
   }
 });
