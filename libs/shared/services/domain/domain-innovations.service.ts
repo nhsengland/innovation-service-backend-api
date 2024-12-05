@@ -427,7 +427,7 @@ export class DomainInnovationsService {
               innovation.id,
               {
                 type: InnovationSupportLogTypeEnum.INNOVATION_ARCHIVED,
-                description: innovation.reason,
+                description: TranslationHelper.translate(`ARCHIVE_REASONS.${innovation.reason}`),
                 unitId: support.organisationUnit.id,
                 supportStatus: InnovationSupportStatusEnum.CLOSED
               }
