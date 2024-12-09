@@ -1,9 +1,9 @@
+import { InnovationSectionStatusEnum } from '@innovations/shared/enums';
 import { injectable } from 'inversify';
 import PdfPrinter from 'pdfmake';
 import PdfMake from 'pdfmake/build/pdfmake';
 import PdfFonts from 'pdfmake/build/vfs_fonts';
 import type { TDocumentDefinitions } from 'pdfmake/interfaces';
-import { InnovationSectionStatusEnum } from '@innovations/shared/enums';
 
 import {
   buildDocumentFooterDefinition,
@@ -13,14 +13,14 @@ import {
 } from '../_helpers/innovation.pdf.styles';
 import type { InnovationAllSectionsType, InnovationExportSectionAnswerType } from '../_types/innovation.types';
 
+import { JoiHelper } from '@innovations/shared/helpers';
 import {
   DomainContextType,
   isAccessorDomainContextType,
   isAssessmentDomainContextType
 } from '@innovations/shared/types';
-import { BaseService } from './base.service';
 import Joi from 'joi';
-import { JoiHelper } from '@innovations/shared/helpers';
+import { BaseService } from './base.service';
 
 export type DocumentExportInboundDataType = { sections: InnovationAllSectionsType; startSectionIndex: number };
 export const DocumentExportBodySchema = Joi.object<DocumentExportInboundDataType>({
@@ -132,7 +132,7 @@ export class ExportFileService extends BaseService {
 
   //#region PDF helpers
   private async createPDFFromDefinition(docDefinition: TDocumentDefinitions): Promise<Buffer> {
-    PdfMake.vfs = PdfFonts.pdfMake.vfs;
+    PdfMake.vfs = PdfFonts.vfs;
 
     const fontDescriptors = {
       Roboto: {
