@@ -195,7 +195,7 @@ export class OrganisationsService extends BaseService {
           support.innovation.id,
           {
             type: InnovationSupportLogTypeEnum.STATUS_UPDATE,
-            supportStatus: support.status,
+            supportStatus: InnovationSupportStatusEnum.CLOSED,
             description: 'Unit inactivated',
             unitId
           }
