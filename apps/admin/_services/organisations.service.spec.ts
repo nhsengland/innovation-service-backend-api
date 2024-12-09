@@ -240,7 +240,7 @@ describe('Admin / _services / organisations service suite', () => {
             scenario.users.johnInnovator.innovations.johnInnovation.id,
             {
               type: InnovationSupportLogTypeEnum.STATUS_UPDATE,
-              supportStatus: status,
+              supportStatus: InnovationSupportStatusEnum.CLOSED,
               description: 'Unit inactivated',
               unitId: unit.id
             }
