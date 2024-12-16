@@ -1,14 +1,16 @@
-import { injectable } from 'inversify';
+import { inject, injectable } from 'inversify';
 import { DataSource } from 'typeorm';
 
 import { SQLDB_DEFAULT_CONNECTION, SQLDB_TESTS_CONNECTION } from '../../config';
 import { GenericErrorsEnum, ServiceUnavailableError } from '../../errors';
+import { LoggerService } from '../integrations/logger.service';
+import SHARED_SYMBOLS from '../symbols';
 
 @injectable()
 export class SQLConnectionService {
   private _connection: DataSource;
 
-  constructor() {
+  constructor(@inject(SHARED_SYMBOLS.LoggerService) private logger: LoggerService) {
     /*
     const connection =
       process.env['NODE_ENV'] === 'test'
@@ -23,6 +25,7 @@ export class SQLConnectionService {
         : new DataSource(SQLDB_DEFAULT_CONNECTION);
 
     this._connection.initialize();
+    this.logger.log('SQLConnectionService initialized');
   }
 
   isInitialized(): boolean {
