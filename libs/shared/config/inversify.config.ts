@@ -37,3 +37,6 @@ container.bind<CacheService>(SHARED_SYMBOLS.CacheService).to(CacheService).inSin
 container.bind<ElasticSearchService>(SHARED_SYMBOLS.ElasticSearchService).to(ElasticSearchService).inSingletonScope();
 container.bind<RedisService>(SHARED_SYMBOLS.RedisService).to(RedisService).inSingletonScope();
 container.bind<IRSchemaService>(SHARED_SYMBOLS.IRSchemaService).to(IRSchemaService).inSingletonScope();
+
+// Force SQL initialization on startup so that the connection is ready on first request
+container.get<SQLConnectionService>(SHARED_SYMBOLS.SQLConnectionService);
