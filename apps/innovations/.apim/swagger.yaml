@@ -4715,11 +4715,6 @@ paths:
           required: false
           schema:
             type: boolean
-        - name: allTasks
-          in: query
-          required: false
-          schema:
-            type: boolean
         - name: fields
           in: query
           required: false

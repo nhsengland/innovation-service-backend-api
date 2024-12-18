@@ -64,7 +64,6 @@ export class InnovationTasksService extends BaseService {
       innovationStatus?: InnovationStatusEnum[];
       createdByMe?: boolean;
       createdByMyUnit?: boolean;
-      allTasks?: boolean;
       fields: 'notifications'[];
     },
     pagination: PaginationQueryParamsType<
@@ -134,19 +133,7 @@ export class InnovationTasksService extends BaseService {
     }
 
     if (domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT) {
-      if (!filters.allTasks) {
-        query.andWhere('task.innovation_support_id IS NULL');
-      }
       query
-        // leaving for now but almost sure it's equivalent to not withdrawn
-        // .andWhere('innovation.status IN (:...assessmentInnovationStatus)', {
-        //   assessmentInnovationStatus: [
-        //     InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
-        //     InnovationStatusEnum.NEEDS_ASSESSMENT,
-        //     InnovationStatusEnum.IN_PROGRESS,
-        //     InnovationStatusEnum.ARCHIVED
-        //   ]
-        // })
         .andWhere('innovation.status != :withdrawn', { withdrawn: InnovationStatusEnum.WITHDRAWN })
         .andWhere('innovation.submittedAt IS NOT NULL');
     }
@@ -169,10 +156,6 @@ export class InnovationTasksService extends BaseService {
         query.andWhere('accessorSupports.status IN (:...accessorSupportsSupportStatuses01)', {
           accessorSupportsSupportStatuses01: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.CLOSED]
         });
-      }
-
-      if (!filters.allTasks) {
-        query.andWhere('task.innovation_support_id IS NOT NULL');
       }
     }
 
