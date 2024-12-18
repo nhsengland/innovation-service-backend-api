@@ -30,7 +30,11 @@ import {
 } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import type { DomainService, NotifierService } from '@innovations/shared/services';
-import { DomainContextType, isAccessorDomainContextType } from '@innovations/shared/types';
+import {
+  DomainContextType,
+  isAccessorDomainContextType,
+  isAssessmentDomainContextType
+} from '@innovations/shared/types';
 
 import { CurrentCatalogTypes, InnovationSectionAliasEnum } from '@innovations/shared/schemas/innovation-record';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
@@ -59,6 +63,7 @@ export class InnovationTasksService extends BaseService {
       status?: InnovationTaskStatusEnum[];
       innovationStatus?: InnovationStatusEnum[];
       createdByMe?: boolean;
+      createdByMyUnit?: boolean;
       allTasks?: boolean;
       fields: 'notifications'[];
     },
@@ -198,10 +203,15 @@ export class InnovationTasksService extends BaseService {
 
     if (filters.createdByMe) {
       query.andWhere('createdByUser.id = :createdBy', { createdBy: domainContext.id });
+    }
+
+    if (filters.createdByMyUnit || filters.createdByMe) {
       if (isAccessorDomainContextType(domainContext)) {
         query.andWhere('innovationSupport.organisation_unit_id = :orgUnitId', {
           orgUnitId: domainContext.organisation.organisationUnit.id
         });
+      } else if (isAssessmentDomainContextType(domainContext)) {
+        query.andWhere('task.innovation_support_id IS NULL');
       }
     }
 
