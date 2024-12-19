@@ -24,16 +24,15 @@ class V1InnovationTasksList {
       const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
       const { skip, take, order, ...filters } = queryParams;
 
-      const authInstance = await authorizationService
+      const auth = await authorizationService
         .validate(context)
         .checkAssessmentType()
         .checkAccessorType()
         .checkInnovatorType()
         .checkAdminType()
         .verify();
-      const domainContext = authInstance.getContext();
 
-      const result = await innovationTasksService.getTasksList(domainContext, filters, {
+      const result = await innovationTasksService.getTasksList(auth.getContext(), filters, {
         skip,
         take,
         order

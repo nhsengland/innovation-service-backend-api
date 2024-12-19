@@ -30,7 +30,11 @@ import {
 } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import type { DomainService, NotifierService } from '@innovations/shared/services';
-import { DomainContextType, isAccessorDomainContextType } from '@innovations/shared/types';
+import {
+  DomainContextType,
+  isAccessorDomainContextType,
+  isAssessmentDomainContextType
+} from '@innovations/shared/types';
 
 import { CurrentCatalogTypes, InnovationSectionAliasEnum } from '@innovations/shared/schemas/innovation-record';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
@@ -59,7 +63,7 @@ export class InnovationTasksService extends BaseService {
       status?: InnovationTaskStatusEnum[];
       innovationStatus?: InnovationStatusEnum[];
       createdByMe?: boolean;
-      allTasks?: boolean;
+      createdByMyUnit?: boolean;
       fields: 'notifications'[];
     },
     pagination: PaginationQueryParamsType<
@@ -129,19 +133,7 @@ export class InnovationTasksService extends BaseService {
     }
 
     if (domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT) {
-      if (!filters.allTasks) {
-        query.andWhere('task.innovation_support_id IS NULL');
-      }
       query
-        // leaving for now but almost sure it's equivalent to not withdrawn
-        // .andWhere('innovation.status IN (:...assessmentInnovationStatus)', {
-        //   assessmentInnovationStatus: [
-        //     InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
-        //     InnovationStatusEnum.NEEDS_ASSESSMENT,
-        //     InnovationStatusEnum.IN_PROGRESS,
-        //     InnovationStatusEnum.ARCHIVED
-        //   ]
-        // })
         .andWhere('innovation.status != :withdrawn', { withdrawn: InnovationStatusEnum.WITHDRAWN })
         .andWhere('innovation.submittedAt IS NOT NULL');
     }
@@ -164,10 +156,6 @@ export class InnovationTasksService extends BaseService {
         query.andWhere('accessorSupports.status IN (:...accessorSupportsSupportStatuses01)', {
           accessorSupportsSupportStatuses01: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.CLOSED]
         });
-      }
-
-      if (!filters.allTasks) {
-        query.andWhere('task.innovation_support_id IS NOT NULL');
       }
     }
 
@@ -198,10 +186,15 @@ export class InnovationTasksService extends BaseService {
 
     if (filters.createdByMe) {
       query.andWhere('createdByUser.id = :createdBy', { createdBy: domainContext.id });
+    }
+
+    if (filters.createdByMyUnit || filters.createdByMe) {
       if (isAccessorDomainContextType(domainContext)) {
         query.andWhere('innovationSupport.organisation_unit_id = :orgUnitId', {
           orgUnitId: domainContext.organisation.organisationUnit.id
         });
+      } else if (isAssessmentDomainContextType(domainContext)) {
+        query.andWhere('task.innovation_support_id IS NULL');
       }
     }
 

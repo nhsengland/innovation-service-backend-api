@@ -286,7 +286,7 @@ describe('Innovation Tasks Suite', () => {
 
       const tasks = await sut.getTasksList(
         DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
-        { fields: [] },
+        { createdByMyUnit: true, fields: [] },
         { order: { createdAt: 'DESC' }, skip: 0, take: 10 },
         em
       );
@@ -335,7 +335,7 @@ describe('Innovation Tasks Suite', () => {
     it('should list all tasks created by NA and QA/A as a NA', async () => {
       const tasks = await sut.getTasksList(
         DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
-        { allTasks: true, fields: [] },
+        { fields: [] },
         { order: { createdAt: 'DESC' }, skip: 0, take: 10 },
         em
       );
@@ -387,19 +387,19 @@ describe('Innovation Tasks Suite', () => {
 
       const tasks = await sut.getTasksList(
         DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
-        { fields: [] },
+        { createdByMyUnit: true, fields: [] },
         { order: { createdAt: 'DESC' }, skip: 0, take: 10 },
         em
       );
 
-      expect(tasks.count).toBe(4);
+      expect(tasks.count).toBe(3);
       expect(tasks.data).toEqual(expect.arrayContaining(expected));
     });
 
     it('should list all tasks created by NA and QA/A as a QA/A', async () => {
       const tasks = await sut.getTasksList(
         DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
-        { allTasks: true, fields: [] },
+        { fields: [] },
         { order: { createdAt: 'DESC' }, skip: 0, take: 10 },
         em
       );
@@ -410,7 +410,7 @@ describe('Innovation Tasks Suite', () => {
     it('should list all tasks that match an innovation name', async () => {
       const tasks = await sut.getTasksList(
         DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
-        { innovationName: innovation.name, fields: [] },
+        { createdByMyUnit: true, innovationName: innovation.name, fields: [] },
         { order: { createdAt: 'DESC' }, skip: 0, take: 10 },
         em
       );
@@ -425,7 +425,7 @@ describe('Innovation Tasks Suite', () => {
     it('should list no tasks that match an innovation name when no match', async () => {
       const tasks = await sut.getTasksList(
         DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
-        { innovationName: randText(), fields: [] },
+        { createdByMyUnit: true, innovationName: randText(), fields: [] },
         { order: { createdAt: 'DESC' }, skip: 0, take: 10 },
         em
       );
@@ -441,7 +441,7 @@ describe('Innovation Tasks Suite', () => {
 
       const tasks = await sut.getTasksList(
         DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
-        { innovationStatus: [InnovationStatusEnum.NEEDS_ASSESSMENT], fields: [] },
+        { createdByMyUnit: true, innovationStatus: [InnovationStatusEnum.NEEDS_ASSESSMENT], fields: [] },
         { order: { createdAt: 'DESC' }, skip: 0, take: 10 },
         em
       );
@@ -454,7 +454,7 @@ describe('Innovation Tasks Suite', () => {
       const task2 = scenario.users.adamInnovator.innovations.adamInnovation.tasks.adamInnovationTaskBySean;
       const tasks = await sut.getTasksList(
         DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
-        { sections: ['INNOVATION_DESCRIPTION'], fields: [] },
+        { createdByMyUnit: true, sections: ['INNOVATION_DESCRIPTION'], fields: [] },
         { order: { createdAt: 'DESC' }, skip: 0, take: 10 },
         em
       );
@@ -595,7 +595,7 @@ describe('Innovation Tasks Suite', () => {
 
         const tasks = await sut.getTasksList(
           DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
-          { allTasks: true, fields: [] },
+          { fields: [] },
           { order: { [order]: 'ASC' }, skip: 0, take: 10 },
           em
         );
@@ -625,7 +625,7 @@ describe('Innovation Tasks Suite', () => {
 
         const tasks = await sut.getTasksList(
           DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
-          { allTasks: true, fields: [] },
+          { fields: [] },
           { order: { [order]: 'DESC' }, skip: 0, take: 10 },
           em
         );
@@ -646,7 +646,7 @@ describe('Innovation Tasks Suite', () => {
     it('should order by createdAt if unknown order provided (should not happen)', async () => {
       const tasks = await sut.getTasksList(
         DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
-        { allTasks: true, fields: [] },
+        { fields: [] },
         { order: { unknown: 'DESC' } as any, skip: 0, take: 10 },
         em
       );
@@ -661,7 +661,7 @@ describe('Innovation Tasks Suite', () => {
         .update({ id: scenario.users.aliceQualifyingAccessor.id }, { status: UserStatusEnum.DELETED });
       const tasks = await sut.getTasksList(
         DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
-        { allTasks: true, fields: [] },
+        { fields: [] },
         { order: { createdAt: 'DESC' } as any, skip: 0, take: 10 },
         em
       );

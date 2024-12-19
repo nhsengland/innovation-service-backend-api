@@ -4710,7 +4710,7 @@ paths:
           required: false
           schema:
             type: boolean
-        - name: allTasks
+        - name: createdByMyUnit
           in: query
           required: false
           schema:
