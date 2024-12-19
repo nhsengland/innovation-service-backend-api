@@ -21,7 +21,7 @@ export type QueryParamsType = PaginationQueryParamsType<orderFields> & {
   status?: InnovationTaskStatusEnum[];
   innovationStatus?: InnovationStatusEnum[];
   createdByMe?: boolean;
-  allTasks?: boolean;
+  createdByMyUnit?: boolean;
   fields: 'notifications'[];
 };
 export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
@@ -55,7 +55,7 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
       )
       .optional(),
     createdByMe: Joi.boolean().optional(),
-    allTasks: Joi.boolean().optional(),
+    createdByMyUnit: Joi.boolean().optional().default(true),
     fields: JoiHelper.AppCustomJoi()
       .stringArray()
       .items(JoiHelper.AppCustomJoi().string().valid('notifications'))
