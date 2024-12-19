@@ -55,7 +55,7 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
       )
       .optional(),
     createdByMe: Joi.boolean().optional(),
-    createdByMyUnit: Joi.boolean().optional(),
+    createdByMyUnit: Joi.boolean().optional().default(true),
     fields: JoiHelper.AppCustomJoi()
       .stringArray()
       .items(JoiHelper.AppCustomJoi().string().valid('notifications'))
