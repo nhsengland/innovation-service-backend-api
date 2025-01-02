@@ -3,10 +3,10 @@ import Joi from 'joi';
 
 import { TEXTAREA_LENGTH_LIMIT } from '@notifications/shared/constants';
 import { InnovationSupportStatusEnum } from '@notifications/shared/enums';
+import { JoiHelper } from '@notifications/shared/helpers';
 import { CurrentCatalogTypes } from '@notifications/shared/schemas/innovation-record';
 import type { DomainContextType, EventPayloads } from '@notifications/shared/types';
 import { DomainContextSchema, EventType } from '@notifications/shared/types';
-import { JoiHelper } from '@notifications/shared/helpers';
 
 export type MessageType = {
   data: {
@@ -41,7 +41,7 @@ export const EventParamsSchema: { [key in EventType]: ObjectSchema<EventPayloads
       .valid(...Object.values(InnovationSupportStatusEnum))
       .required(),
     units: RequiredIdSchema,
-    message: JoiHelper.AppCustomJoi().string().max(TEXTAREA_LENGTH_LIMIT.xl).required()
+    message: JoiHelper.AppCustomJoi().string().max(TEXTAREA_LENGTH_LIMIT.xxl).required()
   }).required(),
   PROGRESS_UPDATE_CREATED: Joi.object<EventPayloads['PROGRESS_UPDATE_CREATED']>({
     units: RequiredIdSchema
