@@ -37,6 +37,9 @@ export class InnovationEntity extends BaseEntity {
   @Column({ name: 'name', length: 100 })
   name: string;
 
+  @Column({ name: 'unique_id', nullable: false, unique: true, update: false })
+  uniqueId: string;
+
   @Column({ type: 'simple-enum', enum: InnovationStatusEnum, nullable: false })
   status: InnovationStatusEnum;
 

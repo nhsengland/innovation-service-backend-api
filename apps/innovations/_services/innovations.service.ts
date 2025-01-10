@@ -1410,10 +1410,13 @@ export class InnovationsService extends BaseService {
     return connection.transaction(async transaction => {
       const now = new Date();
 
+      const uniqueId = await this.getNextUniqueIdentifier(transaction);
+
       const savedInnovation = await transaction.save(
         InnovationEntity,
         InnovationEntity.new({
           name: data.name,
+          uniqueId: uniqueId,
 
           owner: UserEntity.new({ id: domainContext.id }),
           status: InnovationStatusEnum.CREATED,
@@ -2088,5 +2091,18 @@ export class InnovationsService extends BaseService {
       };
     });
     return result;
+  }
+
+  async getNextUniqueIdentifier(entityManager: EntityManager): Promise<string> {
+    const lastIdentifier = (await entityManager.query('SELECT MAX(unique_id) as lastIdentifier FROM innovation'))?.[0][
+      'lastIdentifier'
+    ];
+
+    const currentYearMonth = new Date().toISOString().slice(2, 4) + new Date().toISOString().slice(5, 7);
+    const [yearMonth, count] = lastIdentifier?.split('-').slice(1, 3);
+    const nextCount = yearMonth === currentYearMonth ? Number(count) + 1 : 1;
+    const checksum = `${currentYearMonth}${nextCount}`.split('').reduce((acc, curr) => acc + Number(curr), 0) % 10;
+
+    return `INN-${currentYearMonth}-${nextCount.toString().padStart(3, '0')}-${checksum}`;
   }
 }
