@@ -12,7 +12,7 @@ export class AddUniqueIdentifier1736506232824 implements MigrationInterface {
         CONCAT('INN-',SUBSTRING(CONVERT(varchar,YEAR(created_at)), 3, 2),MONTH(created_at),'-', RIGHT('000' + CONVERT(varchar, ROW_NUMBER() OVER (PARTITION BY YEAR(created_at),MONTH(created_at) ORDER BY created_at)), 3)) as unique_id
         FROM innovation
         ) UPDATE innovation
-        SET innovation.unique_id = CONCAT(t.unique_id, '-', (SUBSTRING(t.unique_id, 5, 1)
+        SET innovation.unique_id = CONCAT(t.unique_id, '-', (CONVERT(int, SUBSTRING(t.unique_id, 5, 1))
         + CONVERT(int, SUBSTRING(t.unique_id, 6, 1)) 
         + CONVERT(int, SUBSTRING(t.unique_id, 7, 1)) 
         + CONVERT(int, SUBSTRING(t.unique_id, 8, 1)) 
