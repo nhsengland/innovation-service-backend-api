@@ -31,8 +31,10 @@ export type TestInnovationType = {
 };
 
 export class InnovationBuilder extends BaseBuilder {
+  private static counter = 0;
   private innovation: DeepPartial<InnovationEntity> = {
     name: randProduct().title,
+    uniqueId: `INN-1111-${InnovationBuilder.counter++}-1`, // We're not using this for anything in tests using 1111 so that it's easier to manipulate in the tests
     status: InnovationStatusEnum.CREATED,
     owner: null,
     assessments: [],
