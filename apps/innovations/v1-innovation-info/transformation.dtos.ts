@@ -10,6 +10,7 @@ import Joi from 'joi';
 
 export const ResponseBodySchema = Joi.object<ResponseDTO>({
   id: JoiHelper.AppCustomJoi().string().uuid().required(),
+  uniqueId: Joi.string().required(),
   name: Joi.string().required(),
   description: Joi.string().allow(null).required(),
   version: Joi.string().required(),
@@ -75,6 +76,7 @@ export const ResponseBodySchema = Joi.object<ResponseDTO>({
 
 export type ResponseDTO = {
   id: string;
+  uniqueId: string;
   name: string;
   description: null | string;
   version: string;
