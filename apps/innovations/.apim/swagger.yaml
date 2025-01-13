@@ -1474,6 +1474,7 @@ paths:
               type: string
               enum:
                 - id
+                - uniqueId
                 - name
                 - status
                 - statusUpdatedAt
@@ -6424,6 +6425,7 @@ paths:
               type: string
               enum:
                 - id
+                - uniqueId
                 - name
                 - status
                 - statusUpdatedAt
