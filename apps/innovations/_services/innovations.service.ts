@@ -1103,6 +1103,7 @@ export class InnovationsService extends BaseService {
     entityManager?: EntityManager
   ): Promise<{
     id: string;
+    uniqueId: string;
     name: string;
     description: null | string;
     version: string;
@@ -1149,6 +1150,7 @@ export class InnovationsService extends BaseService {
       .createQueryBuilder(InnovationEntity, 'innovation')
       .select([
         'innovation.id',
+        'innovation.uniqueId',
         'innovation.name',
         'innovation.status',
         'innovation.statusUpdatedAt',
@@ -1298,6 +1300,7 @@ export class InnovationsService extends BaseService {
 
     return {
       id: innovation.id,
+      uniqueId: innovation.uniqueId,
       name: innovation.name,
       description: documentData.description,
       version: documentData.version,

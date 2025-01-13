@@ -44,6 +44,7 @@ beforeAll(async () => {
 
 const expected: Awaited<ReturnType<InnovationsService['getInnovationInfo']>> = {
   id: randUuid(),
+  uniqueId: randUuid(),
   name: randProductName(),
   categories: [],
   createdAt: randPastDate(),
