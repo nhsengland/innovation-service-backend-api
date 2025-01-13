@@ -12,6 +12,7 @@ import type { InnovationRecordDocumentType } from './document.types';
 
 export type ElasticSearchDocumentType = {
   id: string;
+  uniqueId: string;
   status: InnovationStatusEnum;
   statusUpdatedAt: Date;
   groupedStatus: InnovationGroupedStatusEnum;
@@ -86,6 +87,7 @@ export const ElasticSearchSchema: CreateIndexParams = {
         }
       },
 
+      uniqueId: { type: 'keyword' },
       status: { type: 'keyword' },
       statusUpdatedAt: { type: 'date' },
       groupedStatus: { type: 'keyword' },

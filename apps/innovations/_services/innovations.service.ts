@@ -79,6 +79,7 @@ import SYMBOLS from './symbols';
 // TODO move types
 export const InnovationListSelectType = [
   'id',
+  'uniqueId',
   'name',
   'status',
   'statusUpdatedAt',

@@ -407,6 +407,12 @@ export class SearchService extends BaseService {
     search: string
   ): Promise<void> {
     if (search) {
+      // If we are searching by uniqueIdentifier we match instantly.
+      if (search.match(/^INN-\d{4}-\d{3}-\d$/gm)) {
+        builder.addMust({ term: { uniqueId: search } });
+        return;
+      }
+
       // Admins can search by email (full match search)
       const targetUser =
         domainContext.currentRole.role === ServiceRoleEnum.ADMIN && search.match(/^\S+@\S+$/)
@@ -739,6 +745,7 @@ export class SearchService extends BaseService {
     return {
       ...pick(input, [
         'id',
+        'uniqueId',
         'name',
         'statusUpdatedAt',
         'submittedAt',
