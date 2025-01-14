@@ -66,7 +66,10 @@ describe('v1-innovation-csv-export Suite', () => {
       expect(generateCSVMock).toHaveBeenCalledWith(
         DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
         'csv',
-        scenario.users.johnInnovator.innovations.johnInnovation.name,
+        {
+          name: scenario.users.johnInnovator.innovations.johnInnovation.name,
+          uniqueId: scenario.users.johnInnovator.innovations.johnInnovation.uniqueId
+        },
         body,
         { withIndex: false }
       );

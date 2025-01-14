@@ -52,7 +52,7 @@ export class AuthorizationValidationModel {
   private user: { identityId?: string; data?: DomainUserInfoType } = {};
   private innovation: {
     id?: string;
-    data?: { id: string; name: string; status: InnovationStatusEnum; owner?: string };
+    data?: { id: string; uniqueId: string; name: string; status: InnovationStatusEnum; owner?: string };
   } = {};
   private roleId?: string;
 
@@ -93,7 +93,7 @@ export class AuthorizationValidationModel {
     throw new ForbiddenError(AuthErrorsEnum.AUTH_MISSING_ORGANISATION_UNIT_CONTEXT);
   }
 
-  getInnovationInfo(): { id: string; name: string; status: InnovationStatusEnum } {
+  getInnovationInfo(): { id: string; uniqueId: string; name: string; status: InnovationStatusEnum } {
     if (this.innovation.data) {
       return this.innovation.data;
     }
@@ -427,10 +427,10 @@ export class AuthorizationValidationModel {
     user: DomainUserInfoType,
     innovationId: string,
     context: DomainContextType
-  ): Promise<undefined | { id: string; name: string; status: InnovationStatusEnum; owner?: string }> {
+  ): Promise<undefined | { id: string; name: string; uniqueId: string; status: InnovationStatusEnum; owner?: string }> {
     const query = this.domainService.innovations.innovationRepository
       .createQueryBuilder('innovation')
-      .select(['innovation.id', 'innovation.name', 'innovation.status', 'owner.id'])
+      .select(['innovation.id', 'innovation.name', 'innovation.status', 'innovation.uniqueId', 'owner.id'])
       .leftJoin('innovation.owner', 'owner')
       .where('innovation.id = :innovationId', { innovationId });
 
@@ -501,6 +501,7 @@ export class AuthorizationValidationModel {
     return innovation
       ? {
           id: innovation.id,
+          uniqueId: innovation.uniqueId,
           name: innovation.name,
           status: innovation.status,
           owner: innovation.owner?.id
