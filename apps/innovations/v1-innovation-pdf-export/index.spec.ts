@@ -66,7 +66,10 @@ describe('v1-innovation-pdf-export Suite', () => {
       expect(generatePDFMock).toHaveBeenCalledWith(
         DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
         'pdf',
-        scenario.users.johnInnovator.innovations.johnInnovation.name,
+        {
+          name: scenario.users.johnInnovator.innovations.johnInnovation.name,
+          uniqueId: scenario.users.johnInnovator.innovations.johnInnovation.uniqueId
+        },
         body
       );
     });

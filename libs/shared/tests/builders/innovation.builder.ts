@@ -14,6 +14,7 @@ import type { TestOrganisationType } from './organisation.builder';
 
 export type TestInnovationType = {
   id: string;
+  uniqueId: string;
   name: string;
   status: InnovationStatusEnum;
   ownerId: string;
@@ -217,6 +218,7 @@ export class InnovationBuilder extends BaseBuilder {
 
     return {
       id: result.id,
+      uniqueId: result.uniqueId,
       name: result.name,
       status: result.status,
       ownerId: result.owner.id,

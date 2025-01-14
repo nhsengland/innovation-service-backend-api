@@ -65,7 +65,7 @@ export class ExportFileService extends BaseService {
   async create<T extends keyof ExportFileService['handlers']>(
     domainContext: DomainContextType,
     type: T,
-    innovationName: string,
+    innovation: { name: string; uniqueId: string },
     body: DocumentExportInboundDataType,
     options?: Parameters<ExportFileService['handlers'][T]>[2]
   ): Promise<ReturnType<ExportFileService['handlers'][T]>> {
@@ -85,7 +85,7 @@ export class ExportFileService extends BaseService {
         });
       });
     }
-    return this.handlers[type](innovationName, body, options) as any;
+    return this.handlers[type](innovation, body, options) as any;
   }
 
   //#region Handlers
@@ -95,8 +95,11 @@ export class ExportFileService extends BaseService {
    * @param body questions and answers
    * @returns the pdf file
    */
-  private createPdf(innovationName: string, body: DocumentExportInboundDataType): Promise<Buffer> {
-    const definition = this.buildPdfDocumentHeaderDefinition(innovationName, body);
+  private createPdf(
+    innovation: { name: string; uniqueId: string },
+    body: DocumentExportInboundDataType
+  ): Promise<Buffer> {
+    const definition = this.buildPdfDocumentHeaderDefinition(innovation, body);
     return this.createPDFFromDefinition(definition);
   }
 
@@ -107,12 +110,13 @@ export class ExportFileService extends BaseService {
    * @returns the csv file
    */
   private createCsv(
-    _innovationName: string,
+    innovation: { name: string; uniqueId: string },
     body: DocumentExportInboundDataType,
     options?: { withIndex?: boolean }
   ): string {
     // Add headers
     const header = ['Section', 'Subsection', 'Question', 'Answer'];
+    const id = ['Innovation Details', 'Innovation Details', 'ID', innovation.uniqueId];
     const data = body.sections.flatMap((section, sectionIndex) =>
       section.sections.flatMap((subsection, subsectionIndex) =>
         subsection.answers.map(question => [
@@ -126,7 +130,7 @@ export class ExportFileService extends BaseService {
       )
     );
 
-    return this.csvToString([header, ...data]);
+    return this.csvToString([header, id, ...data]);
   }
   //#endregion
 
@@ -158,13 +162,13 @@ export class ExportFileService extends BaseService {
   }
 
   private buildPdfDocumentHeaderDefinition(
-    innovationName: string,
+    innovation: { name: string; uniqueId: string },
     body: DocumentExportInboundDataType
   ): TDocumentDefinitions {
     const documentDefinition = {
       header: buildDocumentHeaderDefinition(),
       footer: buildDocumentFooterDefinition(),
-      content: buildDocumentTOCDefinition(innovationName),
+      content: buildDocumentTOCDefinition(innovation),
       styles: buildDocumentStylesDefinition()
     };
 
