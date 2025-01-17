@@ -957,26 +957,26 @@ describe('Innovations / _services / innovations suite', () => {
   });
 
   describe('getNextUniqueIdentifier', () => {
-    it('should return the next unique identifier as YYMM-001-X if first for the year/month', async () => {
+    it('should return the next unique identifier as YYMM-0001-X if first for the year/month', async () => {
       const result = await sut.getNextUniqueIdentifier(em);
 
       const currentYearMonth = new Date().toISOString().slice(2, 4) + new Date().toISOString().slice(5, 7);
-      const checksum = `${currentYearMonth}001`.split('').reduce((acc, curr) => acc + Number(curr), 0) % 10;
-      expect(result).toBe(`INN-${currentYearMonth}-001-${checksum}`);
+      const checksum = `${currentYearMonth}0001`.split('').reduce((acc, curr) => acc + Number(curr), 0) % 10;
+      expect(result).toBe(`INN-${currentYearMonth}-0001-${checksum}`);
     });
 
-    it('should return the next unique identifier as YYMM-002-X if second year/month', async () => {
+    it('should return the next unique identifier as YYMM-0002-X if second year/month', async () => {
       const currentYearMonth = new Date().toISOString().slice(2, 4) + new Date().toISOString().slice(5, 7);
 
       // uniqueId not updatable
       await em.query('UPDATE innovation SET unique_id = @0 WHERE id = @1', [
-        `INN-${currentYearMonth}-001-1`,
+        `INN-${currentYearMonth}-0001-1`,
         scenario.users.johnInnovator.innovations.johnInnovation.id
       ]);
       const result = await sut.getNextUniqueIdentifier(em);
 
-      const checksum = `${currentYearMonth}002`.split('').reduce((acc, curr) => acc + Number(curr), 0) % 10;
-      expect(result).toBe(`INN-${currentYearMonth}-002-${checksum}`);
+      const checksum = `${currentYearMonth}0002`.split('').reduce((acc, curr) => acc + Number(curr), 0) % 10;
+      expect(result).toBe(`INN-${currentYearMonth}-0002-${checksum}`);
     });
   });
 });

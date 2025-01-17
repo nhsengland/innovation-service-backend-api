@@ -2107,6 +2107,6 @@ export class InnovationsService extends BaseService {
     const nextCount = yearMonth === currentYearMonth ? Number(count) + 1 : 1;
     const checksum = `${currentYearMonth}${nextCount}`.split('').reduce((acc, curr) => acc + Number(curr), 0) % 10;
 
-    return `INN-${currentYearMonth}-${nextCount.toString().padStart(3, '0')}-${checksum}`;
+    return `INN-${currentYearMonth}-${nextCount.toString().padStart(4, '0')}-${checksum}`;
   }
 }

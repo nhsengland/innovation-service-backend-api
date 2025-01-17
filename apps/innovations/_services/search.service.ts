@@ -408,7 +408,7 @@ export class SearchService extends BaseService {
   ): Promise<void> {
     if (search) {
       // If we are searching by uniqueIdentifier we match instantly.
-      if (search.match(/^INN-\d{4}-\d{3}-\d$/gm)) {
+      if (search.match(/^INN-\d{4}-\d{4}-\d$/gm)) {
         builder.addMust({ term: { uniqueId: search } });
         return;
       }
