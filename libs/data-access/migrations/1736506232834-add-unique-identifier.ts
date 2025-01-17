@@ -3,7 +3,7 @@ import type { MigrationInterface, QueryRunner } from 'typeorm';
 export class AddUniqueIdentifier1736506232834 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
-      `ALTER TABLE innovation ADD unique_id VARCHAR(14) NOT NULL CONSTRAINT "df_innovation_unique_id" DEFAULT ''`
+      `ALTER TABLE innovation ADD unique_id VARCHAR(15) NOT NULL CONSTRAINT "df_innovation_unique_id" DEFAULT ''`
     );
 
     await queryRunner.query(`
