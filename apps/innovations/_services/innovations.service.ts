@@ -79,6 +79,7 @@ import SYMBOLS from './symbols';
 // TODO move types
 export const InnovationListSelectType = [
   'id',
+  'uniqueId',
   'name',
   'status',
   'statusUpdatedAt',
@@ -1103,6 +1104,7 @@ export class InnovationsService extends BaseService {
     entityManager?: EntityManager
   ): Promise<{
     id: string;
+    uniqueId: string;
     name: string;
     description: null | string;
     version: string;
@@ -1149,6 +1151,7 @@ export class InnovationsService extends BaseService {
       .createQueryBuilder(InnovationEntity, 'innovation')
       .select([
         'innovation.id',
+        'innovation.uniqueId',
         'innovation.name',
         'innovation.status',
         'innovation.statusUpdatedAt',
@@ -1298,6 +1301,7 @@ export class InnovationsService extends BaseService {
 
     return {
       id: innovation.id,
+      uniqueId: innovation.uniqueId,
       name: innovation.name,
       description: documentData.description,
       version: documentData.version,
@@ -1410,10 +1414,13 @@ export class InnovationsService extends BaseService {
     return connection.transaction(async transaction => {
       const now = new Date();
 
+      const uniqueId = await this.getNextUniqueIdentifier(transaction);
+
       const savedInnovation = await transaction.save(
         InnovationEntity,
         InnovationEntity.new({
           name: data.name,
+          uniqueId: uniqueId,
 
           owner: UserEntity.new({ id: domainContext.id }),
           status: InnovationStatusEnum.CREATED,
@@ -2088,5 +2095,18 @@ export class InnovationsService extends BaseService {
       };
     });
     return result;
+  }
+
+  async getNextUniqueIdentifier(entityManager: EntityManager): Promise<string> {
+    const lastIdentifier = (await entityManager.query('SELECT MAX(unique_id) as lastIdentifier FROM innovation'))?.[0][
+      'lastIdentifier'
+    ];
+
+    const currentYearMonth = new Date().toISOString().slice(2, 4) + new Date().toISOString().slice(5, 7);
+    const [yearMonth, count] = lastIdentifier?.split('-').slice(1, 3);
+    const nextCount = yearMonth === currentYearMonth ? Number(count) + 1 : 1;
+    const checksum = `${currentYearMonth}${nextCount}`.split('').reduce((acc, curr) => acc + Number(curr), 0) % 10;
+
+    return `INN-${currentYearMonth}-${nextCount.toString().padStart(4, '0')}-${checksum}`;
   }
 }

@@ -137,7 +137,7 @@ export const NOTIFICATIONS_CONFIG = {
           .string()
           .valid(...Object.values(InnovationSupportStatusEnum))
           .required(),
-        message: JoiHelper.AppCustomJoi().string().max(TEXTAREA_LENGTH_LIMIT.xl).required(),
+        message: JoiHelper.AppCustomJoi().string().max(TEXTAREA_LENGTH_LIMIT.xxl).required(),
         newAssignedAccessorsIds: Joi.array().items(JoiHelper.AppCustomJoi().string().guid())
       }).required()
     }).required()

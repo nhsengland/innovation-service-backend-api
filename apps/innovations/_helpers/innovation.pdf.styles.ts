@@ -33,7 +33,13 @@ export const buildDocumentFooterDefinition = (): any => {
   };
 };
 
-export const buildDocumentTOCDefinition = (innovationName: string): any => {
+export const buildDocumentTOCDefinition = ({
+  name: innovationName,
+  uniqueId
+}: {
+  name: string;
+  uniqueId: string;
+}): any => {
   return [
     {
       text: 'Innovation Record Export',
@@ -48,9 +54,15 @@ export const buildDocumentTOCDefinition = (innovationName: string): any => {
       alignment: 'left'
     },
     {
+      text: uniqueId,
+      style: 'documentSubtitle',
+      margin: [20, 0, 0, 0],
+      alignment: 'left'
+    },
+    {
       text: 'NHS Innovation Service',
       style: 'documentInfo',
-      margin: [0, 440, 0, 0],
+      margin: [0, 420, 0, 0],
       alignment: 'right'
     },
     {
@@ -91,6 +103,11 @@ export const buildDocumentStylesDefinition = (): any => {
       fontSize: 26,
       bold: true,
       color: '#333333'
+    },
+    documentSubtitle: {
+      fontSize: 12,
+      color: '#999999',
+      italic: true
     },
     documentInfo: {
       fontSize: 16,

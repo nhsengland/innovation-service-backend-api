@@ -1474,6 +1474,7 @@ paths:
               type: string
               enum:
                 - id
+                - uniqueId
                 - name
                 - status
                 - statusUpdatedAt
@@ -2432,6 +2433,8 @@ paths:
                   id:
                     type: string
                     format: uuid
+                  uniqueId:
+                    type: string
                   name:
                     type: string
                   description:
@@ -2618,6 +2621,7 @@ paths:
                     format: date-time
                 required:
                   - id
+                  - uniqueId
                   - name
                   - description
                   - version
@@ -4715,6 +4719,7 @@ paths:
           required: false
           schema:
             type: boolean
+            default: true
         - name: fields
           in: query
           required: false
@@ -6420,6 +6425,7 @@ paths:
               type: string
               enum:
                 - id
+                - uniqueId
                 - name
                 - status
                 - statusUpdatedAt

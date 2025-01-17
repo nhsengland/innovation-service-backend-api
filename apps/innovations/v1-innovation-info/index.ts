@@ -41,6 +41,7 @@ class V1InnovationInfo {
       const result = await innovationsService.getInnovationInfo(domainContext, params.innovationId, queryParams);
       context.res = ResponseHelper.Ok<ResponseDTO>({
         id: result.id,
+        uniqueId: result.uniqueId,
         name: result.name,
         description: result.description,
         version: result.version,

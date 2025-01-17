@@ -1123,7 +1123,7 @@ export class DomainInnovationsService {
   ): Promise<CurrentElasticSearchDocumentType | undefined | CurrentElasticSearchDocumentType[]> {
     let sql = `WITH
       innovations AS (
-        SELECT i.id, i.status, status_updated_at, submitted_at, i.updated_at, i.current_assessment_id,
+        SELECT i.id, i.unique_id, i.status, status_updated_at, submitted_at, i.updated_at, i.current_assessment_id,
         i.has_been_assessed, last_assessment_request_at, grouped_status, u.id AS owner_id,
         u.external_id AS owner_external_id, u.status AS owner_status, o.name AS owner_company
         FROM innovation i
@@ -1153,6 +1153,7 @@ export class DomainInnovationsService {
       )
     SELECT
       i.id,
+      i.unique_id as uniqueId,
       i.status,
       i.status_updated_at AS statusUpdatedAt,
       i.grouped_status AS groupedStatus,
@@ -1222,6 +1223,7 @@ export class DomainInnovationsService {
       const document = schema.model.cleanUpDocument(JSON.parse(innovation.document ?? {}));
       return {
         id: innovation.id,
+        uniqueId: innovation.uniqueId,
         status: innovation.status,
         statusUpdatedAt: innovation.statusUpdatedAt,
         groupedStatus: innovation.groupedStatus,
