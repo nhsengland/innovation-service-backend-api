@@ -116,7 +116,7 @@ export class ExportFileService extends BaseService {
   ): string {
     // Add headers
     const header = ['Section', 'Subsection', 'Question', 'Answer'];
-    const id = ['Innovation Details', 'Innovation Details', 'ID', innovation.uniqueId];
+    const id = ['Innovation Details', 'Innovation Details', 'Innovation ID', innovation.uniqueId];
     const data = body.sections.flatMap((section, sectionIndex) =>
       section.sections.flatMap((subsection, subsectionIndex) =>
         subsection.answers.map(question => [
