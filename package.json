@@ -46,7 +46,7 @@
     "mssql": "^10.0.4",
     "pdfmake": "^0.2.12",
     "redis": "^4.7.0",
-    "reflect-metadata": "^0.1.14",
+    "reflect-metadata": "^0.2.2",
     "typeorm": "^0.3.20",
     "uuid": "^11.0.3",
     "yaml": "^2.5.1"
