@@ -2,6 +2,7 @@ type AdminResponseDTO = {
   id: string;
   name: string;
   acronym: string | null;
+  summary: string | null;
   organisationUnits: {
     id: string;
     name: string;

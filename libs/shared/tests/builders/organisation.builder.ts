@@ -1,4 +1,4 @@
-import { randAlpha, randCompanyName } from '@ngneat/falso';
+import { randAlpha, randCompanyName, randText } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 import { SYSTEM_CONTEXT } from '../../constants';
 import { OrganisationEntity } from '../../entities';
@@ -10,6 +10,7 @@ export type TestOrganisationType = {
   id: string;
   name: string;
   acronym: string | null;
+  summary: string | null;
   isShadow: boolean;
   isActive: boolean;
   units: { [key: string]: TestOrganisationUnitType };
@@ -26,6 +27,7 @@ export class OrganisationBuilder extends BaseBuilder {
       name: randCompanyName(),
       acronym: randAlpha({ length: 5 }).join('.'),
       isShadow: false,
+      summary: randText(),
       type: OrganisationTypeEnum.ACCESSOR
     });
   }
@@ -67,6 +69,7 @@ export class OrganisationBuilder extends BaseBuilder {
       id: result.id,
       name: result.name,
       acronym: result.acronym,
+      summary: result.summary,
       isShadow: result.isShadow,
       isActive: !result.inactivatedAt,
       units: {}
