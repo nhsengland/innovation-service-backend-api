@@ -376,6 +376,7 @@ export class OrganisationsService extends BaseService {
     organisationId: string,
     name: string,
     acronym: string,
+    summary: string,
     entityManager?: EntityManager
   ): Promise<{
     id: string;
@@ -412,7 +413,8 @@ export class OrganisationsService extends BaseService {
         { id: organisation.id },
         {
           name: name,
-          acronym: acronym
+          acronym: acronym,
+          summary: summary
         }
       );
 
@@ -441,6 +443,7 @@ export class OrganisationsService extends BaseService {
     data: {
       name: string;
       acronym: string;
+      summary: string;
       units?: { name: string; acronym: string }[];
     },
     entityManager?: EntityManager
@@ -468,6 +471,7 @@ export class OrganisationsService extends BaseService {
       const org = OrganisationEntity.new({
         name: data.name,
         acronym: data.acronym,
+        summary: data.summary,
         createdBy: domainContext.id,
         createdAt: now,
         inactivatedAt: now,
