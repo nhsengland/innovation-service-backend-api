@@ -98,7 +98,7 @@ export class OrganisationsService extends BaseService {
     id: string;
     name: string;
     acronym: string | null;
-    summary?: string | null;
+    summary: string | null;
     organisationUnits?: {
       id: string;
       name: string;
@@ -127,7 +127,7 @@ export class OrganisationsService extends BaseService {
     const res: Awaited<ReturnType<OrganisationsService['getOrganisationInfo']>> = {
       id: organisation.id,
       name: organisation.name,
-      ...(type === 'full' && { summary: organisation.summary }),
+      summary: organisation.summary,
       acronym: organisation.acronym,
       isActive: !organisation.inactivatedAt
     };
