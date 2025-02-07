@@ -1254,7 +1254,7 @@ export const IR_SCHEMA = {
                 {
                   id: 'involvedAACProgrammes',
                   dataType: 'checkbox-array',
-                  label: 'Are you involved with any Accelerated Access Collaborative programmes?',
+                  label: 'Has this innovation received support from any of these programmes?',
                   description: 'Select all that apply, or select no, if not relevant.',
                   validations: {
                     isRequired: 'Choose at least one category'
@@ -1269,48 +1269,64 @@ export const IR_SCHEMA = {
                       type: 'separator'
                     },
                     {
-                      id: 'Health Innovation Network',
-                      label: 'Health Innovation Network'
-                    },
-                    {
                       id: 'Artificial Intelligence in Health and Care Award',
                       label: 'Artificial Intelligence in Health and Care Award'
                     },
                     {
-                      id: 'Clinical Entrepreneur Programme',
-                      label: 'Clinical Entrepreneur Programme'
+                      id: 'Clinical Entrepreneur Programme (CEP)',
+                      label: 'Clinical Entrepreneur Programme (CEP)'
                     },
                     {
                       id: 'Early Access to Medicines Scheme',
                       label: 'Early Access to Medicines Scheme'
                     },
                     {
-                      id: 'Innovation for Healthcare Inequalities Programme',
-                      label: 'Innovation for Healthcare Inequalities Programme'
+                      id: 'Health Innovation Network',
+                      label: 'Health Innovation Network'
                     },
                     {
                       id: 'Innovation and Technology Payment Programme',
                       label: 'Innovation and Technology Payment Programme'
                     },
                     {
-                      id: 'NHS Innovation Accelerator',
-                      label: 'NHS Innovation Accelerator'
+                      id: 'Innovation for Healthcare Inequalities Programme (InHIP)',
+                      label: 'Innovation for Healthcare Inequalities Programme (InHIP)'
+                    },
+                    {
+                      id: 'Innovative Devices Access Pathway (IDAP)',
+                      label: 'Innovative Devices Access Pathway (IDAP)'
+                    },
+                    {
+                      id: 'Innovative Licensing and Access Pathway (ILAP)',
+                      label: 'Innovative Licensing and Access Pathway (ILAP)'
+                    },
+                    {
+                      id: 'NHS Innovation Accelerator (NIA)',
+                      label: 'NHS Innovation Accelerator (NIA)'
                     },
                     {
                       id: 'NHS Insights Prioritisation Programme',
                       label: 'NHS Insights Prioritisation Programme'
                     },
                     {
+                      id: 'NHS InSites Programme',
+                      label: 'NHS InSites Programme'
+                    },
+                    {
                       id: 'Pathway Transformation Fund',
                       label: 'Pathway Transformation Fund'
+                    },
+                    {
+                      id: 'Patient Entrepreneur Programme (PEP)',
+                      label: 'Patient Entrepreneur Programme (PEP)'
                     },
                     {
                       id: 'Rapid Uptake Products Programme',
                       label: 'Rapid Uptake Products Programme'
                     },
                     {
-                      id: 'Small Business Research Initiative for Healthcare',
-                      label: 'Small Business Research Initiative for Healthcare'
+                      id: 'Small Business Research Initiative for Healthcare (SBRI)',
+                      label: 'Small Business Research Initiative for Healthcare (SBRI)'
                     },
                     {
                       id: 'Test beds',
