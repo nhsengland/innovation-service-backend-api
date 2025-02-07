@@ -13,6 +13,6 @@ type AdminResponseDTO = {
   isActive: boolean;
 };
 
-type RegularResponseDTO = Pick<AdminResponseDTO, 'id' | 'name' | 'acronym' | 'isActive'>;
+type RegularResponseDTO = Pick<AdminResponseDTO, 'id' | 'name' | 'acronym' | 'summary' | 'isActive'>;
 
 export type ResponseDTO = AdminResponseDTO | RegularResponseDTO;

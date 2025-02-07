@@ -247,6 +247,7 @@ describe('Users / _services / organisations service suite', () => {
         id: org.id,
         name: org.name,
         acronym: org.acronym,
+        summary: org.summary,
         isActive: true
       });
     });

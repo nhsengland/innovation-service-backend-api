@@ -1,6 +1,6 @@
 import azureFunction from '.';
 
-import { randAbbreviation, randCompanyName, randUuid } from '@ngneat/falso';
+import { randAbbreviation, randCompanyName, randText, randUuid } from '@ngneat/falso';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@users/shared/tests';
 import type { TestUserType } from '@users/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@users/shared/types';
@@ -28,6 +28,7 @@ const expected = {
   id: randUuid(),
   name: randCompanyName(),
   acronym: randAbbreviation(),
+  summary: randText(),
   organisationUnits: [
     {
       id: randUuid(),
