@@ -2103,10 +2103,57 @@ export class InnovationsService extends BaseService {
     ];
 
     const currentYearMonth = new Date().toISOString().slice(2, 4) + new Date().toISOString().slice(5, 7);
-    const [yearMonth, count] = lastIdentifier?.split('-').slice(1, 3);
+    const [yearMonth, count] = lastIdentifier ? lastIdentifier.split('-').slice(1, 3) : [currentYearMonth, 0];
     const nextCount = yearMonth === currentYearMonth ? Number(count) + 1 : 1;
     const checksum = `${currentYearMonth}${nextCount}`.split('').reduce((acc, curr) => acc + Number(curr), 0) % 10;
 
     return `INN-${currentYearMonth}-${nextCount.toString().padStart(4, '0')}-${checksum}`;
+  }
+
+  async shareInnovationsWithOrganisation(
+    domainContext: DomainContextType,
+    organisationId: string,
+    em?: EntityManager
+  ): Promise<void> {
+    if (!em) {
+      return await this.sqlConnection.manager.transaction(async transaction => {
+        return this.shareInnovationsWithOrganisation(domainContext, organisationId, transaction);
+      });
+    }
+
+    // Get all innovations that have already been submitted but not shared with this organisation where the user is the owner or collaborator
+    const innovationIds = (
+      await em
+        .createQueryBuilder(InnovationEntity, 'innovations')
+        .select(['innovations.id'])
+        .leftJoin('innovations.collaborators', 'collaborator', 'collaborator.status = :collaboratorStatus', {
+          collaboratorStatus: InnovationCollaboratorStatusEnum.ACTIVE
+        })
+        .leftJoin('innovations.owner', 'owner')
+        .where('(innovations.owner_id = :userId or collaborator.user_id = :userId)', { userId: domainContext.id })
+        .andWhere('innovations.submittedAt IS NOT NULL')
+        .getMany()
+    ).map(innovation => innovation.id);
+
+    const innovationShares = new Map(
+      (
+        await em
+          .createQueryBuilder(InnovationEntity, 'innovation')
+          .select(['innovation.id', 'shares.id'])
+          .innerJoin('innovation.organisationShares', 'shares')
+          .where('innovation.id IN (:...innovationIds)', { innovationIds })
+          .getMany()
+      ).map(innovation => [innovation.id, innovation.organisationShares.map(share => share.id)])
+    );
+
+    const newInnovations = innovationIds.filter(id => !innovationShares.get(id)?.some(s => s === organisationId));
+    for (const innovationId of newInnovations) {
+      await this.updateInnovationShares(
+        domainContext,
+        innovationId,
+        [organisationId, ...(innovationShares.get(innovationId) ?? [])],
+        em
+      );
+    }
   }
 }
