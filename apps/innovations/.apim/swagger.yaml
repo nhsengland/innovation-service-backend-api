@@ -6551,6 +6551,30 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
+  /v1/share-with-organisation/{organisationId}:
+    post:
+      operationId: v1-innovations-share-with-organisation
+      description: Share all user innovations with an organisation
+      parameters:
+        - name: organisationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Success
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
   /v1/{innovationId}/validate:
     get:
       description: Get validation information.
