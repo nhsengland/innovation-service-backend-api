@@ -25,6 +25,7 @@ class PostInnovationCSVExport {
       const auth = await authorizationService
         .validate(context)
         .setInnovation(params.innovationId)
+        .checkAdminType()
         .checkInnovatorType()
         .checkAccessorType()
         .checkAssessmentType()
