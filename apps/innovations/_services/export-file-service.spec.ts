@@ -76,7 +76,7 @@ describe('Export File Service Suite', () => {
         expect(csv).toStrictEqual(
           [
             'Section,Subsection,Question,Answer',
-            'Innovation Details,Innovation Details,ID,unique id',
+            'Innovation Details,Innovation Details,Innovation ID,unique id',
             'title 1,section 1,question 1,value 1',
             'title 1,section 1,question 2,value 2',
             'title 1,section 2,question 3,value 3'
@@ -128,7 +128,7 @@ describe('Export File Service Suite', () => {
         expect(csv).toStrictEqual(
           [
             'Section,Subsection,Question,Answer',
-            'Innovation Details,Innovation Details,ID,unique id',
+            'Innovation Details,Innovation Details,Innovation ID,unique id',
             '1 title 1,1.1 section 1,question 1,value 1',
             '1 title 1,1.1 section 1,question 2,value 2',
             '1 title 1,1.2 section 2,question 3,value 3'
@@ -183,7 +183,7 @@ describe('Export File Service Suite', () => {
         expect(csv).toStrictEqual(
           [
             'Section,Subsection,Question,Answer',
-            'Innovation Details,Innovation Details,ID,unique id',
+            'Innovation Details,Innovation Details,Innovation ID,unique id',
             'title 1,section 1,question 1,value 1',
             'title 1,section 1,question 2,value 2',
             'title 1,section 2,This section is in draft and will not be visible until it is resubmitted.,This section is in draft and will not be visible until it is resubmitted.'
