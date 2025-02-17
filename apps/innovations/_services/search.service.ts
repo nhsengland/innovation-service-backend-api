@@ -11,6 +11,7 @@ import type { InnovationListView } from '@innovations/shared/entities';
 import { InnovationStatusEnum, InnovationSupportStatusEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 import { GenericErrorsEnum, NotImplementedError } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
+import { csvToString } from '@innovations/shared/helpers/csv.helper';
 import { displayName, UserMap } from '@innovations/shared/models/user.map';
 import type { CurrentElasticSearchDocumentType } from '@innovations/shared/schemas/innovation-record';
 import type { DomainService, ElasticSearchService } from '@innovations/shared/services';
@@ -140,45 +141,6 @@ export class SearchService extends BaseService {
     if (data) {
       await this.esService.upsertDocument(this.index, data);
     }
-  }
-
-  async bulkGetDocuments<S extends SearchInnovationListSelectType>(
-    domainContext: DomainContextType,
-    params: {
-      fields: S[];
-      filters?: InnovationListFilters;
-    }
-  ): Promise<{ count: number; data: unknown[] }> {
-    const keepAlive = '1m';
-    const pageSize = 10;
-    let pitId = (await this.esService.client.openPointInTime({ index: this.index, keep_alive: keepAlive })).id;
-    let res: { count: number; data: unknown[]; pit?: string; searchAfter?: SortResults };
-    let searchAfter: SortResults | undefined = undefined;
-
-    do {
-      // loop here need to fix, is it the skip ?
-      res = await this.getDocuments(domainContext, {
-        fields: params.fields,
-        pagination: { skip: 0, take: pageSize, order: { uniqueId: 'ASC' } },
-        filters: params.filters,
-        pit: { id: pitId, keep_alive: keepAlive },
-        searchAfter: searchAfter
-      });
-
-      if (res.pit) {
-        pitId = res.pit;
-      }
-
-      // Failsafe to avoid infinite loop in case something odd happens
-      if (searchAfter === res.searchAfter) {
-        break;
-      }
-      searchAfter = res.searchAfter;
-    } while (res.data.length >= pageSize);
-
-    await this.esService.client.closePointInTime({ id: pitId });
-
-    return res;
   }
 
   /**
@@ -327,6 +289,70 @@ export class SearchService extends BaseService {
         searchAfter: response.hits.hits?.[response.hits.hits.length - 1]?.sort
       })
     };
+  }
+
+  async bulkGetDocuments<S extends SearchInnovationListSelectType>(
+    domainContext: DomainContextType,
+    params: {
+      fields: S[];
+      filters?: InnovationListFilters;
+    }
+  ): Promise<{ count: number; data: unknown[] }> {
+    const keepAlive = '1m';
+    const pageSize = 10;
+    let pitId = (await this.esService.client.openPointInTime({ index: this.index, keep_alive: keepAlive })).id;
+    let res: { count: number; data: unknown[]; pit?: string; searchAfter?: SortResults };
+    let searchAfter: SortResults | undefined = undefined;
+
+    do {
+      // loop here need to fix, is it the skip ?
+      res = await this.getDocuments(domainContext, {
+        fields: params.fields,
+        pagination: { skip: 0, take: pageSize, order: { uniqueId: 'ASC' } },
+        filters: params.filters,
+        pit: { id: pitId, keep_alive: keepAlive },
+        searchAfter: searchAfter
+      });
+
+      if (res.pit) {
+        pitId = res.pit;
+      }
+
+      // Failsafe to avoid infinite loop in case something odd happens
+      if (searchAfter === res.searchAfter) {
+        break;
+      }
+      searchAfter = res.searchAfter;
+    } while (res.data.length >= pageSize);
+
+    await this.esService.client.closePointInTime({ id: pitId });
+
+    return res;
+  }
+
+  async getDocumentsCSV<S extends SearchInnovationListSelectType>(
+    domainContext: DomainContextType,
+    params: {
+      fields: S[];
+      filters?: InnovationListFilters;
+    }
+  ): Promise<string> {
+    const rawData = await this.bulkGetDocuments(domainContext, params);
+
+    const header = params.fields;
+    const data = rawData.data.map((item: any) =>
+      header.map(field => {
+        let value = item[field];
+        if (value === null || value === undefined) return '';
+        value = JSON.stringify(value);
+        if (value.startsWith('"') && value.endsWith('"')) {
+          value = value.slice(1, -1);
+        }
+        return value;
+      })
+    );
+
+    return csvToString([header, ...data]);
   }
 
   private displayHandlers: {
