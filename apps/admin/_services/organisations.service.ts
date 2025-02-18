@@ -574,7 +574,7 @@ export class OrganisationsService extends BaseService {
     orgName: string,
     transaction: EntityManager
   ): Promise<void> {
-    const title = 'A new support organisation has been added';
+    const title = 'A new support organisation has joined the NHS Innovation Service';
     const startsAt = new Date();
     const link = {
       label: 'What does this organisation do?',
@@ -595,9 +595,9 @@ export class OrganisationsService extends BaseService {
               .setPathParams({ organisationId })
               .buildUrl()
           },
-          content: `${orgName} has been added to the NHS Innovation Service.
-            If you think this organisation will be able to support you, you can share your innovation with them in your data sharing preferences.
-            For more information about this organisation, and to share your preferences, please read:`
+          content: `${orgName} is now available to support innovators through the NHS Innovation Service.
+            If you believe this organisation can assist with your innovation, you can update your data sharing preferences to share your information with them.
+            For more about this organisation, please read:`
         },
         type: AnnouncementTypeEnum.HOMEPAGE,
         sendEmail: true
@@ -614,7 +614,7 @@ export class OrganisationsService extends BaseService {
         startsAt: startsAt,
         params: {
           link,
-          content: `${orgName} has been added to the NHS Innovation Service.
+          content: `${orgName} is now available to support innovators through the NHS Innovation Service.
             If you think this organisation could offer suitable support to an innovation that you are supporting, you can suggest it to them now.`
         },
         type: AnnouncementTypeEnum.HOMEPAGE,
@@ -632,7 +632,7 @@ export class OrganisationsService extends BaseService {
         startsAt: startsAt,
         params: {
           link,
-          content: `${orgName} has been added to the Innovation Service.`
+          content: `${orgName} is now available to support innovators through the NHS Innovation Service.`
         },
         type: AnnouncementTypeEnum.HOMEPAGE,
         sendEmail: true
