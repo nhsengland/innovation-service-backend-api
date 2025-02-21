@@ -299,13 +299,12 @@ export class SearchService extends BaseService {
     }
   ): Promise<{ count: number; data: unknown[] }> {
     const keepAlive = '1m';
-    const pageSize = 10;
+    const pageSize = 50;
     let pitId = (await this.esService.client.openPointInTime({ index: this.index, keep_alive: keepAlive })).id;
     let res: { count: number; data: unknown[]; pit?: string; searchAfter?: SortResults };
     let searchAfter: SortResults | undefined = undefined;
 
     do {
-      // loop here need to fix, is it the skip ?
       res = await this.getDocuments(domainContext, {
         fields: params.fields,
         pagination: { skip: 0, take: pageSize, order: { uniqueId: 'ASC' } },
