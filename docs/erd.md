@@ -113,6 +113,13 @@ erDiagram
     datetime2 finishedAt
     boolean isMostRecent
   }
+  INNOVATION_SUPPORT_LOG {
+    uuid id
+    enum type
+    enum innovationSupportStatus
+    nvarchar description
+    simple-json params
+  }
   INNOVATION ||--o| USER : hasAnOwner
   INNOVATION ||--o{ ORGANISATION : sharedWith
   INNOVATION ||--o| INNOVATION_ASSESSMENT : hasCurrent
@@ -120,7 +127,7 @@ erDiagram
   INNOVATION ||--o{ INNOVATION_ASSESSMENT : has
   INNOVATION ||--o{ INNOVATION_SECTION : has
   INNOVATION ||--o{ INNOVATION_SUPPORT : has
-  INNOVATION ||--o{ INNOVATION_SUPPORT_LOG : has_todo
+  INNOVATION ||--o{ INNOVATION_SUPPORT_LOG : has
   INNOVATION ||--o{ NOTIFICATION : has_todo
   INNOVATION ||--o{ INNOVATION_REASSESSMENT_REQUEST : requests
   INNOVATION ||--o{ INNOVATION_EXPORT_REQUEST : has_todo
@@ -155,4 +162,9 @@ erDiagram
   INNOVATION_SUPPORT ||--o{ USER_ROLE : supportBy
   INNOVATION_SUPPORT ||--o{ INNOVATION_TASK : has_todo
   INNOVATION_SUPPORT ||--|| SUPPORT_LAST_ACTIVITY_UPDATE_VIEW : lastActivity_todo
+  INNOVATION_SUPPORT_LOG ||--|| INNOVATION : belongsTo
+  INNOVATION_SUPPORT_LOG ||--|| INNOVATION_ASSESSMENT : majorAssessment
+  INNOVATION_SUPPORT_LOG ||--o| ORGANISATION_UNIT : createdBy
+  INNOVATION_SUPPORT_LOG ||--|| USER_ROLE : createdBy
+  INNOVATION_SUPPORT_LOG ||--o{ ORGANISATION_UNIT : suggested
 ```
