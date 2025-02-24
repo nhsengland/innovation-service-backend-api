@@ -105,13 +105,21 @@ erDiagram
     datetime2 submittedAt
     uuid submittedBy
   }
+  INNOVATION_SUPPORT {
+    uuid id
+    enum status
+    enum closeReason
+    datetime2 startedAt
+    datetime2 finishedAt
+    boolean isMostRecent
+  }
   INNOVATION ||--o| USER : hasAnOwner
   INNOVATION ||--o{ ORGANISATION : sharedWith
   INNOVATION ||--o| INNOVATION_ASSESSMENT : hasCurrent
   INNOVATION ||--o| INNOVATION_ASSESSMENT : hasCurrentMajor
   INNOVATION ||--o{ INNOVATION_ASSESSMENT : has
   INNOVATION ||--o{ INNOVATION_SECTION : has
-  INNOVATION ||--o{ INNOVATION_SUPPORT : has_todo
+  INNOVATION ||--o{ INNOVATION_SUPPORT : has
   INNOVATION ||--o{ INNOVATION_SUPPORT_LOG : has_todo
   INNOVATION ||--o{ NOTIFICATION : has_todo
   INNOVATION ||--o{ INNOVATION_REASSESSMENT_REQUEST : requests
@@ -129,7 +137,7 @@ erDiagram
   USER_ROLE ||--o| ORGANISATION : belongsTo
   USER_ROLE ||--o| ORGANISATION_UNIT : belongsTo
   USER_ROLE ||--o| THREADS : follows_TODO
-  USER_ROLE ||--o| INNOVATION_SUPPORT : supports_TODO
+  USER_ROLE ||--o| INNOVATION_SUPPORT : supports
   ORGANISATION ||--o{ ORGANISATION_UNIT : has
   ORGANISATION_UNIT ||--o| ORGANISATION : belongsTo
   ORGANISATION_UNIT ||--o{ INNOVATION_ASSESSMENT : has
@@ -141,4 +149,10 @@ erDiagram
   INNOVATION_ASSESSMENT ||--o| INNOVATION_REASSESSMENT_REQUEST : createdFrom
   INNOVATION_SECTION ||--|| USER : submittedBy
   INNOVATION_SECTION ||--o{ INNOVATION_TASK : xpto_todo
+  INNOVATION_SUPPORT ||--o| INNOVATION : belongsTo
+  INNOVATION_SUPPORT ||--o| INNOVATION_ASSESSMENT : assessedBy
+  INNOVATION_SUPPORT ||--o| ORGANISATION_UNIT : supportBy
+  INNOVATION_SUPPORT ||--o{ USER_ROLE : supportBy
+  INNOVATION_SUPPORT ||--o{ INNOVATION_TASK : has_todo
+  INNOVATION_SUPPORT ||--|| SUPPORT_LAST_ACTIVITY_UPDATE_VIEW : lastActivity_todo
 ```
