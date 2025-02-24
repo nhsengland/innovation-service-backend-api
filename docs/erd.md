@@ -98,12 +98,19 @@ erDiagram
     nvarchar otherReassessmentReason
     nvarchar whatSupportDoYouNeed
   }
+  INNOVATION_SECTION {
+    uuid id
+    enum section
+    enum status
+    datetime2 submittedAt
+    uuid submittedBy
+  }
   INNOVATION ||--o| USER : hasAnOwner
   INNOVATION ||--o{ ORGANISATION : sharedWith
   INNOVATION ||--o| INNOVATION_ASSESSMENT : hasCurrent
   INNOVATION ||--o| INNOVATION_ASSESSMENT : hasCurrentMajor
   INNOVATION ||--o{ INNOVATION_ASSESSMENT : has
-  INNOVATION ||--o{ INNOVATION_SECTION : has_todo
+  INNOVATION ||--o{ INNOVATION_SECTION : has
   INNOVATION ||--o{ INNOVATION_SUPPORT : has_todo
   INNOVATION ||--o{ INNOVATION_SUPPORT_LOG : has_todo
   INNOVATION ||--o{ NOTIFICATION : has_todo
@@ -132,4 +139,6 @@ erDiagram
   INNOVATION_ASSESSMENT ||--o{ ORGANISATION_UNIT : suggested
   INNOVATION_ASSESSMENT ||--o| INNOVATION_ASSESSMENT : previous
   INNOVATION_ASSESSMENT ||--o| INNOVATION_REASSESSMENT_REQUEST : createdFrom
+  INNOVATION_SECTION ||--|| USER : submittedBy
+  INNOVATION_SECTION ||--o{ INNOVATION_TASK : xpto_todo
 ```
