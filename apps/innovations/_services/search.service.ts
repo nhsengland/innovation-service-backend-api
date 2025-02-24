@@ -3,13 +3,15 @@ import type {
   QueryDslRangeQuery,
   SearchHit,
   SearchTotalHits,
-  Sort
+  Sort,
+  SortResults
 } from '@elastic/elasticsearch/lib/api/types';
 import { ES_ENV } from '@innovations/shared/config';
 import type { InnovationListView } from '@innovations/shared/entities';
 import { InnovationStatusEnum, InnovationSupportStatusEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 import { GenericErrorsEnum, NotImplementedError } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
+import { csvToString } from '@innovations/shared/helpers/csv.helper';
 import { displayName, UserMap } from '@innovations/shared/models/user.map';
 import type { CurrentElasticSearchDocumentType } from '@innovations/shared/schemas/innovation-record';
 import type { DomainService, ElasticSearchService } from '@innovations/shared/services';
@@ -158,8 +160,10 @@ export class SearchService extends BaseService {
       fields: S[];
       pagination: PaginationQueryParamsType<any>;
       filters?: InnovationListFilters;
+      pit?: { id: string; keep_alive: string };
+      searchAfter?: SortResults;
     }
-  ): Promise<{ count: number; data: unknown[] }> {
+  ): Promise<{ count: number; data: unknown[]; pitId?: string }> {
     if (!params.fields.length) {
       return { count: 0, data: [] };
     }
@@ -230,7 +234,20 @@ export class SearchService extends BaseService {
     });
     searchQuery.addPagination({ from: params.pagination.skip, size: params.pagination.take, sort });
 
-    const response = await this.esService.client.search<CurrentElasticSearchDocumentType>(searchQuery.build());
+    const searchBody = searchQuery.build();
+
+    if (params.pit) {
+      // PIT searches use the pit instead of the index
+      searchBody.pit = params.pit;
+      searchBody.index = undefined;
+
+      // only using the searchAfter in the PIT but probably should be used in the normal search as well
+      if (params.searchAfter) {
+        searchBody.search_after = params.searchAfter;
+      }
+    }
+
+    const response = await this.esService.client.search<CurrentElasticSearchDocumentType>(searchBody);
 
     const handlerMaps: {
       [k in keyof typeof this.postHandlers]: Awaited<ReturnType<(typeof this.postHandlers)[k]>>;
@@ -266,8 +283,75 @@ export class SearchService extends BaseService {
         return isAccessorDomainContextType(domainContext) && !doc.shares?.includes(domainContext.organisation.id)
           ? this.cleanupAccessorsNotSharedInnovation(res)
           : res;
+      }),
+      ...(response.pit_id && {
+        pitId: response.pit_id,
+        searchAfter: response.hits.hits?.[response.hits.hits.length - 1]?.sort
       })
     };
+  }
+
+  async bulkGetDocuments<S extends SearchInnovationListSelectType>(
+    domainContext: DomainContextType,
+    params: {
+      fields: S[];
+      filters?: InnovationListFilters;
+    }
+  ): Promise<{ count: number; data: unknown[] }> {
+    const keepAlive = '1m';
+    const pageSize = 50;
+    let pitId = (await this.esService.client.openPointInTime({ index: this.index, keep_alive: keepAlive })).id;
+    let res: { count: number; data: unknown[]; pit?: string; searchAfter?: SortResults };
+    let searchAfter: SortResults | undefined = undefined;
+
+    do {
+      res = await this.getDocuments(domainContext, {
+        fields: params.fields,
+        pagination: { skip: 0, take: pageSize, order: { uniqueId: 'ASC' } },
+        filters: params.filters,
+        pit: { id: pitId, keep_alive: keepAlive },
+        searchAfter: searchAfter
+      });
+
+      if (res.pit) {
+        pitId = res.pit;
+      }
+
+      // Failsafe to avoid infinite loop in case something odd happens
+      if (searchAfter === res.searchAfter) {
+        break;
+      }
+      searchAfter = res.searchAfter;
+    } while (res.data.length >= pageSize);
+
+    await this.esService.client.closePointInTime({ id: pitId });
+
+    return res;
+  }
+
+  async getDocumentsCSV<S extends SearchInnovationListSelectType>(
+    domainContext: DomainContextType,
+    params: {
+      fields: S[];
+      filters?: InnovationListFilters;
+    }
+  ): Promise<string> {
+    const rawData = await this.bulkGetDocuments(domainContext, params);
+
+    const header = params.fields;
+    const data = rawData.data.map((item: any) =>
+      header.map(field => {
+        let value = item[field];
+        if (value === null || value === undefined) return '';
+        value = JSON.stringify(value);
+        if (value.startsWith('"') && value.endsWith('"')) {
+          value = value.slice(1, -1);
+        }
+        return value;
+      })
+    );
+
+    return csvToString([header, ...data]);
   }
 
   private displayHandlers: {
