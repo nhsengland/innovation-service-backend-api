@@ -21,7 +21,7 @@ erDiagram
     enum status
     datetime2 firstTimeSignInAt
     datetime2 lockedAt
-    nvarchar deleteReason
+    enum deleteReason
     simple-json howDidYouFindUsAnswers
   }
   INNOVATION_COLLABORATOR {
@@ -61,16 +61,53 @@ erDiagram
     datetime2 inactivatedAt
     uuid organisationId
   }
+  INNOVATION_ASSESSMENT {
+    uuid id
+    smallint majorVersion
+    smallint minorVersion
+    nvarchar editReason
+    nvarchar description
+    nvarchar summary
+    enum maturityLevel
+    nvarchar maturityLevelComment
+    datetime2 startedAt
+    datetime2 finishedAt
+    enum hasRegulatoryApprovals
+    nvarchar hasRegulatoryApprovalsComment
+    enum hasEvidence
+    nvarchar hasEvidenceComment
+    enum hasValidation
+    nvarchar hasValidationComment
+    enum hasProposition
+    nvarchar hasPropositionComment
+    enum hasCompetitionKnowledge
+    nvarchar hasCompetitionKnowledgeComment
+    enum hasImplementationPlan
+    nvarchar hasImplementationPlanComment
+    enum hasScaleResource
+    nvarchar hasScaleResourceComment
+    enum exemptedReason
+    nvarchar exemptedMessage
+    datetime2 exemptedAt
+  }
+  INNOVATION_REASSESSMENT_REQUEST {
+    uuid id
+    varchar updatedInnovationRecord
+    nvarchar description
+    simple-array reassessmentReason
+    nvarchar otherReassessmentReason
+    nvarchar whatSupportDoYouNeed
+  }
   INNOVATION ||--o| USER : hasAnOwner
   INNOVATION ||--o{ ORGANISATION : sharedWith
-  INNOVATION ||--o| INNOVATION_ASSESSMENT : hasCurrent_todo
-  INNOVATION ||--o| INNOVATION_ASSESSMENT : hasCurrentMajor_todo
-  INNOVATION ||--o{ INNOVATION_ASSESSMENT : has_todo
+  INNOVATION ||--o| INNOVATION_ASSESSMENT : hasCurrent
+  INNOVATION ||--o| INNOVATION_ASSESSMENT : hasCurrentMajor
+  INNOVATION ||--o{ INNOVATION_ASSESSMENT : has
   INNOVATION ||--o{ INNOVATION_SECTION : has_todo
   INNOVATION ||--o{ INNOVATION_SUPPORT : has_todo
   INNOVATION ||--o{ INNOVATION_SUPPORT_LOG : has_todo
   INNOVATION ||--o{ NOTIFICATION : has_todo
-  INNOVATION ||--o{ INNOVATION_REASSESSMENT_REQUEST : has_todo
+  INNOVATION ||--o{ INNOVATION_REASSESSMENT_REQUEST : requests
   INNOVATION ||--o{ INNOVATION_EXPORT_REQUEST : has_todo
   INNOVATION ||--|| INNOVATION_GROUPED_STATUS_VIEW : has_todo
   INNOVATION ||--o{ INNOVATION_COLLABORATOR : has_todo
@@ -88,6 +125,11 @@ erDiagram
   USER_ROLE ||--o| INNOVATION_SUPPORT : supports_TODO
   ORGANISATION ||--o{ ORGANISATION_UNIT : has
   ORGANISATION_UNIT ||--o| ORGANISATION : belongsTo
-  ORGANISATION_UNIT ||--o{ ASSESSMENT: x_TODO
-  ORGANISATION_UNIT ||--o{ INNOVATION_SUPPORT_LOG: has_TODO
+  ORGANISATION_UNIT ||--o{ INNOVATION_ASSESSMENT : has
+  ORGANISATION_UNIT ||--o{ INNOVATION_SUPPORT_LOG : has_TODO
+  INNOVATION_ASSESSMENT ||--|| INNOVATION : belongsTo
+  INNOVATION_ASSESSMENT ||--o| USER : assignedTo
+  INNOVATION_ASSESSMENT ||--o{ ORGANISATION_UNIT : suggested
+  INNOVATION_ASSESSMENT ||--o| INNOVATION_ASSESSMENT : previous
+  INNOVATION_ASSESSMENT ||--o| INNOVATION_REASSESSMENT_REQUEST : createdFrom
 ```
