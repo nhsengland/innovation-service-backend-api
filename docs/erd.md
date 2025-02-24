@@ -120,6 +120,17 @@ erDiagram
     nvarchar description
     simple-json params
   }
+  NOTIFICATION {
+    uuid id
+    enum contextType
+    enum contextDetail
+    uuid contextId
+    simple-json params
+  }
+  NOTIFICATION_USER {
+    bigint id PK
+    datetime2 readAt
+  }
   INNOVATION ||--o| USER : hasAnOwner
   INNOVATION ||--o{ ORGANISATION : sharedWith
   INNOVATION ||--o| INNOVATION_ASSESSMENT : hasCurrent
@@ -128,7 +139,7 @@ erDiagram
   INNOVATION ||--o{ INNOVATION_SECTION : has
   INNOVATION ||--o{ INNOVATION_SUPPORT : has
   INNOVATION ||--o{ INNOVATION_SUPPORT_LOG : has
-  INNOVATION ||--o{ NOTIFICATION : has_todo
+  INNOVATION ||--o{ NOTIFICATION : has
   INNOVATION ||--o{ INNOVATION_REASSESSMENT_REQUEST : requests
   INNOVATION ||--o{ INNOVATION_EXPORT_REQUEST : has_todo
   INNOVATION ||--|| INNOVATION_GROUPED_STATUS_VIEW : has_todo
@@ -167,4 +178,6 @@ erDiagram
   INNOVATION_SUPPORT_LOG ||--o| ORGANISATION_UNIT : createdBy
   INNOVATION_SUPPORT_LOG ||--|| USER_ROLE : createdBy
   INNOVATION_SUPPORT_LOG ||--o{ ORGANISATION_UNIT : suggested
+  NOTIFICATION ||--o{ NOTIFICATION_USER : notifies
+  NOTIFICATION_USER }o--|| USER_ROLE : is
 ```
