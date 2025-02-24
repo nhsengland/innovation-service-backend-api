@@ -41,8 +41,28 @@ erDiagram
     uuid organisationUnitId
     uuid userId
   }
+  ORGANISATION {
+    uuid id
+    string name
+    enum type
+    nvarchar acronym
+    nvarchar size
+    nvarchar description
+    nvarchar summary
+    nvarchar registrationNumber
+    boolean isShadow
+    datetime2 inactivatedAt
+  }
+  ORGANISATION_UNIT {
+    uuid id
+    string name
+    nvarchar acronym
+    boolean isShadow
+    datetime2 inactivatedAt
+    uuid organisationId
+  }
   INNOVATION ||--o| USER : hasAnOwner
-  INNOVATION ||--o{ ORGANISATION : sharedWith_todo
+  INNOVATION ||--o{ ORGANISATION : sharedWith
   INNOVATION ||--o| INNOVATION_ASSESSMENT : hasCurrent_todo
   INNOVATION ||--o| INNOVATION_ASSESSMENT : hasCurrentMajor_todo
   INNOVATION ||--o{ INNOVATION_ASSESSMENT : has_todo
@@ -66,4 +86,8 @@ erDiagram
   USER_ROLE ||--o| ORGANISATION_UNIT : belongsTo
   USER_ROLE ||--o| THREADS : follows_TODO
   USER_ROLE ||--o| INNOVATION_SUPPORT : supports_TODO
+  ORGANISATION ||--o{ ORGANISATION_UNIT : has
+  ORGANISATION_UNIT ||--o| ORGANISATION : belongsTo
+  ORGANISATION_UNIT ||--o{ ASSESSMENT: x_TODO
+  ORGANISATION_UNIT ||--o{ INNOVATION_SUPPORT_LOG: has_TODO
 ```
