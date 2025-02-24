@@ -4,9 +4,9 @@ title: Innovation Service
 ---
 erDiagram
   INNOVATION {
-    uuid id
+    uuid id PK
     string name
-    string uniqueId
+    string uniqueId UK
     enum status
     datetime2 statusUpdatedAt
     datetime2 expires_at
@@ -33,6 +33,14 @@ erDiagram
     uuid innovationId
     uuid userId
   }
+  USER_ROLE {
+    uuid id
+    enum role
+    boolean isActive
+    uuid organisationId
+    uuid organisationUnitId
+    uuid userId
+  }
   INNOVATION ||--o| USER : hasAnOwner
   INNOVATION ||--o{ ORGANISATION : sharedWith
   INNOVATION ||--o| INNOVATION_ASSESSMENT : hasCurrent
@@ -51,6 +59,11 @@ erDiagram
   INNOVATION ||--o{ INNOVATION_TRANSFER : has
   INNOVATION ||--o{ INNOVATION_SUGGESTED_UNITS_VIEW : has
   INNOVATION_COLLABORATOR ||--o| USER : is
-  USER ||--o{ USER_ROLE : has_todo
-  USER ||--o{ TERMS_OF_USER_USER : has_todo 
+  USER ||--o{ USER_ROLE : has
+  USER ||--o{ TERMS_OF_USE_USER : accepted_TODO
+  USER_ROLE ||--o| USER : belongsTo
+  USER_ROLE ||--o| ORGANISATION : belongsTo
+  USER_ROLE ||--o| ORGANISATION_UNIT : belongsTo
+  USER_ROLE ||--o| THREADS : follows_TODO
+  USER_ROLE ||--o| INNOVATION_SUPPORT : supports_TODO
 ```
