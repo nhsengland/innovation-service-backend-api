@@ -341,7 +341,7 @@ export class SearchService extends BaseService {
     const header = params.fields;
     const data = rawData.data.map((item: any) =>
       header.map(field => {
-        let value = item[field];
+        let value = field.split('.').reduce((acc, key) => (acc ? acc[key] : undefined), item);
         if (value === null || value === undefined) return '';
         value = JSON.stringify(value);
         if (value.startsWith('"') && value.endsWith('"')) {
