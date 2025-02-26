@@ -158,6 +158,14 @@ erDiagram
     simple-json document
     nvarchar version
   }
+  INNOVATION_TRANSFER {
+    uuid id
+    enum status
+    nvarchar email
+    int emailCount
+    datetime2 finishedAt
+    bit ownerToCollaborator
+  }
   INNOVATION ||--o| USER : hasAnOwner
   INNOVATION ||--o{ ORGANISATION : sharedWith
   INNOVATION ||--o| INNOVATION_ASSESSMENT : hasCurrent
@@ -173,7 +181,7 @@ erDiagram
   INNOVATION ||--o{ INNOVATION_COLLABORATOR : has
   INNOVATION ||--|| INNOVATION_DOCUMENT : has
   INNOVATION ||--|| INNOVATION_DOCUMENT_DRAFT : has
-  INNOVATION ||--o{ INNOVATION_TRANSFER : has_todo
+  INNOVATION ||--o{ INNOVATION_TRANSFER : has
   INNOVATION ||--o{ INNOVATION_SUGGESTED_UNITS_VIEW : has_todo
   INNOVATION_COLLABORATOR ||--o| USER : is
   INNOVATION_COLLABORATOR ||--o| INNOVATION : collaboratesWith
