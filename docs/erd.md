@@ -131,6 +131,12 @@ erDiagram
     bigint id PK
     datetime2 readAt
   }
+  INNOVATION_EXPORT_REQUEST {
+    uuid id
+    enum status
+    varchar requestReason
+    varchar rejectReason
+  }
   INNOVATION ||--o| USER : hasAnOwner
   INNOVATION ||--o{ ORGANISATION : sharedWith
   INNOVATION ||--o| INNOVATION_ASSESSMENT : hasCurrent
@@ -141,7 +147,7 @@ erDiagram
   INNOVATION ||--o{ INNOVATION_SUPPORT_LOG : has
   INNOVATION ||--o{ NOTIFICATION : has
   INNOVATION ||--o{ INNOVATION_REASSESSMENT_REQUEST : requests
-  INNOVATION ||--o{ INNOVATION_EXPORT_REQUEST : has_todo
+  INNOVATION ||--o{ INNOVATION_EXPORT_REQUEST : requests
   INNOVATION ||--|| INNOVATION_GROUPED_STATUS_VIEW : has_todo
   INNOVATION ||--o{ INNOVATION_COLLABORATOR : has_todo
   INNOVATION ||--|| INNOVATION_DOCUMENT : has_todo
@@ -180,4 +186,6 @@ erDiagram
   INNOVATION_SUPPORT_LOG ||--o{ ORGANISATION_UNIT : suggested
   NOTIFICATION ||--o{ NOTIFICATION_USER : notifies
   NOTIFICATION_USER }o--|| USER_ROLE : is
+  INNOVATION_EXPORT_REQUEST ||--o| INNOVATION : belongsTo
+  INNOVATION_EXPORT_REQUEST ||--o| USER_ROLE : createdBy
 ```
