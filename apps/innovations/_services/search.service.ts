@@ -9,7 +9,12 @@ import type {
 import { ES_ENV } from '@innovations/shared/config';
 import type { InnovationListView } from '@innovations/shared/entities';
 import { InnovationStatusEnum, InnovationSupportStatusEnum, ServiceRoleEnum } from '@innovations/shared/enums';
-import { GenericErrorsEnum, NotImplementedError } from '@innovations/shared/errors';
+import {
+  ConflictError,
+  ElasticSearchErrorsEnum,
+  GenericErrorsEnum,
+  NotImplementedError
+} from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import { csvToString } from '@innovations/shared/helpers/csv.helper';
 import { displayName, UserMap } from '@innovations/shared/models/user.map';
@@ -301,11 +306,13 @@ export class SearchService extends BaseService {
     const keepAlive = '1m';
     const pageSize = 50;
     let pitId = (await this.esService.client.openPointInTime({ index: this.index, keep_alive: keepAlive })).id;
-    let res: { count: number; data: unknown[]; pit?: string; searchAfter?: SortResults };
+    let page: { count: number; data: unknown[]; pit?: string; searchAfter?: SortResults };
     let searchAfter: SortResults | undefined = undefined;
 
+    const data = [];
+
     do {
-      res = await this.getDocuments(domainContext, {
+      page = await this.getDocuments(domainContext, {
         fields: params.fields,
         pagination: { skip: 0, take: pageSize, order: { uniqueId: 'ASC' } },
         filters: params.filters,
@@ -313,20 +320,30 @@ export class SearchService extends BaseService {
         searchAfter: searchAfter
       });
 
-      if (res.pit) {
-        pitId = res.pit;
+      if (page.pit) {
+        pitId = page.pit;
       }
 
       // Failsafe to avoid infinite loop in case something odd happens
-      if (searchAfter === res.searchAfter) {
+      if (searchAfter === page.searchAfter) {
         break;
       }
-      searchAfter = res.searchAfter;
-    } while (res.data.length >= pageSize);
+      searchAfter = page.searchAfter;
+      data.push(...page.data);
+    } while (page.data.length >= pageSize);
+
+    if (data.length < page.count) {
+      throw new ConflictError(ElasticSearchErrorsEnum.ES_SEARCH_UNEXPECTED_RESULT_SIZE_ERROR, {
+        details: { count: data.length, total: page.count }
+      });
+    }
 
     await this.esService.client.closePointInTime({ id: pitId });
 
-    return res;
+    return {
+      count: page.count,
+      data: data
+    };
   }
 
   async getDocumentsCSV<S extends SearchInnovationListSelectType>(
