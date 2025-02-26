@@ -137,6 +137,15 @@ erDiagram
     varchar requestReason
     varchar rejectReason
   }
+  INNOVATION_GROUPED_STATUS_VIEW {
+    uuid innovationId
+    enum groupedStatus
+    string name
+    string createdBy
+    int daysSinceNoActiveSupport
+    int daysSinceNoActiveSupportOrDeploy
+    datetime2 expectedArchiveDate
+  }
   INNOVATION ||--o| USER : hasAnOwner
   INNOVATION ||--o{ ORGANISATION : sharedWith
   INNOVATION ||--o| INNOVATION_ASSESSMENT : hasCurrent
@@ -148,7 +157,7 @@ erDiagram
   INNOVATION ||--o{ NOTIFICATION : has
   INNOVATION ||--o{ INNOVATION_REASSESSMENT_REQUEST : requests
   INNOVATION ||--o{ INNOVATION_EXPORT_REQUEST : requests
-  INNOVATION ||--|| INNOVATION_GROUPED_STATUS_VIEW : has_todo
+  INNOVATION ||--|| INNOVATION_GROUPED_STATUS_VIEW : has
   INNOVATION ||--o{ INNOVATION_COLLABORATOR : has_todo
   INNOVATION ||--|| INNOVATION_DOCUMENT : has_todo
   INNOVATION ||--|| INNOVATION_DOCUMENT_DRAFT : has_todo
