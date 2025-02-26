@@ -166,6 +166,12 @@ erDiagram
     datetime2 finishedAt
     bit ownerToCollaborator
   }
+  INNOVATION_SUGGESTED_UNITS_VIEW {
+    uuid innovationId
+    uuid suggestedUnitId
+    simple-json suggestedBy
+    datetime2 suggestedOn
+  }
   INNOVATION ||--o| USER : hasAnOwner
   INNOVATION ||--o{ ORGANISATION : sharedWith
   INNOVATION ||--o| INNOVATION_ASSESSMENT : hasCurrent
@@ -182,7 +188,7 @@ erDiagram
   INNOVATION ||--|| INNOVATION_DOCUMENT : has
   INNOVATION ||--|| INNOVATION_DOCUMENT_DRAFT : has
   INNOVATION ||--o{ INNOVATION_TRANSFER : has
-  INNOVATION ||--o{ INNOVATION_SUGGESTED_UNITS_VIEW : has_todo
+  INNOVATION ||--o{ INNOVATION_SUGGESTED_UNITS_VIEW : suggested
   INNOVATION_COLLABORATOR ||--o| USER : is
   INNOVATION_COLLABORATOR ||--o| INNOVATION : collaboratesWith
   USER ||--o{ USER_ROLE : has
@@ -220,4 +226,6 @@ erDiagram
   INNOVATION_EXPORT_REQUEST ||--o| USER_ROLE : createdBy
   INNOVATION_DOCUMENT ||--o| INNOVATION : belongsTo
   INNOVATION_DOCUMENT_DRAFT ||--o| INNOVATION : belongsTo
+  INNOVATION_SUGGESTED_UNITS_VIEW ||--o| INNOVATION : belongsTo_todo
+  INNOVATION_SUGGESTED_UNITS_VIEW ||--o| ORGANISATION_UNIT : suggestedUnit_todo
 ```
