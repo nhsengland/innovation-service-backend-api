@@ -146,6 +146,18 @@ erDiagram
     int daysSinceNoActiveSupportOrDeploy
     datetime2 expectedArchiveDate
   }
+  INNOVATION_DOCUMENT {
+    uuid id
+    simple-json document
+    nvarchar version
+    boolean isSnapshot
+    nvarchar description
+  }
+  INNOVATION_DOCUMENT_DRAFT {
+    uuid id
+    simple-json document
+    nvarchar version
+  }
   INNOVATION ||--o| USER : hasAnOwner
   INNOVATION ||--o{ ORGANISATION : sharedWith
   INNOVATION ||--o| INNOVATION_ASSESSMENT : hasCurrent
@@ -159,8 +171,8 @@ erDiagram
   INNOVATION ||--o{ INNOVATION_EXPORT_REQUEST : requests
   INNOVATION ||--|| INNOVATION_GROUPED_STATUS_VIEW : has
   INNOVATION ||--o{ INNOVATION_COLLABORATOR : has
-  INNOVATION ||--|| INNOVATION_DOCUMENT : has_todo
-  INNOVATION ||--|| INNOVATION_DOCUMENT_DRAFT : has_todo
+  INNOVATION ||--|| INNOVATION_DOCUMENT : has
+  INNOVATION ||--|| INNOVATION_DOCUMENT_DRAFT : has
   INNOVATION ||--o{ INNOVATION_TRANSFER : has_todo
   INNOVATION ||--o{ INNOVATION_SUGGESTED_UNITS_VIEW : has_todo
   INNOVATION_COLLABORATOR ||--o| USER : is
@@ -198,4 +210,6 @@ erDiagram
   NOTIFICATION_USER }o--|| USER_ROLE : is
   INNOVATION_EXPORT_REQUEST ||--o| INNOVATION : belongsTo
   INNOVATION_EXPORT_REQUEST ||--o| USER_ROLE : createdBy
+  INNOVATION_DOCUMENT ||--o| INNOVATION : belongsTo
+  INNOVATION_DOCUMENT_DRAFT ||--o| INNOVATION : belongsTo
 ```
