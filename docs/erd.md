@@ -192,6 +192,17 @@ erDiagram
     nvarchar displayId
     enum status
   }
+  INNOVATION_TASK_DESCRIPTIONS_VIEW {
+    uuid taskId
+    enum status
+    uuid threadId
+    uuid messageId
+    nvarchar description
+    datetime2 createdAt
+    enum createdByRole
+    nvarchar createdByIdentityId
+    nvarchar createdByOrganisationUnitName
+  }
   INNOVATION ||--o| USER : hasAnOwner
   INNOVATION ||--o{ ORGANISATION : sharedWith
   INNOVATION ||--o| INNOVATION_ASSESSMENT : hasCurrent
@@ -265,5 +276,6 @@ erDiagram
   INNOVATION_TASK ||--o| INNOVATION_SUPPORT : belongsTo
   INNOVATION_TASK ||--o| USER_ROLE : createdBy
   INNOVATION_TASK ||--o| USER_ROLE : updatedBy
-  INNOVATION_TASK ||--o{ INNOVATION_TASK_DESCRIPTIONS_VIEW : has_todo
+  INNOVATION_TASK ||--o{ INNOVATION_TASK_DESCRIPTIONS_VIEW : has
+  INNOVATION_TASK_DESCRIPTIONS_VIEW ||--o| INNOVATION_TASK : belongsTo
 ```
