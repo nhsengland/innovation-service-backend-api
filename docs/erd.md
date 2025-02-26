@@ -176,6 +176,17 @@ erDiagram
     uuid id PK
     datetime2 acceptedAt
   }
+  INNOVATION_THREAD {
+    uuid id
+    string subject
+    enum contextType
+    uuid contextId
+  }
+  INNOVATION_THREAD_MESSAGE {
+    uuid id
+    nvarchar message
+    bit isEditable
+  }
   INNOVATION ||--o| USER : hasAnOwner
   INNOVATION ||--o{ ORGANISATION : sharedWith
   INNOVATION ||--o| INNOVATION_ASSESSMENT : hasCurrent
@@ -193,6 +204,7 @@ erDiagram
   INNOVATION ||--|| INNOVATION_DOCUMENT_DRAFT : has
   INNOVATION ||--o{ INNOVATION_TRANSFER : has
   INNOVATION ||--o{ INNOVATION_SUGGESTED_UNITS_VIEW : suggested
+  INNOVATION ||--o{ INNOVATION_THREAD : has
   INNOVATION_COLLABORATOR ||--o| USER : is
   INNOVATION_COLLABORATOR ||--o| INNOVATION : collaboratesWith
   USER ||--o{ USER_ROLE : has
@@ -200,7 +212,7 @@ erDiagram
   USER_ROLE ||--o| USER : belongsTo
   USER_ROLE ||--o| ORGANISATION : belongsTo
   USER_ROLE ||--o| ORGANISATION_UNIT : belongsTo
-  USER_ROLE ||--o| THREADS : follows_TODO
+  USER_ROLE ||--o| THREADS : follows
   USER_ROLE ||--o| INNOVATION_SUPPORT : supports
   ORGANISATION ||--o{ ORGANISATION_UNIT : has
   ORGANISATION_UNIT ||--o| ORGANISATION : belongsTo
@@ -232,5 +244,15 @@ erDiagram
   INNOVATION_DOCUMENT_DRAFT ||--o| INNOVATION : belongsTo
   INNOVATION_SUGGESTED_UNITS_VIEW ||--o| INNOVATION : belongsTo_todo
   INNOVATION_SUGGESTED_UNITS_VIEW ||--o| ORGANISATION_UNIT : suggestedUnit_todo
-  TERMS_OF_USE_USER ||--o| TERMS_OF_USE : references
+  TERMS_OF_USE_USER ||--o| USER : belongsTo
+  TERMS_OF_USE_USER ||--o| TERMS_OF_USE : belongsTo
+  INNOVATION_THREAD ||--o| INNOVATION : belongsTo
+  INNOVATION_THREAD ||--o| USER : authoredBy
+  INNOVATION_THREAD ||--o| USER_ROLE : authoredBy
+  INNOVATION_THREAD ||--o{ USER_ROLE : followedBy
+  INNOVATION_THREAD ||--o{ INNOVATION_THREAD_MESSAGE : contains
+  INNOVATION_THREAD_MESSAGE }o--|| INNOVATION_THREAD : belongsTo
+  INNOVATION_THREAD_MESSAGE }o--|| USER : authoredBy
+  INNOVATION_THREAD_MESSAGE }o--|| USER_ROLE : authoredBy
+  INNOVATION_THREAD_MESSAGE }o--|| ORGANISATION_UNIT : authoredBy
 ```
