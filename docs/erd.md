@@ -172,6 +172,10 @@ erDiagram
     simple-json suggestedBy
     datetime2 suggestedOn
   }
+  TERMS_OF_USE_USER {
+    uuid id PK
+    datetime2 acceptedAt
+  }
   INNOVATION ||--o| USER : hasAnOwner
   INNOVATION ||--o{ ORGANISATION : sharedWith
   INNOVATION ||--o| INNOVATION_ASSESSMENT : hasCurrent
@@ -192,7 +196,7 @@ erDiagram
   INNOVATION_COLLABORATOR ||--o| USER : is
   INNOVATION_COLLABORATOR ||--o| INNOVATION : collaboratesWith
   USER ||--o{ USER_ROLE : has
-  USER ||--o{ TERMS_OF_USE_USER : accepted_TODO
+  USER ||--o{ TERMS_OF_USE_USER : accepted
   USER_ROLE ||--o| USER : belongsTo
   USER_ROLE ||--o| ORGANISATION : belongsTo
   USER_ROLE ||--o| ORGANISATION_UNIT : belongsTo
@@ -228,4 +232,5 @@ erDiagram
   INNOVATION_DOCUMENT_DRAFT ||--o| INNOVATION : belongsTo
   INNOVATION_SUGGESTED_UNITS_VIEW ||--o| INNOVATION : belongsTo_todo
   INNOVATION_SUGGESTED_UNITS_VIEW ||--o| ORGANISATION_UNIT : suggestedUnit_todo
+  TERMS_OF_USE_USER ||--o| TERMS_OF_USE : references
 ```
