@@ -312,6 +312,7 @@ describe('Users / _services / organisations service suite', () => {
       const adamInnovation = scenario.users.adamInnovator.innovations.adamInnovation;
       const ottoChestInnovation = scenario.users.ottoOctaviusInnovator.innovations.chestHarnessInnovation;
       const ottoTentaclesInnovation = scenario.users.ottoOctaviusInnovator.innovations.tentaclesInnovation;
+      const innovationUpdateInPast = scenario.users.tristanInnovator.innovations.innovationUpdateInPast;
 
       expect(result.count).toBe(3);
       expect(result.data).toStrictEqual([
@@ -333,7 +334,8 @@ describe('Users / _services / organisations service suite', () => {
             { id: johnInnovation.id, name: johnInnovation.name },
             { id: adamInnovation.id, name: adamInnovation.name },
             { id: ottoChestInnovation.id, name: ottoChestInnovation.name },
-            { id: ottoTentaclesInnovation.id, name: ottoTentaclesInnovation.name }
+            { id: ottoTentaclesInnovation.id, name: ottoTentaclesInnovation.name },
+            { id: innovationUpdateInPast.id, name: innovationUpdateInPast.name }
           ]
         }
       ]);
