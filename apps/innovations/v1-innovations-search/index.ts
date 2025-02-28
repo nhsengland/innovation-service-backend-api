@@ -34,14 +34,22 @@ class V1InnovationsSearch {
       });
       const { skip, take, order, fields, ...filters } = queryParams;
 
-      // TODO: fix this as any
-      const response = await searchService.getDocuments(domainContext, {
-        fields: fields as any,
-        filters,
-        pagination: { skip, take, order }
-      });
+      let response: any;
 
-      context.res = ResponseHelper.Ok<ResponseDTO>(response as any); // todo fix this any
+      if (queryParams.type === 'csv') {
+        response = await searchService.getDocumentsCSV(domainContext, {
+          fields: fields as any,
+          filters
+        });
+      } else {
+        response = await searchService.getDocuments(domainContext, {
+          fields: fields as any,
+          filters,
+          pagination: { skip, take, order }
+        });
+      }
+
+      context.res = ResponseHelper.Ok<ResponseDTO>(response);
 
       return;
     } catch (error) {

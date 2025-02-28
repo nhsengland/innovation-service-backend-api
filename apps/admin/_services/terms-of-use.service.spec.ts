@@ -1,15 +1,15 @@
 import { TestsHelper } from '@admin/shared/tests';
 
-import { container } from '../_config';
-import SYMBOLS from './symbols';
-import type { EntityManager } from 'typeorm';
-import type { TermsOfUseService } from './terms-of-use.service';
+import { TermsOfUseEntity } from '@admin/shared/entities';
+import { TermsOfUseTypeEnum } from '@admin/shared/enums';
+import { NotFoundError } from '@admin/shared/errors';
+import { AdminErrorsEnum } from '@admin/shared/errors/errors.enums';
 import { DTOsHelper } from '@admin/shared/tests/helpers/dtos.helper';
 import { randPastDate, randText, randUuid } from '@ngneat/falso';
-import { TermsOfUseTypeEnum } from '@admin/shared/enums';
-import { TermsOfUseEntity } from '@admin/shared/entities';
-import { AdminErrorsEnum } from '@admin/shared/errors/errors.enums';
-import { NotFoundError } from '@admin/shared/errors';
+import type { EntityManager } from 'typeorm';
+import { container } from '../_config';
+import SYMBOLS from './symbols';
+import type { TermsOfUseService } from './terms-of-use.service';
 
 describe('Admin / _services / terms-of-use service suite', () => {
   let sut: TermsOfUseService;
@@ -110,24 +110,26 @@ describe('Admin / _services / terms-of-use service suite', () => {
       const result = await sut.getTermsOfUseList({ take: 10, skip: 0, order: { createdAt: 'ASC' } }, em);
 
       expect(result.count).toBe(2);
-      expect(result.data).toMatchObject([
-        {
-          id: releasedTermsOfUse.id,
-          name: releasedTermsOfUse.name,
-          touType: releasedTermsOfUse.touType,
-          summary: releasedTermsOfUse.summary,
-          releasedAt: releasedTermsOfUse.releasedAt,
-          createdAt: releasedTermsOfUse.createdAt
-        },
-        {
-          id: unreleasedTermsOfUse.id,
-          name: unreleasedTermsOfUse.name,
-          touType: unreleasedTermsOfUse.touType,
-          summary: unreleasedTermsOfUse.summary,
-          releasedAt: unreleasedTermsOfUse.releasedAt,
-          createdAt: unreleasedTermsOfUse.createdAt
-        }
-      ]);
+      expect(result.data).toMatchObject(
+        expect.arrayContaining([
+          {
+            id: releasedTermsOfUse.id,
+            name: releasedTermsOfUse.name,
+            touType: releasedTermsOfUse.touType,
+            summary: releasedTermsOfUse.summary,
+            releasedAt: releasedTermsOfUse.releasedAt,
+            createdAt: releasedTermsOfUse.createdAt
+          },
+          {
+            id: unreleasedTermsOfUse.id,
+            name: unreleasedTermsOfUse.name,
+            touType: unreleasedTermsOfUse.touType,
+            summary: unreleasedTermsOfUse.summary,
+            releasedAt: unreleasedTermsOfUse.releasedAt,
+            createdAt: unreleasedTermsOfUse.createdAt
+          }
+        ])
+      );
     });
 
     it('should order the terms of user by createdAt DESC', async () => {

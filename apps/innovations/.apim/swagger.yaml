@@ -6324,6 +6324,13 @@ paths:
                 - DESC
             default:
               default: DESC
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - csv
         - name: careSettings
           in: query
           required: false

@@ -184,7 +184,8 @@ export enum AnnouncementErrorsEnum {
 export enum ElasticSearchErrorsEnum {
   ES_SERVICE_UNAVAILABLE = 'ES.0001',
   ES_CREATE_INDEX_ERROR = 'ES.0002',
-  ES_BULK_INSERT_ERROR = 'ES.0003'
+  ES_BULK_INSERT_ERROR = 'ES.0003',
+  ES_SEARCH_UNEXPECTED_RESULT_SIZE_ERROR = 'ES.0004'
 }
 
 export enum NotificationErrorsEnum {
