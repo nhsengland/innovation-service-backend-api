@@ -20,7 +20,7 @@ import { NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from 
 import { DomainInnovationsService, NotifierService } from '@admin/shared/services';
 import { NotificationBuilder } from '@admin/shared/tests/builders/notification.builder';
 import { DTOsHelper } from '@admin/shared/tests/helpers/dtos.helper';
-import { randAlpha, randCompanyName, randPastDate, randText, randUuid } from '@ngneat/falso';
+import { randAlpha, randCompanyName, randPastDate, randText, randUrl, randUuid } from '@ngneat/falso';
 import { EntityManager } from 'typeorm';
 import { container } from '../_config';
 import type { OrganisationsService } from './organisations.service';
@@ -399,10 +399,11 @@ describe('Admin / _services / organisations service suite', () => {
       const data = {
         name: randCompanyName(),
         acronym: randAlpha({ length: 5 }).join('.'),
-        summary: randText()
+        summary: randText(),
+        url: randUrl()
       };
 
-      const result = await sut.updateOrganisation(organisation.id, data.name, data.acronym, data.summary, em);
+      const result = await sut.updateOrganisation(organisation.id, data, em);
 
       expect(result).toMatchObject({ id: organisation.id });
 
@@ -426,10 +427,11 @@ describe('Admin / _services / organisations service suite', () => {
       const data = {
         name: randCompanyName(),
         acronym: randAlpha({ length: 5 }).join('.'),
-        summary: randText()
+        summary: randText(),
+        url: randUrl()
       };
 
-      await sut.updateOrganisation(organisationWithShadow.id, data.name, data.acronym, data.summary, em);
+      await sut.updateOrganisation(organisationWithShadow.id, data, em);
 
       const dbShadowUnit = await em
         .createQueryBuilder(OrganisationUnitEntity, 'unit')
@@ -442,7 +444,11 @@ describe('Admin / _services / organisations service suite', () => {
 
     it(`should throw an error if the organisation doesn't exist`, async () => {
       await expect(() =>
-        sut.updateOrganisation(randUuid(), randCompanyName(), randAlpha({ length: 5 }).join('.'), randText(), em)
+        sut.updateOrganisation(
+          randUuid(),
+          { name: randCompanyName(), acronym: randAlpha({ length: 5 }).join('.'), summary: randText(), url: randUrl() },
+          em
+        )
       ).rejects.toThrow(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND));
     });
 
@@ -450,9 +456,12 @@ describe('Admin / _services / organisations service suite', () => {
       await expect(() =>
         sut.updateOrganisation(
           organisation.id,
-          scenario.organisations.innovTechOrg.name,
-          randAlpha({ length: 5 }).join('.'),
-          randText(),
+          {
+            name: scenario.organisations.innovTechOrg.name,
+            acronym: randAlpha({ length: 5 }).join('.'),
+            summary: randText(),
+            url: randUrl()
+          },
           em
         )
       ).rejects.toThrow(new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_ALREADY_EXISTS));
@@ -462,9 +471,12 @@ describe('Admin / _services / organisations service suite', () => {
       await expect(() =>
         sut.updateOrganisation(
           organisation.id,
-          randCompanyName(),
-          scenario.organisations.innovTechOrg.acronym || '',
-          randText(),
+          {
+            name: randCompanyName(),
+            acronym: scenario.organisations.innovTechOrg.acronym || '',
+            summary: randText(),
+            url: randUrl()
+          },
           em
         )
       ).rejects.toThrow(new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_ALREADY_EXISTS));
@@ -475,7 +487,8 @@ describe('Admin / _services / organisations service suite', () => {
     const data = {
       name: randCompanyName(),
       acronym: randAlpha({ length: 5 }).join('.'),
-      summary: randText()
+      summary: randText(),
+      url: randUrl()
     };
 
     it('should create the organisation', async () => {
@@ -564,6 +577,7 @@ describe('Admin / _services / organisations service suite', () => {
           name: scenario.organisations.medTechOrg.name,
           acronym: randAlpha({ length: 5 }).join('.'),
           summary: randText(),
+          url: randUrl(),
           units: []
         })
       ).rejects.toThrow(new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_ALREADY_EXISTS));
@@ -575,6 +589,7 @@ describe('Admin / _services / organisations service suite', () => {
           name: randCompanyName(),
           acronym: scenario.organisations.medTechOrg.acronym || '',
           summary: randText(),
+          url: randUrl(),
           units: []
         })
       ).rejects.toThrow(new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_ALREADY_EXISTS));

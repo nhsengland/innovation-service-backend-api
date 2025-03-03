@@ -32,6 +32,9 @@ export class OrganisationEntity extends BaseEntity {
   @Column({ type: 'nvarchar', nullable: true })
   summary: null | string;
 
+  @Column({ type: 'nvarchar', nullable: true })
+  url: null | string;
+
   @Column({ type: 'nvarchar', length: 8, nullable: true })
   registrationNumber: null | string;
 

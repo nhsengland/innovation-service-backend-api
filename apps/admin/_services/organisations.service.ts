@@ -374,9 +374,12 @@ export class OrganisationsService extends BaseService {
 
   async updateOrganisation(
     organisationId: string,
-    name: string,
-    acronym: string,
-    summary: string,
+    data: {
+      name: string;
+      acronym: string;
+      summary: string;
+      url: string;
+    },
     entityManager?: EntityManager
   ): Promise<{
     id: string;
@@ -397,8 +400,8 @@ export class OrganisationsService extends BaseService {
       const orgNameOrAcronymAlreadyExists = await transaction
         .createQueryBuilder(OrganisationEntity, 'org')
         .where('(org.name = :name OR org.acronym = :acronym) AND org.id != :organisationId AND org.type= :type', {
-          name,
-          acronym,
+          name: data.name,
+          acronym: data.acronym,
           organisationId,
           type: OrganisationTypeEnum.ACCESSOR
         })
@@ -412,9 +415,10 @@ export class OrganisationsService extends BaseService {
         OrganisationEntity,
         { id: organisation.id },
         {
-          name: name,
-          acronym: acronym,
-          summary: summary
+          name: data.name,
+          acronym: data.acronym,
+          summary: data.summary,
+          url: data.url
         }
       );
 
@@ -428,8 +432,8 @@ export class OrganisationsService extends BaseService {
           OrganisationUnitEntity,
           { id: unitIds[0] },
           {
-            name: name,
-            acronym: acronym
+            name: data.name,
+            acronym: data.acronym
           }
         );
       }
@@ -444,6 +448,7 @@ export class OrganisationsService extends BaseService {
       name: string;
       acronym: string;
       summary: string;
+      url: string;
       units?: { name: string; acronym: string }[];
     },
     entityManager?: EntityManager
@@ -472,6 +477,7 @@ export class OrganisationsService extends BaseService {
         name: data.name,
         acronym: data.acronym,
         summary: data.summary,
+        url: data.url,
         createdBy: domainContext.id,
         createdAt: now,
         inactivatedAt: now,
@@ -574,7 +580,7 @@ export class OrganisationsService extends BaseService {
     orgName: string,
     transaction: EntityManager
   ): Promise<void> {
-    const title = 'A new support organisation has joined the NHS Innovation Service';
+    const title = 'A new support organisation has been added';
     const startsAt = new Date();
     const link = {
       label: 'What does this organisation do?',
@@ -595,9 +601,9 @@ export class OrganisationsService extends BaseService {
               .setPathParams({ organisationId })
               .buildUrl()
           },
-          content: `${orgName} is now available to support innovators through the NHS Innovation Service.
-            If you believe this organisation can assist with your innovation, you can update your data sharing preferences to share your information with them.
-            For more about this organisation, please read:`
+          content: `${orgName} is now supporting innovations through the NHS Innovation Service.
+            For more about this organisation and to share your submitted innovations with them, please read:
+            `
         },
         type: AnnouncementTypeEnum.HOMEPAGE,
         sendEmail: true
