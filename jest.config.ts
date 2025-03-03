@@ -14,7 +14,6 @@ const jestBaseConfig: Config = {
   // Enable these if you want to run tests in parallel. Don't forget to remove the afterAll database cleanups
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   globalSetup: '<rootDir>/jest.global-setup.ts',
-  globalTeardown: '<rootDir>/jest.global-teardown.ts',
   coverageProvider: 'v8',
   coverageReporters: ['text', 'cobertura'],
   coveragePathIgnorePatterns: [
