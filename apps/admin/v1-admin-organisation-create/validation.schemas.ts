@@ -7,7 +7,7 @@ export type BodyType = {
   name: string;
   acronym: string;
   summary: string;
-  url: string;
+  website: string;
   units?: { name: string; acronym: string }[];
 };
 export const BodySchema = Joi.object<BodyType>({
@@ -26,11 +26,12 @@ export const BodySchema = Joi.object<BodyType>({
     .max(TEXTAREA_LENGTH_LIMIT.xxl)
     .optional()
     .description('Summary of the organisation'),
-  url: JoiHelper.AppCustomJoi()
+  website: JoiHelper.AppCustomJoi()
     .string()
+    .max(TEXTAREA_LENGTH_LIMIT.xs)
     .uri({ scheme: ['http', 'https'] })
     .optional()
-    .description('URL of the organisation.'),
+    .description('Website of the organisation.'),
   units: Joi.array()
     .items(
       Joi.object({

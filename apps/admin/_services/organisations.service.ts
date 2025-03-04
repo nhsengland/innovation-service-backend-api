@@ -378,7 +378,7 @@ export class OrganisationsService extends BaseService {
       name: string;
       acronym: string;
       summary: string;
-      url: string;
+      website: string;
     },
     entityManager?: EntityManager
   ): Promise<{
@@ -418,7 +418,7 @@ export class OrganisationsService extends BaseService {
           name: data.name,
           acronym: data.acronym,
           summary: data.summary,
-          url: data.url
+          website: data.website
         }
       );
 
@@ -448,7 +448,7 @@ export class OrganisationsService extends BaseService {
       name: string;
       acronym: string;
       summary: string;
-      url: string;
+      website: string;
       units?: { name: string; acronym: string }[];
     },
     entityManager?: EntityManager
@@ -477,7 +477,7 @@ export class OrganisationsService extends BaseService {
         name: data.name,
         acronym: data.acronym,
         summary: data.summary,
-        url: data.url,
+        website: data.website,
         createdBy: domainContext.id,
         createdAt: now,
         inactivatedAt: now,

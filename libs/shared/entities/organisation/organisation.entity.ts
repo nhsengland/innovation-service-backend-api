@@ -33,7 +33,7 @@ export class OrganisationEntity extends BaseEntity {
   summary: null | string;
 
   @Column({ type: 'nvarchar', nullable: true })
-  url: null | string;
+  website: null | string;
 
   @Column({ type: 'nvarchar', length: 8, nullable: true })
   registrationNumber: null | string;

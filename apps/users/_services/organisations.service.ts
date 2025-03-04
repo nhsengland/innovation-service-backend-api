@@ -106,7 +106,7 @@ export class OrganisationsService extends BaseService {
       isActive: boolean;
       userCount: number;
     }[];
-    url: string | null;
+    website: string | null;
     isActive: boolean;
   }> {
     const connection = entityManager ?? this.sqlConnection.manager;
@@ -130,7 +130,7 @@ export class OrganisationsService extends BaseService {
       name: organisation.name,
       summary: organisation.summary,
       acronym: organisation.acronym,
-      url: organisation.url,
+      website: organisation.website,
       isActive: !organisation.inactivatedAt
     };
 

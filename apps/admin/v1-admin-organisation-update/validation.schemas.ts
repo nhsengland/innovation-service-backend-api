@@ -14,14 +14,15 @@ export type BodyType = {
   name: string;
   acronym: string;
   summary: string;
-  url: string;
+  website: string;
 };
 export const BodySchema = Joi.object<BodyType>({
   name: JoiHelper.AppCustomJoi().string().max(ORGANISATIONS_LENGTH_LIMITS.name).required(),
   acronym: JoiHelper.AppCustomJoi().string().max(ORGANISATIONS_LENGTH_LIMITS.acronym).required(),
   summary: JoiHelper.AppCustomJoi().string().max(TEXTAREA_LENGTH_LIMIT.xxl).required(),
-  url: JoiHelper.AppCustomJoi()
+  website: JoiHelper.AppCustomJoi()
     .string()
+    .max(TEXTAREA_LENGTH_LIMIT.xs)
     .uri({ scheme: ['http', 'https'] })
     .required()
 }).required();

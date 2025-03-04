@@ -39,7 +39,7 @@ describe('v1-admin-organisation-create Suite', () => {
           acronym: randAbbreviation(),
           name: randCompanyName(),
           summary: randText(),
-          url: randUrl()
+          website: randUrl()
         })
         .call<never>(azureFunction);
 
@@ -63,7 +63,7 @@ describe('v1-admin-organisation-create Suite', () => {
           acronym: randAbbreviation(),
           name: randCompanyName(),
           summary: randText(),
-          url: randUrl()
+          website: randUrl()
         })
         .call<ErrorResponseType>(azureFunction);
 

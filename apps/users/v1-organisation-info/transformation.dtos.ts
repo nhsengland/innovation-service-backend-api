@@ -3,7 +3,7 @@ type AdminResponseDTO = {
   name: string;
   acronym: string | null;
   summary: string | null;
-  url: string | null;
+  website: string | null;
   organisationUnits: {
     id: string;
     name: string;
@@ -14,6 +14,6 @@ type AdminResponseDTO = {
   isActive: boolean;
 };
 
-type RegularResponseDTO = Pick<AdminResponseDTO, 'id' | 'name' | 'acronym' | 'summary' | 'url' | 'isActive'>;
+type RegularResponseDTO = Pick<AdminResponseDTO, 'id' | 'name' | 'acronym' | 'summary' | 'website' | 'isActive'>;
 
 export type ResponseDTO = AdminResponseDTO | RegularResponseDTO;

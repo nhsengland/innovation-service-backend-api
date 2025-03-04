@@ -191,7 +191,7 @@ describe('Users / _services / organisations service suite', () => {
         name: org.name,
         acronym: org.acronym,
         summary: org.summary,
-        url: org.url,
+        website: org.website,
         organisationUnits: [
           {
             id: org.organisationUnits.healthOrgUnit.id,
@@ -249,7 +249,7 @@ describe('Users / _services / organisations service suite', () => {
         name: org.name,
         acronym: org.acronym,
         summary: org.summary,
-        url: org.url,
+        website: org.website,
         isActive: true
       });
     });

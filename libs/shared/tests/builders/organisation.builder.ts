@@ -11,7 +11,7 @@ export type TestOrganisationType = {
   name: string;
   acronym: string | null;
   summary: string | null;
-  url: string | null;
+  website: string | null;
   isShadow: boolean;
   isActive: boolean;
   units: { [key: string]: TestOrganisationUnitType };
@@ -29,7 +29,7 @@ export class OrganisationBuilder extends BaseBuilder {
       acronym: randAlpha({ length: 5 }).join('.'),
       isShadow: false,
       summary: randText(),
-      url: randUrl(),
+      website: randUrl(),
       type: OrganisationTypeEnum.ACCESSOR
     });
   }
@@ -72,7 +72,7 @@ export class OrganisationBuilder extends BaseBuilder {
       name: result.name,
       acronym: result.acronym,
       summary: result.summary,
-      url: result.url,
+      website: result.website,
       isShadow: result.isShadow,
       isActive: !result.inactivatedAt,
       units: {}
