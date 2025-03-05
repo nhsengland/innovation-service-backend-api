@@ -61,8 +61,7 @@ type SearchInnovationListSelectType =
   | 'owner.name'
   | 'owner.companyName'
   | 'owner.email'
-  | 'suggestion.suggestedBy'
-  | 'suggestion.suggestedOn';
+  | 'suggestion.suggestedBy';
 
 // In advanced search the suggestedOnly applies not to a state as the innovation list but to the suggestions as it
 // affects other innovations besides "UNASSIGNED". This should probably be changed in the future and removed and focus
@@ -470,11 +469,17 @@ export class SearchService extends BaseService {
     domainContext: DomainContextType,
     item: CurrentElasticSearchDocumentType,
     fields: InnovationListChildrenType<'suggestion'>[],
-    extra: PickHandlerReturnType<typeof this.postHandlers, 'users'>
+    _extra: PickHandlerReturnType<typeof this.postHandlers, 'users'>
   ): Partial<InnovationListFullResponseType['suggestion']> {
-    console.log('displaySuggestion', domainContext, item, fields, extra);
     if (isAccessorDomainContextType(domainContext)) {
-      return { batatas: 'test' } as any;
+      const suggestions = new Set(
+        item.suggestions
+          ?.filter(s => s.suggestedUnitId === domainContext.organisation.organisationUnit.id)
+          .flatMap(s => s.suggestedBy) ?? []
+      );
+      return {
+        ...(fields.includes('suggestedBy') && { suggestedBy: Array.from(suggestions.values()) })
+      };
     }
     return null;
   }

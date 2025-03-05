@@ -1512,6 +1512,7 @@ paths:
                 - owner.id
                 - owner.name
                 - owner.companyName
+                - owner.email
                 - statistics.notifications
                 - statistics.tasks
                 - statistics.messages
@@ -6470,6 +6471,7 @@ paths:
                 - owner.id
                 - owner.name
                 - owner.companyName
+                - owner.email
                 - statistics.notifications
                 - statistics.tasks
                 - statistics.messages
