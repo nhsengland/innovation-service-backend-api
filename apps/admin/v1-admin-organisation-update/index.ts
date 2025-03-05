@@ -27,12 +27,7 @@ class V1AdminOrganisationUpdate {
 
       await authorizationService.validate(context).checkAdminType().verify();
 
-      const result = await organisationsService.updateOrganisation(
-        params.organisationId,
-        body.name,
-        body.acronym,
-        body.summary
-      );
+      const result = await organisationsService.updateOrganisation(params.organisationId, body);
 
       context.res = ResponseHelper.Ok<ResponseDTO>({ organisationId: result.id });
       return;
