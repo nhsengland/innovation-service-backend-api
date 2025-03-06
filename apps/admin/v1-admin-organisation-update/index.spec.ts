@@ -3,7 +3,7 @@ import azureFunction from '.';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@admin/shared/tests';
 import type { TestUserType } from '@admin/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@admin/shared/types';
-import { randAbbreviation, randCompanyName, randText, randUuid } from '@ngneat/falso';
+import { randAbbreviation, randCompanyName, randText, randUrl, randUuid } from '@ngneat/falso';
 import { OrganisationsService } from '../_services/organisations.service';
 import type { BodyType, ParamsType } from './validation.schemas';
 
@@ -39,7 +39,8 @@ describe('v1-admin-organisation-update Suite', () => {
         .setBody<BodyType>({
           acronym: randAbbreviation(),
           name: randCompanyName(),
-          summary: randText()
+          summary: randText(),
+          website: randUrl()
         })
         .call<never>(azureFunction);
 
@@ -63,7 +64,8 @@ describe('v1-admin-organisation-update Suite', () => {
         .setBody<BodyType>({
           acronym: randAbbreviation(),
           name: randCompanyName(),
-          summary: randText()
+          summary: randText(),
+          website: randUrl()
         })
         .call<ErrorResponseType>(azureFunction);
 
