@@ -2104,6 +2104,7 @@ paths:
                 - INNOVATIONS_ASSIGNED_TO_ME_COUNTER
                 - TASKS_RESPONDED_COUNTER
                 - INNOVATIONS_TO_REVIEW_COUNTER
+                - INNOVATIONS_NEEDING_ACTION_COUNTER
       responses:
         "200":
           description: Ok

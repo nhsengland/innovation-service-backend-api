@@ -1,6 +1,7 @@
 import { UserStatisticsEnum } from '../_enums/user.enums';
 import { assignedInnovationsStatisticsHandler } from '../_handlers/statistics/assigned-innovations.handler';
 import { innovationsAssignedToMeStatisticsHandler } from '../_handlers/statistics/innovations-assigned-to-me.handler';
+import { InnovationsNeedingActionStatisticsHandler } from '../_handlers/statistics/innovations-needing-action.handler';
 import { innovationsToReviewStatisticsHandler } from '../_handlers/statistics/innovations-to-review.handler';
 import { tasksRespondedStatisticsHandler } from '../_handlers/statistics/tasks-responded.handler';
 import { waitingAssessmentStatisticsHandler } from '../_handlers/statistics/waiting-assessment.handler';
@@ -28,7 +29,8 @@ export const USER_STATISTICS_CONFIG: Record<
 
   [UserStatisticsEnum.INNOVATIONS_TO_REVIEW_COUNTER]: {
     handler: innovationsToReviewStatisticsHandler
-  }
+  },
+  [UserStatisticsEnum.INNOVATIONS_NEEDING_ACTION_COUNTER]: { handler: InnovationsNeedingActionStatisticsHandler }
 };
 
 export type UserStatisticsTemplateType = {
@@ -52,4 +54,5 @@ export type UserStatisticsTemplateType = {
     count: number;
     lastSubmittedAt: null | Date;
   };
+  [UserStatisticsEnum.INNOVATIONS_NEEDING_ACTION_COUNTER]: { count: number };
 };
