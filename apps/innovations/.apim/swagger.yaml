@@ -1512,6 +1512,7 @@ paths:
                 - owner.id
                 - owner.name
                 - owner.companyName
+                - owner.email
                 - statistics.notifications
                 - statistics.tasks
                 - statistics.messages
@@ -6324,6 +6325,13 @@ paths:
                 - DESC
             default:
               default: DESC
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - csv
         - name: careSettings
           in: query
           required: false
@@ -6463,6 +6471,7 @@ paths:
                 - owner.id
                 - owner.name
                 - owner.companyName
+                - owner.email
                 - statistics.notifications
                 - statistics.tasks
                 - statistics.messages
@@ -6538,6 +6547,30 @@ paths:
             type: string
             maxLength: 200
             nullable: true
+      responses:
+        "204":
+          description: Success
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+  /v1/share-with-organisation/{organisationId}:
+    post:
+      operationId: v1-innovations-share-with-organisation
+      description: Share all user innovations with an organisation
+      parameters:
+        - name: organisationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         "204":
           description: Success

@@ -24,8 +24,16 @@ export class OrganisationEntity extends BaseEntity {
   @Column({ type: 'nvarchar', length: 255, nullable: true })
   size: null | string;
 
+  // This field is used for a "enum" like type for innovators
   @Column({ type: 'nvarchar', length: 50, nullable: true })
   description: null | string;
+
+  // This is a free text field for a summary of the organisation
+  @Column({ type: 'nvarchar', nullable: true })
+  summary: null | string;
+
+  @Column({ type: 'nvarchar', nullable: true })
+  website: null | string;
 
   @Column({ type: 'nvarchar', length: 8, nullable: true })
   registrationNumber: null | string;

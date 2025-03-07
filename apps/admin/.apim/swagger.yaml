@@ -52,6 +52,14 @@ paths:
                   type: string
                   maxLength: 10
                   description: Acronym of the organisation.
+                summary:
+                  type: string
+                  maxLength: 4000
+                  description: Summary of the organisation
+                website:
+                  type: string
+                  maxLength: 200
+                  description: Website of the organisation.
                 units:
                   type: array
                   items:
@@ -124,9 +132,17 @@ paths:
                 acronym:
                   type: string
                   maxLength: 10
+                summary:
+                  type: string
+                  maxLength: 4000
+                website:
+                  type: string
+                  maxLength: 200
               required:
                 - name
                 - acronym
+                - summary
+                - website
               additionalProperties: false
       responses:
         "200":

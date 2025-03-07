@@ -293,7 +293,7 @@ export class OrganisationsService extends BaseService {
 
         // Just send the announcement if this is the first time the organization has been activated.
         if (DatesHelper.isDateEqual(unit.organisation.createdAt, unit.organisation.inactivatedAt)) {
-          await this.createOrganisationAnnouncement(domainContext, unit.organisation.name, transaction);
+          await this.createOrganisationAnnouncement(domainContext, organisationId, unit.organisation.name, transaction);
         }
       }
 
@@ -374,8 +374,12 @@ export class OrganisationsService extends BaseService {
 
   async updateOrganisation(
     organisationId: string,
-    name: string,
-    acronym: string,
+    data: {
+      name: string;
+      acronym: string;
+      summary: string;
+      website: string;
+    },
     entityManager?: EntityManager
   ): Promise<{
     id: string;
@@ -396,8 +400,8 @@ export class OrganisationsService extends BaseService {
       const orgNameOrAcronymAlreadyExists = await transaction
         .createQueryBuilder(OrganisationEntity, 'org')
         .where('(org.name = :name OR org.acronym = :acronym) AND org.id != :organisationId AND org.type= :type', {
-          name,
-          acronym,
+          name: data.name,
+          acronym: data.acronym,
           organisationId,
           type: OrganisationTypeEnum.ACCESSOR
         })
@@ -411,8 +415,10 @@ export class OrganisationsService extends BaseService {
         OrganisationEntity,
         { id: organisation.id },
         {
-          name: name,
-          acronym: acronym
+          name: data.name,
+          acronym: data.acronym,
+          summary: data.summary,
+          website: data.website
         }
       );
 
@@ -426,8 +432,8 @@ export class OrganisationsService extends BaseService {
           OrganisationUnitEntity,
           { id: unitIds[0] },
           {
-            name: name,
-            acronym: acronym
+            name: data.name,
+            acronym: data.acronym
           }
         );
       }
@@ -441,6 +447,8 @@ export class OrganisationsService extends BaseService {
     data: {
       name: string;
       acronym: string;
+      summary: string;
+      website: string;
       units?: { name: string; acronym: string }[];
     },
     entityManager?: EntityManager
@@ -468,6 +476,8 @@ export class OrganisationsService extends BaseService {
       const org = OrganisationEntity.new({
         name: data.name,
         acronym: data.acronym,
+        summary: data.summary,
+        website: data.website,
         createdBy: domainContext.id,
         createdAt: now,
         inactivatedAt: now,
@@ -566,6 +576,7 @@ export class OrganisationsService extends BaseService {
 
   private async createOrganisationAnnouncement(
     requestUser: DomainContextType,
+    organisationId: string,
     orgName: string,
     transaction: EntityManager
   ): Promise<void> {
@@ -583,11 +594,18 @@ export class OrganisationsService extends BaseService {
         title: title,
         startsAt: startsAt,
         params: {
-          link,
-          content: `${orgName} has been added to the Innovation Service.
-            If you think this organisation will be able to support you, you can share your innovation with them in your data sharing preferences.`
+          link: {
+            ...link,
+            url: new UrlModel(ENV.webBaseTransactionalUrl)
+              .addPath('innovator/organisation/:organisationId/share-innovations-with-org')
+              .setPathParams({ organisationId })
+              .buildUrl()
+          },
+          content: `${orgName} is now supporting innovations through the NHS Innovation Service.
+            For more about this organisation and to share your submitted innovations with them, please read:
+            `
         },
-        type: AnnouncementTypeEnum.LOG_IN,
+        type: AnnouncementTypeEnum.HOMEPAGE,
         sendEmail: true
       },
       {},
@@ -602,10 +620,10 @@ export class OrganisationsService extends BaseService {
         startsAt: startsAt,
         params: {
           link,
-          content: `${orgName} has been added to the Innovation Service.
-            If you think this organisation could offer suitable support to an innovation, you can suggest it to them.`
+          content: `${orgName} is now available to support innovators through the NHS Innovation Service.
+            If you think this organisation could offer suitable support to an innovation that you are supporting, you can suggest it to them now.`
         },
-        type: AnnouncementTypeEnum.LOG_IN,
+        type: AnnouncementTypeEnum.HOMEPAGE,
         sendEmail: true
       },
       {},
@@ -620,9 +638,9 @@ export class OrganisationsService extends BaseService {
         startsAt: startsAt,
         params: {
           link,
-          content: `${orgName} has been added to the Innovation Service.`
+          content: `${orgName} is now available to support innovators through the NHS Innovation Service.`
         },
-        type: AnnouncementTypeEnum.LOG_IN,
+        type: AnnouncementTypeEnum.HOMEPAGE,
         sendEmail: true
       },
       {},

@@ -1,4 +1,5 @@
 import { InnovationSectionStatusEnum } from '@innovations/shared/enums';
+import { csvToString } from '@innovations/shared/helpers/csv.helper';
 import { injectable } from 'inversify';
 import PdfPrinter from 'pdfmake';
 import PdfMake from 'pdfmake/build/pdfmake';
@@ -130,7 +131,7 @@ export class ExportFileService extends BaseService {
       )
     );
 
-    return this.csvToString([header, id, ...data]);
+    return csvToString([header, id, ...data]);
   }
   //#endregion
 
@@ -228,57 +229,6 @@ export class ExportFileService extends BaseService {
     });
 
     return documentDefinition;
-  }
-  //#endregion
-
-  //#region CSV helpers
-  /**
-   * converts an array of arrays to a csv string
-   *
-   * from https://github.com/vanillaes/csv/blob/main/index.js
-   *
-   * @param array data to convert
-   * @param options options
-   *   - eof: add a new line at the end of the file
-   * @returns csv string
-   */
-  private csvToString(array: string[][], options = { eof: true }): string {
-    const ctx = Object.create(null);
-    ctx.options = options;
-    ctx.options.eof = ctx.options.eof !== undefined ? ctx.options.eof : true;
-    ctx.row = 1;
-    ctx.col = 1;
-    ctx.output = '';
-
-    const needsDelimiters = /"|,|\r\n|\n|\r/;
-
-    array.forEach((row, rIdx) => {
-      let entry = '';
-      ctx.col = 1;
-      row.forEach((col, cIdx) => {
-        if (typeof col === 'string') {
-          col = col.replace(/"/g, '""');
-          col = needsDelimiters.test(col) ? `"${col}"` : col;
-        }
-        entry += col;
-        if (cIdx !== row.length - 1) {
-          entry += ',';
-        }
-        ctx.col++;
-      });
-      switch (true) {
-        case ctx.options.eof:
-        case !ctx.options.eof && rIdx !== array.length - 1:
-          ctx.output += `${entry}\n`;
-          break;
-        default:
-          ctx.output += `${entry}`;
-          break;
-      }
-      ctx.row++;
-    });
-
-    return ctx.output;
   }
   //#endregion
 }

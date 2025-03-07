@@ -77,7 +77,7 @@ describe('v1-innovation-pdf-export Suite', () => {
 
   describe('Access', () => {
     it.each([
-      ['Admin', 403, scenario.users.allMighty],
+      ['Admin', 200, scenario.users.allMighty],
       ['QA', 200, scenario.users.aliceQualifyingAccessor],
       ['NA', 200, scenario.users.paulNeedsAssessor],
       ['Innovator owner', 200, scenario.users.johnInnovator]

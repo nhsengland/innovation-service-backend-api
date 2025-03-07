@@ -2,6 +2,8 @@ type AdminResponseDTO = {
   id: string;
   name: string;
   acronym: string | null;
+  summary: string | null;
+  website: string | null;
   organisationUnits: {
     id: string;
     name: string;
@@ -12,6 +14,6 @@ type AdminResponseDTO = {
   isActive: boolean;
 };
 
-type RegularResponseDTO = Pick<AdminResponseDTO, 'id' | 'name' | 'acronym' | 'isActive'>;
+type RegularResponseDTO = Pick<AdminResponseDTO, 'id' | 'name' | 'acronym' | 'summary' | 'website' | 'isActive'>;
 
 export type ResponseDTO = AdminResponseDTO | RegularResponseDTO;

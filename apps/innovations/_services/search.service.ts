@@ -3,13 +3,20 @@ import type {
   QueryDslRangeQuery,
   SearchHit,
   SearchTotalHits,
-  Sort
+  Sort,
+  SortResults
 } from '@elastic/elasticsearch/lib/api/types';
 import { ES_ENV } from '@innovations/shared/config';
 import type { InnovationListView } from '@innovations/shared/entities';
 import { InnovationStatusEnum, InnovationSupportStatusEnum, ServiceRoleEnum } from '@innovations/shared/enums';
-import { GenericErrorsEnum, NotImplementedError } from '@innovations/shared/errors';
+import {
+  ConflictError,
+  ElasticSearchErrorsEnum,
+  GenericErrorsEnum,
+  NotImplementedError
+} from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
+import { csvToString } from '@innovations/shared/helpers/csv.helper';
 import { displayName, UserMap } from '@innovations/shared/models/user.map';
 import type { CurrentElasticSearchDocumentType } from '@innovations/shared/schemas/innovation-record';
 import type { DomainService, ElasticSearchService } from '@innovations/shared/services';
@@ -52,7 +59,9 @@ type SearchInnovationListSelectType =
   | 'support.closeReason'
   | 'owner.id'
   | 'owner.name'
-  | 'owner.companyName';
+  | 'owner.companyName'
+  | 'owner.email'
+  | 'suggestion.suggestedBy';
 
 // In advanced search the suggestedOnly applies not to a state as the innovation list but to the suggestions as it
 // affects other innovations besides "UNASSIGNED". This should probably be changed in the future and removed and focus
@@ -158,8 +167,10 @@ export class SearchService extends BaseService {
       fields: S[];
       pagination: PaginationQueryParamsType<any>;
       filters?: InnovationListFilters;
+      pit?: { id: string; keep_alive: string };
+      searchAfter?: SortResults;
     }
-  ): Promise<{ count: number; data: unknown[] }> {
+  ): Promise<{ count: number; data: unknown[]; pitId?: string }> {
     if (!params.fields.length) {
       return { count: 0, data: [] };
     }
@@ -188,6 +199,7 @@ export class SearchService extends BaseService {
 
         // TODO: find a cleaner way to approach this sort. Like this for now.
         switch (key) {
+          case 'owner.email':
           case 'owner.name':
           case 'support.updatedBy':
             throw new NotImplementedError(GenericErrorsEnum.NOT_IMPLEMENTED_ERROR, {
@@ -230,7 +242,20 @@ export class SearchService extends BaseService {
     });
     searchQuery.addPagination({ from: params.pagination.skip, size: params.pagination.take, sort });
 
-    const response = await this.esService.client.search<CurrentElasticSearchDocumentType>(searchQuery.build());
+    const searchBody = searchQuery.build();
+
+    if (params.pit) {
+      // PIT searches use the pit instead of the index
+      searchBody.pit = params.pit;
+      searchBody.index = undefined;
+
+      // only using the searchAfter in the PIT but probably should be used in the normal search as well
+      if (params.searchAfter) {
+        searchBody.search_after = params.searchAfter;
+      }
+    }
+
+    const response = await this.esService.client.search<CurrentElasticSearchDocumentType>(searchBody);
 
     const handlerMaps: {
       [k in keyof typeof this.postHandlers]: Awaited<ReturnType<(typeof this.postHandlers)[k]>>;
@@ -266,12 +291,91 @@ export class SearchService extends BaseService {
         return isAccessorDomainContextType(domainContext) && !doc.shares?.includes(domainContext.organisation.id)
           ? this.cleanupAccessorsNotSharedInnovation(res)
           : res;
+      }),
+      ...(response.pit_id && {
+        pitId: response.pit_id,
+        searchAfter: response.hits.hits?.[response.hits.hits.length - 1]?.sort
       })
     };
   }
 
+  async bulkGetDocuments<S extends SearchInnovationListSelectType>(
+    domainContext: DomainContextType,
+    params: {
+      fields: S[];
+      filters?: InnovationListFilters;
+    }
+  ): Promise<{ count: number; data: unknown[] }> {
+    const keepAlive = '1m';
+    const pageSize = 50;
+    let pitId = (await this.esService.client.openPointInTime({ index: this.index, keep_alive: keepAlive })).id;
+    let page: { count: number; data: unknown[]; pit?: string; searchAfter?: SortResults };
+    let searchAfter: SortResults | undefined = undefined;
+
+    const data = [];
+
+    do {
+      page = await this.getDocuments(domainContext, {
+        fields: params.fields,
+        pagination: { skip: 0, take: pageSize, order: { uniqueId: 'ASC' } },
+        filters: params.filters,
+        pit: { id: pitId, keep_alive: keepAlive },
+        searchAfter: searchAfter
+      });
+
+      if (page.pit) {
+        pitId = page.pit;
+      }
+
+      // Failsafe to avoid infinite loop in case something odd happens
+      if (searchAfter === page.searchAfter) {
+        break;
+      }
+      searchAfter = page.searchAfter;
+      data.push(...page.data);
+    } while (page.data.length >= pageSize);
+
+    if (data.length < page.count) {
+      throw new ConflictError(ElasticSearchErrorsEnum.ES_SEARCH_UNEXPECTED_RESULT_SIZE_ERROR, {
+        details: { count: data.length, total: page.count }
+      });
+    }
+
+    await this.esService.client.closePointInTime({ id: pitId });
+
+    return {
+      count: page.count,
+      data: data
+    };
+  }
+
+  async getDocumentsCSV<S extends SearchInnovationListSelectType>(
+    domainContext: DomainContextType,
+    params: {
+      fields: S[];
+      filters?: InnovationListFilters;
+    }
+  ): Promise<string> {
+    const rawData = await this.bulkGetDocuments(domainContext, params);
+
+    const header = params.fields;
+    const data = rawData.data.map((item: any) =>
+      header.map(field => {
+        let value = field.split('.').reduce((acc, key) => (acc ? acc[key] : undefined), item);
+        if (value === null || value === undefined) return '';
+        value = JSON.stringify(value);
+        if (value.startsWith('"') && value.endsWith('"')) {
+          value = value.slice(1, -1);
+        }
+        return value;
+      })
+    );
+
+    return csvToString([header, ...data]);
+  }
+
   private displayHandlers: {
-    [k in 'assessment' | 'support' | 'owner' | 'engagingUnits']: (
+    [k in 'assessment' | 'support' | 'suggestion' | 'owner' | 'engagingUnits']: (
       domainContext: DomainContextType,
       item: CurrentElasticSearchDocumentType,
       fields: k extends InnovationListJoinTypes ? InnovationListChildrenType<k>[] : string[],
@@ -281,7 +385,8 @@ export class SearchService extends BaseService {
     assessment: this.displayAssessment.bind(this),
     engagingUnits: this.displayEngagingUnits.bind(this),
     support: this.displaySupport.bind(this),
-    owner: this.displayOwner.bind(this)
+    owner: this.displayOwner.bind(this),
+    suggestion: this.displaySuggestion.bind(this)
   };
 
   private displayAssessment(
@@ -360,6 +465,25 @@ export class SearchService extends BaseService {
     return null;
   }
 
+  private displaySuggestion(
+    domainContext: DomainContextType,
+    item: CurrentElasticSearchDocumentType,
+    fields: InnovationListChildrenType<'suggestion'>[],
+    _extra: PickHandlerReturnType<typeof this.postHandlers, 'users'>
+  ): Partial<InnovationListFullResponseType['suggestion']> {
+    if (isAccessorDomainContextType(domainContext)) {
+      const suggestions = new Set(
+        item.suggestions
+          ?.filter(s => s.suggestedUnitId === domainContext.organisation.organisationUnit.id)
+          .flatMap(s => s.suggestedBy) ?? []
+      );
+      return {
+        ...(fields.includes('suggestedBy') && { suggestedBy: Array.from(suggestions.values()) })
+      };
+    }
+    return null;
+  }
+
   private displayOwner(
     _domainContext: DomainContextType,
     item: CurrentElasticSearchDocumentType,
@@ -372,6 +496,7 @@ export class SearchService extends BaseService {
     return {
       ...(fields.includes('id') && { id: item.owner.id }),
       ...(fields.includes('name') && { name: extra.users.getDisplayName(item.owner.id, ServiceRoleEnum.INNOVATOR) }),
+      ...(fields.includes('email') && { email: extra.users.get(item.owner.id)?.email }),
       ...(fields.includes('companyName') && { companyName: item.owner.companyName ?? null })
     };
   }

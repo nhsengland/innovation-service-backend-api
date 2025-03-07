@@ -13,12 +13,14 @@ import { DateFilterFieldsType, InnovationListSelectType } from '../_services/inn
 export type QueryParamsType = PaginationQueryParamsType<InnovationListSelectType & 'relevance'> &
   InnovationListFilters & {
     fields: InnovationListSelectType[];
+    type?: 'csv';
   };
 
 export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
   orderKeys: ['relevance', ...Object.values(InnovationListSelectType)]
 })
   .append<QueryParamsType>({
+    type: Joi.string().valid('csv').optional(),
     careSettings: JoiHelper.AppCustomJoi()
       .stringArray()
       .items(

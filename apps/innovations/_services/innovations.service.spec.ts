@@ -979,4 +979,77 @@ describe('Innovations / _services / innovations suite', () => {
       expect(result).toBe(`INN-${currentYearMonth}-0002-${checksum}`);
     });
   });
+
+  describe('shareInnovationsWithOrganisation', () => {
+    // John has 3 innovations, Jane is collaborator in 2
+    const john = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator);
+    const jane = DTOsHelper.getUserRequestContext(scenario.users.janeInnovator);
+    let updateInnovationSharesMock: jest.SpyInstance;
+
+    beforeAll(() => {
+      updateInnovationSharesMock = jest.spyOn(sut, 'updateInnovationShares').mockResolvedValue();
+    });
+
+    beforeEach(() => {
+      updateInnovationSharesMock.mockClear();
+    });
+
+    afterAll(() => {
+      updateInnovationSharesMock.mockRestore();
+    });
+
+    it('should share all the innovator innovations with the organisation', async () => {
+      await sut.shareInnovationsWithOrganisation(john, scenario.organisations.notSharedOrg.id, em);
+      expect(updateInnovationSharesMock).toHaveBeenCalledTimes(3);
+    });
+
+    it('should share if the user has access as collaborator', async () => {
+      await sut.shareInnovationsWithOrganisation(jane, scenario.organisations.notSharedOrg.id, em);
+      expect(updateInnovationSharesMock).toHaveBeenCalledTimes(2);
+    });
+
+    it('should ignore if the innovation is already shared with the organisation', async () => {
+      // Only one of the innovations shared with innovTech
+      await sut.shareInnovationsWithOrganisation(john, scenario.organisations.innovTechOrg.id, em);
+      expect(updateInnovationSharesMock).toHaveBeenCalledTimes(2);
+    });
+
+    it("should ignore innovations that haven't been submitted yet", async () => {
+      await em.update(
+        InnovationEntity,
+        { id: scenario.users.johnInnovator.innovations.johnInnovationEmpty.id },
+        { submittedAt: null }
+      );
+      await sut.shareInnovationsWithOrganisation(john, scenario.organisations.notSharedOrg.id, em);
+      expect(updateInnovationSharesMock).toHaveBeenCalledTimes(2);
+    });
+
+    it('should include previous innovation shares in the list to update', async () => {
+      await sut.shareInnovationsWithOrganisation(john, scenario.organisations.notSharedOrg.id, em);
+      expect(updateInnovationSharesMock).toHaveBeenCalledWith(
+        john,
+        scenario.users.johnInnovator.innovations.johnInnovation.id,
+        expect.arrayContaining([
+          ...scenario.users.johnInnovator.innovations.johnInnovation.sharedOrganisations.map(o => o.id),
+          scenario.organisations.notSharedOrg.id
+        ]),
+        em
+      );
+      expect(updateInnovationSharesMock).toHaveBeenCalledWith(
+        john,
+        scenario.users.johnInnovator.innovations.johnInnovationArchived.id,
+        expect.arrayContaining([
+          ...scenario.users.johnInnovator.innovations.johnInnovationArchived.sharedOrganisations.map(o => o.id),
+          scenario.organisations.notSharedOrg.id
+        ]),
+        em
+      );
+      expect(updateInnovationSharesMock).toHaveBeenCalledWith(
+        john,
+        scenario.users.johnInnovator.innovations.johnInnovationEmpty.id,
+        expect.arrayContaining([scenario.organisations.notSharedOrg.id]),
+        em
+      );
+    });
+  });
 });
