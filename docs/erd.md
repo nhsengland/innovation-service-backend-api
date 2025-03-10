@@ -51,35 +51,7 @@ erDiagram
     datetime2 inactivatedAt
     uuid organisationId
   }
-  INNOVATION_ASSESSMENT {
-    uuid id
-    smallint majorVersion
-    smallint minorVersion
-    nvarchar editReason
-    nvarchar description
-    nvarchar summary
-    enum maturityLevel
-    nvarchar maturityLevelComment
-    datetime2 startedAt
-    datetime2 finishedAt
-    enum hasRegulatoryApprovals
-    nvarchar hasRegulatoryApprovalsComment
-    enum hasEvidence
-    nvarchar hasEvidenceComment
-    enum hasValidation
-    nvarchar hasValidationComment
-    enum hasProposition
-    nvarchar hasPropositionComment
-    enum hasCompetitionKnowledge
-    nvarchar hasCompetitionKnowledgeComment
-    enum hasImplementationPlan
-    nvarchar hasImplementationPlanComment
-    enum hasScaleResource
-    nvarchar hasScaleResourceComment
-    enum exemptedReason
-    nvarchar exemptedMessage
-    datetime2 exemptedAt
-  }
+  
   INNOVATION_REASSESSMENT_REQUEST {
     uuid id
     varchar updatedInnovationRecord
@@ -219,11 +191,7 @@ erDiagram
   ORGANISATION_UNIT ||--o| ORGANISATION : belongsTo
   ORGANISATION_UNIT ||--o{ INNOVATION_ASSESSMENT : has
   ORGANISATION_UNIT ||--o{ INNOVATION_SUPPORT_LOG : has
-  INNOVATION_ASSESSMENT ||--|| INNOVATION : belongsTo
-  INNOVATION_ASSESSMENT ||--o| USER : assignedTo
-  INNOVATION_ASSESSMENT ||--o{ ORGANISATION_UNIT : suggested
-  INNOVATION_ASSESSMENT ||--o| INNOVATION_ASSESSMENT : previous
-  INNOVATION_ASSESSMENT ||--o| INNOVATION_REASSESSMENT_REQUEST : createdFrom
+  
   INNOVATION_SECTION ||--|| USER : submittedBy
   INNOVATION_SECTION ||--o{ INNOVATION_TASK : has
   INNOVATION_SUPPORT ||--o| INNOVATION : belongsTo
@@ -345,4 +313,45 @@ erDiagram
   INNOVATION ||--o{ INNOVATION_TRANSFER : has
   INNOVATION ||--o{ INNOVATION_SUGGESTED_UNITS_VIEW : suggested
   
+  INNOVATION_ASSESSMENT {
+    uuid id
+    smallint majorVersion
+    smallint minorVersion
+    nvarchar editReason
+    nvarchar description
+    nvarchar summary
+    enum maturityLevel
+    nvarchar maturityLevelComment
+    datetime2 startedAt
+    datetime2 finishedAt
+    enum hasRegulatoryApprovals
+    nvarchar hasRegulatoryApprovalsComment
+    enum hasEvidence
+    nvarchar hasEvidenceComment
+    enum hasValidation
+    nvarchar hasValidationComment
+    enum hasProposition
+    nvarchar hasPropositionComment
+    enum hasCompetitionKnowledge
+    nvarchar hasCompetitionKnowledgeComment
+    enum hasImplementationPlan
+    nvarchar hasImplementationPlanComment
+    enum hasScaleResource
+    nvarchar hasScaleResourceComment
+    enum exemptedReason
+    nvarchar exemptedMessage
+    datetime2 exemptedAt
+  }
+  INNOVATION_ASSESSMENT ||--|| INNOVATION : assesses
+  INNOVATION_ASSESSMENT ||--o| USER : assignedTo
+  INNOVATION_ASSESSMENT ||--o{ ORGANISATION_UNIT : suggested
+  INNOVATION_ASSESSMENT ||--o| INNOVATION_ASSESSMENT : previous
+  INNOVATION_ASSESSMENT ||--o| INNOVATION_REASSESSMENT_REQUEST : createdFrom
 ```
+
+# Innovation Document Schema
+
+# Deprecated only here for audit/history
+- innovation_action: replaced by innovation_tasks
+- innovation_area: replaced by innovation_document
+- lots of columns, especially within the innovation entity that were replaced by the innovation_document
