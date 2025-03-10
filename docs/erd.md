@@ -49,6 +49,7 @@ erDiagram
     nvarchar size
     nvarchar description
     nvarchar summary
+    nvarchar website
     nvarchar registrationNumber
     boolean isShadow
     datetime2 inactivatedAt
