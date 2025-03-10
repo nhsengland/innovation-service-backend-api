@@ -250,7 +250,7 @@ erDiagram
   INNOVATION ||--|| INNOVATION_DOCUMENT_DRAFT : has
   INNOVATION ||--o{ INNOVATION_TRANSFER : has
   INNOVATION ||--o{ INNOVATION_SUGGESTED_UNITS_VIEW : suggested
-  
+    
   INNOVATION_ASSESSMENT {
     uuid id PK
     smallint majorVersion
@@ -431,6 +431,20 @@ erDiagram
   INNOVATION_SUPPORT_LOG ||--o{ INNOVATION_SUPPORT_LOG_ORGANISATION_UNIT : suggested
   INNOVATION_SUPPORT_LOG_ORGANISATION_UNIT ||--|| ORGANISATION_UNIT : suggested
 
+  INNOVATION_SURVEY {
+    uuid id
+    enum type
+    uuid contextId
+    simple-json answers
+    datetime2 createdAt
+    datetime2 updatedAt
+    datetime2 deletedAt
+    uuid innovationId FK
+    uuid targetUserRoleId FK
+  }
+  INNOVATION_SURVEY ||--|| INNOVATION : belongsTo
+  INNOVATION_SURVEY ||--|| USER_ROLE : inquires
+  INNOVATION_SURVEY ||--o| INNOVATION_SUPPORT : relatedTo
   
 ```
 # Almost all tables also have the following audit fields
