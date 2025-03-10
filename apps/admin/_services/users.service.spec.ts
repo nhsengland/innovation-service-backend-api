@@ -692,6 +692,7 @@ describe('Admin / _services / users service suite', () => {
       const chestInnovation = scenario.users.ottoOctaviusInnovator.innovations.chestHarnessInnovation;
       const tentaclesInnovation = scenario.users.ottoOctaviusInnovator.innovations.tentaclesInnovation;
       const johnInnovation = scenario.users.johnInnovator.innovations.johnInnovation;
+      const innovationUpdateInPast = scenario.users.tristanInnovator.innovations.innovationUpdateInPast;
 
       expect(assigned.count).toBe(assigned.data.length);
       expect(assigned.data).toStrictEqual([
@@ -703,6 +704,11 @@ describe('Admin / _services / users service suite', () => {
         {
           innovation: { id: chestInnovation.id, name: chestInnovation.name },
           supportedBy: [supportedByAlice, supportedByJamie],
+          unit: 'Health Org Unit'
+        },
+        {
+          innovation: { id: innovationUpdateInPast.id, name: innovationUpdateInPast.name },
+          supportedBy: [supportedByJamie],
           unit: 'Health Org Unit'
         },
         {

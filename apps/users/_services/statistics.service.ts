@@ -1,6 +1,6 @@
 import { inject, injectable } from 'inversify';
 
-import { InnovationEntity, InnovationSupportEntity } from '@users/shared/entities';
+import { InnovationEntity, InnovationSupportEntity, SupportLastActivityUpdateView } from '@users/shared/entities';
 import {
   InnovationStatusEnum,
   InnovationSupportStatusEnum,
@@ -167,5 +167,40 @@ export class StatisticsService extends BaseService {
       count: count,
       lastSubmittedAt: lastSubmittedAt
     };
+  }
+
+  async getInnovationsNotUpdatedForMoreThan30Days(
+    organisationUnitId: string,
+    entityManager?: EntityManager
+  ): Promise<{ id: string }[]> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const innovations = await em
+      .createQueryBuilder(SupportLastActivityUpdateView, 'lastActivity')
+      .select(['lastActivity.innovationId'])
+      .where('last_update <= DATEADD(day, -30, GETDATE())')
+      .andWhere('organisation_unit_id = :organisationUnitId', { organisationUnitId })
+      .getMany();
+
+    return innovations.map(i => ({ id: i.innovationId }));
+  }
+
+  async getInnovationsSuggestedForMoreThan3WorkDays(
+    organisationUnitId: string,
+    entityManager?: EntityManager
+  ): Promise<{ id: string }[]> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const innovations = await em
+      .createQueryBuilder(InnovationSupportEntity, 'innovation_support')
+      .select('innovation_support.innovation_id')
+      .addSelect('dbo.workdaysBetween(innovation_support.updated_at, GETDATE())', 'workdays_since_update')
+      .where('dbo.workdaysBetween(innovation_support.updated_at, GETDATE()) > 3')
+      .andWhere('innovation_support.is_most_recent = 1')
+      .andWhere('innovation_support.status = :status', { status: 'SUGGESTED' })
+      .andWhere('innovation_support.organisation_unit_id = :organisationUnitId', { organisationUnitId })
+      .getRawMany();
+
+    return innovations.map(i => ({ id: i['innovation_id'] }));
   }
 }

@@ -220,7 +220,7 @@ describe('Users / _services / statistics service suite', () => {
         em
       );
 
-      expect(result.count).toBe(2);
+      expect(result.count).toBe(3);
     });
 
     it.each([
@@ -231,6 +231,34 @@ describe('Users / _services / statistics service suite', () => {
       await expect(() => sut.innovationsToReview(DTOsHelper.getUserRequestContext(user), em)).rejects.toThrow(
         new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND)
       );
+    });
+  });
+  describe('getInnovationsNotUpdatedForMoreThan30Days', () => {
+    it('should get innovations not updated for more than 30 days', async () => {
+      const innovation = scenario.users.tristanInnovator.innovations.innovationUpdateInPast;
+      const organisationUnitId = scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id;
+
+      const notUpdatedInnovations = await sut.getInnovationsNotUpdatedForMoreThan30Days(organisationUnitId, em);
+
+      expect(notUpdatedInnovations).toHaveLength(1);
+
+      if (notUpdatedInnovations.length > 0) {
+        const firstResult = notUpdatedInnovations[0]!;
+        expect(firstResult.id).toBe(innovation.id);
+      }
+    });
+  });
+
+  describe('getInnovationsSuggestedForMoreThan3WorkDays', () => {
+    it('should get innovations suggested for more than 3 work days', async () => {
+      const innovation = scenario.users.tristanInnovator.innovations.innovationSuggestedInThePast;
+      const organisationUnit = scenario.organisations.healthOrg.organisationUnits.healthOrgUnit;
+
+      console.log('innovation', innovation.id);
+
+      const suggestedInnovations = await sut.getInnovationsSuggestedForMoreThan3WorkDays(organisationUnit.id, em);
+
+      expect(suggestedInnovations).toHaveLength(1);
     });
   });
 });
