@@ -292,4 +292,15 @@ erDiagram
   INNOVATION_TASK ||--o| USER_ROLE : updatedBy
   INNOVATION_TASK ||--o{ INNOVATION_TASK_DESCRIPTIONS_VIEW : has
   INNOVATION_TASK_DESCRIPTIONS_VIEW ||--o| INNOVATION_TASK : belongsTo
+
+  ACTIVITY_LOG {
+    uuid id PK
+    enum type
+    enum activity
+    uuid userRoleId
+    simple-json param
+    uuid innovationId
+  }
+  ACTIVITY_LOG ||--o| USER_ROLE : createdBy
+  ACTIVITY_LOG ||--o| INNOVATION : belongsTo
 ```
