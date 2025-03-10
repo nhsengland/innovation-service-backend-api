@@ -3,18 +3,7 @@
 title: Innovation Service
 ---
 erDiagram
-  INNOVATION {
-    uuid id PK
-    string name
-    string uniqueId UK
-    enum status
-    datetime2 statusUpdatedAt
-    datetime2 expires_at
-    datetime2 submittedAt
-    datetime2 lastAssessmentRequestAt
-    nvarchar archiveReason
-    bit hasBeenAssessed
-  }
+  
   USER {
     uuid id
     nvarchar identityId
@@ -217,25 +206,6 @@ erDiagram
     nvarchar summary
     datetime2 releasedAt
   }
-  INNOVATION ||--o| USER : hasAnOwner
-  INNOVATION ||--o{ ORGANISATION : sharedWith
-  INNOVATION ||--o| INNOVATION_ASSESSMENT : hasCurrent
-  INNOVATION ||--o| INNOVATION_ASSESSMENT : hasCurrentMajor
-  INNOVATION ||--o{ INNOVATION_ASSESSMENT : has
-  INNOVATION ||--o{ INNOVATION_SECTION : has
-  INNOVATION ||--o{ INNOVATION_SUPPORT : has
-  INNOVATION ||--o{ INNOVATION_SUPPORT_LOG : has
-  INNOVATION ||--o{ NOTIFICATION : has
-  INNOVATION ||--o{ INNOVATION_REASSESSMENT_REQUEST : requests
-  INNOVATION ||--o{ INNOVATION_EXPORT_REQUEST : requests
-  INNOVATION ||--|| INNOVATION_GROUPED_STATUS_VIEW : has
-  INNOVATION ||--o{ INNOVATION_COLLABORATOR : has
-  INNOVATION ||--|| INNOVATION_DOCUMENT : has
-  INNOVATION ||--|| INNOVATION_DOCUMENT_DRAFT : has
-  INNOVATION ||--o{ INNOVATION_TRANSFER : has
-  INNOVATION ||--o{ INNOVATION_SUGGESTED_UNITS_VIEW : suggested
-  INNOVATION ||--o{ INNOVATION_THREAD : has
-  INNOVATION ||--o{ INNOVATION_TASK : has
   INNOVATION_COLLABORATOR ||--o| USER : is
   INNOVATION_COLLABORATOR ||--o| INNOVATION : collaboratesWith
   USER ||--o{ USER_ROLE : has
@@ -341,4 +311,38 @@ erDiagram
   }
   AUDIT ||--o| USER_ROLE : createdBy
   AUDIT ||--o| INNOVATION : belongsTo
+
+  INNOVATION {
+    uuid id PK
+    string name
+    string uniqueId UK
+    enum status
+    datetime2 statusUpdatedAt
+    datetime2 expires_at
+    datetime2 submittedAt
+    datetime2 lastAssessmentRequestAt
+    nvarchar archiveReason
+    bit hasBeenAssessed
+    uuid ownerId
+    uuid currentAssessmentId
+    uuid currentMajorAssessmentId
+  }
+  INNOVATION ||--o| USER : hasAnOwner
+  INNOVATION ||--o{ ORGANISATION : sharedWith
+  INNOVATION ||--o| INNOVATION_ASSESSMENT : hasCurrent
+  INNOVATION ||--o| INNOVATION_ASSESSMENT : hasCurrentMajor
+  INNOVATION ||--o{ INNOVATION_ASSESSMENT : has
+  INNOVATION ||--o{ INNOVATION_SECTION : has
+  INNOVATION ||--o{ INNOVATION_SUPPORT : has
+  INNOVATION ||--o{ INNOVATION_SUPPORT_LOG : has
+  INNOVATION ||--o{ NOTIFICATION : has
+  INNOVATION ||--o{ INNOVATION_REASSESSMENT_REQUEST : requests
+  INNOVATION ||--o{ INNOVATION_EXPORT_REQUEST : requests
+  INNOVATION ||--|| INNOVATION_GROUPED_STATUS_VIEW : has
+  INNOVATION ||--o{ INNOVATION_COLLABORATOR : has
+  INNOVATION ||--|| INNOVATION_DOCUMENT : has
+  INNOVATION ||--|| INNOVATION_DOCUMENT_DRAFT : has
+  INNOVATION ||--o{ INNOVATION_TRANSFER : has
+  INNOVATION ||--o{ INNOVATION_SUGGESTED_UNITS_VIEW : suggested
+  
 ```
