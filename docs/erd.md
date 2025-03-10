@@ -45,13 +45,7 @@ erDiagram
   }
   
   
-  INNOVATION_SUPPORT_LOG {
-    uuid id
-    enum type
-    enum innovationSupportStatus
-    nvarchar description
-    simple-json params
-  }
+  
   NOTIFICATION {
     uuid id
     enum contextType
@@ -146,11 +140,7 @@ erDiagram
   
   
   
-  INNOVATION_SUPPORT_LOG ||--|| INNOVATION : belongsTo
-  INNOVATION_SUPPORT_LOG ||--|| INNOVATION_ASSESSMENT : majorAssessment
-  INNOVATION_SUPPORT_LOG ||--o| ORGANISATION_UNIT : createdBy
-  INNOVATION_SUPPORT_LOG ||--|| USER_ROLE : createdBy
-  INNOVATION_SUPPORT_LOG ||--o{ ORGANISATION_UNIT : suggested
+  
   NOTIFICATION ||--o{ NOTIFICATION_USER : notifies
   NOTIFICATION_USER }o--|| USER_ROLE : is
   
@@ -414,10 +404,34 @@ erDiagram
   INNOVATION_SUPPORT ||--o| INNOVATION : supports
   INNOVATION_SUPPORT ||--o| INNOVATION_ASSESSMENT : assessedBy
   INNOVATION_SUPPORT ||--o| ORGANISATION_UNIT : supportBy
-  INNOVATION_SUPPORT ||--o{ INNOVATION_SUPPORT_USER : supportBy
-  INNOVATION_SUPPORT_USER ||--|| USER_ROLE : supportBy
+  INNOVATION_SUPPORT ||--o{ INNOVATION_SUPPORT_USER : assigned
+  INNOVATION_SUPPORT_USER ||--|| USER_ROLE : assigned
   INNOVATION_SUPPORT ||--o{ INNOVATION_TASK : has
   INNOVATION_SUPPORT ||--|| SUPPORT_LAST_ACTIVITY_UPDATE_VIEW : lastActivity
+
+  INNOVATION_SUPPORT_LOG {
+    uuid id PK
+    enum type
+    enum innovationSupportStatus
+    nvarchar description
+    simple-json params
+    uuid innovationId FK
+    uuid majorAssessmentId FK
+    uuid organisationUnitId FK
+    uuid createdByUserRoleId FK
+  }
+  INNOVATION_SUPPORT_LOG_ORGANISATION_UNIT {
+    uuid innovationSupportLogId PK,FK
+    uuid organisationUnitId PK,FK
+  }
+  INNOVATION_SUPPORT_LOG ||--|| INNOVATION : belongsTo
+  INNOVATION_SUPPORT_LOG ||--|| INNOVATION_ASSESSMENT : majorAssessment
+  INNOVATION_SUPPORT_LOG ||--o| ORGANISATION_UNIT : createdBy
+  INNOVATION_SUPPORT_LOG ||--|| USER_ROLE : createdBy
+  INNOVATION_SUPPORT_LOG ||--o{ INNOVATION_SUPPORT_LOG_ORGANISATION_UNIT : suggested
+  INNOVATION_SUPPORT_LOG_ORGANISATION_UNIT ||--|| ORGANISATION_UNIT : suggested
+
+  
 ```
 # Almost all tables also have the following audit fields
   - created_at
@@ -450,6 +464,8 @@ TODO
   - innovation_standard
   - innovation_subgroup
   - innovation_subgroup_benefit
+- innovation_support_type: not sure when it was dropped < Oct 2023
+
 
 
 
