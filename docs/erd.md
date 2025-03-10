@@ -203,6 +203,13 @@ erDiagram
     nvarchar createdByIdentityId
     nvarchar createdByOrganisationUnitName
   }
+  TERMS_OF_USE {
+    uuid id PK
+    string name
+    enum touType
+    nvarchar summary
+    datetime2 releasedAt
+  }
   INNOVATION ||--o| USER : hasAnOwner
   INNOVATION ||--o{ ORGANISATION : sharedWith
   INNOVATION ||--o| INNOVATION_ASSESSMENT : hasCurrent
@@ -229,7 +236,7 @@ erDiagram
   USER_ROLE ||--o| USER : belongsTo
   USER_ROLE ||--o| ORGANISATION : belongsTo
   USER_ROLE ||--o| ORGANISATION_UNIT : belongsTo
-  USER_ROLE ||--o| THREADS : follows
+  USER_ROLE ||--o| INNOVATION_THREAD : follows
   USER_ROLE ||--o| INNOVATION_SUPPORT : supports
   ORGANISATION ||--o{ ORGANISATION_UNIT : has
   ORGANISATION_UNIT ||--o| ORGANISATION : belongsTo
@@ -261,8 +268,8 @@ erDiagram
   INNOVATION_DOCUMENT_DRAFT ||--o| INNOVATION : belongsTo
   INNOVATION_SUGGESTED_UNITS_VIEW ||--o| INNOVATION : belongsTo
   INNOVATION_SUGGESTED_UNITS_VIEW ||--o| ORGANISATION_UNIT : suggestedUnit
-  TERMS_OF_USE_USER ||--o| USER : belongsTo
-  TERMS_OF_USE_USER ||--o| TERMS_OF_USE : belongsTo
+  TERMS_OF_USE_USER ||--o| USER : acceptedBy
+  TERMS_OF_USE_USER ||--o| TERMS_OF_USE : accepted
   INNOVATION_THREAD ||--o| INNOVATION : belongsTo
   INNOVATION_THREAD ||--o| USER : authoredBy
   INNOVATION_THREAD ||--o| USER_ROLE : authoredBy
