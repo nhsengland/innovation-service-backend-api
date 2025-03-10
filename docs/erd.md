@@ -303,4 +303,28 @@ erDiagram
   }
   ACTIVITY_LOG ||--o| USER_ROLE : createdBy
   ACTIVITY_LOG ||--o| INNOVATION : belongsTo
+
+  ANNOUNCEMENT {
+    uuid id PK
+    enum status
+    nvarchar title
+    simple-array userRoles
+    datetime2 startsAt
+    datetime2 expiresAt
+    simple-json params
+    enum type
+    simple-json filters
+    bit sendEmail
+  }
+  ANNOUNCEMENT_USER {
+    uuid id PK
+    datetime2 readAt
+    uuid announcementId
+    uuid userId
+    uuid innovationId
+  }
+  ANNOUNCEMENT ||--o{ ANNOUNCEMENT_USER : has
+  ANNOUNCEMENT_USER ||--o| ANNOUNCEMENT : belongsTo
+  ANNOUNCEMENT_USER ||--o| USER : is
+  ANNOUNCEMENT_USER ||--o| INNOVATION : belongsTo
 ```
