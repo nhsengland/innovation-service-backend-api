@@ -366,8 +366,22 @@ erDiagram
   INNOVATION_EXPORT_REQUEST ||--o| INNOVATION : belongsTo
   INNOVATION_EXPORT_REQUEST ||--o| USER_ROLE : createdBy
 
+  INNOVATION_FILE {
+    uuid id PK
+    nvarchar storageId
+    enum contextType
+    nvarchar contextId
+    nvarchar name
+    nvarchar description
+    nvarchar filename
+    int filesize
+    nvarchar extension
+    uuid innovationId FK
+    uuid createdByUserRoleId FK
+  }
+  INNOVATION_FILE ||--o| INNOVATION : belongsTo
+  INNOVATION_FILE ||--o| USER_ROLE : createdBy
 
-  
 ```
 
 # Innovation Document Schema
