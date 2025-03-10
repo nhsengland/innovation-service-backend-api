@@ -203,6 +203,12 @@ erDiagram
     nvarchar createdByIdentityId
     nvarchar createdByOrganisationUnitName
   }
+  SUPPORT_LAST_ACTIVITY_UPDATE_VIEW {
+    uuid supportId
+    uuid innovationId
+    uuid organisationUnitId
+    datetime2 lastUpdate
+  }
   TERMS_OF_USE {
     uuid id PK
     string name
