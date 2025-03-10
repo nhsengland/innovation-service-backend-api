@@ -45,21 +45,6 @@ erDiagram
   }
   
   
-  INNOVATION_SECTION {
-    uuid id
-    enum section
-    enum status
-    datetime2 submittedAt
-    uuid submittedBy
-  }
-  INNOVATION_SUPPORT {
-    uuid id
-    enum status
-    enum closeReason
-    datetime2 startedAt
-    datetime2 finishedAt
-    boolean isMostRecent
-  }
   INNOVATION_SUPPORT_LOG {
     uuid id
     enum type
@@ -159,14 +144,8 @@ erDiagram
   ORGANISATION_UNIT ||--o{ INNOVATION_ASSESSMENT : has
   ORGANISATION_UNIT ||--o{ INNOVATION_SUPPORT_LOG : has
   
-  INNOVATION_SECTION ||--|| USER : submittedBy
-  INNOVATION_SECTION ||--o{ INNOVATION_TASK : has
-  INNOVATION_SUPPORT ||--o| INNOVATION : belongsTo
-  INNOVATION_SUPPORT ||--o| INNOVATION_ASSESSMENT : assessedBy
-  INNOVATION_SUPPORT ||--o| ORGANISATION_UNIT : supportBy
-  INNOVATION_SUPPORT ||--o{ USER_ROLE : supportBy
-  INNOVATION_SUPPORT ||--o{ INNOVATION_TASK : has
-  INNOVATION_SUPPORT ||--|| SUPPORT_LAST_ACTIVITY_UPDATE_VIEW : lastActivity
+  
+  
   INNOVATION_SUPPORT_LOG ||--|| INNOVATION : belongsTo
   INNOVATION_SUPPORT_LOG ||--|| INNOVATION_ASSESSMENT : majorAssessment
   INNOVATION_SUPPORT_LOG ||--o| ORGANISATION_UNIT : createdBy
@@ -259,8 +238,13 @@ erDiagram
     uuid currentAssessmentId FK
     uuid currentMajorAssessmentId FK
   }
+  INNOVATION_SHARE {
+    uuid innovationId PK,FK
+    uuid organisationId PK,FK
+  }
   INNOVATION ||--o| USER : hasAnOwner
-  INNOVATION ||--o{ ORGANISATION : sharedWith
+  INNOVATION ||--o{ INNOVATION_SHARE : sharedWith
+  INNOVATION_SHARE ||--|| ORGANISATION : sharedWith
   INNOVATION ||--o| INNOVATION_ASSESSMENT : hasCurrent
   INNOVATION ||--o| INNOVATION_ASSESSMENT : hasCurrentMajor
   INNOVATION ||--o{ INNOVATION_ASSESSMENT : has
@@ -388,16 +372,69 @@ erDiagram
   INNOVATION_REASSESSMENT_REQUEST ||--|| INNOVATION : belongsTo
   INNOVATION_REASSESSMENT_REQUEST ||--|| INNOVATION_ASSESSMENT : creates
 
-  
+  INNOVATION_RECORD_SCHEMA {
+    int version PK
+    simple-json schema
+  }
 
+  INNOVATION_SECTION {
+    uuid id PK
+    enum section
+    enum status
+    datetime2 submittedAt
+    uuid submittedBy
+    uuid innovationId FK
+  }
+  INNOVATION_SECTION ||--|| USER : submittedBy
+  INNOVATION_SECTION ||--o{ INNOVATION_TASK : has
+  
+  INNOVATION_SHARE_LOG {
+    datetime2 createdAt PK
+    uuid innovationId PK,FK
+    uuid organisationId PK,FK
+    enum operation
+  }
+  
+  INNOVATION_SUPPORT {
+    uuid id PK
+    enum status
+    enum closeReason
+    datetime2 startedAt
+    datetime2 finishedAt
+    boolean isMostRecent
+    uuid innovationId FK
+    uuid majorAssessmentId FK
+    uuid organisationUnitId FK
+
+  }
+  INNOVATION_SUPPORT_USER {
+    uuid innovationSupportId PK,FK
+    uuid userRoleId PK,FK
+  }
+  INNOVATION_SUPPORT ||--o| INNOVATION : supports
+  INNOVATION_SUPPORT ||--o| INNOVATION_ASSESSMENT : assessedBy
+  INNOVATION_SUPPORT ||--o| ORGANISATION_UNIT : supportBy
+  INNOVATION_SUPPORT ||--o{ INNOVATION_SUPPORT_USER : supportBy
+  INNOVATION_SUPPORT_USER ||--|| USER_ROLE : supportBy
+  INNOVATION_SUPPORT ||--o{ INNOVATION_TASK : has
+  INNOVATION_SUPPORT ||--|| SUPPORT_LAST_ACTIVITY_UPDATE_VIEW : lastActivity
 ```
+# Almost all tables also have the following audit fields
+  - created_at
+  - created_by
+  - updated_at
+  - updated_by
+  - deleted_at
 
 # Innovation Document Schema
 TODO
 
 # Deprecated only here for audit/history
 - innovation_action: replaced by innovation_tasks
-- innovation_file_legacy: replaced by new innovation_file
+- replaced by new innovation_file:
+  - innovation_file_legacy
+  - innovation_section_file
+  - innovation_evidence_file
 - replaced by innovation_document: 
   - innovation_area
   - innovation_care_setting
@@ -407,9 +444,14 @@ TODO
   - innovation_disease_condition
   - innovation_environmental_benefit
   - innovation_evidence
-  - innovation_evidence_file
   - innovation_general_benefit
   - innovation_patients_citizens_benefit
+  - innovation_revenue
+  - innovation_standard
+  - innovation_subgroup
+  - innovation_subgroup_benefit
+
+
 
 
 
