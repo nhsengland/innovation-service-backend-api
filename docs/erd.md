@@ -85,12 +85,7 @@ erDiagram
     bigint id PK
     datetime2 readAt
   }
-  INNOVATION_EXPORT_REQUEST {
-    uuid id
-    enum status
-    varchar requestReason
-    varchar rejectReason
-  }
+  
   INNOVATION_GROUPED_STATUS_VIEW {
     uuid innovationId
     enum groupedStatus
@@ -186,8 +181,7 @@ erDiagram
   INNOVATION_SUPPORT_LOG ||--o{ ORGANISATION_UNIT : suggested
   NOTIFICATION ||--o{ NOTIFICATION_USER : notifies
   NOTIFICATION_USER }o--|| USER_ROLE : is
-  INNOVATION_EXPORT_REQUEST ||--o| INNOVATION : belongsTo
-  INNOVATION_EXPORT_REQUEST ||--o| USER_ROLE : createdBy
+  
   INNOVATION_SUGGESTED_UNITS_VIEW ||--o| INNOVATION : belongsTo
   INNOVATION_SUGGESTED_UNITS_VIEW ||--o| ORGANISATION_UNIT : suggestedUnit
   TERMS_OF_USE_USER ||--o| USER : acceptedBy
@@ -360,7 +354,19 @@ erDiagram
   }
   INNOVATION_DOCUMENT ||--o| INNOVATION : belongsTo
   INNOVATION_DOCUMENT_DRAFT ||--o| INNOVATION : belongsTo
-  
+
+  INNOVATION_EXPORT_REQUEST {
+    uuid id PK
+    enum status
+    varchar requestReason
+    varchar rejectReason
+    uuid innovationId FK
+    uuid createdByUserRole FK
+  }
+  INNOVATION_EXPORT_REQUEST ||--o| INNOVATION : belongsTo
+  INNOVATION_EXPORT_REQUEST ||--o| USER_ROLE : createdBy
+
+
   
 ```
 
@@ -369,6 +375,7 @@ TODO
 
 # Deprecated only here for audit/history
 - innovation_action: replaced by innovation_tasks
+- innovation_file_legacy: replaced by new innovation_file
 - replaced by innovation_document: 
   - innovation_area
   - innovation_care_setting
@@ -376,5 +383,10 @@ TODO
   - innovation_clinical_area
   - innovation_deployment_plan
   - innovation_disease_condition
+  - innovation_environmental_benefit
+  - innovation_evidence
+  - innovation_evidence_file
+
+
 
 - lots of columns, especially within the innovation entity that were replaced by the innovation_document
