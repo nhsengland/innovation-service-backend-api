@@ -327,4 +327,18 @@ erDiagram
   ANNOUNCEMENT_USER ||--o| ANNOUNCEMENT : belongsTo
   ANNOUNCEMENT_USER ||--o| USER : is
   ANNOUNCEMENT_USER ||--o| INNOVATION : belongsTo
+
+  AUDIT {
+    uuid id PK
+    uuid userId
+    datetime2 date
+    enum action
+    enum target
+    uuid targetId
+    uuid innovationId
+    nvarchar invocationId
+    nvarchar functionName
+  }
+  AUDIT ||--o| USER_ROLE : createdBy
+  AUDIT ||--o| INNOVATION : belongsTo
 ```
