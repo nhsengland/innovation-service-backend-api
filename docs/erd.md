@@ -44,14 +44,7 @@ erDiagram
     uuid organisationId
   }
   
-  INNOVATION_REASSESSMENT_REQUEST {
-    uuid id
-    varchar updatedInnovationRecord
-    nvarchar description
-    simple-array reassessmentReason
-    nvarchar otherReassessmentReason
-    nvarchar whatSupportDoYouNeed
-  }
+  
   INNOVATION_SECTION {
     uuid id
     enum section
@@ -382,6 +375,21 @@ erDiagram
   INNOVATION_FILE ||--o| INNOVATION : belongsTo
   INNOVATION_FILE ||--o| USER_ROLE : createdBy
 
+  INNOVATION_REASSESSMENT_REQUEST {
+    uuid id
+    enum updatedInnovationRecord
+    nvarchar description
+    simple-array reassessmentReason
+    nvarchar otherReassessmentReason
+    nvarchar whatSupportDoYouNeed
+    uuid innovationId
+    uuid innovationAssessmentId
+  }
+  INNOVATION_REASSESSMENT_REQUEST ||--|| INNOVATION : belongsTo
+  INNOVATION_REASSESSMENT_REQUEST ||--|| INNOVATION_ASSESSMENT : creates
+
+  
+
 ```
 
 # Innovation Document Schema
@@ -400,6 +408,9 @@ TODO
   - innovation_environmental_benefit
   - innovation_evidence
   - innovation_evidence_file
+  - innovation_general_benefit
+  - innovation_patients_citizens_benefit
+
 
 
 
