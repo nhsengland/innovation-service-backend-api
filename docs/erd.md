@@ -235,9 +235,9 @@ erDiagram
     uuid id PK
     enum type
     enum activity
-    uuid userRoleId
     simple-json param
-    uuid innovationId
+    uuid userRoleId FK
+    uuid innovationId FK
   }
   ACTIVITY_LOG ||--o| USER_ROLE : createdBy
   ACTIVITY_LOG ||--o| INNOVATION : belongsTo
@@ -257,9 +257,9 @@ erDiagram
   ANNOUNCEMENT_USER {
     uuid id PK
     datetime2 readAt
-    uuid announcementId
-    uuid userId
-    uuid innovationId
+    uuid announcementId FK
+    uuid userId FK
+    uuid innovationId FK
   }
   ANNOUNCEMENT ||--o{ ANNOUNCEMENT_USER : has
   ANNOUNCEMENT_USER ||--o| ANNOUNCEMENT : belongsTo
@@ -268,12 +268,12 @@ erDiagram
 
   AUDIT {
     uuid id PK
-    uuid userId
+    uuid userId FK
     datetime2 date
     enum action
     enum target
     uuid targetId
-    uuid innovationId
+    uuid innovationId FK
     nvarchar invocationId
     nvarchar functionName
   }
@@ -291,9 +291,9 @@ erDiagram
     datetime2 lastAssessmentRequestAt
     nvarchar archiveReason
     bit hasBeenAssessed
-    uuid ownerId
-    uuid currentAssessmentId
-    uuid currentMajorAssessmentId
+    uuid ownerId FK
+    uuid currentAssessmentId FK
+    uuid currentMajorAssessmentId FK
   }
   INNOVATION ||--o| USER : hasAnOwner
   INNOVATION ||--o{ ORGANISATION : sharedWith
@@ -314,7 +314,7 @@ erDiagram
   INNOVATION ||--o{ INNOVATION_SUGGESTED_UNITS_VIEW : suggested
   
   INNOVATION_ASSESSMENT {
-    uuid id
+    uuid id PK
     smallint majorVersion
     smallint minorVersion
     nvarchar editReason
@@ -341,17 +341,32 @@ erDiagram
     enum exemptedReason
     nvarchar exemptedMessage
     datetime2 exemptedAt
+    uuid innovationId FK
+    uuid assignTo FK
+    uuid previousAssessmentId FK
+  }
+  INNOVATION_ASSESSMENT_ORGANISATION_UNIT {
+    uuid innovationAssessmentId PK,FK
+    uuid organisationUnitId PK,FK
   }
   INNOVATION_ASSESSMENT ||--|| INNOVATION : assesses
   INNOVATION_ASSESSMENT ||--o| USER : assignedTo
-  INNOVATION_ASSESSMENT ||--o{ ORGANISATION_UNIT : suggested
   INNOVATION_ASSESSMENT ||--o| INNOVATION_ASSESSMENT : previous
   INNOVATION_ASSESSMENT ||--o| INNOVATION_REASSESSMENT_REQUEST : createdFrom
+  INNOVATION_ASSESSMENT ||--o{ INNOVATION_ASSESSMENT_ORGANISATION_UNIT : suggested
+  INNOVATION_ASSESSMENT_ORGANISATION_UNIT ||--|| ORGANISATION_UNIT: suggested
+  INNOVATION_ASSESSMENT_ORGANISATION_UNIT ||--|| INNOVATION_ASSESSMENT: belongsTo
 ```
 
 # Innovation Document Schema
+TODO
 
 # Deprecated only here for audit/history
 - innovation_action: replaced by innovation_tasks
-- innovation_area: replaced by innovation_document
+- replaced by innovation_document: 
+  - innovation_area
+  - innovation_care_setting
+  - innovation_category
+  - innovation_clinical_area
+
 - lots of columns, especially within the innovation entity that were replaced by the innovation_document
