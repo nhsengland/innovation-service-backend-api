@@ -13,15 +13,7 @@ erDiagram
     enum deleteReason
     simple-json howDidYouFindUsAnswers
   }
-  INNOVATION_COLLABORATOR {
-    uuid id
-    enum status
-    nvarchar email
-    nvarchar collaboratorRole
-    datetime2 invitedAt
-    uuid innovationId
-    uuid userId
-  }
+  
   USER_ROLE {
     uuid id
     enum role
@@ -108,18 +100,7 @@ erDiagram
     int daysSinceNoActiveSupportOrDeploy
     datetime2 expectedArchiveDate
   }
-  INNOVATION_DOCUMENT {
-    uuid id
-    simple-json document
-    nvarchar version
-    boolean isSnapshot
-    nvarchar description
-  }
-  INNOVATION_DOCUMENT_DRAFT {
-    uuid id
-    simple-json document
-    nvarchar version
-  }
+  
   INNOVATION_TRANSFER {
     uuid id
     enum status
@@ -178,8 +159,6 @@ erDiagram
     nvarchar summary
     datetime2 releasedAt
   }
-  INNOVATION_COLLABORATOR ||--o| USER : is
-  INNOVATION_COLLABORATOR ||--o| INNOVATION : collaboratesWith
   USER ||--o{ USER_ROLE : has
   USER ||--o{ TERMS_OF_USE_USER : accepted
   USER_ROLE ||--o| USER : belongsTo
@@ -209,8 +188,6 @@ erDiagram
   NOTIFICATION_USER }o--|| USER_ROLE : is
   INNOVATION_EXPORT_REQUEST ||--o| INNOVATION : belongsTo
   INNOVATION_EXPORT_REQUEST ||--o| USER_ROLE : createdBy
-  INNOVATION_DOCUMENT ||--o| INNOVATION : belongsTo
-  INNOVATION_DOCUMENT_DRAFT ||--o| INNOVATION : belongsTo
   INNOVATION_SUGGESTED_UNITS_VIEW ||--o| INNOVATION : belongsTo
   INNOVATION_SUGGESTED_UNITS_VIEW ||--o| ORGANISATION_UNIT : suggestedUnit
   TERMS_OF_USE_USER ||--o| USER : acceptedBy
@@ -356,6 +333,35 @@ erDiagram
   INNOVATION_ASSESSMENT ||--o{ INNOVATION_ASSESSMENT_ORGANISATION_UNIT : suggested
   INNOVATION_ASSESSMENT_ORGANISATION_UNIT ||--|| ORGANISATION_UNIT: suggested
   INNOVATION_ASSESSMENT_ORGANISATION_UNIT ||--|| INNOVATION_ASSESSMENT: belongsTo
+
+  INNOVATION_COLLABORATOR {
+    uuid id PK
+    enum status
+    nvarchar email
+    nvarchar collaboratorRole
+    datetime2 invitedAt
+    uuid innovationId FK
+    uuid userId FK
+  }
+  INNOVATION_COLLABORATOR ||--o| USER : is
+  INNOVATION_COLLABORATOR ||--o| INNOVATION : collaboratesWith
+  
+  INNOVATION_DOCUMENT {
+    uuid id PK,FK
+    simple-json document
+    nvarchar version
+    boolean isSnapshot
+    nvarchar description
+  }
+  INNOVATION_DOCUMENT_DRAFT {
+    uuid id PK,FK
+    simple-json document
+    nvarchar version
+  }
+  INNOVATION_DOCUMENT ||--o| INNOVATION : belongsTo
+  INNOVATION_DOCUMENT_DRAFT ||--o| INNOVATION : belongsTo
+  
+  
 ```
 
 # Innovation Document Schema
@@ -368,5 +374,7 @@ TODO
   - innovation_care_setting
   - innovation_category
   - innovation_clinical_area
+  - innovation_deployment_plan
+  - innovation_disease_condition
 
 - lots of columns, especially within the innovation entity that were replaced by the innovation_document
