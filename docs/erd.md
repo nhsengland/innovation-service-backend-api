@@ -22,27 +22,6 @@ erDiagram
     uuid organisationUnitId
     uuid userId
   }
-  ORGANISATION {
-    uuid id
-    string name
-    enum type
-    nvarchar acronym
-    nvarchar size
-    nvarchar description
-    nvarchar summary
-    nvarchar website
-    nvarchar registrationNumber
-    boolean isShadow
-    datetime2 inactivatedAt
-  }
-  ORGANISATION_UNIT {
-    uuid id
-    string name
-    nvarchar acronym
-    boolean isShadow
-    datetime2 inactivatedAt
-    uuid organisationId
-  }
   
   INNOVATION_GROUPED_STATUS_VIEW {
     uuid innovationId
@@ -68,10 +47,7 @@ erDiagram
     simple-json suggestedBy
     datetime2 suggestedOn
   }
-  TERMS_OF_USE_USER {
-    uuid id PK
-    datetime2 acceptedAt
-  }
+  
   
   
   
@@ -81,13 +57,7 @@ erDiagram
     uuid organisationUnitId
     datetime2 lastUpdate
   }
-  TERMS_OF_USE {
-    uuid id PK
-    string name
-    enum touType
-    nvarchar summary
-    datetime2 releasedAt
-  }
+  
   USER ||--o{ USER_ROLE : has
   USER ||--o{ TERMS_OF_USE_USER : accepted
   USER_ROLE ||--o| USER : belongsTo
@@ -95,16 +65,6 @@ erDiagram
   USER_ROLE ||--o| ORGANISATION_UNIT : belongsTo
   USER_ROLE ||--o| INNOVATION_THREAD : follows
   USER_ROLE ||--o| INNOVATION_SUPPORT : supports
-  ORGANISATION ||--o{ ORGANISATION_UNIT : has
-  ORGANISATION_UNIT ||--o| ORGANISATION : belongsTo
-  ORGANISATION_UNIT ||--o{ INNOVATION_ASSESSMENT : has
-  ORGANISATION_UNIT ||--o{ INNOVATION_SUPPORT_LOG : has
-  
-  
-  
-  
-  NOTIFICATION ||--o{ NOTIFICATION_USER : notifies
-  NOTIFICATION_USER }o--|| USER_ROLE : is
   
   INNOVATION_SUGGESTED_UNITS_VIEW ||--o| INNOVATION : belongsTo
   INNOVATION_SUGGESTED_UNITS_VIEW ||--o| ORGANISATION_UNIT : suggestedUnit
@@ -449,7 +409,8 @@ erDiagram
   INNOVATION_THREAD ||--o| INNOVATION : belongsTo
   INNOVATION_THREAD ||--o| USER : authoredBy
   INNOVATION_THREAD ||--o| USER_ROLE : authoredBy
-  INNOVATION_THREAD ||--o{ USER_ROLE : followedBy
+  INNOVATION_THREAD ||--o{ INNOVATION_THREAD_FOLLOWER : followedBy
+  INNOVATION_THREAD_FOLLOWER ||--|| USER_ROLE: followedBy
   INNOVATION_THREAD ||--o{ INNOVATION_THREAD_MESSAGE : has
   
   INNOVATION_THREAD_MESSAGE {
@@ -515,6 +476,58 @@ erDiagram
   NOTIFY_ME_SUBSCRIPTION ||--|| USER_ROLE: notifies
   NOTIFY_ME_SUBSCRIPTION ||--o| NOTIFICATION_SCHEDULE: notifiesOn
 
+  ORGANISATION {
+    uuid id PK
+    string name
+    enum type
+    nvarchar acronym
+    nvarchar size
+    nvarchar description
+    nvarchar summary
+    nvarchar website
+    nvarchar registrationNumber
+    boolean isShadow
+    datetime2 inactivatedAt
+  }
+  ORGANISATION ||--o{ ORGANISATION_UNIT : has
+  ORGANISATION ||--o{ INNOVATION_SHARE : sharedBy
+  
+  ORGANISATION_UNIT {
+    uuid id PK
+    string name
+    nvarchar acronym
+    boolean isShadow
+    datetime2 inactivatedAt
+    uuid organisationId FK
+
+  }
+  ORGANISATION_UNIT ||--o| ORGANISATION : belongsTo
+  ORGANISATION_UNIT ||--o{ INNOVATION_ASSESSMENT_ORGANISATION_UNIT : suggestedBy
+  ORGANISATION_UNIT ||--o{ INNOVATION_SUPPORT_LOG_ORGANISATION_UNIT : suggestedBy
+  
+  SEEDS {
+    int id PK
+    bigint timestamp
+    varchar name
+  }
+
+  TERMS_OF_USE {
+    uuid id PK
+    string name UK
+    enum touType
+    nvarchar summary
+    datetime2 releasedAt
+  }
+  
+  TERMS_OF_USE_USER {
+    uuid id PK
+    datetime2 acceptedAt
+    uuid touId FK
+    uuid uesrId FK
+  }
+  TERMS_OF_USE_USER ||--o| USER : acceptedBy
+  TERMS_OF_USE_USER ||--o| TERMS_OF_USE : accepted
+
 
 ```
 # Falta views
@@ -552,5 +565,8 @@ TODO
   - innovation_subgroup_benefit
   - innovation_support_type
   - innovation_user_test
+- replaced by user_roles:
+  - organisation_user
+  - organisation_unit_user
 
 - lots of columns, especially within the innovation entity that were replaced by the innovation_document
