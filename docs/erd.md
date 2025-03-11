@@ -247,7 +247,7 @@ erDiagram
   INNOVATION_SUPPORT ||--o{ INNOVATION_SUPPORT_USER : assigned
   INNOVATION_SUPPORT_USER ||--|| USER_ROLE : assigned
   INNOVATION_SUPPORT ||--o{ INNOVATION_TASK : has
-  INNOVATION_SUPPORT ||--|| SUPPORT_LAST_ACTIVITY_UPDATE_VIEW : lastActivity
+  INNOVATION_SUPPORT ||--|| INNOVATION_SUPPORT_LAST_ACTIVITY_UPDATE_VIEW : lastActivity
 
   INNOVATION_SUPPORT_LOG {
     uuid id PK
@@ -570,6 +570,33 @@ erDiagram
   INNOVATION_LIST_VIEW ||--o{ INNOVATION_SUGGESTIONS: has
   INNOVATION_LIST_VIEW ||--o{ INNOVATION_SHARE: has
 
+  INNOVATION_PROGRESS_VIEW {
+    uuid innovationId
+    int deploymentCount
+    enum ukcaceCertification
+    enum dtacCertification
+    enum evidenceClinicalOrCare
+    enum evidenceRealWorld
+    enum assessmentRealWorldValidation
+    enum evidenceOfImpact
+    enum assessmentEvidenceProveEfficacy
+    enum evidenceCostImpact
+    enum workingProduct
+    enum carbonReductionPlan
+    enum htwTerComplete
+    enum niceGuidanceComplete
+    enum scProcurementRouteIdentified
+  }
+  INNOVATION_PROGRESS_VIEW ||--|| INNOVATION: relatesTo
+
+  INNOVATION_RELEVANT_ORGANISATIONS_STATUS_VIEW {
+    uuid innovationId
+    enum status
+    simple-json organisationData
+    simple-json organisationUnitData
+    simple-json userData
+  }
+  INNOVATION_RELEVANT_ORGANISATIONS_STATUS_VIEW ||--|| INNOVATION: relatesTo
 
   INNOVATION_SUGGESTED_UNITS_VIEW {
     uuid innovationId
@@ -578,7 +605,16 @@ erDiagram
     datetime2 suggestedOn
   }
   INNOVATION_SUGGESTED_UNITS_VIEW ||--o| INNOVATION : belongsTo
+  INNOVATION_SUGGESTED_UNITS_VIEW ||--o| INNOVATION_LIST_VIEW : belongsTo
   INNOVATION_SUGGESTED_UNITS_VIEW ||--o| ORGANISATION_UNIT : suggestedUnit
+
+  INNOVATION_SUPPORT_LAST_ACTIVITY_UPDATE_VIEW {
+    uuid supportId
+    uuid innovationId
+    uuid organisationUnitId
+    datetime2 lastUpdate
+  }
+  INNOVATION_SUPPORT_LAST_ACTIVITY_UPDATE_VIEW ||--|| INNOVATION_SUPPORT: relatesTo
 
   INNOVATION_TASK_DESCRIPTIONS_VIEW {
     uuid taskId
@@ -595,18 +631,7 @@ erDiagram
   INNOVATION_TASK_DESCRIPTIONS_VIEW ||--|| INNOVATION_THREAD: relatesTo
   INNOVATION_TASK_DESCRIPTIONS_VIEW ||--|| INNOVATION_THREAD_MESSAGE: has
   
-  
-  
-  SUPPORT_LAST_ACTIVITY_UPDATE_VIEW {
-    uuid supportId
-    uuid innovationId
-    uuid organisationUnitId
-    datetime2 lastUpdate
-  }
-  
 ```
-# Falta views
-
 # Almost all tables also have the following audit fields
   - created_at
   - created_by
@@ -615,7 +640,7 @@ erDiagram
   - deleted_at
 
 # Innovation Document Schema
-TODO
+  - The innovation document schema is a record in the database, the most recent version types is available [here](https://github.com/nhsengland/innovation-service-backend-api/blob/21e41ef6a58b0b6ded0cc09e99bc23e0d08d2037/libs/shared/schemas/innovation-record/document.types.ts)
 
 # Deprecated only here for audit/history
 - innovation_action: replaced by innovation_tasks
@@ -646,6 +671,4 @@ TODO
 - user_preference: replaced by notification_preference
 - don't know if this was ever used:
   - typeorm_metadata
-
-
 - lots of columns, especially within the innovation entity that were replaced by the innovation_document
