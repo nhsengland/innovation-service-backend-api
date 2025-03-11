@@ -97,22 +97,8 @@ erDiagram
     nvarchar message
     bit isEditable
   }
-  INNOVATION_TASK {
-    uuid id
-    nvarchar displayId
-    enum status
-  }
-  INNOVATION_TASK_DESCRIPTIONS_VIEW {
-    uuid taskId
-    enum status
-    uuid threadId
-    uuid messageId
-    nvarchar description
-    datetime2 createdAt
-    enum createdByRole
-    nvarchar createdByIdentityId
-    nvarchar createdByOrganisationUnitName
-  }
+  
+  
   SUPPORT_LAST_ACTIVITY_UPDATE_VIEW {
     uuid supportId
     uuid innovationId
@@ -157,12 +143,7 @@ erDiagram
   INNOVATION_THREAD_MESSAGE ||--o| USER : authoredBy
   INNOVATION_THREAD_MESSAGE ||--o| USER_ROLE : authoredBy
   INNOVATION_THREAD_MESSAGE ||--o| ORGANISATION_UNIT : authoredBy
-  INNOVATION_TASK ||--o| INNOVATION_SECTION : belongsTo
-  INNOVATION_TASK ||--o| INNOVATION_SUPPORT : belongsTo
-  INNOVATION_TASK ||--o| USER_ROLE : createdBy
-  INNOVATION_TASK ||--o| USER_ROLE : updatedBy
-  INNOVATION_TASK ||--o{ INNOVATION_TASK_DESCRIPTIONS_VIEW : has
-  INNOVATION_TASK_DESCRIPTIONS_VIEW ||--o| INNOVATION_TASK : belongsTo
+  
 
   ACTIVITY_LOG {
     uuid id PK
@@ -432,7 +413,7 @@ erDiagram
   INNOVATION_SUPPORT_LOG_ORGANISATION_UNIT ||--|| ORGANISATION_UNIT : suggested
 
   INNOVATION_SURVEY {
-    uuid id
+    uuid id PK
     enum type
     uuid contextId
     simple-json answers
@@ -445,8 +426,40 @@ erDiagram
   INNOVATION_SURVEY ||--|| INNOVATION : belongsTo
   INNOVATION_SURVEY ||--|| USER_ROLE : inquires
   INNOVATION_SURVEY ||--o| INNOVATION_SUPPORT : relatedTo
+
+  INNOVATION_TASK {
+    uuid id PK
+    nvarchar displayId
+    enum status
+    uuid innovationSectionId FK
+    uuid innovationSupportId FK
+    uuid createdByUserRoleId FK
+    uuid updatedByUserRoleId FK
+  }
+  INNOVATION_TASK ||--o| INNOVATION_SECTION : affects
+  INNOVATION_TASK ||--o| INNOVATION_SUPPORT : relatedTo
+  INNOVATION_TASK ||--o| USER_ROLE : createdBy
+  INNOVATION_TASK ||--o| USER_ROLE : updatedBy
+  INNOVATION_TASK ||--o{ INNOVATION_TASK_DESCRIPTIONS_VIEW : has
+
+  INNOVATION_TASK_DESCRIPTIONS_VIEW {
+    uuid taskId
+    enum status
+    uuid threadId
+    uuid messageId
+    nvarchar description
+    datetime2 createdAt
+    enum createdByRole
+    nvarchar createdByIdentityId
+    nvarchar createdByOrganisationUnitName
+  }
+  INNOVATION_TASK_DESCRIPTIONS_VIEW ||--|| INNOVATION_TASK : belongsTo
+  INNOVATION_TASK_DESCRIPTIONS_VIEW ||--|| INNOVATION_THREAD: relatesTo
+  INNOVATION_TASK_DESCRIPTIONS_VIEW ||--|| INNOVATION_THREAD_MESSAGE: has
   
 ```
+# Falta views
+
 # Almost all tables also have the following audit fields
   - created_at
   - created_by
