@@ -44,20 +44,6 @@ erDiagram
     uuid organisationId
   }
   
-  
-  
-  NOTIFICATION {
-    uuid id
-    enum contextType
-    enum contextDetail
-    uuid contextId
-    simple-json params
-  }
-  NOTIFICATION_USER {
-    bigint id PK
-    datetime2 readAt
-  }
-  
   INNOVATION_GROUPED_STATUS_VIEW {
     uuid innovationId
     enum groupedStatus
@@ -505,7 +491,31 @@ erDiagram
   NOTIFICATION_USER ||--|| NOTIFICATION: belongsTo
   NOTIFICATION_USER ||--|| USER_ROLE : is
 
-  
+  NOTIFICATION_PREFERENCE {
+    uuid userRoleId PK,FK
+    simple-json preferences
+  }
+  NOTIFICATION_PREFERENCE ||--|| USER_ROLE : belongsTo
+
+  NOTIFICATION_SCHEDULE {
+    uuid subscriptionId PK,FK
+    datetime2 sendDate
+  }
+  NOTIFICATION_SCHEDULE ||--|| NOTIFY_ME_SUBSCRIPTION: belongsTo
+
+  NOTIFY_ME_SUBSCRIPTION {
+    uuid id PK
+    enum eventType
+    enum subscriptionType
+    simple-json config
+    uuid innovationId FK
+    uuid userRoleId FK
+  }
+  NOTIFY_ME_SUBSCRIPTION ||--|| INNOVATION: relatesTo
+  NOTIFY_ME_SUBSCRIPTION ||--|| USER_ROLE: notifies
+  NOTIFY_ME_SUBSCRIPTION ||--o| NOTIFICATION_SCHEDULE: notifiesOn
+
+
 ```
 # Falta views
 
