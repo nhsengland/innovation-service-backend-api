@@ -3,76 +3,7 @@
 title: Innovation Service
 ---
 erDiagram
-  
-  USER {
-    uuid id
-    nvarchar identityId
-    enum status
-    datetime2 firstTimeSignInAt
-    datetime2 lockedAt
-    enum deleteReason
-    simple-json howDidYouFindUsAnswers
-  }
-  
-  USER_ROLE {
-    uuid id
-    enum role
-    boolean isActive
-    uuid organisationId
-    uuid organisationUnitId
-    uuid userId
-  }
-  
-  INNOVATION_GROUPED_STATUS_VIEW {
-    uuid innovationId
-    enum groupedStatus
-    string name
-    string createdBy
-    int daysSinceNoActiveSupport
-    int daysSinceNoActiveSupportOrDeploy
-    datetime2 expectedArchiveDate
-  }
-  
-  INNOVATION_TRANSFER {
-    uuid id
-    enum status
-    nvarchar email
-    int emailCount
-    datetime2 finishedAt
-    bit ownerToCollaborator
-  }
-  INNOVATION_SUGGESTED_UNITS_VIEW {
-    uuid innovationId
-    uuid suggestedUnitId
-    simple-json suggestedBy
-    datetime2 suggestedOn
-  }
-  
-  
-  
-  
-  SUPPORT_LAST_ACTIVITY_UPDATE_VIEW {
-    uuid supportId
-    uuid innovationId
-    uuid organisationUnitId
-    datetime2 lastUpdate
-  }
-  
-  USER ||--o{ USER_ROLE : has
-  USER ||--o{ TERMS_OF_USE_USER : accepted
-  USER_ROLE ||--o| USER : belongsTo
-  USER_ROLE ||--o| ORGANISATION : belongsTo
-  USER_ROLE ||--o| ORGANISATION_UNIT : belongsTo
-  USER_ROLE ||--o| INNOVATION_THREAD : follows
-  USER_ROLE ||--o| INNOVATION_SUPPORT : supports
-  
-  INNOVATION_SUGGESTED_UNITS_VIEW ||--o| INNOVATION : belongsTo
-  INNOVATION_SUGGESTED_UNITS_VIEW ||--o| ORGANISATION_UNIT : suggestedUnit
-  TERMS_OF_USE_USER ||--o| USER : acceptedBy
-  TERMS_OF_USE_USER ||--o| TERMS_OF_USE : accepted
-  
-  
-
+  %% TABLES  
   ACTIVITY_LOG {
     uuid id PK
     enum type
@@ -378,21 +309,6 @@ erDiagram
   INNOVATION_TASK_MESSAGE ||--|| INNOVATION_TASK: belongsTo
   INNOVATION_TASK_MESSAGE ||--|| INNOVATION_THREAD_MESSAGE: has
 
-  INNOVATION_TASK_DESCRIPTIONS_VIEW {
-    uuid taskId
-    enum status
-    uuid threadId
-    uuid messageId
-    nvarchar description
-    datetime2 createdAt
-    enum createdByRole
-    nvarchar createdByIdentityId
-    nvarchar createdByOrganisationUnitName
-  }
-  INNOVATION_TASK_DESCRIPTIONS_VIEW ||--|| INNOVATION_TASK : belongsTo
-  INNOVATION_TASK_DESCRIPTIONS_VIEW ||--|| INNOVATION_THREAD: relatesTo
-  INNOVATION_TASK_DESCRIPTIONS_VIEW ||--|| INNOVATION_THREAD_MESSAGE: has
-  
   INNOVATION_THREAD {
     uuid id PK
     string subject
@@ -426,6 +342,17 @@ erDiagram
   INNOVATION_THREAD_MESSAGE ||--o| USER : authoredBy
   INNOVATION_THREAD_MESSAGE ||--o| USER_ROLE : authoredBy
   INNOVATION_THREAD_MESSAGE ||--o| ORGANISATION_UNIT : authoredBy
+
+  INNOVATION_TRANSFER {
+    uuid id PK
+    enum status
+    nvarchar email
+    int emailCount
+    datetime2 finishedAt
+    bit ownerToCollaborator
+    uuid innovationId FK
+  }
+  INNOVATION_TRANSFER ||--|| INNOVATION: relatedTo
 
   MIGRATIONS {
     int id PK
@@ -528,7 +455,155 @@ erDiagram
   TERMS_OF_USE_USER ||--o| USER : acceptedBy
   TERMS_OF_USE_USER ||--o| TERMS_OF_USE : accepted
 
+  USER {
+    uuid id PK
+    nvarchar identityId
+    enum status
+    datetime2 firstTimeSignInAt
+    datetime2 lockedAt
+    enum deleteReason
+    simple-json howDidYouFindUsAnswers
+  }
+  USER ||--o{ USER_ROLE : has
+  USER ||--o{ TERMS_OF_USE_USER : accepted
+  
+  USER_ROLE {
+    uuid id PK
+    enum role
+    boolean isActive
+    uuid organisationId FK
+    uuid organisationUnitId FK
+    uuid userId FK
+  }
+  USER_ROLE ||--o| USER : belongsTo
+  USER_ROLE ||--o| ORGANISATION : belongsTo
+  USER_ROLE ||--o| ORGANISATION_UNIT : belongsTo
+  USER_ROLE ||--o| INNOVATION_THREAD : follows
+  USER_ROLE ||--o| INNOVATION_SUPPORT : supports
+  USER_ROLE ||--o{ INNOVATION_THREAD_FOLLOWER : follows
 
+  %% VIEWS
+  ANALYTICS_ORGANISATION_INACTIVITY_KPI {
+    int year
+    int month
+    nvarchar organisation
+    uuid organisationId
+    nvarchar organisationUnit
+    uuid organisationUnitId
+    uuid innovationId
+    nvarchar innovationName
+    boolean breached
+  }
+  ANALYTICS_ORGANISATION_INACTIVITY_KPI ||--|| INNOVATION: relatesTo
+  ANALYTICS_ORGANISATION_INACTIVITY_KPI ||--|| ORGANISATION: relatesTo
+  ANALYTICS_ORGANISATION_INACTIVITY_KPI ||--|| ORGANISATION_UNIT: relatesTo
+
+  ANALYTICS_SUPPORT_METRICS_VIEW {
+    uuid innovationId
+    nvarchar innovation
+    uuid organisationId
+    nvarchar organisation
+    uuid organisationUnitId
+    nvarchar organisationUnit
+    uuid supportId
+    datetime2 suggestedAt
+    enum suggestedAtWeekday
+    datetime2 startedAt
+    datetime2 finishedAt
+    int daysToSupport
+    int workdaysToSupport
+  }
+  ANALYTICS_SUPPORT_METRICS_VIEW ||--|| INNOVATION: relatesTo
+  ANALYTICS_SUPPORT_METRICS_VIEW ||--|| ORGANISATION: relatesTo
+  ANALYTICS_SUPPORT_METRICS_VIEW ||--|| ORGANISATION_UNIT: relatesTo
+  ANALYTICS_SUPPORT_METRICS_VIEW ||--|| INNOVATION_SUPPORT: relatesTo
+
+  DOCUMENTS_STATISTICS_VIEW {
+    uuid innovationId
+    simple-json uploadedByRoles
+    simple-json updatedByUnits
+    simple-json locations
+  }
+  DOCUMENTS_STATISTICS_VIEW ||--|| INNOVATION: relatesTo
+
+  INNOVATION_GROUPED_STATUS_VIEW {
+    uuid innovationId
+    enum groupedStatus
+    string name
+    string createdBy
+    int daysSinceNoActiveSupport
+    int daysSinceNoActiveSupportOrDeploy
+    datetime2 expectedArchiveDate
+  }
+  INNOVATION_GROUPED_STATUS_VIEW ||--|| INNOVATION: relatesTo
+  
+  INNOVATION_LIST_VIEW {
+    uuid id
+    nvarchar name
+    uuid ownerId
+    nvarchar ownerCompanyName
+    datetime2 submittedAt
+    datetime2 updatedAt
+    datetime2 lastAssessmentRequestAt
+    enum status
+    datetime2 statusUpdatedAt
+    enum groupedStatus
+    nvarchar countryName
+    nvarchar postcode
+    enum mainCategory
+    nvarchar otherCategoryDescription
+    simple-json categories
+    simple-json careSettings
+    nvarchar otherCareSetting
+    simple-json involvedAACProgrammes
+    simple-json diseasesAndConditions
+    simple-json keyHealthInequalities
+    simple-json engagingOrganisations
+    simple-json engagingUnits
+    boolean hasBeenAssessed
+    uuid currentAssessmentId
+  }
+  INNOVATION_LIST_VIEW ||--|| INNOVATION: relatesTo
+  INNOVATION_LIST_VIEW ||--o| USER: owner
+  INNOVATION_LIST_VIEW ||--o| INNOVATION_ASSESSMENT: currentAssessment
+  INNOVATION_LIST_VIEW ||--o{ INNOVATION_SUPPORT: has
+  INNOVATION_LIST_VIEW ||--o{ INNOVATION_SUGGESTIONS: has
+  INNOVATION_LIST_VIEW ||--o{ INNOVATION_SHARE: has
+
+
+  INNOVATION_SUGGESTED_UNITS_VIEW {
+    uuid innovationId
+    uuid suggestedUnitId
+    simple-json suggestedBy
+    datetime2 suggestedOn
+  }
+  INNOVATION_SUGGESTED_UNITS_VIEW ||--o| INNOVATION : belongsTo
+  INNOVATION_SUGGESTED_UNITS_VIEW ||--o| ORGANISATION_UNIT : suggestedUnit
+
+  INNOVATION_TASK_DESCRIPTIONS_VIEW {
+    uuid taskId
+    enum status
+    uuid threadId
+    uuid messageId
+    nvarchar description
+    datetime2 createdAt
+    enum createdByRole
+    nvarchar createdByIdentityId
+    nvarchar createdByOrganisationUnitName
+  }
+  INNOVATION_TASK_DESCRIPTIONS_VIEW ||--|| INNOVATION_TASK : belongsTo
+  INNOVATION_TASK_DESCRIPTIONS_VIEW ||--|| INNOVATION_THREAD: relatesTo
+  INNOVATION_TASK_DESCRIPTIONS_VIEW ||--|| INNOVATION_THREAD_MESSAGE: has
+  
+  
+  
+  SUPPORT_LAST_ACTIVITY_UPDATE_VIEW {
+    uuid supportId
+    uuid innovationId
+    uuid organisationUnitId
+    datetime2 lastUpdate
+  }
+  
 ```
 # Falta views
 
@@ -568,5 +643,9 @@ TODO
 - replaced by user_roles:
   - organisation_user
   - organisation_unit_user
+- user_preference: replaced by notification_preference
+- don't know if this was ever used:
+  - typeorm_metadata
+
 
 - lots of columns, especially within the innovation entity that were replaced by the innovation_document
