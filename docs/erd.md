@@ -86,17 +86,7 @@ erDiagram
     uuid id PK
     datetime2 acceptedAt
   }
-  INNOVATION_THREAD {
-    uuid id
-    string subject
-    enum contextType
-    uuid contextId
-  }
-  INNOVATION_THREAD_MESSAGE {
-    uuid id
-    nvarchar message
-    bit isEditable
-  }
+  
   
   
   SUPPORT_LAST_ACTIVITY_UPDATE_VIEW {
@@ -134,15 +124,7 @@ erDiagram
   INNOVATION_SUGGESTED_UNITS_VIEW ||--o| ORGANISATION_UNIT : suggestedUnit
   TERMS_OF_USE_USER ||--o| USER : acceptedBy
   TERMS_OF_USE_USER ||--o| TERMS_OF_USE : accepted
-  INNOVATION_THREAD ||--o| INNOVATION : belongsTo
-  INNOVATION_THREAD ||--o| USER : authoredBy
-  INNOVATION_THREAD ||--o| USER_ROLE : authoredBy
-  INNOVATION_THREAD ||--o{ USER_ROLE : followedBy
-  INNOVATION_THREAD ||--o{ INNOVATION_THREAD_MESSAGE : contains
-  INNOVATION_THREAD_MESSAGE ||--o| INNOVATION_THREAD : belongsTo
-  INNOVATION_THREAD_MESSAGE ||--o| USER : authoredBy
-  INNOVATION_THREAD_MESSAGE ||--o| USER_ROLE : authoredBy
-  INNOVATION_THREAD_MESSAGE ||--o| ORGANISATION_UNIT : authoredBy
+  
   
 
   ACTIVITY_LOG {
@@ -441,6 +423,14 @@ erDiagram
   INNOVATION_TASK ||--o| USER_ROLE : createdBy
   INNOVATION_TASK ||--o| USER_ROLE : updatedBy
   INNOVATION_TASK ||--o{ INNOVATION_TASK_DESCRIPTIONS_VIEW : has
+  INNOVATION_TASK ||--o{ INNOVATION_TASK_MESSAGE: has
+  INNOVATION_TASK_MESSAGE {
+    uuid innovationTaskId PK,FK
+    uuid innovationThreadMessageId PK,FK
+    enum status
+  }
+  INNOVATION_TASK_MESSAGE ||--|| INNOVATION_TASK: belongsTo
+  INNOVATION_TASK_MESSAGE ||--|| INNOVATION_THREAD_MESSAGE: has
 
   INNOVATION_TASK_DESCRIPTIONS_VIEW {
     uuid taskId
@@ -456,6 +446,65 @@ erDiagram
   INNOVATION_TASK_DESCRIPTIONS_VIEW ||--|| INNOVATION_TASK : belongsTo
   INNOVATION_TASK_DESCRIPTIONS_VIEW ||--|| INNOVATION_THREAD: relatesTo
   INNOVATION_TASK_DESCRIPTIONS_VIEW ||--|| INNOVATION_THREAD_MESSAGE: has
+  
+  INNOVATION_THREAD {
+    uuid id PK
+    string subject
+    enum contextType
+    uuid contextId
+    uuid innovationId FK
+    uuid authorId FK
+    uuid authorUserRoleId FK
+  }
+  INNOVATION_THREAD_FOLLOWER{
+    uuid innovationThreadId PK,FK
+    uuid userRoleId PK,FK
+  }
+  INNOVATION_THREAD ||--o| INNOVATION : belongsTo
+  INNOVATION_THREAD ||--o| USER : authoredBy
+  INNOVATION_THREAD ||--o| USER_ROLE : authoredBy
+  INNOVATION_THREAD ||--o{ USER_ROLE : followedBy
+  INNOVATION_THREAD ||--o{ INNOVATION_THREAD_MESSAGE : has
+  
+  INNOVATION_THREAD_MESSAGE {
+    uuid id PK
+    nvarchar message
+    bit isEditable
+    uuid innovationThreadId FK
+    uuid authorId FK
+    uuid authorOrganisationUnit FK
+    uuid authorUserRoleId FK
+  }
+  INNOVATION_THREAD_MESSAGE ||--o| INNOVATION_THREAD : belongsTo
+  INNOVATION_THREAD_MESSAGE ||--o| USER : authoredBy
+  INNOVATION_THREAD_MESSAGE ||--o| USER_ROLE : authoredBy
+  INNOVATION_THREAD_MESSAGE ||--o| ORGANISATION_UNIT : authoredBy
+
+  MIGRATIONS {
+    int id PK
+    bigint timestamp
+    varchar name
+  }
+
+  NOTIFICATION {
+    uuid id PK
+    enum contextType
+    enum contextDetail
+    uuid contextId
+    simple-json params
+    uuid innovationId FK
+  }
+  NOTIFICATION ||--o{ NOTIFICATION_USER : notifies
+  
+  NOTIFICATION_USER {
+    bigint id PK
+    datetime2 readAt
+    uuid notificationId FK
+    uuid userRoleId FK
+  }
+  NOTIFICATION_USER ||--|| NOTIFICATION: belongsTo
+  NOTIFICATION_USER ||--|| USER_ROLE : is
+
   
 ```
 # Falta views
@@ -476,7 +525,7 @@ TODO
   - innovation_file_legacy
   - innovation_section_file
   - innovation_evidence_file
-- replaced by innovation_document: 
+- replaced by innovation_document / irv2: 
   - innovation_area
   - innovation_care_setting
   - innovation_category
@@ -491,12 +540,7 @@ TODO
   - innovation_standard
   - innovation_subgroup
   - innovation_subgroup_benefit
-- innovation_support_type: not sure when it was dropped < Oct 2023
-
-
-
-
-
-
+  - innovation_support_type
+  - innovation_user_test
 
 - lots of columns, especially within the innovation entity that were replaced by the innovation_document
