@@ -17,12 +17,7 @@ export const InnovationsNeedingActionStatisticsHandler = async (
     return { count: 0 };
   }
 
-  const innovationsNotUpdated = await statisticsService.getInnovationsNotUpdatedForMoreThan30Days(organisationUnitId);
-
-  const innovationsSuggestedForMoreThan3WorkDays =
-    await statisticsService.getInnovationsSuggestedForMoreThan3WorkDays(organisationUnitId);
-
-  const innovationsNeedingAction = innovationsNotUpdated.length + innovationsSuggestedForMoreThan3WorkDays.length;
+  const innovationsNeedingAction = await statisticsService.getCountInnovationsNeedingAction(organisationUnitId);
 
   return { count: innovationsNeedingAction };
 };

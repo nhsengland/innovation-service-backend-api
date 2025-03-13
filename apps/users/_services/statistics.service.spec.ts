@@ -233,32 +233,19 @@ describe('Users / _services / statistics service suite', () => {
       );
     });
   });
-  describe('getInnovationsNotUpdatedForMoreThan30Days', () => {
-    it('should get innovations not updated for more than 30 days', async () => {
-      const innovation = scenario.users.tristanInnovator.innovations.innovationUpdateInPast;
-      const organisationUnitId = scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id;
 
-      const notUpdatedInnovations = await sut.getInnovationsNotUpdatedForMoreThan30Days(organisationUnitId, em);
-
-      expect(notUpdatedInnovations).toHaveLength(1);
-
-      if (notUpdatedInnovations.length > 0) {
-        const firstResult = notUpdatedInnovations[0]!;
-        expect(firstResult.id).toBe(innovation.id);
-      }
-    });
-  });
-
-  describe('getInnovationsSuggestedForMoreThan3WorkDays', () => {
-    it('should get innovations suggested for more than 3 work days', async () => {
-      const innovation = scenario.users.tristanInnovator.innovations.innovationSuggestedInThePast;
+  describe('getCountInnovationsNeedingAction', () => {
+    it('should get the number of innovations that need action', async () => {
+      const innovationSuggestedInThePast = scenario.users.tristanInnovator.innovations.innovationSuggestedInThePast;
+      const innovationWaitingForUpdate = scenario.users.tristanInnovator.innovations.innovationUpdateInPast;
       const organisationUnit = scenario.organisations.healthOrg.organisationUnits.healthOrgUnit;
 
-      console.log('innovation', innovation.id);
+      console.log('innovationSuggestedInThePast', innovationSuggestedInThePast.id);
+      console.log('innovationWaitingForUpdate', innovationWaitingForUpdate.id);
 
-      const suggestedInnovations = await sut.getInnovationsSuggestedForMoreThan3WorkDays(organisationUnit.id, em);
+      const suggestedInnovations = await sut.getCountInnovationsNeedingAction(organisationUnit.id, em);
 
-      expect(suggestedInnovations).toHaveLength(1);
+      expect(suggestedInnovations).toEqual(2);
     });
   });
 });
