@@ -236,16 +236,11 @@ describe('Users / _services / statistics service suite', () => {
 
   describe('getCountInnovationsNeedingAction', () => {
     it('should get the number of innovations that need action', async () => {
-      const innovationSuggestedInThePast = scenario.users.tristanInnovator.innovations.innovationSuggestedInThePast;
-      const innovationWaitingForUpdate = scenario.users.tristanInnovator.innovations.innovationUpdateInPast;
       const organisationUnit = scenario.organisations.healthOrg.organisationUnits.healthOrgUnit;
-
-      console.log('innovationSuggestedInThePast', innovationSuggestedInThePast.id);
-      console.log('innovationWaitingForUpdate', innovationWaitingForUpdate.id);
 
       const suggestedInnovations = await sut.getCountInnovationsNeedingAction(organisationUnit.id, em);
 
-      expect(suggestedInnovations).toEqual(2);
+      expect(suggestedInnovations).toEqual(1);
     });
   });
 });

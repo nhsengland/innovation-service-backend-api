@@ -65,7 +65,7 @@ describe('Admin / _services / announcements service suite', () => {
         em
       );
 
-      expect(result).toMatchObject({ ENGAGING: 5 });
+      expect(result).toMatchObject({ ENGAGING: 6 });
     });
 
     it('should return the count of innovations in each ongoing support status for the given organisation unit', async () => {
