@@ -121,6 +121,7 @@ export const InnovationListSelectType = [
   'owner.id',
   'owner.name',
   'owner.companyName',
+  'owner.email',
   'statistics.notifications',
   'statistics.tasks',
   'statistics.messages'
@@ -136,6 +137,7 @@ export type InnovationListSelectType =
   | 'owner.id'
   | 'owner.name'
   | 'owner.companyName'
+  | 'owner.email'
   | 'suggestion.suggestedBy'
   | 'suggestion.suggestedOn'
   | 'statistics.notifications'
@@ -160,7 +162,7 @@ export type InnovationListFullResponseType = Omit<InnovationListViewFields, 'eng
     suggestedBy: string[];
     suggestedOn: Date;
   } | null;
-  owner: { id: string; name: string | null; companyName: string | null } | null;
+  owner: { id: string; name: string | null; companyName: string | null; email: string | null } | null;
   statistics: { notifications: number; tasks: number; messages: number };
 };
 
@@ -296,9 +298,12 @@ export class InnovationsService extends BaseService {
       }
     });
     // Ensure that we aren't filtering by owner name as it's not supported (joi is validating this, didn't spend much time getting the pagination type to work with Omit)
-    if (Object.keys(params.pagination.order).includes('owner.name')) {
+    if (
+      Object.keys(params.pagination.order).includes('owner.name') ||
+      Object.keys(params.pagination.order).includes('owner.email')
+    ) {
       throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD, {
-        message: 'Invalid sort field owner.name not supported'
+        message: 'Invalid sort field owner.name or owner.email not supported'
       });
     }
 
@@ -409,6 +414,7 @@ export class InnovationsService extends BaseService {
           key = 'owner' + key.split('.')[1]?.charAt(0).toUpperCase() + key.split('.')[1]?.slice(1);
         }
         switch (key) {
+          case 'owner.email':
           case 'owner.name':
           case 'support.updatedBy':
             throw new NotImplementedError(GenericErrorsEnum.NOT_IMPLEMENTED_ERROR, {
@@ -1078,6 +1084,9 @@ export class InnovationsService extends BaseService {
       ...(fields.includes('id') && { id: item.ownerId }),
       ...(fields.includes('name') && {
         name: extra.users.getDisplayName(item.ownerId, ServiceRoleEnum.INNOVATOR)
+      }),
+      ...(fields.includes('email') && {
+        email: extra.users.get(item.ownerId)?.email ?? null
       }),
       ...(fields.includes('companyName') && {
         companyName: item.ownerCompanyName ?? null

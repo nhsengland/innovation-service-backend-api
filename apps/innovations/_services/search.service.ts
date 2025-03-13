@@ -59,7 +59,9 @@ type SearchInnovationListSelectType =
   | 'support.closeReason'
   | 'owner.id'
   | 'owner.name'
-  | 'owner.companyName';
+  | 'owner.companyName'
+  | 'owner.email'
+  | 'suggestion.suggestedBy';
 
 // In advanced search the suggestedOnly applies not to a state as the innovation list but to the suggestions as it
 // affects other innovations besides "UNASSIGNED". This should probably be changed in the future and removed and focus
@@ -197,6 +199,7 @@ export class SearchService extends BaseService {
 
         // TODO: find a cleaner way to approach this sort. Like this for now.
         switch (key) {
+          case 'owner.email':
           case 'owner.name':
           case 'support.updatedBy':
             throw new NotImplementedError(GenericErrorsEnum.NOT_IMPLEMENTED_ERROR, {
@@ -372,7 +375,7 @@ export class SearchService extends BaseService {
   }
 
   private displayHandlers: {
-    [k in 'assessment' | 'support' | 'owner' | 'engagingUnits']: (
+    [k in 'assessment' | 'support' | 'suggestion' | 'owner' | 'engagingUnits']: (
       domainContext: DomainContextType,
       item: CurrentElasticSearchDocumentType,
       fields: k extends InnovationListJoinTypes ? InnovationListChildrenType<k>[] : string[],
@@ -382,7 +385,8 @@ export class SearchService extends BaseService {
     assessment: this.displayAssessment.bind(this),
     engagingUnits: this.displayEngagingUnits.bind(this),
     support: this.displaySupport.bind(this),
-    owner: this.displayOwner.bind(this)
+    owner: this.displayOwner.bind(this),
+    suggestion: this.displaySuggestion.bind(this)
   };
 
   private displayAssessment(
@@ -461,6 +465,25 @@ export class SearchService extends BaseService {
     return null;
   }
 
+  private displaySuggestion(
+    domainContext: DomainContextType,
+    item: CurrentElasticSearchDocumentType,
+    fields: InnovationListChildrenType<'suggestion'>[],
+    _extra: PickHandlerReturnType<typeof this.postHandlers, 'users'>
+  ): Partial<InnovationListFullResponseType['suggestion']> {
+    if (isAccessorDomainContextType(domainContext)) {
+      const suggestions = new Set(
+        item.suggestions
+          ?.filter(s => s.suggestedUnitId === domainContext.organisation.organisationUnit.id)
+          .flatMap(s => s.suggestedBy) ?? []
+      );
+      return {
+        ...(fields.includes('suggestedBy') && { suggestedBy: Array.from(suggestions.values()) })
+      };
+    }
+    return null;
+  }
+
   private displayOwner(
     _domainContext: DomainContextType,
     item: CurrentElasticSearchDocumentType,
@@ -473,6 +496,7 @@ export class SearchService extends BaseService {
     return {
       ...(fields.includes('id') && { id: item.owner.id }),
       ...(fields.includes('name') && { name: extra.users.getDisplayName(item.owner.id, ServiceRoleEnum.INNOVATOR) }),
+      ...(fields.includes('email') && { email: extra.users.get(item.owner.id)?.email }),
       ...(fields.includes('companyName') && { companyName: item.owner.companyName ?? null })
     };
   }
