@@ -236,11 +236,12 @@ describe('Users / _services / statistics service suite', () => {
 
   describe('getCountInnovationsNeedingAction', () => {
     it('should get the number of innovations that need action', async () => {
-      const organisationUnit = scenario.organisations.healthOrg.organisationUnits.healthOrgUnit;
+      const suggestedInnovations = await sut.getCountInnovationsNeedingAction(
+        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+        em
+      );
 
-      const suggestedInnovations = await sut.getCountInnovationsNeedingAction(organisationUnit.id, em);
-
-      expect(suggestedInnovations).toEqual(1);
+      expect(suggestedInnovations).toBe(2);
     });
   });
 });

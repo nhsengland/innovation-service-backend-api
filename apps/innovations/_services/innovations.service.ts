@@ -38,6 +38,7 @@ import {
 } from '@innovations/shared/enums';
 import {
   BadRequestError,
+  ForbiddenError,
   GenericErrorsEnum,
   InnovationErrorsEnum,
   NotFoundError,
@@ -76,6 +77,7 @@ import { BaseService } from './base.service';
 import { InnovationDocumentService } from './innovation-document.service';
 import { InnovationSupportsService } from './innovation-supports.service';
 import SYMBOLS from './symbols';
+import { AuthErrorsEnum } from '@innovations/shared/services/auth/authorization-validation.model';
 
 // TODO move types
 export const InnovationListSelectType = [
@@ -1394,7 +1396,7 @@ export class InnovationsService extends BaseService {
   }
 
   async getInnovationsNeedingAction(
-    organisationUnitId: string,
+    domainContext: DomainContextType,
     params: {
       pagination: PaginationQueryParamsType<InnovationListSelectType>;
     },
@@ -1410,6 +1412,12 @@ export class InnovationsService extends BaseService {
     count: number;
   }> {
     const connection = entityManager ?? this.sqlConnection.manager;
+
+    if (!isAccessorDomainContextType(domainContext)) {
+      throw new ForbiddenError(AuthErrorsEnum.AUTH_USER_UNAUTHORIZED);
+    }
+
+    const organisationUnitId = domainContext.organisation.organisationUnit.id;
 
     const query = await connection
       .createQueryBuilder(InnovationNeedingActionView, 'innovations_needing_action')
@@ -1935,7 +1943,18 @@ export class InnovationsService extends BaseService {
     // Pagination and ordering
     query.skip(pagination.skip);
     query.take(pagination.take);
-    query.addOrderBy('activityLog.createdAt', pagination.order.createdAt);
+    for (const [key, order] of Object.entries(pagination.order)) {
+      let field: string;
+      switch (key) {
+        case 'createdAt':
+          field = 'activityLog.createdAt';
+          break;
+        default:
+          field = 'activityLog.createdAt';
+          break;
+      }
+      query.addOrderBy(field, order);
+    }
 
     const [dbActivities, dbActivitiesCount] = await query.getManyAndCount();
 

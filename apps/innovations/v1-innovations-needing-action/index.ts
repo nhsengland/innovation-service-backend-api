@@ -31,15 +31,9 @@ class V1InnovationsNeedingAction {
       const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
       const { skip, take, order } = queryParams;
 
-      if (!domainContext.organisation?.organisationUnit?.id) {
-        context.res = ResponseHelper.Error(context, new Error('Invalid organisation unit ID.'));
-        return;
-      }
-
-      const result = await innovationsService.getInnovationsNeedingAction(
-        domainContext.organisation?.organisationUnit?.id,
-        { pagination: { skip, take, order } }
-      );
+      const result = await innovationsService.getInnovationsNeedingAction(domainContext, {
+        pagination: { skip, take, order }
+      });
 
       context.res = ResponseHelper.Ok<ResponseDTO>(result);
       return;

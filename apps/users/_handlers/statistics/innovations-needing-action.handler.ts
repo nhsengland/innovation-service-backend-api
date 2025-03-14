@@ -11,13 +11,7 @@ export const InnovationsNeedingActionStatisticsHandler = async (
 ): Promise<UserStatisticsTemplateType[UserStatisticsEnum.INNOVATIONS_NEEDING_ACTION_COUNTER]> => {
   const statisticsService = container.get<StatisticsService>(SYMBOLS.StatisticsService);
 
-  const organisationUnitId = domainContext.organisation?.organisationUnit?.id;
-
-  if (!organisationUnitId) {
-    return { count: 0 };
-  }
-
-  const innovationsNeedingAction = await statisticsService.getCountInnovationsNeedingAction(organisationUnitId);
+  const innovationsNeedingAction = await statisticsService.getCountInnovationsNeedingAction(domainContext);
 
   return { count: innovationsNeedingAction };
 };
