@@ -84,6 +84,11 @@ export class InnovationSupportBuilder extends BaseBuilder {
     return this;
   }
 
+  setUpdatedAt(date: Date): this {
+    this.support.updatedAt = date;
+    return this;
+  }
+
   setFinishedAt(date: Date): this {
     this.support.finishedAt = date;
     return this;

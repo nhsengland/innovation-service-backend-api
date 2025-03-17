@@ -10,6 +10,7 @@ import {
   InnovationEntity,
   InnovationExportRequestEntity,
   InnovationListView,
+  InnovationNeedingActionView,
   InnovationSectionEntity,
   InnovationSupportEntity,
   InnovationTaskEntity,
@@ -37,6 +38,7 @@ import {
 } from '@innovations/shared/enums';
 import {
   BadRequestError,
+  ForbiddenError,
   GenericErrorsEnum,
   InnovationErrorsEnum,
   NotFoundError,
@@ -75,6 +77,7 @@ import { BaseService } from './base.service';
 import { InnovationDocumentService } from './innovation-document.service';
 import { InnovationSupportsService } from './innovation-supports.service';
 import SYMBOLS from './symbols';
+import { AuthErrorsEnum } from '@innovations/shared/services/auth/authorization-validation.model';
 
 // TODO move types
 export const InnovationListSelectType = [
@@ -1392,6 +1395,72 @@ export class InnovationsService extends BaseService {
     return query.getCount();
   }
 
+  async getInnovationsNeedingAction(
+    domainContext: DomainContextType,
+    params: {
+      pagination: PaginationQueryParamsType<InnovationListSelectType>;
+    },
+    entityManager?: EntityManager
+  ): Promise<{
+    innovations: {
+      id: string;
+      name: string;
+      supportStatus: InnovationSupportStatusEnum;
+      dueDate: Date;
+      dueDays: number;
+    }[];
+    count: number;
+  }> {
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    if (!isAccessorDomainContextType(domainContext)) {
+      throw new ForbiddenError(AuthErrorsEnum.AUTH_USER_UNAUTHORIZED);
+    }
+
+    const organisationUnitId = domainContext.organisation.organisationUnit.id;
+
+    const query = await connection
+      .createQueryBuilder(InnovationNeedingActionView, 'innovations_needing_action')
+      .select([
+        'innovations_needing_action.id',
+        'innovations_needing_action.name',
+        'innovations_needing_action.supportStatus',
+        'innovations_needing_action.dueDate',
+        'innovations_needing_action.dueDays'
+      ])
+      .where('innovations_needing_action.org_unit_id = :organisationUnitId', { organisationUnitId });
+
+    // Pagination and ordering
+    query.skip(params.pagination.skip);
+    query.take(params.pagination.take);
+
+    for (const [key, order] of Object.entries(params.pagination.order)) {
+      let field: string;
+      switch (key) {
+        case 'dueDate':
+          field = 'innovations_needing_action.dueDate';
+          break;
+        default:
+          field = 'innovations_needing_action.name';
+          break;
+      }
+      query.addOrderBy(field, order);
+    }
+
+    const [innovations, count] = await query.getManyAndCount();
+
+    return {
+      innovations: innovations.map(innovation => ({
+        id: innovation.id,
+        name: innovation.name,
+        supportStatus: innovation.supportStatus,
+        dueDate: innovation.dueDate,
+        dueDays: innovation.dueDays
+      })),
+      count
+    };
+  }
+
   async createInnovation(
     domainContext: DomainContextType,
     data: {
@@ -1874,7 +1943,6 @@ export class InnovationsService extends BaseService {
     // Pagination and ordering
     query.skip(pagination.skip);
     query.take(pagination.take);
-
     for (const [key, order] of Object.entries(pagination.order)) {
       let field: string;
       switch (key) {

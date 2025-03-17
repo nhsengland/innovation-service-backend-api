@@ -87,6 +87,7 @@ import { DocumentsStatisticsViewEntity } from './views/documents-statistics.view
 import { InnovationSuggestedUnitsView } from './views/innovation-suggested-units.view.entity';
 import { InnovationProgressView } from './views/innovation-progress.view.entity';
 import { InnovationRelevantOrganisationsStatusView } from './views/innovation_relevant_organisations_status_view.entity';
+import { InnovationNeedingActionView } from './views/innovation-needing-action.view.entity';
 export { InnovationGroupedStatusViewEntity } from './views/innovation-grouped-status.view.entity';
 export { InnovationListView } from './views/innovation-list-view.entity';
 export { InnovationTaskDescriptionsViewEntity } from './views/innovation-task-descriptions.view.entity';
@@ -94,6 +95,7 @@ export { SupportLastActivityUpdateView } from './views/support-last-activity-upd
 export { DocumentsStatisticsViewEntity } from './views/documents-statistics.view.entity';
 export { InnovationSuggestedUnitsView } from './views/innovation-suggested-units.view.entity';
 export { InnovationRelevantOrganisationsStatusView } from './views/innovation_relevant_organisations_status_view.entity';
+export { InnovationNeedingActionView } from './views/innovation-needing-action.view.entity';
 
 // Entities lists.
 export const GENERAL_ENTITIES = [AuditEntity, TermsOfUseEntity, TermsOfUseUserEntity];
@@ -141,5 +143,6 @@ export const VIEW_ENTITIES = [
   InnovationSuggestedUnitsView,
   InnovationListView,
   InnovationProgressView,
-  InnovationRelevantOrganisationsStatusView
+  InnovationRelevantOrganisationsStatusView,
+  InnovationNeedingActionView
 ];

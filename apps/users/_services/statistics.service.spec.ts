@@ -220,7 +220,7 @@ describe('Users / _services / statistics service suite', () => {
         em
       );
 
-      expect(result.count).toBe(2);
+      expect(result.count).toBe(3);
     });
 
     it.each([
@@ -231,6 +231,17 @@ describe('Users / _services / statistics service suite', () => {
       await expect(() => sut.innovationsToReview(DTOsHelper.getUserRequestContext(user), em)).rejects.toThrow(
         new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND)
       );
+    });
+  });
+
+  describe('getCountInnovationsNeedingAction', () => {
+    it('should get the number of innovations that need action', async () => {
+      const suggestedInnovations = await sut.getCountInnovationsNeedingAction(
+        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+        em
+      );
+
+      expect(suggestedInnovations).toBe(2);
     });
   });
 });

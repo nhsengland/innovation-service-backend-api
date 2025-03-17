@@ -6275,6 +6275,49 @@ paths:
           description: The user is not authorized to access this resource.
         "500":
           description: An error occurred while processing the request.
+  /v1/needing-action:
+    get:
+      operationId: v1-innovations-needing-action
+      description: Get innovations that need action
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  innovations:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        name:
+                          type: string
+                        supportStatus: {}
+                        dueDate:
+                          type: string
+                          format: date-time
+                        dueDays:
+                          type: integer
+                      required:
+                        - id
+                        - name
+                        - supportStatus
+                        - dueDate
+                        - dueDays
+                      additionalProperties: false
+                  count:
+                    type: integer
+                required:
+                  - count
+                additionalProperties: false
+        "400":
+          description: Invalid innovation payload
   /v1/overdue-assessments:
     get:
       operationId: v1-innovations-overdue-assessments
