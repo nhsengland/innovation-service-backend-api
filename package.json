@@ -35,7 +35,7 @@
     "@azure/storage-queue": "^12.23.0",
     "@elastic/elasticsearch": "^8.15.0",
     "applicationinsights": "^2.9.6",
-    "axios": "^1.7.7",
+    "axios": "^1.8.2",
     "dotenv": "^16.4.5",
     "inversify": "^6.0.2",
     "joi": "^17.13.3",
