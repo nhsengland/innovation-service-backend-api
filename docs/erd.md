@@ -878,6 +878,21 @@ The `INNOVATION_DOCUMENT_DRAFT` table stores draft versions of the innovation re
 - Drafts are not visible to non innovator users until they are finalized and moved to the `INNOVATION_DOCUMENT` table.
 - The `id` field ensures that each draft is uniquely tied to its corresponding innovation.
 
+## INNOVATION_EXPORT_REQUEST
+The `INNOVATION_EXPORT_REQUEST` table tracks requests made by users to export innovation data. This used to be mandatory but has changed to only required if using this information for other parties.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|id|uuid|primary key for the export request|PK|
+|status|enum|status of the export request|<ul><li>PENDING</li><li>APPROVED</li><li>REJECTED</li><li>COMPLETED</li></ul>|
+|requestReason|varchar|reason provided by the user for the export request||
+|rejectReason|varchar|reason provided for rejecting the export request|nullable|
+|innovationId|uuid|foreign key referencing the innovation being exported|FK|
+|createdByUserRole|uuid|foreign key referencing the user role that created the request|FK|
+
+### Notes
+- The `status` field indicates the current state of the request, such as whether it is pending or completed.
+
 # Almost all tables also have the following audit fields
   - created_at
   - created_by
