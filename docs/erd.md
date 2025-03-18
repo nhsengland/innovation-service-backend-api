@@ -1,3 +1,5 @@
+# ERD
+
 ```mermaid
 ---
 title: Innovation Service
@@ -632,6 +634,22 @@ erDiagram
   INNOVATION_TASK_DESCRIPTIONS_VIEW ||--|| INNOVATION_THREAD_MESSAGE: has
   
 ```
+# Table/Column descriptions
+
+## ACTIVITY_LOG
+Most activities done by the users are registered in the activity log for audit and other purposes and made available within the innovation record.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|id|uuid|primary key for the activity_log|PK|
+|type|enum|type of the activity log entry|<ul><li>INNOVATION_MANAGEMENT</li><li>INNOVATION_RECORD</li><li>NEEDS_ASSESSMENT</li><li>SUPPORT</li><li>COMMENTS</li><li>TASKS</li><li>THREADS</li></ul>|
+|activity|enum|subtype of the activity log entry|<ul><li>INNOVATION_CREATION</li><li>OWNERSHIP_TRANSFER</li><li>SHARING_PREFERENCES_UPDATE</li><li>SECTION_DRAFT_UPDATE</li><li>SECTION_SUBMISSION</li><li>INNOVATION_SUBMISSION</li><li>NEEDS_ASSESSMENT_START</li><li>NEEDS_ASSESSMENT_START_EDIT</li><li>NEEDS_ASSESSMENT_COMPLETED</li><li>NEEDS_ASSESSMENT_EDITED</li><li>ORGANISATION_SUGGESTION</li><li>SUPPORT_STATUS_UPDATE</li><li>COMMENT_CREATION</li><li>TASK_CREATION</li><li>TASK_STATUS_DONE_UPDATE</li><li>TASK_STATUS_DECLINED_UPDATE</li><li>TASK_STATUS_OPEN_UPDATE</li><li>TASK_STATUS_CANCELLED_UPDATE</li><li>THREAD_CREATION</li><li>THREAD_MESSAGE_CREATION</li><li>NEEDS_ASSESSMENT_REASSESSMENT_REQUESTED</li><li>INNOVATION_PAUSE</li></ul>|
+|param|simple-json|specific data related to the activity log entry that is dependant on the activity|[ActivityLogDBParamsType](https://github.com/nhsengland/innovation-service-backend-api/blob/develop/libs/shared/types/domain.types.ts#L239)|
+|userRoleId|uuid|id of the role that created the activity log|FK|
+|innovationId|uuid|id of the innovation|FK|
+
+
+
 # Almost all tables also have the following audit fields
   - created_at
   - created_by
