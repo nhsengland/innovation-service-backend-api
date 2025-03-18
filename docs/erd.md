@@ -945,6 +945,22 @@ While this table allows for INNOVATION_RECORD_SCHEMA dynamic updates that part o
 - The `schema` field contains the JSON structure defining the innovation record, which is used for validation and data integrity.
 - The schema is referenced in the `INNOVATION_DOCUMENT` and `INNOVATION_DOCUMENT_DRAFT` tables to ensure data consistency.
 
+## INNOVATION_SECTION
+The `INNOVATION_SECTION` table tracks the sections of an innovation record, allowing for modular updates and submissions.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|id|uuid|primary key for the innovation section|PK|
+|section|enum|specific section of the innovation record|<ul><li>INNOVATION_DESCRIPTION</li><li>UNDERSTANDING_OF_NEEDS</li><li>EVIDENCE_OF_EFFECTIVENESS</li><li>MARKET_RESEARCH</li><li>CURRENT_CARE_PATHWAY</li><li>TESTING_WITH_USERS</li><li>REGULATIONS_AND_STANDARDS</li><li>INTELLECTUAL_PROPERTY</li><li>REVENUE_MODEL</li><li>COST_OF_INNOVATION</li><li>DEPLOYMENT</li></ul>|
+|status|enum|current status of the section|<ul><li>NOT_STARTED</li><li>DRAFT</li><li>SUBMITTED</li></ul>|
+|submittedAt|datetime2|timestamp when the section was submitted|nullable|
+|submittedBy|uuid|foreign key referencing the user who submitted the section|nullable FK|
+|innovationId|uuid|foreign key referencing the associated innovation|FK|
+
+### Notes
+- The `section` field identifies the specific part of the innovation record, such as "Innovation Description," "Evidence of Effectiveness," or "Market Research."
+- The `status` field tracks the progress of the section, indicating whether it has not been started (`NOT_STARTED`), is still being worked on (`DRAFT`), or has been finalized and submitted (`SUBMITTED`).
+
 # Almost all tables also have the following audit fields
   - created_at
   - created_by
