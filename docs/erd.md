@@ -843,11 +843,11 @@ The `INNOVATION_COLLABORATOR` table tracks the relationship between innovations 
 
 ## INNOVATION_DOCUMENT
 
-The `INNOVATION_DOCUMENT` table stores the structured data of an innovation record, allowing for versioning and snapshots. All the information related to the Innovation Record is registered in this table.
+The `INNOVATION_DOCUMENT` table stores the structured data of an innovation record, allowing for versioning and snapshots. All the information related to the Innovation Record is registered in this table and it is updated when a innovator saves a section.
 
 |column|type|description|values/constraints|
 |--|--|--|--|
-|id|uuid|primary key for the innovation document|PK, FK|
+|id|uuid|primary key for the innovation document, this is the same as the innovation id|PK, FK|
 |document|simple-json|JSON representation of the innovation record||
 |version|nvarchar|version of the document template||
 |isSnapshot|boolean|flag indicating if the document is a snapshot of a specific state|deprecated|
@@ -862,7 +862,21 @@ The `INNOVATION_DOCUMENT` table stores the structured data of an innovation reco
 - Snapshots (`isSnapshot`) are used to capture the state of the innovation record at a specific point in time, such as during section submission, template changes or others. This is no longer relevant after we introduced the `INNOVATION_DOCUMENT_DRAFT`
 - This table is central to the new innovation record versioning system (IRv2), replacing many legacy tables.
 
+## INNOVATION_DOCUMENT_DRAFT
 
+The `INNOVATION_DOCUMENT_DRAFT` table stores draft versions of the innovation record, allowing users to make changes before finalizing and submitting updates.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|id|uuid|primary key for the innovation document draft, this is the same as the innovation id|PK, FK|
+|document|simple-json|JSON representation of the innovation record||
+|version|nvarchar|version of the document template||
+
+### Notes
+- The `document` field contains the structured data of the draft innovation record, adhering to the schema defined in the [Innovation Document Schema](#innovation-document-schema).
+- The `version` field indicates the schema version for the draft document.
+- Drafts are not visible to non innovator users until they are finalized and moved to the `INNOVATION_DOCUMENT` table.
+- The `id` field ensures that each draft is uniquely tied to its corresponding innovation.
 
 # Almost all tables also have the following audit fields
   - created_at
