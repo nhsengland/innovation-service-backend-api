@@ -754,6 +754,18 @@ The `INNOVATION` table represents the core entity of the system, capturing detai
 - The `ownerId` establishes the relationship between the innovation and its creator or primary owner.
 - The `currentAssessmentId` and `currentMajorAssessmentId` fields allow tracking of the most recent assessments associated with the innovation.
 
+## INNOVATION_SHARE
+The `INNOVATION_SHARE` table tracks the sharing of innovations with organisations and is pivotal in ensuring that the innovator controls which organisations have access to their innovation.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|innovationId|uuid|foreign key referencing the innovation being shared|PK, FK|
+|organisationId|uuid|foreign key referencing the organisation with which the innovation is shared|PK, FK|
+
+### Notes
+- This table establishes a many-to-many relationship between innovations and organisations.
+- Each record represents a unique sharing instance of an innovation with an organisation.
+- This table is of utmost importance when controlling authorization and exposing data.
 
 # Almost all tables also have the following audit fields
   - created_at
