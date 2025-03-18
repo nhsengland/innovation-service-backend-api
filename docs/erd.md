@@ -648,6 +648,37 @@ Most activities done by the users are registered in the activity log for audit a
 |userRoleId|uuid|id of the role that created the activity log|FK|
 |innovationId|uuid|id of the innovation|FK|
 
+## ANNOUNCEMENT
+Admins have the ability to create different announcements that will be made available to different users.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|id|uuid|primary key for the announcement|PK|
+|status|enum|status of the announcement|<ul><li>SCHEDULED</li><li>ACTIVE</li><li>DONE</li><li>DELETED</li></ul>|
+|title|nvarchar|title of the announcement||
+|userRoles|simple-array|list of user roles targeted by the announcement|Array of <ul><li>ADMIN</li><li>INNOVATOR</li><li>ACCESSOR</li><li>ASSESSMENT</li><li>QUALIFYING_ACCESSOR</li></ul>|
+|startsAt|datetime2|start date and time of the announcement||
+|expiresAt|datetime2|expiration date and time of the announcement||
+|params|simple-json|additional parameters for the announcement, such as content and optional links|[AnnouncementParamsType](#annoucementparamstype)|
+|type|enum|type of the announcement|<ul><li>LOGIN</li><li>HOMEPAGE</li></ul>|
+|filters|simple-json|filters to determine the audience of the announcement by fine targeting innovators with specific innovations.|Array of [FilterPayload](#filterpayload)|
+|sendEmail|bit|flag to indicate if an email should be sent for the announcement||
+
+### AnnoucementParamsType
+| Property   | Type              | Description                                           |
+|------------|-------------------|-------------------------------------------------------|
+| content    | string            | The main content of the announcement.                 |
+| link       | object (optional) | An optional link associated with the announcement.    |
+| link.label | string            | The label for the link.                               |
+| link.url   | string            | The URL for the link.                                 |
+
+### FilterPayload
+
+| Property  | Type     | Description                                                                 |
+|-----------|----------|-----------------------------------------------------------------------------|
+| section   | string   | The section of the innovation record to which the filter applies.           |
+| question  | string   | The specific question within the section that the filter targets.           |
+| answers   | string[] | A list of answers that determine the audience for the announcement.         |
 
 
 # Almost all tables also have the following audit fields
