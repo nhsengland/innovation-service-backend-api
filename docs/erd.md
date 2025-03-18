@@ -931,6 +931,20 @@ The `INNOVATION_REASSESSMENT_REQUEST` table tracks requests made by innovators t
 ### Notes
 - The `reassessmentReason` field allows users to select predefined reasons for reassessment, while `otherReassessmentReason` provides flexibility for custom input.
 
+## INNOVATION_RECORD_SCHEMA
+The `INNOVATION_RECORD_SCHEMA` table stores the schema definitions for innovation records, enabling version control and validation of innovation data.
+While this table allows for INNOVATION_RECORD_SCHEMA dynamic updates that part of the project wasn't completed as it included too many restrictions and the schema should evolve with attention to other implications.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|version|int|primary key representing the schema version|PK|
+|schema|simple-json|JSON representation of the schema|For reference please check [schema model](https://github.com/nhsengland/innovation-service-backend-api/blob/develop/libs/shared/models/schema-engine/schema.model.ts)|
+
+### Notes
+- The `version` field ensures that each schema version is uniquely identifiable.
+- The `schema` field contains the JSON structure defining the innovation record, which is used for validation and data integrity.
+- The schema is referenced in the `INNOVATION_DOCUMENT` and `INNOVATION_DOCUMENT_DRAFT` tables to ensure data consistency.
+
 # Almost all tables also have the following audit fields
   - created_at
   - created_by
