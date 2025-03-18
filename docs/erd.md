@@ -710,6 +710,28 @@ This table tracks the relationship between announcements and the users who recei
 |userId|uuid|foreign key referencing the user|FK|
 |innovationId|uuid|foreign key referencing the innovation, if applicable|FK|
 
+## AUDIT
+The `AUDIT` table is used to track user actions for logging and auditing purposes. It provides a detailed record of activities performed within the system.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|id|uuid|primary key for the audit entry|PK|
+|userId|uuid|foreign key referencing the user who performed the action|FK|
+|date|datetime2|timestamp of when the action occurred||
+|action|enum|type of action performed|<ul><li>CREATE</li><li>READ</li><li>UPDATE</li><li>DELETE</li></ul>|
+|target|enum|type of entity affected by the action|<ul><li>ASSESSMENT</li><li>INNOVATION</li><li>SUPPORT</li><li>THREAD</li><li>USER</li></ul>|
+|targetId|uuid|ID of the specific entity affected by the action|nullable|
+|innovationId|uuid|foreign key referencing the associated innovation, if applicable|nullable FK|
+|invocationId|nvarchar|unique identifier for the invocation of the action, useful for tracing|nullable|
+|functionName|nvarchar|name of the function or process that triggered the action|nullable|
+
+### Notes
+- The `AUDIT` table is essential for maintaining a history of changes and ensuring accountability.
+- It supports filtering and querying based on user, action type, and affected entities.
+- The `invocationId` and `functionName` fields are particularly useful for debugging and tracing system-level operations.
+- The `innovationId` field links the audit entry to a specific innovation, providing context for innovation-related actions.
+- This table is often used in conjunction with the `ACTIVITY_LOG` table for a comprehensive view of user interactions.
+
 
 # Almost all tables also have the following audit fields
   - created_at
