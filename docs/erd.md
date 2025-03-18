@@ -975,6 +975,30 @@ The `INNOVATION_SHARE_LOG` table tracks the history of sharing operations for in
 - The `operation` field indicates whether the innovation was shared or unshared with the organisation.
 - This table isn't used by the Innovation Service
 
+## INNOVATION_SUPPORT
+The `INNOVATION_SUPPORT` table tracks the support provided to innovations by various organisation units, capturing details about the support lifecycle.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|id|uuid|primary key for the innovation support|PK|
+|status|enum|current status of the support|<dl><dt>SUGGESTED</dt><dd>Support has been suggested but not yet initiated.</dd><dt>ENGAGING</dt><dd>Support is actively being provided.</dd><dt>WAITING</dt><dd>Support is pending further action or response.</dd><dt>UNASSIGNED</dt><dd>Support has not been assigned to any organisation unit.</dd><dt>UNSUITABLE</dt><dd>Support is deemed unsuitable for the innovation.</dd><dt>CLOSED</dt><dd>Support has been concluded or terminated.</dd></dl>|
+|closeReason|enum|reason for closing the support|<ul><li>ARCHIVE</li><li>STOP_SHARE</li><li>SUPPORT_COMPLETE</li></ul>|nullable|
+|startedAt|datetime2|timestamp when the support started|nullable|
+|finishedAt|datetime2|timestamp when the support was completed or closed|nullable|
+|isMostRecent|boolean|flag indicating if this is the organisation unit most recent support entry for the innovation||
+|innovationId|uuid|foreign key referencing the associated innovation|FK|
+|majorAssessmentId|uuid|foreign key referencing the associated major assessment|nullable FK|
+|organisationUnitId|uuid|foreign key referencing the organisation unit providing the support|FK|
+
+### Notes
+- The `status` field tracks the current state of the support, such as whether it is suggested, engaging, waiting, unassigned, unsuitable, or closed.
+- The `closeReason` field provides context for why the support was closed, such as archiving, stopping sharing, or completing the support.
+- The `majorAssessmentId` links the support to a specific major assessment, if applicable, ensuring traceability between assessments and support activities.
+- This table is used to monitor, evaluate, and improve the effectiveness of support provided to innovations, ensuring alignment with organisational goals and innovator needs.
+- The support lifecycle has recently been updated to enhance KPI measurement and better align with organisational expectations. Previously, the lifecycle allowed transitions between any states without a clear closure process. The new approach introduces a defined starting point and a clear finish for each support instance.
+- Historically, all supports originated from suggestions, even though this was not strictly required. However, the updated process now accommodates more organic support initiation. For example, transitioning from a `CLOSED` or `UNSUITABLE` state to an open state automatically creates a new support instance.
+
+
 # Almost all tables also have the following audit fields
   - created_at
   - created_by
