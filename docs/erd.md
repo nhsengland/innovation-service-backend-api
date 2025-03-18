@@ -648,6 +648,25 @@ Most activities done by the users are registered in the activity log for audit a
 |userRoleId|uuid|id of the role that created the activity log|FK|
 |innovationId|uuid|id of the innovation|FK|
 
+### ActivityLogDBParamsType
+
+|Property|Type|Description|
+|--------|----|-----------|
+|interveningUserId|string\|null|Optional ID of the user intervening in the activity, if applicable.|
+|assessmentId|string|Optional ID of the assessment associated with the activity.|
+|sectionId|InnovationSections|Optional section of the innovation record associated with the activity.|
+|taskId|string|Optional ID of the task associated with the activity.|
+|actionUserRole|ServiceRoleEnum|Optional role of the user performing the action.|
+|innovationSupportStatus|InnovationSupportStatusEnum|Optional status of the innovation support related to the activity.|
+|organisations|string[]|Optional list of organisation names associated with the activity.|
+|organisationUnit|string|Optional list of organisation unit names associated with the activity.|
+|comment|{id?:string;value:string}|Optional comment related to the activity, which may or may not have an ID.|
+|totalTasks|number|Optional total number of tasks associated with the activity.|
+|thread|{id:string;subject:string;messageId:string}|Optional details of the thread associated with the activity, including its ID, subject, and message ID.|
+|assessment|{id:string}|Optional details of the assessment associated with the activity, including its ID.|
+|reassessment|{id:string}|Optional details of the reassessment associated with the activity, including its ID.|
+|message|string\|{id:string}|Optional message related to the activity, which may be a string or an object with an ID.|
+
 ## ANNOUNCEMENT
 Admins have the ability to create different announcements that will be made available to different users.
 
