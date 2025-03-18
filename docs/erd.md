@@ -804,13 +804,14 @@ The `INNOVATION_ASSESSMENT` table captures the details of assessments conducted 
 |previousAssessmentId|uuid|foreign key referencing the previous assessment, if applicable|nullable FK|
 
 ### Notes
-- **Major Assessment**: Represent the innovator submission of the innovation for assessment (1) or reassessment (>1).
-- **Minor Assessment**: Minor bump when the NA team makes a change to the assessment.
-- The `majorVersion` and `minorVersion` fields track the versioning of assessments, ensuring a clear history of changes.
-- The `assignTo` field allows for assigning responsibility for the assessment to a specific user.
-- The `previousAssessmentId` establishes a link to the prior assessment, enabling traceability and comparison.
-- NA team should start assessment within 2 days from creation date
-- NA team have finish assessment KPIs
+- **Major Assessment**: Represents the submission of an innovation by the innovator for its initial assessment (major version 1) or subsequent reassessments (major version >1).
+- **Minor Assessment**: Represents incremental updates made by the Needs Assessment (NA) team to an existing assessment.
+- The `majorVersion` and `minorVersion` fields provide version control, ensuring a clear and traceable history of assessment changes.
+- The `assignTo` field designates the user responsible for conducting the assessment.
+- The `previousAssessmentId` field links to the preceding assessment, enabling traceability and facilitating comparisons.
+- All assessment information fields must be completed before the assessment can be marked as finished.
+- The NA team is expected to start the assessment within two days of its creation.
+- The NA team must adhere to key performance indicators (KPIs) for completing assessments within the defined timelines.
 
 # Almost all tables also have the following audit fields
   - created_at
