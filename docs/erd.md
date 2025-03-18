@@ -813,6 +813,34 @@ The `INNOVATION_ASSESSMENT` table captures the details of assessments conducted 
 - The NA team is expected to start the assessment within two days of its creation.
 - The NA team must adhere to key performance indicators (KPIs) for completing assessments within the defined timelines.
 
+## INNOVATION_ASSESSMENT_ORGANISATION_UNIT
+The `INNOVATION_ASSESSMENT_ORGANISATION_UNIT` table tracks the relationship between innovation assessments and organisation units, specifically for suggested units during the assessment process.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|innovationAssessmentId|uuid|foreign key referencing the innovation assessment|PK, FK|
+|organisationUnitId|uuid|foreign key referencing the organisation unit|PK, FK|
+
+### Notes
+- This table establishes a many-to-many relationship between innovation assessments and organisation units.
+
+## INNOVATION_COLLABORATOR
+The `INNOVATION_COLLABORATOR` table tracks the relationship between innovations and their collaborators, allowing multiple innovators to collaborate on a single innovation.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|id|uuid|primary key for the innovation collaborator|PK|
+|status|enum|status of the collaboration|<dl><dt>PENDING</dt><dd>Invitation sent, awaiting acceptance.</dd><dt>ACTIVE</dt><dd>Collaboration is active and ongoing.</dd><dt>DECLINED</dt><dd>Invitation was declined by the collaborator.</dd><dt>CANCELLED</dt><dd>Invitation was cancelled by the inviter.</dd><dt>REMOVED</dt><dd>Collaborator was removed from the innovation.</dd><dt>LEFT</dt><dd>Collaborator voluntarily left the innovation.</dd><dt>EXPIRED</dt><dd>Invitation expired without a response.</dd></dl>|
+|email|nvarchar|email address of the collaborator||
+|collaboratorRole|nvarchar|description of the collaborator role|nullable|
+|invitedAt|datetime2|timestamp when the collaborator was invited||
+|innovationId|uuid|foreign key referencing the innovation being collaborated on|FK|
+|userId|uuid|foreign key referencing the user who is the collaborator|nullable FK|
+
+### Notes
+- This table establishes a many-to-one relationship between innovations and collaborators.
+- The `status` field tracks the current state of the collaboration, such as whether the invitation is pending or accepted.
+
 # Almost all tables also have the following audit fields
   - created_at
   - created_by
