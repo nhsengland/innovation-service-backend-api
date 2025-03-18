@@ -893,13 +893,33 @@ The `INNOVATION_EXPORT_REQUEST` table tracks requests made by users to export in
 ### Notes
 - The `status` field indicates the current state of the request, such as whether it is pending or completed.
 
+## INNOVATION_FILE
+The `INNOVATION_FILE` table tracks files uploaded by users related to innovations, such as supporting documents.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|id|uuid|primary key for the innovation file|PK|
+|storageId|nvarchar|unique identifier for the file in the storage system||
+|contextType|enum|type of context the file is associated with|<ul><li>INNOVATION</li><li>INNOVATION_EVIDENCE</li><li>INNOVATION_MESSAGE</li><li>INNOVATION_PROGRESS_UPDATE</li><li>INNOVATION_SECTION</li></ul>|
+|contextId|nvarchar|ID of the specific context entity the file is associated with||
+|name|nvarchar|name of the file||
+|description|nvarchar|description of the file|nullable|
+|filename|nvarchar|original filename of the uploaded file||
+|filesize|int|size of the file in bytes||
+|extension|nvarchar|file extension (e.g., `.pdf`, `.docx`)||
+|innovationId|uuid|foreign key referencing the associated innovation|FK|
+|createdByUserRoleId|uuid|foreign key referencing the user role that uploaded the file|FK|
+
+### Notes
+- The `contextType` and `contextId` fields enable the file to be linked to different contexts, such as innovations, evidence, messages, progress updates, or sections.
+- The `storageId` is used to locate the file in the storage system, ensuring secure and efficient retrieval.
+
 # Almost all tables also have the following audit fields
   - created_at
   - created_by
   - updated_at
   - updated_by
   - deleted_at
-
 
 # Deprecated only here for audit/history
 - innovation_action: replaced by innovation_tasks
