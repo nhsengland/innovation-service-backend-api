@@ -961,6 +961,20 @@ The `INNOVATION_SECTION` table tracks the sections of an innovation record, allo
 - The `section` field identifies the specific part of the innovation record, such as "Innovation Description," "Evidence of Effectiveness," or "Market Research."
 - The `status` field tracks the progress of the section, indicating whether it has not been started (`NOT_STARTED`), is still being worked on (`DRAFT`), or has been finalized and submitted (`SUBMITTED`).
 
+## INNOVATION_SHARE_LOG
+The `INNOVATION_SHARE_LOG` table tracks the history of sharing operations for innovations, providing an audit trail of when and how innovations were shared with organisations.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|createdAt|datetime2|timestamp when the sharing operation occurred|PK|
+|innovationId|uuid|foreign key referencing the innovation being shared|PK, FK|
+|organisationId|uuid|foreign key referencing the organisation with which the innovation was shared|PK, FK|
+|operation|enum|type of sharing operation performed|<ul><li>ADD</li><li>REMOVE</li></ul>|
+
+### Notes
+- The `operation` field indicates whether the innovation was shared or unshared with the organisation.
+- This table isn't used by the Innovation Service
+
 # Almost all tables also have the following audit fields
   - created_at
   - created_by
