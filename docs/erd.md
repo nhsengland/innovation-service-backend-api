@@ -64,7 +64,7 @@ erDiagram
     datetime2 expires_at
     datetime2 submittedAt
     datetime2 lastAssessmentRequestAt
-    nvarchar archiveReason
+    enum archiveReason
     bit hasBeenAssessed
     uuid ownerId FK
     uuid currentAssessmentId FK
@@ -726,11 +726,33 @@ The `AUDIT` table is used to track user actions for logging and auditing purpose
 |functionName|nvarchar|name of the function or process that triggered the action|nullable|
 
 ### Notes
-- The `AUDIT` table is essential for maintaining a history of changes and ensuring accountability.
-- It supports filtering and querying based on user, action type, and affected entities.
-- The `invocationId` and `functionName` fields are particularly useful for debugging and tracing system-level operations.
-- The `innovationId` field links the audit entry to a specific innovation, providing context for innovation-related actions.
-- This table is often used in conjunction with the `ACTIVITY_LOG` table for a comprehensive view of user interactions.
+- This table is mostly used for audit purposes and is only used by the Innovation Service for the Needs Assessment Users to display most recent innovations they visited
+
+## INNOVATION
+The `INNOVATION` table represents the core entity of the system, capturing details about innovations submitted by users.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|id|uuid|primary key for the innovation|PK|
+|name|string|name of the innovation||
+|uniqueId|string|unique identifier for the innovation|UK|
+|status|enum|current status of the innovation|<dl><dt>CREATED</dt><dd>Initial state of the innovation.</dd><dt>WAITING_NEEDS_ASSESSMENT</dt><dd>Awaiting needs assessment.</dd><dt>NEEDS_ASSESSMENT</dt><dd>Undergoing needs assessment.</dd><dt>IN_PROGRESS</dt><dd>Currently in progress.</dd><dt>WITHDRAWN</dt><dd>Withdrawn from the innovation service.</dd><dt>ARCHIVED</dt><dd>Archived and no longer active.</dd></dl>|
+|statusUpdatedAt|datetime2|timestamp of the last status update||
+|expires_at|datetime2|expiration date of the innovation. This is used when innovator deletes account and a transfer is in progress|nullable|
+|submittedAt|datetime2|timestamp when the innovation was submitted|nullable|
+|lastAssessmentRequestAt|datetime2|timestamp of the last assessment request|nullable|
+|archiveReason|enum|reason for archiving the innovation|nullable <dl><dt>DEVELOP_FURTHER</dt><dd>User wants to develop the innovation further before proceeding.</dd><dt>HAVE_ALL_SUPPORT</dt><dd>User has received all the support they need.</dd><dt>DECIDED_NOT_TO_PURSUE</dt><dd>User has decided not to pursue the innovation.</dd><dt>ALREADY_LIVE_NHS</dt><dd>The innovation is already live within the NHS.</dd><dt>OTHER_DONT_WANT_TO_SAY</dt><dd>User prefers not to disclose the reason.</dd><dt>SIX_MONTHS_INACTIVITY</dt><dd>Automatically archived due to six months of inactivity.</dd><dt>OWNER_ACCOUNT_DELETED</dt><dd>Archived because the owner's account was deleted.</dd><dt>LEGACY</dt><dd>Was free text archive reason before migration.</dd></dl>|
+|hasBeenAssessed|bit|flag indicating if the innovation has been assessed||
+|ownerId|uuid|foreign key referencing the user who owns the innovation|nullable FK|
+|currentAssessmentId|uuid|foreign key referencing the current assessment, if applicable|nullable FK|
+|currentMajorAssessmentId|uuid|foreign key referencing the current major assessment, if applicable|nullable FK|
+
+### Notes
+- The `INNOVATION` table is central to the system and is linked to many other entities, such as assessments, tasks, and documents.
+- The `uniqueId` ensures that each innovation has a distinct identifier for tracking purposes and third party reference.
+- Innovations can transition through various statuses, reflecting their lifecycle within the system.
+- The `ownerId` establishes the relationship between the innovation and its creator or primary owner.
+- The `currentAssessmentId` and `currentMajorAssessmentId` fields allow tracking of the most recent assessments associated with the innovation.
 
 
 # Almost all tables also have the following audit fields
