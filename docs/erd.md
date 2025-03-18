@@ -841,6 +841,29 @@ The `INNOVATION_COLLABORATOR` table tracks the relationship between innovations 
 - This table establishes a many-to-one relationship between innovations and collaborators.
 - The `status` field tracks the current state of the collaboration, such as whether the invitation is pending or accepted.
 
+## INNOVATION_DOCUMENT
+
+The `INNOVATION_DOCUMENT` table stores the structured data of an innovation record, allowing for versioning and snapshots. All the information related to the Innovation Record is registered in this table.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|id|uuid|primary key for the innovation document|PK, FK|
+|document|simple-json|JSON representation of the innovation record||
+|version|nvarchar|version of the document template||
+|isSnapshot|boolean|flag indicating if the document is a snapshot of a specific state|deprecated|
+|description|nvarchar|description of operation change|nullable|
+
+### Innovation Document Schema
+  - The innovation document schema is a record in the database, the most recent version types is available [here](https://github.com/nhsengland/innovation-service-backend-api/blob/21e41ef6a58b0b6ded0cc09e99bc23e0d08d2037/libs/shared/schemas/innovation-record/document.types.ts)
+
+### Notes
+- The `document` field contains the structured data of the innovation record, adhering to the schema defined in the [Innovation Document Schema](#innovation-document-schema).
+- The `version` field that has the information of the schema version for the document.
+- Snapshots (`isSnapshot`) are used to capture the state of the innovation record at a specific point in time, such as during section submission, template changes or others. This is no longer relevant after we introduced the `INNOVATION_DOCUMENT_DRAFT`
+- This table is central to the new innovation record versioning system (IRv2), replacing many legacy tables.
+
+
+
 # Almost all tables also have the following audit fields
   - created_at
   - created_by
@@ -848,8 +871,6 @@ The `INNOVATION_COLLABORATOR` table tracks the relationship between innovations 
   - updated_by
   - deleted_at
 
-# Innovation Document Schema
-  - The innovation document schema is a record in the database, the most recent version types is available [here](https://github.com/nhsengland/innovation-service-backend-api/blob/21e41ef6a58b0b6ded0cc09e99bc23e0d08d2037/libs/shared/schemas/innovation-record/document.types.ts)
 
 # Deprecated only here for audit/history
 - innovation_action: replaced by innovation_tasks
