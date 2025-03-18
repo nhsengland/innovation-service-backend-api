@@ -767,6 +767,51 @@ The `INNOVATION_SHARE` table tracks the sharing of innovations with organisation
 - Each record represents a unique sharing instance of an innovation with an organisation.
 - This table is of utmost importance when controlling authorization and exposing data.
 
+## INNOVATION_ASSESSMENT
+The `INNOVATION_ASSESSMENT` table captures the details of assessments conducted on innovations. Assessments are categorized as either major or minor.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|id|uuid|primary key for the innovation assessment|PK|
+|majorVersion|smallint|major version of the assessment, incremented with each reassessment||
+|minorVersion|smallint|minor version of the assessment, incremented for NA updates||
+|editReason|nvarchar|reason provided by NA for editing the assessment|nullable|
+|description|nvarchar|assessment description of the innovation|nullable|
+|summary|nvarchar|summary of the support required|nullable|
+|maturityLevel|enum|maturity level of the innovation|<dl><dt>DISCOVERY</dt><dd>Discovery or early development.</dd><dt>ADVANCED</dt><dd>Advanced development and testing.</dd><dt>READY</dt><dd>Ready or nearly ready for adoption and scale.</dd></dl>|
+|maturityLevelComment|nvarchar|comments on the maturity level|nullable|
+|startedAt|datetime2|timestamp when the assessment started|nullable|
+|finishedAt|datetime2|timestamp when the assessment was completed|nullable|
+|hasRegulatoryApprovals|enum|status of regulatory approvals|<ul><li>YES</li><li>NO</li><li>PARTIALLY</li></ul>|
+|hasRegulatoryApprovalsComment|nvarchar|comments on regulatory approvals|nullable|
+|hasEvidence|enum|status of evidence availability|<ul><li>YES</li><li>NO</li><li>PARTIALLY</li></ul>|
+|hasEvidenceComment|nvarchar|comments on evidence availability|nullable|
+|hasValidation|enum|status of validation|<ul><li>YES</li><li>NO</li><li>PARTIALLY</li></ul>|
+|hasValidationComment|nvarchar|comments on validation|nullable|
+|hasProposition|enum|status of the value proposition|<ul><li>YES</li><li>NO</li><li>PARTIALLY</li></ul>|
+|hasPropositionComment|nvarchar|comments on the value proposition|nullable|
+|hasCompetitionKnowledge|enum|status of competition knowledge|<ul><li>YES</li><li>NO</li><li>PARTIALLY</li></ul>|
+|hasCompetitionKnowledgeComment|nvarchar|comments on competition knowledge|nullable|
+|hasImplementationPlan|enum|status of the implementation plan|<ul><li>YES</li><li>NO</li><li>PARTIALLY</li></ul>|
+|hasImplementationPlanComment|nvarchar|comments on the implementation plan|nullable|
+|hasScaleResource|enum|status of scaling resources|<ul><li>YES</li><li>NO</li><li>PARTIALLY</li></ul>|
+|hasScaleResourceComment|nvarchar|comments on scaling resources|nullable|
+|exemptedReason|enum|reason for exemption from assessment|nullable|
+|exemptedMessage|nvarchar|message explaining the exemption|nullable|
+|exemptedAt|datetime2|timestamp when the exemption was applied|nullable|
+|innovationId|uuid|foreign key referencing the innovation being assessed|FK|
+|assignTo|uuid|foreign key referencing the user assigned to the assessment|nullable FK|
+|previousAssessmentId|uuid|foreign key referencing the previous assessment, if applicable|nullable FK|
+
+### Notes
+- **Major Assessment**: Represent the innovator submission of the innovation for assessment (1) or reassessment (>1).
+- **Minor Assessment**: Minor bump when the NA team makes a change to the assessment.
+- The `majorVersion` and `minorVersion` fields track the versioning of assessments, ensuring a clear history of changes.
+- The `assignTo` field allows for assigning responsibility for the assessment to a specific user.
+- The `previousAssessmentId` establishes a link to the prior assessment, enabling traceability and comparison.
+- NA team should start assessment within 2 days from creation date
+- NA team have finish assessment KPIs
+
 # Almost all tables also have the following audit fields
   - created_at
   - created_by
