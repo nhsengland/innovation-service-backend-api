@@ -914,6 +914,23 @@ The `INNOVATION_FILE` table tracks files uploaded by users related to innovation
 - The `contextType` and `contextId` fields enable the file to be linked to different contexts, such as innovations, evidence, messages, progress updates, or sections.
 - The `storageId` is used to locate the file in the storage system, ensuring secure and efficient retrieval.
 
+## INNOVATION_REASSESSMENT_REQUEST
+The `INNOVATION_REASSESSMENT_REQUEST` table tracks requests made by innovators to reassess an innovation, typically after significant updates or changes.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|id|uuid|primary key for the reassessment request|PK|
+|updatedInnovationRecord|enum|indicates if the innovation record has been updated|<ul><li>YES</li><li>NO</li></ul>|
+|description|nvarchar|description of the reassessment request|nullable|
+|reassessmentReason|simple-array|list of reasons for requesting reassessment|Array of predefined reasons: <ul><li>NO_SUPPORT</li><li>PREVIOUSLY_ARCHIVED</li><li>HAS_PROGRESSED_SIGNIFICANTLY</li><li>OTHER</li></ul>|
+|otherReassessmentReason|nvarchar|other reason provided by the user|nullable|
+|whatSupportDoYouNeed|nvarchar|details of the support needed for reassessment|nullable|
+|innovationId|uuid|foreign key referencing the innovation being reassessed|FK|
+|innovationAssessmentId|uuid|foreign key referencing the associated innovation assessment|FK|
+
+### Notes
+- The `reassessmentReason` field allows users to select predefined reasons for reassessment, while `otherReassessmentReason` provides flexibility for custom input.
+
 # Almost all tables also have the following audit fields
   - created_at
   - created_by
