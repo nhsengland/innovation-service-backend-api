@@ -677,10 +677,10 @@ Admins have the ability to create different announcements that will be made avai
 |title|nvarchar|title of the announcement||
 |userRoles|simple-array|list of user roles targeted by the announcement|Array of <ul><li>ADMIN</li><li>INNOVATOR</li><li>ACCESSOR</li><li>ASSESSMENT</li><li>QUALIFYING_ACCESSOR</li></ul>|
 |startsAt|datetime2|start date and time of the announcement||
-|expiresAt|datetime2|expiration date and time of the announcement||
+|expiresAt|datetime2|expiration date and time of the announcement|nullable|
 |params|simple-json|additional parameters for the announcement, such as content and optional links|[AnnouncementParamsType](#annoucementparamstype)|
 |type|enum|type of the announcement|<ul><li>LOGIN</li><li>HOMEPAGE</li></ul>|
-|filters|simple-json|filters to determine the audience of the announcement by fine targeting innovators with specific innovations.|Array of [FilterPayload](#filterpayload)|
+|filters|simple-json|filters to determine the audience of the announcement by fine targeting innovators with specific innovations.|nullable array of [FilterPayload](#filterpayload)|
 |sendEmail|bit|flag to indicate if an email should be sent for the announcement||
 
 ### AnnoucementParamsType
@@ -698,6 +698,17 @@ Admins have the ability to create different announcements that will be made avai
 | section   | string   | The section of the innovation record to which the filter applies.           |
 | question  | string   | The specific question within the section that the filter targets.           |
 | answers   | string[] | A list of answers that determine the audience for the announcement.         |
+
+## ANNOUNCEMENT_USER
+This table tracks the relationship between announcements and the users who receive the announcement.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|id|uuid|primary key for the announcement_user|PK|
+|readAt|datetime2|timestamp when the user read the announcement|nullable|
+|announcementId|uuid|foreign key referencing the announcement|FK|
+|userId|uuid|foreign key referencing the user|FK|
+|innovationId|uuid|foreign key referencing the innovation, if applicable|FK|
 
 
 # Almost all tables also have the following audit fields
