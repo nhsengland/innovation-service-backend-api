@@ -1048,6 +1048,18 @@ The `INNOVATION_SUPPORT_LOG` table tracks the history of actions and updates rel
 |--------------|--------|-------------------------------------------------------|
 | assessmentId | string | ID of the assessment associated with the support log. |
 
+## INNOVATION_SUPPORT_LOG_ORGANISATION_UNIT
+The `INNOVATION_SUPPORT_LOG_ORGANISATION_UNIT` table tracks the relationship between innovation support logs and organisation units, specifically for suggested units during support activities.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|innovationSupportLogId|uuid|foreign key referencing the innovation support log|PK, FK|
+|organisationUnitId|uuid|foreign key referencing the organisation unit|PK, FK|
+
+### Notes
+- This table establishes a many-to-many relationship between innovation support logs and organisation units.
+
+
 # Almost all tables also have the following audit fields
   - created_at
   - created_by
