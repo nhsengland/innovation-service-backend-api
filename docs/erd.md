@@ -1242,15 +1242,28 @@ The `NOTIFICATION_USER` table tracks the relationship between notifications and 
 
 ## NOTIFICATION_PREFERENCE
 
-The `NOTIFICATION_PREFERENCE` table tracks user preferences for receiving notifications, enabling personalized notification settings.
+The `NOTIFICATION_PREFERENCE` table tracks user preferences for receiving email notifications, enabling personalized email notification settings.
 
 |column|type|description|values/constraints|
 |--|--|--|--|
 |userRoleId|uuid|primary key referencing the user role|PK, FK|
-|preferences|simple-json|JSON representation of the user's notification preferences||
+|preferences|simple-json|JSON representation of the user's email notification preferences||
 
 ### Notes
-- The `preferences` field stores the user's notification preferences in a structured JSON format, allowing for flexibility in defining settings.
+- The `preferences` field stores the user's email notification preferences in a structured JSON format, allowing for flexibility in defining settings.
+- The `preferences` field is an object, where each key represents a notification `contextType` and its corresponding value is the preference (`YES` or `NO`).
+- Example:
+  ```json
+  {
+    "TASK": "YES",
+    "SUPPORT": "NO"
+  }
+  ```
+- `preferences` are role-dependent, as each role has its own `contextTypes` that can be configured.
+- This structure allows users to enable or disable email notifications for specific `contextTypes`.
+- The `contextType` keys correspond to the types defined in the [NotificationTypes](https://github.com/nhsengland/innovation-service-backend-api/blob/develop/libs/shared/enums/notification.enum.ts).
+- These preferences apply exclusively to email notifications and do not affect in-app notifications.
+
 
 #
 # Separator TOOO Remove
