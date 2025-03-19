@@ -1379,6 +1379,54 @@ The `TERMS_OF_USE_USER` table tracks the relationship between users and the term
 - The `acceptedAt` field records when a user accepted the terms of use, ensuring compliance tracking.
 - This table establishes a many-to-many relationship between users and terms of use agreements.
 
+## USER
+The `USER` table tracks individual users within the system, capturing their identity and status. It is directly linked to the user authentication system in Azure B2C, where each user is uniquely identified by their `identityId`. This integration ensures secure and seamless authentication for all users while keeping personal identifiable information (PII) outside of the database. Only non-sensitive metadata, such as user status and timestamps, is stored to maintain privacy and compliance with data protection regulations.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|id|uuid|primary key for the user|PK|
+|identityId|nvarchar|unique identifier for the user's Azure B2C identity||
+|status|enum|current status of the user|<ul><li>ACTIVE</li><li>LOCKED</li><li>DELETED</li></ul>|
+|firstTimeSignInAt|datetime2|timestamp of the user's first sign-in|nullable|
+|lockedAt|datetime2|timestamp when the user was locked|nullable|
+|deleteReason|enum|reason for user deletion|nullable|
+|howDidYouFindUsAnswers|simple-json|JSON representation of how the user found the service|nullable|
+
+### Notes
+- The `status` field tracks the user's current state, such as active, locked, or deleted.
+- User accounts are not deleted to ensure data integrity and maintain data consistency. Instead, they are marked as `DELETED` in the `status` field, allowing the system to retain historical data and relationships while preventing further access or activity by the user.
+- The `deleteReason` field provides context for why a user was deleted, aiding in audit and reporting.
+- The `howDidYouFindUsAnswers` field stores structured data about how the user discovered the service, supporting analytics and outreach efforts.
+
+## USER_ROLE
+The `USER_ROLE` table tracks the roles assigned to users, enabling role-based access control and permissions.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|id|uuid|primary key for the user role|PK|
+|role|enum|role assigned to the user|<ul><li>ADMIN</li><li>INNOVATOR</li><li>ACCESSOR</li><li>ASSESSMENT</li><li>QUALIFYING_ACCESSOR</li></ul>|
+|isActive|boolean|flag indicating if the role is active||
+|organisationId|uuid|foreign key referencing the associated organisation|nullable FK|
+|organisationUnitId|uuid|foreign key referencing the associated organisation unit|nullable FK|
+|userId|uuid|foreign key referencing the associated user|FK|
+
+### Rules
+- Innovator accounts are exclusively assigned the role of Innovator. Within the context of an innovation, an Innovator can either be the owner or a collaborator.
+- Admin accounts are exclusively assigned the role of Admin.
+- Accessor and Qualifying-Accessor accounts can belong to multiple units within the same organisation, but they must maintain the same role across all units.
+- Accessor and Qualifying-Accessor accounts cannot belong to multiple organisations.
+- Accounts with Accessor or Qualifying-Accessor roles may also hold the Needs Assessment role.
+- Accounts can be assigned the Needs Assessment role.
+
+### Notes
+- The `role` field specifies the user's role within the system, such as Innovator, Accessor, or Admin.
+- The `organisationId` and `organisationUnitId` fields associate the role with specific organisations or units.
+  - Needs Assessment and Admin roles are not tied to any organisation.
+  - Innovators are not associated with organisation units.
+- The `isActive` field indicates whether the role is currently active, facilitating role lifecycle management.
+- A user can hold multiple roles simultaneously, allowing for flexible role assignments.
+- This table is a cornerstone of the system's Role-Based Access Control (RBAC) mechanism, ensuring users have the appropriate permissions based on their assigned roles.
+
 #
 # Separator TOOO Remove
 #
