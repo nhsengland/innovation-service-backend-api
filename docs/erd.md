@@ -1511,6 +1511,45 @@ The `INNOVATION_GROUPED_STATUS_VIEW` view provides a summarized status of innova
 - This view is particularly useful for Needs Assessment and Support teams to prioritize their efforts and ensure timely interventions.
 - The `groupedStatus` field enables high-level reporting and trend analysis, making it easier to monitor and manage the innovation portfolio effectively.
 
+## INNOVATION_LIST_VIEW
+The `INNOVATION_LIST_VIEW` view is designed to support the listing of innovations, providing key details to facilitate navigation, filtering and quick access to relevant information. 
+
+This view consolidates information from multiple sources, including assessments, supports, and the innovation record, to provide a comprehensive overview of each innovation's status and associated details.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|id|uuid|unique identifier for the innovation||
+|name|nvarchar|name of the innovation||
+|ownerId|uuid|unique identifier for the owner of the innovation||
+|ownerCompanyName|nvarchar|name of the owner's company||
+|submittedAt|datetime2|timestamp when the innovation was submitted|nullable|
+|updatedAt|datetime2|timestamp when the innovation was last updated|nullable|
+|lastAssessmentRequestAt|datetime2|timestamp of the last assessment request|nullable|
+|status|enum|current status of the innovation|<ul><li>CREATED</li><li>WAITING_NEEDS_ASSESSMENT</li><li>NEEDS_ASSESSMENT</li><li>IN_PROGRESS</li><li>WITHDRAWN</li><li>ARCHIVED</li></ul>|
+|statusUpdatedAt|datetime2|timestamp of the last status update|nullable|
+|groupedStatus|enum|grouped status of the innovation|<ul><li>RECORD_NOT_SHARED</li><li>AWAITING_NEEDS_ASSESSMENT</li><li>NEEDS_ASSESSMENT</li><li>AWAITING_SUPPORT</li><li>RECEIVING_SUPPORT</li><li>NO_ACTIVE_SUPPORT</li><li>AWAITING_NEEDS_REASSESSMENT</li><li>WITHDRAWN</li><li>ARCHIVED</li></ul>|
+|countryName|nvarchar|name of the country associated with the innovation|nullable|
+|postcode|nvarchar|postcode of the innovation's location|nullable|
+|mainCategory|enum|primary category of the innovation|nullable|
+|otherCategoryDescription|nvarchar|description of other categories, if applicable|nullable|
+|categories|simple-json|JSON representation of the innovation's categories|nullable|
+|careSettings|simple-json|JSON representation of the care settings associated with the innovation|nullable|
+|otherCareSetting|nvarchar|description of other care settings, if applicable|nullable|
+|involvedAACProgrammes|simple-json|JSON representation of AAC programmes involved with the innovation|nullable|
+|diseasesAndConditions|simple-json|JSON representation of diseases and conditions addressed by the innovation|nullable|
+|keyHealthInequalities|simple-json|JSON representation of key health inequalities addressed by the innovation|nullable|
+|engagingOrganisations|simple-json|JSON representation of organisations engaging with the innovation|nullable|
+|engagingUnits|simple-json|JSON representation of organisation units engaging with the innovation|nullable|
+|hasBeenAssessed|boolean|flag indicating if the innovation has been assessed||
+|currentAssessmentId|uuid|unique identifier for the current assessment, if applicable|nullable|
+
+### Notes
+- This view is used both for displaying and filtering information, enabling users to quickly locate and interact with innovations based on various criteria.
+- The consolidated data supports advanced filtering options, such as by status, category, care setting, or engagement details, enhancing user experience and efficiency.
+- The `groupedStatus` field simplifies filtering by aggregating detailed statuses into broader categories.
+- JSON fields like `categories`, `careSettings`, and `engagingOrganisations` allow for flexible and dynamic filtering based on user needs.
+- This view is integral to dashboards and reporting tools, providing a comprehensive overview of innovations at a glance.
+
 #
 # Separator TOOO Remove
 #
