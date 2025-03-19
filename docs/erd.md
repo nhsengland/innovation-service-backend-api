@@ -1059,6 +1059,47 @@ The `INNOVATION_SUPPORT_LOG_ORGANISATION_UNIT` table tracks the relationship bet
 ### Notes
 - This table establishes a many-to-many relationship between innovation support logs and organisation units.
 
+## INNOVATION_SURVEY
+The `INNOVATION_SURVEY` table tracks surveys related to innovations, capturing responses and metadata for analysis. Currently innovators are prompted to fill a survey when their support is closed.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|id|uuid|primary key for the innovation survey|PK|
+|type|enum|type of survey|<ul><li>SUPPORT_END</li></ul>|
+|contextId|uuid|ID of the specific context entity the survey is associated with|nullable|
+|answers|simple-json|JSON representation of the survey answers|See [SurveyParamsTypes](#surveyparamstypes) for details on the structure.|
+|createdAt|datetime2|timestamp when the survey was created||
+|updatedAt|datetime2|timestamp when the survey was last updated|nullable|
+|deletedAt|datetime2|timestamp when the survey was deleted|nullable|
+|innovationId|uuid|foreign key referencing the associated innovation|FK|
+|targetUserRoleId|uuid|foreign key referencing the user role receiving the survey|FK|
+
+### Notes
+- The `type` field categorizes the survey, such as feedback, assessment, or progress. Currently, the only supported type is `SUPPORT_END`, which is triggered when support for an innovation is closed.
+- The `answers` field stores the survey responses in a structured JSON format. It adheres to a predefined schema, such as `SupportEndSurveyParams`, ensuring consistency and validation.
+- The `contextId` field allows linking the survey to a specific context, such as a task, section, or support instance, providing flexibility in associating surveys with various entities.
+- The `targetUserRoleId` field identifies the user role intended to respond to the survey, ensuring that the survey reaches the appropriate audience.
+- This table is used to gather insights and feedback to improve innovation processes, support quality, and overall outcomes.
+- The `SUPPORT_END` survey type specifically captures user feedback on the support received, including satisfaction levels, suggestions for improvement, and likelihood of recommending the service.
+
+### SurveyParamsTypes
+#### SupportEndSurveyParams
+
+| Property                     | Type   | Description                                                                 |
+|------------------------------|--------|-----------------------------------------------------------------------------|
+| supportSatisfaction          | string | Feedback on the satisfaction level with the support received.              |
+| ideaOnHowToProceed           | string | Suggestions or ideas on how to proceed with the innovation.                |
+| howLikelyWouldYouRecommendIS | string | Likelihood of recommending the Innovation Service to others (e.g., rating).|
+| comment                      | string | Additional comments or feedback provided by the user.                      |
+
+### Notes
+- The `supportSatisfaction` field captures the user's overall satisfaction with the support provided.
+- The `ideaOnHowToProceed` field allows users to share their thoughts or suggestions for next steps.
+- The `howLikelyWouldYouRecommendIS` field is used to gauge the user's likelihood of recommending the Innovation Service, often as part of a Net Promoter Score (NPS) metric.
+- The `comment` field provides space for users to leave any additional feedback or remarks.
+- These fields are part of the survey answers stored in the `answers` column of the `INNOVATION_SURVEY` table.
+- The data collected helps improve the quality of support and user experience within the Innovation Service.
+- All fields are optional and depend on the survey design and user input.
 
 # Almost all tables also have the following audit fields
   - created_at
