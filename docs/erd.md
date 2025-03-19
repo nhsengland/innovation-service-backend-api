@@ -1629,7 +1629,7 @@ The `INNOVATION_SUPPORT_LAST_ACTIVITY_UPDATE_VIEW` view provides details about t
 - This view is particularly relevant for support teams to ensure that innovations are receiving timely and effective assistance.
 
 ## INNOVATION_TASK_DESCRIPTIONS_VIEW
-The `INNOVATION_TASK_DESCRIPTIONS_VIEW` view provides detailed descriptions of tasks associated with innovations, enabling better tracking and understanding of task-related activities.
+The `INNOVATION_TASK_DESCRIPTIONS_VIEW` view provides detailed descriptions of tasks associated with innovations, linking tasks to their thread messages and enabling better tracking and understanding of task-related activities.
 
 |column|type|description|values/constraints|
 |--|--|--|--|
@@ -1644,16 +1644,10 @@ The `INNOVATION_TASK_DESCRIPTIONS_VIEW` view provides detailed descriptions of t
 |createdByOrganisationUnitName|nvarchar|name of the organisation unit of the user who created the task|nullable|
 
 ### Notes
-- The `description` field provides a detailed explanation of the task, aiding in understanding its purpose and requirements.
-- The `threadId` and `messageId` fields link the task to specific threads and messages, enabling traceability and context for task-related discussions.
-- The `createdByRole` and `createdByIdentityId` fields capture the role and identity of the user who created the task, supporting accountability and auditability.
-- This view is particularly useful for reporting, task management, and ensuring that all stakeholders have a clear understanding of task objectives and progress.
-- The `createdByOrganisationUnitName` field provides additional context about the origin of the task, especially for tasks created by support organisations or units.
-- This view supports advanced filtering and reporting capabilities, making it easier to manage and prioritize tasks effectively.
-
-#
-# Separator TOOO Remove
-#
+- The `description` field offers a comprehensive explanation of the task, clarifying its purpose and requirements for all stakeholders.
+- The `threadId` and `messageId` fields establish links between tasks and their associated threads or messages, ensuring traceability and providing context for task-related communications.
+- The `createdByRole` and `createdByIdentityId` fields document the role and identity of the user who initiated the task, enhancing accountability and enabling detailed audits.
+- The `createdByOrganisationUnitName` field adds further context by identifying the organisation unit responsible for creating the task, which is particularly valuable for tasks originating from support organisations or units.
 
 # Almost all tables also have the following audit fields
   - created_at
