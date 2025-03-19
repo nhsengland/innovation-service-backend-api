@@ -1595,7 +1595,20 @@ The `INNOVATION_RELEVANT_ORGANISATIONS_STATUS_VIEW` view provides a summary of o
 - The `userData` field contains details about users, such as their roles, names, and associated organisations or units.
 - This view is particularly useful for thread creation workflows, where it helps determine the appropriate audience for notifications.
 
+## INNOVATION_SUGGESTED_UNITS_VIEW
+The `INNOVATION_SUGGESTED_UNITS_VIEW` view provides details about organisation units suggested for innovations, enabling tracking and analysis of these suggestions.
 
+|column|type|description|values/constraints|
+|--|--|--|--|
+|innovationId|uuid|unique identifier for the associated innovation||
+|suggestedUnitId|uuid|unique identifier for the suggested organisation unit||
+|suggestedBy|simple-json|JSON representation of the user or entity that made the suggestion||
+|suggestedOn|datetime2|timestamp when the suggestion was made||
+
+### Notes
+- The `suggestedUnitId` field links the suggestion to a specific organisation unit, providing clarity on the target of the suggestion.
+- The `suggestedBy` field captures details about the user or entity that made the suggestion, supporting traceability and accountability.
+- The `suggestedOn` field records when the suggestion was made, enabling analysis of suggestion timelines and trends.
 
 #
 # Separator TOOO Remove
