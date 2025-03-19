@@ -1348,6 +1348,37 @@ The `SEEDS` table is used to track the execution of TypeORM seed scripts, ensuri
 ### Notes
 - This table is used by TypeORM to manage and track seed scripts.
 
+## TERMS_OF_USE
+
+The `TERMS_OF_USE` table tracks the terms of use agreements within the system, enabling version control and user acceptance tracking.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|id|uuid|primary key for the terms of use|PK|
+|name|string|unique name of the terms of use|UK|
+|touType|enum|type of terms of use|<ul><li>INNOVATOR</li><li>SUPPORT_ORGANISATION</li></ul>|
+|summary|nvarchar|short summary of the terms of use||
+|releasedAt|datetime2|timestamp when the terms of use were released||
+
+### Notes
+- The `touType` field specifies the type of terms of use, such as those applicable to innovators or support organisations, ensuring clarity and relevance for different user groups.
+- The `releasedAt` field indicates when the terms of use became effective, ensuring proper version control.
+
+## TERMS_OF_USE_USER
+
+The `TERMS_OF_USE_USER` table tracks the relationship between users and the terms of use they have accepted.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|id|uuid|primary key for the terms of use user relationship|PK|
+|acceptedAt|datetime2|timestamp when the user accepted the terms of use||
+|touId|uuid|foreign key referencing the terms of use|FK|
+|userId|uuid|foreign key referencing the user|FK|
+
+### Notes
+- The `acceptedAt` field records when a user accepted the terms of use, ensuring compliance tracking.
+- This table establishes a many-to-many relationship between users and terms of use agreements.
+
 #
 # Separator TOOO Remove
 #
