@@ -998,6 +998,16 @@ The `INNOVATION_SUPPORT` table tracks the support provided to innovations by var
 - The support lifecycle has recently been updated to enhance KPI measurement and better align with organisational expectations. Previously, the lifecycle allowed transitions between any states without a clear closure process. The new approach introduces a defined starting point and a clear finish for each support instance.
 - Historically, all supports originated from suggestions, even though this was not strictly required. However, the updated process now accommodates more organic support initiation. For example, transitioning from a `CLOSED` or `UNSUITABLE` state to an open state automatically creates a new support instance.
 
+## INNOVATION_SUPPORT_USER
+The `INNOVATION_SUPPORT_USER` table tracks the relationship between innovation support instances and the users assigned to provide support.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|innovationSupportId|uuid|foreign key referencing the innovation support instance|PK, FK|
+|userRoleId|uuid|foreign key referencing the user role assigned to the support|PK, FK|
+
+### Notes
+- This table establishes a many-to-many relationship between innovation support instances and user roles.
 
 # Almost all tables also have the following audit fields
   - created_at
