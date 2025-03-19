@@ -1169,6 +1169,7 @@ The `INNOVATION_THREAD_MESSAGE` table tracks messages within threads, enabling d
 - The `isEditable` field allows for flexibility in editing messages, subject to system rules and permissions.
 - The `authorOrganisationUnit` and `authorUserRoleId` fields provide additional context about the message's author, such as their organisational affiliation and role.
 - This table supports detailed and structured communication within threads, enabling effective collaboration and information sharing.
+
 ## INNOVATION_TRANSFER
 The `INNOVATION_TRANSFER` table tracks the transfer of ownership for innovations.
 
@@ -1189,6 +1190,10 @@ The `INNOVATION_TRANSFER` table tracks the transfer of ownership for innovations
 - This table facilitates the smooth transition of roles and responsibilities for innovations, ensuring continuity and proper authorization.
 - The `emailCount` field helps monitor communication efforts, ensuring recipients are adequately informed about the transfer.
 - The `finishedAt` field provides a timestamp for when the transfer process was concluded, aiding in audit and reporting.
+
+
+
+
 #
 # Separator TOOO Remove
 #
