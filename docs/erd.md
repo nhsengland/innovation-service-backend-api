@@ -1335,6 +1335,19 @@ The `ORGANISATION_UNIT` table represents sub-units of the supporting organisatio
 - The `isShadow` field is used to identify shadow units, organisations that only have one unit have a shadow unit with the same name as the organisation.
 - The `inactivatedAt` field tracks when an organisation unit is no longer active in the system.
 
+## SEEDS
+
+The `SEEDS` table is used to track the execution of TypeORM seed scripts, ensuring that data seeding operations are applied in the correct order and only once.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|id|int|primary key for the seed entry|PK|
+|timestamp|bigint|timestamp of when the seed was executed||
+|name|varchar|name of the seed file||
+
+### Notes
+- This table is used by TypeORM to manage and track seed scripts.
+
 #
 # Separator TOOO Remove
 #
