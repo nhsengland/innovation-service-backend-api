@@ -1018,18 +1018,21 @@ The `INNOVATION_SUPPORT_LOG` table tracks the history of actions and updates rel
 |type|enum|type of log entry|<ul><li>STATUS_UPDATE</li><li>ACCESSOR_SUGGESTION</li><li>ASSESSMENT_SUGGESTION</li><li>PROGRESS_UPDATE</li><li>INNOVATION_ARCHIVED</li><li>STOP_SHARE</li></ul>|
 |innovationSupportStatus|enum|status of the innovation support at the time of the log entry|<ul><li>SUGGESTED</li><li>ENGAGING</li><li>WAITING</li><li>UNASSIGNED</li><li>UNSUITABLE</li><li>CLOSED</li></ul>|
 |description|nvarchar|description of the log entry|nullable|
-|params|simple-json|additional parameters related to the log entry|nullable|
+|params|simple-json|additional parameters related to the log entry|nullable. See [SupportLogProgressUpdateParams](#supportlogprogressupdateparams) and [SupportLogAssessmentSuggestionParams](#supportlogassessmentsuggestionparams) for details.|
 |innovationId|uuid|foreign key referencing the associated innovation|FK|
 |majorAssessmentId|uuid|foreign key referencing the associated major assessment|nullable FK|
 |organisationUnitId|uuid|foreign key referencing the organisation unit involved in the log entry|nullable FK|
 |createdByUserRoleId|uuid|foreign key referencing the user role that created the log entry|FK|
 
 ### Notes
-- The `type` field categorizes the log entry, such as a status update, comment, or activity.
+- The `type` field categorizes the log entry, such as a status update, progress update, or activity.
 - The `innovationSupportStatus` field captures the status of the support at the time of the log entry, providing context for the recorded action.
-- The `params` field allows for storing additional structured data related to the log entry, enabling flexibility in capturing diverse types of information.
-- This table is used to maintain a detailed history of support activities, ensuring transparency and accountability in the support process.
-- The `createdByUserRoleId` field links the log entry to the user role responsible for the action, facilitating traceability.
+- The `params` field allows for storing additional structured data related to the log entry, enabling flexibility in capturing diverse types of information. For example, it can store progress update details or assessment suggestions.
+- The `description` field provides a human-readable summary of the log entry, making it easier to understand the context of the recorded action.
+- The `type` and `params` fields together enable capturing both high-level and detailed information about support activities, ensuring comprehensive documentation.
+- The `majorAssessmentId` and `organisationUnitId` fields allow linking the log entry to specific assessments or organisation units, enhancing traceability and reporting capabilities.
+- The `params` field supports multiple structured formats, such as `SimpleProgressUpdateParams`, `OneLevelProgressUpdateParams`, and `TwoLevelProgressUpdateParams`, to accommodate diverse reporting needs.
+- The `PROGRESS_UPDATE` type is crucial for capturing the support summary provided by organisations, offering insights into the progress and status of the support activities.
 
 ### SupportLogProgressUpdateParams
 
@@ -1039,7 +1042,7 @@ The `INNOVATION_SUPPORT_LOG` table tracks the history of actions and updates rel
 |`OneLevelProgressUpdateParams`|`categories: string[]`|A progress update with a list of categories.|
 |`TwoLevelProgressUpdateParams`|`category: string`, `subCategories: string[]`|A progress update with a main category and its associated subcategories.|
 
-### SupportLogAssessmentParams
+### SupportLogAssessmentSuggestionParams
 
 | Property     | Type   | Description                                           |
 |--------------|--------|-------------------------------------------------------|
