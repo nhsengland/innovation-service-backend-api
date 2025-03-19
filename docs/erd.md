@@ -1119,6 +1119,19 @@ The `INNOVATION_TASK` table tracks tasks requested by the Needs Assessment team 
 - The `status` field tracks the progress of the task, such as whether it is open, completed, declined, or cancelled.
 - The `innovationSectionId` and `innovationSupportId` fields link the task to specific sections or support instances, providing context for its purpose.
 
+## INNOVATION_TASK_MESSAGE
+The `INNOVATION_TASK_MESSAGE` table tracks the relationship between innovation tasks and thread messages, enabling detailed communication and updates for specific tasks.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|innovationTaskId|uuid|foreign key referencing the associated innovation task|PK, FK|
+|innovationThreadMessageId|uuid|foreign key referencing the associated thread message|PK, FK|
+|status|enum|status of the innovation task|<ul><li>OPEN</li><li>DONE</li><li>DECLINED</li><li>CANCELLED</li></ul>|
+
+### Notes
+- This table establishes a many-to-many relationship between innovation tasks and thread messages.
+- The `status` field tracks the current state of the task message, such as whether it is open, done, declined, or cancelled.
+- This table is used to link specific messages in threads to tasks, providing a clear communication trail and context for task-related discussions.
 
 #
 # Separator TOOO Remove
