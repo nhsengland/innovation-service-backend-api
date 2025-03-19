@@ -1550,6 +1550,33 @@ This view consolidates information from multiple sources, including assessments,
 - JSON fields like `categories`, `careSettings`, and `engagingOrganisations` allow for flexible and dynamic filtering based on user needs.
 - This view is integral to dashboards and reporting tools, providing a comprehensive overview of innovations at a glance.
 
+## INNOVATION_PROGRESS_VIEW
+The `INNOVATION_PROGRESS_VIEW` view provides a detailed summary of the progress and certifications associated with innovations, enabling stakeholders to assess their readiness and compliance with various standards.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|innovationId|uuid|unique identifier for the associated innovation||
+|deploymentCount|int|number of deployments associated with the innovation|nullable|
+|ukcaceCertification|enum|status of UKCACE certification|nullable YES|
+|dtacCertification|enum|status of DTAC certification|nullable YES|
+|evidenceClinicalOrCare|enum|status of clinical or care evidence|nullable YES|
+|evidenceRealWorld|enum|status of real-world evidence|nullable YES|
+|assessmentRealWorldValidation|enum|status of real-world validation assessment|nullable YES \| PARTIALLY|
+|evidenceOfImpact|enum|status of evidence of impact|nullable YES|
+|assessmentEvidenceProveEfficacy|enum|status of evidence proving efficacy assessment|nullable YES \| PARTIALLY|
+|evidenceCostImpact|enum|status of cost impact evidence|nullable YES|
+|workingProduct|enum|status of having a working product|nullable YES|
+|carbonReductionPlan|enum|status of carbon reduction plan|nullable YES|
+|htwTerComplete|enum|status of HTW TER completion|nullable YES|
+|niceGuidanceComplete|enum|status of NICE guidance completion|nullable YES|
+|scProcurementRouteIdentified|enum|status of Supply Chain procurement route identification|nullable YES|
+
+### Notes
+- This view consolidates progress metrics and certifications, providing a comprehensive overview of an innovation's readiness for deployment and compliance.
+- The `deploymentCount` field tracks the number of deployments, offering insights into the innovation's adoption and scalability.
+- Certification and evidence fields, such as `ukcaceCertification` and `evidenceClinicalOrCare`, help assess the innovation's compliance with industry standards and its impact.
+- This view is particularly useful for stakeholders, including Needs Assessment and Support teams, to evaluate the innovation's progress and identify areas requiring further development or support.
+
 #
 # Separator TOOO Remove
 #
