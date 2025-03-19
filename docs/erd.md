@@ -1191,7 +1191,25 @@ The `INNOVATION_TRANSFER` table tracks the transfer of ownership for innovations
 - The `emailCount` field helps monitor communication efforts, ensuring recipients are adequately informed about the transfer.
 - The `finishedAt` field provides a timestamp for when the transfer process was concluded, aiding in audit and reporting.
 
+## MIGRATIONS
+The `MIGRATIONS` table tracks the migration history for the database, ensuring that all schema changes are applied in the correct order.
 
+|column|type|description|values/constraints|
+|--|--|--|--|
+|id|int|primary key for the migration entry|PK|
+|timestamp|bigint|timestamp of when the migration was created||
+|name|varchar|name of the migration file||
+
+### Notes
+- This table is used by TypeORM to manage and track database migrations.
+- Each migration file corresponds to a record in this table, ensuring that migrations are applied sequentially and only once.
+- The `timestamp` field helps in identifying the order of migrations, while the `name` field provides a human-readable identifier for the migration.
+- This table is critical for maintaining database schema consistency across different environments and deployments.
+- The `MIGRATIONS` table is automatically updated by TypeORM when running migration commands such as `typeorm migration:run` or `typeorm migration:revert`.
+- It is recommended not to manually modify this table to avoid inconsistencies in the migration history.
+- The `id` field is an auto-incrementing integer, ensuring unique identification for each migration entry.
+- The `name` field typically matches the filename of the migration script, providing traceability between the database and the source code.
+- This table is essential for ensuring that the database schema evolves in a controlled and predictable manner, especially in collaborative development environments.
 
 
 #
