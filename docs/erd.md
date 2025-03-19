@@ -1471,6 +1471,25 @@ The `ANALYTICS_SUPPORT_METRICS_VIEW` view provides metrics related to the suppor
 - The `suggestedAtWeekday` field provides insights into the timing of support suggestions, which can inform process improvements.
 - The view supports KPI tracking and reporting for organisational performance.
 
+## DOCUMENTS_STATISTICS_VIEW
+The `DOCUMENTS_STATISTICS_VIEW` view provides aggregated statistics about documents associated with innovations, offering insights into document usage and updates.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|innovationId|uuid|unique identifier for the associated innovation||
+|uploadedByRoles|simple-json|JSON representation of roles that uploaded documents||
+|updatedByUnits|simple-json|JSON representation of organisation units that updated documents||
+|locations|simple-json|JSON representation of places within the Innovation Service where documents are associated||
+
+### Notes
+- The `uploadedByRoles` field provides a breakdown of document uploads by user roles, enabling analysis of role-specific contributions.
+- The `updatedByUnits` field tracks updates made by organisation units, offering insights into collaborative document management.
+- The `locations` field identifies the places within the Innovation Service where documents are associated, supporting better understanding of document context and usage.
+- This view is used for reporting and analytics to monitor document-related activities within the system.
+- The data helps identify trends, such as which roles or units are most active in document management, and ensures compliance with operational policies.
+- The JSON fields allow for flexible and detailed representation of aggregated data, supporting diverse reporting needs.
+
+
 #
 # Separator TOOO Remove
 #
