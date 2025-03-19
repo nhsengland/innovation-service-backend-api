@@ -1133,6 +1133,43 @@ The `INNOVATION_TASK_MESSAGE` table tracks the relationship between innovation t
 - The `status` field tracks the current state of the task message, such as whether it is open, done, declined, or cancelled.
 - This table is used to link specific messages in threads to tasks, providing a clear communication trail and context for task-related discussions.
 
+## INNOVATION_THREAD
+The `INNOVATION_THREAD` table tracks threads related to innovations, enabling structured communication and collaboration among users.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|id|uuid|primary key for the innovation thread|PK|
+|subject|string|subject or title of the thread||
+|contextType|enum|type of context the thread is associated with|<ul><li>NEEDS_ASSESSMENT</li><li>SUPPORT</li><li>TASK</li><li>ORGANISATION_SUGGESTION</li></ul>|
+|contextId|uuid|ID of the specific context entity the thread is associated with||
+|innovationId|uuid|foreign key referencing the associated innovation|FK|
+|authorId|uuid|foreign key referencing the user who created the thread|FK|
+|authorUserRoleId|uuid|foreign key referencing the user role of the thread author|FK|
+
+### Notes
+- The `contextType` and `contextId` fields allow threads to be linked to various contexts, such as innovations, support instances, or tasks.
+- The `subject` field provides a brief description of the thread's purpose, making it easier to identify in lists or searches.
+- This table is central to facilitating communication and collaboration within the Innovation Service, ensuring that all relevant parties can engage in structured discussions.
+
+## INNOVATION_THREAD_MESSAGE
+The `INNOVATION_THREAD_MESSAGE` table tracks messages within threads, enabling detailed communication and updates.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|id|uuid|primary key for the thread message|PK|
+|message|nvarchar|content of the message||
+|isEditable|bit|flag indicating if the message is editable by the author||
+|innovationThreadId|uuid|foreign key referencing the associated thread|FK|
+|authorId|uuid|foreign key referencing the user who authored the message|FK|
+|authorOrganisationUnit|uuid|foreign key referencing the organisation unit of the author|nullable FK|
+|authorUserRoleId|uuid|foreign key referencing the user role of the author|FK|
+
+### Notes
+- The `innovationThreadId` field links the message to its parent thread, ensuring a clear hierarchy of communication.
+- The `isEditable` field allows for flexibility in editing messages, subject to system rules and permissions.
+- The `authorOrganisationUnit` and `authorUserRoleId` fields provide additional context about the message's author, such as their organisational affiliation and role.
+- This table supports detailed and structured communication within threads, enabling effective collaboration and information sharing.
+
 #
 # Separator TOOO Remove
 #
