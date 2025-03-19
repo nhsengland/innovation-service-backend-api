@@ -1489,6 +1489,27 @@ The `DOCUMENTS_STATISTICS_VIEW` view provides aggregated statistics about docume
 - The data helps identify trends, such as which roles or units are most active in document management, and ensures compliance with operational policies.
 - The JSON fields allow for flexible and detailed representation of aggregated data, supporting diverse reporting needs.
 
+## INNOVATION_GROUPED_STATUS_VIEW
+The `INNOVATION_GROUPED_STATUS_VIEW` view provides a summarized status of innovations by combining information from their current status and ongoing supports. This view offers insights into the overall state of innovations, including their lifecycle stage, support activities, and key metrics.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|innovationId|uuid|unique identifier for the associated innovation||
+|groupedStatus|enum|aggregated status of the innovation|<dl><dt>RECORD_NOT_SHARED</dt><dd>The innovation record is not shared for needs assessment.</dd><dt>AWAITING_NEEDS_ASSESSMENT</dt><dd>The innovation is awaiting a needs assessment.</dd><dt>NEEDS_ASSESSMENT</dt><dd>The innovation is undergoing a needs assessment.</dd><dt>AWAITING_SUPPORT</dt><dd>The innovation is awaiting support allocation.</dd><dt>RECEIVING_SUPPORT</dt><dd>The innovation is currently receiving support.</dd><dt>NO_ACTIVE_SUPPORT</dt><dd>The innovation has no active support at the moment.</dd><dt>AWAITING_NEEDS_REASSESSMENT</dt><dd>The innovation is awaiting a reassessment of its needs.</dd><dt>WITHDRAWN</dt><dd>The innovation has been withdrawn from the service.</dd><dt>ARCHIVED</dt><dd>The innovation has been archived and is no longer active.</dd></dl>|
+|name|string|name of the innovation||
+|createdBy|string|name of the user who created the innovation||
+|daysSinceNoActiveSupport|int|number of days since the innovation last had active support|nullable|
+|daysSinceNoActiveSupportOrDeploy|int|number of days since the innovation last had active support or deployment|nullable|
+|expectedArchiveDate|datetime2|predicted date when the innovation will be archived|nullable|
+
+### Notes
+- The `groupedStatus` field aggregates detailed statuses and support information into broader categories, simplifying status tracking and analysis.
+- The view combines data from the innovation's lifecycle status and its associated support activities, providing a comprehensive overview of its current state.
+- The `daysSinceNoActiveSupport` and `daysSinceNoActiveSupportOrDeploy` fields help identify innovations that may require attention due to inactivity or lack of recent support.
+  - `daysSinceNoActiveSupportOrDeploy` accounts for recent deployments, treating them as activity to delay automatic archiving.
+- The `expectedArchiveDate` field forecasts when the innovation might be archived, aiding in proactive management and planning.
+- This view is particularly useful for Needs Assessment and Support teams to prioritize their efforts and ensure timely interventions.
+- The `groupedStatus` field enables high-level reporting and trend analysis, making it easier to monitor and manage the innovation portfolio effectively.
 
 #
 # Separator TOOO Remove
