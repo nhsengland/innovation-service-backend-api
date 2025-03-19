@@ -1169,7 +1169,26 @@ The `INNOVATION_THREAD_MESSAGE` table tracks messages within threads, enabling d
 - The `isEditable` field allows for flexibility in editing messages, subject to system rules and permissions.
 - The `authorOrganisationUnit` and `authorUserRoleId` fields provide additional context about the message's author, such as their organisational affiliation and role.
 - This table supports detailed and structured communication within threads, enabling effective collaboration and information sharing.
+## INNOVATION_TRANSFER
+The `INNOVATION_TRANSFER` table tracks the transfer of ownership for innovations.
 
+|column|type|description|values/constraints|
+|--|--|--|--|
+|id|uuid|primary key for the innovation transfer|PK|
+|status|enum|current status of the transfer|<ul><li>PENDING</li><li>COMPLETED</li><li>DECLINED</li><li>CANCELED</li><li>EXPIRED</li></ul>|
+|email|nvarchar|email address of the recipient of the transfer||
+|emailCount|int|number of emails sent to the recipient regarding the transfer||
+|finishedAt|datetime2|timestamp when the transfer was completed or closed|nullable|
+|ownerToCollaborator|bit|flag indicating if the transfer is from owner to collaborator||
+|innovationId|uuid|foreign key referencing the associated innovation|FK|
+
+### Notes
+- The `status` field tracks the progress of the transfer, such as whether it is pending, completed, declined, canceled, or expired.
+- The `email` field identifies the recipient of the transfer, ensuring proper communication and tracking.
+- The `ownerToCollaborator` field specifies whether the transfer involves a change from owner to collaborator, providing clarity on the nature of the transfer.
+- This table facilitates the smooth transition of roles and responsibilities for innovations, ensuring continuity and proper authorization.
+- The `emailCount` field helps monitor communication efforts, ensuring recipients are adequately informed about the transfer.
+- The `finishedAt` field provides a timestamp for when the transfer process was concluded, aiding in audit and reporting.
 #
 # Separator TOOO Remove
 #
