@@ -1240,6 +1240,17 @@ The `NOTIFICATION_USER` table tracks the relationship between notifications and 
 - Notifications are delivered based on user roles, ensuring that only relevant users receive them.
 - The `NOTIFICATION_USER` table supports features like notification history and unread notification counts.
 
+## NOTIFICATION_PREFERENCE
+
+The `NOTIFICATION_PREFERENCE` table tracks user preferences for receiving notifications, enabling personalized notification settings.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|userRoleId|uuid|primary key referencing the user role|PK, FK|
+|preferences|simple-json|JSON representation of the user's notification preferences||
+
+### Notes
+- The `preferences` field stores the user's notification preferences in a structured JSON format, allowing for flexibility in defining settings.
 
 #
 # Separator TOOO Remove
