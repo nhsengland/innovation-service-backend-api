@@ -1009,6 +1009,42 @@ The `INNOVATION_SUPPORT_USER` table tracks the relationship between innovation s
 ### Notes
 - This table establishes a many-to-many relationship between innovation support instances and user roles.
 
+## INNOVATION_SUPPORT_LOG
+The `INNOVATION_SUPPORT_LOG` table tracks the history of actions and updates related to innovation support, providing an audit trail for support activities. The information provided by the organisation units in the support summary is registered here as `PROGRESS_UPDATE`.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|id|uuid|primary key for the innovation support log|PK|
+|type|enum|type of log entry|<ul><li>STATUS_UPDATE</li><li>ACCESSOR_SUGGESTION</li><li>ASSESSMENT_SUGGESTION</li><li>PROGRESS_UPDATE</li><li>INNOVATION_ARCHIVED</li><li>STOP_SHARE</li></ul>|
+|innovationSupportStatus|enum|status of the innovation support at the time of the log entry|<ul><li>SUGGESTED</li><li>ENGAGING</li><li>WAITING</li><li>UNASSIGNED</li><li>UNSUITABLE</li><li>CLOSED</li></ul>|
+|description|nvarchar|description of the log entry|nullable|
+|params|simple-json|additional parameters related to the log entry|nullable|
+|innovationId|uuid|foreign key referencing the associated innovation|FK|
+|majorAssessmentId|uuid|foreign key referencing the associated major assessment|nullable FK|
+|organisationUnitId|uuid|foreign key referencing the organisation unit involved in the log entry|nullable FK|
+|createdByUserRoleId|uuid|foreign key referencing the user role that created the log entry|FK|
+
+### Notes
+- The `type` field categorizes the log entry, such as a status update, comment, or activity.
+- The `innovationSupportStatus` field captures the status of the support at the time of the log entry, providing context for the recorded action.
+- The `params` field allows for storing additional structured data related to the log entry, enabling flexibility in capturing diverse types of information.
+- This table is used to maintain a detailed history of support activities, ensuring transparency and accountability in the support process.
+- The `createdByUserRoleId` field links the log entry to the user role responsible for the action, facilitating traceability.
+
+### SupportLogProgressUpdateParams
+
+|Type|Fields|Description|
+|----|------|-----------|
+|`SimpleProgressUpdateParams`|`title: string`|A simple progress update with a title.|
+|`OneLevelProgressUpdateParams`|`categories: string[]`|A progress update with a list of categories.|
+|`TwoLevelProgressUpdateParams`|`category: string`, `subCategories: string[]`|A progress update with a main category and its associated subcategories.|
+
+### SupportLogAssessmentParams
+
+| Property     | Type   | Description                                           |
+|--------------|--------|-------------------------------------------------------|
+| assessmentId | string | ID of the assessment associated with the support log. |
+
 # Almost all tables also have the following audit fields
   - created_at
   - created_by
