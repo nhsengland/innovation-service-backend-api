@@ -1297,6 +1297,44 @@ The `NOTIFY_ME_SUBSCRIPTION` table tracks user subscriptions for specific events
 - The `config` field allows for storing additional structured data related to the subscription, such as filters or specific information.
 - This table supports a flexible and user-centric notification system, allowing users to stay informed about events relevant to their roles and interests.
 
+## ORGANISATION
+The `ORGANISATION` table represents organisations within the system and is used both for innovator companies and for supporting organisations.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|id|uuid|primary key for the organisation|PK|
+|name|string|name of the organisation||
+|type|enum|distinguish between innovator and support organisations|<ul><li>INNOVATOR</li><li>ACCESSOR</li></ul>|
+|acronym|nvarchar|for support organisations the acronym or short name for the organisation|nullable|
+|size|nvarchar|for innovator organisations the size of the organisation|nullable|
+|description|nvarchar|detailed description of the organisation|nullable|
+|summary|nvarchar|short summary of the organisation|nullable|
+|website|nvarchar|URL of the organisation's website|nullable|
+|registrationNumber|nvarchar|for innovator organisations registration number of the organisation|nullable|
+|isShadow|boolean|flag indicating if the organisation is a shadow organisation||
+|inactivatedAt|datetime2|timestamp when the organisation was inactivated|nullable|
+
+### Notes
+- The `type` field categorizes the organisation, such as private, public, charity, or other.
+- The `isShadow` field is used to identify organisations that are created automatically for system requirements, for example innovators without a company have a shadow organisation.
+
+## ORGANISATION_UNIT
+The `ORGANISATION_UNIT` table represents sub-units of the supporting organisations, enabling finer granularity in organisational structure.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|id|uuid|primary key for the organisation unit|PK|
+|name|string|name of the organisation unit||
+|acronym|nvarchar|acronym or short name for the organisation unit|nullable|
+|isShadow|boolean|flag indicating if the organisation unit is a shadow unit||
+|inactivatedAt|datetime2|timestamp when the organisation unit was inactivated|nullable|
+|organisationId|uuid|foreign key referencing the parent organisation|FK|
+
+### Notes
+- The `organisationId` field establishes a relationship between organisation units and their parent organisations.
+- The `isShadow` field is used to identify shadow units, organisations that only have one unit have a shadow unit with the same name as the organisation.
+- The `inactivatedAt` field tracks when an organisation unit is no longer active in the system.
+
 #
 # Separator TOOO Remove
 #
