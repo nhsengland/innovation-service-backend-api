@@ -1101,6 +1101,29 @@ The `INNOVATION_SURVEY` table tracks surveys related to innovations, capturing r
 - The data collected helps improve the quality of support and user experience within the Innovation Service.
 - All fields are optional and depend on the survey design and user input.
 
+## INNOVATION_TASK
+The `INNOVATION_TASK` table tracks tasks requested by the Needs Assessment team or organisation units, enabling innovators to complete specific actions to enhance support and progress.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|id|uuid|primary key for the innovation task|PK|
+|displayId|nvarchar|unique display identifier for the task||
+|status|enum|current status of the task|<ul><li>OPEN</li><li>DONE</li><li>DECLINED</li><li>CANCELLED</li></ul>|
+|innovationSectionId|uuid|foreign key referencing the associated innovation section|FK|
+|innovationSupportId|uuid|foreign key referencing the associated innovation support|nullable FK|
+|createdByUserRoleId|uuid|foreign key referencing the user role that created the task|FK|
+|updatedByUserRoleId|uuid|foreign key referencing the user role that last updated the task|FK|
+
+### Notes
+- Tasks are created to guide innovators in completing specific actions that improve the quality of support or address identified needs.
+- The `status` field tracks the progress of the task, such as whether it is open, completed, declined, or cancelled.
+- The `innovationSectionId` and `innovationSupportId` fields link the task to specific sections or support instances, providing context for its purpose.
+
+
+#
+# Separator TOOO Remove
+#
+
 # Almost all tables also have the following audit fields
   - created_at
   - created_by
