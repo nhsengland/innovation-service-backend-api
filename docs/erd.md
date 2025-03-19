@@ -1427,6 +1427,50 @@ The `USER_ROLE` table tracks the roles assigned to users, enabling role-based ac
 - A user can hold multiple roles simultaneously, allowing for flexible role assignments.
 - This table is a cornerstone of the system's Role-Based Access Control (RBAC) mechanism, ensuring users have the appropriate permissions based on their assigned roles.
 
+## ANALYTICS_ORGANISATION_INACTIVITY_KPI
+The `ANALYTICS_ORGANISATION_INACTIVITY_KPI` view provides key performance indicators (KPIs) related to organisational inactivity, helping to identify organisations and units that may require additional engagement or support.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|year|int|year of the KPI measurement||
+|month|int|month of the KPI measurement||
+|organisation|nvarchar|name of the organisation||
+|organisationId|uuid|unique identifier for the organisation||
+|organisationUnit|nvarchar|name of the organisation unit||
+|organisationUnitId|uuid|unique identifier for the organisation unit||
+|innovationId|uuid|unique identifier for the associated innovation||
+|innovationName|nvarchar|name of the associated innovation||
+|breached|boolean|flag indicating if the inactivity threshold was breached||
+
+### Notes
+- This view is used to monitor inactivity trends and identify areas where additional engagement may be needed.
+- The `breached` field helps flag organisations or units that have exceeded acceptable inactivity thresholds.
+
+## ANALYTICS_SUPPORT_METRICS_VIEW
+The `ANALYTICS_SUPPORT_METRICS_VIEW` view provides metrics related to the support lifecycle, enabling analysis of support efficiency and effectiveness.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|innovationId|uuid|unique identifier for the associated innovation||
+|innovation|nvarchar|name of the associated innovation||
+|organisationId|uuid|unique identifier for the organisation providing support||
+|organisation|nvarchar|name of the organisation providing support||
+|organisationUnitId|uuid|unique identifier for the organisation unit providing support||
+|organisationUnit|nvarchar|name of the organisation unit providing support||
+|supportId|uuid|unique identifier for the support instance||
+|suggestedAt|datetime2|timestamp when the support was suggested|nullable|
+|suggestedAtWeekday|enum|day of the week when the support was suggested|<ul><li>MONDAY</li><li>TUESDAY</li><li>WEDNESDAY</li><li>THURSDAY</li><li>FRIDAY</li><li>SATURDAY</li><li>SUNDAY</li></ul>|
+|startedAt|datetime2|timestamp when the support started|nullable|
+|finishedAt|datetime2|timestamp when the support was completed|nullable|
+|daysToSupport|int|number of calendar days from suggestion to start of support|nullable|
+|workdaysToSupport|int|number of workdays from suggestion to start of support|nullable|
+
+### Notes
+- This view is used to evaluate the timeliness and efficiency of support provided to innovations.
+- The `daysToSupport` and `workdaysToSupport` fields help measure the responsiveness of support processes.
+- The `suggestedAtWeekday` field provides insights into the timing of support suggestions, which can inform process improvements.
+- The view supports KPI tracking and reporting for organisational performance.
+
 #
 # Separator TOOO Remove
 #
