@@ -1264,6 +1264,38 @@ The `NOTIFICATION_PREFERENCE` table tracks user preferences for receiving email 
 - The `contextType` keys correspond to the types defined in the [NotificationTypes](https://github.com/nhsengland/innovation-service-backend-api/blob/develop/libs/shared/enums/notification.enum.ts).
 - These preferences apply exclusively to email notifications and do not affect in-app notifications.
 
+## NOTIFICATION_SCHEDULE
+
+The `NOTIFICATION_SCHEDULE` table tracks scheduled notifications, enabling the system to send notifications at specific times.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|subscriptionId|uuid|primary key referencing the associated subscription|PK, FK|
+|sendDate|datetime2|timestamp when the notification is scheduled to be sent||
+
+### Notes
+- The `subscriptionId` field links the schedule to a specific subscription in the `NOTIFY_ME_SUBSCRIPTION` table.
+- The `sendDate` field specifies the exact time when the notification should be sent.
+- This table ensures that notifications are sent at the appropriate time, supporting time-sensitive communication.
+
+## NOTIFY_ME_SUBSCRIPTION
+
+The `NOTIFY_ME_SUBSCRIPTION` table tracks user subscriptions for specific events, enabling personalized notifications.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|id|uuid|primary key for the subscription|PK|
+|eventType|enum|type of event the subscription is associated with|<ul><li>SUPPORT_UPDATED</li><li>PROGRESS_UPDATE_CREATED</li><li>INNOVATION_RECORD_UPDATED</li><li>DOCUMENT_UPLOADED</li><li>REMINDER</li></ul>|
+|subscriptionType|enum|type of subscription|<ul><li>INSTANTLY</li><li>ONCE</li><li>SCHEDULED</li></ul>|
+|config|simple-json|additional configuration for the subscription|For more details, refer to [NotifyMeConfigTypes](https://github.com/nhsengland/innovation-service-backend-api/blob/develop/libs/shared/types/notify-me.types.ts)|
+|innovationId|uuid|foreign key referencing the associated innovation|FK|
+|userRoleId|uuid|foreign key referencing the user role subscribing to the event|FK|
+
+### Notes
+- The `eventType` field defines the specific event the user is subscribing to, such as innovation updates, support changes, or assessment activities.
+- The `subscriptionType` field specifies the delivery method for the subscription, such as email notifications, in-app notifications, or a combination of both.
+- The `config` field allows for storing additional structured data related to the subscription, such as filters or specific information.
+- This table supports a flexible and user-centric notification system, allowing users to stay informed about events relevant to their roles and interests.
 
 #
 # Separator TOOO Remove
