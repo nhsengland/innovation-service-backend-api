@@ -1203,13 +1203,42 @@ The `MIGRATIONS` table tracks the migration history for the database, ensuring t
 ### Notes
 - This table is used by TypeORM to manage and track database migrations.
 - Each migration file corresponds to a record in this table, ensuring that migrations are applied sequentially and only once.
-- The `timestamp` field helps in identifying the order of migrations, while the `name` field provides a human-readable identifier for the migration.
-- This table is critical for maintaining database schema consistency across different environments and deployments.
-- The `MIGRATIONS` table is automatically updated by TypeORM when running migration commands such as `typeorm migration:run` or `typeorm migration:revert`.
-- It is recommended not to manually modify this table to avoid inconsistencies in the migration history.
-- The `id` field is an auto-incrementing integer, ensuring unique identification for each migration entry.
-- The `name` field typically matches the filename of the migration script, providing traceability between the database and the source code.
-- This table is essential for ensuring that the database schema evolves in a controlled and predictable manner, especially in collaborative development environments.
+
+## NOTIFICATION
+
+The `NOTIFICATION` table tracks notifications generated within the system, enabling users to stay informed about relevant events and updates. Notifications are used to send both emails via GOV.UK Notify and in-app messages. The content of the notifications depends on the `contextType` and `contextDetail` fields, which define the specific event or action that triggered the notification.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|id|uuid|primary key for the notification|PK|
+|contextType|enum|type of context the notification is associated with|[NotificationTypes](https://github.com/nhsengland/innovation-service-backend-api/blob/develop/libs/shared/enums/notification.enum.ts)|
+|contextDetail|enum|specific detail about the context|[NotificationTypes](https://github.com/nhsengland/innovation-service-backend-api/blob/develop/libs/shared/enums/notification.enum.ts)|
+|contextId|uuid|ID of the specific context entity the notification is associated with||
+|params|simple-json|additional parameters related to the notification|nullable|
+|innovationId|uuid|foreign key referencing the associated innovation|nullable FK|
+
+### Notes
+- The `contextType` field acts as the primary key for `NotificationTypes`, while the `contextDetail` field corresponds to one of the values within the array associated with each `contextType`.
+- For example, if the `contextType` is `TASK`, the `contextDetail` could be `TA01_TASK_CREATION_TO_INNOVATOR` (task created and assigned to an innovator) or `TA02_TASK_RESPONDED_TO_OTHER_INNOVATORS` (task response shared with other innovators); if the `contextType` is `SUPPORT`, the `contextDetail` could be `ST01_SUPPORT_STATUS_TO_ENGAGING` (support status changed to "Engaging") or `ST09_SUPPORT_STATUS_TO_CLOSED` (support status changed to "Closed").
+- The `params` field allows for storing additional structured data related to the notification, enabling flexibility in capturing diverse types of information.
+- The `innovationId` field links the notification to a specific innovation, if applicable, ensuring traceability.
+
+## NOTIFICATION_USER
+
+The `NOTIFICATION_USER` table tracks the relationship between notifications and the users who receive them, enabling personalized delivery and tracking.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|id|bigint|primary key for the notification-user relationship|PK|
+|readAt|datetime2|timestamp when the user read the notification|nullable|
+|notificationId|uuid|foreign key referencing the notification|FK|
+|userRoleId|uuid|foreign key referencing the user role receiving the notification|FK|
+
+### Notes
+- The `readAt` field tracks when a user has read the notification, enabling the system to distinguish between read and unread notifications.
+- This table establishes a many-to-many relationship between notifications and user roles.
+- Notifications are delivered based on user roles, ensuring that only relevant users receive them.
+- The `NOTIFICATION_USER` table supports features like notification history and unread notification counts.
 
 
 #
