@@ -1610,6 +1610,47 @@ The `INNOVATION_SUGGESTED_UNITS_VIEW` view provides details about organisation u
 - The `suggestedBy` field captures details about the user or entity that made the suggestion, supporting traceability and accountability.
 - The `suggestedOn` field records when the suggestion was made, enabling analysis of suggestion timelines and trends.
 
+## INNOVATION_SUPPORT_LAST_ACTIVITY_UPDATE_VIEW
+The `INNOVATION_SUPPORT_LAST_ACTIVITY_UPDATE_VIEW` view provides details about the most recent activity updates for innovation support instances, enabling tracking and analysis of support engagement.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|supportId|uuid|unique identifier for the associated support instance||
+|innovationId|uuid|unique identifier for the associated innovation||
+|organisationUnitId|uuid|unique identifier for the organisation unit providing the support||
+|lastUpdate|datetime2|timestamp of the most recent activity update||
+
+### Notes
+- The `lastUpdate` field captures the timestamp of the latest activity related to the support instance, providing insights into recent engagement.
+- This view is useful for monitoring the timeliness and frequency of support activities, ensuring that support remains active and responsive.
+- The `organisationUnitId` field links the activity update to a specific organisation unit, enabling detailed analysis of unit-level engagement.
+- This view supports reporting and analytics for support lifecycle management, helping identify areas that may require additional attention or follow-up.
+- The data can be used to measure key performance indicators (KPIs) related to support activity and responsiveness.
+- This view is particularly relevant for support teams to ensure that innovations are receiving timely and effective assistance.
+
+## INNOVATION_TASK_DESCRIPTIONS_VIEW
+The `INNOVATION_TASK_DESCRIPTIONS_VIEW` view provides detailed descriptions of tasks associated with innovations, enabling better tracking and understanding of task-related activities.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|taskId|uuid|unique identifier for the associated task||
+|status|enum|current status of the task|<ul><li>OPEN</li><li>DONE</li><li>DECLINED</li><li>CANCELLED</li></ul>|
+|threadId|uuid|unique identifier for the associated thread|nullable|
+|messageId|uuid|unique identifier for the associated thread message|nullable|
+|description|nvarchar|detailed description of the task||
+|createdAt|datetime2|timestamp when the task was created||
+|createdByRole|enum|role of the user who created the task|<ul><li>ACCESSOR</li><li>QUALIFYING_ACCESSOR</li><li>ASSESSMENT</li></ul>|
+|createdByIdentityId|nvarchar|unique identifier for the user who created the task||
+|createdByOrganisationUnitName|nvarchar|name of the organisation unit of the user who created the task|nullable|
+
+### Notes
+- The `description` field provides a detailed explanation of the task, aiding in understanding its purpose and requirements.
+- The `threadId` and `messageId` fields link the task to specific threads and messages, enabling traceability and context for task-related discussions.
+- The `createdByRole` and `createdByIdentityId` fields capture the role and identity of the user who created the task, supporting accountability and auditability.
+- This view is particularly useful for reporting, task management, and ensuring that all stakeholders have a clear understanding of task objectives and progress.
+- The `createdByOrganisationUnitName` field provides additional context about the origin of the task, especially for tasks created by support organisations or units.
+- This view supports advanced filtering and reporting capabilities, making it easier to manage and prioritize tasks effectively.
+
 #
 # Separator TOOO Remove
 #
