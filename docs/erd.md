@@ -1577,6 +1577,26 @@ The `INNOVATION_PROGRESS_VIEW` view provides a detailed summary of the progress 
 - Certification and evidence fields, such as `ukcaceCertification` and `evidenceClinicalOrCare`, help assess the innovation's compliance with industry standards and its impact.
 - This view is particularly useful for stakeholders, including Needs Assessment and Support teams, to evaluate the innovation's progress and identify areas requiring further development or support.
 
+## INNOVATION_RELEVANT_ORGANISATIONS_STATUS_VIEW
+The `INNOVATION_RELEVANT_ORGANISATIONS_STATUS_VIEW` view provides a summary of organisations, organisation units, and users that are relevant to a specific innovation. This view is primarily used to determine which entities could be notified in new threads or other communication contexts.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|innovationId|uuid|unique identifier for the associated innovation||
+|status|enum|status of the organisation's relevance to the innovation|<ul><li>ACTIVE</li><li>INACTIVE</li></ul>|
+|organisationData|simple-json|JSON representation of relevant organisations and their details||
+|organisationUnitData|simple-json|JSON representation of relevant organisation units and their details||
+|userData|simple-json|JSON representation of relevant users and their details||
+
+### Notes
+- The `status` field indicates whether the organisation or unit is actively engaged with the innovation.
+- The `organisationData` field includes details such as organisation names, types, and other metadata.
+- The `organisationUnitData` field provides information about organisation units, including their names and associated organisations.
+- The `userData` field contains details about users, such as their roles, names, and associated organisations or units.
+- This view is particularly useful for thread creation workflows, where it helps determine the appropriate audience for notifications.
+
+
+
 #
 # Separator TOOO Remove
 #
