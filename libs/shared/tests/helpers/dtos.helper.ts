@@ -1,4 +1,3 @@
- 
 import type { RecipientType } from 'apps/notifications/_services/recipients.service';
 import { ServiceRoleEnum } from '../../enums/user.enums';
 import type { DomainContextType, IdentityUserInfo } from '../../types/domain.types';
@@ -126,5 +125,17 @@ export class DTOsHelper {
       lastLoginAt: null,
       passwordResetAt: null
     };
+  }
+
+  static getDateWithSubctractedWorkDays(daysToSubtract: number): Date {
+    const date = new Date();
+    while (daysToSubtract > 0) {
+      date.setDate(date.getDate() - 1);
+      if (date.getDay() !== 0 && date.getDay() !== 6) {
+        // Skip Sundays and Saturdays
+        daysToSubtract--;
+      }
+    }
+    return date;
   }
 }
