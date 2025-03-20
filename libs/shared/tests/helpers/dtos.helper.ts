@@ -126,16 +126,4 @@ export class DTOsHelper {
       passwordResetAt: null
     };
   }
-
-  static getDateWithSubctractedWorkDays(daysToSubtract: number): Date {
-    const date = new Date();
-    while (daysToSubtract > 0) {
-      date.setDate(date.getDate() - 1);
-      if (date.getDay() !== 0 && date.getDay() !== 6) {
-        // Skip Sundays and Saturdays
-        daysToSubtract--;
-      }
-    }
-    return date;
-  }
 }
