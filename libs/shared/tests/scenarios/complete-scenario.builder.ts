@@ -44,6 +44,7 @@ import { OrganisationUnitBuilder } from '../builders/organisation-unit.builder';
 import { OrganisationBuilder } from '../builders/organisation.builder';
 import { type TestUserType, UserBuilder } from '../builders/user.builder';
 import { InnovationSurveyBuilder } from '../builders/innovation-survey.builder';
+import { DatesHelper } from '../../helpers/dates.helper';
 
 export type CompleteScenarioType = Awaited<ReturnType<CompleteScenarioBuilder['createScenario']>>;
 
@@ -1073,7 +1074,7 @@ export class CompleteScenarioBuilder {
         .setStatus(InnovationSupportStatusEnum.SUGGESTED)
         .setOrganisationUnit(healthOrgUnit.id)
         .setCreatedAndUpdatedBy(aliceQualifyingAccessor.id, aliceQualifyingAccessor.roles['qaRole']!.id)
-        .setUpdatedAt(new Date(new Date().setDate(new Date().getDate() - 4)))
+        .setUpdatedAt(DatesHelper.addWorkingDays(new Date(), -4))
         .save();
 
       const announcementForQAs = await new AnnouncementBuilder(entityManager)
