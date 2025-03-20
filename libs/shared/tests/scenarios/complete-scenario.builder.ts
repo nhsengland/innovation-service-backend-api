@@ -44,6 +44,7 @@ import { OrganisationUnitBuilder } from '../builders/organisation-unit.builder';
 import { OrganisationBuilder } from '../builders/organisation.builder';
 import { type TestUserType, UserBuilder } from '../builders/user.builder';
 import { InnovationSurveyBuilder } from '../builders/innovation-survey.builder';
+import { DatesHelper } from '../../helpers/dates.helper';
 
 export type CompleteScenarioType = Awaited<ReturnType<CompleteScenarioBuilder['createScenario']>>;
 
@@ -516,38 +517,26 @@ export class CompleteScenarioBuilder {
       // John Innovation Files
       // Keep in mind that createdAt order of this files matter.
       const johnInnovationSectionFileUploadedByJohn = await new InnovationFileBuilder(entityManager)
-        .setContext({
-          id: 'INNOVATION_DESCRIPTION',
-          type: InnovationFileContextTypeEnum.INNOVATION_SECTION
-        })
+        .setContext({ id: 'INNOVATION_DESCRIPTION', type: InnovationFileContextTypeEnum.INNOVATION_SECTION })
         .setName('AAAAAAAAAAAAAA')
         .setCreatedByUserRole(johnInnovator.roles['innovatorRole']!.id)
         .setInnovation(johnInnovation.id)
         .save();
 
       const johnInnovationEvidenceFileByJohn = await new InnovationFileBuilder(entityManager)
-        .setContext({
-          id: johnInnovation.evidences![0]!.id,
-          type: InnovationFileContextTypeEnum.INNOVATION_EVIDENCE
-        })
+        .setContext({ id: johnInnovation.evidences![0]!.id, type: InnovationFileContextTypeEnum.INNOVATION_EVIDENCE })
         .setCreatedByUserRole(johnInnovator.roles['innovatorRole']!.id)
         .setInnovation(johnInnovation.id)
         .save();
 
       const johnInnovationSectionFileUploadedByJane = await new InnovationFileBuilder(entityManager)
-        .setContext({
-          id: 'INNOVATION_DESCRIPTION',
-          type: InnovationFileContextTypeEnum.INNOVATION_SECTION
-        })
+        .setContext({ id: 'INNOVATION_DESCRIPTION', type: InnovationFileContextTypeEnum.INNOVATION_SECTION })
         .setCreatedByUserRole(janeInnovator.roles['innovatorRole']!.id)
         .setInnovation(johnInnovation.id)
         .save();
 
       const johnInnovationInnovationFileUploadedByPaul = await new InnovationFileBuilder(entityManager)
-        .setContext({
-          id: johnInnovation.id,
-          type: InnovationFileContextTypeEnum.INNOVATION
-        })
+        .setContext({ id: johnInnovation.id, type: InnovationFileContextTypeEnum.INNOVATION })
         .setCreatedByUserRole(paulNeedsAssessor.roles['assessmentRole']!.id)
         .setDescription(null)
         .setSize(null)
@@ -555,56 +544,38 @@ export class CompleteScenarioBuilder {
         .save();
 
       const johnInnovationInnovationFileUploadedBySean = await new InnovationFileBuilder(entityManager)
-        .setContext({
-          id: johnInnovation.id,
-          type: InnovationFileContextTypeEnum.INNOVATION
-        })
+        .setContext({ id: johnInnovation.id, type: InnovationFileContextTypeEnum.INNOVATION })
         .setCreatedByUserRole(seanNeedsAssessor.roles['assessmentRole']!.id)
         .setInnovation(johnInnovation.id)
         .save();
 
       const johnInnovationInnovationFileUploadedByAlice = await new InnovationFileBuilder(entityManager)
-        .setContext({
-          id: johnInnovation.id,
-          type: InnovationFileContextTypeEnum.INNOVATION
-        })
+        .setContext({ id: johnInnovation.id, type: InnovationFileContextTypeEnum.INNOVATION })
         .setCreatedByUserRole(aliceQualifyingAccessor.roles['qaRole']!.id)
         .setInnovation(johnInnovation.id)
         .save();
 
       const johnInnovationInnovationFileUploadedByIngrid = await new InnovationFileBuilder(entityManager)
-        .setContext({
-          id: johnInnovation.id,
-          type: InnovationFileContextTypeEnum.INNOVATION
-        })
+        .setContext({ id: johnInnovation.id, type: InnovationFileContextTypeEnum.INNOVATION })
         .setName('AAAAAAAAAAAAAB')
         .setCreatedByUserRole(ingridAccessor.roles['accessorRole']!.id)
         .setInnovation(johnInnovation.id)
         .save();
 
       const johnInnovationInnovationFileUploadedByJamieWithAiRole = await new InnovationFileBuilder(entityManager)
-        .setContext({
-          id: johnInnovation.id,
-          type: InnovationFileContextTypeEnum.INNOVATION
-        })
+        .setContext({ id: johnInnovation.id, type: InnovationFileContextTypeEnum.INNOVATION })
         .setCreatedByUserRole(jamieMadroxAccessor.roles['aiRole']!.id)
         .setInnovation(johnInnovation.id)
         .save();
 
       const johnInnovationInnovationFileUploadedBySebastiaoDeletedUser = await new InnovationFileBuilder(entityManager)
-        .setContext({
-          id: johnInnovation.id,
-          type: InnovationFileContextTypeEnum.INNOVATION
-        })
+        .setContext({ id: johnInnovation.id, type: InnovationFileContextTypeEnum.INNOVATION })
         .setCreatedByUserRole(sebastiaoDeletedInnovator.roles['innovatorRole']!.id)
         .setInnovation(johnInnovation.id)
         .save();
 
       const johnInnovationInnovationFileUploadedAfterTodayByJohn = await new InnovationFileBuilder(entityManager)
-        .setContext({
-          id: johnInnovation.id,
-          type: InnovationFileContextTypeEnum.INNOVATION
-        })
+        .setContext({ id: johnInnovation.id, type: InnovationFileContextTypeEnum.INNOVATION })
         .setCreatedByUserRole(johnInnovator.roles['innovatorRole']!.id)
         .setCreatedAt(randSoonDate())
         .setInnovation(johnInnovation.id)
@@ -739,10 +710,7 @@ export class CompleteScenarioBuilder {
         .setConfig({
           eventType: 'SUPPORT_UPDATED',
           subscriptionType: 'INSTANTLY',
-          preConditions: {
-            status: [InnovationSupportStatusEnum.ENGAGING],
-            units: [medTechOrgUnit.id]
-          },
+          preConditions: { status: [InnovationSupportStatusEnum.ENGAGING], units: [medTechOrgUnit.id] },
           notificationType: 'SUPPORT_UPDATED'
         })
         .save();
@@ -755,10 +723,7 @@ export class CompleteScenarioBuilder {
         .setConfig({
           eventType: 'SUPPORT_UPDATED',
           subscriptionType: 'INSTANTLY',
-          preConditions: {
-            status: [InnovationSupportStatusEnum.ENGAGING],
-            units: [medTechOrgUnit.id]
-          },
+          preConditions: { status: [InnovationSupportStatusEnum.ENGAGING], units: [medTechOrgUnit.id] },
           notificationType: 'SUPPORT_UPDATED'
         })
         .save();
@@ -871,10 +836,7 @@ export class CompleteScenarioBuilder {
         .setConfig({
           eventType: 'SUPPORT_UPDATED',
           subscriptionType: 'INSTANTLY',
-          preConditions: {
-            status: [InnovationSupportStatusEnum.ENGAGING],
-            units: [medTechOrgUnit.id]
-          },
+          preConditions: { status: [InnovationSupportStatusEnum.ENGAGING], units: [medTechOrgUnit.id] },
           notificationType: 'SUPPORT_UPDATED'
         })
         .save();
@@ -1065,6 +1027,56 @@ export class CompleteScenarioBuilder {
         .setUpdateStatus(false)
         .save();
 
+      //This innovation will have its  update in the past:
+      const innovationUpdateInPast = await new InnovationBuilder(entityManager)
+        .setName('Innovation Update In Past')
+        .setOwner(tristanInnovator.id)
+        .setStatus(InnovationStatusEnum.IN_PROGRESS)
+        .addSection('INNOVATION_DESCRIPTION')
+        .addSection('COST_OF_INNOVATION')
+        .save();
+
+      const supportInThePastAssessment = await new InnovationAssessmentBuilder(entityManager)
+        .setInnovation(tentaclesInnovation.id)
+        .setNeedsAssessor(paulNeedsAssessor.id)
+        .setUpdatedBy(paulNeedsAssessor.id)
+        .setFinishedAt()
+        .suggestOrganisationUnits(healthOrgUnit, innovTechOrgUnit)
+        .save();
+
+      const supportInThePast = await new InnovationSupportBuilder(entityManager)
+        .setStatus(InnovationSupportStatusEnum.ENGAGING)
+        .setInnovation(innovationUpdateInPast.id)
+        .setMajorAssessment(supportInThePastAssessment.id)
+        .setOrganisationUnit(healthOrgUnit.id)
+        .setAccessors([jamieMadroxAccessor])
+        .setCreatedAndUpdatedBy(aliceQualifyingAccessor.id, aliceQualifyingAccessor.roles['qaRole']!.id)
+        .setUpdatedAt(new Date(Date.now() - 45 * 24 * 60 * 60 * 1000))
+        .save();
+
+      const innovationSuggestedInThePast = await new InnovationBuilder(entityManager)
+        .setName('Innovation Suggested In The Past')
+        .setOwner(tristanInnovator.id)
+        .setStatus(InnovationStatusEnum.IN_PROGRESS)
+        .save();
+
+      const assesmentSuggestedInThePast = await new InnovationAssessmentBuilder(entityManager)
+        .setInnovation(innovationSuggestedInThePast.id)
+        .setNeedsAssessor(paulNeedsAssessor.id)
+        .setUpdatedBy(paulNeedsAssessor.id)
+        .setFinishedAt()
+        .suggestOrganisationUnits(healthOrgUnit)
+        .save();
+
+      const supportSuggestedInThePast = await new InnovationSupportBuilder(entityManager)
+        .setInnovation(innovationSuggestedInThePast.id)
+        .setMajorAssessment(assesmentSuggestedInThePast.id)
+        .setStatus(InnovationSupportStatusEnum.SUGGESTED)
+        .setOrganisationUnit(healthOrgUnit.id)
+        .setCreatedAndUpdatedBy(aliceQualifyingAccessor.id, aliceQualifyingAccessor.roles['qaRole']!.id)
+        .setUpdatedAt(DatesHelper.addWorkingDays(new Date(), -4))
+        .save();
+
       const announcementForQAs = await new AnnouncementBuilder(entityManager)
         .setTitle('Announcement for QAs')
         .setStartsAt(randPastDate())
@@ -1118,9 +1130,7 @@ export class CompleteScenarioBuilder {
               johnInnovationEmpty: johnInnovationEmpty,
               johnInnovationArchived: {
                 ...johnInnovationArchived,
-                collaborators: {
-                  janeCollaborator: janeCollaboratorArchived
-                }
+                collaborators: { janeCollaborator: janeCollaboratorArchived }
               },
               johnInnovation: {
                 ...johnInnovation,
@@ -1252,9 +1262,7 @@ export class CompleteScenarioBuilder {
           janeInnovator: {
             ...janeInnovator,
             roles: { innovatorRole: janeInnovator.roles['innovatorRole']! },
-            innovations: {
-              johnInnovation: johnInnovation
-            }
+            innovations: { johnInnovation: johnInnovation }
           },
           adamInnovator: {
             ...adamInnovator,
@@ -1268,9 +1276,7 @@ export class CompleteScenarioBuilder {
                   adamInnovationTaskBySean: adamInnovationTaskBySean,
                   adamInnovationDoneTask: adamInnovationDoneTask
                 },
-                supports: {
-                  adamInnovationSupportByHealthOrgUnit: adamInnovationSupportByHealthOrgUnit
-                }
+                supports: { adamInnovationSupportByHealthOrgUnit: adamInnovationSupportByHealthOrgUnit }
               },
               adamInnovationEmpty: adamInnovationEmpty,
               adamInnovationNoActiveSupport: {
@@ -1325,6 +1331,16 @@ export class CompleteScenarioBuilder {
                 assessment: innovationMultipleAssessmentsAssessmentByPaulLatest,
                 previousAssessment: innovationMultipleAssessmentsAssessmentByPaul,
                 reassessmentRequest: innovationMultipleAssessmentsReassessmentRequest
+              },
+              innovationUpdateInPast: {
+                ...innovationUpdateInPast,
+                assessment: supportInThePastAssessment,
+                supports: { supportInThePast: supportInThePast }
+              },
+              innovationSuggestedInThePast: {
+                ...innovationSuggestedInThePast,
+                assessment: assesmentSuggestedInThePast,
+                supports: { supportSuggestedInThePast: supportSuggestedInThePast }
               }
             }
           },
@@ -1453,31 +1469,17 @@ export class CompleteScenarioBuilder {
             roles: { assessmentRole: seanNeedsAssessor.roles['assessmentRole']! }
           },
           // Admins
-          allMighty: {
-            ...allMighty,
-            roles: { admin: allMighty.roles['adminRole']! }
-          }
+          allMighty: { ...allMighty, roles: { admin: allMighty.roles['adminRole']! } }
         },
         organisations: {
           healthOrg: {
             ...healthOrg,
-            organisationUnits: {
-              healthOrgUnit: healthOrgUnit,
-              healthOrgAiUnit: healthOrgAiUnit
-            }
+            organisationUnits: { healthOrgUnit: healthOrgUnit, healthOrgAiUnit: healthOrgAiUnit }
           },
-          medTechOrg: {
-            ...medTechOrg,
-            organisationUnits: {
-              medTechOrgUnit: medTechOrgUnit
-            }
-          },
+          medTechOrg: { ...medTechOrg, organisationUnits: { medTechOrgUnit: medTechOrgUnit } },
           innovTechOrg: {
             ...innovTechOrg,
-            organisationUnits: {
-              innovTechOrgUnit: innovTechOrgUnit,
-              innovTechHeavyOrgUnit: innovTechHeavyOrgUnit
-            }
+            organisationUnits: { innovTechOrgUnit: innovTechOrgUnit, innovTechHeavyOrgUnit: innovTechHeavyOrgUnit }
           },
           notSharedOrg: {
             ...notSharedOrg,
@@ -1486,12 +1488,7 @@ export class CompleteScenarioBuilder {
               notSharedOrgHeavyOrgUnit: notSharedOrgHeavyOrgUnit
             }
           },
-          inactiveEmptyOrg: {
-            ...inactiveEmptyOrg,
-            organisationUnits: {
-              inactiveEmptyOrgUnit: inactiveEmptyOrgUnit
-            }
-          }
+          inactiveEmptyOrg: { ...inactiveEmptyOrg, organisationUnits: { inactiveEmptyOrgUnit: inactiveEmptyOrgUnit } }
         },
         announcements: {
           announcementForQAs: {

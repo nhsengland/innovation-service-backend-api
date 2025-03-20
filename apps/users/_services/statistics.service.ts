@@ -1,19 +1,20 @@
 import { inject, injectable } from 'inversify';
 
-import { InnovationEntity, InnovationSupportEntity } from '@users/shared/entities';
+import { InnovationEntity, InnovationNeedingActionView, InnovationSupportEntity } from '@users/shared/entities';
 import {
   InnovationStatusEnum,
   InnovationSupportStatusEnum,
   InnovationTaskStatusEnum,
   UserStatusEnum
 } from '@users/shared/enums';
-import { OrganisationErrorsEnum, UnprocessableEntityError } from '@users/shared/errors';
-import type { DomainContextType } from '@users/shared/types';
+import { ForbiddenError, OrganisationErrorsEnum, UnprocessableEntityError } from '@users/shared/errors';
+import { isAccessorDomainContextType, type DomainContextType } from '@users/shared/types';
 
 import type { DomainService } from '@users/shared/services';
 import SHARED_SYMBOLS from '@users/shared/services/symbols';
 import type { EntityManager } from 'typeorm';
 import { BaseService } from './base.service';
+import { AuthErrorsEnum } from '@users/shared/services/auth/authorization-validation.model';
 
 @injectable()
 export class StatisticsService extends BaseService {
@@ -167,5 +168,26 @@ export class StatisticsService extends BaseService {
       count: count,
       lastSubmittedAt: lastSubmittedAt
     };
+  }
+
+  async getCountInnovationsNeedingAction(
+    domainContext: DomainContextType,
+    entityManager?: EntityManager
+  ): Promise<number> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    if (!isAccessorDomainContextType(domainContext)) {
+      throw new ForbiddenError(AuthErrorsEnum.AUTH_USER_UNAUTHORIZED);
+    }
+
+    const organisationUnitId = domainContext.organisation.organisationUnit.id;
+
+    const innovationsCount = await em
+      .createQueryBuilder(InnovationNeedingActionView, 'innovation_needing_action')
+      .select('innovation_needing_action.id')
+      .where('innovation_needing_action.org_unit_id = :organisationUnitId', { organisationUnitId })
+      .getCount();
+
+    return innovationsCount;
   }
 }
