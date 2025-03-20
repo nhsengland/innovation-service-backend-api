@@ -1,4 +1,19 @@
-# ERD
+# Introduction
+
+This document provides a detailed overview of the database schema for the Innovation Service Backend API. It serves as a comprehensive reference for developers, database administrators, and other stakeholders involved in maintaining or enhancing the system. The document outlines the structure, relationships, and functionality of the database, enabling stakeholders to ensure data integrity, optimize queries, and implement new features effectively.
+
+Key sections include:
+
+1. **Introduction**: Describes the purpose of the document and its intended audience.
+2. **Entity-Relationship Diagram (ERD)**: A visual representation of the database schema using Mermaid syntax, illustrating tables, columns, relationships, and views.
+3. **Table/Column Descriptions**: Detailed explanations of each table, including columns, data types, constraints, and relationships, along with their purpose and usage.
+4. **Views/Column Descriptions**: Summaries of database views that aggregate and present data for analytics, reporting, and operational needs.
+5. **Audit Fields**: Information on standard audit fields included in most tables for tracking creation, updates, and deletions.
+6. **Deprecated Tables**: A list of legacy tables maintained for historical or audit purposes.
+
+This document is an essential resource for understanding the database's design and functionality, supporting efficient development, maintenance, and system enhancements
+
+# Entity-Relationship Diagram (ERD)
 
 ```mermaid
 ---
@@ -452,7 +467,7 @@ erDiagram
     uuid id PK
     datetime2 acceptedAt
     uuid touId FK
-    uuid uesrId FK
+    uuid userId FK
   }
   TERMS_OF_USE_USER ||--o| USER : acceptedBy
   TERMS_OF_USE_USER ||--o| TERMS_OF_USE : accepted
@@ -634,7 +649,7 @@ erDiagram
   INNOVATION_TASK_DESCRIPTIONS_VIEW ||--|| INNOVATION_THREAD_MESSAGE: has
   
 ```
-# Table/Column descriptions
+# Table/Column Descriptions
 
 ## ACTIVITY_LOG
 Most activities done by the users are registered in the activity log for audit and other purposes and made available within the innovation record.
@@ -683,7 +698,7 @@ Admins have the ability to create different announcements that will be made avai
 |filters|simple-json|filters to determine the audience of the announcement by fine targeting innovators with specific innovations.|nullable array of [FilterPayload](#filterpayload)|
 |sendEmail|bit|flag to indicate if an email should be sent for the announcement||
 
-### AnnoucementParamsType
+### AnnouncementParamsType
 | Property   | Type              | Description                                           |
 |------------|-------------------|-------------------------------------------------------|
 | content    | string            | The main content of the announcement.                 |
@@ -1427,6 +1442,8 @@ The `USER_ROLE` table tracks the roles assigned to users, enabling role-based ac
 - A user can hold multiple roles simultaneously, allowing for flexible role assignments.
 - This table is a cornerstone of the system's Role-Based Access Control (RBAC) mechanism, ensuring users have the appropriate permissions based on their assigned roles.
 
+# Views/Column Descriptions
+
 ## ANALYTICS_ORGANISATION_INACTIVITY_KPI
 The `ANALYTICS_ORGANISATION_INACTIVITY_KPI` view provides key performance indicators (KPIs) related to organisational inactivity, helping to identify organisations and units that may require additional engagement or support.
 
@@ -1649,14 +1666,21 @@ The `INNOVATION_TASK_DESCRIPTIONS_VIEW` view provides detailed descriptions of t
 - The `createdByRole` and `createdByIdentityId` fields document the role and identity of the user who initiated the task, enhancing accountability and enabling detailed audits.
 - The `createdByOrganisationUnitName` field adds further context by identifying the organisation unit responsible for creating the task, which is particularly valuable for tasks originating from support organisations or units.
 
-# Almost all tables also have the following audit fields
-  - created_at
-  - created_by
-  - updated_at
-  - updated_by
-  - deleted_at
+# Audit Fields
 
-# Deprecated only here for audit/history
+Most of the tables for the innovation service include the following audit fields:
+
+| Column      | Type       | Description                                                                 |
+|-------------|------------|-----------------------------------------------------------------------------|
+| created_at  | datetime2  | Timestamp indicating when the record was created.                          |
+| created_by  | uuid       | Foreign key referencing the user or system that created the record.        |
+| updated_at  | datetime2  | Timestamp indicating when the record was last updated.                     |
+| updated_by  | uuid       | Foreign key referencing the user or system that last updated the record.   |
+| deleted_at  | datetime2  | Timestamp indicating when the record was deleted, if applicable.           |
+
+# Deprecated Tables
+
+The following tables have been deprecated and should only be used for audit/history:
 - innovation_action: replaced by innovation_tasks
 - replaced by new innovation_file:
   - innovation_file_legacy
