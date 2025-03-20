@@ -1,4 +1,3 @@
- 
 import type { RecipientType } from 'apps/notifications/_services/recipients.service';
 import { ServiceRoleEnum } from '../../enums/user.enums';
 import type { DomainContextType, IdentityUserInfo } from '../../types/domain.types';
