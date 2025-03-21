@@ -62,9 +62,9 @@ class V1InnovationInfo {
                 name: result.owner.name,
                 isActive: result.owner.isActive,
                 organisation: result.owner.organisation,
-                // Contact details are always sent to ADMIN and sent to Assessment if innovation is not archived
+                // Contact details are always sent to ADMIN and sent to non innovators if innovation is not archived
                 ...(domainContext.currentRole.role === ServiceRoleEnum.ADMIN ||
-                (domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT &&
+                (domainContext.currentRole.role !== ServiceRoleEnum.INNOVATOR &&
                   result.status !== InnovationStatusEnum.ARCHIVED)
                   ? {
                       email: result.owner.email,
