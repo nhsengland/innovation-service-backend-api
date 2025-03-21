@@ -13,9 +13,7 @@ import { InnovationAssessmentEntity } from './innovation/innovation-assessment.e
 import { InnovationCollaboratorEntity } from './innovation/innovation-collaborator.entity';
 import { InnovationDocumentEntity } from './innovation/innovation-document.entity';
 import { InnovationDocumentDraftEntity } from './innovation/innovation-document-draft.entity';
-import { InnovationEvidenceEntity } from './innovation/innovation-evidence.entity';
 import { InnovationExportRequestEntity } from './innovation/innovation-export-request.entity';
-import { InnovationFileLegacyEntity } from './innovation/innovation-file-legacy.entity';
 import { InnovationFileEntity } from './innovation/innovation-file.entity';
 import { InnovationReassessmentRequestEntity } from './innovation/innovation-reassessment-request.entity';
 import { InnovationSectionEntity } from './innovation/innovation-section.entity';
@@ -34,9 +32,7 @@ export { InnovationAssessmentEntity } from './innovation/innovation-assessment.e
 export { InnovationCollaboratorEntity } from './innovation/innovation-collaborator.entity';
 export { InnovationDocumentEntity } from './innovation/innovation-document.entity';
 export { InnovationDocumentDraftEntity } from './innovation/innovation-document-draft.entity';
-export { InnovationEvidenceEntity } from './innovation/innovation-evidence.entity';
 export { InnovationExportRequestEntity } from './innovation/innovation-export-request.entity';
-export { InnovationFileLegacyEntity } from './innovation/innovation-file-legacy.entity';
 export { InnovationFileEntity } from './innovation/innovation-file.entity';
 export { InnovationReassessmentRequestEntity } from './innovation/innovation-reassessment-request.entity';
 export { InnovationSectionEntity } from './innovation/innovation-section.entity';
@@ -105,9 +101,7 @@ export const INNOVATION_ENTITIES = [
   InnovationCollaboratorEntity,
   InnovationDocumentEntity,
   InnovationDocumentDraftEntity,
-  InnovationEvidenceEntity,
   InnovationExportRequestEntity,
-  InnovationFileLegacyEntity,
   InnovationFileEntity,
   InnovationReassessmentRequestEntity,
   InnovationSectionEntity,

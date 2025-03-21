@@ -1,18 +1,7 @@
-import {
-  Column,
-  Entity,
-  Index,
-  JoinColumn,
-  JoinTable,
-  ManyToMany,
-  ManyToOne,
-  OneToMany,
-  PrimaryGeneratedColumn
-} from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
 
-import { InnovationFileLegacyEntity } from './innovation-file-legacy.entity';
 import { InnovationTaskEntity } from './innovation-task.entity';
 import { InnovationEntity } from './innovation.entity';
 
@@ -43,14 +32,6 @@ export class InnovationSectionEntity extends BaseEntity {
   @ManyToOne(() => InnovationEntity, { nullable: false })
   @JoinColumn({ name: 'innovation_id' })
   innovation: InnovationEntity;
-
-  @ManyToMany(() => InnovationFileLegacyEntity, record => record.evidence, { nullable: true })
-  @JoinTable({
-    name: 'innovation_section_file',
-    joinColumn: { name: 'innovation_section_id', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'innovation_file_id', referencedColumnName: 'id' }
-  })
-  files: InnovationFileLegacyEntity[];
 
   @OneToMany(() => InnovationTaskEntity, record => record.innovationSection, { cascade: ['insert', 'update'] })
   tasks: InnovationTaskEntity[];
