@@ -1281,8 +1281,8 @@ export const IR_SCHEMA = {
                       label: 'Early Access to Medicines Scheme'
                     },
                     {
-                      id: 'Health Innovation Network',
-                      label: 'Health Innovation Network'
+                      id: 'Health Innovation Network (HIN)',
+                      label: 'Health Innovation Network (HIN)'
                     },
                     {
                       id: 'Innovation and Technology Payment Programme',
