@@ -96,7 +96,15 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
           .valid(...Object.values(InnovationLocationEnum))
       )
       .optional(),
-    search: JoiHelper.AppCustomJoi().decodeURIString().max(TEXTAREA_LENGTH_LIMIT.xs).allow(null, '').optional()
+    search: JoiHelper.AppCustomJoi().decodeURIString().max(TEXTAREA_LENGTH_LIMIT.xs).allow(null, '').optional(),
+    areas: JoiHelper.AppCustomJoi()
+      .stringArray()
+      .items(
+        JoiHelper.AppCustomJoi()
+          .string()
+          .valid(...CurrentCatalogTypes.catalogAreas)
+      )
+      .optional()
   })
   .when('$userType', {
     switch: [

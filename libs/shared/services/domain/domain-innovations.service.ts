@@ -49,7 +49,7 @@ import { TranslationHelper } from '../../helpers';
 import type { FilterPayload } from '../../models/schema-engine/schema.model';
 import { UserMap } from '../../models/user.map';
 import type { CurrentElasticSearchDocumentType } from '../../schemas/innovation-record/index';
-import { DomainUsersService, RedisService, SQLConnectionService } from '../../services';
+import type { DomainUsersService, RedisService, SQLConnectionService } from '../../services';
 import type { ActivitiesParamsType, DomainContextType, SupportLogParams } from '../../types';
 import type { NotifierService } from '../integrations/notifier.service';
 import type { IRSchemaService } from '../storage/ir-schema.service';
@@ -1246,6 +1246,7 @@ export class DomainInnovationsService {
           countryName: document.INNOVATION_DESCRIPTION.countryName,
           categories: document.INNOVATION_DESCRIPTION.categories,
           careSettings: document.INNOVATION_DESCRIPTION.careSettings,
+          areas: document.INNOVATION_DESCRIPTION.areas,
           involvedAACProgrammes: document.INNOVATION_DESCRIPTION.involvedAACProgrammes,
           diseasesAndConditions: document.UNDERSTANDING_OF_NEEDS.diseasesConditionsImpact,
           keyHealthInequalities: document.UNDERSTANDING_OF_NEEDS.keyHealthInequalities

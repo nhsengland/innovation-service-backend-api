@@ -101,6 +101,7 @@ export const InnovationListSelectType = [
   'otherCareSetting',
   'otherCategoryDescription',
   'postcode',
+  'areas',
   // Relation fields
   'assessment.id',
   'assessment.majorVersion',
@@ -202,6 +203,7 @@ export type InnovationListFilters = {
   supportStatuses?: InnovationSupportStatusEnum[];
   supportUnit?: string;
   closedByMyOrganisation?: boolean;
+  areas?: CurrentCatalogTypes.catalogAreas[];
 };
 
 // Join types are the ones with nested selectable objects
@@ -712,7 +714,8 @@ export class InnovationsService extends BaseService {
     locations: this.addLocationFilter.bind(this),
     search: this.addSearchFilter.bind(this),
     supportStatuses: this.addSupportFilter.bind(this),
-    supportUnit: () => {} // this is handled in the withSupport handler for admin users and forbidden otherwise
+    supportUnit: () => {}, // this is handled in the withSupport handler for admin users and forbidden otherwise
+    areas: this.addJsonArrayInFilter('areas').bind(this)
   };
 
   /**

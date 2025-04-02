@@ -11,6 +11,7 @@ import {
 } from 'typeorm';
 import type { InnovationGroupedStatusEnum, InnovationStatusEnum } from '../../enums';
 import type {
+  catalogAreas,
   catalogCareSettings,
   catalogCategory,
   catalogInvolvedAACProgrammes,
@@ -92,6 +93,9 @@ export class InnovationListView {
 
   @Column({ name: 'has_been_assessed' })
   hasBeenAssessed: boolean;
+
+  @Column({ name: 'areas' })
+  areas: catalogAreas[] | null;
 
   @OneToOne(() => InnovationAssessmentEntity)
   @JoinColumn({ name: 'current_assessment_id' })

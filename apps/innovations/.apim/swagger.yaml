@@ -1492,6 +1492,7 @@ paths:
                 - otherCareSetting
                 - otherCategoryDescription
                 - postcode
+                - areas
                 - assessment.id
                 - assessment.majorVersion
                 - assessment.minorVersion
@@ -1588,6 +1589,24 @@ paths:
             type: string
             maxLength: 200
             nullable: true
+        - name: areas
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - COVID_19
+                - DATA_ANALYTICS_AND_RESEARCH
+                - DIGITALISING_SYSTEM
+                - IMPROVING_SYSTEM_FLOW
+                - INDEPENDENCE_AND_PREVENTION
+                - OPERATIONAL_EXCELLENCE
+                - PATIENT_ACTIVATION_AND_SELF_CARE
+                - PATIENT_SAFETY
+                - WORKFORCE_RESOURCE_OPTIMISATION
+                - NET_ZERO_GREENER_INNOVATION
       responses:
         "200":
           description: Success
@@ -6494,6 +6513,7 @@ paths:
                 - otherCareSetting
                 - otherCategoryDescription
                 - postcode
+                - areas
                 - assessment.id
                 - assessment.majorVersion
                 - assessment.minorVersion
@@ -6590,6 +6610,24 @@ paths:
             type: string
             maxLength: 200
             nullable: true
+        - name: areas
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - COVID_19
+                - DATA_ANALYTICS_AND_RESEARCH
+                - DIGITALISING_SYSTEM
+                - IMPROVING_SYSTEM_FLOW
+                - INDEPENDENCE_AND_PREVENTION
+                - OPERATIONAL_EXCELLENCE
+                - PATIENT_ACTIVATION_AND_SELF_CARE
+                - PATIENT_SAFETY
+                - WORKFORCE_RESOURCE_OPTIMISATION
+                - NET_ZERO_GREENER_INNOVATION
       responses:
         "204":
           description: Success
