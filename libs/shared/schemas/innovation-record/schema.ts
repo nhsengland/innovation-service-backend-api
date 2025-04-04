@@ -1936,6 +1936,10 @@ export const IR_SCHEMA = {
                       label: 'Fertility, pregnancy and childbirth - Termination of pregnancy services'
                     },
                     {
+                      id: 'GENETIC_CONDITIONS',
+                      label: 'Genetic conditions'
+                    },
+                    {
                       id: 'GYNAECOLOGICAL_CONDITIONS',
                       label: 'Gynaecological conditions'
                     },
@@ -2190,6 +2194,10 @@ export const IR_SCHEMA = {
                     {
                       id: 'ORAL_AND_DENTAL_HEALTH',
                       label: 'Oral and dental health'
+                    },
+                    {
+                      id: 'RARE_CONDITIONS',
+                      label: 'Rare conditions'
                     },
                     {
                       id: 'RESPIRATORY_CONDITIONS',
