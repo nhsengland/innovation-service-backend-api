@@ -21,7 +21,7 @@ resources:
 name: Backend_API_PR__$(Date:yyyyMMdd)_$(Rev:r)
 
 pool:
-  vmImage: "ubuntu-22.04"
+  vmImage: "ubuntu-latest"
 
 trigger: none
 
