@@ -69,7 +69,9 @@ type SearchInnovationListSelectType =
 // on support statuses
 type SearchFilters = InnovationListFilters & { suggestedOnly: boolean };
 
-// NOT: Altough this is not needed for the flat document (IR versioning) it is still needed for the Elastic Search
+// Translations maps the IR schema in elastic search to the one used in the UI
+// NOTE: if the new flat document (IR versioning) is implemented this will not be needed anymore but right now we have
+//       different structure between the two
 const translations = new Map([
   ['name', ['document', 'INNOVATION_DESCRIPTION', 'name']],
   ['careSettings', ['document', 'INNOVATION_DESCRIPTION', 'careSettings']],
@@ -83,7 +85,7 @@ const translations = new Map([
   ['involvedAACProgrammes', ['document', 'INNOVATION_DESCRIPTION', 'involvedAACProgrammes']],
   ['keyHealthInequalities', ['document', 'UNDERSTANDING_OF_NEEDS', 'keyHealthInequalities']],
   ['areas', ['document', 'INNOVATION_DESCRIPTION', 'areas']],
-  ['description', ['document', 'INNOVATION_DESCRIPTION', 'description']]
+  ['description', ['document', 'INNOVATION_DESCRIPTION', 'description']] // This field is only required because of the export CSV as it's not shown in the cards.
 ]);
 
 /**
