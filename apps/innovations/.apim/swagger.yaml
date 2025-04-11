@@ -1482,6 +1482,7 @@ paths:
                 - submittedAt
                 - updatedAt
                 - lastAssessmentRequestAt
+                - description
                 - careSettings
                 - categories
                 - countryName
@@ -6503,6 +6504,7 @@ paths:
                 - submittedAt
                 - updatedAt
                 - lastAssessmentRequestAt
+                - description
                 - careSettings
                 - categories
                 - countryName

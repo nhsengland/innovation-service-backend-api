@@ -69,7 +69,7 @@ type SearchInnovationListSelectType =
 // on support statuses
 type SearchFilters = InnovationListFilters & { suggestedOnly: boolean };
 
-// NOTE: when the new flat document (IR versioning) is implemented this will not be needed
+// NOT: Altough this is not needed for the flat document (IR versioning) it is still needed for the Elastic Search
 const translations = new Map([
   ['name', ['document', 'INNOVATION_DESCRIPTION', 'name']],
   ['careSettings', ['document', 'INNOVATION_DESCRIPTION', 'careSettings']],
@@ -82,7 +82,8 @@ const translations = new Map([
   ['postcode', ['document', 'INNOVATION_DESCRIPTION', 'postcode']],
   ['involvedAACProgrammes', ['document', 'INNOVATION_DESCRIPTION', 'involvedAACProgrammes']],
   ['keyHealthInequalities', ['document', 'UNDERSTANDING_OF_NEEDS', 'keyHealthInequalities']],
-  ['areas', ['document', 'INNOVATION_DESCRIPTION', 'areas']]
+  ['areas', ['document', 'INNOVATION_DESCRIPTION', 'areas']],
+  ['description', ['document', 'INNOVATION_DESCRIPTION', 'description']]
 ]);
 
 /**
