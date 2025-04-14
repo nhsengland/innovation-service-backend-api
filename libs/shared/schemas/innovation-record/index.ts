@@ -1,7 +1,7 @@
 import { randBoolean, randCountry, randProduct, randText } from '@ngneat/falso';
-import type { ElasticSearchDocumentType } from './elastic-search.schema';
 import { EvidenceSchema } from './document.schema';
 import type { InnovationRecordDocumentType } from './document.types';
+import type { ElasticSearchDocumentType } from './elastic-search.schema';
 
 // All versions
 export type DocumentType = InnovationRecordDocumentType;
@@ -48,7 +48,7 @@ export const createSampleDocument = (data?: {
       countryLocation: data?.countryName ?? randCountry(),
       postcode: data?.postcode ?? undefined,
 
-      areas: ['COVID_19'],
+      areas: ['EMERGING_INFECTIOUS_DISEASES'],
       careSettings: ['INDUSTRY'],
       categories: ['MEDICAL_DEVICE', 'AI'],
       mainCategory: 'MEDICAL_DEVICE',
