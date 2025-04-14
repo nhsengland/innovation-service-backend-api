@@ -91,6 +91,7 @@ export const InnovationListSelectType = [
   'updatedAt',
   'lastAssessmentRequestAt',
   // Document fields
+  'description',
   'careSettings',
   'categories',
   'countryName',
