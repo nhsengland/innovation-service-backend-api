@@ -38,7 +38,7 @@ describe('Admin / _services / announcements service suite', () => {
     it('should return the count of innovations in each support status for the given organisation unit', async () => {
       const resultBefore = await sut.getOrganisationUnitInnovationCounters(healthOrgUnit.id, undefined, em);
 
-      expect(resultBefore).toMatchObject({ ENGAGING: 4 });
+      expect(resultBefore).toMatchObject({ ENGAGING: 5 });
 
       const assessment = await new InnovationAssessmentBuilder(em)
         .setInnovation(innovation.id)
@@ -65,7 +65,7 @@ describe('Admin / _services / announcements service suite', () => {
         em
       );
 
-      expect(result).toMatchObject({ ENGAGING: 5 });
+      expect(result).toMatchObject({ ENGAGING: 6 });
     });
 
     it('should return the count of innovations in each ongoing support status for the given organisation unit', async () => {
@@ -94,7 +94,7 @@ describe('Admin / _services / announcements service suite', () => {
         em
       );
 
-      expect(result).toMatchObject({ ENGAGING: 4 });
+      expect(result).toMatchObject({ ENGAGING: 5 });
     });
   });
 });

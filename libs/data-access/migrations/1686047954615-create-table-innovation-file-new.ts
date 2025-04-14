@@ -1,11 +1,4 @@
-import { extname, parse } from 'path';
 import type { MigrationInterface, QueryRunner } from 'typeorm';
-
-import { InnovationFileLegacyEntity } from '../../shared/entities/innovation/innovation-file-legacy.entity';
-import { InnovationFileEntity } from '../../shared/entities/innovation/innovation-file.entity';
-import { UserRoleEntity } from '../../shared/entities/user/user-role.entity';
-import { InnovationFileContextTypeEnum } from '../../shared/enums/innovation.enums';
-import { ServiceRoleEnum } from '../../shared/enums/user.enums';
 
 export class createTableInnovationFileNew1686047954615 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -36,6 +29,7 @@ export class createTableInnovationFileNew1686047954615 implements MigrationInter
       ALTER TABLE "innovation_file" ADD CONSTRAINT "fk_innovation_file_innovation_id" FOREIGN KEY ("innovation_id") REFERENCES "innovation"("id") ON DELETE NO ACTION ON UPDATE NO ACTION;
     `);
 
+    /*
     const roles = await queryRunner.manager
       .createQueryBuilder(UserRoleEntity, 'role')
       .withDeleted()
@@ -85,6 +79,7 @@ export class createTableInnovationFileNew1686047954615 implements MigrationInter
     );
 
     await queryRunner.manager.save(InnovationFileEntity, files, { chunk: 100 });
+    */
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

@@ -59,6 +59,7 @@ export type ElasticSearchDocumentType = {
     involvedAACProgrammes: InnovationRecordDocumentType['INNOVATION_DESCRIPTION']['involvedAACProgrammes'];
     diseasesAndConditions: InnovationRecordDocumentType['UNDERSTANDING_OF_NEEDS']['diseasesConditionsImpact'];
     keyHealthInequalities: InnovationRecordDocumentType['UNDERSTANDING_OF_NEEDS']['keyHealthInequalities'];
+    areas: InnovationRecordDocumentType['INNOVATION_DESCRIPTION']['areas'];
   };
 };
 
@@ -163,7 +164,8 @@ export const ElasticSearchSchema: CreateIndexParams = {
           careSettings: KeywordType,
           involvedAACProgrammes: KeywordType,
           diseasesAndConditions: KeywordType,
-          keyHealthInequalities: KeywordType
+          keyHealthInequalities: KeywordType,
+          areas: KeywordType
         }
       },
 

@@ -1,7 +1,7 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 // Note: Editing/Renaming view in place to make it easier to track changes
-export class CreateViewInnovationList1730981086966 implements MigrationInterface {
+export class CreateAlterViewInnovationList1743515917946 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
     CREATE OR ALTER VIEW innovation_list_view AS
@@ -54,6 +54,7 @@ export class CreateViewInnovationList1730981086966 implements MigrationInterface
     JSON_QUERY(d.document, '$.INNOVATION_DESCRIPTION.careSettings') as care_settings,
     JSON_VALUE(d.document, '$.INNOVATION_DESCRIPTION.otherCareSetting') as other_care_setting,
     JSON_QUERY(d.document, '$.INNOVATION_DESCRIPTION.involvedAACProgrammes') as involved_aac_programmes,
+    JSON_QUERY(d.document, '$.INNOVATION_DESCRIPTION.areas') as areas,
     JSON_QUERY(d.document, '$.UNDERSTANDING_OF_NEEDS.diseasesConditionsImpact') as diseases_and_conditions,
     JSON_QUERY(d.document, '$.UNDERSTANDING_OF_NEEDS.keyHealthInequalities') as key_health_inequalities,
     (SELECT unit_id as unitId, name, acronym, assigned_accessors as assignedAccessors FROM engaging_units u WHERE u.innovation_id = i.id FOR JSON PATH) as engaging_units,
