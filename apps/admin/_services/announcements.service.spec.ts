@@ -1,16 +1,12 @@
 import { TestsHelper } from '@admin/shared/tests';
 
-import { container } from '../_config';
-import SYMBOLS from './symbols';
-import { AnnouncementsService } from './announcements.service';
 import {
   AnnouncementEntity,
   AnnouncementUserEntity,
+  InnovationCollaboratorEntity,
   InnovationDocumentEntity,
-  UserEntity,
-  InnovationCollaboratorEntity
+  UserEntity
 } from '@admin/shared/entities';
-import { randFutureDate, randPastDate, randText, randUuid } from '@ngneat/falso';
 import {
   AnnouncementStatusEnum,
   AnnouncementTypeEnum,
@@ -20,13 +16,17 @@ import {
 import {
   AnnouncementErrorsEnum,
   BadRequestError,
+  ConflictError,
   NotFoundError,
-  UnprocessableEntityError,
-  ConflictError
+  UnprocessableEntityError
 } from '@admin/shared/errors';
-import { DTOsHelper } from '@admin/shared/tests/helpers/dtos.helper';
-import type { EntityManager } from 'typeorm';
 import { NotifierService } from '@admin/shared/services';
+import { DTOsHelper } from '@admin/shared/tests/helpers/dtos.helper';
+import { randFutureDate, randPastDate, randText, randUuid } from '@ngneat/falso';
+import type { EntityManager } from 'typeorm';
+import { container } from '../_config';
+import { AnnouncementsService } from './announcements.service';
+import SYMBOLS from './symbols';
 
 describe('Admin / _services / announcements service suite', () => {
   let sut: AnnouncementsService;
@@ -420,7 +420,7 @@ describe('Admin / _services / announcements service suite', () => {
         .createQueryBuilder(InnovationDocumentEntity, 'document')
         .select(['document.id', 'innovation.id'])
         .innerJoin('document.innovation', 'innovation')
-        .where(`JSON_QUERY(document.document, '$.INNOVATION_DESCRIPTION.areas') LIKE '%COVID_19%'`)
+        .where(`JSON_QUERY(document.document, '$.INNOVATION_DESCRIPTION.areas') LIKE '%EMERGING_INFECTIOUS_DISEASES%'`)
         .andWhere('innovation.submittedAt IS NOT NULL')
         .getMany();
 
@@ -449,7 +449,15 @@ describe('Admin / _services / announcements service suite', () => {
       await em.update(
         AnnouncementEntity,
         { id: announcement.id },
-        { filters: [{ section: 'INNOVATION_DESCRIPTION', question: 'INVALID_QUESTION', answers: ['COVID_19'] }] }
+        {
+          filters: [
+            {
+              section: 'INNOVATION_DESCRIPTION',
+              question: 'INVALID_QUESTION',
+              answers: ['EMERGING_INFECTIOUS_DISEASES']
+            }
+          ]
+        }
       );
 
       await sut.activateAnnouncement(admin.id, announcement.id, {}, em);

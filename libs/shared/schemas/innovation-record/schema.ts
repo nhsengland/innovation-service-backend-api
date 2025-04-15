@@ -1032,10 +1032,6 @@ export const IR_SCHEMA = {
                   },
                   items: [
                     {
-                      id: 'COVID_19',
-                      label: 'COVID-19'
-                    },
-                    {
                       id: 'DATA_ANALYTICS_AND_RESEARCH',
                       label: 'Data, analytics and research'
                     },
@@ -1044,32 +1040,36 @@ export const IR_SCHEMA = {
                       label: 'Digitalising the system'
                     },
                     {
+                      id: 'EMERGING_INFECTIOUS_DISEASES',
+                      label: 'Emerging infectious diseases'
+                    },
+                    {
+                      id: 'HOSPITAL_TO_COMMUNITY',
+                      label: 'Hospital to community'
+                    },
+                    {
                       id: 'IMPROVING_SYSTEM_FLOW',
                       label: 'Improving system flow'
                     },
                     {
-                      id: 'INDEPENDENCE_AND_PREVENTION',
-                      label: 'Independence and prevention'
-                    },
-                    {
-                      id: 'OPERATIONAL_EXCELLENCE',
-                      label: 'Operational excellence'
-                    },
-                    {
-                      id: 'PATIENT_ACTIVATION_AND_SELF_CARE',
-                      label: 'Patient activation and self-care'
+                      id: 'NET_ZERO_GREENER_INNOVATION',
+                      label: 'Net zero NHS or greener innovation'
                     },
                     {
                       id: 'PATIENT_SAFETY',
                       label: 'Patient safety and quality improvement'
                     },
                     {
-                      id: 'WORKFORCE_RESOURCE_OPTIMISATION',
-                      label: 'Workforce resource optimisation'
+                      id: 'PREVENTIVE_CARE',
+                      label: 'Preventive care'
                     },
                     {
-                      id: 'NET_ZERO_GREENER_INNOVATION',
-                      label: 'Net zero NHS or greener innovation'
+                      id: 'SUPPORTING_PEOPLE_HEALTH',
+                      label: 'Supporting people to manage their health'
+                    },
+                    {
+                      id: 'WORKFORCE_RESOURCE_OPTIMISATION',
+                      label: 'Workforce resource optimisation'
                     },
                     {
                       type: 'separator'
