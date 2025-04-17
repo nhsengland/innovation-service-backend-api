@@ -1,4 +1,4 @@
-import type { InnovationRecordDocumentType} from './document.types';
+import type { InnovationRecordDocumentType } from './document.types';
 import { requiredSectionsAndQuestions } from './document.types';
 
 // Sections.
@@ -64,17 +64,21 @@ export type catalogCareSettings = (typeof catalogCareSettings)[number];
 
 export const catalogInvolvedAACProgrammes = [
   'No',
-  'Health Innovation Network',
+  'Health Innovation Network (HIN)',
   'Artificial Intelligence in Health and Care Award',
-  'Clinical Entrepreneur Programme',
+  'Clinical Entrepreneur Programme (CEP)',
   'Early Access to Medicines Scheme',
-  'Innovation for Healthcare Inequalities Programme',
   'Innovation and Technology Payment Programme',
-  'NHS Innovation Accelerator',
+  'Innovation for Healthcare Inequalities Programme (InHIP)',
+  'Innovative Devices Access Pathway (IDAP)',
+  'Innovative Licensing and Access Pathway (ILAP)',
+  'NHS Innovation Accelerator (NIA)',
   'NHS Insights Prioritisation Programme',
+  'NHS InSites Programme',
   'Pathway Transformation Fund',
+  'Patient Entrepreneur Programme (PEP)',
   'Rapid Uptake Products Programme',
-  'Small Business Research Initiative for Healthcare',
+  'Small Business Research Initiative for Healthcare (SBRI)',
   'Test beds'
 ] as const;
 export type catalogInvolvedAACProgrammes = (typeof catalogInvolvedAACProgrammes)[number];
