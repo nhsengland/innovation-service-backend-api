@@ -1602,13 +1602,12 @@ paths:
             items:
               type: string
               enum:
-                - COVID_19
+                - EMERGING_INFECTIOUS_DISEASES
                 - DATA_ANALYTICS_AND_RESEARCH
                 - DIGITALISING_SYSTEM
                 - IMPROVING_SYSTEM_FLOW
-                - INDEPENDENCE_AND_PREVENTION
-                - OPERATIONAL_EXCELLENCE
-                - PATIENT_ACTIVATION_AND_SELF_CARE
+                - PREVENTIVE_CARE
+                - SUPPORTING_PEOPLE_HEALTH
                 - PATIENT_SAFETY
                 - WORKFORCE_RESOURCE_OPTIMISATION
                 - NET_ZERO_GREENER_INNOVATION
@@ -6628,13 +6627,12 @@ paths:
             items:
               type: string
               enum:
-                - COVID_19
+                - EMERGING_INFECTIOUS_DISEASES
                 - DATA_ANALYTICS_AND_RESEARCH
                 - DIGITALISING_SYSTEM
                 - IMPROVING_SYSTEM_FLOW
-                - INDEPENDENCE_AND_PREVENTION
-                - OPERATIONAL_EXCELLENCE
-                - PATIENT_ACTIVATION_AND_SELF_CARE
+                - PREVENTIVE_CARE
+                - SUPPORTING_PEOPLE_HEALTH
                 - PATIENT_SAFETY
                 - WORKFORCE_RESOURCE_OPTIMISATION
                 - NET_ZERO_GREENER_INNOVATION

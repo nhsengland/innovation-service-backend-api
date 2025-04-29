@@ -52,7 +52,7 @@ export class InnovationBuilder extends BaseBuilder {
       countryName: randCountry(),
       postcode: undefined,
 
-      areas: randBoolean() ? ['COVID_19'] : ['OPERATIONAL_EXCELLENCE'],
+      areas: randBoolean() ? ['EMERGING_INFECTIOUS_DISEASES'] : ['WORKFORCE_RESOURCE_OPTIMISATION'],
       careSettings: ['INDUSTRY'],
       categories: ['MEDICAL_DEVICE', 'AI'],
       mainCategory: 'MEDICAL_DEVICE',

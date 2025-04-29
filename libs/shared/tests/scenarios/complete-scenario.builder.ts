@@ -24,6 +24,7 @@ import {
   ThreadContextTypeEnum
 } from '../../enums/innovation.enums';
 import { ServiceRoleEnum, UserStatusEnum } from '../../enums/user.enums';
+import { DatesHelper } from '../../helpers/dates.helper';
 import type { Reminder, SupportUpdated } from '../../types';
 import { AnnouncementUserBuilder } from '../builders/announcement-users.builder';
 import { AnnouncementBuilder } from '../builders/announcement.builder';
@@ -34,6 +35,7 @@ import { InnovationFileBuilder } from '../builders/innovation-file.builder';
 import { InnovationReassessmentRequestBuilder } from '../builders/innovation-reassessment-request.builder';
 import { InnovationSupportLogBuilder } from '../builders/innovation-support-log.builder';
 import { InnovationSupportBuilder } from '../builders/innovation-support.builder';
+import { InnovationSurveyBuilder } from '../builders/innovation-survey.builder';
 import { InnovationTaskBuilder } from '../builders/innovation-task.builder';
 import { InnovationThreadBuilder } from '../builders/innovation-thread.builder';
 import { InnovationTransferBuilder } from '../builders/innovation-transfer.builder';
@@ -43,8 +45,6 @@ import { NotifyMeSubscriptionBuilder } from '../builders/notify-me-subscription.
 import { OrganisationUnitBuilder } from '../builders/organisation-unit.builder';
 import { OrganisationBuilder } from '../builders/organisation.builder';
 import { type TestUserType, UserBuilder } from '../builders/user.builder';
-import { InnovationSurveyBuilder } from '../builders/innovation-survey.builder';
-import { DatesHelper } from '../../helpers/dates.helper';
 
 export type CompleteScenarioType = Awaited<ReturnType<CompleteScenarioBuilder['createScenario']>>;
 
@@ -1099,7 +1099,9 @@ export class CompleteScenarioBuilder {
         .setTitle('Announcement for Specific Innovations')
         .setUserRoles([ServiceRoleEnum.INNOVATOR])
         .setStatus(AnnouncementStatusEnum.ACTIVE)
-        .setFilters([{ section: 'INNOVATION_DESCRIPTION', question: 'areas', answers: ['COVID_19'] }])
+        .setFilters([
+          { section: 'INNOVATION_DESCRIPTION', question: 'areas', answers: ['EMERGING_INFECTIOUS_DISEASES'] }
+        ])
         .save();
 
       const announcementUserForSpecificInnovationsJohnInnovation = await new AnnouncementUserBuilder(entityManager)

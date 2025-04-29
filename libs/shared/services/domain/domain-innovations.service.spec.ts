@@ -137,7 +137,7 @@ describe('Shared / services / innovations suite', () => {
     ])('should filter %s innovations', async (_type: string, onlySubmitted: boolean) => {
       const innovations = await sut.getInnovationsFiltered(
         [
-          { section: 'INNOVATION_DESCRIPTION', question: 'areas', answers: ['COVID_19'] },
+          { section: 'INNOVATION_DESCRIPTION', question: 'areas', answers: ['EMERGING_INFECTIOUS_DISEASES'] },
           { section: 'UNDERSTANDING_OF_NEEDS', question: 'hasProductServiceOrPrototype', answers: ['NO'] }
         ],
         { onlySubmitted },
@@ -146,7 +146,7 @@ describe('Shared / services / innovations suite', () => {
 
       const dbFilteredQuery = em
         .createQueryBuilder(InnovationDocumentEntity, 'document')
-        .where(`JSON_QUERY(document.document, '$.INNOVATION_DESCRIPTION.areas') LIKE '%COVID_19%'`)
+        .where(`JSON_QUERY(document.document, '$.INNOVATION_DESCRIPTION.areas') LIKE '%EMERGING_INFECTIOUS_DISEASES%'`)
         .andWhere(`JSON_VALUE(document.document, '$.UNDERSTANDING_OF_NEEDS.hasProductServiceOrPrototype') = 'NO'`);
 
       if (onlySubmitted) {
@@ -209,7 +209,11 @@ describe('Shared / services / innovations suite', () => {
     it('should filter all innovations even if some of the filters are invalid', async () => {
       const innovations = await sut.getInnovationsFiltered(
         [
-          { section: 'INNOVATION_DESCRIPTION', question: 'INVALID_QUESTION', answers: ['COVID_19'] },
+          {
+            section: 'INNOVATION_DESCRIPTION',
+            question: 'INVALID_QUESTION',
+            answers: ['EMERGING_INFECTIOUS_DISEASES']
+          },
           { section: 'INVALID_SECTION', question: 'hasProductServiceOrPrototype', answers: ['NO'] },
           { section: 'UNDERSTANDING_OF_NEEDS', question: 'hasProductServiceOrPrototype', answers: ['NO'] }
         ],
@@ -229,7 +233,11 @@ describe('Shared / services / innovations suite', () => {
       await expect(() =>
         sut.getInnovationsFiltered(
           [
-            { section: 'INNOVATION_DESCRIPTION', question: 'INVALID_QUESTION', answers: ['COVID_19'] },
+            {
+              section: 'INNOVATION_DESCRIPTION',
+              question: 'INVALID_QUESTION',
+              answers: ['EMERGING_INFECTIOUS_DISEASES']
+            },
             { section: 'INVALID_SECTION', question: 'hasProductServiceOrPrototype', answers: ['NO'] }
           ],
           {},
