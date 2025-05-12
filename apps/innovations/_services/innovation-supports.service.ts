@@ -1508,7 +1508,7 @@ export class InnovationSupportsService extends BaseService {
           organisationUnit: unitName,
           progressUpdate: {
             id: savedLog.id,
-            createdAt: data.createdAt
+            date: data.createdAt
           }
         }
       );

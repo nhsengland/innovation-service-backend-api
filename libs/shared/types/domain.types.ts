@@ -328,7 +328,7 @@ export type ActivityLogTemplatesType = {
       organisationUnit: string;
       progressUpdate: {
         id: string;
-        createdAt: Date;
+        date: Date;
       };
     };
   };
