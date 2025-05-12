@@ -6,13 +6,7 @@ export class createViewLastSupportActivityUpdate1728469267102 implements Migrati
   async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
     CREATE OR ALTER VIEW [innovation_support_last_activity_update_view] AS
-    WITH latest_support_log_update AS (
-      SELECT innovation_id, organisation_unit_id, MAX(created_at) as last_update
-      FROM innovation_support_log
-      WHERE type='PROGRESS_UPDATE'
-      GROUP BY innovation_id, organisation_unit_id
-    ),
-    latest_activity_log_update as (
+    WITH latest_activity_log_update as (
       SELECT l.innovation_id, r.organisation_unit_id, MAX(l.created_at) as last_update
       FROM activity_log L
       INNER JOIN user_role r ON l.user_role_id=r.id
@@ -22,17 +16,10 @@ export class createViewLastSupportActivityUpdate1728469267102 implements Migrati
     s.id as support_id,
     s.innovation_id,
     s.organisation_unit_id,
-    CASE
-      WHEN ISNULL(l1.last_update, '1900-01-01') >= ISNULL(l2.last_update, '1900-01-01') 
-        AND ISNULL(l1.last_update, '1900-01-01') >= s.updated_at THEN l1.last_update
-      WHEN ISNULL(l2.last_update, '1900-01-01') >= ISNULL(l1.last_update, '1900-01-01') 
-        AND ISNULL(l2.last_update, '1900-01-01') >= s.updated_at THEN l2.last_update
-      ELSE s.updated_at
-    END AS last_update
+    IIF(l.last_update > s.updated_at, l.last_update, s.updated_at) as last_update
     FROM innovation_support s
     INNER JOIN innovation i ON s.innovation_id=i.id AND i.status = 'IN_PROGRESS'
-    LEFT JOIN latest_support_log_update l1 on s.innovation_id = l1.innovation_id and s.organisation_unit_id=l1.organisation_unit_id
-    LEFT JOIN latest_activity_log_update l2 on s.innovation_id = l2.innovation_id and s.organisation_unit_id=l2.organisation_unit_id
+    LEFT JOIN latest_activity_log_update l on s.innovation_id = l.innovation_id and s.organisation_unit_id=l.organisation_unit_id
     WHERE s.is_most_recent = 1
   `);
   }
