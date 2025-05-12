@@ -1,6 +1,6 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class updateIRRelevant1744644031556 implements MigrationInterface {
+export class createPastProgressUpdateActivity1747043760030 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
       `
