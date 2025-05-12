@@ -265,6 +265,11 @@ export type ActivityLogDBParamsType = {
   };
 
   message?: string | { id: string };
+
+  progressUpdate?: {
+    id: string;
+    createdAt: Date;
+  };
 };
 
 // // This is the type of the list of activities.
@@ -316,6 +321,15 @@ export type ActivityLogTemplatesType = {
       innovationSupportStatus: InnovationSupportStatusEnum;
       organisationUnit: string;
       comment: { id: string; value: string };
+    };
+  };
+  [ActivityEnum.SUPPORT_PROGRESS_UPDATE]: {
+    params: {
+      organisationUnit: string;
+      progressUpdate: {
+        id: string;
+        date: Date;
+      };
     };
   };
   [ActivityEnum.TASK_CREATION]: {

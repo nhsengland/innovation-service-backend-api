@@ -131,6 +131,7 @@ paths:
                             - NEEDS_ASSESSMENT_EDITED
                             - ORGANISATION_SUGGESTION
                             - SUPPORT_STATUS_UPDATE
+                            - SUPPORT_PROGRESS_UPDATE
                             - COMMENT_CREATION
                             - TASK_CREATION
                             - TASK_STATUS_DONE_UPDATE

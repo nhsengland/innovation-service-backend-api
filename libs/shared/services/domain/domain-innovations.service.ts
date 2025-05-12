@@ -1279,6 +1279,7 @@ export class DomainInnovationsService {
 
       case ActivityEnum.ORGANISATION_SUGGESTION:
       case ActivityEnum.SUPPORT_STATUS_UPDATE:
+      case ActivityEnum.SUPPORT_PROGRESS_UPDATE:
         return ActivityTypeEnum.SUPPORT;
 
       case ActivityEnum.COMMENT_CREATION:
