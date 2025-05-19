@@ -4,6 +4,7 @@ import {
   InnovationAssessmentEntity,
   InnovationEntity,
   InnovationReassessmentRequestEntity,
+  InnovationThreadEntity,
   OrganisationEntity,
   OrganisationUnitEntity,
   UserEntity
@@ -421,6 +422,13 @@ export class InnovationAssessmentsService extends BaseService {
         previousAssessment: { id: latestAssessment.id }
       });
 
+      await this.updateAssessmentThreadAssignedNA(
+        domainContext,
+        innovationId,
+        domainContext.currentRole.id,
+        transaction
+      );
+
       await transaction.update(
         InnovationEntity,
         { id: latestAssessment.innovation.id },
@@ -516,6 +524,12 @@ export class InnovationAssessmentsService extends BaseService {
       // if assessment doesn't have an assigned assessor, assign the current user.
       if (!assessment.assignTo) {
         assessment.assignTo = UserEntity.new({ id: domainContext.id });
+        await this.updateAssessmentThreadAssignedNA(
+          domainContext,
+          innovationId,
+          domainContext.currentRole.id,
+          transaction
+        );
       }
 
       if (data.suggestedOrganisationUnitsIds) {
@@ -766,7 +780,8 @@ export class InnovationAssessmentsService extends BaseService {
       })
       .getOne();
 
-    if (!newAssessor) {
+    const assessorRole = newAssessor?.serviceRoles.find(r => r.role === ServiceRoleEnum.ASSESSMENT);
+    if (!(newAssessor && assessorRole)) {
       throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND);
     }
 
@@ -786,6 +801,8 @@ export class InnovationAssessmentsService extends BaseService {
 
     const updatedAssessment = await connection.transaction(async transaction => {
       await transaction.update(InnovationAssessmentEntity, { id: assessment.id }, { assignTo: newAssessor });
+
+      await this.updateAssessmentThreadAssignedNA(domainContext, innovationId, assessorRole.id, transaction);
 
       return {
         id: assessment.id,
@@ -969,5 +986,25 @@ export class InnovationAssessmentsService extends BaseService {
         });
       }
     }
+  }
+
+  private async updateAssessmentThreadAssignedNA(
+    domainContext: DomainContextType,
+    innovationId: string,
+    assessorRoleId: string,
+    entityManager: EntityManager
+  ): Promise<void> {
+    const thread = await entityManager
+      .createQueryBuilder(InnovationThreadEntity, 'thread')
+      .where('thread.context_type = :contextType', { contextType: ThreadContextTypeEnum.NEEDS_ASSESSMENT }) // Only one thread per innovation of type needs_assessment
+      .andWhere('thread.innovation_id = :innovationId', { innovationId: innovationId })
+      .getOne();
+
+    if (!thread) {
+      return;
+    }
+
+    await this.threadService.removeAssessmentFollowers(thread.id, entityManager);
+    await this.threadService.addFollowersToThread(domainContext, thread.id, [assessorRoleId], false, entityManager);
   }
 }
