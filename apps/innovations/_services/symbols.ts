@@ -1,4 +1,5 @@
 export const SYMBOLS = {
+  AnalyticsService: Symbol.for('AnalyticsService'),
   InnovationAssessmentsService: Symbol.for('InnovationAssessmentsService'),
   InnovationCollaboratorsService: Symbol.for('InnovationCollaboratorsService'),
   InnovationExportRequestService: Symbol.for('InnovationExportRequestService'),

@@ -32,6 +32,14 @@ erDiagram
   ACTIVITY_LOG ||--o| USER_ROLE : createdBy
   ACTIVITY_LOG ||--o| INNOVATION : belongsTo
 
+  ANALYTICS_ORGANISATION_INACTIVITY_BREACH {
+    date date PK
+    uuid innovation_id PK
+    uuid support_id PK
+  }
+  ANALYTICS_ORGANISATION_INACTIVITY_BREACH ||--o| INNOVATION : related
+  ANALYTICS_ORGANISATION_INACTIVITY_BREACH ||--o| INNOVATION_SUPPORT : related
+
   ANNOUNCEMENT {
     uuid id PK
     enum status
@@ -371,6 +379,11 @@ erDiagram
   }
   INNOVATION_TRANSFER ||--|| INNOVATION: relatedTo
 
+  JOB_TRACKER {
+    nvarchar job PK
+    date date
+  }
+
   MIGRATIONS {
     int id PK
     bigint timestamp
@@ -681,6 +694,15 @@ Most activities done by the users are registered in the activity log for audit a
 |assessment|{id:string}|Optional details of the assessment associated with the activity, including its ID.|
 |reassessment|{id:string}|Optional details of the reassessment associated with the activity, including its ID.|
 |message|string\|{id:string}|Optional message related to the activity, which may be a string or an object with an ID.|
+
+## ANALYTICS_ORGANISATION_INACTIVITY_BREACH
+This table tracks the breaches for the 3 month KPI and his populated on a schedule.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|date|date|date of the breach|PK|
+|innovation_id|uuid|The innovation breached|PK|
+|support_id|uuid|The innovation support breached|PK|
 
 ## ANNOUNCEMENT
 Admins have the ability to create different announcements that will be made available to different users.
@@ -1205,6 +1227,14 @@ The `INNOVATION_TRANSFER` table tracks the transfer of ownership for innovations
 - This table facilitates the smooth transition of roles and responsibilities for innovations, ensuring continuity and proper authorization.
 - The `emailCount` field helps monitor communication efforts, ensuring recipients are adequately informed about the transfer.
 - The `finishedAt` field provides a timestamp for when the transfer process was concluded, aiding in audit and reporting.
+
+## JOB_TRACKER
+Tracks jobs ran to avoid reprocessing. Currently only used for the analytics_breach.
+
+|column|type|description|values/constraints|
+|--|--|--|--|
+|job|varchar|the identifier for the job ran|PK|
+|date|date|the data the job ran||
 
 ## MIGRATIONS
 The `MIGRATIONS` table tracks the migration history for the database, ensuring that all schema changes are applied in the correct order.
