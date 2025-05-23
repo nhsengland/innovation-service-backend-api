@@ -696,7 +696,7 @@ Most activities done by the users are registered in the activity log for audit a
 |message|string\|{id:string}|Optional message related to the activity, which may be a string or an object with an ID.|
 
 ## ANALYTICS_ORGANISATION_INACTIVITY_BREACH
-This table tracks the breaches for the 3 month KPI and his populated on a schedule.
+This table tracks the breaches for the 3 month KPI and is populated on a schedule.
 
 |column|type|description|values/constraints|
 |--|--|--|--|
