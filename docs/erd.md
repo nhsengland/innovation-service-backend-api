@@ -1234,7 +1234,7 @@ Tracks jobs ran to avoid reprocessing. Currently only used for the analytics_bre
 |column|type|description|values/constraints|
 |--|--|--|--|
 |job|varchar|the identifier for the job ran|PK|
-|date|date|the data the job ran||
+|date|date|the date the job ran||
 
 ## MIGRATIONS
 The `MIGRATIONS` table tracks the migration history for the database, ensuring that all schema changes are applied in the correct order.
