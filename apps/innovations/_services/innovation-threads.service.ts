@@ -269,6 +269,18 @@ export class InnovationThreadsService extends BaseService {
       .execute();
   }
 
+  async removeAssessmentFollowers(threadId: string, entityManager?: EntityManager): Promise<void> {
+    const manager = entityManager ?? this.sqlConnection.manager;
+
+    await manager
+      .createQueryBuilder()
+      .delete()
+      .from('innovation_thread_follower')
+      .where('innovation_thread_id = :threadId', { threadId })
+      .andWhere("EXISTS(SELECT 1 FROM user_role r WHERE user_role_id=r.id AND r.role='ASSESSMENT')")
+      .execute();
+  }
+
   async createThread(
     domainContext: DomainContextType,
     innovationId: string,

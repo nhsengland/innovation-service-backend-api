@@ -1135,6 +1135,10 @@ export class RecipientsService extends BaseService {
   async getRecipientsByRoleId(userRoleIds: string[], entityManager?: EntityManager): Promise<RecipientType[]> {
     const em = entityManager ?? this.sqlConnection.manager;
 
+    if (!userRoleIds.length) {
+      return [];
+    }
+
     const userRoles = await em
       .createQueryBuilder(UserRoleEntity, 'userRole')
       .select([

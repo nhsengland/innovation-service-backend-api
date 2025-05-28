@@ -148,7 +148,7 @@ export const NOTIFICATIONS_CONFIG = {
       innovationId: JoiHelper.AppCustomJoi().string().guid().required(),
       supportId: JoiHelper.AppCustomJoi().string().guid().required(),
       threadId: JoiHelper.AppCustomJoi().string().guid().required(),
-      message: JoiHelper.AppCustomJoi().string().max(TEXTAREA_LENGTH_LIMIT.xl).required(),
+      message: JoiHelper.AppCustomJoi().string().max(TEXTAREA_LENGTH_LIMIT.xxl).required(),
       newAssignedAccessorsRoleIds: Joi.array().items(JoiHelper.AppCustomJoi().string().guid()),
       removedAssignedAccessorsRoleIds: Joi.array().items(JoiHelper.AppCustomJoi().string().guid()),
       changedStatus: Joi.boolean().strict().required()

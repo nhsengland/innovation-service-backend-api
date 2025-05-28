@@ -2,6 +2,7 @@ import { container } from '@innovations/shared/config/inversify.config';
 
 import SYMBOLS from '../_services/symbols';
 
+import { AnalyticsService } from '../_services/analytics.service';
 import { ExportFileService } from '../_services/export-file-service';
 import { InnovationAssessmentsService } from '../_services/innovation-assessments.service';
 import { InnovationCollaboratorsService } from '../_services/innovation-collaborators.service';
@@ -14,12 +15,13 @@ import { InnovationTasksService } from '../_services/innovation-tasks.service';
 import { InnovationThreadsService } from '../_services/innovation-threads.service';
 import { InnovationTransferService } from '../_services/innovation-transfer.service';
 import { InnovationsService } from '../_services/innovations.service';
-import { StatisticsService } from '../_services/statistics.service';
 import { SearchService } from '../_services/search.service';
-import { ValidationService } from '../_services/validation.service';
+import { StatisticsService } from '../_services/statistics.service';
 import { SurveysService } from '../_services/surveys.service';
+import { ValidationService } from '../_services/validation.service';
 
 // Specific inversify container configuration.
+container.bind<AnalyticsService>(SYMBOLS.AnalyticsService).to(AnalyticsService).inSingletonScope();
 container.bind<InnovationTasksService>(SYMBOLS.InnovationTasksService).to(InnovationTasksService).inSingletonScope();
 container
   .bind<InnovationAssessmentsService>(SYMBOLS.InnovationAssessmentsService)

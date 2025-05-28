@@ -1043,7 +1043,14 @@ describe('Notifications / _services / recipients service suite', () => {
       const date30DaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
       const date31DaysAgo = new Date(Date.now() - 31 * 24 * 60 * 60 * 1000);
       await em.update(InnovationSupportEntity, { id: support.id }, { updatedAt: date31DaysAgo });
-      // No activity logs await em.delete(ActivityLogEntity, { innovation: { id: innovation.id } });
+      await em.insert(ActivityLogEntity, {
+        innovation: { id: innovation.id },
+        type: ActivityTypeEnum.SUPPORT,
+        activity: ActivityEnum.SUPPORT_PROGRESS_UPDATE,
+        userRole: { id: scenario.users.aliceQualifyingAccessor.roles.qaRole.id },
+        createdAt: date30DaysAgo,
+        updatedAt: date30DaysAgo
+      });
 
       // needs to be raw query because we need to update createdAt
       await em.query(

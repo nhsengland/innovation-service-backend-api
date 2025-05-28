@@ -1420,10 +1420,12 @@ export class InnovationSupportsService extends BaseService {
   ): Promise<void> {
     const connection = entityManager ?? this.sqlConnection.manager;
 
-    const unitId = domainContext.organisation?.organisationUnit?.id;
-    if (!unitId) {
+    if (!isAccessorDomainContextType(domainContext)) {
       throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
     }
+
+    const unitId = domainContext.organisation.organisationUnit.id;
+    const unitName = domainContext.organisation.organisationUnit.name;
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { description, document, createdAt, ...params } = data;
@@ -1494,6 +1496,22 @@ export class InnovationSupportsService extends BaseService {
           savedLog.id
         ]);
       }
+
+      await this.domainService.innovations.addActivityLog(
+        transaction,
+        {
+          innovationId: innovationId,
+          activity: ActivityEnum.SUPPORT_PROGRESS_UPDATE,
+          domainContext
+        },
+        {
+          organisationUnit: unitName,
+          progressUpdate: {
+            id: savedLog.id,
+            date: data.createdAt
+          }
+        }
+      );
     });
 
     await this.notifierService.send(domainContext, NotifierTypeEnum.SUPPORT_SUMMARY_UPDATE, {
