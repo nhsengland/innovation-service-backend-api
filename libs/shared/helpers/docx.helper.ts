@@ -128,7 +128,7 @@ export async function generateWordDocument(irShema: IRSchemaType): Promise<Buffe
  * Generates the cover page for the document
  * @returns Array of paragraphs for the cover page
  */
-function generateCoverPage(): Paragraph[] {
+export function generateCoverPage(): Paragraph[] {
   const paragraphs: Paragraph[] = [];
   const today = new Date();
   const formattedDate = today.toLocaleDateString('en-GB', {
@@ -203,7 +203,7 @@ function generateCoverPage(): Paragraph[] {
  * @param schema The schema containing sections and subsections
  * @returns Array of paragraphs for the table of contents
  */
-function generateTableOfContents(schema: IRSchemaType): Paragraph[] {
+export function generateTableOfContents(schema: IRSchemaType): Paragraph[] {
   const paragraphs: Paragraph[] = [];
 
   // Add Table of Contents title
@@ -293,7 +293,7 @@ function generateTableOfContents(schema: IRSchemaType): Paragraph[] {
   return paragraphs;
 }
 
-function generateDocumentContent(schema: IRSchemaType): Paragraph[] {
+export function generateDocumentContent(schema: IRSchemaType): Paragraph[] {
   const paragraphs: Paragraph[] = [];
 
   // Process sections
@@ -474,7 +474,7 @@ function generateDocumentContent(schema: IRSchemaType): Paragraph[] {
   return paragraphs;
 }
 
-function processQuestionItems(question: Question): Paragraph[] {
+export function processQuestionItems(question: Question): Paragraph[] {
   const paragraphs: Paragraph[] = [];
 
   // Only process if question is of type 'radio-group' or 'checkbox-array'
@@ -517,7 +517,7 @@ function processQuestionItems(question: Question): Paragraph[] {
   return paragraphs;
 }
 
-function basicParagraph(text: string): Paragraph {
+export function basicParagraph(text: string): Paragraph {
   return new Paragraph({
     children: [
       new TextRun({
@@ -531,7 +531,7 @@ function basicParagraph(text: string): Paragraph {
 }
 
 // Converts HTML content to docx Paragraph elements
-function convertHtmlToDocxElements(htmlContent: string): Paragraph[] {
+export function convertHtmlToDocxElements(htmlContent: string): Paragraph[] {
   const paragraphs: Paragraph[] = [];
   let currentParagraph = new Paragraph({});
 
@@ -606,7 +606,7 @@ export async function addFormElements(docBuffer: Buffer): Promise<Buffer> {
  * @param documentXml The XML content of the Word document
  * @returns Updated XML with proper checkbox elements
  */
-function replaceCheckboxPlaceholders(documentXml: string): string {
+export function replaceCheckboxPlaceholders(documentXml: string): string {
   // Regular expression to find text tags containing checkbox placeholders
   // Handles text tags with attributes like xml:space
   const regex = /<w:t(?:\s+[^>]*)?>(.*?)\[\[CHECKBOX\]\](.*?)<\/w:t>/g;
@@ -704,7 +704,7 @@ function replaceCheckboxPlaceholders(documentXml: string): string {
  * @param documentXml The XML content of the Word document
  * @returns Updated XML with modern text box elements
  */
-function replaceTextBoxPlaceholders(documentXml: string): string {
+export function replaceTextBoxPlaceholders(documentXml: string): string {
   // Regular expression to find text tags containing text box placeholders
   const regex = /<w:t(?:\s+[^>]*)?>(.*?)\[Write your answer here\](.*?)<\/w:t>/g;
   let result = documentXml;
@@ -799,7 +799,7 @@ function replaceTextBoxPlaceholders(documentXml: string): string {
  * Updates the settings.xml file to remove shading from form data
  * @param zip The JSZip object containing the Word document
  */
-async function updateDocumentSettings(zip: any): Promise<void> {
+export async function updateDocumentSettings(zip: any): Promise<void> {
   const settingsFile = zip.file('word/settings.xml');
   if (!settingsFile) {
     console.warn('word/settings.xml not found - skipping document settings update');

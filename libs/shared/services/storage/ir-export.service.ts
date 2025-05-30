@@ -14,21 +14,15 @@ export class IRExportService {
    * and use it to create the docx file.
    */
   async generateDocx(): Promise<Buffer> {
-    try {
-      // 1. Retrieve JSON schema from database
-      const schema = await this.irSchemaService.getSchema();
+    // 1. Retrieve JSON schema from database
+    const schema = await this.irSchemaService.getSchema();
 
-      // 2. Generate Word document
-      const documentBuffer = await generateWordDocument(schema.model.schema);
+    // 2. Generate Word document
+    const documentBuffer = await generateWordDocument(schema.model.schema);
 
-      // 3. Process document to add checkboxes and other form elements
-      const finalBuffer = await addFormElements(documentBuffer);
+    // 3. Process document to add checkboxes and other form elements
+    const finalBuffer = await addFormElements(documentBuffer);
 
-      return finalBuffer;
-    } catch (error) {
-      console.error('Error processing document:', error instanceof Error ? error.message : error);
-      console.error(error);
-      throw error;
-    }
+    return finalBuffer;
   }
 }
