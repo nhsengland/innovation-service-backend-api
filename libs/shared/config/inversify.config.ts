@@ -16,6 +16,7 @@ import { FileStorageService } from '../services/storage/file-storage.service';
 import { IRSchemaService } from '../services/storage/ir-schema.service';
 import { RedisService } from '../services/storage/redis.service';
 import { SQLConnectionService } from '../services/storage/sql-connection.service';
+import { IRExportService } from '../services/storage/ir-export.service';
 import SHARED_SYMBOLS from '../services/symbols';
 
 export const container: Container = new Container();
@@ -37,6 +38,7 @@ container.bind<CacheService>(SHARED_SYMBOLS.CacheService).to(CacheService).inSin
 container.bind<ElasticSearchService>(SHARED_SYMBOLS.ElasticSearchService).to(ElasticSearchService).inSingletonScope();
 container.bind<RedisService>(SHARED_SYMBOLS.RedisService).to(RedisService).inSingletonScope();
 container.bind<IRSchemaService>(SHARED_SYMBOLS.IRSchemaService).to(IRSchemaService).inSingletonScope();
+container.bind<IRExportService>(SHARED_SYMBOLS.IRExportService).to(IRExportService).inSingletonScope();
 
 // Force SQL initialization on startup so that the connection is ready on first request
 container.get<SQLConnectionService>(SHARED_SYMBOLS.SQLConnectionService);
