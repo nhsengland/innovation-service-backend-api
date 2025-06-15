@@ -14,6 +14,7 @@ import {
   InnovationSupportStatusEnum,
   InnovationTaskStatusEnum,
   NotifierTypeEnum,
+  OrganisationTypeEnum,
   UserStatusEnum
 } from '@admin/shared/enums';
 import { NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@admin/shared/errors';
@@ -485,6 +486,83 @@ describe('Admin / _services / organisations service suite', () => {
           em
         )
       ).rejects.toThrow(new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_ALREADY_EXISTS));
+    });
+
+    it('should not allow changing the NHSE organisation acronym', async () => {
+      // Prepare a fake NHSE org in the DB
+      const nhseOrg = await em.getRepository(OrganisationEntity).save(
+        OrganisationEntity.new({
+          name: 'NHS England',
+          acronym: 'NHSE',
+          summary: 'NHSE summary',
+          website: 'https://nhs.uk',
+          type: OrganisationTypeEnum.ACCESSOR,
+          inactivatedAt: null,
+        })
+      );
+      const data = {
+        name: 'NHS England',
+        acronym: 'NEWNHSE', // attempt to change
+        summary: 'Updated summary',
+        website: 'https://nhs.uk'
+      };
+      await expect(() => sut.updateOrganisation(nhseOrg.id, data, em)).rejects.toThrow(
+        new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_NHSE_ACRONYM_CANNOT_BE_CHANGED)
+      );
+    });
+
+    it('should allow updating other fields for NHSE organisation if acronym is unchanged', async () => {
+      // Prepare a fake NHSE org in the DB
+      const nhseOrg = await em.getRepository(OrganisationEntity).save(
+        OrganisationEntity.new({
+          name: 'NHS England',
+          acronym: 'NHSE',
+          summary: 'NHSE summary',
+          website: 'https://nhs.uk',
+          type: OrganisationTypeEnum.ACCESSOR,
+          inactivatedAt: null,
+        })
+      );
+      const data = {
+        name: 'NHS England Updated',
+        acronym: 'NHSE', // unchanged
+        summary: 'Updated summary',
+        website: 'https://nhs.uk/updated'
+      };
+      const result = await sut.updateOrganisation(nhseOrg.id, data, em);
+      expect(result).toMatchObject({ id: nhseOrg.id });
+      const dbOrganisation = await em
+        .createQueryBuilder(OrganisationEntity, 'organisation')
+        .where('organisation.id = :organisationId', { organisationId: nhseOrg.id })
+        .getOne();
+      expect(dbOrganisation?.name).toBe(data.name);
+      expect(dbOrganisation?.acronym).toBe('NHSE');
+    });
+
+    it('should allow changing the acronym for a non-NHSE organisation', async () => {
+      const org = await em.getRepository(OrganisationEntity).save(
+        OrganisationEntity.new({
+          name: 'Test Org',
+          acronym: 'TEST',
+          summary: 'Test summary',
+          website: 'https://test.org',
+          type: OrganisationTypeEnum.ACCESSOR,
+          inactivatedAt: null,
+        })
+      );
+      const data = {
+        name: 'Test Org',
+        acronym: 'NEWTEST',
+        summary: 'Test summary',
+        website: 'https://test.org'
+      };
+      const result = await sut.updateOrganisation(org.id, data, em);
+      expect(result).toMatchObject({ id: org.id });
+      const dbOrganisation = await em
+        .createQueryBuilder(OrganisationEntity, 'organisation')
+        .where('organisation.id = :organisationId', { organisationId: org.id })
+        .getOne();
+      expect(dbOrganisation?.acronym).toBe('NEWTEST');
     });
   });
 
