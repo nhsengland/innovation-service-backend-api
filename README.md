@@ -143,6 +143,7 @@ $ npm run migrations:test # Only needs to be runned once.
 
 $ npm run app:test --function-app=innovations
 $ npm run app:test --function-app=users
+$ npm run app:test --function-app=admin
 $ ...
 
 ```

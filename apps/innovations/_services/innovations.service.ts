@@ -1493,6 +1493,11 @@ export class InnovationsService extends BaseService {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ALREADY_EXISTS);
     }
 
+    const nhseOrganisation = await connection
+      .createQueryBuilder(OrganisationEntity, 'organisation')
+      .where('organisation.acronym = :acronym', { acronym: 'NHSE' })
+      .getOne();
+
     return connection.transaction(async transaction => {
       const now = new Date();
 
@@ -1507,6 +1512,8 @@ export class InnovationsService extends BaseService {
           owner: UserEntity.new({ id: domainContext.id }),
           status: InnovationStatusEnum.CREATED,
           statusUpdatedAt: new Date(),
+          // Always share with NHSE organisation
+          ...(nhseOrganisation ? { organisationShares: [nhseOrganisation] } : {}),
 
           createdAt: now,
           createdBy: domainContext.id,
@@ -1578,6 +1585,17 @@ export class InnovationsService extends BaseService {
     entityManager?: EntityManager
   ): Promise<void> {
     const em = entityManager ?? this.sqlConnection.manager;
+
+    // Get NHSE organisation by its acronym "NHSE"
+    const nhseOrganisation = await em
+      .createQueryBuilder(OrganisationEntity, 'organisation')
+      .where('organisation.acronym = :acronym', { acronym: 'NHSE' })
+      .getOne();
+
+    // add NHSE organisation to the shares if not already present
+    if (nhseOrganisation && !organisationShares.includes(nhseOrganisation.id)) {
+      organisationShares = [...organisationShares, nhseOrganisation.id];
+    }
 
     // Sanity check if all organisation exists.
     const organisations = await em
