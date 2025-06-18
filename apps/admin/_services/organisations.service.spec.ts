@@ -14,7 +14,6 @@ import {
   InnovationSupportStatusEnum,
   InnovationTaskStatusEnum,
   NotifierTypeEnum,
-  OrganisationTypeEnum,
   UserStatusEnum
 } from '@admin/shared/enums';
 import { NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@admin/shared/errors';
@@ -490,15 +489,15 @@ describe('Admin / _services / organisations service suite', () => {
 
     it('should not allow changing the NHSE organisation acronym', async () => {
       // Prepare a fake NHSE org in the DB
-      const nhseOrg = await em.getRepository(OrganisationEntity).save(
-        OrganisationEntity.new({
+      const nhseOrg = await sut.createOrganisation(
+        domainContext,
+        {
           name: 'NHS England',
           acronym: 'NHSE',
           summary: 'NHSE summary',
-          website: 'https://nhs.uk',
-          type: OrganisationTypeEnum.ACCESSOR,
-          inactivatedAt: null,
-        })
+          website: 'https://nhs.uk'
+        },
+        em
       );
       const data = {
         name: 'NHS England',
@@ -507,21 +506,23 @@ describe('Admin / _services / organisations service suite', () => {
         website: 'https://nhs.uk'
       };
       await expect(() => sut.updateOrganisation(nhseOrg.id, data, em)).rejects.toThrow(
-        new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_NHSE_ACRONYM_CANNOT_BE_CHANGED)
+        new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_NHSE_ACRONYM_CANNOT_BE_CHANGED, {
+          message: 'NHSE acronym cannot be changed'
+        })
       );
     });
 
     it('should allow updating other fields for NHSE organisation if acronym is unchanged', async () => {
       // Prepare a fake NHSE org in the DB
-      const nhseOrg = await em.getRepository(OrganisationEntity).save(
-        OrganisationEntity.new({
+      const nhseOrg = await sut.createOrganisation(
+        domainContext,
+        {
           name: 'NHS England',
           acronym: 'NHSE',
           summary: 'NHSE summary',
-          website: 'https://nhs.uk',
-          type: OrganisationTypeEnum.ACCESSOR,
-          inactivatedAt: null,
-        })
+          website: 'https://nhs.uk'
+        },
+        em
       );
       const data = {
         name: 'NHS England Updated',
@@ -540,15 +541,15 @@ describe('Admin / _services / organisations service suite', () => {
     });
 
     it('should allow changing the acronym for a non-NHSE organisation', async () => {
-      const org = await em.getRepository(OrganisationEntity).save(
-        OrganisationEntity.new({
+      const org = await sut.createOrganisation(
+        domainContext,
+        {
           name: 'Test Org',
           acronym: 'TEST',
           summary: 'Test summary',
-          website: 'https://test.org',
-          type: OrganisationTypeEnum.ACCESSOR,
-          inactivatedAt: null,
-        })
+          website: 'https://test.org'
+        },
+        em
       );
       const data = {
         name: 'Test Org',
