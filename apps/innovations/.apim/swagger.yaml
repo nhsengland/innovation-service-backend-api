@@ -4079,6 +4079,9 @@ paths:
                       items:
                         type: string
                         maxLength: 100
+                    whetherToNotify:
+                      type: string
+                      maxLength: 3
                   required:
                     - description
                     - categories

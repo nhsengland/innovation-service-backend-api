@@ -27,7 +27,8 @@ const BaseSchema = Joi.object<BodyType>({
 export const BodySchema = Joi.alternatives([
   BaseSchema.append({ title: JoiHelper.AppCustomJoi().string().max(100).required() }),
   BaseSchema.append({
-    categories: JoiHelper.AppCustomJoi().stringArray().items(JoiHelper.AppCustomJoi().string().max(100)).required()
+    categories: JoiHelper.AppCustomJoi().stringArray().items(JoiHelper.AppCustomJoi().string().max(100)).required(),
+    whetherToNotify: JoiHelper.AppCustomJoi().string().max(3).optional()
   }),
   BaseSchema.append({
     category: JoiHelper.AppCustomJoi().string().max(100).required(),

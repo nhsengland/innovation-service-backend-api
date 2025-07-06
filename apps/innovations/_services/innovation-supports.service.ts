@@ -1415,6 +1415,7 @@ export class InnovationSupportsService extends BaseService {
       description: string;
       createdAt: Date;
       document?: InnovationFileType;
+      whetherToNotify?: string;
     } & SupportLogProgressUpdate['params'],
     entityManager?: EntityManager
   ): Promise<void> {
@@ -1514,10 +1515,12 @@ export class InnovationSupportsService extends BaseService {
       );
     });
 
-    await this.notifierService.send(domainContext, NotifierTypeEnum.SUPPORT_SUMMARY_UPDATE, {
-      innovationId,
-      supportId: support.id
-    });
+    if (data.whetherToNotify !== 'no'){
+      await this.notifierService.send(domainContext, NotifierTypeEnum.SUPPORT_SUMMARY_UPDATE, {
+        innovationId,
+        supportId: support.id
+      });
+    }
 
     await this.notifierService.sendNotifyMe(domainContext, innovationId, 'PROGRESS_UPDATE_CREATED', {
       units: unitId
