@@ -1518,6 +1518,7 @@ export class InnovationSupportsService extends BaseService {
     if (data.whetherToNotify !== 'no'){
       await this.notifierService.send(domainContext, NotifierTypeEnum.SUPPORT_SUMMARY_UPDATE, {
         innovationId,
+        date: data.createdAt.toJSON().split('T')[0] as string,
         supportId: support.id
       });
     }

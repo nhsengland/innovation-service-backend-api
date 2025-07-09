@@ -48,6 +48,7 @@ export class SupportSummaryUpdateHandler extends BaseHandler<
       params: {
         innovation_name: innovation.name,
         unit_name: unit.name,
+        date: this.inputData.date,
         support_summary_update_url: supportSummaryUrl(
           ServiceRoleEnum.INNOVATOR,
           this.inputData.innovationId,
@@ -67,6 +68,7 @@ export class SupportSummaryUpdateHandler extends BaseHandler<
       params: {
         innovationName: innovation.name,
         unitName: unit.name,
+        date: this.inputData.date,
         unitId: unit.id
       },
       notificationId
@@ -89,6 +91,7 @@ export class SupportSummaryUpdateHandler extends BaseHandler<
       params: {
         innovation_name: innovation.name,
         unit_name: unit.name,
+        date: this.inputData.date,
         support_summary_update_url: supportSummaryUrl(
           ServiceRoleEnum.ACCESSOR,
           this.inputData.innovationId,
@@ -108,6 +111,7 @@ export class SupportSummaryUpdateHandler extends BaseHandler<
       params: {
         innovationName: innovation.name,
         unitName: unit.name,
+        date: this.inputData.date,
         unitId: unit.id
       },
       notificationId
