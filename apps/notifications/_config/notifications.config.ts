@@ -211,7 +211,8 @@ export const NOTIFICATIONS_CONFIG = {
     handler: SupportSummaryUpdateHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.SUPPORT_SUMMARY_UPDATE]>({
       innovationId: JoiHelper.AppCustomJoi().string().guid().required(),
-      supportId: JoiHelper.AppCustomJoi().string().guid().required()
+      supportId: JoiHelper.AppCustomJoi().string().guid().required(),
+      date: JoiHelper.AppCustomJoi().string().required(),
     }).required()
   },
 
