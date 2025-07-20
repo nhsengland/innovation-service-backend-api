@@ -29,7 +29,9 @@ export class SupportSummaryUpdateHandler extends BaseHandler<
     const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
     const unit = { id: this.requestUser.organisation.organisationUnit.id, name: this.getRequestUnitName() };
 
-    await this.SS01_SUPPORT_SUMMARY_UPDATE_TO_INNOVATORS(innovation, unit);
+    if (this.inputData.whetherToNotify !== 'no') {
+      await this.SS01_SUPPORT_SUMMARY_UPDATE_TO_INNOVATORS(innovation, unit);
+    }
     await this.SS02_SUPPORT_SUMMARY_UPDATE_TO_OTHER_ENGAGING_ACCESSORS(innovation, unit);
 
     return this;
