@@ -143,6 +143,7 @@ export type NotifierTemplatesType = {
     innovationId: string;
     supportId: string;
     date: string;
+    whetherToNotify: 'yes' | 'no' | undefined;
   };
 
   // Supports

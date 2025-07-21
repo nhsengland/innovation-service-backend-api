@@ -213,6 +213,7 @@ export const NOTIFICATIONS_CONFIG = {
       innovationId: JoiHelper.AppCustomJoi().string().guid().required(),
       supportId: JoiHelper.AppCustomJoi().string().guid().required(),
       date: JoiHelper.AppCustomJoi().string().required(),
+      whetherToNotify: JoiHelper.AppCustomJoi().string().valid('yes', 'no').optional().default('yes')
     }).required()
   },
 

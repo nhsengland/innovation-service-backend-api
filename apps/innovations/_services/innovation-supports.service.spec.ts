@@ -1583,13 +1583,12 @@ describe('Innovations / _services / innovation-supports suite', () => {
       });
     });
 
-    it('should call notifier when whetherToNotify is not "no"', async () => {
+    it('should call notifier', async () => {
       const domainContext = DTOsHelper.getUserRequestContext(user, 'qaRole');
       const data: Parameters<InnovationSupportsService['createProgressUpdate']>[2] = {
         description: randText(),
         title: randText(),
-        createdAt: support.startedAt!,
-        whetherToNotify: 'yes'
+        createdAt: support.startedAt!
       };
       const dbProgressId = randUuid();
       supportLogSpy.mockResolvedValueOnce({ id: dbProgressId });
@@ -1597,30 +1596,6 @@ describe('Innovations / _services / innovation-supports suite', () => {
       await sut.createProgressUpdate(domainContext, innovationId, data, em);
 
       expect(notifierSendSpy).toHaveBeenCalledWith(
-        domainContext,
-        NotifierTypeEnum.SUPPORT_SUMMARY_UPDATE,
-        expect.objectContaining({
-          innovationId: innovationId,
-          supportId: support.id,
-          date: expect.any(String)
-        })
-      );
-    });
-
-    it('should NOT call notifier when whetherToNotify is "no"', async () => {
-      const domainContext = DTOsHelper.getUserRequestContext(user, 'qaRole');
-      const data: Parameters<InnovationSupportsService['createProgressUpdate']>[2] = {
-        description: randText(),
-        title: randText(),
-        createdAt: support.startedAt!,
-        whetherToNotify: 'no'
-      };
-      const dbProgressId = randUuid();
-      supportLogSpy.mockResolvedValueOnce({ id: dbProgressId });
-
-      await sut.createProgressUpdate(domainContext, innovationId, data, em);
-
-      expect(notifierSendSpy).not.toHaveBeenCalledWith(
         domainContext,
         NotifierTypeEnum.SUPPORT_SUMMARY_UPDATE,
         expect.objectContaining({
