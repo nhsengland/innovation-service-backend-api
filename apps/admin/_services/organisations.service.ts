@@ -397,6 +397,23 @@ export class OrganisationsService extends BaseService {
         throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
       }
 
+      // if organisation we want to update is NHSE
+      // Get NHSE organisation by its acronym "NHSE" From DB
+      // Then ensure that we can't change its acronym
+      // Reason : because it is an organisation that all innovations are shared
+      // with and if we change its acronym it will break the default sharing functionality
+      if (organisation?.acronym === 'NHSE') {
+        const nhseOrganisation = await em
+          .createQueryBuilder(OrganisationEntity, 'organisation')
+          .select(['organisation.id'])
+          .where('organisation.acronym = :acronym', { acronym: 'NHSE' })
+          .getOne();
+        if (nhseOrganisation && nhseOrganisation.id === organisationId && data.acronym !== 'NHSE')
+          throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_NHSE_ACRONYM_CANNOT_BE_CHANGED, {
+            message: 'NHSE acronym cannot be changed'
+          });
+      }
+
       const orgNameOrAcronymAlreadyExists = await transaction
         .createQueryBuilder(OrganisationEntity, 'org')
         .where('(org.name = :name OR org.acronym = :acronym) AND org.id != :organisationId AND org.type= :type', {

@@ -29,7 +29,9 @@ export class SupportSummaryUpdateHandler extends BaseHandler<
     const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
     const unit = { id: this.requestUser.organisation.organisationUnit.id, name: this.getRequestUnitName() };
 
-    await this.SS01_SUPPORT_SUMMARY_UPDATE_TO_INNOVATORS(innovation, unit);
+    if (this.inputData.whetherToNotify !== 'no') {
+      await this.SS01_SUPPORT_SUMMARY_UPDATE_TO_INNOVATORS(innovation, unit);
+    }
     await this.SS02_SUPPORT_SUMMARY_UPDATE_TO_OTHER_ENGAGING_ACCESSORS(innovation, unit);
 
     return this;
@@ -48,6 +50,7 @@ export class SupportSummaryUpdateHandler extends BaseHandler<
       params: {
         innovation_name: innovation.name,
         unit_name: unit.name,
+        date: this.inputData.date,
         support_summary_update_url: supportSummaryUrl(
           ServiceRoleEnum.INNOVATOR,
           this.inputData.innovationId,
@@ -67,6 +70,7 @@ export class SupportSummaryUpdateHandler extends BaseHandler<
       params: {
         innovationName: innovation.name,
         unitName: unit.name,
+        date: this.inputData.date,
         unitId: unit.id
       },
       notificationId
@@ -89,6 +93,7 @@ export class SupportSummaryUpdateHandler extends BaseHandler<
       params: {
         innovation_name: innovation.name,
         unit_name: unit.name,
+        date: this.inputData.date,
         support_summary_update_url: supportSummaryUrl(
           ServiceRoleEnum.ACCESSOR,
           this.inputData.innovationId,
@@ -108,6 +113,7 @@ export class SupportSummaryUpdateHandler extends BaseHandler<
       params: {
         innovationName: innovation.name,
         unitName: unit.name,
+        date: this.inputData.date,
         unitId: unit.id
       },
       notificationId

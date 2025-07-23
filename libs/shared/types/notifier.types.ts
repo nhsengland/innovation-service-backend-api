@@ -142,6 +142,8 @@ export type NotifierTemplatesType = {
   [NotifierTypeEnum.SUPPORT_SUMMARY_UPDATE]: {
     innovationId: string;
     supportId: string;
+    date: string;
+    whetherToNotify: 'yes' | 'no' | undefined;
   };
 
   // Supports

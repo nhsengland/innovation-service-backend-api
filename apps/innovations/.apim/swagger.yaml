@@ -1701,6 +1701,21 @@ paths:
           description: Ok.
         "400":
           description: Bad request.
+  /v1/innovation-record/docx:
+    get:
+      description: Generate docx for the innovation record
+      tags:
+        - "[v1] Innovations"
+      operationId: v1-innovation-record-docx-export
+      responses:
+        "200":
+          description: DOCX file download
+          content:
+            application/vnd.openxmlformats-officedocument.wordprocessingml.document:
+              schema:
+                type: string
+        "400":
+          description: Bad request.
   /v1/{innovationId}/evidence:
     post:
       description: Create an innovation evidence entry.
@@ -4064,6 +4079,9 @@ paths:
                       items:
                         type: string
                         maxLength: 100
+                    whetherToNotify:
+                      type: string
+                      maxLength: 3
                   required:
                     - description
                     - categories
