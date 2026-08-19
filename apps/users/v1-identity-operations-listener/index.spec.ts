@@ -1,6 +1,6 @@
 import azureFunction from '.';
 
-import { randText, randUuid } from '@ngneat/falso';
+import { randUuid } from '@ngneat/falso';
 import { BadRequestError, GenericErrorsEnum, NotFoundError, UserErrorsEnum } from '@users/shared/errors';
 import { MocksHelper, TestsHelper } from '@users/shared/tests';
 
@@ -23,7 +23,9 @@ describe('v1-identity-operations-listener', () => {
       data: {
         body: {
           accountEnabled: true,
-          displayName: randText()
+          givenName: 'Ada',
+          surname: 'Lovelace',
+          displayName: 'Ada Lovelace'
         },
         identityId: scenario.users.johnInnovator.identityId
       }
@@ -37,7 +39,9 @@ describe('v1-identity-operations-listener', () => {
         data: {
           body: {
             accountEnabled: true,
-            displayName: randText()
+            givenName: 'Ada',
+            surname: 'Lovelace',
+            displayName: 'Ada Lovelace'
           },
           identityId: randUuid()
         }
@@ -49,5 +53,19 @@ describe('v1-identity-operations-listener', () => {
     await expect(azureFunction(context, {} as any)).rejects.toThrow(
       new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD)
     );
+  });
+
+  it.each([
+    { givenName: '   ', surname: 'Lovelace' },
+    { givenName: 'A'.repeat(65), surname: 'Lovelace' }
+  ])('should reject invalid queued names', async names => {
+    await expect(
+      azureFunction(context, {
+        data: {
+          body: names,
+          identityId: scenario.users.johnInnovator.identityId
+        }
+      })
+    ).rejects.toThrow();
   });
 });

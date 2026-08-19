@@ -79,6 +79,8 @@ class V1MeInfo {
       context.res = ResponseHelper.Ok<ResponseDTO>({
         id: requestUser.id,
         email: requestUser.email,
+        givenName: requestUser.givenName,
+        surname: requestUser.surname,
         displayName: requestUser.displayName,
         roles: userRoles,
         strategicRoles: requestUser.strategicRoles,

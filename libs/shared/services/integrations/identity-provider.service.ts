@@ -207,7 +207,11 @@ export class IdentityProviderService {
       await this.cache.deleteMany(uniqueUserIds);
     }
 
-    const res = await this.cache.getMany(uniqueUserIds);
+    const res = (await this.cache.getMany(uniqueUserIds)).map(user => ({
+      ...user,
+      givenName: user.givenName ?? '',
+      surname: user.surname ?? ''
+    }));
 
     if (res.length !== uniqueUserIds.length) {
       const cachedUserIds = new Set(res.map(user => user.identityId));
@@ -324,6 +328,8 @@ export class IdentityProviderService {
     const odataFilter = `$filter=id in (${idsFilter})`;
     const fields = [
       'displayName',
+      'givenName',
+      'surname',
       'identities',
       'email',
       'mobilePhone',
@@ -337,6 +343,8 @@ export class IdentityProviderService {
   private mapB2CUsersToDomain(b2cUsers: b2cGetUsersListDTO['value']): IdentityUserInfo[] {
     return b2cUsers.map(u => ({
       identityId: u.id,
+      givenName: u.givenName ?? '',
+      surname: u.surname ?? '',
       displayName: u.displayName,
       email: u.identities.find(identity => identity.signInType === 'emailAddress')?.issuerAssignedId || '',
       mobilePhone: u.mobilePhone,
@@ -347,12 +355,14 @@ export class IdentityProviderService {
     }));
   }
 
-  async createUser(data: { name: string; email: string; password: string }): Promise<string> {
+  async createUser(data: { givenName: string; surname: string; email: string; password: string }): Promise<string> {
     await this.verifyAccessToken();
 
     const body = {
       accountEnabled: true,
-      displayName: data.name,
+      givenName: data.givenName,
+      surname: data.surname,
+      displayName: `${data.givenName} ${data.surname}`,
       passwordPolicies: 'DisablePasswordExpiration',
       passwordProfile: { password: data.password, forceChangePasswordNextSignIn: false },
       identities: [
@@ -383,7 +393,13 @@ export class IdentityProviderService {
 
   async updateUser(
     identityId: string,
-    body: { displayName?: string; mobilePhone?: string | null; accountEnabled?: boolean }
+    body: {
+      givenName?: string;
+      surname?: string;
+      displayName?: string;
+      mobilePhone?: string | null;
+      accountEnabled?: boolean;
+    }
   ): Promise<void> {
     await this.verifyAccessToken();
 
@@ -430,6 +446,8 @@ export class IdentityProviderService {
   async updateUserAsync(
     identityId: string,
     body: {
+      givenName?: string;
+      surname?: string;
       displayName?: string;
       mobilePhone?: string | null;
       accountEnabled?: boolean;

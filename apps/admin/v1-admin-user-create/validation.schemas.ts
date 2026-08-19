@@ -4,13 +4,15 @@ import Joi from 'joi';
 import { StrategicRoleEnum } from '@admin/shared/enums';
 
 export type BodyType = {
-  name: string;
+  givenName: string;
+  surname: string;
   email: string;
   strategicRoles?: StrategicRoleEnum[];
 } & CreateRolesType;
 
 export const BodySchema = Joi.object<BodyType>({
-  name: JoiHelper.AppCustomJoi().string().max(100).required().description('Name of the user.'),
+  givenName: JoiHelper.AppCustomJoi().string().trim().min(1).max(64).required().description('Given name of the user.'),
+  surname: JoiHelper.AppCustomJoi().string().trim().min(1).max(64).required().description('Surname of the user.'),
   email: JoiHelper.AppCustomJoi().string().max(100).email().required().description('Email of the user.'),
   strategicRoles: Joi.array()
     .items(Joi.string().valid(...Object.values(StrategicRoleEnum)))

@@ -19,7 +19,7 @@ import { TranslationHelper } from '@admin/shared/helpers';
 import { NotifierService } from '@admin/shared/services';
 import type { TestUserType } from '@admin/shared/tests/builders/user.builder';
 import { DTOsHelper } from '@admin/shared/tests/helpers/dtos.helper';
-import { randEmail, randFullName, randPastDate, randText, randUuid } from '@ngneat/falso';
+import { randEmail, randPastDate, randText, randUuid } from '@ngneat/falso';
 import { container } from '../_config';
 import * as AdminOperationsConfig from '../_config/admin-operations.config';
 import SYMBOLS from './symbols';
@@ -193,7 +193,8 @@ describe('Admin / _services / users service suite', () => {
       const result = await sut.createUser(
         userAdminContext,
         {
-          name: randFullName(),
+          givenName: 'Test',
+          surname: 'User',
           email: randEmail(),
           role: userType
         },
@@ -215,7 +216,8 @@ describe('Admin / _services / users service suite', () => {
         const result = await sut.createUser(
           userAdminContext,
           {
-            name: randFullName(),
+            givenName: 'Test',
+            surname: 'User',
             email: randEmail(),
             role: userType,
             organisationId: scenario.organisations.healthOrg.id,
@@ -244,7 +246,8 @@ describe('Admin / _services / users service suite', () => {
         const result = await sut.createUser(
           userAdminContext,
           {
-            name: randFullName(),
+            givenName: 'Test',
+            surname: 'User',
             email: randEmail(),
             role: userType,
             organisationId: scenario.organisations.healthOrg.id,
@@ -282,7 +285,8 @@ describe('Admin / _services / users service suite', () => {
         sut.createUser(
           userAdminContext,
           {
-            name: randFullName(),
+            givenName: 'Test',
+            surname: 'User',
             email: randEmail(),
             role: ServiceRoleEnum.ACCESSOR,
             organisationId: randUuid(),
@@ -298,7 +302,8 @@ describe('Admin / _services / users service suite', () => {
         sut.createUser(
           userAdminContext,
           {
-            name: randFullName(),
+            givenName: 'Test',
+            surname: 'User',
             email: randEmail(),
             role: ServiceRoleEnum.ACCESSOR,
             organisationId: randUuid(),
@@ -316,7 +321,8 @@ describe('Admin / _services / users service suite', () => {
           sut.createUser(
             userAdminContext,
             {
-              name: randFullName(),
+              givenName: 'Test',
+              surname: 'User',
               email: randEmail(),
               role: ServiceRoleEnum.ACCESSOR,
               organisationId: randUuid(),
@@ -333,7 +339,8 @@ describe('Admin / _services / users service suite', () => {
         sut.createUser(
           userAdminContext,
           {
-            name: randFullName(),
+            givenName: 'Test',
+            surname: 'User',
             email: scenario.users.adamInnovator.email,
             role: ServiceRoleEnum.ASSESSMENT
           },

@@ -1,6 +1,15 @@
 import azureFunction from '.';
 
-import { randBoolean, randCompanyName, randEmail, randFullName, randPastDate, randText, randUuid } from '@ngneat/falso';
+import {
+  randBoolean,
+  randCompanyName,
+  randEmail,
+  randFirstName,
+  randLastName,
+  randPastDate,
+  randText,
+  randUuid
+} from '@ngneat/falso';
 import { InnovatorOrganisationRoleEnum, ServiceRoleEnum } from '@users/shared/enums';
 import { InternalServerError, UserErrorsEnum } from '@users/shared/errors';
 import { DomainUsersService } from '@users/shared/services';
@@ -28,11 +37,17 @@ beforeAll(async () => {
   await testsHelper.init();
 });
 
+const givenName = randFirstName();
+const surname = randLastName();
+const displayName = `${givenName} ${surname}`;
+
 const userInfo = {
   id: randUuid(),
   identityId: randUuid(),
   email: randEmail(),
-  displayName: randFullName(),
+  givenName: givenName,
+  surname: surname,
+  displayName: displayName,
   roles: [{ id: randUuid(), role: ServiceRoleEnum.INNOVATOR, isActive: true }],
   phone: null,
   jobTitle: null,

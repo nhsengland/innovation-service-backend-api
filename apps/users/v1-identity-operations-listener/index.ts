@@ -16,6 +16,8 @@ class V1IdentityOperationsQueueListener {
       data: {
         identityId: string;
         body: {
+          givenName?: string;
+          surname?: string;
           displayName?: string;
           mobilePhone?: string | null;
           accountEnabled?: boolean;

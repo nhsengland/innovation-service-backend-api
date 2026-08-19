@@ -1,12 +1,17 @@
 import azureFunction from '.';
 
-import { randBoolean, randFullName, randText, randUuid } from '@ngneat/falso';
+import { randBoolean, randFirstName, randLastName, randText, randUuid } from '@ngneat/falso';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@users/shared/tests';
 import type { TestUserType } from '@users/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@users/shared/types';
 import { UsersService } from '../_services/users.service';
 import type { ResponseDTO } from './transformation.dtos';
-import type { DefaultUserBodyType, InnovatorBodyType } from './validation.schemas';
+import {
+  DefaultUserBodySchema,
+  type DefaultUserBodyType,
+  InnovatorBodySchema,
+  type InnovatorBodyType
+} from './validation.schemas';
 
 jest.mock('@users/shared/decorators', () => ({
   JwtDecoder: jest.fn().mockImplementation(() => (_: any, __: string, descriptor: PropertyDescriptor) => {
@@ -34,11 +39,17 @@ afterEach(() => {
 });
 
 describe('v1-me-update Suite', () => {
+  const givenName = randFirstName();
+  const surname = randLastName();
+
   const defaultBody = {
-    displayName: randFullName()
+    givenName: givenName,
+    surname: surname
   };
+
   const innovatorBody = {
-    displayName: randFullName(),
+    givenName: givenName,
+    surname: surname,
     contactByEmail: randBoolean(),
     contactByPhone: randBoolean(),
     contactDetails: randText(),
@@ -49,6 +60,43 @@ describe('v1-me-update Suite', () => {
     },
     howDidYouFindUsAnswers: {}
   };
+
+  describe.each([
+    ['default user', DefaultUserBodySchema, defaultBody],
+    ['innovator', InnovatorBodySchema, innovatorBody]
+  ])('%s name validation', (_label, schema, body) => {
+    it('accepts and trims normal names', () => {
+      const result = schema.validate({ ...body, givenName: ' Ada ', surname: ' Lovelace ' });
+
+      expect(result.error).toBeUndefined();
+      expect(result.value).toMatchObject({ givenName: 'Ada', surname: 'Lovelace' });
+    });
+
+    it.each([
+      ['givenName', '   ', 'Lovelace'],
+      ['surname', 'Ada', '   ']
+    ])('rejects whitespace-only %s', (_field, invalidGivenName, invalidSurname) => {
+      const result = schema.validate({ ...body, givenName: invalidGivenName, surname: invalidSurname });
+
+      expect(result.error).toBeDefined();
+    });
+
+    it('accepts 64-character givenName and surname', () => {
+      const result = schema.validate({ ...body, givenName: 'a'.repeat(64), surname: 'b'.repeat(64) });
+
+      expect(result.error).toBeUndefined();
+    });
+
+    it.each([
+      ['givenName', 'a'.repeat(65), 'Lovelace'],
+      ['surname', 'Ada', 'b'.repeat(65)]
+    ])('rejects a 65-character %s', (_field, invalidGivenName, invalidSurname) => {
+      const result = schema.validate({ ...body, givenName: invalidGivenName, surname: invalidSurname });
+
+      expect(result.error).toBeDefined();
+    });
+  });
+
   describe('200', () => {
     it.each([
       ['QA', scenario.users.aliceQualifyingAccessor],
@@ -84,7 +132,9 @@ describe('v1-me-update Suite', () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.johnInnovator)
         .setBody<InnovatorBodyType>({
-          displayName: randFullName(),
+          givenName: givenName,
+          surname: surname,
+          // displayName: displayName,
           contactByEmail: randBoolean(),
           contactByPhone: randBoolean(),
           contactDetails: randText(),

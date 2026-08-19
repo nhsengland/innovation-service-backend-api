@@ -18,8 +18,12 @@ export class MocksHelper {
   // }
 
   static mockIdentityServiceGetUserInfo(user: TestUserType): void {
+    const [givenName = user.name, ...surnameParts] = user.name.trim().split(/\s+/);
+
     jest.spyOn(IdentityProviderService.prototype, 'getUserInfo').mockResolvedValue({
       identityId: user.identityId,
+      givenName,
+      surname: surnameParts.join(' ') || givenName,
       displayName: user.name,
       email: user.email,
       mobilePhone: user.mobilePhone,

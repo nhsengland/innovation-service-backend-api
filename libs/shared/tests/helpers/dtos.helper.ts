@@ -119,7 +119,11 @@ export class DTOsHelper {
   }
 
   static getIdentityUserInfo(user: TestUserType): IdentityUserInfo {
+    const [givenName = user.name, ...surnameParts] = user.name.trim().split(/\s+/);
+
     return {
+      givenName,
+      surname: surnameParts.join(' ') || givenName,
       displayName: user.name,
       email: user.email,
       identityId: user.identityId,

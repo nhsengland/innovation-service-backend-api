@@ -4,7 +4,7 @@ import { ServiceRoleEnum } from '@admin/shared/enums';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@admin/shared/tests';
 import type { TestUserType } from '@admin/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@admin/shared/types';
-import { randEmail, randFullName, randUuid } from '@ngneat/falso';
+import { randEmail, randUuid } from '@ngneat/falso';
 import { UsersService } from '../_services/users.service';
 import type { BodyType } from './validation.schemas';
 
@@ -40,7 +40,8 @@ describe('v1-admin-user-create Suite', () => {
           .setAuth(scenario.users.allMighty)
           .setBody<BodyType>({
             email: randEmail(),
-            name: randFullName(),
+            givenName: 'Test',
+            surname: 'User',
             role: role
           })
           .call<never>(azureFunction);
@@ -58,7 +59,8 @@ describe('v1-admin-user-create Suite', () => {
           .setAuth(scenario.users.allMighty)
           .setBody<BodyType>({
             email: randEmail(),
-            name: randFullName(),
+            givenName: 'Test',
+            surname: 'User',
             role: role,
             organisationId: randUuid(),
             unitIds: [randUuid(), randUuid()]
@@ -80,7 +82,8 @@ describe('v1-admin-user-create Suite', () => {
           .setAuth(scenario.users.allMighty)
           .setBody<BodyType>({
             email: randEmail(),
-            name: randFullName(),
+            givenName: 'Test',
+            surname: 'User',
             role: role,
             organisationId: randUuid(),
             unitIds: [randUuid()]
@@ -99,7 +102,8 @@ describe('v1-admin-user-create Suite', () => {
           .setAuth(scenario.users.allMighty)
           .setBody<BodyType>({
             email: randEmail(),
-            name: randFullName(),
+            givenName: 'Test',
+            surname: 'User',
             role: role
           })
           .call<never>(azureFunction);
@@ -114,7 +118,8 @@ describe('v1-admin-user-create Suite', () => {
         .setAuth(scenario.users.allMighty)
         .setBody<BodyType>({
           email: randEmail(),
-          name: randFullName(),
+          givenName: 'Test',
+          surname: 'User',
           role: ServiceRoleEnum.ACCESSOR,
           organisationId: randUuid(),
           unitIds: []
@@ -138,7 +143,8 @@ describe('v1-admin-user-create Suite', () => {
         .setAuth(user)
         .setBody<BodyType>({
           email: randEmail(),
-          name: randFullName(),
+          givenName: 'Test',
+          surname: 'User',
           role: ServiceRoleEnum.ADMIN
         })
         .call<ErrorResponseType>(azureFunction);

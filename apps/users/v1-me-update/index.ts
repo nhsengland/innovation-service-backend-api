@@ -48,7 +48,9 @@ class V1MeUpdate {
           { id: requestUser.id, identityId: requestUser.identityId },
           domainContext.currentRole.role,
           {
-            displayName: accessorBody.displayName,
+            givenName: accessorBody.givenName,
+            surname: accessorBody.surname,
+            displayName: `${accessorBody.givenName} ${accessorBody.surname}`,
             jobTitle: accessorBody.jobTitle,
             howDidYouFindUsAnswers: {}
           }
@@ -69,7 +71,9 @@ class V1MeUpdate {
           },
           domainContext.currentRole.role,
           {
-            displayName: innovatorBody.displayName,
+            givenName: innovatorBody.givenName,
+            surname: innovatorBody.surname,
+            displayName: `${innovatorBody.givenName} ${innovatorBody.surname}`,
             contactByEmail: innovatorBody.contactByEmail,
             contactByPhone: innovatorBody.contactByPhone,
             contactByPhoneTimeframe: innovatorBody.contactByPhoneTimeframe,
