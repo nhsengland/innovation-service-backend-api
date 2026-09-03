@@ -143,6 +143,25 @@ export const catalogStandardsType = [
   'MARKETING',
   'CQC',
   'DTAC',
-  'OTHER'
+  'OTHER',
+  // new ones
+  'UK_MDR_CLASS_I',
+  'UK_MDR_CLASS_II_A',
+  'UK_MDR_CLASS_II_B',
+  'UK_MDR_CLASS_III',
+  'EU_MDR_CLASS_I',
+  'EU_MDR_CLASS_II_A',
+  'EU_MDR_CLASS_II_B',
+  'EU_MDR_CLASS_III',
+  'UKR_MDR_GENERAL_IVD',
+  'UKR_MDR_IVD_SELF_TEST',
+  'UKR_MDR_IVD_ANNEX_II_B',
+  'UKR_MDR_IVD_ANNEX_II_A',
+  'EU_IVDR_IVD_CLASS_A',
+  'EU_IVDR_IVD_CLASS_B',
+  'EU_IVDR_IVD_CLASS_C',
+  'EU_IVDR_IVD_CLASS_D',
+  'IONISING_RADIATION',
+  'MARKETING_AUTHORISATION'
 ] as const;
 export type catalogStandardsType = (typeof catalogStandardsType)[number];

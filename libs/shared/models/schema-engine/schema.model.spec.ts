@@ -5,6 +5,42 @@ import { randCountry, randText } from '@ngneat/falso';
 import { IR_SCHEMA } from '../../schemas/innovation-record/schema';
 
 describe('models / schema-engine / schema.model.ts', () => {
+  const checkboxTranslationSchema: any = {
+    sections: [
+      {
+        id: 'section',
+        title: 'Section',
+        subSections: [
+          {
+            id: 'REGULATIONS_AND_STANDARDS',
+            title: 'Regulations and standards',
+            steps: [
+              {
+                questions: [
+                  {
+                    id: 'standards',
+                    dataType: 'checkbox-array',
+                    label: 'Standards',
+                    checkboxAnswerId: 'type',
+                    items: [{ id: 'STANDARD_A', label: 'Standard A' }],
+                    addQuestions: [
+                      {
+                        id: 'certifications',
+                        dataType: 'input-array',
+                        label: 'Certifications',
+                        items: [{ id: 'GMDN', label: 'GMDN' }]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  };
+
   beforeAll(() => {
     requiredSectionsAndQuestions.clear();
   });
@@ -17,6 +53,40 @@ describe('models / schema-engine / schema.model.ts', () => {
     const { errors } = schema.runRules();
 
     expect(errors).toStrictEqual([{ context: undefined, message: '"sections[0].title" is required' }]);
+  });
+
+  it('should normalize a legacy addQuestion into addQuestions', () => {
+    const legacyChild = { id: 'child', dataType: 'text', label: 'Child question' } as const;
+    const schema = new SchemaModel({
+      sections: [
+        {
+          id: 'section',
+          title: 'Section',
+          subSections: [
+            {
+              id: 'subSection',
+              title: 'Subsection',
+              steps: [
+                {
+                  questions: [
+                    {
+                      id: 'group',
+                      dataType: 'fields-group',
+                      label: 'Group',
+                      field: { id: 'field', dataType: 'text', label: 'Field' },
+                      addQuestion: legacyChild
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    });
+
+    expect(schema.runRules().errors).toHaveLength(0);
+    expect(schema.getQuestion('group')).toMatchObject({ addQuestions: [legacyChild] });
   });
 
   it('should give an error when two sections have the same id', () => {
@@ -305,7 +375,7 @@ describe('models / schema-engine / schema.model.ts', () => {
     expect(errors).toHaveLength(1);
   });
 
-  it('should give error when the addQuestion question is not valid', () => {
+  it('should give error when the addQuestions question is not valid', () => {
     const body: IRSchemaType = {
       sections: [
         {
@@ -324,7 +394,7 @@ describe('models / schema-engine / schema.model.ts', () => {
                       label: 'Question 1',
                       description: 'description 1',
                       field: { id: 'q2', dataType: 'text', label: 'Question 2' },
-                      addQuestion: { id: 'q1', dataType: 'text', label: 'Question 2' },
+                      addQuestions: [{ id: 'q1', dataType: 'text', label: 'Question 2' }],
                       addNewLabel: 'New label'
                     }
                   ]
@@ -571,6 +641,54 @@ describe('models / schema-engine / schema.model.ts', () => {
   });
 
   describe('translateDocument', () => {
+    it('preserves a non-array checkbox answer value', () => {
+      const schema = new SchemaModel(checkboxTranslationSchema);
+      expect(schema.runRules().errors).toHaveLength(0);
+      const document = {
+        REGULATIONS_AND_STANDARDS: {
+          standards: 'legacy-standard'
+        }
+      };
+
+      expect(schema.translateDocument(document)['REGULATIONS_AND_STANDARDS'].standards).toBe('legacy-standard');
+    });
+
+    it('preserves a null checkbox answer value', () => {
+      const schema = new SchemaModel(checkboxTranslationSchema);
+      expect(schema.runRules().errors).toHaveLength(0);
+      const document = {
+        REGULATIONS_AND_STANDARDS: {
+          standards: null
+        }
+      };
+
+      expect(schema.translateDocument(document)['REGULATIONS_AND_STANDARDS'].standards).toBeNull();
+    });
+
+    it('preserves unknown fields on checkbox answer rows', () => {
+      const schema = new SchemaModel(checkboxTranslationSchema);
+      expect(schema.runRules().errors).toHaveLength(0);
+      const document = {
+        REGULATIONS_AND_STANDARDS: {
+          standards: [
+            {
+              type: 'STANDARD_A',
+              legacyField: 'preserve-me',
+              certifications: { GMDN: '12345' }
+            }
+          ]
+        }
+      };
+
+      expect(schema.translateDocument(document)['REGULATIONS_AND_STANDARDS'].standards).toEqual([
+        {
+          type: 'Standard A',
+          legacyField: 'preserve-me',
+          certifications: { GMDN: '12345' }
+        }
+      ]);
+    });
+
     it('should translate document info', () => {
       const schema = new SchemaModel(IR_SCHEMA);
       schema.runRules();
@@ -639,10 +757,40 @@ describe('models / schema-engine / schema.model.ts', () => {
         REGULATIONS_AND_STANDARDS: {
           hasRegulationKnowledge: 'YES_ALL',
           standards: [
-            { type: 'CE_UKCA_NON_MEDICAL', hasMet: 'YES' },
-            { type: 'CE_UKCA_CLASS_I', hasMet: 'YES' },
-            { type: 'IVD_GENERAL', hasMet: 'IN_PROGRESS' },
-            { type: 'IVD_SELF_TEST', hasMet: 'IN_PROGRESS' }
+            {
+              type: 'UKR_MDR_GENERAL_IVD',
+              hasMet: 'YES',
+              certifications: {
+                GMDN: '12345',
+                UDI: null,
+                'UDI-DI': null
+              }
+            },
+            {
+              type: 'UK_MDR_CLASS_I',
+              hasMet: 'YES',
+              certifications: {
+                GMDN: '12345',
+                UDI: null,
+                'UDI-DI': null
+              }
+            },
+            {
+              type: 'CQC',
+              hasMet: 'IN_PROGRESS',
+              certifications: {
+                CQC: null
+              }
+            },
+            {
+              type: 'UKR_MDR_IVD_SELF_TEST',
+              hasMet: 'IN_PROGRESS',
+              certifications: {
+                GMDN: null,
+                UDI: null,
+                UDI_DI: null
+              }
+            }
           ]
         },
         REVENUE_MODEL: {
@@ -747,10 +895,40 @@ describe('models / schema-engine / schema.model.ts', () => {
         },
         REGULATIONS_AND_STANDARDS: {
           standards: [
-            { hasMet: 'Yes', type: 'Non-medical device' },
-            { hasMet: 'Yes', type: 'Class I medical device' },
-            { hasMet: 'I am actively working towards it', type: 'IVD general' },
-            { hasMet: 'I am actively working towards it', type: 'IVD self-test' }
+            {
+              hasMet: 'Yes',
+              type: 'UK MDR General IVD (Great Britain)',
+              certifications: {
+                GMDN: '12345',
+                'Basic UDI': null,
+                'UDI-DI': null
+              }
+            },
+            {
+              hasMet: 'Yes',
+              type: 'UK MDR Class I (Great Britain)',
+              certifications: {
+                GMDN: '12345',
+                'Basic UDI': null,
+                'UDI-DI': null
+              }
+            },
+            {
+              hasMet: 'I am actively working towards it',
+              type: 'Care Quality Commission (CQC) registration, as I am providing a regulated activity',
+              certifications: {
+                'CQC registration number': null
+              }
+            },
+            {
+              hasMet: 'I am actively working towards it',
+              type: 'UK MDR IVD for self test (Great Britain)',
+              certifications: {
+                'Basic UDI': null,
+                GMDN: null,
+                'UDI-DI': null
+              }
+            }
           ],
           hasRegulationKnowledge: 'Yes, I know all of them'
         },
@@ -794,6 +972,22 @@ describe('models / schema-engine / schema.model.ts', () => {
   });
 
   describe('getSubSectionPayloadValidation', () => {
+    it('shows the other registration field for OTHER and IONISING_RADIATION', () => {
+      const standardsQuestion = (IR_SCHEMA as any).sections
+        .flatMap((section: any) => section.subSections)
+        .flatMap((subSection: any) => subSection.steps)
+        .flatMap((step: any) => step.questions)
+        .find((question: any) => question.id === 'standards');
+      const certificationsQuestion = standardsQuestion?.addQuestions?.find(
+        (question: any) => question.id === 'certifications'
+      );
+      const otherRegistrationItem = certificationsQuestion?.items?.find((item: any) => item.id === 'OTHER_REG');
+
+      expect(otherRegistrationItem?.itemConditionOptions?.displayIf?.conditions[0]?.list).toEqual(
+        expect.arrayContaining(['OTHER', 'IONISING_RADIATION'])
+      );
+    });
+
     it.each(['YES', 'CONCEPT_STAGE', 'PROOF_OF_CONCEPT', 'MVP', 'PROTOTYPE', 'WORKING_PRODUCT', 'SERVICE'])(
       'accepts prototype answer %s',
       answer => {

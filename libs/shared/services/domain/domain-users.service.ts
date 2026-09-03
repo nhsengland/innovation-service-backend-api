@@ -286,8 +286,18 @@ export class DomainUsersService {
     return dbUsers.map(dbUser => {
       const identityUser = identityUsers.get(dbUser.identityId);
       if (!identityUser) {
-        // This should never happen, but just in case.
-        throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND, { details: { context: 'S.DU.gUL' } });
+        // Fallback placeholder for orphaned SQL users missing in B2C
+        return {
+          id: dbUser.id,
+          identityId: dbUser.identityId,
+          displayName: 'Deleted User',
+          roles: dbUser.serviceRoles.map(r => ({ id: r.id, role: r.role, isActive: r.isActive })),
+          email: 'unknown@deleted.local',
+          mobilePhone: null,
+          isActive: false, // Force them to appear inactive
+          jobTitle: dbUser.jobTitle,
+          lastLoginAt: null
+        };
       }
 
       return {

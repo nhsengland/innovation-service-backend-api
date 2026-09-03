@@ -75,7 +75,15 @@ const createStore = (existingEntity?: Partial<AlertManagerThrottleEntity>): Aler
   };
 };
 
-const createService = (store: AlertManagerThrottleStore = createStore(), now = fixedNow) => {
+const createService = (
+  store: AlertManagerThrottleStore = createStore(),
+  now = fixedNow
+): {
+  service: AlertManagerService;
+  store: AlertManagerThrottleStore;
+  sendManagerEmail: jest.Mock;
+  logger: any;
+} => {
   const sendManagerEmail = jest.fn(async (_alert: NormalizedAlertPayload, _recipients: string[]) => undefined);
   const logger = { log: jest.fn(), error: jest.fn(), info: jest.fn() } as any;
   const storageQueue = { sendMessage: jest.fn(async () => ({})) } as any;

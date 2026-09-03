@@ -4,7 +4,7 @@ import type { AzureFunction, HttpRequest } from '@azure/functions';
 import { ResponseHelper } from '@admin/shared/helpers';
 import type { CustomContextType } from '@admin/shared/types';
 
-import { AlertManagerService } from '../_services/alert-manager.service';
+import type { AlertManagerService } from '../_services/alert-manager.service';
 import { container } from '../_config';
 import SYMBOLS from '../_services/symbols';
 

@@ -2,6 +2,7 @@ type Validations = {
   isRequired?: boolean | string;
   min?: { length: number; errorMessage?: string };
   max?: { length: number; errorMessage?: string };
+  equalToLength?: { length: number; errorMessage?: string };
   minLength?: number;
   maxLength?: number;
   postcodeFormat?: boolean | string;
@@ -49,8 +50,18 @@ export type CheckboxArray = Base & {
     | { id: string; label: string; group?: string; conditional?: string; exclusive?: boolean }
   )[];
   size?: 'small' | 'normal';
-  addQuestion?: Question;
+  addQuestions?: Question[];
   checkboxAnswerId?: string;
+};
+
+export type InputArray = Base & {
+  dataType: 'input-array';
+  items: {
+    id: string;
+    label: string;
+    itemConditionOptions?: ItemConditionOptionsType;
+    validations?: Validations;
+  }[];
 };
 
 export type AutocompleteArray = Base & {
@@ -61,11 +72,28 @@ export type AutocompleteArray = Base & {
 export type FieldsGroup = Base & {
   dataType: 'fields-group';
   field: Question;
-  addQuestion?: Question;
+  addQuestions?: Question[];
   addNewLabel: string;
 };
 
-export type Question = Text | Textarea | RadioGroup | CheckboxArray | AutocompleteArray | FieldsGroup;
+export type Question = Text | Textarea | RadioGroup | CheckboxArray | AutocompleteArray | FieldsGroup | InputArray;
+
+export type ItemConditionOptionsType = {
+  mandatoryIf?: ConditionGroupType /* mark as mandatory if on list */;
+  displayIf?: ConditionGroupType /* show item depending on previous answer */;
+};
+
+export type ConditionType = {
+  list: string[];
+  logic?: 'inclusive' | 'exclusive';
+  id?: string;
+  relation?: 'parent' | 'sibling';
+};
+
+export type ConditionGroupType = {
+  groupLogic: 'AND' | 'OR';
+  conditions: ConditionType[];
+};
 
 // Others
 export const TEXTAREA_LENGTH_LIMIT = {
