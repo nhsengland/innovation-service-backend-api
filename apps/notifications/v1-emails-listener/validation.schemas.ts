@@ -5,6 +5,7 @@ import { EmailTemplates } from '../_config/emails.config';
 import { JoiHelper } from '@notifications/shared/helpers';
 
 export type MessageType = {
+  attempt?: number;
   data: {
     type: keyof EmailTemplates;
     to: string;
@@ -13,6 +14,7 @@ export type MessageType = {
 };
 
 export const MessageSchema = Joi.object<MessageType>({
+  attempt: Joi.number().integer().min(1).optional(),
   data: Joi.object<MessageType['data']>({
     type: JoiHelper.AppCustomJoi()
       .string()

@@ -3,12 +3,8 @@ import { injectable } from 'inversify';
 import { Secret, sign } from 'jsonwebtoken';
 import { v4 as uuid } from 'uuid';
 
-import {
-  EmailErrorsEnum,
-  GenericErrorsEnum,
-  ServiceUnavailableError,
-  UnprocessableEntityError
-} from '@notifications/shared/errors';
+import { getRetryAfterMsFromHeaders, isRetryableHttpStatus } from '@notifications/shared/helpers';
+import { EmailErrorsEnum, UnprocessableEntityError } from '@notifications/shared/errors';
 
 import type { EmailTemplatesType } from '../_config';
 
@@ -29,8 +25,19 @@ type apiClientParamsType<T> = {
   email_address: string;
   reference: string;
   personalisation: T;
-  // emailReplyToId?: string;
 };
+
+export class NotifyDeliveryError extends Error {
+  constructor(
+    public readonly status: number | undefined,
+    public readonly retryAfterMs: number | undefined,
+    public readonly retryable: boolean,
+    message = 'GOV Notify email delivery failed'
+  ) {
+    super(message);
+    this.name = 'NotifyDeliveryError';
+  }
+}
 
 @injectable()
 export class EmailService extends BaseService {
@@ -39,6 +46,9 @@ export class EmailService extends BaseService {
   private apiSecret: Secret = process.env['EMAIL_NOTIFICATION_API_SECRET'] || '';
   private apiBaseUrl = process.env['EMAIL_NOTIFICATION_API_BASE_URL'] || '';
   private apiEmailPath = process.env['EMAIL_NOTIFICATION_API_EMAIL_PATH'] || '';
+  private nextNotifySendAt = 0;
+  private notifyRateLimitTail: Promise<void> = Promise.resolve();
+  private readonly notifyMinIntervalMs = 100;
 
   constructor() {
     super();
@@ -74,6 +84,26 @@ export class EmailService extends BaseService {
     this.accessToken = sign({ iss: this.apiIssuer }, this.apiSecret, { algorithm: 'HS256' });
   }
 
+  private async waitForNotifyRateLimit(): Promise<void> {
+    const previous = this.notifyRateLimitTail;
+    let release!: () => void;
+    this.notifyRateLimitTail = new Promise(resolve => {
+      release = resolve;
+    });
+
+    await previous;
+
+    try {
+      const delay = Math.max(0, this.nextNotifySendAt - Date.now());
+      if (delay > 0) {
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+      this.nextNotifySendAt = Date.now() + this.notifyMinIntervalMs;
+    } finally {
+      release();
+    }
+  }
+
   async sendEmail<T extends keyof EmailTemplatesType>(
     template: T,
     toEmail: string,
@@ -97,11 +127,8 @@ export class EmailService extends BaseService {
       personalisation: properties
     };
 
-    try {
-      await this.sendEmailNotifyNHS<T>(apiProperties, toEmail);
-    } catch (error) {
-      this.logger.error(`Error sending email to ${toEmail}`, { error });
-    }
+    await this.waitForNotifyRateLimit();
+    await this.sendEmailNotifyNHS<T>(apiProperties, toEmail);
 
     return true;
   }
@@ -110,28 +137,44 @@ export class EmailService extends BaseService {
     apiProperties: apiClientParamsType<EmailTemplatesType[T]>,
     toEmail: string
   ): Promise<void> {
-    const response = await axios
-      .post<apiResponseDTO>(new URL(this.apiEmailPath, this.apiBaseUrl).toString(), apiProperties, {
-        headers: { Authorization: `Bearer ${this.accessToken}` }
-      })
-      .catch(error => {
-        const badAPIKey = error.response?.data?.errors.find(
-          (e: { error: string; message: string }) =>
-            e.message === 'Can’t send to this recipient using a team-only API key'
-        );
-        if (badAPIKey) {
-          this.logger.error(`Error sending email to ${toEmail} due to bad api key`, { error });
-          throw new ServiceUnavailableError(EmailErrorsEnum.EMAIL_BAD_API_KEY);
-        }
+    try {
+      const response = await axios.post<apiResponseDTO>(
+        new URL(this.apiEmailPath, this.apiBaseUrl).toString(),
+        apiProperties,
+        { headers: { Authorization: `Bearer ${this.accessToken}` } }
+      );
 
-        this.logger.error(`Error sending email to ${toEmail}`, { error });
-        throw new ServiceUnavailableError(GenericErrorsEnum.SERVICE_EMAIL_UNAVAILABLE);
+      this.logger.log(`Email sent`, {
+        toEmail: toEmail,
+        templateId: response.data.template.id,
+        response: response.data
       });
+    } catch (error: unknown) {
+      throw this.toNotifyDeliveryError(error, toEmail);
+    }
+  }
 
-    this.logger.log(`Email sent`, {
-      toEmail: toEmail,
-      templateId: response.data.template.id,
-      response: response.data
-    });
+  private toNotifyDeliveryError(error: unknown, toEmail: string): NotifyDeliveryError {
+    const axiosError = axios.isAxiosError(error) ? error : undefined;
+    const response = axiosError?.response;
+    const status = response?.status;
+    const responseData = response?.data as { errors?: { message?: string }[] } | undefined;
+    const badAPIKey = responseData?.errors?.some(item =>
+      item.message?.includes('send to this recipient using a team-only API key')
+    );
+
+    this.logger.error(
+      badAPIKey
+        ? `Error sending email to ${toEmail} due to bad api key (status ${status ?? 'unknown'})`
+        : `Error sending email to ${toEmail} (status ${status ?? 'unknown'})`,
+      { error }
+    );
+
+    return new NotifyDeliveryError(
+      status,
+      getRetryAfterMsFromHeaders(response?.headers),
+      !badAPIKey && (status === undefined || isRetryableHttpStatus(status)),
+      status ? `GOV Notify returned status ${status}` : 'GOV Notify request failed'
+    );
   }
 }

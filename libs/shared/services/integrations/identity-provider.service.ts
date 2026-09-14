@@ -19,6 +19,7 @@ import type { LoggerService } from './logger.service';
 import { QueuesEnum, StorageQueueService } from './storage-queue.service';
 
 import { sleep } from '../../helpers/misc.helper';
+import { getExponentialBackoffMs, getRetryAfterMsFromHeaders, isRetryableHttpStatus } from '../../helpers/retry.helper';
 
 type b2cGetUserInfoByEmailDTO = {
   value: {
@@ -47,7 +48,7 @@ type b2cGetUsersListDTO = {
     mobilePhone: null | string;
     officeLocation: null | string;
     preferredLanguage: null | string;
-    identities: {
+    identities?: {
       signInType: 'emailAddress' | 'userPrincipalName';
       issuer: string;
       issuerAssignedId: string;
@@ -55,8 +56,8 @@ type b2cGetUsersListDTO = {
     accountEnabled: boolean;
     createdDateTime: string;
     deletedDateTime: null | string;
-    lastPasswordChangeDateTime: null | Date;
-    signInActivity: {
+    lastPasswordChangeDateTime: null | string;
+    signInActivity?: {
       lastSignInDateTime: null | string;
       lastSignInRequestId: null | string;
       lastNonInteractiveSignInDateTime: null | string;
@@ -64,6 +65,58 @@ type b2cGetUsersListDTO = {
     };
   }[];
 };
+
+type B2CUser = b2cGetUsersListDTO['value'][number];
+
+type B2CBatchSubResponse = {
+  id: string;
+  status: number;
+  headers?: Record<string, string>;
+  body?: B2CUser | { error?: { code?: string; message?: string } };
+};
+
+type B2CBatchResponseDTO = {
+  responses?: B2CBatchSubResponse[];
+};
+
+type B2CBatchRequest = {
+  id: string;
+  method: 'GET';
+  url: string;
+};
+
+type B2CBatchProcessingResult = {
+  retryAfterMs?: number;
+  retryUserIds: string[];
+  users: IdentityUserInfo[];
+};
+
+class B2CBatchRequestError extends Error {
+  constructor(
+    public readonly status: number | undefined,
+    public readonly retryAfterMs: number | undefined,
+    public readonly retryable: boolean,
+    message: string
+  ) {
+    super(message);
+    this.name = 'B2CBatchRequestError';
+  }
+}
+
+const B2C_BATCH_SIZE = 20;
+const B2C_MAX_CONCURRENT_BATCHES = 3;
+const B2C_MAX_RETRIES = 20;
+const B2C_MAX_BACKOFF_MS = 1 * 60 * 60 * 1000;
+const B2C_BATCH_FIELDS = [
+  'id',
+  'displayName',
+  'jobTitle',
+  'identities',
+  'mobilePhone',
+  'accountEnabled',
+  'lastPasswordChangeDateTime',
+  'signInActivity'
+];
 
 @injectable()
 export class IdentityProviderService {
@@ -77,11 +130,20 @@ export class IdentityProviderService {
   };
   private sessionData: { token: string; expiresAt: number } = { token: '', expiresAt: 0 };
   private cache: CacheConfigType['IdentityUserInfo'];
+  private missingUserQuarantine = new Set<string>();
   private constants = {
     // More info https://learn.microsoft.com/en-us/graph/api/resources/phoneauthenticationmethod?view=graph-rest-1.0#properties
     mfa_mobile_id: '3179e48a-750b-4051-897c-87b9720928f7',
     mfa_extension_key: `extension_${process.env['AD_EXTENSION_ID'] ?? ''}_mfaByPhoneOrEmail`
   };
+
+  private isAMissingUserWhichWasQuarantined(identityId: string): boolean {
+    return this.missingUserQuarantine.has(identityId);
+  }
+
+  private quarantineMissingUser(identityId: string): void {
+    this.missingUserQuarantine.add(identityId);
+  }
 
   constructor(
     @inject(SHARED_SYMBOLS.CacheService) cacheService: CacheService,
@@ -205,13 +267,15 @@ export class IdentityProviderService {
 
     if (forceRefresh) {
       await this.cache.deleteMany(uniqueUserIds);
+      uniqueUserIds.forEach(identityId => this.missingUserQuarantine.delete(identityId));
     }
 
-    const res = await this.cache.getMany(uniqueUserIds);
+    const eligibleUserIds = uniqueUserIds.filter(identityId => !this.isAMissingUserWhichWasQuarantined(identityId));
+    const res = await this.cache.getMany(eligibleUserIds);
 
-    if (res.length !== uniqueUserIds.length) {
+    if (res.length !== eligibleUserIds.length) {
       const cachedUserIds = new Set(res.map(user => user.identityId));
-      const tempUsers = uniqueUserIds.filter(id => !cachedUserIds.has(id));
+      const tempUsers = eligibleUserIds.filter(id => !cachedUserIds.has(id));
       const nonCachedUsers = await this.getUsersListFromB2C(tempUsers);
 
       // Add new users to cache.
@@ -238,7 +302,7 @@ export class IdentityProviderService {
   /**
    * returns the list of users from the identity provider
    *
-   * this function splits the number of users to be fetched into chunks of 10 users
+   * Graph supports up to 20 individual requests in one JSON batch.
    * @param entityIds user identities to be fetched
    * @returns list of users
    */
@@ -249,100 +313,219 @@ export class IdentityProviderService {
     await this.verifyAccessToken();
 
     const uniqueUserIds = [...new Set(entityIds)]; // Remove duplicated entries.
-    const chunkSize = 15; // B2C has a maximum limit of users that can be requested in 1 call.
-    const maxConcurrentRequests = 10; // More than 3 and we start getting 429 errors.
-
-    // 1. Chunking
     const userIdsChunks: string[][] = [];
-    for (let i = 0; i < uniqueUserIds.length; i += chunkSize) {
-      userIdsChunks.push(uniqueUserIds.slice(i, i + chunkSize));
+
+    for (let i = 0; i < uniqueUserIds.length; i += B2C_BATCH_SIZE) {
+      userIdsChunks.push(uniqueUserIds.slice(i, i + B2C_BATCH_SIZE));
     }
 
     const usersList: IdentityUserInfo[] = [];
 
-    // 2. Batch Processing
-    for (let i = 0; i < userIdsChunks.length; i += maxConcurrentRequests) {
-      const currentBatch = userIdsChunks.slice(i, i + maxConcurrentRequests);
-
-      const promises = currentBatch.map(chunk => this.fetchUserBatchWithRetry(chunk));
-      const settledResults = await Promise.allSettled(promises);
-
-      const successfulResults = settledResults
-        .filter((result): result is PromiseFulfilledResult<IdentityUserInfo[]> => result.status === 'fulfilled')
-        .map(result => result.value);
-
-      const failedCount = settledResults.filter(r => r.status === 'rejected').length;
-      if (failedCount > 0) {
-        this.loggerService.error(`[getUsersListFromB2C] ${failedCount} chunks completely failed and were skipped.`);
-      }
-
-      usersList.push(...successfulResults.flat());
+    for (let i = 0; i < userIdsChunks.length; i += B2C_MAX_CONCURRENT_BATCHES) {
+      const currentChunks = userIdsChunks.slice(i, i + B2C_MAX_CONCURRENT_BATCHES);
+      const results = await Promise.all(currentChunks.map(chunk => this.fetchUserBatchWithRetry(chunk)));
+      usersList.push(...results.flat());
     }
 
     return usersList;
   }
 
   private async fetchUserBatchWithRetry(userIds: string[]): Promise<IdentityUserInfo[]> {
-    const url = this.buildB2CQueryUrl(userIds);
+    let pendingUserIds = [...new Set(userIds)];
+    const users: IdentityUserInfo[] = [];
     let retryCount = 0;
-    const maxRetries = 20;
-    const maxBackoffMs = 15000; // cap at 15 seconds per retry
 
-    while (retryCount < maxRetries) {
-      try {
-        const response = await axios.get<b2cGetUsersListDTO>(url, {
-          headers: { Authorization: `Bearer ${this.sessionData.token}` }
-        });
-        return this.mapB2CUsersToDomain(response.data.value);
-      } catch (error: any) {
-        if (error.response?.status === 429) {
-          retryCount++;
-          const retryAfterHeader = error.response.headers['retry-after'];
-          // Default to exponential backoff if header is missing: 2s, 4s, 8s, 16s... capped at 15s
-          const backoff = retryAfterHeader
-            ? parseInt(retryAfterHeader, 10) * 1000
-            : Math.min(Math.pow(2, retryCount) * 1000, maxBackoffMs);
+    while (pendingUserIds.length > 0) {
+      const responses = await this.postB2CUserBatchWithRetry(pendingUserIds);
+      const result = this.processB2CBatchResponses(pendingUserIds, responses);
+      users.push(...result.users);
 
-          this.loggerService.error(
-            `B2C Rate limit hit. Retrying in ${backoff}ms... (Attempt ${retryCount}/${maxRetries})`
-          );
-          await sleep(backoff);
-        } else {
-          this.loggerService.error(JSON.stringify(error));
-          throw error;
-        }
+      if (result.retryUserIds.length === 0) {
+        break;
       }
+
+      if (retryCount >= B2C_MAX_RETRIES) {
+        this.loggerService.error(
+          `[B2C] Retriable batch subrequests exhausted; skipped identities: ${result.retryUserIds.join(', ')}`
+        );
+        break;
+      }
+
+      retryCount += 1;
+      pendingUserIds = result.retryUserIds;
+      const backoffMs = result.retryAfterMs ?? getExponentialBackoffMs(retryCount, B2C_MAX_BACKOFF_MS);
+      this.loggerService.error(
+        `[B2C] Retrying ${result.retryUserIds.length} batch subrequests in ${backoffMs}ms (attempt ${retryCount}/${B2C_MAX_RETRIES})`
+      );
+      await sleep(backoffMs);
     }
 
-    throw new ServiceUnavailableError(GenericErrorsEnum.SERVICE_IDENTIY_UNAVAILABLE, {
-      message: 'B2C Rate limit reached and retries exhausted'
-    });
+    return users;
   }
 
-  private buildB2CQueryUrl(userIds: string[]): string {
-    const idsFilter = userIds.map(id => `'${id}'`).join(',');
-    const odataFilter = `$filter=id in (${idsFilter})`;
-    const fields = [
-      'displayName',
-      'identities',
-      'email',
-      'mobilePhone',
-      'accountEnabled',
-      'lastPasswordChangeDateTime',
-      'signInActivity'
-    ];
-    return `https://graph.microsoft.com/beta/users?${odataFilter}&$select=${fields.join(',')}`;
+  private processB2CBatchResponses(userIds: string[], responses: B2CBatchSubResponse[]): B2CBatchProcessingResult {
+    const responseById = new Map(responses.map(response => [response.id, response]));
+    const users: IdentityUserInfo[] = [];
+    const retryUserIds: string[] = [];
+    let retryAfterMs: number | undefined;
+
+    for (const identityId of userIds) {
+      const response = responseById.get(identityId);
+      if (!response) {
+        retryUserIds.push(identityId);
+        this.loggerService.error(`[B2C] Batch response missing for identity: ${identityId}`);
+        continue;
+      }
+
+      if (response.status >= 200 && response.status < 300) {
+        if (!response.body || !('id' in response.body) || response.body.id !== identityId) {
+          retryUserIds.push(identityId);
+          this.loggerService.error(`[B2C] Successful response had an invalid user body: ${identityId}`);
+          continue;
+        }
+
+        users.push(...this.mapB2CUsersToDomain([response.body]));
+        continue;
+      }
+
+      if (response.status === 404) {
+        this.quarantineMissingUser(identityId);
+        continue;
+      }
+
+      if (response.status === 401 || response.status === 403) {
+        throw new B2CBatchRequestError(
+          response.status,
+          getRetryAfterMsFromHeaders(response.headers),
+          false,
+          `B2C rejected batch subrequest for ${identityId} with status ${response.status}`
+        );
+      }
+
+      if (isRetryableHttpStatus(response.status)) {
+        retryUserIds.push(identityId);
+        const responseRetryAfterMs = getRetryAfterMsFromHeaders(response.headers);
+        if (responseRetryAfterMs !== undefined) {
+          retryAfterMs = Math.max(retryAfterMs ?? 0, responseRetryAfterMs);
+        }
+        continue;
+      }
+
+      this.loggerService.error(
+        `[B2C] Permanent batch subrequest failure (status ${response.status}); skipped identity ${identityId}`,
+        { body: response.body }
+      );
+    }
+
+    return { retryAfterMs, retryUserIds, users };
+  }
+
+  private createB2CBatchRequests(userIds: string[]): B2CBatchRequest[] {
+    return userIds.map(identityId => ({
+      id: identityId,
+      method: 'GET',
+      url: `/users/${encodeURIComponent(identityId)}?$select=${B2C_BATCH_FIELDS.join(',')}`
+    }));
+  }
+
+  private validateB2CBatchResponses(
+    userIds: string[],
+    responses: B2CBatchSubResponse[] | undefined
+  ): B2CBatchSubResponse[] {
+    if (
+      !Array.isArray(responses) ||
+      responses.some(response => !response || !response.id || typeof response.status !== 'number')
+    ) {
+      throw new B2CBatchRequestError(undefined, undefined, true, 'B2C batch response was invalid');
+    }
+
+    const expectedResponseIds = new Set(userIds);
+    const responseIds = new Set(responses.map(response => response.id));
+    if (
+      responseIds.size !== expectedResponseIds.size ||
+      [...expectedResponseIds].some(identityId => !responseIds.has(identityId)) ||
+      [...responseIds].some(responseId => !expectedResponseIds.has(responseId))
+    ) {
+      throw new B2CBatchRequestError(undefined, undefined, true, 'B2C batch response was incomplete');
+    }
+
+    return responses;
+  }
+
+  private async postB2CUserBatch(userIds: string[]): Promise<B2CBatchSubResponse[]> {
+    const response = await axios.post<B2CBatchResponseDTO>(
+      'https://graph.microsoft.com/v1.0/$batch',
+      { requests: this.createB2CBatchRequests(userIds) },
+      {
+        headers: { Authorization: `Bearer ${this.sessionData.token}` },
+        validateStatus: () => true
+      }
+    );
+
+    if (response.status < 200 || response.status >= 300) {
+      throw new B2CBatchRequestError(
+        response.status,
+        getRetryAfterMsFromHeaders(response.headers),
+        isRetryableHttpStatus(response.status),
+        `B2C batch request failed with status ${response.status}`
+      );
+    }
+
+    return this.validateB2CBatchResponses(userIds, response.data?.responses);
+  }
+
+  private toB2CBatchRequestError(error: unknown): B2CBatchRequestError {
+    if (error instanceof B2CBatchRequestError) {
+      return error;
+    }
+
+    const axiosError = axios.isAxiosError(error) ? error : undefined;
+    const response = axiosError?.response;
+    const status = response?.status;
+
+    return new B2CBatchRequestError(
+      status,
+      getRetryAfterMsFromHeaders(response?.headers),
+      !response || (status !== undefined && isRetryableHttpStatus(status)),
+      axiosError?.message ?? 'B2C batch request failed'
+    );
+  }
+
+  private async postB2CUserBatchWithRetry(userIds: string[]): Promise<B2CBatchSubResponse[]> {
+    let retryCount = 0;
+
+    while (true) {
+      try {
+        return await this.postB2CUserBatch(userIds);
+      } catch (error: unknown) {
+        const batchError = this.toB2CBatchRequestError(error);
+
+        if (!batchError.retryable || retryCount >= B2C_MAX_RETRIES) {
+          this.loggerService.error(
+            `[B2C] Batch request failed; no more retries (status ${batchError.status ?? 'unknown'}): ${batchError.message}. Identities: ${userIds.join(', ')}`
+          );
+          throw batchError;
+        }
+
+        retryCount += 1;
+        const backoffMs = batchError.retryAfterMs ?? getExponentialBackoffMs(retryCount, B2C_MAX_BACKOFF_MS);
+        this.loggerService.error(
+          `[B2C] Batch request retrying in ${backoffMs}ms (status ${batchError.status ?? 'unknown'}, attempt ${retryCount}/${B2C_MAX_RETRIES})`
+        );
+        await sleep(backoffMs);
+      }
+    }
   }
 
   private mapB2CUsersToDomain(b2cUsers: b2cGetUsersListDTO['value']): IdentityUserInfo[] {
     return b2cUsers.map(u => ({
       identityId: u.id,
       displayName: u.displayName,
-      email: u.identities.find(identity => identity.signInType === 'emailAddress')?.issuerAssignedId || '',
+      jobTitle: u.jobTitle,
+      email: u.identities?.find(identity => identity.signInType === 'emailAddress')?.issuerAssignedId || '',
       mobilePhone: u.mobilePhone,
       isActive: u.accountEnabled,
-      lastLoginAt:
-        u.signInActivity && u.signInActivity.lastSignInDateTime ? new Date(u.signInActivity.lastSignInDateTime) : null,
+      lastLoginAt: u.signInActivity?.lastSignInDateTime ? new Date(u.signInActivity.lastSignInDateTime) : null,
       passwordResetAt: u.lastPasswordChangeDateTime ? new Date(u.lastPasswordChangeDateTime) : null
     }));
   }
