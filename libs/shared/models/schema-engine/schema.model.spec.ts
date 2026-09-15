@@ -915,7 +915,7 @@ describe('models / schema-engine / schema.model.ts', () => {
             },
             {
               hasMet: 'I am actively working towards it',
-              type: 'Care Quality Commission (CQC) registration, as I am providing a regulated activity',
+              type: 'Care Quality Commission (CQC) registration',
               certifications: {
                 'CQC registration number': null
               }
