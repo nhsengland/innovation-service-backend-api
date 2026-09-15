@@ -1,8 +1,4 @@
-jest.mock('redis', () => ({
-  createClient: jest.fn()
-}));
-
-import { createClient } from 'redis';
+import * as redisClient from 'redis';
 import type { LoggerService } from '../integrations/logger.service';
 import { RedisService } from './redis.service';
 
@@ -14,7 +10,7 @@ type RedisClientMock = {
   quit: jest.Mock;
 };
 
-const createClientMock = createClient as jest.MockedFunction<typeof createClient>;
+const createClientMock = jest.spyOn(redisClient, 'createClient');
 
 describe('RedisService', () => {
   let redis: RedisClientMock;
@@ -35,7 +31,7 @@ describe('RedisService', () => {
     };
 
     createClientMock.mockReset();
-    createClientMock.mockReturnValue(redis as unknown as ReturnType<typeof createClient>);
+    createClientMock.mockReturnValue(redis as unknown as ReturnType<typeof redisClient.createClient>);
     service = new RedisService(logger as LoggerService);
   });
 
