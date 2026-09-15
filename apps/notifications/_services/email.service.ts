@@ -9,6 +9,7 @@ import { EmailErrorsEnum, UnprocessableEntityError } from '@notifications/shared
 import type { EmailTemplatesType } from '../_config';
 
 import { EmailTemplates } from '../_config/emails.config';
+import { NotifyDeliveryError } from '../_errors/notify-delivery.error';
 import { BaseService } from './base.service';
 
 type apiResponseDTO = {
@@ -26,18 +27,6 @@ type apiClientParamsType<T> = {
   reference: string;
   personalisation: T;
 };
-
-export class NotifyDeliveryError extends Error {
-  constructor(
-    public readonly status: number | undefined,
-    public readonly retryAfterMs: number | undefined,
-    public readonly retryable: boolean,
-    message = 'GOV Notify email delivery failed'
-  ) {
-    super(message);
-    this.name = 'NotifyDeliveryError';
-  }
-}
 
 @injectable()
 export class EmailService extends BaseService {
@@ -84,6 +73,14 @@ export class EmailService extends BaseService {
     this.accessToken = sign({ iss: this.apiIssuer }, this.apiSecret, { algorithm: 'HS256' });
   }
 
+  /**
+   * Reserves the next Notify request slot for this service instance.
+   * Requests are started at least `notifyMinIntervalMs` apart.
+   *
+   * @example
+   * // With a 100 ms interval: at most 10 request starts per second.
+   * await this.waitForNotifyRateLimit();
+   */
   private async waitForNotifyRateLimit(): Promise<void> {
     const previous = this.notifyRateLimitTail;
     let release!: () => void;
@@ -154,6 +151,7 @@ export class EmailService extends BaseService {
     }
   }
 
+  /** Converts an Axios/Notify failure into a retry-aware delivery error. */
   private toNotifyDeliveryError(error: unknown, toEmail: string): NotifyDeliveryError {
     const axiosError = axios.isAxiosError(error) ? error : undefined;
     const response = axiosError?.response;

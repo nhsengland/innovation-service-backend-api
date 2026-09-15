@@ -105,7 +105,7 @@ class B2CBatchRequestError extends Error {
 
 const B2C_BATCH_SIZE = 20;
 const B2C_MAX_CONCURRENT_BATCHES = 3;
-const B2C_MAX_RETRIES = 20;
+const B2C_MAX_RETRIES = 50;
 const B2C_MAX_BACKOFF_MS = 1 * 60 * 60 * 1000;
 const B2C_BATCH_FIELDS = [
   'id',
@@ -137,10 +137,12 @@ export class IdentityProviderService {
     mfa_extension_key: `extension_${process.env['AD_EXTENSION_ID'] ?? ''}_mfaByPhoneOrEmail`
   };
 
+  /** Returns true when an identity was permanently marked as missing. */
   private isAMissingUserWhichWasQuarantined(identityId: string): boolean {
     return this.missingUserQuarantine.has(identityId);
   }
 
+  /** Permanently skips a B2C identity that returned 404 until force refresh/app restart. */
   private quarantineMissingUser(identityId: string): void {
     this.missingUserQuarantine.add(identityId);
   }
@@ -179,7 +181,9 @@ export class IdentityProviderService {
         { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
       )
       .catch(error => {
-        this.loggerService.error('Error generating B2C access token', error);
+        this.loggerService.error('Error generating B2C access token', {
+          message: error instanceof Error ? error.message : String(error)
+        });
         throw new ServiceUnavailableError(GenericErrorsEnum.SERVICE_IDENTIY_UNAVAILABLE, {
           details: error
         });
@@ -260,10 +264,19 @@ export class IdentityProviderService {
    * @returns list of users
    */
   async getUsersList(identityIds: string[], forceRefresh?: boolean): Promise<IdentityUserInfo[]> {
+    const requestedCount = identityIds.length;
+
     // Filter SYSTEM user
     identityIds = identityIds.filter(id => id !== SYSTEM_CONTEXT.identityId);
 
     const uniqueUserIds = [...new Set(identityIds)]; // Remove duplicated entries.
+
+    this.loggerService.log('[B2C] Resolving users', {
+      forceRefresh: forceRefresh ?? false,
+      requestedCount,
+      uniqueCount: uniqueUserIds.length,
+      systemUsersFiltered: requestedCount - identityIds.length
+    });
 
     if (forceRefresh) {
       await this.cache.deleteMany(uniqueUserIds);
@@ -271,7 +284,14 @@ export class IdentityProviderService {
     }
 
     const eligibleUserIds = uniqueUserIds.filter(identityId => !this.isAMissingUserWhichWasQuarantined(identityId));
+    const quarantinedCount = uniqueUserIds.length - eligibleUserIds.length;
     const res = await this.cache.getMany(eligibleUserIds);
+
+    this.loggerService.log('[B2C] Cache lookup complete', {
+      eligibleCount: eligibleUserIds.length,
+      cachedCount: res.length,
+      quarantinedCount
+    });
 
     if (res.length !== eligibleUserIds.length) {
       const cachedUserIds = new Set(res.map(user => user.identityId));
@@ -282,6 +302,12 @@ export class IdentityProviderService {
       await this.cache.setMany(nonCachedUsers.map(user => ({ key: user.identityId, value: user })));
       res.push(...nonCachedUsers);
     }
+
+    this.loggerService.log('[B2C] User resolution complete', {
+      requestedCount,
+      resolvedCount: res.length,
+      skippedQuarantinedCount: quarantinedCount
+    });
 
     return res;
   }
@@ -320,16 +346,27 @@ export class IdentityProviderService {
     }
 
     const usersList: IdentityUserInfo[] = [];
+    let processedUserCount = 0;
 
     for (let i = 0; i < userIdsChunks.length; i += B2C_MAX_CONCURRENT_BATCHES) {
       const currentChunks = userIdsChunks.slice(i, i + B2C_MAX_CONCURRENT_BATCHES);
       const results = await Promise.all(currentChunks.map(chunk => this.fetchUserBatchWithRetry(chunk)));
       usersList.push(...results.flat());
+      processedUserCount += currentChunks.reduce((count, chunk) => count + chunk.length, 0);
+
+      this.loggerService.log('[B2C] Graph batch lookup progress', {
+        progress: `${processedUserCount}/${uniqueUserIds.length}`,
+        processedCount: processedUserCount,
+        totalCount: uniqueUserIds.length,
+        resolvedCount: usersList.length,
+        remainingCount: uniqueUserIds.length - processedUserCount
+      });
     }
 
     return usersList;
   }
 
+  /** Fetches one batch's users, retrying only retriable subrequests. */
   private async fetchUserBatchWithRetry(userIds: string[]): Promise<IdentityUserInfo[]> {
     let pendingUserIds = [...new Set(userIds)];
     const users: IdentityUserInfo[] = [];
@@ -363,6 +400,7 @@ export class IdentityProviderService {
     return users;
   }
 
+  /** Maps each batch subresponse to a user, retry list, or quarantine action. */
   private processB2CBatchResponses(userIds: string[], responses: B2CBatchSubResponse[]): B2CBatchProcessingResult {
     const responseById = new Map(responses.map(response => [response.id, response]));
     const users: IdentityUserInfo[] = [];
@@ -420,6 +458,7 @@ export class IdentityProviderService {
     return { retryAfterMs, retryUserIds, users };
   }
 
+  /** Builds up to 20 individual Graph user requests for one JSON batch. */
   private createB2CBatchRequests(userIds: string[]): B2CBatchRequest[] {
     return userIds.map(identityId => ({
       id: identityId,
@@ -428,6 +467,7 @@ export class IdentityProviderService {
     }));
   }
 
+  /** Ensures Graph returned exactly one valid subresponse for every requested ID. */
   private validateB2CBatchResponses(
     userIds: string[],
     responses: B2CBatchSubResponse[] | undefined
@@ -452,6 +492,7 @@ export class IdentityProviderService {
     return responses;
   }
 
+  /** Sends one JSON batch request to Microsoft Graph. */
   private async postB2CUserBatch(userIds: string[]): Promise<B2CBatchSubResponse[]> {
     const response = await axios.post<B2CBatchResponseDTO>(
       'https://graph.microsoft.com/v1.0/$batch',
@@ -474,6 +515,7 @@ export class IdentityProviderService {
     return this.validateB2CBatchResponses(userIds, response.data?.responses);
   }
 
+  /** Normalizes an unknown Axios failure into a batch error with retry metadata. */
   private toB2CBatchRequestError(error: unknown): B2CBatchRequestError {
     if (error instanceof B2CBatchRequestError) {
       return error;
@@ -491,6 +533,7 @@ export class IdentityProviderService {
     );
   }
 
+  /** Sends a Graph batch and retries transient outer-request failures. */
   private async postB2CUserBatchWithRetry(userIds: string[]): Promise<B2CBatchSubResponse[]> {
     let retryCount = 0;
 

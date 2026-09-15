@@ -9,12 +9,12 @@ import type { EmailTemplates } from '../_config';
 import { container } from '../_config';
 
 import type { DispatchService } from '../_services/dispatch.service';
-import { NotifyDeliveryError } from '../_services/email.service';
+import { NotifyDeliveryError } from '../_errors/notify-delivery.error';
 import SYMBOLS from '../_services/symbols';
 import type { MessageType } from './validation.schemas';
 import { MessageSchema } from './validation.schemas';
 
-const MAX_EMAIL_ATTEMPTS = 10;
+const MAX_EMAIL_ATTEMPTS = 50;
 const MAX_FALLBACK_RETRY_DELAY_MS = 1 * 60 * 60 * 1000;
 
 class V1SendEmailListener {
@@ -33,7 +33,11 @@ class V1SendEmailListener {
     let storageQueueService: StorageQueueService | undefined;
     let attempt = 1;
 
-    context.log.info('EMAIL LISTENER: ', JSON.stringify(requestMessage));
+    context.log.info('EMAIL LISTENER: Message received', {
+      attempt: requestMessage.attempt ?? 1,
+      to: requestMessage.data?.to,
+      type: requestMessage.data?.type
+    });
 
     try {
       const dispatchService = container.get<DispatchService>(SYMBOLS.DispatchService);
@@ -51,6 +55,7 @@ class V1SendEmailListener {
     }
   }
 
+  /** Logs a delivery failure or schedules its next queue attempt. */
   private static async handleEmailError(
     context: Context,
     error: unknown,
@@ -58,6 +63,13 @@ class V1SendEmailListener {
     attempt: number,
     storageQueueService: StorageQueueService | undefined
   ): Promise<void> {
+    context.log.error('EMAIL LISTENER: Email processing raised an error', {
+      attempt,
+      hasMessage: Boolean(message),
+      retryable: error instanceof NotifyDeliveryError ? error.retryable : false,
+      status: error instanceof NotifyDeliveryError ? error.status : undefined
+    });
+
     if (message && storageQueueService && error instanceof NotifyDeliveryError) {
       if (error.retryable && attempt < MAX_EMAIL_ATTEMPTS) {
         const retryScheduled = await V1SendEmailListener.scheduleEmailRetry(
@@ -71,6 +83,13 @@ class V1SendEmailListener {
           return;
         }
       }
+
+      context.log.error('EMAIL LISTENER: Notify failure will not be retried', {
+        attempt,
+        maxAttempts: MAX_EMAIL_ATTEMPTS,
+        retryable: error.retryable,
+        status: error.status
+      });
     }
 
     context.log.error('EMAIL LISTENER: Email delivery failed; message removed after logging', {
@@ -81,6 +100,7 @@ class V1SendEmailListener {
     });
   }
 
+  /** Requeues a retryable email using Notify's delay or exponential backoff. */
   private static async scheduleEmailRetry(
     context: Context,
     storageQueueService: StorageQueueService,
@@ -90,12 +110,20 @@ class V1SendEmailListener {
   ): Promise<boolean> {
     const delayMs =
       error.retryAfterMs ?? getExponentialBackoffMs(Math.max(0, attempt - 1), MAX_FALLBACK_RETRY_DELAY_MS);
+    const visibilityTimeoutSeconds = Math.max(1, Math.ceil(delayMs / 1000));
+
+    context.log.info('EMAIL LISTENER: Scheduling email retry', {
+      attempt,
+      delayMs,
+      status: error.status,
+      visibilityTimeoutSeconds
+    });
 
     try {
       await storageQueueService.sendMessage<MessageType>(
         QueuesEnum.EMAIL,
         { ...message, attempt: attempt + 1 },
-        { visibilityTimeout: Math.max(1, Math.ceil(delayMs / 1000)) }
+        { visibilityTimeout: visibilityTimeoutSeconds }
       );
     } catch (requeueError) {
       context.log.error('EMAIL LISTENER: Could not schedule email retry', {
@@ -111,6 +139,10 @@ class V1SendEmailListener {
       attempt,
       delayMs,
       status: error.status
+    });
+    context.log.info('EMAIL LISTENER: Email retry queued', {
+      nextAttempt: attempt + 1,
+      visibilityTimeoutSeconds
     });
     return true;
   }
