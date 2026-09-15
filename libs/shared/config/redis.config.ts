@@ -18,6 +18,10 @@ const dict = parameters
 export const REDIS_DEFAULT_CONNECTION: RedisClientOptions = Object.freeze<RedisClientOptions>({
   url: `redis${dict['ssl'] === 'True' ? 's' : ''}://${url}`,
   ...(dict['password'] && { password: dict['password'] }),
+  socket: {
+    connectTimeout: 10000,
+    reconnectStrategy: retries => Math.min(100 * 2 ** retries, 5000)
+  },
   pingInterval: 30000, // Azure Redis closes the connection after 10m of inactivity
   disableOfflineQueue: true // This is to avoid the client to queue commands while offline
 });
