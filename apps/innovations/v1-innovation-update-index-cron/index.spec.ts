@@ -10,17 +10,14 @@ beforeAll(async () => {
   await testsHelper.init();
 });
 
-const popFromSetSpy = jest
-  .spyOn(RedisService.prototype, "popFromSet")
-  .mockResolvedValueOnce("1111")
-  .mockResolvedValueOnce(null);
-const upsertDocumentSpy = jest.spyOn(SearchService.prototype, "upsertDocument").mockResolvedValue();
-const addToSetSpy = jest.spyOn(RedisService.prototype, "addToSet").mockResolvedValue();
+const popFromSetSpy = jest.spyOn(RedisService.prototype, "popFromSet");
+const upsertDocumentSpy = jest.spyOn(SearchService.prototype, "upsertDocument");
+const addToSetSpy = jest.spyOn(RedisService.prototype, "addToSet");
 
-afterEach(() => {
-  popFromSetSpy.mockClear();
-  upsertDocumentSpy.mockClear();
-  addToSetSpy.mockClear();
+beforeEach(() => {
+  popFromSetSpy.mockReset().mockResolvedValueOnce("1111").mockResolvedValueOnce(null);
+  upsertDocumentSpy.mockReset().mockResolvedValue();
+  addToSetSpy.mockReset().mockResolvedValue();
 });
 
 describe("v1-innovation-update-index-cron", () => {
@@ -32,11 +29,8 @@ describe("v1-innovation-update-index-cron", () => {
 
   it("should add to redis set again in case of error", async () => {
     upsertDocumentSpy.mockRejectedValue(new Error());
-    try {
-      await azureFunction();
-    } catch {
-      expect(popFromSetSpy).toHaveBeenCalledTimes(1);
-      expect(addToSetSpy).toHaveBeenCalledTimes(1);
-    }
+    await expect(azureFunction()).rejects.toThrow();
+    expect(popFromSetSpy).toHaveBeenCalledTimes(1);
+    expect(addToSetSpy).toHaveBeenCalledTimes(1);
   });
 });
