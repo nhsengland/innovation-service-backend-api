@@ -3002,7 +3002,7 @@ export const IR_SCHEMA = {
                   checkboxAnswerId: 'type',
                   label: 'Which regulations, standards and certifications apply to your innovation?',
                   description:
-                    'Find out more about <a href="{{urls.UNDERSTANDING_REGULATIONS_MEDICAL_DEVICES}}" target="_blank" rel="noopener noreferrer">UKCA / CE marking (opens in a new window)</a>, <a href="{{urls.UNDERSTANDING_CQC_REGULATIONS}}" target="_blank" rel="noopener noreferrer">CQC registration (opens in a new window)</a>, or <a href="{{urls.NHS_DIGITAL_TECHNOLOGY_ASSESSMENT_CRITERIA}}" target="_blank" rel="noopener noreferrer">DTAC (opens in a new window)</a>.',
+                    'Select all the regulations that apply to your innovation. If you\'re not sure, choose any that seem relevant and request support with regulations when submitting your innovation. Find out more about <a href="{{urls.INNOVATION_GUIDES_REGULATION}}" target="_blank" rel="noopener noreferrer">regulations (opens in new window)</a>.',
                   addQuestions: [
                     {
                       id: 'hasMet',
@@ -3457,7 +3457,7 @@ export const IR_SCHEMA = {
                     },
                     {
                       id: 'CQC',
-                      label: 'Care Quality Commission (CQC) registration, as I am providing a regulated activity'
+                      label: 'Care Quality Commission (CQC) registration'
                     },
                     {
                       id: 'OTHER',
