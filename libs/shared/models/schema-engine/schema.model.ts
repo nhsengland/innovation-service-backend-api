@@ -31,6 +31,19 @@ export type InnovationRecordStepType = {
 
 type Condition = { id: string; options: string[] };
 
+const LEGACY_STANDARD_IDS = [
+  'CE_UKCA_NON_MEDICAL',
+  'CE_UKCA_CLASS_I',
+  'CE_UKCA_CLASS_II_A',
+  'CE_UKCA_CLASS_II_B',
+  'CE_UKCA_CLASS_III',
+  'IVD_GENERAL',
+  'IVD_SELF_TEST',
+  'IVD_ANNEX_LIST_A',
+  'IVD_ANNEX_LIST_B',
+  'MARKETING'
+] as const;
+
 function normalizeLegacyAddQuestions(value: unknown): unknown {
   if (Array.isArray(value)) {
     return value.map(normalizeLegacyAddQuestions);
@@ -262,7 +275,11 @@ export class SchemaModel {
   /**
    * Validations
    */
-  public getSubSectionPayloadValidation(subSectionId: string, payload: { [key: string]: any }): Joi.ObjectSchema<any> {
+  public getSubSectionPayloadValidation(
+    subSectionId: string,
+    payload: { [key: string]: any },
+    options: { allowLegacyStandards?: boolean } = {}
+  ): Joi.ObjectSchema<any> {
     const questions = this.getSubsectionQuestions(subSectionId);
 
     const validation: Joi.PartialSchemaMap = {};
@@ -270,11 +287,22 @@ export class SchemaModel {
       const question = questions.find(q => q.id === key);
       if (!question) continue;
 
+      const questionForValidation =
+        options.allowLegacyStandards &&
+        subSectionId === 'REGULATIONS_AND_STANDARDS' &&
+        question.id === 'standards' &&
+        question.dataType === 'checkbox-array'
+          ? {
+              ...question,
+              items: [...question.items, ...LEGACY_STANDARD_IDS.map(id => ({ id, label: id }))]
+            }
+          : question;
+
       // WARNING: big hack due to itemsFromAnswer.
-      const itemsFromAnswer = this.checkItemsFromAnswer(question);
+      const itemsFromAnswer = this.checkItemsFromAnswer(questionForValidation);
 
       validation[key] = QuestionValidatorFactory.validate({
-        ...question,
+        ...questionForValidation,
         ...(itemsFromAnswer && { items: itemsFromAnswer })
       });
     }

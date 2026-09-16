@@ -42,7 +42,9 @@ class V1InnovationSectionUpdate {
       }
 
       // Validate Payload
-      const validation = schema.model.getSubSectionPayloadValidation(params.sectionKey, request.body["data"]);
+      const validation = schema.model.getSubSectionPayloadValidation(params.sectionKey, request.body["data"], {
+        allowLegacyStandards: params.sectionKey === "REGULATIONS_AND_STANDARDS"
+      });
       const body = {
         ...JoiHelper.Validate<{ [key: string]: any }>(validation, request.body["data"]),
         ...schema.model.getCalculatedFields(params.sectionKey, request.body["data"])
