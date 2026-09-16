@@ -1013,6 +1013,32 @@ describe('models / schema-engine / schema.model.ts', () => {
       expect(validationSchema.validate({ hasProductServiceOrPrototype: 'NO' }).error).toBeDefined();
     });
 
+    it('accepts legacy standards when explicitly validating an existing regulations update', () => {
+      const model = new SchemaModel(IR_SCHEMA);
+      model.runRules();
+      const payload = {
+        standards: [{ type: 'CE_UKCA_CLASS_II_B', hasMet: 'YES' }]
+      };
+
+      const validationSchema = model.getSubSectionPayloadValidation('REGULATIONS_AND_STANDARDS', payload, {
+        allowLegacyStandards: true
+      });
+
+      expect(validationSchema.validate(payload).error).toBeUndefined();
+    });
+
+    it('does not accept legacy standards without explicit update compatibility', () => {
+      const model = new SchemaModel(IR_SCHEMA);
+      model.runRules();
+      const payload = {
+        standards: [{ type: 'CE_UKCA_CLASS_II_B', hasMet: 'YES' }]
+      };
+
+      const validationSchema = model.getSubSectionPayloadValidation('REGULATIONS_AND_STANDARDS', payload);
+
+      expect(validationSchema.validate(payload).error).toBeDefined();
+    });
+
     it('should fail validation when fields-group is required but empty array is provided', () => {
       const model = new SchemaModel({
         sections: [
