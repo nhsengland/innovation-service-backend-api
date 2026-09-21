@@ -8,6 +8,7 @@ import { container } from '../_config';
 
 import type { IdentityOperationType } from './validation.schemas';
 import { IdentityOperationSchema } from './validation.schemas';
+import { normalizeNameUpdate } from './identity-name.helper';
 
 class V1IdentityOperationsQueueListener {
   static async queueTrigger(
@@ -31,8 +32,15 @@ class V1IdentityOperationsQueueListener {
 
     try {
       const operation = JoiHelper.Validate<IdentityOperationType>(IdentityOperationSchema, requestOperation);
+      const body = operation.data.body;
+      const hasNameChange =
+        Object.prototype.hasOwnProperty.call(body, 'givenName') ||
+        Object.prototype.hasOwnProperty.call(body, 'surname');
+      const updateBody = hasNameChange
+        ? normalizeNameUpdate(body, await identityProviderService.getUserInfo(operation.data.identityId, true))
+        : body;
 
-      await identityProviderService.updateUser(operation.data.identityId, operation.data.body);
+      await identityProviderService.updateUser(operation.data.identityId, updateBody);
 
       context.res = { done: true };
       return;

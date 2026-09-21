@@ -81,6 +81,16 @@ describe('v1-me-update Suite', () => {
       expect(result.error).toBeDefined();
     });
 
+    it.each([
+      ['both names', '', ''],
+      ['givenName', 'Ada', ''],
+      ['surname', '', 'Lovelace']
+    ])('rejects missing %s', (_field, invalidGivenName, invalidSurname) => {
+      const result = schema.validate({ ...body, givenName: invalidGivenName, surname: invalidSurname });
+
+      expect(result.error).toBeDefined();
+    });
+
     it('accepts 64-character givenName and surname', () => {
       const result = schema.validate({ ...body, givenName: 'a'.repeat(64), surname: 'b'.repeat(64) });
 
