@@ -1,6 +1,34 @@
-import { getSmartMockPayload } from './excel-schema-helpers';
+import { getSmartMockPayload, indexQuestion, isQuestionUnsupportedForExcel, questionMap } from './excel-schema-helpers';
 
 describe('excel-schema-helpers', () => {
+  afterEach(() => questionMap.clear());
+
+  describe('static Excel support detection', () => {
+    it('treats questions with addQuestions as unsupported', () => {
+      const child = { id: 'CHILD', dataType: 'text', label: 'Child' };
+      const parent = { id: 'PARENT', dataType: 'checkbox-array', items: [], addQuestions: [child] };
+
+      indexQuestion(parent);
+
+      expect(questionMap.get('CHILD')).toEqual(child);
+      expect(isQuestionUnsupportedForExcel(parent)).toBe(true);
+    });
+
+    it.each([
+      [{ dataType: 'input-array', items: [] }],
+      [{ dataType: 'input-array', items: [{ itemConditionOptions: { displayIf: {} } }] }],
+      [{ dataType: 'fields-group', field: { id: 'FIELD' }, addNewLabel: 'Add another' }]
+    ])('marks unsupported question structures: %o', question => {
+      expect(isQuestionUnsupportedForExcel(question)).toBe(true);
+    });
+
+    it('supports questions whose items come from another answer', () => {
+      expect(isQuestionUnsupportedForExcel({ dataType: 'radio-group', items: [{ itemsFromAnswer: 'SOURCE' }] })).toBe(
+        false
+      );
+    });
+  });
+
   describe('getSmartMockPayload', () => {
     const mockSubSection = {
       id: 'TEST_SUBSECTION',
@@ -39,6 +67,15 @@ describe('excel-schema-helpers', () => {
         Q1: null,
         Q1b: null
       });
+    });
+
+    it('should omit unsupported questions from validation mocks', () => {
+      const result = getSmartMockPayload(
+        { steps: [{ questions: [{ id: 'DYNAMIC', dataType: 'checkbox-array', addQuestions: [{ id: 'CHILD' }] }] }] },
+        {}
+      );
+
+      expect(result).toEqual({});
     });
 
     it('should include conditional questions when condition is met', () => {

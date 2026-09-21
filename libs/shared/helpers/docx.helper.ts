@@ -467,7 +467,7 @@ export function generateDocumentContent(schema: IRSchemaType): Paragraph[] {
               paragraphs.push(basicParagraph('[Write your answer here]'));
           }
 
-          // Add question's child "addQuestion", if present.
+          // Add question's dynamic children, if present.
           if (
             (question.dataType === 'fields-group' || question.dataType === 'checkbox-array') &&
             question.addQuestion
