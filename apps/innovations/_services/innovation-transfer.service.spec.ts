@@ -1,20 +1,20 @@
-import type { EntityManager } from 'typeorm';
-import type { InnovationTransferService } from './innovation-transfer.service';
-import { TestsHelper } from '@innovations/shared/tests';
-import { container } from '../_config';
-import SYMBOLS from './symbols';
-import { DomainInnovationsService, DomainUsersService, NotifierService } from '@innovations/shared/services';
-import { InnovationErrorsEnum, NotFoundError, UserErrorsEnum } from '@innovations/shared/errors';
-import { IdentityProviderService } from '@innovations/shared/services';
-import { randUuid } from '@ngneat/falso';
-import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
-import { InnovationEntity, InnovationTransferEntity } from '@innovations/shared/entities';
-import { UnprocessableEntityError } from '@innovations/shared/errors';
-import { InnovationTransferStatusEnum } from '@innovations/shared/enums';
-import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
-import { InnovationCollaboratorsService } from './innovation-collaborators.service';
+import type { EntityManager } from "typeorm";
+import type { InnovationTransferService } from "./innovation-transfer.service";
+import { TestsHelper } from "@innovations/shared/tests";
+import { container } from "../_config";
+import SYMBOLS from "./symbols";
+import { DomainInnovationsService, DomainUsersService, NotifierService } from "@innovations/shared/services";
+import { InnovationErrorsEnum, NotFoundError, UserErrorsEnum } from "@innovations/shared/errors";
+import { IdentityProviderService } from "@innovations/shared/services";
+import { randUuid } from "@ngneat/falso";
+import { DTOsHelper } from "@innovations/shared/tests/helpers/dtos.helper";
+import { InnovationEntity, InnovationTransferEntity } from "@innovations/shared/entities";
+import { UnprocessableEntityError } from "@innovations/shared/errors";
+import { InnovationTransferStatusEnum } from "@innovations/shared/enums";
+import type { TestUserType } from "@innovations/shared/tests/builders/user.builder";
+import { InnovationCollaboratorsService } from "./innovation-collaborators.service";
 
-describe('Innovations / _services / innovation transfer suite', () => {
+describe("Innovations / _services / innovation transfer suite", () => {
   let sut: InnovationTransferService;
 
   let em: EntityManager;
@@ -23,8 +23,8 @@ describe('Innovations / _services / innovation transfer suite', () => {
   const scenario = testsHelper.getCompleteScenario();
 
   // Setup global mocks for these tests
-  const activityLogSpy = jest.spyOn(DomainInnovationsService.prototype, 'addActivityLog');
-  const notifierSendSpy = jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
+  const activityLogSpy = jest.spyOn(DomainInnovationsService.prototype, "addActivityLog");
+  const notifierSendSpy = jest.spyOn(NotifierService.prototype, "send").mockResolvedValue(true);
 
   beforeAll(async () => {
     sut = container.get<InnovationTransferService>(SYMBOLS.InnovationTransferService);
@@ -41,8 +41,8 @@ describe('Innovations / _services / innovation transfer suite', () => {
     notifierSendSpy.mockReset();
   });
 
-  describe('getInnovationTransfersList', () => {
-    it('should get all transfers created by request user', async () => {
+  describe("getInnovationTransfersList", () => {
+    it("should get all transfers created by request user", async () => {
       const innovation = scenario.users.adamInnovator.innovations.adamInnovation;
       const transfer = innovation.transfer;
       const transfers = await sut.getInnovationTransfersList(scenario.users.adamInnovator.id, undefined, em);
@@ -60,7 +60,7 @@ describe('Innovations / _services / innovation transfer suite', () => {
       ]);
     });
 
-    it('should get all transfers assigned to request user', async () => {
+    it("should get all transfers assigned to request user", async () => {
       const transfers = await sut.getInnovationTransfersList(scenario.users.janeInnovator.id, true, em);
 
       expect(transfers).toMatchObject([
@@ -85,12 +85,12 @@ describe('Innovations / _services / innovation transfer suite', () => {
       ]);
     });
 
-    it('should omit innovation owner info when it is not found', async () => {
+    it("should omit innovation owner info when it is not found", async () => {
       const innovation = scenario.users.adamInnovator.innovations.adamInnovation;
       const transfer = innovation.transfer;
 
       jest
-        .spyOn(DomainUsersService.prototype, 'getUserInfo')
+        .spyOn(DomainUsersService.prototype, "getUserInfo")
         .mockRejectedValueOnce(new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND));
 
       const transfers = await sut.getInnovationTransfersList(scenario.users.adamInnovator.id, undefined, em);
@@ -108,8 +108,8 @@ describe('Innovations / _services / innovation transfer suite', () => {
     });
   });
 
-  describe('getPendingInnovationTransferInfo', () => {
-    it('should get the pending transfer info when the assigned user exists', async () => {
+  describe("getPendingInnovationTransferInfo", () => {
+    it("should get the pending transfer info when the assigned user exists", async () => {
       const transferInfo = await sut.getPendingInnovationTransferInfo(
         scenario.users.johnInnovator.innovations.johnInnovation.transfer.id,
         em
@@ -119,7 +119,7 @@ describe('Innovations / _services / innovation transfer suite', () => {
     });
 
     it(`should get the pending transfer info when the assigned doesn't exist yet`, async () => {
-      jest.spyOn(IdentityProviderService.prototype, 'getUserInfoByEmail').mockRejectedValueOnce(new Error());
+      jest.spyOn(IdentityProviderService.prototype, "getUserInfoByEmail").mockRejectedValueOnce(new Error());
       const transferInfo = await sut.getPendingInnovationTransferInfo(
         scenario.users.johnInnovator.innovations.johnInnovation.transfer.id,
         em
@@ -128,15 +128,15 @@ describe('Innovations / _services / innovation transfer suite', () => {
       expect(transferInfo).toMatchObject({ userExists: false });
     });
 
-    it('should throw a not found error when the transfer is not found', async () => {
+    it("should throw a not found error when the transfer is not found", async () => {
       await expect(() => sut.getPendingInnovationTransferInfo(randUuid(), em)).rejects.toThrow(
         new NotFoundError(InnovationErrorsEnum.INNOVATION_TRANSFER_NOT_FOUND)
       );
     });
   });
 
-  describe('getInnovationTransferInfo', () => {
-    it('should get the innovation transfer info', async () => {
+  describe("getInnovationTransferInfo", () => {
+    it("should get the innovation transfer info", async () => {
       const transfer = scenario.users.adamInnovator.innovations.adamInnovation.transfer;
       const transferInfo = await sut.getInnovationTransferInfo(transfer.id, em);
 
@@ -151,15 +151,15 @@ describe('Innovations / _services / innovation transfer suite', () => {
       });
     });
 
-    it('should throw a not found error when the transfer is not found', async () => {
+    it("should throw a not found error when the transfer is not found", async () => {
       await expect(() => sut.getInnovationTransferInfo(randUuid(), em)).rejects.toThrow(
         new NotFoundError(InnovationErrorsEnum.INNOVATION_TRANSFER_NOT_FOUND)
       );
     });
   });
 
-  describe('createInnovationTransfer', () => {
-    it('should create an innovation transfer', async () => {
+  describe("createInnovationTransfer", () => {
+    it("should create an innovation transfer", async () => {
       const innovation = scenario.users.johnInnovator.innovations.johnInnovationEmpty;
       const result = await sut.createInnovationTransfer(
         { id: scenario.users.johnInnovator.id, identityId: scenario.users.johnInnovator.identityId },
@@ -171,8 +171,8 @@ describe('Innovations / _services / innovation transfer suite', () => {
       );
 
       const dbTranfer = await em
-        .createQueryBuilder(InnovationTransferEntity, 'transfer')
-        .where('transfer.id = :transferId', { transferId: result.id })
+        .createQueryBuilder(InnovationTransferEntity, "transfer")
+        .where("transfer.id = :transferId", { transferId: result.id })
         .getOne();
 
       expect(dbTranfer?.createdBy).toBe(scenario.users.johnInnovator.id);
@@ -180,7 +180,7 @@ describe('Innovations / _services / innovation transfer suite', () => {
       expect(dbTranfer?.id).toBe(result.id);
     });
 
-    it('should throw a not found error when the innovation is not found', async () => {
+    it("should throw a not found error when the innovation is not found", async () => {
       await expect(() =>
         sut.createInnovationTransfer(
           { id: scenario.users.johnInnovator.id, identityId: scenario.users.johnInnovator.identityId },
@@ -193,7 +193,7 @@ describe('Innovations / _services / innovation transfer suite', () => {
       ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND));
     });
 
-    it('should throw an unprocessable entity error when the innovation already has a pending transfer', async () => {
+    it("should throw an unprocessable entity error when the innovation already has a pending transfer", async () => {
       await expect(() =>
         sut.createInnovationTransfer(
           { id: scenario.users.johnInnovator.id, identityId: scenario.users.johnInnovator.identityId },
@@ -206,7 +206,7 @@ describe('Innovations / _services / innovation transfer suite', () => {
       ).rejects.toThrow(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_TRANSFER_ALREADY_EXISTS));
     });
 
-    it('should throw an unprocessable entity error when the transfer is to the current owner', async () => {
+    it("should throw an unprocessable entity error when the transfer is to the current owner", async () => {
       await expect(() =>
         sut.createInnovationTransfer(
           { id: scenario.users.johnInnovator.id, identityId: scenario.users.johnInnovator.identityId },
@@ -219,7 +219,7 @@ describe('Innovations / _services / innovation transfer suite', () => {
       ).rejects.toThrow(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_TRANSFER_REQUESTED_FOR_SELF));
     });
 
-    it('should throw an unprocessable entity error when the transfer target is not an innovator', async () => {
+    it("should throw an unprocessable entity error when the transfer target is not an innovator", async () => {
       await expect(() =>
         sut.createInnovationTransfer(
           { id: scenario.users.johnInnovator.id, identityId: scenario.users.johnInnovator.identityId },
@@ -235,13 +235,13 @@ describe('Innovations / _services / innovation transfer suite', () => {
     });
   });
 
-  describe('updateInnovationTransferStatus', () => {
+  describe("updateInnovationTransferStatus", () => {
     it.each([
       [InnovationTransferStatusEnum.CANCELED as const, scenario.users.johnInnovator],
       [InnovationTransferStatusEnum.COMPLETED as const, scenario.users.janeInnovator],
       [InnovationTransferStatusEnum.DECLINED as const, scenario.users.janeInnovator]
     ])(
-      'should update the transfer status to %s',
+      "should update the transfer status to %s",
       async (
         status:
           | InnovationTransferStatusEnum.CANCELED
@@ -250,15 +250,15 @@ describe('Innovations / _services / innovation transfer suite', () => {
         requestUser: TestUserType
       ) => {
         const dbInnovation = await em
-          .createQueryBuilder(InnovationEntity, 'innovation')
-          .innerJoinAndSelect('innovation.owner', 'owner')
-          .where('innovation.id = :innovationId', {
+          .createQueryBuilder(InnovationEntity, "innovation")
+          .innerJoinAndSelect("innovation.owner", "owner")
+          .where("innovation.id = :innovationId", {
             innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id
           })
           .getOne();
 
         const innovationMock = jest
-          .spyOn(DomainInnovationsService.prototype, 'getInnovationInfo')
+          .spyOn(DomainInnovationsService.prototype, "getInnovationInfo")
           .mockResolvedValueOnce(dbInnovation);
 
         const result = await sut.updateInnovationTransferStatus(
@@ -273,8 +273,8 @@ describe('Innovations / _services / innovation transfer suite', () => {
         );
 
         const dbTransfer = await em
-          .createQueryBuilder(InnovationTransferEntity, 'transfer')
-          .where('transfer.id = :transferId', {
+          .createQueryBuilder(InnovationTransferEntity, "transfer")
+          .where("transfer.id = :transferId", {
             transferId: scenario.users.johnInnovator.innovations.johnInnovation.transfer.id
           })
           .getOne();
@@ -292,19 +292,19 @@ describe('Innovations / _services / innovation transfer suite', () => {
       }
     );
 
-    it('should update collaborators when changing transfer to COMPLETED', async () => {
+    it("should update collaborators when changing transfer to COMPLETED", async () => {
       const dbInnovation = await em
-        .createQueryBuilder(InnovationEntity, 'innovation')
-        .innerJoinAndSelect('innovation.owner', 'owner')
-        .where('innovation.id = :innovationId', {
+        .createQueryBuilder(InnovationEntity, "innovation")
+        .innerJoinAndSelect("innovation.owner", "owner")
+        .where("innovation.id = :innovationId", {
           innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id
         })
         .getOne();
 
-      jest.spyOn(DomainInnovationsService.prototype, 'getInnovationInfo').mockResolvedValueOnce(dbInnovation);
+      jest.spyOn(DomainInnovationsService.prototype, "getInnovationInfo").mockResolvedValueOnce(dbInnovation);
 
-      const upsertCollabSpy = jest.spyOn(InnovationCollaboratorsService.prototype, 'upsertCollaborator');
-      const deleteCollabSpy = jest.spyOn(InnovationCollaboratorsService.prototype, 'deleteCollaborator');
+      const upsertCollabSpy = jest.spyOn(InnovationCollaboratorsService.prototype, "upsertCollaborator");
+      const deleteCollabSpy = jest.spyOn(InnovationCollaboratorsService.prototype, "deleteCollaborator");
 
       const result = await sut.updateInnovationTransferStatus(
         {
@@ -322,21 +322,21 @@ describe('Innovations / _services / innovation transfer suite', () => {
       expect(deleteCollabSpy).toHaveBeenCalled();
     });
 
-    it('should archive innovation without owner when changing transfer to DECLINED', async () => {
+    it("should archive innovation without owner when changing transfer to DECLINED", async () => {
       const dbInnovation = await em
-        .createQueryBuilder(InnovationEntity, 'innovation')
-        .where('innovation.id = :innovationId', {
+        .createQueryBuilder(InnovationEntity, "innovation")
+        .where("innovation.id = :innovationId", {
           innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id
         })
         .getOne();
 
       jest
-        .spyOn(DomainInnovationsService.prototype, 'getInnovationInfo')
+        .spyOn(DomainInnovationsService.prototype, "getInnovationInfo")
         .mockResolvedValueOnce({ ...dbInnovation, owner: null } as InnovationEntity);
 
       const archiveInnovationSpy = jest.spyOn(
         DomainInnovationsService.prototype,
-        'archiveInnovationsWithDeleteSideffects'
+        "archiveInnovationsWithDeleteSideffects"
       );
 
       const result = await sut.updateInnovationTransferStatus(
@@ -351,7 +351,7 @@ describe('Innovations / _services / innovation transfer suite', () => {
       expect(archiveInnovationSpy).toHaveBeenCalled();
     });
 
-    it('should throw a not found error when the transfer is not found', async () => {
+    it("should throw a not found error when the transfer is not found", async () => {
       await expect(() =>
         sut.updateInnovationTransferStatus(
           {

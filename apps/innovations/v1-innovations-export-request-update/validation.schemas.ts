@@ -1,7 +1,7 @@
-import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
-import { InnovationExportRequestStatusEnum } from '@innovations/shared/enums';
-import { JoiHelper } from '@innovations/shared/helpers';
-import Joi from 'joi';
+import { TEXTAREA_LENGTH_LIMIT } from "@innovations/shared/constants";
+import { InnovationExportRequestStatusEnum } from "@innovations/shared/enums";
+import { JoiHelper } from "@innovations/shared/helpers";
+import Joi from "joi";
 
 export type ParamsType = {
   innovationId: string;
@@ -17,17 +17,17 @@ export type BodyType = {
   rejectReason?: string;
 };
 export const BodySchema = Joi.object<BodyType>({
-  status: Joi.when('$userType', [
+  status: Joi.when("$userType", [
     {
-      is: 'ACCESSOR',
+      is: "ACCESSOR",
       then: JoiHelper.AppCustomJoi().string().valid(InnovationExportRequestStatusEnum.CANCELLED).required()
     },
     {
-      is: 'ASSESSMENT',
+      is: "ASSESSMENT",
       then: JoiHelper.AppCustomJoi().string().valid(InnovationExportRequestStatusEnum.CANCELLED).required()
     },
     {
-      is: 'QUALIFYING_ACCESSOR',
+      is: "QUALIFYING_ACCESSOR",
       then: JoiHelper.AppCustomJoi().string().valid(InnovationExportRequestStatusEnum.CANCELLED).required(),
       otherwise: JoiHelper.AppCustomJoi()
         .string()
@@ -35,7 +35,7 @@ export const BodySchema = Joi.object<BodyType>({
         .required()
     }
   ]),
-  rejectReason: Joi.when('status', {
+  rejectReason: Joi.when("status", {
     is: InnovationExportRequestStatusEnum.REJECTED,
     then: JoiHelper.AppCustomJoi().string().max(TEXTAREA_LENGTH_LIMIT.s).required(),
     otherwise: Joi.forbidden()

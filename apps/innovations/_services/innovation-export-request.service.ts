@@ -1,20 +1,20 @@
-import { inject, injectable } from 'inversify';
-import type { EntityManager } from 'typeorm';
+import { inject, injectable } from "inversify";
+import type { EntityManager } from "typeorm";
 
-import { BaseService } from './base.service';
+import { BaseService } from "./base.service";
 
-import { InnovationExportRequestEntity, UserRoleEntity } from '@innovations/shared/entities';
-import { InnovationExportRequestStatusEnum, NotifierTypeEnum, ServiceRoleEnum } from '@innovations/shared/enums';
+import { InnovationExportRequestEntity, UserRoleEntity } from "@innovations/shared/entities";
+import { InnovationExportRequestStatusEnum, NotifierTypeEnum, ServiceRoleEnum } from "@innovations/shared/enums";
 import {
   ForbiddenError,
   InnovationErrorsEnum,
   NotFoundError,
   UnprocessableEntityError
-} from '@innovations/shared/errors';
-import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
-import type { DomainService, NotifierService } from '@innovations/shared/services';
-import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import type { DomainContextType } from '@innovations/shared/types';
+} from "@innovations/shared/errors";
+import type { PaginationQueryParamsType } from "@innovations/shared/helpers";
+import type { DomainService, NotifierService } from "@innovations/shared/services";
+import SHARED_SYMBOLS from "@innovations/shared/services/symbols";
+import type { DomainContextType } from "@innovations/shared/types";
 
 @injectable()
 export class InnovationExportRequestService extends BaseService {
@@ -77,34 +77,34 @@ export class InnovationExportRequestService extends BaseService {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const query = em
-      .createQueryBuilder(InnovationExportRequestEntity, 'request')
+      .createQueryBuilder(InnovationExportRequestEntity, "request")
       .select([
-        'request.id',
-        'request.status',
-        'request.requestReason',
-        'request.rejectReason',
-        'request.createdAt',
-        'request.createdBy',
-        'request.updatedAt',
-        'request.updatedBy',
-        'userRole.id',
-        'userRole.role',
-        'unit.id',
-        'unit.name',
-        'roleUser.jobTitle'
+        "request.id",
+        "request.status",
+        "request.requestReason",
+        "request.rejectReason",
+        "request.createdAt",
+        "request.createdBy",
+        "request.updatedAt",
+        "request.updatedBy",
+        "userRole.id",
+        "userRole.role",
+        "unit.id",
+        "unit.name",
+        "roleUser.jobTitle"
       ])
-      .innerJoin('request.createdByUserRole', 'userRole')
-      .leftJoin('userRole.user', 'roleUser')
-      .leftJoin('userRole.organisationUnit', 'unit')
-      .where('request.id = :exportRequestId', { exportRequestId });
+      .innerJoin("request.createdByUserRole", "userRole")
+      .leftJoin("userRole.user", "roleUser")
+      .leftJoin("userRole.organisationUnit", "unit")
+      .where("request.id = :exportRequestId", { exportRequestId });
 
     if (domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT) {
-      query.andWhere('userRole.role = :assessmentRole', { assessmentRole: ServiceRoleEnum.ASSESSMENT });
+      query.andWhere("userRole.role = :assessmentRole", { assessmentRole: ServiceRoleEnum.ASSESSMENT });
     } else if (
       domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR ||
       domainContext.currentRole.role === ServiceRoleEnum.QUALIFYING_ACCESSOR
     ) {
-      query.andWhere('userRole.organisation_unit_id = :unitId', {
+      query.andWhere("userRole.organisation_unit_id = :unitId", {
         unitId: domainContext.organisation?.organisationUnit?.id
       });
     }
@@ -149,7 +149,7 @@ export class InnovationExportRequestService extends BaseService {
     filters: {
       statuses?: InnovationExportRequestStatusEnum[];
     },
-    pagination: PaginationQueryParamsType<'createdAt'>,
+    pagination: PaginationQueryParamsType<"createdAt">,
     entityManager?: EntityManager
   ): Promise<{
     count: number;
@@ -167,36 +167,36 @@ export class InnovationExportRequestService extends BaseService {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const query = em
-      .createQueryBuilder(InnovationExportRequestEntity, 'request')
+      .createQueryBuilder(InnovationExportRequestEntity, "request")
       .select([
-        'request.id',
-        'request.status',
-        'request.createdAt',
-        'request.createdBy',
-        'userRole.id',
-        'userRole.role',
-        'unit.id',
-        'unit.name',
-        'roleUser.jobTitle'
+        "request.id",
+        "request.status",
+        "request.createdAt",
+        "request.createdBy",
+        "userRole.id",
+        "userRole.role",
+        "unit.id",
+        "unit.name",
+        "roleUser.jobTitle"
       ])
-      .innerJoin('request.createdByUserRole', 'userRole')
-      .leftJoin('userRole.user', 'roleUser')
-      .leftJoin('userRole.organisationUnit', 'unit')
-      .where('request.innovation_id = :innovationId', { innovationId });
+      .innerJoin("request.createdByUserRole", "userRole")
+      .leftJoin("userRole.user", "roleUser")
+      .leftJoin("userRole.organisationUnit", "unit")
+      .where("request.innovation_id = :innovationId", { innovationId });
 
     if (domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT) {
-      query.andWhere('userRole.role = :assessmentRole', { assessmentRole: ServiceRoleEnum.ASSESSMENT });
+      query.andWhere("userRole.role = :assessmentRole", { assessmentRole: ServiceRoleEnum.ASSESSMENT });
     } else if (
       domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR ||
       domainContext.currentRole.role === ServiceRoleEnum.QUALIFYING_ACCESSOR
     ) {
-      query.andWhere('unit.id = :unitId', {
+      query.andWhere("unit.id = :unitId", {
         unitId: domainContext.organisation?.organisationUnit?.id
       });
     }
 
     if (filters.statuses && filters.statuses.length > 0) {
-      query.andWhere('request.status IN (:...requestStatuses)', { requestStatuses: filters.statuses });
+      query.andWhere("request.status IN (:...requestStatuses)", { requestStatuses: filters.statuses });
     }
 
     // Pagination and ordering.
@@ -207,7 +207,7 @@ export class InnovationExportRequestService extends BaseService {
       let field: string;
       switch (key) {
         default:
-          field = 'request.createdAt';
+          field = "request.createdAt";
           break;
       }
       query.addOrderBy(field, order);
@@ -248,12 +248,12 @@ export class InnovationExportRequestService extends BaseService {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const request = await em
-      .createQueryBuilder(InnovationExportRequestEntity, 'request')
-      .select(['request.id', 'request.status', 'role.id', 'role.role', 'unit.id', 'innovation.id'])
-      .innerJoin('request.innovation', 'innovation')
-      .innerJoin('request.createdByUserRole', 'role')
-      .leftJoin('role.organisationUnit', 'unit')
-      .where('request.id = :exportRequestId', { exportRequestId })
+      .createQueryBuilder(InnovationExportRequestEntity, "request")
+      .select(["request.id", "request.status", "role.id", "role.role", "unit.id", "innovation.id"])
+      .innerJoin("request.innovation", "innovation")
+      .innerJoin("request.createdByUserRole", "role")
+      .leftJoin("role.organisationUnit", "unit")
+      .where("request.id = :exportRequestId", { exportRequestId })
       .getOne();
     if (!request) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_EXPORT_REQUEST_NOT_FOUND);

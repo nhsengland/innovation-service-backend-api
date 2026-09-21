@@ -1,5 +1,5 @@
-import Joi from 'joi';
-import type { SurveyInfoPayload } from '../_services/surveys.service';
+import Joi from "joi";
+import type { SurveyInfoPayload } from "../_services/surveys.service";
 
 export type ResponseDTO = {
   id: string;

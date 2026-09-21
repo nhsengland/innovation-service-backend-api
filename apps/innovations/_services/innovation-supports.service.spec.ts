@@ -1,4 +1,4 @@
-import { container } from '../_config';
+import { container } from "../_config";
 
 import {
   InnovationFileEntity,
@@ -7,14 +7,14 @@ import {
   InnovationTaskEntity,
   InnovationThreadEntity,
   InnovationThreadMessageEntity
-} from '@innovations/shared/entities';
+} from "@innovations/shared/entities";
 import {
   InnovationFileContextTypeEnum,
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
   InnovationTaskStatusEnum,
   NotifierTypeEnum
-} from '@innovations/shared/enums';
+} from "@innovations/shared/enums";
 
 import {
   BadRequestError,
@@ -25,24 +25,24 @@ import {
   NotFoundError,
   OrganisationErrorsEnum,
   UnprocessableEntityError
-} from '@innovations/shared/errors';
-import { TranslationHelper } from '@innovations/shared/helpers';
-import { DomainInnovationsService, NotifierService } from '@innovations/shared/services';
-import { AuthErrorsEnum } from '@innovations/shared/services/auth/authorization-validation.model';
-import { TestsHelper } from '@innovations/shared/tests';
-import { InnovationSupportLogBuilder } from '@innovations/shared/tests/builders/innovation-support-log.builder';
-import { InnovationSupportBuilder } from '@innovations/shared/tests/builders/innovation-support.builder';
-import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
-import { randFileExt, randFileName, randNumber, randPastDate, randText, randUuid } from '@ngneat/falso';
-import type { EntityManager } from 'typeorm';
-import { InnovationFileService } from './innovation-file.service';
-import type { InnovationSupportsService } from './innovation-supports.service';
-import { InnovationThreadsService } from './innovation-threads.service';
-import SYMBOLS from './symbols';
-import { ValidationService } from './validation.service';
-import { SurveysService } from './surveys.service';
+} from "@innovations/shared/errors";
+import { TranslationHelper } from "@innovations/shared/helpers";
+import { DomainInnovationsService, NotifierService } from "@innovations/shared/services";
+import { AuthErrorsEnum } from "@innovations/shared/services/auth/authorization-validation.model";
+import { TestsHelper } from "@innovations/shared/tests";
+import { InnovationSupportLogBuilder } from "@innovations/shared/tests/builders/innovation-support-log.builder";
+import { InnovationSupportBuilder } from "@innovations/shared/tests/builders/innovation-support.builder";
+import { DTOsHelper } from "@innovations/shared/tests/helpers/dtos.helper";
+import { randFileExt, randFileName, randNumber, randPastDate, randText, randUuid } from "@ngneat/falso";
+import type { EntityManager } from "typeorm";
+import { InnovationFileService } from "./innovation-file.service";
+import type { InnovationSupportsService } from "./innovation-supports.service";
+import { InnovationThreadsService } from "./innovation-threads.service";
+import SYMBOLS from "./symbols";
+import { ValidationService } from "./validation.service";
+import { SurveysService } from "./surveys.service";
 
-describe('Innovations / _services / innovation-supports suite', () => {
+describe("Innovations / _services / innovation-supports suite", () => {
   let sut: InnovationSupportsService;
 
   let em: EntityManager;
@@ -51,14 +51,14 @@ describe('Innovations / _services / innovation-supports suite', () => {
   const scenario = testsHelper.getCompleteScenario();
 
   // Setup global mocks for these tests
-  const activityLogSpy = jest.spyOn(DomainInnovationsService.prototype, 'addActivityLog');
-  const supportLogSpy = jest.spyOn(DomainInnovationsService.prototype, 'addSupportLog');
-  const notifierSendSpy = jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
-  const notifierSendNotifyMeSpy = jest.spyOn(NotifierService.prototype, 'sendNotifyMe').mockResolvedValue(true);
-  const threadMessageMock = jest.spyOn(InnovationThreadsService.prototype, 'createThreadMessage').mockResolvedValue({
+  const activityLogSpy = jest.spyOn(DomainInnovationsService.prototype, "addActivityLog");
+  const supportLogSpy = jest.spyOn(DomainInnovationsService.prototype, "addSupportLog");
+  const notifierSendSpy = jest.spyOn(NotifierService.prototype, "send").mockResolvedValue(true);
+  const notifierSendNotifyMeSpy = jest.spyOn(NotifierService.prototype, "sendNotifyMe").mockResolvedValue(true);
+  const threadMessageMock = jest.spyOn(InnovationThreadsService.prototype, "createThreadMessage").mockResolvedValue({
     threadMessage: InnovationThreadMessageEntity.new({ id: randUuid() })
   });
-  const createSurveySpy = jest.spyOn(SurveysService.prototype, 'createSurvey').mockResolvedValue();
+  const createSurveySpy = jest.spyOn(SurveysService.prototype, "createSurvey").mockResolvedValue();
 
   beforeAll(async () => {
     sut = container.get<InnovationSupportsService>(SYMBOLS.InnovationSupportsService);
@@ -79,16 +79,16 @@ describe('Innovations / _services / innovation-supports suite', () => {
     createSurveySpy.mockClear();
   });
 
-  describe('getInnovationSupportsList', () => {
+  describe("getInnovationSupportsList", () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
 
     const getUnreadNotificationsMock = jest
-      .spyOn(DomainInnovationsService.prototype, 'getUnreadNotifications')
+      .spyOn(DomainInnovationsService.prototype, "getUnreadNotifications")
       .mockImplementation((_userId, contextIds) => {
         return Promise.resolve(
           contextIds.map(contextId => ({
             contextId,
-            contextType: 'TASK',
+            contextType: "TASK",
             id: randUuid(),
             params: {}
           }))
@@ -99,7 +99,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
       getUnreadNotificationsMock.mockRestore();
     });
 
-    it('should list all innovation supports', async () => {
+    it("should list all innovation supports", async () => {
       const supports = await sut.getInnovationSupportsList(innovation.id, { fields: [] }, em);
 
       expect(supports).toMatchObject([
@@ -148,8 +148,8 @@ describe('Innovations / _services / innovation-supports suite', () => {
       ]);
     });
 
-    it('should list all innovation supports with engaging accessors', async () => {
-      const supports = await sut.getInnovationSupportsList(innovation.id, { fields: ['engagingAccessors'] }, em);
+    it("should list all innovation supports with engaging accessors", async () => {
+      const supports = await sut.getInnovationSupportsList(innovation.id, { fields: ["engagingAccessors"] }, em);
 
       expect(supports).toMatchObject([
         {
@@ -224,8 +224,8 @@ describe('Innovations / _services / innovation-supports suite', () => {
     });
   });
 
-  describe('getInnovationSupportInfo', () => {
-    it('should get the innovation support info with default behavior (excludes inactive users)', async () => {
+  describe("getInnovationSupportInfo", () => {
+    it("should get the innovation support info with default behavior (excludes inactive users)", async () => {
       const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
       const support = await sut.getInnovationSupportInfo(innovation.supports.supportByHealthOrgUnit.id, undefined, em);
 
@@ -249,7 +249,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
       });
     });
 
-    it('should get the innovation support info with includeInactive: false (excludes inactive users)', async () => {
+    it("should get the innovation support info with includeInactive: false (excludes inactive users)", async () => {
       const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
       const support = await sut.getInnovationSupportInfo(
         innovation.supports.supportByHealthOrgUnit.id,
@@ -277,18 +277,15 @@ describe('Innovations / _services / innovation-supports suite', () => {
       });
     });
 
-    it('should get the innovation support info with includeInactive: true (includes inactive users)', async () => {
+    it("should get the innovation support info with includeInactive: true (includes inactive users)", async () => {
       const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
-      
+
       // Deactivate one of the accessors
-      await em.query(
-        `UPDATE user_role SET user_id = (SELECT id FROM "user" WHERE id = @0) WHERE id = @1`,
-        [scenario.users.jamieMadroxAccessor.id, scenario.users.jamieMadroxAccessor.roles.healthAccessorRole.id]
-      );
-      await em.query(
-        `UPDATE "user" SET status = 'INACTIVE' WHERE id = @0`,
-        [scenario.users.jamieMadroxAccessor.id]
-      );
+      await em.query(`UPDATE user_role SET user_id = (SELECT id FROM "user" WHERE id = @0) WHERE id = @1`, [
+        scenario.users.jamieMadroxAccessor.id,
+        scenario.users.jamieMadroxAccessor.roles.healthAccessorRole.id
+      ]);
+      await em.query(`UPDATE "user" SET status = 'INACTIVE' WHERE id = @0`, [scenario.users.jamieMadroxAccessor.id]);
 
       const support = await sut.getInnovationSupportInfo(
         innovation.supports.supportByHealthOrgUnit.id,
@@ -311,14 +308,13 @@ describe('Innovations / _services / innovation-supports suite', () => {
       );
     });
 
-    it('should exclude locked users when includeInactive: false', async () => {
+    it("should exclude locked users when includeInactive: false", async () => {
       const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
-      
+
       // Lock one of the accessors
-      await em.query(
-        `UPDATE "user" SET locked_at = CURRENT_TIMESTAMP WHERE id = @0`,
-        [scenario.users.jamieMadroxAccessor.id]
-      );
+      await em.query(`UPDATE "user" SET locked_at = CURRENT_TIMESTAMP WHERE id = @0`, [
+        scenario.users.jamieMadroxAccessor.id
+      ]);
 
       const support = await sut.getInnovationSupportInfo(
         innovation.supports.supportByHealthOrgUnit.id,
@@ -333,14 +329,13 @@ describe('Innovations / _services / innovation-supports suite', () => {
       });
     });
 
-    it('should include locked users when includeInactive: true', async () => {
+    it("should include locked users when includeInactive: true", async () => {
       const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
-      
+
       // Lock one of the accessors
-      await em.query(
-        `UPDATE "user" SET locked_at = CURRENT_TIMESTAMP WHERE id = @0`,
-        [scenario.users.jamieMadroxAccessor.id]
-      );
+      await em.query(`UPDATE "user" SET locked_at = CURRENT_TIMESTAMP WHERE id = @0`, [
+        scenario.users.jamieMadroxAccessor.id
+      ]);
 
       const support = await sut.getInnovationSupportInfo(
         innovation.supports.supportByHealthOrgUnit.id,
@@ -363,14 +358,11 @@ describe('Innovations / _services / innovation-supports suite', () => {
       );
     });
 
-    it('should handle mix of active, inactive, and locked users with includeInactive: true', async () => {
+    it("should handle mix of active, inactive, and locked users with includeInactive: true", async () => {
       const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
-      
+
       // Make Jamie inactive
-      await em.query(
-        `UPDATE "user" SET status = 'INACTIVE' WHERE id = @0`,
-        [scenario.users.jamieMadroxAccessor.id]
-      );
+      await em.query(`UPDATE "user" SET status = 'INACTIVE' WHERE id = @0`, [scenario.users.jamieMadroxAccessor.id]);
 
       const support = await sut.getInnovationSupportInfo(
         innovation.supports.supportByHealthOrgUnit.id,
@@ -379,28 +371,24 @@ describe('Innovations / _services / innovation-supports suite', () => {
       );
 
       expect(support.engagingAccessors).toHaveLength(2);
-      
+
       const activeAccessors = support.engagingAccessors.filter(a => a.isActive);
       const inactiveAccessors = support.engagingAccessors.filter(a => !a.isActive);
-      
+
       expect(activeAccessors).toHaveLength(1);
       expect(inactiveAccessors).toHaveLength(1);
       expect(activeAccessors[0]!.id).toBe(scenario.users.aliceQualifyingAccessor.id);
       expect(inactiveAccessors[0]!.id).toBe(scenario.users.jamieMadroxAccessor.id);
     });
 
-    it('should always include isActive field in response', async () => {
+    it("should always include isActive field in response", async () => {
       const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
-      const support = await sut.getInnovationSupportInfo(
-        innovation.supports.supportByHealthOrgUnit.id,
-        undefined,
-        em
-      );
+      const support = await sut.getInnovationSupportInfo(innovation.supports.supportByHealthOrgUnit.id, undefined, em);
 
       expect(support.engagingAccessors.length).toBeGreaterThan(0);
       support.engagingAccessors.forEach(accessor => {
-        expect(accessor).toHaveProperty('isActive');
-        expect(typeof accessor.isActive).toBe('boolean');
+        expect(accessor).toHaveProperty("isActive");
+        expect(typeof accessor.isActive).toBe("boolean");
       });
     });
 
@@ -411,12 +399,12 @@ describe('Innovations / _services / innovation-supports suite', () => {
     });
   });
 
-  describe('createInnovationSupport', () => {
+  describe("createInnovationSupport", () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
     const organisationWithSupport = scenario.organisations.healthOrg.organisationUnits.healthOrgUnit;
     const organisationWithoutSupport = scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit;
 
-    it('should create a new innovation support as suggested', async () => {
+    it("should create a new innovation support as suggested", async () => {
       const res = await sut.createInnovationSupport(
         DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
         innovation.id,
@@ -434,9 +422,9 @@ describe('Innovations / _services / innovation-supports suite', () => {
       });
 
       const dbSupport = await em
-        .createQueryBuilder(InnovationSupportEntity, 'support')
-        .where('support.innovation.id = :innovationId', { innovationId: innovation.id })
-        .andWhere('support.organisationUnit.id = :organisationUnitId', {
+        .createQueryBuilder(InnovationSupportEntity, "support")
+        .where("support.innovation.id = :innovationId", { innovationId: innovation.id })
+        .andWhere("support.organisationUnit.id = :organisationUnitId", {
           organisationUnitId: organisationWithoutSupport.id
         })
         .getOne();
@@ -450,7 +438,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
       });
     });
 
-    it('should create a new innovation support if no active support', async () => {
+    it("should create a new innovation support if no active support", async () => {
       await em.update(
         InnovationSupportEntity,
         { id: innovation.supports.supportByHealthOrgUnit.id },
@@ -474,7 +462,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
       });
     });
 
-    it('should fail if there is an active innovation support', async () => {
+    it("should fail if there is an active innovation support", async () => {
       await expect(
         sut.createInnovationSupport(
           DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
@@ -487,7 +475,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
     });
 
     it("should fail if the innovation hasn't been shared with the organisation unit", async () => {
-      await em.query('DELETE FROM innovation_share WHERE innovation_id = @0', [innovation.id]);
+      await em.query("DELETE FROM innovation_share WHERE innovation_id = @0", [innovation.id]);
 
       await expect(
         sut.createInnovationSupport(
@@ -500,7 +488,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
       ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND));
     });
 
-    it('should mark other supports as not most recent', async () => {
+    it("should mark other supports as not most recent", async () => {
       const previous = await em
         .getRepository(InnovationSupportEntity)
         .findOneBy({ innovation: { id: innovation.id }, isMostRecent: true });
@@ -525,7 +513,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
     });
   });
 
-  describe('createSuggestedSupports', () => {
+  describe("createSuggestedSupports", () => {
     const na = scenario.users.paulNeedsAssessor;
     const naContext = DTOsHelper.getUserRequestContext(na);
     let previousCreateInnovationSupport: any;
@@ -546,7 +534,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
       sut.createInnovationSupport = previousCreateInnovationSupport;
     });
 
-    it('should create a new innovation support as suggested', async () => {
+    it("should create a new innovation support as suggested", async () => {
       await sut.createSuggestedSupports(
         naContext,
         innovationWithoutSupports.id,
@@ -576,7 +564,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
       );
     });
 
-    it('should ignore units that are not shared', async () => {
+    it("should ignore units that are not shared", async () => {
       await sut.createSuggestedSupports(
         naContext,
         innovationWithoutSupports.id,
@@ -587,7 +575,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
       expect(createInnovationSupportSpy).toHaveBeenCalledTimes(0);
     });
 
-    it('should ignore units that are already supporting the innovation', async () => {
+    it("should ignore units that are already supporting the innovation", async () => {
       await new InnovationSupportBuilder(em)
         .setInnovation(innovationWithoutSupports.id)
         .setMajorAssessment(innovationWithoutSupports.assessmentInProgress.id)
@@ -595,7 +583,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
         .setOrganisationUnit(scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id)
         .setCreatedAndUpdatedBy(
           scenario.users.scottQualifyingAccessor.id,
-          scenario.users.scottQualifyingAccessor.roles['qaRole'].id
+          scenario.users.scottQualifyingAccessor.roles["qaRole"].id
         )
         .save();
 
@@ -621,10 +609,10 @@ describe('Innovations / _services / innovation-supports suite', () => {
     });
   });
 
-  describe('startInnovationSupport', () => {
+  describe("startInnovationSupport", () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
 
-    it('should create and start a support if no support exists', async () => {
+    it("should create and start a support if no support exists", async () => {
       const support = await sut.startInnovationSupport(
         DTOsHelper.getUserRequestContext(scenario.users.bartQualifyingAccessor),
         scenario.users.adamInnovator.innovations.adamInnovation.id,
@@ -650,7 +638,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
       expect(notifierSendSpy).toHaveBeenCalled();
     });
 
-    it('should create and start a support if no active support exists', async () => {
+    it("should create and start a support if no active support exists", async () => {
       await em.update(
         InnovationSupportEntity,
         { innovation: { id: scenario.users.johnInnovator.innovations.johnInnovation.id } },
@@ -677,7 +665,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
       });
     });
 
-    it('should start the innovation support if it was SUGGESTED', async () => {
+    it("should start the innovation support if it was SUGGESTED", async () => {
       await em.update(
         InnovationSupportEntity,
         { innovation: { id: scenario.users.johnInnovator.innovations.johnInnovation.id } },
@@ -704,7 +692,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
       });
     });
 
-    it('should send the notifyMe', async () => {
+    it("should send the notifyMe", async () => {
       const context = DTOsHelper.getUserRequestContext(scenario.users.bartQualifyingAccessor);
       const innovation = scenario.users.adamInnovator.innovations.adamInnovation.id;
       const message = randText({ charCount: 10 });
@@ -724,14 +712,14 @@ describe('Innovations / _services / innovation-supports suite', () => {
         em
       );
 
-      expect(notifierSendNotifyMeSpy).toHaveBeenCalledWith(context, innovation, 'SUPPORT_UPDATED', {
+      expect(notifierSendNotifyMeSpy).toHaveBeenCalledWith(context, innovation, "SUPPORT_UPDATED", {
         status: InnovationSupportStatusEnum.ENGAGING,
         units: context.organisation?.organisationUnit?.id,
         message
       });
     });
 
-    it('should throw an unprocessable entity error if the domain context has an invalid organisation unit id', async () => {
+    it("should throw an unprocessable entity error if the domain context has an invalid organisation unit id", async () => {
       await expect(() =>
         sut.startInnovationSupport(
           DTOsHelper.getUserRequestContext(scenario.users.allMighty),
@@ -764,7 +752,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
       ).rejects.toThrow(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND));
     });
 
-    it('should throw an unprocessable entity error if one active support already exists', async () => {
+    it("should throw an unprocessable entity error if one active support already exists", async () => {
       await expect(() =>
         sut.startInnovationSupport(
           DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
@@ -778,7 +766,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
       ).rejects.toThrow(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_ALREADY_EXISTS));
     });
 
-    it('should throw an unprocessable entity error if the accessors argument exists and the status is not ENGAGING', async () => {
+    it("should throw an unprocessable entity error if the accessors argument exists and the status is not ENGAGING", async () => {
       await expect(() =>
         sut.startInnovationSupport(
           DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
@@ -801,10 +789,10 @@ describe('Innovations / _services / innovation-supports suite', () => {
     });
   });
 
-  describe('getSupportSummaryList', () => {
+  describe("getSupportSummaryList", () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
 
-    it('should return currently engaging units', async () => {
+    it("should return currently engaging units", async () => {
       const supportSummaryList = await sut.getSupportSummaryList(
         DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
         innovation.id
@@ -837,7 +825,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
       ).toBeTruthy();
     });
 
-    it('should return units that had been engaged', async () => {
+    it("should return units that had been engaged", async () => {
       await em
         .getRepository(InnovationSupportEntity)
         .update({ id: innovation.supports.supportByHealthOrgUnit.id }, { status: InnovationSupportStatusEnum.CLOSED });
@@ -862,7 +850,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
       ]);
     });
 
-    it('should return suggested units', async () => {
+    it("should return suggested units", async () => {
       const innovTechHeavySupport = await new InnovationSupportBuilder(em)
         .setStatus(InnovationSupportStatusEnum.WAITING)
         .setInnovation(innovation.id)
@@ -876,7 +864,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
         .setOrganisationUnit(scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.id)
         .setCreatedAndUpdatedBy(
           scenario.users.lisaQualifyingAccessor.id,
-          scenario.users.lisaQualifyingAccessor.roles['qaRole'].id
+          scenario.users.lisaQualifyingAccessor.roles["qaRole"].id
         )
         .save();
       const supportSummaryList = await sut.getSupportSummaryList(
@@ -940,7 +928,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
     });
   });
 
-  describe('getInnovationUnitsSuggestions', () => {
+  describe("getInnovationUnitsSuggestions", () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
 
     it("should return a list with 1 support suggestion in which the user's unit was suggested by QA Alice", async () => {
@@ -998,10 +986,10 @@ describe('Innovations / _services / innovation-supports suite', () => {
     });
   });
 
-  describe('getSupportSummaryUnitInfo', () => {
+  describe("getSupportSummaryUnitInfo", () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
 
-    it('should return the unit information', async () => {
+    it("should return the unit information", async () => {
       const johnInnovator = scenario.users.johnInnovator;
       const jamieMadrox = scenario.users.jamieMadroxAccessor;
       const alice = scenario.users.aliceQualifyingAccessor;
@@ -1070,15 +1058,15 @@ describe('Innovations / _services / innovation-supports suite', () => {
           {
             id: stopShareUpdate.id,
             createdAt: stopShareUpdate.createdAt,
-            createdBy: { id: johnInnovator.id, name: johnInnovator.name, displayRole: 'Owner' },
-            type: 'STOP_SHARE',
+            createdBy: { id: johnInnovator.id, name: johnInnovator.name, displayRole: "Owner" },
+            type: "STOP_SHARE",
             params: { supportStatus: InnovationSupportStatusEnum.CLOSED }
           },
           {
             id: archiveInnovationUpdate.id,
             createdAt: archiveInnovationUpdate.createdAt,
-            createdBy: { id: johnInnovator.id, name: johnInnovator.name, displayRole: 'Owner' },
-            type: 'INNOVATION_ARCHIVED',
+            createdBy: { id: johnInnovator.id, name: johnInnovator.name, displayRole: "Owner" },
+            type: "INNOVATION_ARCHIVED",
             params: {
               supportStatus: InnovationSupportStatusEnum.CLOSED,
               message: archiveInnovationUpdate.description
@@ -1092,9 +1080,9 @@ describe('Innovations / _services / innovation-supports suite', () => {
               name: jamieMadrox.name,
               displayRole: TranslationHelper.translate(`SERVICE_ROLES.${jamieMadrox.roles.aiRole.role}`)
             },
-            type: 'PROGRESS_UPDATE',
+            type: "PROGRESS_UPDATE",
             params: {
-              title: progressUpdate.params && 'title' in progressUpdate.params ? progressUpdate.params.title : '',
+              title: progressUpdate.params && "title" in progressUpdate.params ? progressUpdate.params.title : "",
               message: progressUpdate.description
             }
           },
@@ -1106,7 +1094,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
               name: jamieMadrox.name,
               displayRole: TranslationHelper.translate(`SERVICE_ROLES.${jamieMadrox.roles.aiRole.role}`)
             },
-            type: 'SUPPORT_UPDATE',
+            type: "SUPPORT_UPDATE",
             params: { supportStatus: statusUpdate.innovationSupportStatus, message: statusUpdate.description }
           },
           {
@@ -1117,7 +1105,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
               name: alice.name,
               displayRole: TranslationHelper.translate(`SERVICE_ROLES.${alice.roles.qaRole.role}`)
             },
-            type: 'SUGGESTED_ORGANISATION',
+            type: "SUGGESTED_ORGANISATION",
             params: {
               suggestedByName: alice.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
               message: qaSuggestion.description
@@ -1131,7 +1119,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
               name: paul.name,
               displayRole: TranslationHelper.translate(`SERVICE_ROLES.${paul.roles.assessmentRole.role}`)
             },
-            type: 'SUGGESTED_ORGANISATION',
+            type: "SUGGESTED_ORGANISATION",
             params: {}
           }
         ].sort((a, b) => b.createdAt!.getTime() - a.createdAt!.getTime())
@@ -1151,11 +1139,11 @@ describe('Innovations / _services / innovation-supports suite', () => {
     });
   });
 
-  describe('updateSupportStatus', () => {
+  describe("updateSupportStatus", () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
 
     it.each([InnovationSupportStatusEnum.CLOSED, InnovationSupportStatusEnum.WAITING])(
-      'should update the support status to %s',
+      "should update the support status to %s",
       async (status: InnovationSupportStatusEnum) => {
         const support = await sut.updateInnovationSupport(
           DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
@@ -1172,15 +1160,15 @@ describe('Innovations / _services / innovation-supports suite', () => {
         expect(notifierSendSpy).toHaveBeenCalled();
 
         const dbSupport = await em
-          .createQueryBuilder(InnovationSupportEntity, 'support')
-          .where('support.id = :supportId', { supportId: support.id })
+          .createQueryBuilder(InnovationSupportEntity, "support")
+          .where("support.id = :supportId", { supportId: support.id })
           .getOne();
 
         expect(dbSupport?.status).toBe(status);
       }
     );
 
-    it('should add new assigned accessors when status is changed to ENGAGING', async () => {
+    it("should add new assigned accessors when status is changed to ENGAGING", async () => {
       const support = await sut.updateInnovationSupport(
         DTOsHelper.getUserRequestContext(scenario.users.sarahQualifyingAccessor),
         innovation.id,
@@ -1201,10 +1189,10 @@ describe('Innovations / _services / innovation-supports suite', () => {
       expect(support).toMatchObject({ id: support.id });
 
       const dbSupport = await em
-        .createQueryBuilder(InnovationSupportEntity, 'support')
-        .select(['support.id', 'userRole.id'])
-        .innerJoin('support.userRoles', 'userRole')
-        .where('support.id = :supportId', { supportId: support.id })
+        .createQueryBuilder(InnovationSupportEntity, "support")
+        .select(["support.id", "userRole.id"])
+        .innerJoin("support.userRoles", "userRole")
+        .where("support.id = :supportId", { supportId: support.id })
         .getOne();
 
       expect(dbSupport?.userRoles.map(u => u.id)).toContain(
@@ -1212,9 +1200,9 @@ describe('Innovations / _services / innovation-supports suite', () => {
       );
 
       const dbThread = await em
-        .createQueryBuilder(InnovationThreadEntity, 'thread')
-        .leftJoinAndSelect('thread.followers', 'followers')
-        .where('thread.contextId = :contextId', { contextId: support.id })
+        .createQueryBuilder(InnovationThreadEntity, "thread")
+        .leftJoinAndSelect("thread.followers", "followers")
+        .where("thread.contextId = :contextId", { contextId: support.id })
         .getOne();
 
       expect(dbThread?.followers.map(f => f.id)).toContain(
@@ -1222,7 +1210,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
       );
     });
 
-    it('should add new assigned accessors when status is changed to WAITING', async () => {
+    it("should add new assigned accessors when status is changed to WAITING", async () => {
       const support = await sut.updateInnovationSupport(
         DTOsHelper.getUserRequestContext(scenario.users.sarahQualifyingAccessor),
         innovation.id,
@@ -1243,18 +1231,18 @@ describe('Innovations / _services / innovation-supports suite', () => {
       expect(support).toMatchObject({ id: support.id });
 
       const dbSupport = await em
-        .createQueryBuilder(InnovationSupportEntity, 'support')
-        .select(['support.id', 'userRole.id'])
-        .innerJoin('support.userRoles', 'userRole')
-        .where('support.id = :supportId', { supportId: support.id })
+        .createQueryBuilder(InnovationSupportEntity, "support")
+        .select(["support.id", "userRole.id"])
+        .innerJoin("support.userRoles", "userRole")
+        .where("support.id = :supportId", { supportId: support.id })
         .getOne();
 
       expect(dbSupport?.userRoles.map(u => u.id)).toContain(scenario.users.aliceQualifyingAccessor.roles.qaRole.id);
 
       const dbThread = await em
-        .createQueryBuilder(InnovationThreadEntity, 'thread')
-        .leftJoinAndSelect('thread.followers', 'followers')
-        .where('thread.contextId = :contextId', { contextId: support.id })
+        .createQueryBuilder(InnovationThreadEntity, "thread")
+        .leftJoinAndSelect("thread.followers", "followers")
+        .where("thread.contextId = :contextId", { contextId: support.id })
         .getOne();
 
       expect(dbThread?.followers.map(f => f.id)).toContain(scenario.users.aliceQualifyingAccessor.roles.qaRole.id);
@@ -1264,7 +1252,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
       [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.CLOSED],
       [InnovationSupportStatusEnum.WAITING, InnovationSupportStatusEnum.UNSUITABLE]
     ])(
-      'should clear any open tasks when status is changed from %s to %s',
+      "should clear any open tasks when status is changed from %s to %s",
       async (previousStatus: InnovationSupportStatusEnum, newStatus: InnovationSupportStatusEnum) => {
         const scenarioSupport = innovation.supports.supportByHealthOrgUnit;
 
@@ -1292,10 +1280,10 @@ describe('Innovations / _services / innovation-supports suite', () => {
         });
 
         const dbTasks = await em
-          .createQueryBuilder(InnovationTaskEntity, 'task')
-          .innerJoin('task.innovationSupport', 'support')
-          .where('support.id = :supportId', { supportId: support.id })
-          .andWhere('task.status IN (:...taskStatusActive)', {
+          .createQueryBuilder(InnovationTaskEntity, "task")
+          .innerJoin("task.innovationSupport", "support")
+          .where("support.id = :supportId", { supportId: support.id })
+          .andWhere("task.status IN (:...taskStatusActive)", {
             taskStatusActive: [InnovationTaskStatusEnum.OPEN]
           })
           .getCount();
@@ -1308,7 +1296,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
       [innovation.supports.supportByHealthOrgUnit.id, InnovationSupportStatusEnum.CLOSED],
       [innovation.supports.supportByHealthOrgAiUnit.id, InnovationSupportStatusEnum.UNSUITABLE]
     ])(
-      'should remove all assigned accessors when status is changed to %s',
+      "should remove all assigned accessors when status is changed to %s",
       async (supportId: string, status: InnovationSupportStatusEnum) => {
         const support = await sut.updateInnovationSupport(
           DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
@@ -1326,10 +1314,10 @@ describe('Innovations / _services / innovation-supports suite', () => {
         });
 
         const dbSupport = await em
-          .createQueryBuilder(InnovationSupportEntity, 'support')
-          .select(['support.id', 'userRole.id'])
-          .leftJoin('support.userRoles', 'userRole')
-          .where('support.id = :supportId', { supportId: support.id })
+          .createQueryBuilder(InnovationSupportEntity, "support")
+          .select(["support.id", "userRole.id"])
+          .leftJoin("support.userRoles", "userRole")
+          .where("support.id = :supportId", { supportId: support.id })
           .getOne();
 
         expect(dbSupport?.userRoles).toHaveLength(0);
@@ -1340,7 +1328,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
       [innovation.supports.supportByHealthOrgUnit.id, InnovationSupportStatusEnum.CLOSED],
       [innovation.supports.supportByHealthOrgAiUnit.id, InnovationSupportStatusEnum.UNSUITABLE]
     ])(
-      'should update finishedAt when status is changed to %s',
+      "should update finishedAt when status is changed to %s",
       async (supportId: string, status: InnovationSupportStatusEnum) => {
         const support = await sut.updateInnovationSupport(
           DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
@@ -1358,9 +1346,9 @@ describe('Innovations / _services / innovation-supports suite', () => {
         });
 
         const dbSupport = await em
-          .createQueryBuilder(InnovationSupportEntity, 'support')
-          .select(['support.finishedAt'])
-          .where('support.id = :supportId', { supportId: support.id })
+          .createQueryBuilder(InnovationSupportEntity, "support")
+          .select(["support.finishedAt"])
+          .where("support.id = :supportId", { supportId: support.id })
           .getOne();
 
         expect(dbSupport?.finishedAt).toStrictEqual(expect.any(Date));
@@ -1389,9 +1377,9 @@ describe('Innovations / _services / innovation-supports suite', () => {
         });
 
         const dbSupport = await em
-          .createQueryBuilder(InnovationSupportEntity, 'support')
-          .select(['support.finishedAt'])
-          .where('support.id = :supportId', { supportId: support.id })
+          .createQueryBuilder(InnovationSupportEntity, "support")
+          .select(["support.finishedAt"])
+          .where("support.id = :supportId", { supportId: support.id })
           .getOne();
 
         expect(dbSupport?.finishedAt).toBeUndefined();
@@ -1402,7 +1390,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
       InnovationSupportStatusEnum.SUGGESTED,
       InnovationSupportStatusEnum.CLOSED,
       InnovationSupportStatusEnum.UNSUITABLE
-    ])('should not allow update if status is %s', async (status: InnovationSupportStatusEnum) => {
+    ])("should not allow update if status is %s", async (status: InnovationSupportStatusEnum) => {
       await em.update(InnovationSupportEntity, { id: innovation.supports.supportByHealthOrgUnit.id }, { status });
       await expect(
         sut.updateInnovationSupport(
@@ -1418,7 +1406,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
       ).rejects.toThrow(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UPDATE_INACTIVE));
     });
 
-    it('should create a survey when a support is closed', async () => {
+    it("should create a survey when a support is closed", async () => {
       const context = DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor);
       await sut.updateInnovationSupport(
         context,
@@ -1428,14 +1416,14 @@ describe('Innovations / _services / innovation-supports suite', () => {
         em
       );
       expect(createSurveySpy).toHaveBeenCalledWith(
-        'SUPPORT_END',
+        "SUPPORT_END",
         innovation.id,
         innovation.supports.supportByHealthOrgUnit.id,
         expect.any(Object)
       );
     });
 
-    it('should send a notifyMe when status is changed', async () => {
+    it("should send a notifyMe when status is changed", async () => {
       const context = DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor);
       const message = randText({ charCount: 10 });
       await sut.updateInnovationSupport(
@@ -1446,7 +1434,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
         em
       );
 
-      expect(notifierSendNotifyMeSpy).toHaveBeenCalledWith(context, innovation.id, 'SUPPORT_UPDATED', {
+      expect(notifierSendNotifyMeSpy).toHaveBeenCalledWith(context, innovation.id, "SUPPORT_UPDATED", {
         status: InnovationSupportStatusEnum.CLOSED,
         units: context.organisation?.organisationUnit?.id,
         message
@@ -1470,13 +1458,13 @@ describe('Innovations / _services / innovation-supports suite', () => {
 
     it(`should throw a not found error if the thread creation fails`, async () => {
       const dbThread = await em
-        .createQueryBuilder(InnovationThreadEntity, 'thread')
-        .where('thread.id = :threadId', {
+        .createQueryBuilder(InnovationThreadEntity, "thread")
+        .where("thread.id = :threadId", {
           threadId: scenario.users.johnInnovator.innovations.johnInnovation.threads.threadByAliceQA.id
         })
         .getOne();
 
-      jest.spyOn(InnovationThreadsService.prototype, 'createThreadOrMessage').mockResolvedValue({
+      jest.spyOn(InnovationThreadsService.prototype, "createThreadOrMessage").mockResolvedValue({
         thread: dbThread!,
         message: undefined as any
       });
@@ -1510,9 +1498,9 @@ describe('Innovations / _services / innovation-supports suite', () => {
     });
   });
 
-  describe('updateInnovationSupportAccessors', () => {
+  describe("updateInnovationSupportAccessors", () => {
     const user = scenario.users.aliceQualifyingAccessor;
-    const context = DTOsHelper.getUserRequestContext(user, 'qaRole');
+    const context = DTOsHelper.getUserRequestContext(user, "qaRole");
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
     const support = innovation.supports.supportByHealthOrgUnit;
     const newAccessors = [
@@ -1523,7 +1511,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
     ];
     const message = randText();
 
-    it('should update to new accessors', async () => {
+    it("should update to new accessors", async () => {
       await sut.updateInnovationSupportAccessors(
         context,
         innovation.id,
@@ -1533,9 +1521,9 @@ describe('Innovations / _services / innovation-supports suite', () => {
       );
       const supportRoles = (
         await em
-          .createQueryBuilder(InnovationSupportEntity, 'support')
-          .leftJoinAndSelect('support.userRoles', 'userRoles')
-          .where('support.id = :supportId', { supportId: support.id })
+          .createQueryBuilder(InnovationSupportEntity, "support")
+          .leftJoinAndSelect("support.userRoles", "userRoles")
+          .where("support.id = :supportId", { supportId: support.id })
           .getOneOrFail()
       ).userRoles;
 
@@ -1543,12 +1531,12 @@ describe('Innovations / _services / innovation-supports suite', () => {
       expect(supportRoles[0]!.id).toBe(scenario.users.ingridAccessor.roles.accessorRole.id);
     });
 
-    it('should add a message to the thread if one provided', async () => {
+    it("should add a message to the thread if one provided", async () => {
       await sut.updateInnovationSupportAccessors(
         context,
         innovation.id,
         support.id,
-        { accessors: newAccessors, message: 'Test message' },
+        { accessors: newAccessors, message: "Test message" },
         em
       );
 
@@ -1556,7 +1544,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
       expect(threadMessageMock).toHaveBeenCalledWith(
         context,
         innovation.threads.threadByAliceQA.id,
-        'Test message',
+        "Test message",
         false,
         false,
         undefined,
@@ -1564,7 +1552,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
       );
     });
 
-    it('should send a notification when changing the assigned', async () => {
+    it("should send a notification when changing the assigned", async () => {
       await sut.updateInnovationSupportAccessors(
         context,
         innovation.id,
@@ -1588,7 +1576,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
       });
     });
 
-    it('should not send a notification nor update thread if no thread found (fix old supports #156480)', async () => {
+    it("should not send a notification nor update thread if no thread found (fix old supports #156480)", async () => {
       await em.update(InnovationThreadEntity, { contextId: support.id }, { contextId: null });
       await sut.updateInnovationSupportAccessors(
         context,
@@ -1602,7 +1590,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
       expect(threadMessageMock).toHaveBeenCalledTimes(0);
     });
 
-    it('should fail with not found if support not found', async () => {
+    it("should fail with not found if support not found", async () => {
       await expect(
         sut.updateInnovationSupportAccessors(
           context,
@@ -1614,7 +1602,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
       ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND));
     });
 
-    it('should fail with unprocessable if innovation status not engaging or waiting', async () => {
+    it("should fail with unprocessable if innovation status not engaging or waiting", async () => {
       await em.update(InnovationSupportEntity, { id: support.id }, { status: InnovationSupportStatusEnum.CLOSED });
       await expect(
         sut.updateInnovationSupportAccessors(
@@ -1629,21 +1617,21 @@ describe('Innovations / _services / innovation-supports suite', () => {
       );
     });
 
-    it('should fail with unprocessable if accessors is empty', async () => {
+    it("should fail with unprocessable if accessors is empty", async () => {
       await expect(
         sut.updateInnovationSupportAccessors(context, innovation.id, support.id, { accessors: [], message })
       ).rejects.toThrow(new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD));
     });
   });
 
-  describe('createProgressUpdate', () => {
+  describe("createProgressUpdate", () => {
     const user = scenario.users.aliceQualifyingAccessor;
     const innovationId = scenario.users.johnInnovator.innovations.johnInnovation.id;
     const support = scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByHealthOrgUnit;
 
-    it('should create a support summary without a file for a unit with started support', async () => {
-      const domainContext = DTOsHelper.getUserRequestContext(user, 'qaRole');
-      const data: Parameters<InnovationSupportsService['createProgressUpdate']>[2] = {
+    it("should create a support summary without a file for a unit with started support", async () => {
+      const domainContext = DTOsHelper.getUserRequestContext(user, "qaRole");
+      const data: Parameters<InnovationSupportsService["createProgressUpdate"]>[2] = {
         description: randText(),
         title: randText(),
         createdAt: support.startedAt!
@@ -1655,12 +1643,12 @@ describe('Innovations / _services / innovation-supports suite', () => {
       await sut.createProgressUpdate(domainContext, innovationId, data, em);
 
       const fileExists = await em
-        .createQueryBuilder(InnovationFileEntity, 'file')
-        .where('file.contextId = :contextId', { contextId: dbProgressId })
-        .andWhere('file.contextType = :contextType', {
+        .createQueryBuilder(InnovationFileEntity, "file")
+        .where("file.contextId = :contextId", { contextId: dbProgressId })
+        .andWhere("file.contextType = :contextType", {
           contextType: InnovationFileContextTypeEnum.INNOVATION_PROGRESS_UPDATE
         })
-        .andWhere('file.innovation = :innovationId', { innovationId })
+        .andWhere("file.innovation = :innovationId", { innovationId })
         .getCount();
 
       expect(supportLogSpy).toHaveBeenCalledWith(
@@ -1678,10 +1666,10 @@ describe('Innovations / _services / innovation-supports suite', () => {
       expect(fileExists).toBe(0);
     });
 
-    it('should create a support summary with a file for a unit with started support', async () => {
-      const domainContext = DTOsHelper.getUserRequestContext(user, 'qaRole');
+    it("should create a support summary with a file for a unit with started support", async () => {
+      const domainContext = DTOsHelper.getUserRequestContext(user, "qaRole");
       const dbProgressId = randUuid();
-      const data: Parameters<InnovationSupportsService['createProgressUpdate']>[2] = {
+      const data: Parameters<InnovationSupportsService["createProgressUpdate"]>[2] = {
         description: randText(),
         document: {
           name: randFileName(),
@@ -1701,12 +1689,12 @@ describe('Innovations / _services / innovation-supports suite', () => {
       await sut.createProgressUpdate(domainContext, innovationId, data, em);
 
       const fileExists = await em
-        .createQueryBuilder(InnovationFileEntity, 'file')
-        .where('file.contextId = :contextId', { contextId: dbProgressId })
-        .andWhere('file.contextType = :contextType', {
+        .createQueryBuilder(InnovationFileEntity, "file")
+        .where("file.contextId = :contextId", { contextId: dbProgressId })
+        .andWhere("file.contextType = :contextType", {
           contextType: InnovationFileContextTypeEnum.INNOVATION_PROGRESS_UPDATE
         })
-        .andWhere('file.innovation = :innovationId', { innovationId })
+        .andWhere("file.innovation = :innovationId", { innovationId })
         .getCount();
 
       expect(supportLogSpy).toHaveBeenCalledWith(
@@ -1724,7 +1712,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
       expect(fileExists).toBe(1);
     });
 
-    it('should send a notifyMe when progress update is created', async () => {
+    it("should send a notifyMe when progress update is created", async () => {
       const context = DTOsHelper.getUserRequestContext(user);
       const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
 
@@ -1735,14 +1723,14 @@ describe('Innovations / _services / innovation-supports suite', () => {
         em
       );
 
-      expect(notifierSendNotifyMeSpy).toHaveBeenCalledWith(context, innovation.id, 'PROGRESS_UPDATE_CREATED', {
+      expect(notifierSendNotifyMeSpy).toHaveBeenCalledWith(context, innovation.id, "PROGRESS_UPDATE_CREATED", {
         units: context.organisation?.organisationUnit?.id
       });
     });
 
-    it('should call notifier', async () => {
-      const domainContext = DTOsHelper.getUserRequestContext(user, 'qaRole');
-      const data: Parameters<InnovationSupportsService['createProgressUpdate']>[2] = {
+    it("should call notifier", async () => {
+      const domainContext = DTOsHelper.getUserRequestContext(user, "qaRole");
+      const data: Parameters<InnovationSupportsService["createProgressUpdate"]>[2] = {
         description: randText(),
         title: randText(),
         createdAt: support.startedAt!
@@ -1763,7 +1751,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
       );
     });
 
-    it('should throw an NotFoundError when the unitId is not present in context', async () => {
+    it("should throw an NotFoundError when the unitId is not present in context", async () => {
       await expect(() =>
         sut.createProgressUpdate(
           DTOsHelper.getUserRequestContext(scenario.users.allMighty),
@@ -1777,7 +1765,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
     it("should throw a NotFoundError when the support doesn't exist", async () => {
       await expect(() =>
         sut.createProgressUpdate(
-          DTOsHelper.getUserRequestContext(scenario.users.samAccessor, 'accessorRole'),
+          DTOsHelper.getUserRequestContext(scenario.users.samAccessor, "accessorRole"),
           scenario.users.adamInnovator.innovations.adamInnovation.id,
           { description: randText(), title: randText(), createdAt: support.startedAt! },
           em
@@ -1785,26 +1773,26 @@ describe('Innovations / _services / innovation-supports suite', () => {
       ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND));
     });
 
-    it('should throw an UnprocessableEntityError when the unit has not yet started support with innovation', async () => {
-      await em.update(InnovationSupportEntity, { id: support.id }, { startedAt: new Date('2000-01-01') });
+    it("should throw an UnprocessableEntityError when the unit has not yet started support with innovation", async () => {
+      await em.update(InnovationSupportEntity, { id: support.id }, { startedAt: new Date("2000-01-01") });
 
       await expect(() =>
         sut.createProgressUpdate(
-          DTOsHelper.getUserRequestContext(user, 'qaRole'),
+          DTOsHelper.getUserRequestContext(user, "qaRole"),
           innovationId,
-          { description: randText(), title: randText(), createdAt: new Date('1999-01-01') },
+          { description: randText(), title: randText(), createdAt: new Date("1999-01-01") },
           em
         )
       ).rejects.toThrow(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UNIT_NOT_STARTED));
     });
 
-    describe('create past progress update', () => {
-      const mock = jest.spyOn(ValidationService.prototype, 'checkIfSupportHadAlreadyStartedAtDate');
+    describe("create past progress update", () => {
+      const mock = jest.spyOn(ValidationService.prototype, "checkIfSupportHadAlreadyStartedAtDate");
 
       afterAll(() => mock.mockRestore());
 
-      it('should create a progress update in the past', async () => {
-        mock.mockResolvedValueOnce({ rule: 'checkIfSupportHadAlreadyStartedAtDate', valid: true });
+      it("should create a progress update in the past", async () => {
+        mock.mockResolvedValueOnce({ rule: "checkIfSupportHadAlreadyStartedAtDate", valid: true });
 
         const pastDate = randPastDate();
         pastDate.setHours(0, 0, 0, 0);
@@ -1814,23 +1802,23 @@ describe('Innovations / _services / innovation-supports suite', () => {
         await em.update(InnovationSupportEntity, { id: support.id }, { startedAt: pastDate });
 
         await sut.createProgressUpdate(
-          DTOsHelper.getUserRequestContext(user, 'qaRole'),
+          DTOsHelper.getUserRequestContext(user, "qaRole"),
           innovationId,
           { description: randText(), title: randText(), createdAt: pastDatePlusOneDay },
           em
         );
 
         await em
-          .createQueryBuilder(InnovationSupportLogEntity, 'log')
-          .where('log.createdAt <= :createdAt', { createdAt: pastDatePlusOneDay })
+          .createQueryBuilder(InnovationSupportLogEntity, "log")
+          .where("log.createdAt <= :createdAt", { createdAt: pastDatePlusOneDay })
           .getOneOrFail();
       });
 
-      it('should throw an UnprocessableEntityError if the date is invalid', async () => {
-        mock.mockResolvedValueOnce({ rule: 'checkIfSupportHadAlreadyStartedAtDate', valid: false });
+      it("should throw an UnprocessableEntityError if the date is invalid", async () => {
+        mock.mockResolvedValueOnce({ rule: "checkIfSupportHadAlreadyStartedAtDate", valid: false });
         await expect(() =>
           sut.createProgressUpdate(
-            DTOsHelper.getUserRequestContext(user, 'qaRole'),
+            DTOsHelper.getUserRequestContext(user, "qaRole"),
             innovationId,
             { description: randText(), title: randText(), createdAt: randPastDate() },
             em
@@ -1840,20 +1828,20 @@ describe('Innovations / _services / innovation-supports suite', () => {
     });
   });
 
-  describe('deleteProgressUpdate', () => {
+  describe("deleteProgressUpdate", () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
-    const fileServiceDeleteSpy = jest.spyOn(InnovationFileService.prototype, 'deleteFile').mockResolvedValue();
+    const fileServiceDeleteSpy = jest.spyOn(InnovationFileService.prototype, "deleteFile").mockResolvedValue();
 
-    it('should delete a progress update without a file', async () => {
-      const domainContext = DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole');
+    it("should delete a progress update without a file", async () => {
+      const domainContext = DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, "qaRole");
       const progressUpdate = innovation.progressUpdates.progressUpdateByAlice;
 
       await sut.deleteProgressUpdate(domainContext, innovation.id, progressUpdate.id, em);
 
       const dbProgress = await em
-        .createQueryBuilder(InnovationSupportLogEntity, 'log')
+        .createQueryBuilder(InnovationSupportLogEntity, "log")
         .withDeleted()
-        .where('log.id = :progressId', { progressId: progressUpdate.id })
+        .where("log.id = :progressId", { progressId: progressUpdate.id })
         .getOneOrFail();
 
       expect(dbProgress).toMatchObject({
@@ -1863,16 +1851,16 @@ describe('Innovations / _services / innovation-supports suite', () => {
       expect(fileServiceDeleteSpy).toBeCalledTimes(0);
     });
 
-    it('should delete a progress update and the associated file', async () => {
-      const domainContext = DTOsHelper.getUserRequestContext(scenario.users.ingridAccessor, 'accessorRole');
+    it("should delete a progress update and the associated file", async () => {
+      const domainContext = DTOsHelper.getUserRequestContext(scenario.users.ingridAccessor, "accessorRole");
       const progressUpdate = innovation.progressUpdates.progressUpdateByIngridWithFile;
 
       await sut.deleteProgressUpdate(domainContext, innovation.id, progressUpdate.id, em);
 
       const dbProgress = await em
-        .createQueryBuilder(InnovationSupportLogEntity, 'log')
+        .createQueryBuilder(InnovationSupportLogEntity, "log")
         .withDeleted()
-        .where('log.id = :progressId', { progressId: progressUpdate.id })
+        .where("log.id = :progressId", { progressId: progressUpdate.id })
         .getOneOrFail();
 
       expect(dbProgress).toMatchObject({
@@ -1885,7 +1873,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
     it("should throw error NotFoundError if the progress update doesn't exist", async () => {
       await expect(() =>
         sut.deleteProgressUpdate(
-          DTOsHelper.getUserRequestContext(scenario.users.ingridAccessor, 'accessorRole'),
+          DTOsHelper.getUserRequestContext(scenario.users.ingridAccessor, "accessorRole"),
           innovation.id,
           randUuid(),
           em
@@ -1893,10 +1881,10 @@ describe('Innovations / _services / innovation-supports suite', () => {
       ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_SUMMARY_PROGRESS_UPDATE_NOT_FOUND));
     });
 
-    it('should throw error UnprocessableEntityError if the progress update was created by other unit', async () => {
+    it("should throw error UnprocessableEntityError if the progress update was created by other unit", async () => {
       await expect(() =>
         sut.deleteProgressUpdate(
-          DTOsHelper.getUserRequestContext(scenario.users.jamieMadroxAccessor, 'aiRole'),
+          DTOsHelper.getUserRequestContext(scenario.users.jamieMadroxAccessor, "aiRole"),
           innovation.id,
           innovation.progressUpdates.progressUpdateByAlice.id,
           em
@@ -1907,7 +1895,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
     });
   });
 
-  describe('getValidSupportStatuses', () => {
+  describe("getValidSupportStatuses", () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
     const support = innovation.supports.supportByHealthOrgUnit;
 
@@ -1939,7 +1927,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
       [InnovationSupportStatusEnum.UNSUITABLE, []],
       [InnovationSupportStatusEnum.CLOSED, []]
     ])(
-      'when status is %s and wasEngaged=%s it should return %s',
+      "when status is %s and wasEngaged=%s it should return %s",
       async (currentStatus: InnovationSupportStatusEnum, expected: InnovationSupportStatusEnum[]) => {
         const supportId = support.id;
         await em.getRepository(InnovationSupportEntity).update({ id: supportId }, { status: currentStatus });

@@ -1,5 +1,5 @@
-import { inject, injectable } from 'inversify';
-import { Brackets, EntityManager, In } from 'typeorm';
+import { inject, injectable } from "inversify";
+import { Brackets, EntityManager, In } from "typeorm";
 
 import {
   InnovationEntity,
@@ -9,7 +9,7 @@ import {
   InnovationThreadEntity,
   OrganisationUnitEntity,
   UserRoleEntity
-} from '@innovations/shared/entities';
+} from "@innovations/shared/entities";
 import {
   ActivityEnum,
   InnovationFileContextTypeEnum,
@@ -22,7 +22,7 @@ import {
   ServiceRoleEnum,
   ThreadContextTypeEnum,
   UserStatusEnum
-} from '@innovations/shared/enums';
+} from "@innovations/shared/enums";
 import {
   BadRequestError,
   ConflictError,
@@ -32,34 +32,34 @@ import {
   NotFoundError,
   OrganisationErrorsEnum,
   UnprocessableEntityError
-} from '@innovations/shared/errors';
-import type { DomainService, NotifierService } from '@innovations/shared/services';
+} from "@innovations/shared/errors";
+import type { DomainService, NotifierService } from "@innovations/shared/services";
 import {
   isAccessorDomainContextType,
   type DomainContextType,
   type SupportLogProgressUpdate
-} from '@innovations/shared/types';
+} from "@innovations/shared/types";
 
-import { InnovationThreadSubjectEnum } from '../_enums/innovation.enums';
+import { InnovationThreadSubjectEnum } from "../_enums/innovation.enums";
 import type {
   InnovationFileType,
   InnovationSuggestionAccessor,
   InnovationSuggestionsType,
   InnovationUnitSuggestionsType,
   SuggestedOrganisationInfo
-} from '../_types/innovation.types';
+} from "../_types/innovation.types";
 
-import { DatesHelper } from '@innovations/shared/helpers';
-import { UserMap } from '@innovations/shared/models/user.map';
-import { AuthErrorsEnum } from '@innovations/shared/services/auth/authorization-validation.model';
-import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import type { SupportSummaryUnitInfo } from '../_types/support.types';
-import { BaseService } from './base.service';
-import type { InnovationFileService } from './innovation-file.service';
-import type { InnovationThreadsService } from './innovation-threads.service';
-import { SurveysService } from './surveys.service';
-import SYMBOLS from './symbols';
-import type { ValidationService } from './validation.service';
+import { DatesHelper } from "@innovations/shared/helpers";
+import { UserMap } from "@innovations/shared/models/user.map";
+import { AuthErrorsEnum } from "@innovations/shared/services/auth/authorization-validation.model";
+import SHARED_SYMBOLS from "@innovations/shared/services/symbols";
+import type { SupportSummaryUnitInfo } from "../_types/support.types";
+import { BaseService } from "./base.service";
+import type { InnovationFileService } from "./innovation-file.service";
+import type { InnovationThreadsService } from "./innovation-threads.service";
+import { SurveysService } from "./surveys.service";
+import SYMBOLS from "./symbols";
+import type { ValidationService } from "./validation.service";
 
 type UnitSupportInformationType = {
   id: string;
@@ -111,7 +111,7 @@ export class InnovationSupportsService extends BaseService {
 
   async getInnovationSupportsList(
     innovationId: string,
-    filters: { fields: 'engagingAccessors'[] },
+    filters: { fields: "engagingAccessors"[] },
     entityManager?: EntityManager
   ): Promise<
     {
@@ -129,15 +129,15 @@ export class InnovationSupportsService extends BaseService {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const query = connection
-      .createQueryBuilder(InnovationEntity, 'innovation')
-      .leftJoinAndSelect('innovation.innovationSupports', 'supports', 'supports.isMostRecent = 1')
-      .leftJoinAndSelect('supports.organisationUnit', 'organisationUnit')
-      .leftJoinAndSelect('organisationUnit.organisation', 'organisation')
-      .where('innovation.id = :innovationId', { innovationId });
+      .createQueryBuilder(InnovationEntity, "innovation")
+      .leftJoinAndSelect("innovation.innovationSupports", "supports", "supports.isMostRecent = 1")
+      .leftJoinAndSelect("supports.organisationUnit", "organisationUnit")
+      .leftJoinAndSelect("organisationUnit.organisation", "organisation")
+      .where("innovation.id = :innovationId", { innovationId });
 
-    if (filters.fields.includes('engagingAccessors')) {
-      query.leftJoinAndSelect('supports.userRoles', 'userRole');
-      query.leftJoinAndSelect('userRole.user', 'user');
+    if (filters.fields.includes("engagingAccessors")) {
+      query.leftJoinAndSelect("supports.userRoles", "userRole");
+      query.leftJoinAndSelect("userRole.user", "user");
     }
 
     const innovation = await query.getOne();
@@ -150,7 +150,7 @@ export class InnovationSupportsService extends BaseService {
     // Fetch users names.
     let usersInfo = new UserMap();
 
-    if (filters.fields.includes('engagingAccessors')) {
+    if (filters.fields.includes("engagingAccessors")) {
       const assignedAccessorsIds = innovationSupports
         .filter(
           support =>
@@ -170,7 +170,7 @@ export class InnovationSupportsService extends BaseService {
       let engagingAccessors: { id: string; userRoleId: string; name: string; isActive: boolean }[] | undefined =
         undefined;
 
-      if (filters.fields.includes('engagingAccessors')) {
+      if (filters.fields.includes("engagingAccessors")) {
         engagingAccessors = support.userRoles
           .filter(su => su.isActive && su.user.status === UserStatusEnum.ACTIVE && !su.user.lockedAt)
           .map(supportUserRole => ({
@@ -212,24 +212,24 @@ export class InnovationSupportsService extends BaseService {
     }
 
     const lastSupportStatusUpdate = await this.sqlConnection.manager
-      .createQueryBuilder(InnovationSupportEntity, 'support')
-      .select(['support.updatedAt'])
-      .where('support.innovation_id = :innovationId', { innovationId })
-      .andWhere('support.organisation_unit_id = :unitId', { unitId })
+      .createQueryBuilder(InnovationSupportEntity, "support")
+      .select(["support.updatedAt"])
+      .where("support.innovation_id = :innovationId", { innovationId })
+      .andWhere("support.organisation_unit_id = :unitId", { unitId })
       .getOne();
 
     const unitsSuggestionsQuery = this.sqlConnection.manager
-      .createQueryBuilder(InnovationSupportLogEntity, 'log')
-      .select(['log.id', 'log.createdAt', 'log.description', 'unit.name'])
-      .innerJoin('log.organisationUnit', 'unit')
-      .innerJoin('log.suggestedOrganisationUnits', 'units')
-      .innerJoin('innovation_thread', 'thread', 'thread.context_id = log.id')
-      .where('log.innovation_id = :innovationId', { innovationId })
-      .andWhere('log.type = :type', { type: 'ACCESSOR_SUGGESTION' })
-      .andWhere('units.id = :unitId', { unitId });
+      .createQueryBuilder(InnovationSupportLogEntity, "log")
+      .select(["log.id", "log.createdAt", "log.description", "unit.name"])
+      .innerJoin("log.organisationUnit", "unit")
+      .innerJoin("log.suggestedOrganisationUnits", "units")
+      .innerJoin("innovation_thread", "thread", "thread.context_id = log.id")
+      .where("log.innovation_id = :innovationId", { innovationId })
+      .andWhere("log.type = :type", { type: "ACCESSOR_SUGGESTION" })
+      .andWhere("units.id = :unitId", { unitId });
 
     if (lastSupportStatusUpdate) {
-      unitsSuggestionsQuery.andWhere('log.createdAt > :statusUpdatedAt', {
+      unitsSuggestionsQuery.andWhere("log.createdAt > :statusUpdatedAt", {
         statusUpdatedAt: lastSupportStatusUpdate.updatedAt
       });
     }
@@ -243,9 +243,9 @@ export class InnovationSupportsService extends BaseService {
     const threads = new Map(
       (
         await this.sqlConnection.manager
-          .createQueryBuilder(InnovationThreadEntity, 'threads')
-          .select(['threads.id', 'threads.contextId'])
-          .where('threads.context_id IN (:...logId)', {
+          .createQueryBuilder(InnovationThreadEntity, "threads")
+          .select(["threads.id", "threads.contextId"])
+          .where("threads.context_id IN (:...logId)", {
             logId: unitsSuggestions.map(s => s.id)
           })
           .getMany()
@@ -254,9 +254,9 @@ export class InnovationSupportsService extends BaseService {
 
     return unitsSuggestions.map(s => ({
       suggestionId: s.id,
-      suggestorUnit: s.organisationUnit?.name ?? '',
+      suggestorUnit: s.organisationUnit?.name ?? "",
       thread: {
-        id: threads.get(s.id) ?? '',
+        id: threads.get(s.id) ?? "",
         message: s.description
       }
     }));
@@ -314,42 +314,42 @@ export class InnovationSupportsService extends BaseService {
 
     const query = em
       .createQueryBuilder()
-      .from(InnovationSupportLogEntity, 'sl')
+      .from(InnovationSupportLogEntity, "sl")
       .select([
-        'whom.id',
-        'whom.name',
-        'whom.acronym',
-        'suggested_org.id',
-        'suggested_org.name',
-        'suggested_org.acronym',
-        'suggested_unit.id',
-        'suggested_unit.name',
-        'suggested_unit.acronym'
+        "whom.id",
+        "whom.name",
+        "whom.acronym",
+        "suggested_org.id",
+        "suggested_org.name",
+        "suggested_org.acronym",
+        "suggested_unit.id",
+        "suggested_unit.name",
+        "suggested_unit.acronym"
       ])
-      .innerJoin('innovation_support_log_organisation_unit', 'slou', 'slou.innovation_support_log_id = sl.id')
-      .leftJoin('organisation_unit', 'whom_unit', 'whom_unit.id = sl.organisation_unit_id')
-      .leftJoin('organisation', 'whom', 'whom.id = whom_unit.organisation_id')
-      .innerJoin('organisation_unit', 'suggested_unit', 'suggested_unit.id = slou.organisation_unit_id')
-      .innerJoin('organisation', 'suggested_org', 'suggested_org.id = suggested_unit.organisation_id')
-      .where('sl.innovation_id = :innovationId', { innovationId })
-      .andWhere('sl.type IN (:...types)', {
+      .innerJoin("innovation_support_log_organisation_unit", "slou", "slou.innovation_support_log_id = sl.id")
+      .leftJoin("organisation_unit", "whom_unit", "whom_unit.id = sl.organisation_unit_id")
+      .leftJoin("organisation", "whom", "whom.id = whom_unit.organisation_id")
+      .innerJoin("organisation_unit", "suggested_unit", "suggested_unit.id = slou.organisation_unit_id")
+      .innerJoin("organisation", "suggested_org", "suggested_org.id = suggested_unit.organisation_id")
+      .where("sl.innovation_id = :innovationId", { innovationId })
+      .andWhere("sl.type IN (:...types)", {
         types: [InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION, InnovationSupportLogTypeEnum.ASSESSMENT_SUGGESTION]
       })
-      .groupBy('whom.id')
-      .addGroupBy('whom.name')
-      .addGroupBy('whom.acronym')
-      .addGroupBy('suggested_org.id')
-      .addGroupBy('suggested_org.name')
-      .addGroupBy('suggested_org.acronym')
-      .addGroupBy('suggested_unit.id')
-      .addGroupBy('suggested_unit.name')
-      .addGroupBy('suggested_unit.acronym')
-      .orderBy('whom.name', 'ASC')
-      .addOrderBy('suggested_org.name', 'ASC')
-      .addOrderBy('suggested_unit.name', 'ASC');
+      .groupBy("whom.id")
+      .addGroupBy("whom.name")
+      .addGroupBy("whom.acronym")
+      .addGroupBy("suggested_org.id")
+      .addGroupBy("suggested_org.name")
+      .addGroupBy("suggested_org.acronym")
+      .addGroupBy("suggested_unit.id")
+      .addGroupBy("suggested_unit.name")
+      .addGroupBy("suggested_unit.acronym")
+      .orderBy("whom.name", "ASC")
+      .addOrderBy("suggested_org.name", "ASC")
+      .addOrderBy("suggested_unit.name", "ASC");
 
     if (filters?.majorAssessmentId) {
-      query.andWhere('sl.major_assessment_id = :majorAssessmentId', { majorAssessmentId: filters.majorAssessmentId });
+      query.andWhere("sl.major_assessment_id = :majorAssessmentId", { majorAssessmentId: filters.majorAssessmentId });
     }
 
     return await query.getRawMany<SupportLogSuggestion>();
@@ -423,13 +423,13 @@ export class InnovationSupportsService extends BaseService {
     const includeInactive = options?.includeInactive ?? false;
 
     const innovationSupport = await connection
-      .createQueryBuilder(InnovationSupportEntity, 'support')
-      .innerJoinAndSelect('support.innovation', 'innovation')
-      .innerJoinAndSelect('support.organisationUnit', 'orgUnit')
-      .innerJoinAndSelect('orgUnit.organisation', 'org')
-      .leftJoinAndSelect('support.userRoles', 'userRole')
-      .leftJoinAndSelect('userRole.user', 'user')
-      .where('support.id = :innovationSupportId', { innovationSupportId })
+      .createQueryBuilder(InnovationSupportEntity, "support")
+      .innerJoinAndSelect("support.innovation", "innovation")
+      .innerJoinAndSelect("support.organisationUnit", "orgUnit")
+      .innerJoinAndSelect("orgUnit.organisation", "org")
+      .leftJoinAndSelect("support.userRoles", "userRole")
+      .leftJoinAndSelect("userRole.user", "user")
+      .where("support.id = :innovationSupportId", { innovationSupportId })
       .getOne();
 
     if (!innovationSupport) {
@@ -437,8 +437,7 @@ export class InnovationSupportsService extends BaseService {
     }
     // Fetch users names.
 
-    const assignedAccessorsIds = innovationSupport.userRoles
-      .map(item => item.user.id);
+    const assignedAccessorsIds = innovationSupport.userRoles.map(item => item.user.id);
     const usersInfo = await this.domainService.users.getUsersMap({ userIds: assignedAccessorsIds }, connection);
 
     return {
@@ -473,13 +472,13 @@ export class InnovationSupportsService extends BaseService {
     // Idea if we put the majorAssessment in a innovation domain context we could add a isShared method to the
     // innovation service and reuse it when we need to know if an innovation is shared (similar to hasActiveSupport)
     const innovation = await entityManager
-      .createQueryBuilder(InnovationEntity, 'innovation')
-      .select(['innovation.id', 'majorAssessment.id'])
-      .innerJoin('innovation.currentMajorAssessment', 'majorAssessment')
-      .innerJoin('innovation.organisationShares', 'shares')
-      .innerJoin('shares.organisationUnits', 'organisationUnits')
-      .where('innovation.id = :innovationId', { innovationId })
-      .andWhere('organisationUnits.id = :organisationUnitId', { organisationUnitId })
+      .createQueryBuilder(InnovationEntity, "innovation")
+      .select(["innovation.id", "majorAssessment.id"])
+      .innerJoin("innovation.currentMajorAssessment", "majorAssessment")
+      .innerJoin("innovation.organisationShares", "shares")
+      .innerJoin("shares.organisationUnits", "organisationUnits")
+      .where("innovation.id = :innovationId", { innovationId })
+      .andWhere("organisationUnits.id = :organisationUnitId", { organisationUnitId })
       .getOne();
     if (!innovation || !innovation.currentMajorAssessment) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
@@ -526,11 +525,11 @@ export class InnovationSupportsService extends BaseService {
     const ongoingSupports = new Set(
       (
         await transaction
-          .createQueryBuilder(InnovationSupportEntity, 'support')
-          .select(['support.id', 'unit.id'])
-          .innerJoin('support.organisationUnit', 'unit')
-          .where('support.innovation = :innovationId', { innovationId })
-          .andWhere('support.status IN (:...statuses)', {
+          .createQueryBuilder(InnovationSupportEntity, "support")
+          .select(["support.id", "unit.id"])
+          .innerJoin("support.organisationUnit", "unit")
+          .where("support.innovation = :innovationId", { innovationId })
+          .andWhere("support.status IN (:...statuses)", {
             statuses: [
               InnovationSupportStatusEnum.SUGGESTED,
               InnovationSupportStatusEnum.ENGAGING,
@@ -579,8 +578,8 @@ export class InnovationSupportsService extends BaseService {
     const organisationUnitId = domainContext.organisation.organisationUnit.id;
 
     const organisationUnit = await connection
-      .createQueryBuilder(OrganisationUnitEntity, 'unit')
-      .where('unit.id = :organisationUnitId', { organisationUnitId })
+      .createQueryBuilder(OrganisationUnitEntity, "unit")
+      .where("unit.id = :organisationUnitId", { organisationUnitId })
       .getOne();
 
     if (!organisationUnit) {
@@ -588,13 +587,13 @@ export class InnovationSupportsService extends BaseService {
     }
 
     const support = await connection
-      .createQueryBuilder(InnovationSupportEntity, 'support')
-      .addSelect(['innovation.id', 'organisationUnit.id'])
-      .innerJoin('support.innovation', 'innovation')
-      .innerJoin('support.organisationUnit', 'organisationUnit')
-      .where('support.innovation.id = :innovationId ', { innovationId })
-      .andWhere('support.organisation_unit_id = :organisationUnitId', { organisationUnitId })
-      .andWhere('support.isMostRecent = 1')
+      .createQueryBuilder(InnovationSupportEntity, "support")
+      .addSelect(["innovation.id", "organisationUnit.id"])
+      .innerJoin("support.innovation", "innovation")
+      .innerJoin("support.organisationUnit", "organisationUnit")
+      .where("support.innovation.id = :innovationId ", { innovationId })
+      .andWhere("support.organisation_unit_id = :organisationUnitId", { organisationUnitId })
+      .andWhere("support.isMostRecent = 1")
       .getOne();
 
     if (
@@ -642,8 +641,8 @@ export class InnovationSupportsService extends BaseService {
       const thread = await this.innovationThreadsService.createThreadOrMessage(
         domainContext,
         innovationId,
-        InnovationThreadSubjectEnum.INNOVATION_SUPPORT_UPDATE.replace('{{unit}}', organisationUnit.name).replace(
-          '{{startedAt}}',
+        InnovationThreadSubjectEnum.INNOVATION_SUPPORT_UPDATE.replace("{{unit}}", organisationUnit.name).replace(
+          "{{startedAt}}",
           DatesHelper.getLongDateFormat(savedSupport.startedAt!)
         ),
         data.message,
@@ -659,7 +658,7 @@ export class InnovationSupportsService extends BaseService {
         {
           innovationSupportStatus: savedSupport.status,
           organisationUnit: organisationUnit.name,
-          comment: { id: thread.message?.id ?? '', value: thread.message?.message ?? '' }
+          comment: { id: thread.message?.id ?? "", value: thread.message?.message ?? "" }
         }
       );
 
@@ -670,7 +669,7 @@ export class InnovationSupportsService extends BaseService {
         {
           type: InnovationSupportLogTypeEnum.STATUS_UPDATE,
           supportStatus: savedSupport.status,
-          description: thread.message?.message ?? '',
+          description: thread.message?.message ?? "",
           unitId: organisationUnitId
         }
       );
@@ -718,7 +717,7 @@ export class InnovationSupportsService extends BaseService {
       }
     });
 
-    await this.notifierService.sendNotifyMe(domainContext, innovationId, 'SUPPORT_UPDATED', {
+    await this.notifierService.sendNotifyMe(domainContext, innovationId, "SUPPORT_UPDATED", {
       status: data.status,
       units: organisationUnitId,
       message: data.message
@@ -750,16 +749,16 @@ export class InnovationSupportsService extends BaseService {
     const organisationUnitId = domainContext.organisation.organisationUnit.id;
 
     const innovation = await connection
-      .createQueryBuilder(InnovationEntity, 'innovation')
-      .select(['innovation.id', 'supports.id', 'supports.status'])
+      .createQueryBuilder(InnovationEntity, "innovation")
+      .select(["innovation.id", "supports.id", "supports.status"])
       .leftJoin(
-        'innovation.innovationSupports',
-        'supports',
-        'supports.isMostRecent = 1 AND supports.organisation_unit_id = :organisationUnitId',
+        "innovation.innovationSupports",
+        "supports",
+        "supports.isMostRecent = 1 AND supports.organisation_unit_id = :organisationUnitId",
         { organisationUnitId }
       )
-      .leftJoin('supports.organisationUnit', 'organisationUnit')
-      .where('innovation.id = :innovationId', { innovationId })
+      .leftJoin("supports.organisationUnit", "organisationUnit")
+      .where("innovation.id = :innovationId", { innovationId })
       .getOne();
 
     const innovationSupportStatus = innovation?.innovationSupports[0]?.status ?? InnovationSupportStatusEnum.UNASSIGNED;
@@ -770,9 +769,9 @@ export class InnovationSupportsService extends BaseService {
 
     await connection.transaction(async transaction => {
       const units = await connection
-        .createQueryBuilder(OrganisationUnitEntity, 'unit')
-        .select(['unit.id', 'unit.name'])
-        .where('unit.id IN (:...organisationUnits)', {
+        .createQueryBuilder(OrganisationUnitEntity, "unit")
+        .select(["unit.id", "unit.name"])
+        .where("unit.id IN (:...organisationUnits)", {
           organisationUnits: data.organisationUnits
         })
         .getMany();
@@ -796,8 +795,8 @@ export class InnovationSupportsService extends BaseService {
         const thread = await this.innovationThreadsService.createThreadOrMessage(
           domainContext,
           innovationId,
-          InnovationThreadSubjectEnum.ORGANISATION_SUGGESTION.replace('{{unit}}', userUnitName).replace(
-            '{{suggestedUnit}}',
+          InnovationThreadSubjectEnum.ORGANISATION_SUGGESTION.replace("{{unit}}", userUnitName).replace(
+            "{{suggestedUnit}}",
             unit.name
           ),
           data.description,
@@ -809,10 +808,10 @@ export class InnovationSupportsService extends BaseService {
 
         // Add qualifying accessors from unit as thread followers
         const userRoles = await connection
-          .createQueryBuilder(UserRoleEntity, 'userRole')
-          .where('userRole.organisation_unit_id = :unitId', { unitId: unit.id })
-          .andWhere('userRole.role = :roleType', { roleType: ServiceRoleEnum.QUALIFYING_ACCESSOR })
-          .andWhere('userRole.is_active = 1')
+          .createQueryBuilder(UserRoleEntity, "userRole")
+          .where("userRole.organisation_unit_id = :unitId", { unitId: unit.id })
+          .andWhere("userRole.role = :roleType", { roleType: ServiceRoleEnum.QUALIFYING_ACCESSOR })
+          .andWhere("userRole.is_active = 1")
           .getMany();
 
         if (userRoles.length) {
@@ -862,12 +861,12 @@ export class InnovationSupportsService extends BaseService {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const dbSupport = await connection
-      .createQueryBuilder(InnovationSupportEntity, 'support')
-      .innerJoinAndSelect('support.organisationUnit', 'organisationUnit')
-      .leftJoinAndSelect('support.userRoles', 'userRole')
-      .leftJoinAndSelect('support.innovation', 'innovation')
-      .where('support.id = :supportId ', { supportId })
-      .andWhere('support.isMostRecent = 1')
+      .createQueryBuilder(InnovationSupportEntity, "support")
+      .innerJoinAndSelect("support.organisationUnit", "organisationUnit")
+      .leftJoinAndSelect("support.userRoles", "userRole")
+      .leftJoinAndSelect("support.innovation", "innovation")
+      .where("support.id = :supportId ", { supportId })
+      .andWhere("support.isMostRecent = 1")
       .getOne();
     if (!dbSupport) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
@@ -922,9 +921,9 @@ export class InnovationSupportsService extends BaseService {
         domainContext,
         innovationId,
         InnovationThreadSubjectEnum.INNOVATION_SUPPORT_UPDATE.replace(
-          '{{unit}}',
+          "{{unit}}",
           savedSupport.organisationUnit.name
-        ).replace('{{startedAt}}', DatesHelper.getLongDateFormat(savedSupport.startedAt!)),
+        ).replace("{{startedAt}}", DatesHelper.getLongDateFormat(savedSupport.startedAt!)),
         data.message,
         savedSupport.id,
         ThreadContextTypeEnum.SUPPORT,
@@ -970,7 +969,7 @@ export class InnovationSupportsService extends BaseService {
 
       // Create satisfaction survey if the support was closed
       if (data.status === InnovationSupportStatusEnum.CLOSED) {
-        await this.surveysService.createSurvey('SUPPORT_END', innovationId, savedSupport.id, transaction);
+        await this.surveysService.createSurvey("SUPPORT_END", innovationId, savedSupport.id, transaction);
       }
 
       return { id: savedSupport.id, newAssignedAccessors: new Set(newAssignedAccessors), threadId: thread.thread.id };
@@ -993,7 +992,7 @@ export class InnovationSupportsService extends BaseService {
       }
     });
 
-    await this.notifierService.sendNotifyMe(domainContext, innovationId, 'SUPPORT_UPDATED', {
+    await this.notifierService.sendNotifyMe(domainContext, innovationId, "SUPPORT_UPDATED", {
       status: data.status,
       units: dbSupport.organisationUnit.id,
       message: data.message
@@ -1035,13 +1034,13 @@ export class InnovationSupportsService extends BaseService {
 
     // We're already fetching extra data for the assign accessors to avoid extra queries
     const support = await entityManager
-      .createQueryBuilder(InnovationSupportEntity, 'support')
-      .innerJoinAndSelect('support.organisationUnit', 'organisationUnit')
-      .leftJoinAndSelect('support.userRoles', 'userRole')
-      .leftJoinAndSelect('support.innovation', 'innovation')
-      .where('support.id = :supportId', { supportId })
-      .andWhere('support.innovation_id = :innovationId', { innovationId })
-      .andWhere('support.isMostRecent = 1')
+      .createQueryBuilder(InnovationSupportEntity, "support")
+      .innerJoinAndSelect("support.organisationUnit", "organisationUnit")
+      .leftJoinAndSelect("support.userRoles", "userRole")
+      .leftJoinAndSelect("support.innovation", "innovation")
+      .where("support.id = :supportId", { supportId })
+      .andWhere("support.innovation_id = :innovationId", { innovationId })
+      .andWhere("support.isMostRecent = 1")
       .getOne();
     if (!support) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
@@ -1115,13 +1114,13 @@ export class InnovationSupportsService extends BaseService {
       });
     }
 
-    if (typeof support === 'string') {
+    if (typeof support === "string") {
       const dbSupport = await entityManager
-        .createQueryBuilder(InnovationSupportEntity, 'support')
-        .innerJoinAndSelect('support.organisationUnit', 'organisationUnit')
-        .leftJoinAndSelect('support.userRoles', 'userRole')
-        .where('support.id = :supportId ', { support })
-        .andWhere('support.isMostRecent = 1')
+        .createQueryBuilder(InnovationSupportEntity, "support")
+        .innerJoinAndSelect("support.organisationUnit", "organisationUnit")
+        .leftJoinAndSelect("support.userRoles", "userRole")
+        .where("support.id = :supportId ", { support })
+        .andWhere("support.isMostRecent = 1")
         .getOne();
 
       if (!dbSupport) {
@@ -1276,10 +1275,10 @@ export class InnovationSupportsService extends BaseService {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const innovation = await em
-      .createQueryBuilder(InnovationEntity, 'innovation')
-      .select(['innovation.id', 'owner.id'])
-      .leftJoin('innovation.owner', 'owner')
-      .where('innovation.id = :innovationId', { innovationId })
+      .createQueryBuilder(InnovationEntity, "innovation")
+      .select(["innovation.id", "owner.id"])
+      .leftJoin("innovation.owner", "owner")
+      .where("innovation.id = :innovationId", { innovationId })
       .getOne();
 
     if (!innovation) {
@@ -1287,38 +1286,38 @@ export class InnovationSupportsService extends BaseService {
     }
 
     const unitSupportLogs = await em
-      .createQueryBuilder(InnovationSupportLogEntity, 'log')
+      .createQueryBuilder(InnovationSupportLogEntity, "log")
       .select([
-        'log.id',
-        'log.createdBy',
-        'log.type',
-        'log.createdAt',
-        'log.innovationSupportStatus',
-        'log.description',
-        'log.params',
-        'unit.id',
-        'unit.name',
-        'createdByUserRole.role'
+        "log.id",
+        "log.createdBy",
+        "log.type",
+        "log.createdAt",
+        "log.innovationSupportStatus",
+        "log.description",
+        "log.params",
+        "unit.id",
+        "unit.name",
+        "createdByUserRole.role"
       ])
       .leftJoin(
-        'innovation_support_log_organisation_unit',
-        'suggestedUnits',
-        '(suggestedUnits.innovation_support_log_id = log.id AND suggestedUnits.organisation_unit_id = :unitId)',
+        "innovation_support_log_organisation_unit",
+        "suggestedUnits",
+        "(suggestedUnits.innovation_support_log_id = log.id AND suggestedUnits.organisation_unit_id = :unitId)",
         { unitId }
       )
-      .leftJoin('log.organisationUnit', 'unit')
-      .innerJoin('log.createdByUserRole', 'createdByUserRole')
-      .where('log.innovation_id = :innovationId', { innovationId })
+      .leftJoin("log.organisationUnit", "unit")
+      .innerJoin("log.createdByUserRole", "createdByUserRole")
+      .where("log.innovation_id = :innovationId", { innovationId })
       .andWhere(
         new Brackets(qb => {
-          qb.where('(log.type IN (:...suggestions) AND suggestedUnits.organisation_unit_id = :unitId )', {
+          qb.where("(log.type IN (:...suggestions) AND suggestedUnits.organisation_unit_id = :unitId )", {
             suggestions: [
               InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION,
               InnovationSupportLogTypeEnum.ASSESSMENT_SUGGESTION
             ],
             unitId
           });
-          qb.orWhere('(log.type NOT IN (:...suggestions) AND log.organisation_unit_id = :unitId )', {
+          qb.orWhere("(log.type NOT IN (:...suggestions) AND log.organisation_unit_id = :unitId )", {
             suggestions: [
               InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION,
               InnovationSupportLogTypeEnum.ASSESSMENT_SUGGESTION
@@ -1355,7 +1354,7 @@ export class InnovationSupportsService extends BaseService {
         case InnovationSupportLogTypeEnum.STATUS_UPDATE:
           summary.push({
             ...defaultSummary,
-            type: 'SUPPORT_UPDATE',
+            type: "SUPPORT_UPDATE",
             params: {
               supportStatus: supportLog.innovationSupportStatus ?? InnovationSupportStatusEnum.UNASSIGNED, // Not needed, we are veryfing in the switch case that is a type that always has supportStatus
               message: supportLog.description
@@ -1365,7 +1364,7 @@ export class InnovationSupportsService extends BaseService {
         case InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION:
           summary.push({
             ...defaultSummary,
-            type: 'SUGGESTED_ORGANISATION',
+            type: "SUGGESTED_ORGANISATION",
             params: {
               suggestedByName: supportLog.organisationUnit?.name,
               message: supportLog.description
@@ -1376,10 +1375,10 @@ export class InnovationSupportsService extends BaseService {
           {
             const file = await this.getProgressUpdateFile(domainContext, innovationId, supportLog.id);
 
-            if (supportLog.params && !('assessmentId' in supportLog.params)) {
+            if (supportLog.params && !("assessmentId" in supportLog.params)) {
               summary.push({
                 ...defaultSummary,
-                type: 'PROGRESS_UPDATE',
+                type: "PROGRESS_UPDATE",
                 params: {
                   message: supportLog.description,
                   ...supportLog.params,
@@ -1392,14 +1391,14 @@ export class InnovationSupportsService extends BaseService {
         case InnovationSupportLogTypeEnum.ASSESSMENT_SUGGESTION:
           summary.push({
             ...defaultSummary,
-            type: 'SUGGESTED_ORGANISATION',
+            type: "SUGGESTED_ORGANISATION",
             params: {}
           });
           break;
         case InnovationSupportLogTypeEnum.INNOVATION_ARCHIVED:
           summary.push({
             ...defaultSummary,
-            type: 'INNOVATION_ARCHIVED',
+            type: "INNOVATION_ARCHIVED",
             params: {
               supportStatus: supportLog.innovationSupportStatus ?? InnovationSupportStatusEnum.CLOSED,
               message: supportLog.description
@@ -1409,7 +1408,7 @@ export class InnovationSupportsService extends BaseService {
         case InnovationSupportLogTypeEnum.STOP_SHARE:
           summary.push({
             ...defaultSummary,
-            type: 'STOP_SHARE',
+            type: "STOP_SHARE",
             params: { supportStatus: supportLog.innovationSupportStatus ?? InnovationSupportStatusEnum.CLOSED }
           });
           break;
@@ -1426,8 +1425,8 @@ export class InnovationSupportsService extends BaseService {
       description: string;
       createdAt: Date;
       document?: InnovationFileType;
-      whetherToNotify?: 'yes' | 'no';
-    } & SupportLogProgressUpdate['params'],
+      whetherToNotify?: "yes" | "no";
+    } & SupportLogProgressUpdate["params"],
     entityManager?: EntityManager
   ): Promise<void> {
     const connection = entityManager ?? this.sqlConnection.manager;
@@ -1443,12 +1442,12 @@ export class InnovationSupportsService extends BaseService {
     const { description, document, createdAt, ...params } = data;
 
     const support = await connection
-      .createQueryBuilder(InnovationSupportEntity, 'support')
-      .select(['support.id', 'support.status', 'innovation.id', 'innovation.status'])
-      .innerJoin('support.innovation', 'innovation')
-      .where('support.innovation_id = :innovationId', { innovationId })
-      .andWhere('support.organisation_unit_id = :unitId', { unitId })
-      .andWhere('support.isMostRecent = 1') // TODO: This will probably changed because of past progress updates
+      .createQueryBuilder(InnovationSupportEntity, "support")
+      .select(["support.id", "support.status", "innovation.id", "innovation.status"])
+      .innerJoin("support.innovation", "innovation")
+      .where("support.innovation_id = :innovationId", { innovationId })
+      .andWhere("support.organisation_unit_id = :unitId", { unitId })
+      .andWhere("support.isMostRecent = 1") // TODO: This will probably changed because of past progress updates
       .getOne();
 
     if (!support) {
@@ -1528,12 +1527,12 @@ export class InnovationSupportsService extends BaseService {
 
     await this.notifierService.send(domainContext, NotifierTypeEnum.SUPPORT_SUMMARY_UPDATE, {
       innovationId,
-      date: (data.createdAt.toJSON?.() ?? data.createdAt).split('T')[0] as string,
+      date: (data.createdAt.toJSON?.() ?? data.createdAt).split("T")[0] as string,
       supportId: support.id,
       whetherToNotify: data.whetherToNotify
     });
 
-    await this.notifierService.sendNotifyMe(domainContext, innovationId, 'PROGRESS_UPDATE_CREATED', {
+    await this.notifierService.sendNotifyMe(domainContext, innovationId, "PROGRESS_UPDATE_CREATED", {
       units: unitId
     });
   }
@@ -1547,10 +1546,10 @@ export class InnovationSupportsService extends BaseService {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const dbProgress = await connection
-      .createQueryBuilder(InnovationSupportLogEntity, 'log')
-      .select(['log.id', 'unit.id'])
-      .innerJoin('log.organisationUnit', 'unit')
-      .where('log.id = :progressId', { progressId })
+      .createQueryBuilder(InnovationSupportLogEntity, "log")
+      .select(["log.id", "unit.id"])
+      .innerJoin("log.organisationUnit", "unit")
+      .where("log.id = :progressId", { progressId })
       .getOne();
 
     if (!dbProgress) {
@@ -1588,11 +1587,11 @@ export class InnovationSupportsService extends BaseService {
     const status =
       (
         await em
-          .createQueryBuilder(InnovationSupportEntity, 'support')
-          .select('support.status')
-          .where('support.innovation_id = :innovationId', { innovationId })
-          .andWhere('support.organisation_unit_id = :unitId', { unitId })
-          .andWhere('support.isMostRecent = 1')
+          .createQueryBuilder(InnovationSupportEntity, "support")
+          .select("support.status")
+          .where("support.innovation_id = :innovationId", { innovationId })
+          .andWhere("support.organisation_unit_id = :unitId", { unitId })
+          .andWhere("support.isMostRecent = 1")
           .getOne()
       )?.status ?? InnovationSupportStatusEnum.UNASSIGNED;
 
@@ -1647,7 +1646,7 @@ export class InnovationSupportsService extends BaseService {
       domainContext,
       innovationId,
       { contextId: progressId },
-      { skip: 0, take: 1, order: { createdAt: 'ASC' } }
+      { skip: 0, take: 1, order: { createdAt: "ASC" } }
     );
 
     return files.data[0];
@@ -1686,13 +1685,13 @@ export class InnovationSupportsService extends BaseService {
     entityManager: EntityManager
   ): Promise<boolean> {
     const activeSupport = await entityManager
-      .createQueryBuilder(InnovationSupportEntity, 'support')
-      .where('support.innovation.id = :innovationId', { innovationId })
-      .andWhere('support.organisation_unit_id = :organisationUnitId', { organisationUnitId })
-      .andWhere('support.status NOT IN (:...statuses)', {
+      .createQueryBuilder(InnovationSupportEntity, "support")
+      .where("support.innovation.id = :innovationId", { innovationId })
+      .andWhere("support.organisation_unit_id = :organisationUnitId", { organisationUnitId })
+      .andWhere("support.status NOT IN (:...statuses)", {
         statuses: [InnovationSupportStatusEnum.CLOSED, InnovationSupportStatusEnum.UNSUITABLE]
       })
-      .andWhere('support.isMostRecent = 1')
+      .andWhere("support.isMostRecent = 1")
       .getOne();
 
     return !!activeSupport;

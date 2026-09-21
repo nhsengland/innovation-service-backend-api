@@ -1,4 +1,4 @@
-import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
+import { TEXTAREA_LENGTH_LIMIT } from "@innovations/shared/constants";
 import type {
   InnovationExportRequestStatusEnum,
   InnovationFileContextTypeEnum,
@@ -7,11 +7,11 @@ import type {
   InnovationTaskStatusEnum,
   MaturityLevelCatalogueType,
   YesPartiallyNoCatalogueType
-} from '@innovations/shared/enums';
-import { JoiHelper } from '@innovations/shared/helpers';
-import type { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
-import type { OrganisationWithUnitsType } from '@innovations/shared/types';
-import Joi from 'joi';
+} from "@innovations/shared/enums";
+import { JoiHelper } from "@innovations/shared/helpers";
+import type { CurrentCatalogTypes } from "@innovations/shared/schemas/innovation-record";
+import type { OrganisationWithUnitsType } from "@innovations/shared/types";
+import Joi from "joi";
 
 export interface InnovationSectionModel {
   id: string | null;
@@ -29,7 +29,7 @@ export type ReassessmentType = {
   whatSupportDoYouNeed: string | null;
 };
 
-export const ReassessmentReasons = ['NO_SUPPORT', 'PREVIOUSLY_ARCHIVED', 'HAS_PROGRESSED_SIGNIFICANTLY', 'OTHER'];
+export const ReassessmentReasons = ["NO_SUPPORT", "PREVIOUSLY_ARCHIVED", "HAS_PROGRESSED_SIGNIFICANTLY", "OTHER"];
 export type ReassessmentReasonsType = (typeof ReassessmentReasons)[number];
 
 export type InnovationAssessmentType = {
@@ -131,7 +131,7 @@ export type InnovationExportSectionAnswerType = {
 
 export type InnovationExportSectionItemType = {
   section: string;
-  status: InnovationSectionStatusEnum | 'UNKNOWN';
+  status: InnovationSectionStatusEnum | "UNKNOWN";
   answers: InnovationExportSectionAnswerType[];
 };
 
@@ -215,7 +215,8 @@ export type InnovationFileOutputContextType =
       type:
         | InnovationFileContextTypeEnum.INNOVATION
         | InnovationFileContextTypeEnum.INNOVATION_SECTION
-        | InnovationFileContextTypeEnum.INNOVATION_PROGRESS_UPDATE;
+        | InnovationFileContextTypeEnum.INNOVATION_PROGRESS_UPDATE
+        | InnovationFileContextTypeEnum.INNOVATION_REGULATIONS;
     }
   | {
       id: string;

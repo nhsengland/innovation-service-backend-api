@@ -5,67 +5,67 @@ import type {
   SearchTotalHits,
   Sort,
   SortResults
-} from '@elastic/elasticsearch/lib/api/types';
-import { ES_ENV } from '@innovations/shared/config';
-import type { InnovationListView } from '@innovations/shared/entities';
-import { InnovationStatusEnum, InnovationSupportStatusEnum, ServiceRoleEnum } from '@innovations/shared/enums';
+} from "@elastic/elasticsearch/lib/api/types";
+import { ES_ENV } from "@innovations/shared/config";
+import type { InnovationListView } from "@innovations/shared/entities";
+import { InnovationStatusEnum, InnovationSupportStatusEnum, ServiceRoleEnum } from "@innovations/shared/enums";
 import {
   ConflictError,
   ElasticSearchErrorsEnum,
   GenericErrorsEnum,
   NotImplementedError
-} from '@innovations/shared/errors';
-import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
-import { csvToString } from '@innovations/shared/helpers/csv.helper';
-import { displayName, UserMap } from '@innovations/shared/models/user.map';
-import type { CurrentElasticSearchDocumentType } from '@innovations/shared/schemas/innovation-record';
-import type { DomainService, ElasticSearchService } from '@innovations/shared/services';
-import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
+} from "@innovations/shared/errors";
+import type { PaginationQueryParamsType } from "@innovations/shared/helpers";
+import { csvToString } from "@innovations/shared/helpers/csv.helper";
+import { displayName, UserMap } from "@innovations/shared/models/user.map";
+import type { CurrentElasticSearchDocumentType } from "@innovations/shared/schemas/innovation-record";
+import type { DomainService, ElasticSearchService } from "@innovations/shared/services";
+import SHARED_SYMBOLS from "@innovations/shared/services/symbols";
 import {
   DomainContextType,
   isAccessorDomainContextType,
   isAssessmentDomainContextType
-} from '@innovations/shared/types';
-import { inject, injectable } from 'inversify';
-import { groupBy, isArray, isString, mapValues, pick } from 'lodash';
-import { InnovationLocationEnum } from '../_enums/innovation.enums';
-import { boolQuery, ElasticSearchQueryBuilder, nestedQuery, orQuery } from '../_helpers/es-query-builder.helper';
-import { BaseService } from './base.service';
+} from "@innovations/shared/types";
+import { inject, injectable } from "inversify";
+import { groupBy, isArray, isString, mapValues, pick } from "lodash";
+import { InnovationLocationEnum } from "../_enums/innovation.enums";
+import { boolQuery, ElasticSearchQueryBuilder, nestedQuery, orQuery } from "../_helpers/es-query-builder.helper";
+import { BaseService } from "./base.service";
 import type {
   DateFilterFieldsType,
   InnovationListFilters,
   InnovationListFullResponseType
-} from './innovations.service';
+} from "./innovations.service";
 
 type SearchInnovationListSelectType =
-  // | keyof Omit<CurrentElasticSearchDocumentType, 'assessment' | 'supports'>
-  | keyof Omit<InnovationListView, 'assessment' | 'supports' | 'ownerId'> // TODO: should be changed in the future, keeping the same for simplification proccess
-  | 'careSettings'
-  | 'otherCareSetting'
-  | 'categories'
-  | 'countryName'
-  | 'diseasesAndConditions'
-  | 'mainCategory'
-  | 'otherCategoryDescription'
-  | 'postcode'
-  | 'areas'
-  | 'archiveReason'
-  | 'assessment.id'
-  | 'assessment.updatedAt'
-  | 'assessment.assignedTo'
-  | 'assessment.isExempt'
-  | 'assessment.maturityLevel'
-  | 'assessment.finishedAt'
-  | 'support.id'
-  | 'support.status'
-  | 'support.updatedAt'
-  | 'support.updatedBy'
-  | 'support.closeReason'
-  | 'owner.id'
-  | 'owner.name'
-  | 'owner.companyName'
-  | 'owner.email'
-  | 'suggestion.suggestedBy';
+  // | keyof Omit<  ['areas', ['document', 'INNOVATION_DESCRIPTION', 'areas']]CurrentElasticSearchDocumentType, 'assessment' | 'supports'>
+  | keyof Omit<InnovationListView, "assessment" | "supports" | "ownerId"> // TODO: should be changed in the future, keeping the same for simplification proccess
+  | "careSettings"
+  | "otherCareSetting"
+  | "categories"
+  | "countryName"
+  | "diseasesAndConditions"
+  | "mainCategory"
+  | "otherCategoryDescription"
+  | "postcode"
+  | "areas"
+  | "archiveReason"
+  | "assessment.id"
+  | "assessment.updatedAt"
+  | "assessment.assignedTo"
+  | "assessment.isExempt"
+  | "assessment.maturityLevel"
+  | "assessment.finishedAt"
+  | "support.id"
+  | "support.status"
+  | "support.updatedAt"
+  | "support.updatedBy"
+  | "support.closeReason"
+  | "owner.id"
+  | "owner.name"
+  | "owner.companyName"
+  | "owner.email"
+  | "suggestion.suggestedBy";
 
 // In advanced search the suggestedOnly applies not to a state as the innovation list but to the suggestions as it
 // affects other innovations besides "UNASSIGNED". This should probably be changed in the future and removed and focus
@@ -76,19 +76,19 @@ type SearchFilters = InnovationListFilters & { suggestedOnly: boolean };
 // NOTE: if the new flat document (IR versioning) is implemented this will not be needed anymore but right now we have
 //       different structure between the two
 const translations = new Map([
-  ['name', ['document', 'INNOVATION_DESCRIPTION', 'name']],
-  ['careSettings', ['document', 'INNOVATION_DESCRIPTION', 'careSettings']],
-  ['otherCareSetting', ['document', 'INNOVATION_DESCRIPTION', 'otherCareSetting']],
-  ['categories', ['document', 'INNOVATION_DESCRIPTION', 'categories']],
-  ['countryName', ['document', 'INNOVATION_DESCRIPTION', 'countryName']],
-  ['diseasesAndConditions', ['document', 'UNDERSTANDING_OF_NEEDS', 'diseasesConditionsImpact']],
-  ['mainCategory', ['document', 'INNOVATION_DESCRIPTION', 'mainCategory']],
-  ['otherCategoryDescription', ['document', 'INNOVATION_DESCRIPTION', 'otherCategoryDescription']],
-  ['postcode', ['document', 'INNOVATION_DESCRIPTION', 'postcode']],
-  ['involvedAACProgrammes', ['document', 'INNOVATION_DESCRIPTION', 'involvedAACProgrammes']],
-  ['keyHealthInequalities', ['document', 'UNDERSTANDING_OF_NEEDS', 'keyHealthInequalities']],
-  ['areas', ['document', 'INNOVATION_DESCRIPTION', 'areas']],
-  ['description', ['document', 'INNOVATION_DESCRIPTION', 'description']] // This field is only required because of the export CSV as it's not shown in the cards.
+  ["name", ["document", "INNOVATION_DESCRIPTION", "name"]],
+  ["careSettings", ["document", "INNOVATION_DESCRIPTION", "careSettings"]],
+  ["otherCareSetting", ["document", "INNOVATION_DESCRIPTION", "otherCareSetting"]],
+  ["categories", ["document", "INNOVATION_DESCRIPTION", "categories"]],
+  ["countryName", ["document", "INNOVATION_DESCRIPTION", "countryName"]],
+  ["diseasesAndConditions", ["document", "UNDERSTANDING_OF_NEEDS", "diseasesConditionsImpact"]],
+  ["mainCategory", ["document", "INNOVATION_DESCRIPTION", "mainCategory"]],
+  ["otherCategoryDescription", ["document", "INNOVATION_DESCRIPTION", "otherCategoryDescription"]],
+  ["postcode", ["document", "INNOVATION_DESCRIPTION", "postcode"]],
+  ["involvedAACProgrammes", ["document", "INNOVATION_DESCRIPTION", "involvedAACProgrammes"]],
+  ["keyHealthInequalities", ["document", "UNDERSTANDING_OF_NEEDS", "keyHealthInequalities"]],
+  ["areas", ["document", "INNOVATION_DESCRIPTION", "areas"]],
+  ["description", ["document", "INNOVATION_DESCRIPTION", "description"]] // This field is only required because of the export CSV as it's not shown in the cards.
 ]);
 
 /**
@@ -96,17 +96,17 @@ const translations = new Map([
  * The first step is reverse since the name needs more boost than postcode.
  */
 const priorities = [
-  ['document.INNOVATION_DESCRIPTION.name', 'owner.companyName'],
-  ['document.INNOVATION_DESCRIPTION.description'],
-  ['document.UNDERSTANDING_OF_NEEDS.problemsTackled'],
-  ['document.UNDERSTANDING_OF_NEEDS.impactDiseaseCondition'],
-  ['document.INNOVATION_DESCRIPTION.mainPurpose'],
-  ['document.UNDERSTANDING_OF_NEEDS.benefitsOrImpact'],
-  ['document.INNOVATION_DESCRIPTION.careSettings', 'document.INNOVATION_DESCRIPTION.otherCareSetting'],
-  ['document.TESTING_WITH_USERS.involvedUsersDesignProcess'],
-  ['document.REGULATIONS_AND_STANDARDS.standardsType', 'document.REGULATIONS_AND_STANDARDS.otherRegulationDescription'],
-  ['document.INNOVATION_DESCRIPTION.countryName'],
-  ['document.INNOVATION_DESCRIPTION.postcode']
+  ["document.INNOVATION_DESCRIPTION.name", "owner.companyName"],
+  ["document.INNOVATION_DESCRIPTION.description"],
+  ["document.UNDERSTANDING_OF_NEEDS.problemsTackled"],
+  ["document.UNDERSTANDING_OF_NEEDS.impactDiseaseCondition"],
+  ["document.INNOVATION_DESCRIPTION.mainPurpose"],
+  ["document.UNDERSTANDING_OF_NEEDS.benefitsOrImpact"],
+  ["document.INNOVATION_DESCRIPTION.careSettings", "document.INNOVATION_DESCRIPTION.otherCareSetting"],
+  ["document.TESTING_WITH_USERS.involvedUsersDesignProcess"],
+  ["document.REGULATIONS_AND_STANDARDS.standardsType", "document.REGULATIONS_AND_STANDARDS.otherRegulationDescription"],
+  ["document.INNOVATION_DESCRIPTION.countryName"],
+  ["document.INNOVATION_DESCRIPTION.postcode"]
 ]
   .reverse()
   .flatMap((priority, i) => priority.map(p => `${p}^${i + 1}`));
@@ -183,7 +183,6 @@ export class SearchService extends BaseService {
       return { count: 0, data: [] };
     }
     const searchQuery = new ElasticSearchQueryBuilder(this.index);
-
     // Add Permission Guards according with role
     this.addPermissionGuards(domainContext, searchQuery);
 
@@ -202,34 +201,34 @@ export class SearchService extends BaseService {
     // pagination and sorting
     const sort: Sort = [];
     Object.entries(params.pagination.order).forEach(([key, value]) => {
-      if (value === 'ASC' || value === 'DESC') {
-        const order = value === 'ASC' ? 'asc' : 'desc';
+      if (value === "ASC" || value === "DESC") {
+        const order = value === "ASC" ? "asc" : "desc";
 
         // TODO: find a cleaner way to approach this sort. Like this for now.
         switch (key) {
-          case 'owner.email':
-          case 'owner.name':
-          case 'support.updatedBy':
+          case "owner.email":
+          case "owner.name":
+          case "support.updatedBy":
             throw new NotImplementedError(GenericErrorsEnum.NOT_IMPLEMENTED_ERROR, {
-              message: 'Sort by name is not allowed'
+              message: "Sort by name is not allowed"
             });
 
           // add here the ones that are from the document and are in the "filters" object
-          case 'countryName':
-          case 'name': {
+          case "countryName":
+          case "name": {
             sort.push({ [`filters.${key}`]: { order } });
             break;
           }
 
-          case 'support.updatedAt':
+          case "support.updatedAt":
             if (isAccessorDomainContextType(domainContext)) {
               sort.push({
-                'supports.updatedAt': {
+                "supports.updatedAt": {
                   order,
                   nested: {
-                    path: 'supports',
+                    path: "supports",
                     filter: {
-                      term: { 'supports.unitId': domainContext.organisation.organisationUnit.id }
+                      term: { "supports.unitId": domainContext.organisation.organisationUnit.id }
                     }
                   }
                 }
@@ -237,12 +236,12 @@ export class SearchService extends BaseService {
             }
             break;
 
-          case 'relevance':
+          case "relevance":
             break;
 
           default:
             // Assessment is not nested, can be handled this way as-well.
-            if (!key.includes('.') || (key.includes('.') && key.includes('assessment'))) {
+            if (!key.includes(".") || (key.includes(".") && key.includes("assessment"))) {
               sort.push({ [key]: { order } });
             }
         }
@@ -264,7 +263,6 @@ export class SearchService extends BaseService {
     }
 
     const response = await this.esService.client.search<CurrentElasticSearchDocumentType>(searchBody);
-
     const handlerMaps: {
       [k in keyof typeof this.postHandlers]: Awaited<ReturnType<(typeof this.postHandlers)[k]>>;
     } = {} as any; // initialization
@@ -273,8 +271,8 @@ export class SearchService extends BaseService {
     }
 
     const fieldGroups = mapValues(
-      groupBy(params.fields, item => item.split('.')[0]),
-      v => v.filter(i => i.split('.')[1]).map(item => item.split('.')[1]!)
+      groupBy(params.fields, item => item.split(".")[0]),
+      v => v.filter(i => i.split(".")[1]).map(item => item.split(".")[1]!)
     );
     return {
       count: (response.hits.total as SearchTotalHits).value ?? 0,
@@ -291,7 +289,7 @@ export class SearchService extends BaseService {
           } else if (translations.has(key)) {
             res[key] = this.translate(doc, key);
           } else {
-            res[key] = key === 'id' ? hit._id : doc[key as keyof CurrentElasticSearchDocumentType];
+            res[key] = key === "id" ? hit._id : doc[key as keyof CurrentElasticSearchDocumentType];
           }
         }
 
@@ -314,7 +312,7 @@ export class SearchService extends BaseService {
       filters?: InnovationListFilters;
     }
   ): Promise<{ count: number; data: unknown[] }> {
-    const keepAlive = '1m';
+    const keepAlive = "1m";
     const pageSize = 50;
     let pitId = (await this.esService.client.openPointInTime({ index: this.index, keep_alive: keepAlive })).id;
     let page: { count: number; data: unknown[]; pit?: string; searchAfter?: SortResults };
@@ -325,7 +323,7 @@ export class SearchService extends BaseService {
     do {
       page = await this.getDocuments(domainContext, {
         fields: params.fields,
-        pagination: { skip: 0, take: pageSize, order: { uniqueId: 'ASC' } },
+        pagination: { skip: 0, take: pageSize, order: { uniqueId: "ASC" } },
         filters: params.filters,
         pit: { id: pitId, keep_alive: keepAlive },
         searchAfter: searchAfter
@@ -369,8 +367,8 @@ export class SearchService extends BaseService {
     const header = params.fields;
     const data = rawData.data.map((item: any) =>
       header.map(field => {
-        let value = field.split('.').reduce((acc, key) => (acc ? acc[key] : undefined), item);
-        if (value === null || value === undefined) return '';
+        let value = field.split(".").reduce((acc, key) => (acc ? acc[key] : undefined), item);
+        if (value === null || value === undefined) return "";
         value = JSON.stringify(value);
         if (value.startsWith('"') && value.endsWith('"')) {
           value = value.slice(1, -1);
@@ -383,7 +381,7 @@ export class SearchService extends BaseService {
   }
 
   private displayHandlers: {
-    [k in 'assessment' | 'support' | 'suggestion' | 'owner' | 'engagingUnits']: (
+    [k in "assessment" | "support" | "suggestion" | "owner" | "engagingUnits"]: (
       domainContext: DomainContextType,
       item: CurrentElasticSearchDocumentType,
       fields: k extends InnovationListJoinTypes ? InnovationListChildrenType<k>[] : string[],
@@ -400,13 +398,13 @@ export class SearchService extends BaseService {
   private displayAssessment(
     _domainContext: DomainContextType,
     item: CurrentElasticSearchDocumentType,
-    fields: InnovationListChildrenType<'assessment'>[],
-    extra: PickHandlerReturnType<typeof this.postHandlers, 'users'>
-  ): Partial<InnovationListFullResponseType['assessment']> {
+    fields: InnovationListChildrenType<"assessment">[],
+    extra: PickHandlerReturnType<typeof this.postHandlers, "users">
+  ): Partial<InnovationListFullResponseType["assessment"]> {
     const res = {} as any;
     fields.forEach(field => {
       switch (field) {
-        case 'assignedTo':
+        case "assignedTo":
           res[field] = item.assessment?.assignedToId
             ? extra.users.getDisplayName(item.assessment?.assignedToId, ServiceRoleEnum.ASSESSMENT)
             : null;
@@ -422,8 +420,8 @@ export class SearchService extends BaseService {
     _domainContext: DomainContextType,
     item: CurrentElasticSearchDocumentType,
     _fields: string[],
-    extra: PickHandlerReturnType<typeof this.postHandlers, 'users'>
-  ): Partial<InnovationListFullResponseType['engagingUnits']> {
+    extra: PickHandlerReturnType<typeof this.postHandlers, "users">
+  ): Partial<InnovationListFullResponseType["engagingUnits"]> {
     // currently not doing any field selection, just replacing user names
     return (
       item.engagingUnits?.map(unit => ({
@@ -442,9 +440,9 @@ export class SearchService extends BaseService {
   private displaySupport(
     domainContext: DomainContextType,
     item: CurrentElasticSearchDocumentType,
-    fields: InnovationListChildrenType<'support'>[],
-    extra: PickHandlerReturnType<typeof this.postHandlers, 'users'>
-  ): Partial<InnovationListFullResponseType['support']> {
+    fields: InnovationListChildrenType<"support">[],
+    extra: PickHandlerReturnType<typeof this.postHandlers, "users">
+  ): Partial<InnovationListFullResponseType["support"]> {
     if (isAccessorDomainContextType(domainContext)) {
       const support = item.supports?.find(s => s.unitId === domainContext.organisation.organisationUnit.id);
       if (!support) return null;
@@ -457,16 +455,16 @@ export class SearchService extends BaseService {
         // if the user has the innovator role (currently exclusive) as the updatedBy is not a role but user id and we can't
         // distinguish if there's multiple roles for the same user
         updatedBy?.roles.some(r => r.role === ServiceRoleEnum.INNOVATOR)
-          ? 'Innovator'
+          ? "Innovator"
           : displayName(updatedBy);
 
       // support is handled differently to remove the nested array since it's only 1 element in this case
       return {
-        ...(fields.includes('id') && { id: support.id }),
-        ...(fields.includes('status') && { status: support.status }),
-        ...(fields.includes('updatedAt') && { updatedAt: support.updatedAt }),
-        ...(fields.includes('updatedBy') && { updatedBy: name }),
-        ...(fields.includes('closeReason') && { closeReason: support.closeReason })
+        ...(fields.includes("id") && { id: support.id }),
+        ...(fields.includes("status") && { status: support.status }),
+        ...(fields.includes("updatedAt") && { updatedAt: support.updatedAt }),
+        ...(fields.includes("updatedBy") && { updatedBy: name }),
+        ...(fields.includes("closeReason") && { closeReason: support.closeReason })
       };
     }
 
@@ -476,9 +474,9 @@ export class SearchService extends BaseService {
   private displaySuggestion(
     domainContext: DomainContextType,
     item: CurrentElasticSearchDocumentType,
-    fields: InnovationListChildrenType<'suggestion'>[],
-    _extra: PickHandlerReturnType<typeof this.postHandlers, 'users'>
-  ): Partial<InnovationListFullResponseType['suggestion']> {
+    fields: InnovationListChildrenType<"suggestion">[],
+    _extra: PickHandlerReturnType<typeof this.postHandlers, "users">
+  ): Partial<InnovationListFullResponseType["suggestion"]> {
     if (isAccessorDomainContextType(domainContext)) {
       const suggestions = new Set(
         item.suggestions
@@ -486,7 +484,7 @@ export class SearchService extends BaseService {
           .flatMap(s => s.suggestedBy) ?? []
       );
       return {
-        ...(fields.includes('suggestedBy') && { suggestedBy: Array.from(suggestions.values()) })
+        ...(fields.includes("suggestedBy") && { suggestedBy: Array.from(suggestions.values()) })
       };
     }
     return null;
@@ -495,17 +493,17 @@ export class SearchService extends BaseService {
   private displayOwner(
     _domainContext: DomainContextType,
     item: CurrentElasticSearchDocumentType,
-    fields: InnovationListChildrenType<'owner'>[],
-    extra: PickHandlerReturnType<typeof this.postHandlers, 'users'>
-  ): Partial<InnovationListFullResponseType['owner']> {
+    fields: InnovationListChildrenType<"owner">[],
+    extra: PickHandlerReturnType<typeof this.postHandlers, "users">
+  ): Partial<InnovationListFullResponseType["owner"]> {
     if (!item.owner) {
       return null;
     }
     return {
-      ...(fields.includes('id') && { id: item.owner.id }),
-      ...(fields.includes('name') && { name: extra.users.getDisplayName(item.owner.id, ServiceRoleEnum.INNOVATOR) }),
-      ...(fields.includes('email') && { email: extra.users.get(item.owner.id)?.email }),
-      ...(fields.includes('companyName') && { companyName: item.owner.companyName ?? null })
+      ...(fields.includes("id") && { id: item.owner.id }),
+      ...(fields.includes("name") && { name: extra.users.getDisplayName(item.owner.id, ServiceRoleEnum.INNOVATOR) }),
+      ...(fields.includes("email") && { email: extra.users.get(item.owner.id)?.email }),
+      ...(fields.includes("companyName") && { companyName: item.owner.companyName ?? null })
     };
   }
 
@@ -517,24 +515,25 @@ export class SearchService extends BaseService {
     ) => void | Promise<void>;
   } = {
     assignedToMe: this.addAssignedToMeFilter.bind(this),
-    careSettings: this.addGenericFilter('filters.careSettings').bind(this),
-    categories: this.addGenericFilter('filters.categories').bind(this),
+    careSettings: this.addGenericFilter("filters.careSettings").bind(this),
+    categories: this.addGenericFilter("filters.categories").bind(this),
     dateFilters: this.addDateFilters.bind(this),
-    diseasesAndConditions: this.addGenericFilter('filters.diseasesAndConditions').bind(this),
-    engagingOrganisations: this.addGenericFilter('engagingOrganisations', { fieldSelector: 'organisationId' }).bind(
+    diseasesAndConditions: this.addGenericFilter("filters.diseasesAndConditions").bind(this),
+    engagingOrganisations: this.addGenericFilter("engagingOrganisations", { fieldSelector: "organisationId" }).bind(
       this
     ),
-    engagingUnits: this.addGenericFilter('engagingUnits', { fieldSelector: 'unitId' }).bind(this),
-    groupedStatuses: this.addGenericFilter('groupedStatus').bind(this),
-    involvedAACProgrammes: this.addGenericFilter('filters.involvedAACProgrammes').bind(this),
-    keyHealthInequalities: this.addGenericFilter('filters.keyHealthInequalities').bind(this),
+    engagingUnits: this.addGenericFilter("engagingUnits", { fieldSelector: "unitId" }).bind(this),
+    groupedStatuses: this.addGenericFilter("groupedStatus").bind(this),
+    archiveReason: this.addGenericFilter("archiveReason").bind(this),
+    involvedAACProgrammes: this.addGenericFilter("filters.involvedAACProgrammes").bind(this),
+    keyHealthInequalities: this.addGenericFilter("filters.keyHealthInequalities").bind(this),
     locations: this.addLocationFilter.bind(this),
     search: this.addSearchFilter.bind(this),
     suggestedOnly: this.addSuggestedOnlyFilter.bind(this),
     supportStatuses: this.addSupportFilter.bind(this),
-    areas: this.addGenericFilter('filters.areas').bind(this),
-    maturityLevels: this.addGenericFilter('assessment.maturityLevel').bind(this),
-    progressAreas: this.addGenericFilter('progressAreas').bind(this)
+    areas: this.addGenericFilter("filters.areas").bind(this),
+    maturityLevels: this.addGenericFilter("assessment.maturityLevel").bind(this),
+    progressAreas: this.addGenericFilter("progressAreas").bind(this)
   };
 
   private async addSearchFilter(
@@ -555,16 +554,16 @@ export class SearchService extends BaseService {
           ? await this.domainService.users.getUserByEmail(search)
           : null;
       if (targetUser?.length && targetUser[0]) {
-        builder.addMust({ term: { 'owner.id': targetUser[0].id } });
+        builder.addMust({ term: { "owner.id": targetUser[0].id } });
         return;
       }
       // If is not an email we do the normal search
       // Define individual queries
       const mainQuery: QueryDslQueryContainer = {
         multi_match: {
-          type: 'best_fields',
+          type: "best_fields",
           query: search,
-          fields: [...priorities, 'document.*'],
+          fields: [...priorities, "document.*"],
           fuzziness: 0,
           prefix_length: 2,
           tie_breaker: 0.3
@@ -574,12 +573,12 @@ export class SearchService extends BaseService {
 
       const evidencesQuery: QueryDslQueryContainer = {
         nested: {
-          path: 'document.evidences',
+          path: "document.evidences",
           query: {
             multi_match: {
-              type: 'best_fields',
+              type: "best_fields",
               query: search,
-              fields: ['document.evidences.*'],
+              fields: ["document.evidences.*"],
               fuzziness: 0,
               prefix_length: 2,
               tie_breaker: 0.3
@@ -590,12 +589,12 @@ export class SearchService extends BaseService {
 
       const regulationsQuery: QueryDslQueryContainer = {
         nested: {
-          path: 'document.REGULATIONS_AND_STANDARDS.standards',
+          path: "document.REGULATIONS_AND_STANDARDS.standards",
           query: {
             multi_match: {
-              type: 'best_fields',
+              type: "best_fields",
               query: search,
-              fields: ['document.REGULATIONS_AND_STANDARDS.standards.*'],
+              fields: ["document.REGULATIONS_AND_STANDARDS.standards.*"],
               fuzziness: 0,
               prefix_length: 2,
               tie_breaker: 0.3
@@ -606,12 +605,12 @@ export class SearchService extends BaseService {
 
       const userTestsQuery: QueryDslQueryContainer = {
         nested: {
-          path: 'document.TESTING_WITH_USERS.userTests',
+          path: "document.TESTING_WITH_USERS.userTests",
           query: {
             multi_match: {
-              type: 'best_fields',
+              type: "best_fields",
               query: search,
-              fields: ['document.TESTING_WITH_USERS.userTests.*'],
+              fields: ["document.TESTING_WITH_USERS.userTests.*"],
               fuzziness: 0,
               prefix_length: 2,
               tie_breaker: 0.3
@@ -625,20 +624,20 @@ export class SearchService extends BaseService {
       // Add the combined query to the builder
       builder.addMust(searchQuery);
       builder.addHighlight({
-        order: 'score',
+        order: "score",
         highlight_query: searchQuery, // the search query is required to avoid highlighting things from the filters
         fields: {
-          'owner.companyName': {},
-          'document.*': {
+          "owner.companyName": {},
+          "document.*": {
             number_of_fragments: 1000 // we require the fragments to show the counts so the default 5 isn't enough
           },
-          'document.evidences.*': {
+          "document.evidences.*": {
             number_of_fragments: 1000
           },
-          'document.REGULATIONS_AND_STANDARDS.standards.*': {
+          "document.REGULATIONS_AND_STANDARDS.standards.*": {
             number_of_fragments: 1000
           },
-          'document.TESTING_WITH_USERS.userTests.*': {
+          "document.TESTING_WITH_USERS.userTests.*": {
             number_of_fragments: 1000
           }
         }
@@ -655,13 +654,13 @@ export class SearchService extends BaseService {
       if (isAccessorDomainContextType(domainContext)) {
         builder.addFilter(
           nestedQuery(
-            'supports',
+            "supports",
             boolQuery({
               must: [
-                { term: { 'supports.assignedAccessorsRoleIds': domainContext.currentRole.id } },
+                { term: { "supports.assignedAccessorsRoleIds": domainContext.currentRole.id } },
                 {
                   terms: {
-                    'supports.status': [InnovationSupportStatusEnum.WAITING, InnovationSupportStatusEnum.ENGAGING]
+                    "supports.status": [InnovationSupportStatusEnum.WAITING, InnovationSupportStatusEnum.ENGAGING]
                   }
                 }
               ]
@@ -670,7 +669,7 @@ export class SearchService extends BaseService {
         );
       }
       if (isAssessmentDomainContextType(domainContext)) {
-        builder.addFilter({ term: { 'assessment.assignedToId': domainContext.id } });
+        builder.addFilter({ term: { "assessment.assignedToId": domainContext.id } });
       }
     }
   }
@@ -681,7 +680,7 @@ export class SearchService extends BaseService {
     options?: { fieldSelector: string } // fieldSelector == nested
   ): (_domainContext: DomainContextType, builder: ElasticSearchQueryBuilder, value: string | string[]) => void {
     return (_domainContext: DomainContextType, builder: ElasticSearchQueryBuilder, value: string | string[]) => {
-      const type = isArray(value) ? 'terms' : 'term';
+      const type = isArray(value) ? "terms" : "term";
 
       if (options?.fieldSelector) {
         builder.addFilter(nestedQuery(filterKey, { [type]: { [`${filterKey}.${options.fieldSelector}`]: value } }));
@@ -699,24 +698,24 @@ export class SearchService extends BaseService {
     const should: QueryDslQueryContainer[] = [];
 
     if (locations.length) {
-      if (locations.includes(InnovationLocationEnum['Based outside UK'])) {
+      if (locations.includes(InnovationLocationEnum["Based outside UK"])) {
         const predefinedLocations = [
           InnovationLocationEnum.England,
-          InnovationLocationEnum['Northern Ireland'],
+          InnovationLocationEnum["Northern Ireland"],
           InnovationLocationEnum.Scotland,
           InnovationLocationEnum.Wales
         ];
 
         should.push(
           boolQuery({
-            mustNot: { terms: { 'filters.countryName': predefinedLocations } }
+            mustNot: { terms: { "filters.countryName": predefinedLocations } }
           })
         );
       }
 
       should.push({
         terms: {
-          'filters.countryName': locations.filter(l => l !== InnovationLocationEnum['Based outside UK'])
+          "filters.countryName": locations.filter(l => l !== InnovationLocationEnum["Based outside UK"])
         }
       });
     }
@@ -730,8 +729,8 @@ export class SearchService extends BaseService {
   ): void {
     if (value && isAccessorDomainContextType(domainContext)) {
       builder.addFilter(
-        nestedQuery('suggestions', {
-          term: { 'suggestions.suggestedUnitId': domainContext.organisation.organisationUnit.id }
+        nestedQuery("suggestions", {
+          term: { "suggestions.suggestedUnitId": domainContext.organisation.organisationUnit.id }
         })
       );
     }
@@ -753,11 +752,11 @@ export class SearchService extends BaseService {
 
       should.push(
         nestedQuery(
-          'supports',
+          "supports",
           boolQuery({
             must: [
-              { term: { 'supports.unitId': domainContext.organisation.organisationUnit.id } },
-              { terms: { 'supports.status': supportStatuses } }
+              { term: { "supports.unitId": domainContext.organisation.organisationUnit.id } },
+              { terms: { "supports.status": supportStatuses } }
             ]
           })
         )
@@ -766,8 +765,8 @@ export class SearchService extends BaseService {
       if (hasUnassigned) {
         should.push(
           boolQuery({
-            mustNot: nestedQuery('supports', {
-              term: { 'supports.unitId': domainContext.organisation.organisationUnit.id }
+            mustNot: nestedQuery("supports", {
+              term: { "supports.unitId": domainContext.organisation.organisationUnit.id }
             })
           })
         );
@@ -797,8 +796,8 @@ export class SearchService extends BaseService {
           range.lt = beforeDateWithTimestamp.toISOString();
         }
 
-        if (filter.field === 'support.updatedAt') {
-          builder.addFilter(nestedQuery('supports', { range: { 'supports.updatedAt': range } }));
+        if (filter.field === "support.updatedAt") {
+          builder.addFilter(nestedQuery("supports", { range: { "supports.updatedAt": range } }));
         } else {
           builder.addFilter({ range: { [filter.field]: range } });
         }
@@ -830,13 +829,13 @@ export class SearchService extends BaseService {
 
   private addPermissionGuards(domainContext: DomainContextType, builder: ElasticSearchQueryBuilder): void {
     if (domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT) {
-      builder.addFilter({ exists: { field: 'submittedAt' } });
+      builder.addFilter({ exists: { field: "submittedAt" } });
     }
 
     if (isAccessorDomainContextType(domainContext)) {
       const isShared = { term: { shares: domainContext.organisation.id } };
-      const hasSupport = nestedQuery('supports', {
-        term: { 'supports.unitId': domainContext.organisation.organisationUnit.id }
+      const hasSupport = nestedQuery("supports", {
+        term: { "supports.unitId": domainContext.organisation.organisationUnit.id }
       });
       const isArchived = boolQuery({ mustNot: { term: { status: InnovationStatusEnum.ARCHIVED } } });
 
@@ -850,13 +849,13 @@ export class SearchService extends BaseService {
       if (domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR) {
         builder.addFilter(
           nestedQuery(
-            'supports',
+            "supports",
             boolQuery({
               must: [
-                { term: { 'supports.unitId': domainContext.organisation.organisationUnit.id } },
+                { term: { "supports.unitId": domainContext.organisation.organisationUnit.id } },
                 {
                   terms: {
-                    'supports.status': [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.CLOSED]
+                    "supports.status": [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.CLOSED]
                   }
                 }
               ]
@@ -877,21 +876,21 @@ export class SearchService extends BaseService {
    * @returns cleanup the response to remove fields that are not shared
    */
   private cleanupAccessorsNotSharedInnovation<T extends object & { highlights?: object }>(input: T): Partial<T> {
-    const highlights = input.highlights && pick(input.highlights, 'document.INNOVATION_DESCRIPTION.name');
+    const highlights = input.highlights && pick(input.highlights, "document.INNOVATION_DESCRIPTION.name");
     return {
       ...pick(input, [
-        'id',
-        'uniqueId',
-        'name',
-        'statusUpdatedAt',
-        'submittedAt',
-        'groupedStatus',
-        'updatedAt',
-        'mainCategory',
-        'otherCategoryDescription',
-        'countryName',
-        'postCode',
-        'support'
+        "id",
+        "uniqueId",
+        "name",
+        "statusUpdatedAt",
+        "submittedAt",
+        "groupedStatus",
+        "updatedAt",
+        "mainCategory",
+        "otherCategoryDescription",
+        "countryName",
+        "postCode",
+        "support"
       ]),
       ...(highlights && { highlights })
     };

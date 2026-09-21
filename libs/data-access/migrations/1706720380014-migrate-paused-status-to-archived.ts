@@ -79,5 +79,5 @@ export class migratePausedStatusToArchived1706720380014 implements MigrationInte
     `);
   }
 
-  public async down(): Promise<void> { }
+  public async down(): Promise<void> {}
 }

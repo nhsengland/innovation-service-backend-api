@@ -1,6 +1,6 @@
-import type { DomainContextType } from '@innovations/shared/types';
-import type { InnovationStatisticsTemplateType } from '../_config/statistics.config';
-import type { InnovationStatisticsEnum } from '../_enums/innovation.enums';
+import type { DomainContextType } from "@innovations/shared/types";
+import type { InnovationStatisticsTemplateType } from "../_config/statistics.config";
+import type { InnovationStatisticsEnum } from "../_enums/innovation.enums";
 
 export abstract class InnovationsStatisticsHandler {
   domainContext: DomainContextType;

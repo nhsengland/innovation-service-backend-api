@@ -1,24 +1,23 @@
- 
-import { container } from '../_config';
+import { container } from "../_config";
 
-import { InnovationCollaboratorEntity } from '@innovations/shared/entities/innovation/innovation-collaborator.entity';
-import { InnovationCollaboratorStatusEnum } from '@innovations/shared/enums';
+import { InnovationCollaboratorEntity } from "@innovations/shared/entities/innovation/innovation-collaborator.entity";
+import { InnovationCollaboratorStatusEnum } from "@innovations/shared/enums";
 import {
   ConflictError,
   ForbiddenError,
   InnovationErrorsEnum,
   NotFoundError,
   UnprocessableEntityError
-} from '@innovations/shared/errors';
-import { NotifierService } from '@innovations/shared/services';
-import { TestsHelper } from '@innovations/shared/tests';
-import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
-import { randEmail, randUuid } from '@ngneat/falso';
-import type { EntityManager } from 'typeorm';
-import type { InnovationCollaboratorsService } from './innovation-collaborators.service';
-import SYMBOLS from './symbols';
+} from "@innovations/shared/errors";
+import { NotifierService } from "@innovations/shared/services";
+import { TestsHelper } from "@innovations/shared/tests";
+import { DTOsHelper } from "@innovations/shared/tests/helpers/dtos.helper";
+import { randEmail, randUuid } from "@ngneat/falso";
+import type { EntityManager } from "typeorm";
+import type { InnovationCollaboratorsService } from "./innovation-collaborators.service";
+import SYMBOLS from "./symbols";
 
-describe('Innovation Collaborators Suite', () => {
+describe("Innovation Collaborators Suite", () => {
   let sut: InnovationCollaboratorsService;
 
   const testsHelper = new TestsHelper();
@@ -31,7 +30,7 @@ describe('Innovation Collaborators Suite', () => {
     await testsHelper.init();
 
     // Setup mocks
-    jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
+    jest.spyOn(NotifierService.prototype, "send").mockResolvedValue(true);
   });
 
   beforeEach(async () => {
@@ -42,28 +41,28 @@ describe('Innovation Collaborators Suite', () => {
     await testsHelper.releaseQueryRunnerEntityManager();
   });
 
-  describe('createCollaborator', () => {
+  describe("createCollaborator", () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
 
-    it('create a collaborator for an existing user', async () => {
+    it("create a collaborator for an existing user", async () => {
       const collaborator = await sut.createCollaborator(
         DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
         innovation.id,
         {
           email: scenario.users.ottoOctaviusInnovator.email,
-          role: 'my role'
+          role: "my role"
         },
         em
       );
 
       const dbCollaborator = await em
-        .createQueryBuilder(InnovationCollaboratorEntity, 'collaborators')
-        .where('collaborators.id = :collaboratorId', { collaboratorId: collaborator.id })
+        .createQueryBuilder(InnovationCollaboratorEntity, "collaborators")
+        .where("collaborators.id = :collaboratorId", { collaboratorId: collaborator.id })
         .getOne();
 
       expect(dbCollaborator).toMatchObject({
         id: collaborator.id,
-        collaboratorRole: 'my role',
+        collaboratorRole: "my role",
         status: InnovationCollaboratorStatusEnum.PENDING,
         innovationId: innovation.id,
         createdBy: scenario.users.johnInnovator.id,
@@ -73,25 +72,25 @@ describe('Innovation Collaborators Suite', () => {
       });
     });
 
-    it('create a collaborator for a non existing user', async () => {
+    it("create a collaborator for a non existing user", async () => {
       const collaborator = await sut.createCollaborator(
         DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
         innovation.id,
         {
           email: randEmail(),
-          role: 'my role'
+          role: "my role"
         },
         em
       );
 
       const dbCollaborator = await em
-        .createQueryBuilder(InnovationCollaboratorEntity, 'collaborators')
-        .where('collaborators.id = :collaboratorId', { collaboratorId: collaborator.id })
+        .createQueryBuilder(InnovationCollaboratorEntity, "collaborators")
+        .where("collaborators.id = :collaboratorId", { collaboratorId: collaborator.id })
         .getOne();
 
       expect(dbCollaborator).toMatchObject({
         id: collaborator.id,
-        collaboratorRole: 'my role',
+        collaboratorRole: "my role",
         status: InnovationCollaboratorStatusEnum.PENDING,
         innovationId: innovation.id,
         createdBy: scenario.users.johnInnovator.id,
@@ -101,32 +100,32 @@ describe('Innovation Collaborators Suite', () => {
       });
     });
 
-    it('invite again for a user that is valid to invite again', async () => {
+    it("invite again for a user that is valid to invite again", async () => {
       await em.update(
         InnovationCollaboratorEntity,
         { id: innovation.collaborators.elisaPendingCollaborator.id },
-        { invitedAt: new Date('2021-01-01') }
+        { invitedAt: new Date("2021-01-01") }
       );
       const collaborator = await sut.createCollaborator(
         DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
         innovation.id,
         {
           email: innovation.collaborators.elisaPendingCollaborator.email,
-          role: 'my role'
+          role: "my role"
         },
         em
       );
 
       const dbCollaborator = await em
-        .createQueryBuilder(InnovationCollaboratorEntity, 'collaborators')
-        .where('collaborators.id = :collaboratorId', {
+        .createQueryBuilder(InnovationCollaboratorEntity, "collaborators")
+        .where("collaborators.id = :collaboratorId", {
           collaboratorId: collaborator.id
         })
         .getOne();
 
       expect(dbCollaborator).toMatchObject({
         id: collaborator.id,
-        collaboratorRole: 'my role',
+        collaboratorRole: "my role",
         status: InnovationCollaboratorStatusEnum.PENDING,
         innovationId: innovation.id,
         updatedBy: scenario.users.johnInnovator.id,
@@ -135,47 +134,47 @@ describe('Innovation Collaborators Suite', () => {
       });
     });
 
-    it('return a error if there is an invite associated with an email/innovation', async () => {
+    it("return a error if there is an invite associated with an email/innovation", async () => {
       await expect(() =>
         sut.createCollaborator(DTOsHelper.getUserRequestContext(scenario.users.johnInnovator), innovation.id, {
           email: innovation.collaborators.elisaPendingCollaborator.email,
-          role: 'my role'
+          role: "my role"
         })
       ).rejects.toThrow(new ConflictError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_WITH_VALID_REQUEST));
     });
 
-    it('return a error if the owner is trying to create a invite for himself', async () => {
+    it("return a error if the owner is trying to create a invite for himself", async () => {
       await expect(() =>
         sut.createCollaborator(DTOsHelper.getUserRequestContext(scenario.users.johnInnovator), innovation.id, {
           email: scenario.users.johnInnovator.email,
-          role: 'my role'
+          role: "my role"
         })
       ).rejects.toThrow(new ConflictError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_CANT_BE_OWNER));
     });
 
     it.each([
-      ['QA', scenario.users.aliceQualifyingAccessor],
-      ['NA', scenario.users.paulNeedsAssessor]
-    ])('return a error if he is trying to invite a %s', async (_label, user) => {
+      ["QA", scenario.users.aliceQualifyingAccessor],
+      ["NA", scenario.users.paulNeedsAssessor]
+    ])("return a error if he is trying to invite a %s", async (_label, user) => {
       await expect(() =>
         sut.createCollaborator(DTOsHelper.getUserRequestContext(scenario.users.johnInnovator), innovation.id, {
           email: user.email,
-          role: 'my role'
+          role: "my role"
         })
       ).rejects.toThrow(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_MUST_BE_INNOVATOR));
     });
   });
 
-  describe('getCollaboratorsList', () => {
+  describe("getCollaboratorsList", () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
     const jane = innovation.collaborators.janeCollaborator;
     const elisa = innovation.collaborators.elisaPendingCollaborator;
 
-    it('should return all collaborators independent of the status', async () => {
+    it("should return all collaborators independent of the status", async () => {
       const collaborators = await sut.getCollaboratorsList(
         innovation.id,
         {},
-        { order: { createdAt: 'DESC' }, skip: 0, take: 10 },
+        { order: { createdAt: "DESC" }, skip: 0, take: 10 },
         em
       );
 
@@ -195,30 +194,30 @@ describe('Innovation Collaborators Suite', () => {
       );
     });
 
-    it('should return all collaborators in status PENDING and ACTIVE', async () => {
+    it("should return all collaborators in status PENDING and ACTIVE", async () => {
       const collaborators = await sut.getCollaboratorsList(
         innovation.id,
         {
           status: [InnovationCollaboratorStatusEnum.ACTIVE, InnovationCollaboratorStatusEnum.PENDING]
         },
-        { order: { createdAt: 'DESC' }, skip: 0, take: 10 },
+        { order: { createdAt: "DESC" }, skip: 0, take: 10 },
         em
       );
       expect(collaborators.count).toBe(3);
-      expect(collaborators.data.map(c => c.status)).toMatchObject(expect.arrayContaining(['ACTIVE', 'PENDING']));
+      expect(collaborators.data.map(c => c.status)).toMatchObject(expect.arrayContaining(["ACTIVE", "PENDING"]));
     });
 
-    it('should return all collaborators in status EXPIRED', async () => {
+    it("should return all collaborators in status EXPIRED", async () => {
       await em.update(
         InnovationCollaboratorEntity,
         { id: innovation.collaborators.elisaPendingCollaborator.id },
-        { invitedAt: new Date('2021-01-01') }
+        { invitedAt: new Date("2021-01-01") }
       );
 
       const collaborators = await sut.getCollaboratorsList(
         innovation.id,
         { status: [InnovationCollaboratorStatusEnum.EXPIRED] },
-        { order: { createdAt: 'DESC' }, skip: 0, take: 10 },
+        { order: { createdAt: "DESC" }, skip: 0, take: 10 },
         em
       );
 
@@ -227,11 +226,11 @@ describe('Innovation Collaborators Suite', () => {
     });
   });
 
-  describe('getCollaboratorInfo', () => {
+  describe("getCollaboratorInfo", () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
 
-    describe('asOwner', () => {
-      it('for a new user it should return info for a new collaborator without the name', async () => {
+    describe("asOwner", () => {
+      it("for a new user it should return info for a new collaborator without the name", async () => {
         const collaborator = await sut.getCollaboratorInfo(
           DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
           innovation.id,
@@ -254,7 +253,7 @@ describe('Innovation Collaborators Suite', () => {
         expect(collaborator.name).toBeUndefined();
       });
 
-      it('for a existing user should return info for a new collaborator with the name of the user', async () => {
+      it("for a existing user should return info for a new collaborator with the name of the user", async () => {
         const collaborator = await sut.getCollaboratorInfo(
           DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
           innovation.id,
@@ -278,8 +277,8 @@ describe('Innovation Collaborators Suite', () => {
       });
     });
 
-    describe('asCollaborator', () => {
-      it('should return info (with the name of the user) as collaborator user', async () => {
+    describe("asCollaborator", () => {
+      it("should return info (with the name of the user) as collaborator user", async () => {
         const collaborator = await sut.getCollaboratorInfo(
           DTOsHelper.getUserRequestContext(scenario.users.janeInnovator),
           innovation.id,
@@ -302,7 +301,7 @@ describe('Innovation Collaborators Suite', () => {
         });
       });
 
-      it('should return error if the collaborator invite is not for him', async () => {
+      it("should return error if the collaborator invite is not for him", async () => {
         await expect(() =>
           sut.getCollaboratorInfo(
             DTOsHelper.getUserRequestContext(scenario.users.janeInnovator),
@@ -326,11 +325,11 @@ describe('Innovation Collaborators Suite', () => {
     });
   });
 
-  describe('updateCollaborator', () => {
+  describe("updateCollaborator", () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
 
-    describe('asOwner', () => {
-      it('should update from ACTIVE to REMOVED', async () => {
+    describe("asOwner", () => {
+      it("should update from ACTIVE to REMOVED", async () => {
         const collaborator = await sut.updateCollaborator(
           DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
           innovation.collaborators.janeCollaborator.id,
@@ -341,8 +340,8 @@ describe('Innovation Collaborators Suite', () => {
         );
 
         const dbCollaborator = await em
-          .createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
-          .where('collaborator.id = :collaboratorId', { collaboratorId: collaborator.id })
+          .createQueryBuilder(InnovationCollaboratorEntity, "collaborator")
+          .where("collaborator.id = :collaboratorId", { collaboratorId: collaborator.id })
           .getOne();
 
         expect(dbCollaborator).toMatchObject({
@@ -351,7 +350,7 @@ describe('Innovation Collaborators Suite', () => {
         });
       });
 
-      it('should update from PENDING to CANCELLED', async () => {
+      it("should update from PENDING to CANCELLED", async () => {
         const collaborator = await sut.updateCollaborator(
           DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
           innovation.collaborators.elisaPendingCollaborator.id,
@@ -362,8 +361,8 @@ describe('Innovation Collaborators Suite', () => {
         );
 
         const dbCollaborator = await em
-          .createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
-          .where('collaborator.id = :collaboratorId', { collaboratorId: collaborator.id })
+          .createQueryBuilder(InnovationCollaboratorEntity, "collaborator")
+          .where("collaborator.id = :collaboratorId", { collaboratorId: collaborator.id })
           .getOne();
 
         expect(dbCollaborator).toMatchObject({
@@ -372,7 +371,7 @@ describe('Innovation Collaborators Suite', () => {
         });
       });
 
-      it('should return error while changing status to REMOVED and current status is not ACTIVE', async () => {
+      it("should return error while changing status to REMOVED and current status is not ACTIVE", async () => {
         await expect(() =>
           sut.updateCollaborator(
             DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
@@ -387,7 +386,7 @@ describe('Innovation Collaborators Suite', () => {
         );
       });
 
-      it('should return error while changing status to CANCELLED and current status is not PENDING', async () => {
+      it("should return error while changing status to CANCELLED and current status is not PENDING", async () => {
         await expect(() =>
           sut.updateCollaborator(
             DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
@@ -402,30 +401,30 @@ describe('Innovation Collaborators Suite', () => {
         );
       });
 
-      it('should update collaboratorRole', async () => {
+      it("should update collaboratorRole", async () => {
         const collaborator = await sut.updateCollaborator(
           DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
           innovation.collaborators.elisaPendingCollaborator.id,
           innovation.id,
           true,
-          { role: 'randomRole' },
+          { role: "randomRole" },
           em
         );
 
         const dbCollaborator = await em
-          .createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
-          .where('collaborator.id = :collaboratorId', { collaboratorId: collaborator.id })
+          .createQueryBuilder(InnovationCollaboratorEntity, "collaborator")
+          .where("collaborator.id = :collaboratorId", { collaboratorId: collaborator.id })
           .getOne();
 
         expect(dbCollaborator).toMatchObject({
           status: InnovationCollaboratorStatusEnum.PENDING,
-          collaboratorRole: 'randomRole'
+          collaboratorRole: "randomRole"
         });
       });
     });
 
-    describe('asInvitedCollaborator', () => {
-      it('should update from PENDING to ACTIVE', async () => {
+    describe("asInvitedCollaborator", () => {
+      it("should update from PENDING to ACTIVE", async () => {
         const collaborator = await sut.updateCollaborator(
           DTOsHelper.getUserRequestContext(scenario.users.adamInnovator),
           innovation.collaborators.adamCollaborator.id,
@@ -436,8 +435,8 @@ describe('Innovation Collaborators Suite', () => {
         );
 
         const dbCollaborator = await em
-          .createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
-          .where('collaborator.id = :collaboratorId', { collaboratorId: collaborator.id })
+          .createQueryBuilder(InnovationCollaboratorEntity, "collaborator")
+          .where("collaborator.id = :collaboratorId", { collaboratorId: collaborator.id })
           .getOne();
 
         expect(dbCollaborator).toMatchObject({
@@ -447,7 +446,7 @@ describe('Innovation Collaborators Suite', () => {
         });
       });
 
-      it('should update from PENDING to DECLINED', async () => {
+      it("should update from PENDING to DECLINED", async () => {
         const collaborator = await sut.updateCollaborator(
           DTOsHelper.getUserRequestContext(scenario.users.adamInnovator),
           innovation.collaborators.adamCollaborator.id,
@@ -458,8 +457,8 @@ describe('Innovation Collaborators Suite', () => {
         );
 
         const dbCollaborator = await em
-          .createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
-          .where('collaborator.id = :collaboratorId', { collaboratorId: collaborator.id })
+          .createQueryBuilder(InnovationCollaboratorEntity, "collaborator")
+          .where("collaborator.id = :collaboratorId", { collaboratorId: collaborator.id })
           .getOne();
 
         expect(dbCollaborator).toMatchObject({
@@ -469,7 +468,7 @@ describe('Innovation Collaborators Suite', () => {
         });
       });
 
-      it('should update from ACTIVE to LEFT', async () => {
+      it("should update from ACTIVE to LEFT", async () => {
         const collaborator = await sut.updateCollaborator(
           DTOsHelper.getUserRequestContext(scenario.users.janeInnovator),
           innovation.collaborators.janeCollaborator.id,
@@ -480,8 +479,8 @@ describe('Innovation Collaborators Suite', () => {
         );
 
         const dbCollaborator = await em
-          .createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
-          .where('collaborator.id = :collaboratorId', { collaboratorId: collaborator.id })
+          .createQueryBuilder(InnovationCollaboratorEntity, "collaborator")
+          .where("collaborator.id = :collaboratorId", { collaboratorId: collaborator.id })
           .getOne();
 
         expect(dbCollaborator).toMatchObject({
@@ -491,7 +490,7 @@ describe('Innovation Collaborators Suite', () => {
         });
       });
 
-      it('should return error while changing status to ACTIVE and current status is not PENDING', async () => {
+      it("should return error while changing status to ACTIVE and current status is not PENDING", async () => {
         await expect(() =>
           sut.updateCollaborator(
             DTOsHelper.getUserRequestContext(scenario.users.janeInnovator),
@@ -506,7 +505,7 @@ describe('Innovation Collaborators Suite', () => {
         );
       });
 
-      it('should return error while changing status to DECLINED and current status is not PENDING', async () => {
+      it("should return error while changing status to DECLINED and current status is not PENDING", async () => {
         await expect(() =>
           sut.updateCollaborator(
             DTOsHelper.getUserRequestContext(scenario.users.janeInnovator),
@@ -521,7 +520,7 @@ describe('Innovation Collaborators Suite', () => {
         );
       });
 
-      it('should return error while changing status to LEFT and current status is not ACTIVE', async () => {
+      it("should return error while changing status to LEFT and current status is not ACTIVE", async () => {
         await expect(() =>
           sut.updateCollaborator(
             DTOsHelper.getUserRequestContext(scenario.users.adamInnovator),
@@ -536,14 +535,14 @@ describe('Innovation Collaborators Suite', () => {
         );
       });
 
-      it('should return error when update role', async () => {
+      it("should return error when update role", async () => {
         await expect(() =>
           sut.updateCollaborator(
             DTOsHelper.getUserRequestContext(scenario.users.janeInnovator),
             innovation.collaborators.janeCollaborator.id,
             innovation.id,
             false,
-            { role: 'randomRole' },
+            { role: "randomRole" },
             em
           )
         ).rejects.toThrow(

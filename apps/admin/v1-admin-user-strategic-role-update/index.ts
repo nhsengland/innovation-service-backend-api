@@ -37,31 +37,35 @@ class V1AdminUserStrategicRoleUpdate {
   }
 }
 
-export default openApi(V1AdminUserStrategicRoleUpdate.httpTrigger as AzureFunction, '/v1/users/{userId}/strategic-roles/{strategicRoleId}', {
-  delete: {
-    description: 'Delete a strategic role from a user.',
-    operationId: 'v1-admin-user-strategic-role-update',
-    parameters: [
-      {
-        name: 'userId',
-        in: 'path',
-        required: true,
-        schema: { type: 'string' },
-        description: 'The user id.'
-      },
-      {
-        name: 'strategicRoleId',
-        in: 'path',
-        required: true,
-        schema: { type: 'string' },
-        description: 'The strategic role id.'
+export default openApi(
+  V1AdminUserStrategicRoleUpdate.httpTrigger as AzureFunction,
+  '/v1/users/{userId}/strategic-roles/{strategicRoleId}',
+  {
+    delete: {
+      description: 'Delete a strategic role from a user.',
+      operationId: 'v1-admin-user-strategic-role-update',
+      parameters: [
+        {
+          name: 'userId',
+          in: 'path',
+          required: true,
+          schema: { type: 'string' },
+          description: 'The user id.'
+        },
+        {
+          name: 'strategicRoleId',
+          in: 'path',
+          required: true,
+          schema: { type: 'string' },
+          description: 'The strategic role id.'
+        }
+      ],
+      responses: {
+        '204': { description: 'The strategic role has been deleted.' },
+        '401': { description: 'The user is not authorized.' },
+        '404': { description: 'The strategic role was not found.' },
+        '500': { description: 'An error occurred.' }
       }
-    ],
-    responses: {
-      '204': { description: 'The strategic role has been deleted.' },
-      '401': { description: 'The user is not authorized.' },
-      '404': { description: 'The strategic role was not found.' },
-      '500': { description: 'An error occurred.' }
     }
   }
-});
+);

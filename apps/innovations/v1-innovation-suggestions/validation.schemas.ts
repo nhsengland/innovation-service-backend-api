@@ -1,6 +1,6 @@
-import Joi from 'joi';
-import type { InnovationSuggestionsType } from '../_types/innovation.types';
-import { JoiHelper } from '@innovations/shared/helpers';
+import Joi from "joi";
+import type { InnovationSuggestionsType } from "../_types/innovation.types";
+import { JoiHelper } from "@innovations/shared/helpers";
 
 export type ParamsType = {
   innovationId: string;

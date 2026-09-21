@@ -1,18 +1,18 @@
-import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
-import type { AzureFunction, HttpRequest } from '@azure/functions';
+import { mapOpenApi3 as openApi } from "@aaronpowell/azure-functions-nodejs-openapi";
+import type { AzureFunction, HttpRequest } from "@azure/functions";
 
-import { JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
-import type { AuthorizationService } from '@innovations/shared/services';
-import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import type { CustomContextType } from '@innovations/shared/types';
+import { JwtDecoder } from "@innovations/shared/decorators";
+import { JoiHelper, ResponseHelper, SwaggerHelper } from "@innovations/shared/helpers";
+import type { AuthorizationService } from "@innovations/shared/services";
+import SHARED_SYMBOLS from "@innovations/shared/services/symbols";
+import type { CustomContextType } from "@innovations/shared/types";
 
-import { container } from '../_config';
+import { container } from "../_config";
 
-import type { InnovationTransferService } from '../_services/innovation-transfer.service';
-import SYMBOLS from '../_services/symbols';
-import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
-import { BodySchema, BodyType } from './validation.schemas';
+import type { InnovationTransferService } from "../_services/innovation-transfer.service";
+import SYMBOLS from "../_services/symbols";
+import { ResponseBodySchema, type ResponseDTO } from "./transformation.dtos";
+import { BodySchema, BodyType } from "./validation.schemas";
 
 class CreateInnovationTransfer {
   @JwtDecoder()
@@ -52,27 +52,27 @@ class CreateInnovationTransfer {
   }
 }
 
-export default openApi(CreateInnovationTransfer.httpTrigger as AzureFunction, '/v1/transfers', {
+export default openApi(CreateInnovationTransfer.httpTrigger as AzureFunction, "/v1/transfers", {
   post: {
-    description: 'Create an innovation transfer',
-    operationId: 'createInnovationTransfer',
+    description: "Create an innovation transfer",
+    operationId: "createInnovationTransfer",
     parameters: [],
     requestBody: SwaggerHelper.bodyJ2S(BodySchema),
     responses: {
       200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
-        description: 'Success'
+        description: "Success"
       }),
       400: {
-        description: 'Bad Request',
+        description: "Bad Request",
         content: {
-          'application/json': {
+          "application/json": {
             schema: {
-              type: 'object'
+              type: "object"
             }
           }
         }
       },
-      422: { description: 'Unprocessable Entity' }
+      422: { description: "Unprocessable Entity" }
     }
   }
 });

@@ -1,19 +1,19 @@
-import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
-import type { AzureFunction, HttpRequest } from '@azure/functions';
+import { mapOpenApi3 as openApi } from "@aaronpowell/azure-functions-nodejs-openapi";
+import type { AzureFunction, HttpRequest } from "@azure/functions";
 
-import { JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
-import type { AuthorizationService } from '@innovations/shared/services';
-import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import { isAccessorDomainContextType, type CustomContextType } from '@innovations/shared/types';
+import { JwtDecoder } from "@innovations/shared/decorators";
+import { JoiHelper, ResponseHelper, SwaggerHelper } from "@innovations/shared/helpers";
+import type { AuthorizationService } from "@innovations/shared/services";
+import SHARED_SYMBOLS from "@innovations/shared/services/symbols";
+import { isAccessorDomainContextType, type CustomContextType } from "@innovations/shared/types";
 
-import { container } from '../_config';
+import { container } from "../_config";
 
-import { BadRequestError, UserErrorsEnum } from '@innovations/shared/errors';
-import type { InnovationSupportsService } from '../_services/innovation-supports.service';
-import SYMBOLS from '../_services/symbols';
-import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
-import { ParamsSchema, type ParamsType } from './validation.schemas';
+import { BadRequestError, UserErrorsEnum } from "@innovations/shared/errors";
+import type { InnovationSupportsService } from "../_services/innovation-supports.service";
+import SYMBOLS from "../_services/symbols";
+import { ResponseBodySchema, type ResponseDTO } from "./transformation.dtos";
+import { ParamsSchema, type ParamsType } from "./validation.schemas";
 
 class V1InnovationSupportAvailableStatus {
   @JwtDecoder()
@@ -50,22 +50,22 @@ class V1InnovationSupportAvailableStatus {
 
 export default openApi(
   V1InnovationSupportAvailableStatus.httpTrigger as AzureFunction,
-  '/v1/{innovationId}/supports/available-status',
+  "/v1/{innovationId}/supports/available-status",
   {
     get: {
-      description: 'Get available status for a support',
-      operationId: 'v1-innovation-support-available-status',
-      tags: ['[v1] Innovation Support'],
+      description: "Get available status for a support",
+      operationId: "v1-innovation-support-available-status",
+      tags: ["[v1] Innovation Support"],
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       responses: {
         200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
-          description: 'OK'
+          description: "OK"
         }),
-        400: { description: 'Bad Request' },
-        401: { description: 'Unauthorized' },
-        403: { description: 'Forbidden' },
-        404: { description: 'Not found' },
-        500: { description: 'Internal server error' }
+        400: { description: "Bad Request" },
+        401: { description: "Unauthorized" },
+        403: { description: "Forbidden" },
+        404: { description: "Not found" },
+        500: { description: "Internal server error" }
       }
     }
   }

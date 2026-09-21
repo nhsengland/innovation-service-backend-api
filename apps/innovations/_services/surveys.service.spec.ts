@@ -1,16 +1,16 @@
-import type { EntityManager } from 'typeorm';
+import type { EntityManager } from "typeorm";
 
-import { TestsHelper } from '@innovations/shared/tests';
+import { TestsHelper } from "@innovations/shared/tests";
 
-import { container } from '../_config';
-import SYMBOLS from './symbols';
-import type { SurveysService } from './surveys.service';
-import { InnovationSurveyEntity } from '@innovations/shared/entities';
-import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
-import { randText, randUuid } from '@ngneat/falso';
-import { ForbiddenError, ConflictError, InnovationErrorsEnum, NotFoundError } from '@innovations/shared/errors';
+import { container } from "../_config";
+import SYMBOLS from "./symbols";
+import type { SurveysService } from "./surveys.service";
+import { InnovationSurveyEntity } from "@innovations/shared/entities";
+import { DTOsHelper } from "@innovations/shared/tests/helpers/dtos.helper";
+import { randText, randUuid } from "@ngneat/falso";
+import { ForbiddenError, ConflictError, InnovationErrorsEnum, NotFoundError } from "@innovations/shared/errors";
 
-describe('Innovations / _services / surveys.service.ts suite', () => {
+describe("Innovations / _services / surveys.service.ts suite", () => {
   let sut: SurveysService;
 
   let em: EntityManager;
@@ -31,18 +31,18 @@ describe('Innovations / _services / surveys.service.ts suite', () => {
     await testsHelper.releaseQueryRunnerEntityManager();
   });
 
-  describe('createSurvey', () => {
-    it('should create surveys for multiple users', async () => {
+  describe("createSurvey", () => {
+    it("should create surveys for multiple users", async () => {
       const john = scenario.users.johnInnovator;
       const jane = scenario.users.janeInnovator;
       const innovation = john.innovations.johnInnovation;
 
-      await sut.createSurvey('SUPPORT_END', innovation.id, innovation.supports.supportByHealthOrgUnit.id, em);
+      await sut.createSurvey("SUPPORT_END", innovation.id, innovation.supports.supportByHealthOrgUnit.id, em);
 
       const dbSurveys = await em
-        .createQueryBuilder(InnovationSurveyEntity, 'survey')
-        .select('survey.targetUserRole', 'target')
-        .where('survey.innovation_id = :innovationId', { innovationId: innovation.id })
+        .createQueryBuilder(InnovationSurveyEntity, "survey")
+        .select("survey.targetUserRole", "target")
+        .where("survey.innovation_id = :innovationId", { innovationId: innovation.id })
         .getRawMany();
 
       expect(dbSurveys).toMatchObject([
@@ -52,25 +52,25 @@ describe('Innovations / _services / surveys.service.ts suite', () => {
     });
   });
 
-  describe('answerSurvey', () => {
+  describe("answerSurvey", () => {
     const otto = scenario.users.ottoOctaviusInnovator;
     const innovation = otto.innovations.tentaclesInnovation;
     const unansweredSurvey = innovation.surveys.unansweredSurveyToOtto;
     const answeredSurvey = innovation.surveys.answeredSurveyToOtto;
 
-    it('should save the answer of the survey', async () => {
+    it("should save the answer of the survey", async () => {
       const expected = {
         comment: randText(),
         ideaOnHowToProceed: randText(),
-        supportSatisfaction: '1',
-        howLikelyWouldYouRecommendIS: '10'
+        supportSatisfaction: "1",
+        howLikelyWouldYouRecommendIS: "10"
       };
       await sut.answerSurvey(DTOsHelper.getUserRequestContext(otto), unansweredSurvey.id, expected, em);
 
       const dbSurvey = await em
-        .createQueryBuilder(InnovationSurveyEntity, 'survey')
-        .select(['survey.id', 'survey.answers'])
-        .where('survey.id = :surveyId', { surveyId: unansweredSurvey.id })
+        .createQueryBuilder(InnovationSurveyEntity, "survey")
+        .select(["survey.id", "survey.answers"])
+        .where("survey.id = :surveyId", { surveyId: unansweredSurvey.id })
         .getOneOrFail();
 
       expect(dbSurvey.answers).toStrictEqual(expected);
@@ -82,13 +82,13 @@ describe('Innovations / _services / surveys.service.ts suite', () => {
       ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_SURVEY_NOT_FOUND));
     });
 
-    it('should give error when the survey is already answered', async () => {
+    it("should give error when the survey is already answered", async () => {
       await expect(() =>
         sut.answerSurvey(DTOsHelper.getUserRequestContext(otto), answeredSurvey.id, {} as any, em)
       ).rejects.toThrow(new ConflictError(InnovationErrorsEnum.INNOVATION_SURVEY_ALREADY_ANSWERED));
     });
 
-    it('should give error when the survey is for other user', async () => {
+    it("should give error when the survey is for other user", async () => {
       await expect(() =>
         sut.answerSurvey(
           DTOsHelper.getUserRequestContext(scenario.users.janeInnovator),
@@ -100,8 +100,8 @@ describe('Innovations / _services / surveys.service.ts suite', () => {
     });
   });
 
-  describe('getUnansweredSurveys', () => {
-    it('should return all unanswered surveys for an innovation', async () => {
+  describe("getUnansweredSurveys", () => {
+    it("should return all unanswered surveys for an innovation", async () => {
       const otto = scenario.users.ottoOctaviusInnovator;
       const innovation = otto.innovations.tentaclesInnovation;
       const support = innovation.supports.tentaclesInnovationSupportClosed;
@@ -114,7 +114,7 @@ describe('Innovations / _services / surveys.service.ts suite', () => {
           id: survey.id,
           createdAt: new Date(survey.createdAt),
           info: {
-            type: 'SUPPORT_END',
+            type: "SUPPORT_END",
             supportId: support.id,
             supportUnit: scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.name,
             supportFinishedAt: expect.any(Date)

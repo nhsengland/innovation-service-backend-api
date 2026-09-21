@@ -1,20 +1,20 @@
-import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
-import type { AzureFunction, HttpRequest } from '@azure/functions';
+import { mapOpenApi3 as openApi } from "@aaronpowell/azure-functions-nodejs-openapi";
+import type { AzureFunction, HttpRequest } from "@azure/functions";
 
-import { JwtDecoder } from '@innovations/shared/decorators';
-import { InnovationStatusEnum, ServiceRoleEnum } from '@innovations/shared/enums';
-import { BadRequestError, GenericErrorsEnum } from '@innovations/shared/errors';
-import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
-import type { AuthorizationService } from '@innovations/shared/services';
-import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import type { CustomContextType } from '@innovations/shared/types';
+import { JwtDecoder } from "@innovations/shared/decorators";
+import { InnovationStatusEnum, ServiceRoleEnum } from "@innovations/shared/enums";
+import { BadRequestError, GenericErrorsEnum } from "@innovations/shared/errors";
+import { JoiHelper, ResponseHelper, SwaggerHelper } from "@innovations/shared/helpers";
+import type { AuthorizationService } from "@innovations/shared/services";
+import SHARED_SYMBOLS from "@innovations/shared/services/symbols";
+import type { CustomContextType } from "@innovations/shared/types";
 
-import { container } from '../_config';
+import { container } from "../_config";
 
-import type { InnovationTasksService } from '../_services/innovation-tasks.service';
-import SYMBOLS from '../_services/symbols';
-import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
-import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
+import type { InnovationTasksService } from "../_services/innovation-tasks.service";
+import SYMBOLS from "../_services/symbols";
+import { ResponseBodySchema, type ResponseDTO } from "./transformation.dtos";
+import { BodySchema, BodyType, ParamsSchema, ParamsType } from "./validation.schemas";
 
 class V1InnovationTaskUpdate {
   @JwtDecoder()
@@ -76,7 +76,7 @@ class V1InnovationTaskUpdate {
           domainContext,
           params.innovationId,
           params.taskId,
-          { status: body.status, message: body.message ?? '' } // joi validates message is required
+          { status: body.status, message: body.message ?? "" } // joi validates message is required
         );
 
         context.res = ResponseHelper.Ok<ResponseDTO>({ id: innovatorResult.id });
@@ -92,28 +92,28 @@ class V1InnovationTaskUpdate {
   }
 }
 
-export default openApi(V1InnovationTaskUpdate.httpTrigger as AzureFunction, '/v1/{innovationId}/tasks/{taskId}', {
+export default openApi(V1InnovationTaskUpdate.httpTrigger as AzureFunction, "/v1/{innovationId}/tasks/{taskId}", {
   put: {
-    description: 'Update an innovation task.',
-    operationId: 'v1-innovation-task-update',
-    tags: ['[v1] Innovation Tasks'],
+    description: "Update an innovation task.",
+    operationId: "v1-innovation-task-update",
+    tags: ["[v1] Innovation Tasks"],
     parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
-    requestBody: SwaggerHelper.bodyJ2S(BodySchema, { description: 'The innovation task data.' }),
+    requestBody: SwaggerHelper.bodyJ2S(BodySchema, { description: "The innovation task data." }),
     responses: {
-      '200': SwaggerHelper.responseJ2S(ResponseBodySchema, {
-        description: 'The innovation task has been updated.'
+      "200": SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: "The innovation task has been updated."
       }),
-      '400': {
-        description: 'The innovation task data is invalid.'
+      "400": {
+        description: "The innovation task data is invalid."
       },
-      '401': {
-        description: 'The user is not authorized to update the innovation task.'
+      "401": {
+        description: "The user is not authorized to update the innovation task."
       },
-      '404': {
-        description: 'The innovation task does not exist.'
+      "404": {
+        description: "The innovation task does not exist."
       },
-      '500': {
-        description: 'An error occurred while updating the innovation task.'
+      "500": {
+        description: "An error occurred while updating the innovation task."
       }
     }
   }

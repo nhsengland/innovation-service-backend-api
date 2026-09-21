@@ -1,19 +1,19 @@
-import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
-import type { AzureFunction, HttpRequest } from '@azure/functions';
+import { mapOpenApi3 as openApi } from "@aaronpowell/azure-functions-nodejs-openapi";
+import type { AzureFunction, HttpRequest } from "@azure/functions";
 
-import { ElasticSearchDocumentUpdate, JwtDecoder } from '@innovations/shared/decorators';
-import { InnovationStatusEnum, ServiceRoleEnum } from '@innovations/shared/enums';
-import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
-import type { AuthorizationService } from '@innovations/shared/services';
-import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import type { CustomContextType } from '@innovations/shared/types';
+import { ElasticSearchDocumentUpdate, JwtDecoder } from "@innovations/shared/decorators";
+import { InnovationStatusEnum, ServiceRoleEnum } from "@innovations/shared/enums";
+import { JoiHelper, ResponseHelper, SwaggerHelper } from "@innovations/shared/helpers";
+import type { AuthorizationService } from "@innovations/shared/services";
+import SHARED_SYMBOLS from "@innovations/shared/services/symbols";
+import type { CustomContextType } from "@innovations/shared/types";
 
-import { container } from '../_config';
+import { container } from "../_config";
 
-import type { InnovationSupportsService } from '../_services/innovation-supports.service';
-import SYMBOLS from '../_services/symbols';
-import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
-import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
+import type { InnovationSupportsService } from "../_services/innovation-supports.service";
+import SYMBOLS from "../_services/symbols";
+import { ResponseBodySchema, type ResponseDTO } from "./transformation.dtos";
+import { BodySchema, BodyType, ParamsSchema, ParamsType } from "./validation.schemas";
 
 class V1InnovationSupportStart {
   @JwtDecoder()
@@ -49,20 +49,20 @@ class V1InnovationSupportStart {
   }
 }
 
-export default openApi(V1InnovationSupportStart.httpTrigger as AzureFunction, '/v1/{innovationId}/supports', {
+export default openApi(V1InnovationSupportStart.httpTrigger as AzureFunction, "/v1/{innovationId}/supports", {
   post: {
-    description: 'Starts support in innovation.',
-    operationId: 'v1-innovation-support-start',
-    tags: ['[v1] Innovation Support'],
+    description: "Starts support in innovation.",
+    operationId: "v1-innovation-support-start",
+    tags: ["[v1] Innovation Support"],
     parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     requestBody: SwaggerHelper.bodyJ2S(BodySchema),
     responses: {
       201: SwaggerHelper.responseJ2S(ResponseBodySchema, {
         description:
-          'Creates a new innovation support request for the innovation identified by the supplied Innovation ID.'
+          "Creates a new innovation support request for the innovation identified by the supplied Innovation ID."
       }),
       401: {
-        description: 'Unauthorised.'
+        description: "Unauthorised."
       }
     }
   }

@@ -338,6 +338,23 @@ export class OrganisationsService extends BaseService {
       })
     );
 
-    return { count: data.length, data: data.sort((a, b) => a.needsAssessorUserName.localeCompare(b.needsAssessorUserName)) };
+    return {
+      count: data.length,
+      data: data.sort((a, b) => {
+        const nameCompare = a.needsAssessorUserName.localeCompare(b.needsAssessorUserName);
+        if (nameCompare) return nameCompare;
+
+        const dateCompare = (a.assessmentStartDate?.getTime() ?? 0) - (b.assessmentStartDate?.getTime() ?? 0);
+        if (dateCompare) return dateCompare;
+
+        const [aMajor = 0, aMinor = 0] = a.needsAssessmentVersion.split('.').map(Number);
+        const [bMajor = 0, bMinor = 0] = b.needsAssessmentVersion.split('.').map(Number);
+
+        const versionCompare = aMajor - bMajor || aMinor - bMinor;
+        if (versionCompare) return versionCompare;
+
+        return a.assignedInnovation.localeCompare(b.assignedInnovation);
+      })
+    };
   }
 }

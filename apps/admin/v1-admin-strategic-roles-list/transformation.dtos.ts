@@ -12,17 +12,21 @@ export const ResponseBodySchema = Joi.array().items(
       id: Joi.string().guid().required(),
       name: Joi.string().required()
     }).required(),
-    champions: Joi.array().items(
-      Joi.object({
-        name: Joi.string().required(),
-        email: Joi.string().email().required()
-      })
-    ).required(),
-    seniorSponsors: Joi.array().items(
-      Joi.object({
-        name: Joi.string().required(),
-        email: Joi.string().email().required()
-      })
-    ).required()
+    champions: Joi.array()
+      .items(
+        Joi.object({
+          name: Joi.string().required(),
+          email: Joi.string().email().required()
+        })
+      )
+      .required(),
+    seniorSponsors: Joi.array()
+      .items(
+        Joi.object({
+          name: Joi.string().required(),
+          email: Joi.string().email().required()
+        })
+      )
+      .required()
   })
 );

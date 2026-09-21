@@ -32,7 +32,9 @@ export class createUserStrategicRoleTable1767819000000 implements MigrationInter
   async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`DROP INDEX "idx_user_strategic_role_organisation_id" ON "user_strategic_role"`);
     await queryRunner.query(`DROP INDEX "idx_user_strategic_role_user_id" ON "user_strategic_role"`);
-    await queryRunner.query(`ALTER TABLE "user_strategic_role" DROP CONSTRAINT "fk_user_strategic_role_organisation_organisation_id"`);
+    await queryRunner.query(
+      `ALTER TABLE "user_strategic_role" DROP CONSTRAINT "fk_user_strategic_role_organisation_organisation_id"`
+    );
     await queryRunner.query(`ALTER TABLE "user_strategic_role" DROP CONSTRAINT "fk_user_strategic_role_user_user_id"`);
     await queryRunner.query(`DROP TABLE "user_strategic_role"`);
   }

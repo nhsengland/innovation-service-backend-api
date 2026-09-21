@@ -1,5 +1,5 @@
-import Joi from 'joi';
-import { ReassessmentReasons, type ReassessmentType } from '../_types/innovation.types';
+import Joi from "joi";
+import { ReassessmentReasons, type ReassessmentType } from "../_types/innovation.types";
 
 export type ResponseDTO = {
   id: string;

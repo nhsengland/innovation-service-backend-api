@@ -1,18 +1,18 @@
-import { inject, injectable } from 'inversify';
-import { EntityManager } from 'typeorm';
+import { inject, injectable } from "inversify";
+import { EntityManager } from "typeorm";
 
-import { BaseService } from './base.service';
+import { BaseService } from "./base.service";
 
-import { InnovationSurveyEntity, SurveyType } from '@innovations/shared/entities/innovation/innovation-survey.entity';
-import { InnovationEntity, UserRoleEntity } from '@innovations/shared/entities';
-import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import { DomainService } from '@innovations/shared/services';
-import { DomainContextType } from '@innovations/shared/types';
-import { SurveyAnswersType } from '@innovations/shared/entities/innovation/innovation-survey.entity';
-import { ForbiddenError, ConflictError, InnovationErrorsEnum, NotFoundError } from '@innovations/shared/errors';
+import { InnovationSurveyEntity, SurveyType } from "@innovations/shared/entities/innovation/innovation-survey.entity";
+import { InnovationEntity, UserRoleEntity } from "@innovations/shared/entities";
+import SHARED_SYMBOLS from "@innovations/shared/services/symbols";
+import { DomainService } from "@innovations/shared/services";
+import { DomainContextType } from "@innovations/shared/types";
+import { SurveyAnswersType } from "@innovations/shared/entities/innovation/innovation-survey.entity";
+import { ForbiddenError, ConflictError, InnovationErrorsEnum, NotFoundError } from "@innovations/shared/errors";
 
 export type SurveyInfoPayload = {
-  type: 'SUPPORT_END';
+  type: "SUPPORT_END";
   supportId: string;
   supportUnit: string;
   supportFinishedAt: null | Date;
@@ -61,10 +61,10 @@ export class SurveysService extends BaseService {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const survey = await em
-      .createQueryBuilder(InnovationSurveyEntity, 'survey')
-      .select(['survey.id', 'survey.answers', 'target.id'])
-      .innerJoin('survey.targetUserRole', 'target')
-      .where('survey.id = :surveyId', { surveyId })
+      .createQueryBuilder(InnovationSurveyEntity, "survey")
+      .select(["survey.id", "survey.answers", "target.id"])
+      .innerJoin("survey.targetUserRole", "target")
+      .where("survey.id = :surveyId", { surveyId })
       .getOne();
 
     if (!survey) {
@@ -93,22 +93,22 @@ export class SurveysService extends BaseService {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const surveys = await em
-      .createQueryBuilder(InnovationSurveyEntity, 'survey')
-      .select(['survey.id', 'survey.type', 'survey.createdAt', 'support.id', 'support.finishedAt', 'supportUnit.name'])
-      .leftJoin('survey.support', 'support', 'survey.type = :ctxIdIsSupport', {
-        ctxIdIsSupport: 'SUPPORT_END'
+      .createQueryBuilder(InnovationSurveyEntity, "survey")
+      .select(["survey.id", "survey.type", "survey.createdAt", "support.id", "support.finishedAt", "supportUnit.name"])
+      .leftJoin("survey.support", "support", "survey.type = :ctxIdIsSupport", {
+        ctxIdIsSupport: "SUPPORT_END"
       })
-      .leftJoin('support.organisationUnit', 'supportUnit')
-      .where('survey.innovation_id = :innovationId', { innovationId })
-      .andWhere('survey.target_user_role_id = :targetRoleId', { targetRoleId: domainContext.currentRole.id })
-      .andWhere('survey.answers IS NULL')
+      .leftJoin("support.organisationUnit", "supportUnit")
+      .where("survey.innovation_id = :innovationId", { innovationId })
+      .andWhere("survey.target_user_role_id = :targetRoleId", { targetRoleId: domainContext.currentRole.id })
+      .andWhere("survey.answers IS NULL")
       .getMany();
 
     return surveys.map(s => ({
       id: s.id,
       createdAt: s.createdAt,
       // NOTE: If we have more types this should be moved to another function getSurveyInfoPayload() or something.
-      ...(s.type === 'SUPPORT_END' &&
+      ...(s.type === "SUPPORT_END" &&
         s.support && {
           info: {
             type: s.type,

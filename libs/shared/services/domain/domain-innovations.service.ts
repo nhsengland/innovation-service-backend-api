@@ -784,7 +784,10 @@ export class DomainInnovationsService {
         id: thread.innovation.owner.id,
         identityId: thread.innovation.owner.identityId,
         name: usersInfo.getDisplayName(thread.innovation.owner.identityId, ServiceRoleEnum.INNOVATOR),
-        locked: !thread.innovation.owner.serviceRoles[0].isActive || thread.innovation.owner.status !== UserStatusEnum.ACTIVE || !!thread.innovation.owner.lockedAt,
+        locked:
+          !thread.innovation.owner.serviceRoles[0].isActive ||
+          thread.innovation.owner.status !== UserStatusEnum.ACTIVE ||
+          !!thread.innovation.owner.lockedAt,
         isOwner: true,
         userRole: { id: thread.innovation.owner.serviceRoles[0].id, role: ServiceRoleEnum.INNOVATOR },
         organisationUnit: null
@@ -797,7 +800,10 @@ export class DomainInnovationsService {
         id: collaboratorUser.id,
         identityId: collaboratorUser.identityId,
         name: usersInfo.getDisplayName(collaboratorUser.identityId, ServiceRoleEnum.INNOVATOR),
-        locked: !collaboratorUser.serviceRoles[0]?.isActive || collaboratorUser.status !== UserStatusEnum.ACTIVE || !!collaboratorUser.lockedAt,
+        locked:
+          !collaboratorUser.serviceRoles[0]?.isActive ||
+          collaboratorUser.status !== UserStatusEnum.ACTIVE ||
+          !!collaboratorUser.lockedAt,
         isOwner: false,
         userRole: { id: collaboratorUser.serviceRoles[0]!.id, role: ServiceRoleEnum.INNOVATOR }, //assuming innovators can only have 1 role
         organisationUnit: null
@@ -809,7 +815,8 @@ export class DomainInnovationsService {
         id: followerRole.user.id,
         identityId: followerRole.user.identityId,
         name: usersInfo.getDisplayName(followerRole.user.identityId),
-        locked: !followerRole.isActive || followerRole.user.status !== UserStatusEnum.ACTIVE || !!followerRole.user.lockedAt,
+        locked:
+          !followerRole.isActive || followerRole.user.status !== UserStatusEnum.ACTIVE || !!followerRole.user.lockedAt,
         isOwner: false,
         userRole: {
           id: followerRole.id,
@@ -1030,7 +1037,7 @@ export class DomainInnovationsService {
         case 'checkbox-array':
           // This validation is needed since the checkbox array can be an array of objects when `addQuestion` is defined.
           // And in this cases we need to do an aditional JSON_VALUE to get the value from inside the object.
-          if (question.addQuestion) {
+          if (question.addQuestions) {
             query.andWhere(
               `
                   EXISTS (
@@ -1285,6 +1292,7 @@ export class DomainInnovationsService {
         submittedAt: innovation.submittedAt,
         updatedAt: innovation.updatedAt,
         lastAssessmentRequestAt: innovation.lastAssessmentRequestAt,
+        archiveReason: innovation.archiveReason,
         document: schema.model.translateDocument(cloneDeep(document)),
         ...(innovation.owner && { owner: JSON.parse(innovation.owner) }),
         ...(innovation.engagingOrganisations && {

@@ -1,5 +1,5 @@
-import { InnovationAssessmentKPIExemption, type InnovationAssessmentKPIExemptionType } from '@innovations/shared/types';
-import Joi from 'joi';
+import { InnovationAssessmentKPIExemption, type InnovationAssessmentKPIExemptionType } from "@innovations/shared/types";
+import Joi from "joi";
 
 export type ResponseDTO = {
   isExempted: boolean;

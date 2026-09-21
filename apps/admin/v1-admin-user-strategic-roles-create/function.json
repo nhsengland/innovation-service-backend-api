@@ -5,9 +5,7 @@
       "type": "httpTrigger",
       "direction": "in",
       "name": "request",
-      "methods": [
-        "post"
-      ],
+      "methods": ["post"],
       "route": "v1/users/{userId}/strategic-roles"
     },
     {
@@ -15,5 +13,5 @@
       "direction": "out",
       "name": "res"
     }
-  ],
+  ]
 }

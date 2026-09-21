@@ -1,18 +1,18 @@
-import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
-import type { AzureFunction, HttpRequest } from '@azure/functions';
+import { mapOpenApi3 as openApi } from "@aaronpowell/azure-functions-nodejs-openapi";
+import type { AzureFunction, HttpRequest } from "@azure/functions";
 
-import { JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
-import type { AuthorizationService } from '@innovations/shared/services';
-import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import type { CustomContextType } from '@innovations/shared/types';
+import { JwtDecoder } from "@innovations/shared/decorators";
+import { JoiHelper, ResponseHelper, SwaggerHelper } from "@innovations/shared/helpers";
+import type { AuthorizationService } from "@innovations/shared/services";
+import SHARED_SYMBOLS from "@innovations/shared/services/symbols";
+import type { CustomContextType } from "@innovations/shared/types";
 
-import { container } from '../_config';
+import { container } from "../_config";
 
-import { ServiceRoleEnum } from '@innovations/shared/enums';
-import type { InnovationFileService } from '../_services/innovation-file.service';
-import SYMBOLS from '../_services/symbols';
-import { ParamsSchema, ParamsType } from './validation.schemas';
+import { ServiceRoleEnum } from "@innovations/shared/enums";
+import type { InnovationFileService } from "../_services/innovation-file.service";
+import SYMBOLS from "../_services/symbols";
+import { ParamsSchema, ParamsType } from "./validation.schemas";
 
 class V1InnovationFileDelete {
   @JwtDecoder()
@@ -44,19 +44,19 @@ class V1InnovationFileDelete {
   }
 }
 
-export default openApi(V1InnovationFileDelete.httpTrigger as AzureFunction, '/v1/{innovationId}/files/{fileId}', {
+export default openApi(V1InnovationFileDelete.httpTrigger as AzureFunction, "/v1/{innovationId}/files/{fileId}", {
   delete: {
-    operationId: 'v1-innovation-file-delete',
-    description: 'Delete an innovation file.',
-    tags: ['[v1] Innovation Files'],
+    operationId: "v1-innovation-file-delete",
+    description: "Delete an innovation file.",
+    tags: ["[v1] Innovation Files"],
     parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     responses: {
-      204: { description: 'Success.' },
-      400: { description: 'Bad Request' },
-      401: { description: 'Unauthorized' },
-      403: { description: 'Forbidden' },
-      404: { description: 'Not found' },
-      500: { description: 'Internal server error' }
+      204: { description: "Success." },
+      400: { description: "Bad Request" },
+      401: { description: "Unauthorized" },
+      403: { description: "Forbidden" },
+      404: { description: "Not found" },
+      500: { description: "Internal server error" }
     }
   }
 });

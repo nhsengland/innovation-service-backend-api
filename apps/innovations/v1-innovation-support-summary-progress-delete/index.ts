@@ -1,17 +1,17 @@
-import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
-import type { AzureFunction, HttpRequest } from '@azure/functions';
+import { mapOpenApi3 as openApi } from "@aaronpowell/azure-functions-nodejs-openapi";
+import type { AzureFunction, HttpRequest } from "@azure/functions";
 
-import { JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
-import type { AuthorizationService } from '@innovations/shared/services';
-import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import type { CustomContextType } from '@innovations/shared/types';
+import { JwtDecoder } from "@innovations/shared/decorators";
+import { JoiHelper, ResponseHelper, SwaggerHelper } from "@innovations/shared/helpers";
+import type { AuthorizationService } from "@innovations/shared/services";
+import SHARED_SYMBOLS from "@innovations/shared/services/symbols";
+import type { CustomContextType } from "@innovations/shared/types";
 
-import { container } from '../_config';
+import { container } from "../_config";
 
-import type { InnovationSupportsService } from '../_services/innovation-supports.service';
-import SYMBOLS from '../_services/symbols';
-import { ParamsSchema, ParamsType } from './validation.schemas';
+import type { InnovationSupportsService } from "../_services/innovation-supports.service";
+import SYMBOLS from "../_services/symbols";
+import { ParamsSchema, ParamsType } from "./validation.schemas";
 
 class V1InnovationSupportSummaryProgressDelete {
   @JwtDecoder()
@@ -43,19 +43,19 @@ class V1InnovationSupportSummaryProgressDelete {
 
 export default openApi(
   V1InnovationSupportSummaryProgressDelete.httpTrigger as AzureFunction,
-  '/v1/{innovationId}/support-summary/progress-update/{progressId}',
+  "/v1/{innovationId}/support-summary/progress-update/{progressId}",
   {
     delete: {
-      description: 'Delete support summary progress update.',
-      operationId: 'v1-innovation-support-summary-progress-delete',
-      tags: ['[v1] Innovation Support Summary'],
+      description: "Delete support summary progress update.",
+      operationId: "v1-innovation-support-summary-progress-delete",
+      tags: ["[v1] Innovation Support Summary"],
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       responses: {
-        204: { description: 'Deletes a progress update.' },
-        400: { description: 'The request is invalid.' },
-        401: { description: 'The user is not authenticated.' },
-        403: { description: 'The user is not authorized to access this resource.' },
-        500: { description: 'An error occurred while processing the request.' }
+        204: { description: "Deletes a progress update." },
+        400: { description: "The request is invalid." },
+        401: { description: "The user is not authenticated." },
+        403: { description: "The user is not authorized to access this resource." },
+        500: { description: "An error occurred while processing the request." }
       }
     }
   }

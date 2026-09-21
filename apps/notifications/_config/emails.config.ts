@@ -92,6 +92,7 @@ export const EmailTemplates = {
   AP09_NEW_SUPPORTING_ACCOUNT: 'a126c3e1-d2df-44ee-9313-d71bcd16d510',
   AP10_NEW_ANNOUNCEMENT: 'c5957b7d-6baa-49b8-96b6-882b2528ae29',
   AP11_NEW_ANNOUNCEMENT_WITH_INNOVATIONS_NAME: '9c9caf67-b1f7-4713-b30a-7144735c7c7e',
+  ADMIN_ALERT_MANAGER: '5b0fddea-8890-417b-a215-358fccc5ad51',
 
   // ACCOUNT
   CA01_ACCOUNT_CREATION_OF_INNOVATOR: 'd4bd42fa-a3a2-4eb3-ab71-844caba26044',
@@ -480,6 +481,16 @@ export type EmailTemplatesType = {
     innovations_name: string;
     announcement_body: string;
     announcement_url: string;
+  };
+
+  ADMIN_ALERT_MANAGER: {
+    environment: string;
+    alertRule: string;
+    status: string;
+    severity: string;
+    resourceId: string;
+    firedDateTime: string;
+    description: string;
   };
 
   // Account

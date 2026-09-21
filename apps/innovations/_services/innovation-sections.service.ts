@@ -1,11 +1,11 @@
-import { inject, injectable } from 'inversify';
+import { inject, injectable } from "inversify";
 
 import {
   InnovationEntity,
   InnovationSectionEntity,
   InnovationTaskEntity,
   UserEntity
-} from '@innovations/shared/entities';
+} from "@innovations/shared/entities";
 import {
   ActivityEnum,
   InnovationFileContextTypeEnum,
@@ -14,26 +14,26 @@ import {
   InnovationTaskStatusEnum,
   ServiceRoleEnum,
   UserStatusEnum
-} from '@innovations/shared/enums';
-import { InnovationErrorsEnum, InternalServerError, NotFoundError } from '@innovations/shared/errors';
-import type { DomainService, IRSchemaService, NotifierService, RedisService } from '@innovations/shared/services';
+} from "@innovations/shared/enums";
+import { InnovationErrorsEnum, InternalServerError, NotFoundError } from "@innovations/shared/errors";
+import type { DomainService, IRSchemaService, NotifierService, RedisService } from "@innovations/shared/services";
 
-import { BaseService } from './base.service';
+import { BaseService } from "./base.service";
 
-import { TranslationHelper } from '@innovations/shared/helpers';
-import type { DocumentType } from '@innovations/shared/schemas/innovation-record';
+import { TranslationHelper } from "@innovations/shared/helpers";
+import type { DocumentType } from "@innovations/shared/schemas/innovation-record";
 import {
   CurrentCatalogTypes,
   CurrentDocumentType,
   CurrentEvidenceType
-} from '@innovations/shared/schemas/innovation-record';
-import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import type { DomainContextType } from '@innovations/shared/types';
-import { randomUUID } from 'crypto';
-import type { EntityManager } from 'typeorm';
-import type { InnovationDocumentService } from './innovation-document.service';
-import type { InnovationFileService } from './innovation-file.service';
-import SYMBOLS from './symbols';
+} from "@innovations/shared/schemas/innovation-record";
+import SHARED_SYMBOLS from "@innovations/shared/services/symbols";
+import type { DomainContextType } from "@innovations/shared/types";
+import { randomUUID } from "crypto";
+import type { EntityManager } from "typeorm";
+import type { InnovationDocumentService } from "./innovation-document.service";
+import type { InnovationFileService } from "./innovation-file.service";
+import SYMBOLS from "./symbols";
 
 type SectionInfoType = {
   section: CurrentCatalogTypes.InnovationSections;
@@ -76,22 +76,22 @@ export class InnovationSectionsService extends BaseService {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const innovation = await connection
-      .createQueryBuilder(InnovationEntity, 'innovation')
+      .createQueryBuilder(InnovationEntity, "innovation")
       .select([
-        'innovation.id',
-        'owner.id',
-        'sections.id',
-        'sections.section',
-        'sections.status',
-        'sections.submittedAt',
-        'submittedBy.id',
-        'submittedBy.identityId',
-        'submittedBy.status'
+        "innovation.id",
+        "owner.id",
+        "sections.id",
+        "sections.section",
+        "sections.status",
+        "sections.submittedAt",
+        "submittedBy.id",
+        "submittedBy.identityId",
+        "submittedBy.status"
       ])
-      .leftJoin('innovation.owner', 'owner')
-      .leftJoin('innovation.sections', 'sections')
-      .leftJoin('sections.submittedBy', 'submittedBy')
-      .where('innovation.id = :innovationId', { innovationId })
+      .leftJoin("innovation.owner", "owner")
+      .leftJoin("innovation.sections", "sections")
+      .leftJoin("sections.submittedBy", "submittedBy")
+      .where("innovation.id = :innovationId", { innovationId })
       .getOne();
     if (!innovation) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
@@ -103,16 +103,16 @@ export class InnovationSectionsService extends BaseService {
 
     if (sections.length > 0 && domainContext.currentRole.role === ServiceRoleEnum.INNOVATOR) {
       const query = connection
-        .createQueryBuilder(InnovationTaskEntity, 'tasks')
-        .select('sections.section', 'section')
-        .addSelect('COUNT(tasks.id)', 'tasksCount')
-        .innerJoin('tasks.innovationSection', 'sections')
-        .where('sections.innovation_id = :innovationId', { innovationId })
+        .createQueryBuilder(InnovationTaskEntity, "tasks")
+        .select("sections.section", "section")
+        .addSelect("COUNT(tasks.id)", "tasksCount")
+        .innerJoin("tasks.innovationSection", "sections")
+        .where("sections.innovation_id = :innovationId", { innovationId })
         .andWhere(`sections.id IN (:...sectionIds)`, {
           sectionIds: sections.map(item => item.id)
         })
-        .andWhere('tasks.status = :taskStatus', { taskStatus: InnovationTaskStatusEnum.OPEN })
-        .groupBy('sections.section');
+        .andWhere("tasks.status = :taskStatus", { taskStatus: InnovationTaskStatusEnum.OPEN })
+        .groupBy("sections.section");
 
       openTasks = await query.getRawMany();
     }
@@ -164,7 +164,7 @@ export class InnovationSectionsService extends BaseService {
     domainContext: DomainContextType,
     innovationId: string,
     sectionKey: CurrentCatalogTypes.InnovationSections,
-    filters: { fields?: 'tasks'[] },
+    filters: { fields?: "tasks"[] },
     entityManager?: EntityManager
   ): Promise<{
     id: null | string;
@@ -183,9 +183,9 @@ export class InnovationSectionsService extends BaseService {
     }
 
     const innovation = await connection
-      .createQueryBuilder(InnovationEntity, 'innovation')
-      .leftJoinAndSelect('innovation.owner', 'owner')
-      .where('innovation.id = :innovationId', { innovationId })
+      .createQueryBuilder(InnovationEntity, "innovation")
+      .leftJoinAndSelect("innovation.owner", "owner")
+      .where("innovation.id = :innovationId", { innovationId })
       .getOne();
 
     if (!innovation) {
@@ -199,29 +199,29 @@ export class InnovationSectionsService extends BaseService {
     );
 
     const dbSection = await connection
-      .createQueryBuilder(InnovationSectionEntity, 'section')
+      .createQueryBuilder(InnovationSectionEntity, "section")
       .select([
-        'section.id',
-        'section.section',
-        'section.status',
-        'section.submittedAt',
-        'submittedBy.id',
-        'submittedBy.identityId',
-        'submittedBy.status'
+        "section.id",
+        "section.section",
+        "section.status",
+        "section.submittedAt",
+        "submittedBy.id",
+        "submittedBy.identityId",
+        "submittedBy.status"
       ])
-      .leftJoin('section.submittedBy', 'submittedBy')
-      .where('section.innovation_id = :innovationId', { innovationId })
-      .andWhere('section.section = :sectionKey', { sectionKey })
+      .leftJoin("section.submittedBy", "submittedBy")
+      .where("section.innovation_id = :innovationId", { innovationId })
+      .andWhere("section.section = :sectionKey", { sectionKey })
       .getOne();
 
     let tasks: null | InnovationTaskEntity[] = null;
-    if (filters.fields?.includes('tasks')) {
+    if (filters.fields?.includes("tasks")) {
       const tasksQuery = connection
-        .createQueryBuilder(InnovationTaskEntity, 'tasks')
-        .where('tasks.innovation_section_id = :sectionId', { sectionId: dbSection?.id })
-        .andWhere('tasks.status = :requestedStatus', { requestedStatus: InnovationTaskStatusEnum.OPEN });
+        .createQueryBuilder(InnovationTaskEntity, "tasks")
+        .where("tasks.innovation_section_id = :sectionId", { sectionId: dbSection?.id })
+        .andWhere("tasks.status = :requestedStatus", { requestedStatus: InnovationTaskStatusEnum.OPEN });
 
-      tasks = await tasksQuery.orderBy('tasks.updated_at', 'DESC').getMany();
+      tasks = await tasksQuery.orderBy("tasks.updated_at", "DESC").getMany();
     }
 
     return {
@@ -242,7 +242,7 @@ export class InnovationSectionsService extends BaseService {
           }
         : null,
       data: this.getSectionData(document, sectionKey),
-      ...(filters.fields?.includes('tasks') && tasks ? { tasksIds: tasks?.map(task => task.id) } : {})
+      ...(filters.fields?.includes("tasks") && tasks ? { tasksIds: tasks?.map(task => task.id) } : {})
     };
   }
 
@@ -261,8 +261,8 @@ export class InnovationSectionsService extends BaseService {
     }
 
     const innovation = await connection
-      .createQueryBuilder(InnovationEntity, 'innovation')
-      .where('innovation.id = :innovationId', { innovationId })
+      .createQueryBuilder(InnovationEntity, "innovation")
+      .where("innovation.id = :innovationId", { innovationId })
       .getOne();
 
     if (!innovation) {
@@ -271,9 +271,9 @@ export class InnovationSectionsService extends BaseService {
 
     // We always have at most one section per sectionKey, so we can just get the first one.
     let section = await connection
-      .createQueryBuilder(InnovationSectionEntity, 'section')
-      .where('section.innovation_id = :innovationId', { innovationId })
-      .andWhere('section.section = :sectionKey', { sectionKey })
+      .createQueryBuilder(InnovationSectionEntity, "section")
+      .where("section.innovation_id = :innovationId", { innovationId })
+      .andWhere("section.section = :sectionKey", { sectionKey })
       .getOne();
 
     // Verify if activity log should be created, based on the current section.status.
@@ -308,8 +308,8 @@ export class InnovationSectionsService extends BaseService {
     return connection.transaction(async transaction => {
       // Special case to clear evidences (dataToUpdate type is correct since it was previously validated by joi)
       if (
-        sectionKey === 'EVIDENCE_OF_EFFECTIVENESS' &&
-        (dataToUpdate as CurrentDocumentType['EVIDENCE_OF_EFFECTIVENESS']).hasEvidence !== 'YES'
+        sectionKey === "EVIDENCE_OF_EFFECTIVENESS" &&
+        (dataToUpdate as CurrentDocumentType["EVIDENCE_OF_EFFECTIVENESS"]).hasEvidence !== "YES"
       ) {
         await transaction.query(
           `UPDATE innovation_document_draft
@@ -334,21 +334,21 @@ export class InnovationSectionsService extends BaseService {
       }
 
       // Make sure to keep name up-to-date accross the innovation
-      if (sectionKey === 'INNOVATION_DESCRIPTION' && innovation.name !== dataToUpdate['name']) {
+      if (sectionKey === "INNOVATION_DESCRIPTION" && innovation.name !== dataToUpdate["name"]) {
         // Make sure the latest submitted version contains this change as-well
         await transaction.query(
           `UPDATE innovation_document
            SET document = JSON_MODIFY(document, @0, @1), updated_by=@2, updated_at=@3, is_snapshot=0, description=NULL WHERE id = @4`,
-          [`$.${sectionKey}.name`, dataToUpdate['name'], domainContext.id, updatedAt, innovationId]
+          [`$.${sectionKey}.name`, dataToUpdate["name"], domainContext.id, updatedAt, innovationId]
         );
 
         await transaction.save(InnovationEntity, {
           id: innovation.id,
-          name: dataToUpdate['name'],
+          name: dataToUpdate["name"],
           updatedBy: innovation.updatedBy,
           updatedAt: updatedAt
         });
-        await this.redisService.addToSet('elasticsearch', innovation.id);
+        await this.redisService.addToSet("elasticsearch", innovation.id);
       }
 
       sectionToBeSaved.updatedAt = updatedAt;
@@ -380,10 +380,10 @@ export class InnovationSectionsService extends BaseService {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const dbInnovation = await connection
-      .createQueryBuilder(InnovationEntity, 'innovation')
-      .leftJoinAndSelect('innovation.sections', 'sections')
-      .where('innovation.id = :innovationId', { innovationId, userId: domainContext.id })
-      .andWhere('sections.section = :sectionKey', { sectionKey })
+      .createQueryBuilder(InnovationEntity, "innovation")
+      .leftJoinAndSelect("innovation.sections", "sections")
+      .where("innovation.id = :innovationId", { innovationId, userId: domainContext.id })
+      .andWhere("sections.section = :sectionKey", { sectionKey })
       .getOne();
     if (!dbInnovation) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
@@ -432,7 +432,7 @@ export class InnovationSectionsService extends BaseService {
           { sectionId: savedSection.section }
         );
 
-        await this.notifierService.sendNotifyMe(domainContext, dbInnovation.id, 'INNOVATION_RECORD_UPDATED', {
+        await this.notifierService.sendNotifyMe(domainContext, dbInnovation.id, "INNOVATION_RECORD_UPDATED", {
           sections: sectionKey
         });
       }
@@ -444,7 +444,7 @@ export class InnovationSectionsService extends BaseService {
   async findAllSections(
     domainContext: DomainContextType,
     innovationId: string,
-    version?: DocumentType['version'],
+    version?: DocumentType["version"],
     entityManager?: EntityManager
   ): Promise<{ section: SectionInfoType; data: Record<string, any> }[]> {
     const em = entityManager ?? this.sqlConnection.manager;
@@ -464,7 +464,7 @@ export class InnovationSectionsService extends BaseService {
 
     const sectionsInfoMap = await this.getSectionsInfoMap(innovationId, [], em);
 
-    const output: Awaited<ReturnType<InnovationSectionsService['findAllSections']>> = [];
+    const output: Awaited<ReturnType<InnovationSectionsService["findAllSections"]>> = [];
     for (const curSection of innovationSections) {
       const sectionInfo = sectionsInfoMap.get(curSection.section.section);
       if (sectionInfo) {
@@ -496,19 +496,19 @@ export class InnovationSectionsService extends BaseService {
   async createInnovationEvidence(
     user: { id: string },
     innovationId: string,
-    evidenceData: Omit<CurrentEvidenceType, 'id'>,
+    evidenceData: Omit<CurrentEvidenceType, "id">,
     entityManager?: EntityManager
   ): Promise<{ id: string }> {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     // Check if innovation exists and is of current version (throws error if it doesn't)
-    await this.innovationDocumentService.getInnovationDocument(innovationId, { type: 'DRAFT' }, connection);
+    await this.innovationDocumentService.getInnovationDocument(innovationId, { type: "DRAFT" }, connection);
 
     const section = await connection
-      .createQueryBuilder(InnovationSectionEntity, 'section')
-      .innerJoin('section.innovation', 'innovation')
-      .where('innovation.id = :innovationId', { innovationId: innovationId })
-      .andWhere('section.section = :sectionName', { sectionName: 'EVIDENCE_OF_EFFECTIVENESS' })
+      .createQueryBuilder(InnovationSectionEntity, "section")
+      .innerJoin("section.innovation", "innovation")
+      .where("innovation.id = :innovationId", { innovationId: innovationId })
+      .andWhere("section.section = :sectionName", { sectionName: "EVIDENCE_OF_EFFECTIVENESS" })
       .getOne();
 
     if (!section) {
@@ -547,9 +547,9 @@ export class InnovationSectionsService extends BaseService {
     user: { id: string },
     innovationId: string,
     evidenceId: string,
-    evidenceData: Omit<CurrentEvidenceType, 'id'>
+    evidenceData: Omit<CurrentEvidenceType, "id">
   ): Promise<void> {
-    const document = await this.innovationDocumentService.getInnovationDocument(innovationId, { type: 'DRAFT' });
+    const document = await this.innovationDocumentService.getInnovationDocument(innovationId, { type: "DRAFT" });
 
     const evidenceIndex = document.evidences?.findIndex(e => e.id === evidenceId) ?? -1;
     const evidence = document.evidences?.[evidenceIndex];
@@ -559,10 +559,10 @@ export class InnovationSectionsService extends BaseService {
     }
 
     const section = await this.sqlConnection
-      .createQueryBuilder(InnovationSectionEntity, 'section')
-      .select(['section.id'])
-      .where('section.innovation_id = :innovationId', { innovationId: innovationId })
-      .andWhere('section.section = :sectionName', { sectionName: 'EVIDENCE_OF_EFFECTIVENESS' })
+      .createQueryBuilder(InnovationSectionEntity, "section")
+      .select(["section.id"])
+      .where("section.innovation_id = :innovationId", { innovationId: innovationId })
+      .andWhere("section.section = :sectionName", { sectionName: "EVIDENCE_OF_EFFECTIVENESS" })
       .getOne();
     if (!section) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SECTION_NOT_FOUND);
@@ -603,7 +603,7 @@ export class InnovationSectionsService extends BaseService {
     innovationId: string,
     evidenceId: string
   ): Promise<void> {
-    const document = await this.innovationDocumentService.getInnovationDocument(innovationId, { type: 'DRAFT' });
+    const document = await this.innovationDocumentService.getInnovationDocument(innovationId, { type: "DRAFT" });
 
     let evidences = document.evidences;
     const evidence = evidences?.find(e => e.id === evidenceId);
@@ -624,7 +624,7 @@ export class InnovationSectionsService extends BaseService {
       if (evidences) {
         await this.updateDocumentSectionInfo(
           innovationId,
-          'evidences',
+          "evidences",
           { dataToUpdate: evidences, updatedBy: domainContext.id, updatedAt },
           transaction
         );
@@ -633,7 +633,7 @@ export class InnovationSectionsService extends BaseService {
       //update section status to draft
       await transaction.update(
         InnovationSectionEntity,
-        { innovation: { id: innovationId }, section: 'EVIDENCE_OF_EFFECTIVENESS' },
+        { innovation: { id: innovationId }, section: "EVIDENCE_OF_EFFECTIVENESS" },
         {
           updatedAt: updatedAt,
           updatedBy: domainContext.id,
@@ -673,14 +673,14 @@ export class InnovationSectionsService extends BaseService {
    * @param sectionKey the section key
    * @returns section data with extra information
    */
-  private getSectionData<T extends object & DocumentType, K extends Exclude<keyof T, 'version' | 'evidences'>>(
+  private getSectionData<T extends object & DocumentType, K extends Exclude<keyof T, "version" | "evidences">>(
     document: T,
     sectionKey: K
   ): T[K] & {
     evidences?: {
       id: string;
       name: string;
-      summary: CurrentEvidenceType['summary'];
+      summary: CurrentEvidenceType["summary"];
     }[];
   } {
     let evidenceData;
@@ -688,7 +688,7 @@ export class InnovationSectionsService extends BaseService {
     const sectionData = document[sectionKey];
 
     // Special case for evidence data
-    if (sectionKey === 'EVIDENCE_OF_EFFECTIVENESS' && document.EVIDENCE_OF_EFFECTIVENESS.hasEvidence === 'YES') {
+    if (sectionKey === "EVIDENCE_OF_EFFECTIVENESS" && document.EVIDENCE_OF_EFFECTIVENESS.hasEvidence === "YES") {
       evidenceData = document.evidences?.map(evidence => ({
         id: evidence.id,
         name: this.getEvidenceName(evidence.evidenceSubmitType, evidence.description),
@@ -729,13 +729,13 @@ export class InnovationSectionsService extends BaseService {
     data: { updatedBy: string; updatedAt?: Date; description?: string },
     em: EntityManager
   ): Promise<void> {
-    const document = await this.innovationDocumentService.getInnovationDocument(innovationId, { type: 'DRAFT' });
+    const document = await this.innovationDocumentService.getInnovationDocument(innovationId, { type: "DRAFT" });
 
     const draftSection = this.getSectionData(document, sectionKey);
     const entriesToUpdate: { key: string; data: unknown }[] = [{ key: sectionKey, data: draftSection }];
-    if (sectionKey === 'EVIDENCE_OF_EFFECTIVENESS') {
+    if (sectionKey === "EVIDENCE_OF_EFFECTIVENESS") {
       // Get the evidences raw since the ones returned by the getSectionData transforms some fields
-      entriesToUpdate.push({ key: 'evidences', data: document.evidences });
+      entriesToUpdate.push({ key: "evidences", data: document.evidences });
     }
 
     for (const toUpdate of entriesToUpdate) {
@@ -762,27 +762,27 @@ export class InnovationSectionsService extends BaseService {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const query = em
-      .createQueryBuilder(InnovationSectionEntity, 'section')
+      .createQueryBuilder(InnovationSectionEntity, "section")
       .select([
-        'section.id',
-        'section.section',
-        'section.status',
-        'section.submittedAt',
-        'submittedBy.id',
-        'submittedBy.identityId',
-        'submittedBy.status',
-        'innovation.id',
-        'owner.id',
-        'tasks.id'
+        "section.id",
+        "section.section",
+        "section.status",
+        "section.submittedAt",
+        "submittedBy.id",
+        "submittedBy.identityId",
+        "submittedBy.status",
+        "innovation.id",
+        "owner.id",
+        "tasks.id"
       ])
-      .leftJoin('section.submittedBy', 'submittedBy')
-      .innerJoin('section.innovation', 'innovation')
-      .leftJoin('innovation.owner', 'owner')
-      .leftJoin('section.tasks', 'tasks', 'tasks.status = :taskStatus', { taskStatus: InnovationTaskStatusEnum.OPEN })
-      .where('section.innovation_id = :innovationId', { innovationId });
+      .leftJoin("section.submittedBy", "submittedBy")
+      .innerJoin("section.innovation", "innovation")
+      .leftJoin("innovation.owner", "owner")
+      .leftJoin("section.tasks", "tasks", "tasks.status = :taskStatus", { taskStatus: InnovationTaskStatusEnum.OPEN })
+      .where("section.innovation_id = :innovationId", { innovationId });
 
     if (sectionsKeys?.length) {
-      query.andWhere('section.section IN (:...sectionsKeys)', { sectionsKeys });
+      query.andWhere("section.section IN (:...sectionsKeys)", { sectionsKeys });
     }
 
     const sections = await query.getMany();
@@ -812,15 +812,15 @@ export class InnovationSectionsService extends BaseService {
     );
   }
 
-  private getDocumentSections<T extends DocumentType>(document: T): Exclude<keyof T, 'version' | 'evidences'>[] {
+  private getDocumentSections<T extends DocumentType>(document: T): Exclude<keyof T, "version" | "evidences">[] {
     const sections = Object.keys(document) as (keyof T)[];
-    return sections.filter(section => section !== 'version' && section !== 'evidences') as Exclude<
+    return sections.filter(section => section !== "version" && section !== "evidences") as Exclude<
       keyof T,
-      'version' | 'evidences'
+      "version" | "evidences"
     >[];
   }
 
-  private getEvidenceName(evidenceSubmitType: CurrentEvidenceType['evidenceSubmitType'], description?: string): string {
+  private getEvidenceName(evidenceSubmitType: CurrentEvidenceType["evidenceSubmitType"], description?: string): string {
     return description ?? TranslationHelper.translate(`EVIDENCE_SUBMIT_TYPES.${evidenceSubmitType}`);
   }
 }

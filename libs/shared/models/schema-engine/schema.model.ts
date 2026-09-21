@@ -31,6 +31,43 @@ export type InnovationRecordStepType = {
 
 type Condition = { id: string; options: string[] };
 
+const LEGACY_STANDARD_IDS = [
+  'CE_UKCA_NON_MEDICAL',
+  'CE_UKCA_CLASS_I',
+  'CE_UKCA_CLASS_II_A',
+  'CE_UKCA_CLASS_II_B',
+  'CE_UKCA_CLASS_III',
+  'IVD_GENERAL',
+  'IVD_SELF_TEST',
+  'IVD_ANNEX_LIST_A',
+  'IVD_ANNEX_LIST_B',
+  'MARKETING'
+] as const;
+
+function normalizeLegacyAddQuestions(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map(normalizeLegacyAddQuestions);
+  }
+
+  if (!value || typeof value !== 'object') {
+    return value;
+  }
+
+  const source = value as Record<string, unknown>;
+  const normalized = Object.fromEntries(
+    Object.entries(source).map(([key, entry]) => [key, normalizeLegacyAddQuestions(entry)])
+  ) as Record<string, unknown>;
+
+  if (source['addQuestion'] !== undefined) {
+    if (source['addQuestions'] === undefined) {
+      normalized['addQuestions'] = [normalizeLegacyAddQuestions(source['addQuestion'])];
+    }
+    delete normalized['addQuestion'];
+  }
+
+  return normalized;
+}
+
 export type SchemaValidationError = {
   message: string;
   context: any;
@@ -53,7 +90,7 @@ export class SchemaModel {
 
   constructor(schema: any) {
     this.errorList = [];
-    this.schema = schema;
+    this.schema = normalizeLegacyAddQuestions(schema) as IRSchemaType;
   }
 
   /**
@@ -133,20 +170,50 @@ export class SchemaModel {
         if (!config) continue;
 
         const question = config.question;
-        if (question.dataType === 'checkbox-array' && question.addQuestion) {
-          const addQuestion = this.getQuestionAndItemTranslations(question.addQuestion.id);
-          if (!addQuestion) continue;
+        if (question.dataType === 'checkbox-array' && question.addQuestions) {
+          const toReturn: Record<string, any>[] = [];
 
-          // Checkbox-array + addQuestion is an array of objects
           if (Array.isArray(value)) {
-            document[subSection][questionId] = value.map(v => {
-              const fieldKey = question.checkboxAnswerId ?? question.id;
-              const addQuestionKey = addQuestion.question.id;
-              return {
-                [fieldKey]: config.translations.get(v[fieldKey]) ?? v[fieldKey],
-                [addQuestionKey]: addQuestion.translations.get(v[addQuestionKey]) ?? v[addQuestionKey]
-              };
+            const fieldKey = question.checkboxAnswerId ?? question.id;
+            value.forEach(v => {
+              const translatedAnswer: Record<string, any> = { ...v };
+              // add parent value
+              translatedAnswer[fieldKey] = config.translations.get(v[fieldKey]) ?? v[fieldKey];
+
+              // add addQuestions values
+              if (question.addQuestions) {
+                question.addQuestions.forEach(aq => {
+                  const addQuestion = this.getQuestionAndItemTranslations(aq.id);
+                  if (!addQuestion) return;
+
+                  const addQuestionKey = addQuestion?.question.id;
+
+                  const addQuestionAnswer = v[addQuestionKey];
+                  let addQuestionTranslatedAnswer: any;
+
+                  // check if answer is a single item or an object, and parse value appropriately
+                  if (typeof addQuestionAnswer === 'object' && addQuestionAnswer !== null) {
+                    addQuestionTranslatedAnswer = Object.fromEntries(
+                      Object.entries(addQuestionAnswer).map(([key, value]) => [
+                        addQuestion.translations.get(key) ?? key,
+                        value
+                      ])
+                    );
+                  } else {
+                    addQuestionTranslatedAnswer = addQuestion.translations.get(v[addQuestionKey]) ?? v[addQuestionKey];
+                  }
+
+                  translatedAnswer[addQuestionKey] = addQuestionTranslatedAnswer;
+                });
+              }
+              toReturn.push(translatedAnswer);
             });
+
+            document[subSection][questionId] = toReturn;
+          } else {
+            if (typeof value === 'string') {
+              document[subSection][questionId] = config.translations.get(value) ?? value;
+            }
           }
         } else {
           if (Array.isArray(value)) {
@@ -208,7 +275,11 @@ export class SchemaModel {
   /**
    * Validations
    */
-  public getSubSectionPayloadValidation(subSectionId: string, payload: { [key: string]: any }): Joi.ObjectSchema<any> {
+  public getSubSectionPayloadValidation(
+    subSectionId: string,
+    payload: { [key: string]: any },
+    options: { allowLegacyStandards?: boolean } = {}
+  ): Joi.ObjectSchema<any> {
     const questions = this.getSubsectionQuestions(subSectionId);
 
     const validation: Joi.PartialSchemaMap = {};
@@ -216,11 +287,22 @@ export class SchemaModel {
       const question = questions.find(q => q.id === key);
       if (!question) continue;
 
+      const questionForValidation =
+        options.allowLegacyStandards &&
+        subSectionId === 'REGULATIONS_AND_STANDARDS' &&
+        question.id === 'standards' &&
+        question.dataType === 'checkbox-array'
+          ? {
+              ...question,
+              items: [...question.items, ...LEGACY_STANDARD_IDS.map(id => ({ id, label: id }))]
+            }
+          : question;
+
       // WARNING: big hack due to itemsFromAnswer.
-      const itemsFromAnswer = this.checkItemsFromAnswer(question);
+      const itemsFromAnswer = this.checkItemsFromAnswer(questionForValidation);
 
       validation[key] = QuestionValidatorFactory.validate({
-        ...question,
+        ...questionForValidation,
         ...(itemsFromAnswer && { items: itemsFromAnswer })
       });
     }
@@ -340,8 +422,10 @@ export class SchemaModel {
       this.validateQuestion(subSectionId, question.field, `${path}.field`, idList);
     }
 
-    if ('addQuestion' in question && question.addQuestion) {
-      this.validateQuestion(subSectionId, question.addQuestion, `${path}.addQuestion`, idList);
+    if ('addQuestions' in question && question.addQuestions) {
+      question.addQuestions.forEach(aq => {
+        this.validateQuestion(subSectionId, aq, `${path}.addQuestion`, idList);
+      });
     }
   }
 

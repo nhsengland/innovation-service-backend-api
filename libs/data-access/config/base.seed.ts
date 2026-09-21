@@ -1,14 +1,5 @@
-import type {
-  Connection,
-  EntitySchema,
-  MigrationInterface,
-  ObjectType,
-  QueryRunner,
-  Repository
-} from 'typeorm';
-import {
-  getConnection
-} from 'typeorm';
+import type { Connection, EntitySchema, MigrationInterface, ObjectType, QueryRunner, Repository } from 'typeorm';
+import { getConnection } from 'typeorm';
 
 export abstract class BaseSeed implements MigrationInterface {
   public abstract name: string;

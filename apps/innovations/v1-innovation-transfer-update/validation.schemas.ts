@@ -1,7 +1,7 @@
-import Joi from 'joi';
+import Joi from "joi";
 
-import { InnovationTransferStatusEnum } from '@innovations/shared/enums';
-import { JoiHelper } from '@innovations/shared/helpers';
+import { InnovationTransferStatusEnum } from "@innovations/shared/enums";
+import { JoiHelper } from "@innovations/shared/helpers";
 
 export type ParamsType = {
   transferId: string;

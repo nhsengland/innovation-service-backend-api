@@ -1,4 +1,4 @@
-import type { InnovationListViewWithoutNull } from '@innovations/shared/entities/views/innovation-progress.view.entity';
+import type { InnovationListViewWithoutNull } from "@innovations/shared/entities/views/innovation-progress.view.entity";
 
 /* this is a dynamic type coming directly from the database equivalent to:
 {

@@ -1,8 +1,8 @@
-import type { DomainContextType } from '@innovations/shared/types';
+import type { DomainContextType } from "@innovations/shared/types";
 
-import type { InnovationStatisticsTemplateType } from '../_config/statistics.config';
-import { INNOVATION_STATISTICS_CONFIG } from '../_config/statistics.config';
-import type { InnovationStatisticsEnum } from '../_enums/innovation.enums';
+import type { InnovationStatisticsTemplateType } from "../_config/statistics.config";
+import { INNOVATION_STATISTICS_CONFIG } from "../_config/statistics.config";
+import type { InnovationStatisticsEnum } from "../_enums/innovation.enums";
 
 export class StatisticsHandlersHelper {
   static async runHandler(

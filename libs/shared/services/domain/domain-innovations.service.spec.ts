@@ -1,7 +1,13 @@
 import { randUuid } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 import { container } from '../../config/inversify.config';
-import { InnovationDocumentEntity, InnovationEntity, InnovationThreadEntity, UserEntity, UserRoleEntity } from '../../entities';
+import {
+  InnovationDocumentEntity,
+  InnovationEntity,
+  InnovationThreadEntity,
+  UserEntity,
+  UserRoleEntity
+} from '../../entities';
 import { InnovationGroupedStatusEnum, UserStatusEnum } from '../../enums';
 import { BadRequestError, InnovationErrorsEnum } from '../../errors';
 import { TestsHelper } from '../../tests';
@@ -138,7 +144,7 @@ describe('Shared / services / innovations suite', () => {
       const innovations = await sut.getInnovationsFiltered(
         [
           { section: 'INNOVATION_DESCRIPTION', question: 'areas', answers: ['EMERGING_INFECTIOUS_DISEASES'] },
-          { section: 'UNDERSTANDING_OF_NEEDS', question: 'hasProductServiceOrPrototype', answers: ['NO'] }
+          { section: 'UNDERSTANDING_OF_NEEDS', question: 'hasProductServiceOrPrototype', answers: ['CONCEPT_STAGE'] }
         ],
         { onlySubmitted },
         em
@@ -147,7 +153,9 @@ describe('Shared / services / innovations suite', () => {
       const dbFilteredQuery = em
         .createQueryBuilder(InnovationDocumentEntity, 'document')
         .where(`JSON_QUERY(document.document, '$.INNOVATION_DESCRIPTION.areas') LIKE '%EMERGING_INFECTIOUS_DISEASES%'`)
-        .andWhere(`JSON_VALUE(document.document, '$.UNDERSTANDING_OF_NEEDS.hasProductServiceOrPrototype') = 'NO'`);
+        .andWhere(
+          `JSON_VALUE(document.document, '$.UNDERSTANDING_OF_NEEDS.hasProductServiceOrPrototype') = 'CONCEPT_STAGE'`
+        );
 
       if (onlySubmitted) {
         dbFilteredQuery.innerJoin('document.innovation', 'innovation').andWhere('innovation.submittedAt IS NOT NULL');
@@ -214,8 +222,8 @@ describe('Shared / services / innovations suite', () => {
             question: 'INVALID_QUESTION',
             answers: ['EMERGING_INFECTIOUS_DISEASES']
           },
-          { section: 'INVALID_SECTION', question: 'hasProductServiceOrPrototype', answers: ['NO'] },
-          { section: 'UNDERSTANDING_OF_NEEDS', question: 'hasProductServiceOrPrototype', answers: ['NO'] }
+          { section: 'INVALID_SECTION', question: 'hasProductServiceOrPrototype', answers: ['CONCEPT_STAGE'] },
+          { section: 'UNDERSTANDING_OF_NEEDS', question: 'hasProductServiceOrPrototype', answers: ['CONCEPT_STAGE'] }
         ],
         { onlySubmitted: false },
         em
@@ -223,7 +231,9 @@ describe('Shared / services / innovations suite', () => {
 
       const dbFilteredCount = await em
         .createQueryBuilder(InnovationDocumentEntity, 'document')
-        .where(`JSON_VALUE(document.document, '$.UNDERSTANDING_OF_NEEDS.hasProductServiceOrPrototype') = 'NO'`)
+        .where(
+          `JSON_VALUE(document.document, '$.UNDERSTANDING_OF_NEEDS.hasProductServiceOrPrototype') = 'CONCEPT_STAGE'`
+        )
         .getCount();
 
       expect(innovations.length).toBe(dbFilteredCount);
@@ -238,7 +248,7 @@ describe('Shared / services / innovations suite', () => {
               question: 'INVALID_QUESTION',
               answers: ['EMERGING_INFECTIOUS_DISEASES']
             },
-            { section: 'INVALID_SECTION', question: 'hasProductServiceOrPrototype', answers: ['NO'] }
+            { section: 'INVALID_SECTION', question: 'hasProductServiceOrPrototype', answers: ['CONCEPT_STAGE'] }
           ],
           {},
           em
@@ -260,13 +270,16 @@ describe('Shared / services / innovations suite', () => {
       await em.getRepository(UserEntity).update(user.id, { status: UserStatusEnum.LOCKED });
 
       // Create a thread
-      const thread = await em.save(InnovationThreadEntity, InnovationThreadEntity.new({
-        subject: 'Test Thread',
-        innovation: InnovationEntity.new({ id: user.innovations.johnInnovation.id }),
-        author: UserEntity.new({ id: user.id }),
-        authorUserRole: UserRoleEntity.new({ id: user.roles.innovatorRole.id }),
-        followers: []
-      }));
+      const thread = await em.save(
+        InnovationThreadEntity,
+        InnovationThreadEntity.new({
+          subject: 'Test Thread',
+          innovation: InnovationEntity.new({ id: user.innovations.johnInnovation.id }),
+          author: UserEntity.new({ id: user.id }),
+          authorUserRole: UserRoleEntity.new({ id: user.roles.innovatorRole.id }),
+          followers: []
+        })
+      );
 
       const result = await sut.threadFollowers(thread.id, true, em);
       const follower = result.find(x => x.id === user.id);

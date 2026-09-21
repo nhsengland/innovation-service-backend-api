@@ -1,11 +1,11 @@
-import { InnovationExportRequestStatusEnum } from '@innovations/shared/enums';
-import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
-import { JoiHelper } from '@innovations/shared/helpers';
-import Joi from 'joi';
+import { InnovationExportRequestStatusEnum } from "@innovations/shared/enums";
+import type { PaginationQueryParamsType } from "@innovations/shared/helpers";
+import { JoiHelper } from "@innovations/shared/helpers";
+import Joi from "joi";
 
 enum orderFields {
-  createdAt = 'createdAt',
-  updatedAt = 'updatedAt'
+  createdAt = "createdAt",
+  updatedAt = "updatedAt"
 }
 
 export type ParamsType = {

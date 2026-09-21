@@ -58,7 +58,8 @@ export class DTOsHelper {
       return {
         id: user.id,
         identityId: user.identityId,
-        currentRole: { id: role.id, role: role.role }, jobTitle: null
+        currentRole: { id: role.id, role: role.role },
+        jobTitle: null
       };
     }
 
@@ -66,7 +67,8 @@ export class DTOsHelper {
       return {
         id: user.id,
         identityId: user.identityId,
-        currentRole: { id: role.id, role: role.role }, jobTitle: null
+        currentRole: { id: role.id, role: role.role },
+        jobTitle: null
       };
     }
 

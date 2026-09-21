@@ -1,30 +1,30 @@
-import { container } from '../_config';
+import { container } from "../_config";
 
-import { InnovationExportRequestEntity } from '@innovations/shared/entities';
-import { InnovationExportRequestStatusEnum, NotifierTypeEnum, ServiceRoleEnum } from '@innovations/shared/enums';
+import { InnovationExportRequestEntity } from "@innovations/shared/entities";
+import { InnovationExportRequestStatusEnum, NotifierTypeEnum, ServiceRoleEnum } from "@innovations/shared/enums";
 import {
   ForbiddenError,
   InnovationErrorsEnum,
   NotFoundError,
   UnprocessableEntityError
-} from '@innovations/shared/errors';
-import { TranslationHelper } from '@innovations/shared/helpers';
-import { NotifierService } from '@innovations/shared/services';
-import { TestsHelper } from '@innovations/shared/tests';
-import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
-import type { DomainContextType } from '@innovations/shared/types';
-import { randText, randUuid } from '@ngneat/falso';
-import type { EntityManager } from 'typeorm';
-import type { InnovationExportRequestService } from './innovation-export-request.service';
-import SYMBOLS from './symbols';
+} from "@innovations/shared/errors";
+import { TranslationHelper } from "@innovations/shared/helpers";
+import { NotifierService } from "@innovations/shared/services";
+import { TestsHelper } from "@innovations/shared/tests";
+import { DTOsHelper } from "@innovations/shared/tests/helpers/dtos.helper";
+import type { DomainContextType } from "@innovations/shared/types";
+import { randText, randUuid } from "@ngneat/falso";
+import type { EntityManager } from "typeorm";
+import type { InnovationExportRequestService } from "./innovation-export-request.service";
+import SYMBOLS from "./symbols";
 
-describe('Innovations / _services / innovation export request suite', () => {
+describe("Innovations / _services / innovation export request suite", () => {
   let sut: InnovationExportRequestService;
 
   const testsHelper = new TestsHelper();
   const scenario = testsHelper.getCompleteScenario();
 
-  const notifierSendSpy = jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
+  const notifierSendSpy = jest.spyOn(NotifierService.prototype, "send").mockResolvedValue(true);
 
   let em: EntityManager;
 
@@ -42,25 +42,25 @@ describe('Innovations / _services / innovation export request suite', () => {
     notifierSendSpy.mockReset();
   });
 
-  describe('createExportRequest', () => {
+  describe("createExportRequest", () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
 
     it.each([
-      ['QA', DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole')],
-      ['A', DTOsHelper.getUserRequestContext(scenario.users.ingridAccessor, 'accessorRole')],
-      ['NA', DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor, 'assessmentRole')]
+      ["QA", DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, "qaRole")],
+      ["A", DTOsHelper.getUserRequestContext(scenario.users.ingridAccessor, "accessorRole")],
+      ["NA", DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor, "assessmentRole")]
     ])(
-      'should create a export request as a %s and send a notification',
+      "should create a export request as a %s and send a notification",
       async (_role: string, domainContext: DomainContextType) => {
         const data = { requestReason: randText() };
 
         const request = await sut.createExportRequest(domainContext, innovation.id, data, em);
 
         const dbRequest = await em
-          .createQueryBuilder(InnovationExportRequestEntity, 'request')
-          .select(['request.id', 'request.requestReason', 'request.status', 'userRole.id'])
-          .innerJoin('request.createdByUserRole', 'userRole')
-          .where('request.id = :requestId', { requestId: request.id })
+          .createQueryBuilder(InnovationExportRequestEntity, "request")
+          .select(["request.id", "request.requestReason", "request.status", "userRole.id"])
+          .innerJoin("request.createdByUserRole", "userRole")
+          .where("request.id = :requestId", { requestId: request.id })
           .getOneOrFail();
 
         expect(dbRequest).toMatchObject({
@@ -78,17 +78,17 @@ describe('Innovations / _services / innovation export request suite', () => {
     );
   });
 
-  describe('getExportRequestInfo', () => {
+  describe("getExportRequestInfo", () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
     const aliceRequest = innovation.exportRequests.requestByAlice;
     const paulRequest = innovation.exportRequests.requestByPaulRejected;
 
     it.each([
-      [DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole')],
-      [DTOsHelper.getUserRequestContext(scenario.users.ingridAccessor, 'accessorRole')],
-      [DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, 'innovatorRole')]
+      [DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, "qaRole")],
+      [DTOsHelper.getUserRequestContext(scenario.users.ingridAccessor, "accessorRole")],
+      [DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, "innovatorRole")]
     ])(
-      'should return the information of a export request when created by the same unit',
+      "should return the information of a export request when created by the same unit",
       async (domainContext: DomainContextType) => {
         const createdByUser = scenario.users.aliceQualifyingAccessor;
 
@@ -101,7 +101,7 @@ describe('Innovations / _services / innovation export request suite', () => {
           createdAt: expect.any(Date),
           createdBy: {
             name: createdByUser.name,
-            displayRole: TranslationHelper.translate('SERVICE_ROLES.QUALIFYING_ACCESSOR'),
+            displayRole: TranslationHelper.translate("SERVICE_ROLES.QUALIFYING_ACCESSOR"),
             displayTeam: createdByUser.organisations.healthOrg.organisationUnits.healthOrgUnit.name
           },
           updatedAt: expect.any(Date),
@@ -111,11 +111,11 @@ describe('Innovations / _services / innovation export request suite', () => {
     );
 
     it.each([
-      [DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor, 'assessmentRole')],
-      [DTOsHelper.getUserRequestContext(scenario.users.seanNeedsAssessor, 'assessmentRole')],
-      [DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, 'innovatorRole')]
+      [DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor, "assessmentRole")],
+      [DTOsHelper.getUserRequestContext(scenario.users.seanNeedsAssessor, "assessmentRole")],
+      [DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, "innovatorRole")]
     ])(
-      'should return the information of a export request when created by the NA team',
+      "should return the information of a export request when created by the NA team",
       async (domainContext: DomainContextType) => {
         const createdByUser = scenario.users.paulNeedsAssessor;
 
@@ -129,8 +129,8 @@ describe('Innovations / _services / innovation export request suite', () => {
           createdAt: expect.any(Date),
           createdBy: {
             name: createdByUser.name,
-            displayRole: TranslationHelper.translate('SERVICE_ROLES.ASSESSMENT'),
-            displayTeam: TranslationHelper.translate('TEAMS.ASSESSMENT')
+            displayRole: TranslationHelper.translate("SERVICE_ROLES.ASSESSMENT"),
+            displayTeam: TranslationHelper.translate("TEAMS.ASSESSMENT")
           },
           updatedAt: expect.any(Date),
           updatedBy: { name: createdByUser.name }
@@ -141,7 +141,7 @@ describe('Innovations / _services / innovation export request suite', () => {
     it("should return NotFoundError if the export request doesn't exist", async () => {
       await expect(() =>
         sut.getExportRequestInfo(
-          DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole'),
+          DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, "qaRole"),
           randUuid(),
           em
         )
@@ -149,11 +149,11 @@ describe('Innovations / _services / innovation export request suite', () => {
     });
 
     it.each([
-      [DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor, 'assessmentRole'), aliceRequest.id],
-      [DTOsHelper.getUserRequestContext(scenario.users.samAccessor, 'accessorRole'), aliceRequest.id],
-      [DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole'), paulRequest.id]
+      [DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor, "assessmentRole"), aliceRequest.id],
+      [DTOsHelper.getUserRequestContext(scenario.users.samAccessor, "accessorRole"), aliceRequest.id],
+      [DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, "qaRole"), paulRequest.id]
     ])(
-      'should return NotFoundError if the export request is from a different team',
+      "should return NotFoundError if the export request is from a different team",
       async (domainContext: DomainContextType, requestId: string) => {
         await expect(() => sut.getExportRequestInfo(domainContext, requestId, em)).rejects.toThrow(
           new NotFoundError(InnovationErrorsEnum.INNOVATION_EXPORT_REQUEST_NOT_FOUND)
@@ -162,21 +162,21 @@ describe('Innovations / _services / innovation export request suite', () => {
     );
   });
 
-  describe('getExportRequestList', () => {
+  describe("getExportRequestList", () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
     const aliceRequest = innovation.exportRequests.requestByAlice;
     const ingridRequest = innovation.exportRequests.requestByIngrid;
     const paulRequest = innovation.exportRequests.requestByPaulRejected;
     const paulPendingRequest = innovation.exportRequests.requestByPaulPending;
 
-    it('should return the all PENDING requests related to the unit', async () => {
+    it("should return the all PENDING requests related to the unit", async () => {
       const result = await sut.getExportRequestList(
-        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole'),
+        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, "qaRole"),
         innovation.id,
         {
           statuses: [InnovationExportRequestStatusEnum.PENDING]
         },
-        { order: { createdAt: 'ASC' }, take: 20, skip: 0 },
+        { order: { createdAt: "ASC" }, take: 20, skip: 0 },
         em
       );
 
@@ -187,8 +187,9 @@ describe('Innovations / _services / innovation export request suite', () => {
           status: aliceRequest.status,
           createdBy: {
             name: scenario.users.aliceQualifyingAccessor.name,
-            displayRole: TranslationHelper.translate('SERVICE_ROLES.QUALIFYING_ACCESSOR'),
-            displayTeam: scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name
+            displayRole: TranslationHelper.translate("SERVICE_ROLES.QUALIFYING_ACCESSOR"),
+            displayTeam:
+              scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name
           },
           createdAt: expect.any(Date)
         },
@@ -197,7 +198,7 @@ describe('Innovations / _services / innovation export request suite', () => {
           status: ingridRequest.status,
           createdBy: {
             name: scenario.users.ingridAccessor.name,
-            displayRole: TranslationHelper.translate('SERVICE_ROLES.ACCESSOR'),
+            displayRole: TranslationHelper.translate("SERVICE_ROLES.ACCESSOR"),
             displayTeam: scenario.users.ingridAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name
           },
           createdAt: expect.any(Date)
@@ -206,12 +207,12 @@ describe('Innovations / _services / innovation export request suite', () => {
       expect(result.data.every((s, i) => i === 0 || s.createdAt! >= result.data[i - 1]!.createdAt!)).toBeTruthy();
     });
 
-    it('should return the all the requests related to the NA team', async () => {
+    it("should return the all the requests related to the NA team", async () => {
       const result = await sut.getExportRequestList(
-        DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor, 'assessmentRole'),
+        DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor, "assessmentRole"),
         innovation.id,
         {},
-        { order: { createdAt: 'ASC' }, take: 20, skip: 0 },
+        { order: { createdAt: "ASC" }, take: 20, skip: 0 },
         em
       );
 
@@ -222,8 +223,8 @@ describe('Innovations / _services / innovation export request suite', () => {
           status: paulRequest.status,
           createdBy: {
             name: scenario.users.paulNeedsAssessor.name,
-            displayRole: TranslationHelper.translate('SERVICE_ROLES.ASSESSMENT'),
-            displayTeam: TranslationHelper.translate('TEAMS.ASSESSMENT')
+            displayRole: TranslationHelper.translate("SERVICE_ROLES.ASSESSMENT"),
+            displayTeam: TranslationHelper.translate("TEAMS.ASSESSMENT")
           },
           createdAt: expect.any(Date)
         },
@@ -232,8 +233,8 @@ describe('Innovations / _services / innovation export request suite', () => {
           status: paulPendingRequest.status,
           createdBy: {
             name: scenario.users.paulNeedsAssessor.name,
-            displayRole: TranslationHelper.translate('SERVICE_ROLES.ASSESSMENT'),
-            displayTeam: TranslationHelper.translate('TEAMS.ASSESSMENT')
+            displayRole: TranslationHelper.translate("SERVICE_ROLES.ASSESSMENT"),
+            displayTeam: TranslationHelper.translate("TEAMS.ASSESSMENT")
           },
           createdAt: expect.any(Date)
         }
@@ -241,42 +242,42 @@ describe('Innovations / _services / innovation export request suite', () => {
     });
 
     it.each([
-      [2, DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor, 'assessmentRole')],
-      [1, DTOsHelper.getUserRequestContext(scenario.users.samAccessor, 'accessorRole')],
-      [2, DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole')],
-      [0, DTOsHelper.getUserRequestContext(scenario.users.bartQualifyingAccessor, 'qaRole')],
-      [5, DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, 'innovatorRole')]
-    ])('should return %s results', async (count: number, domainContext: DomainContextType) => {
+      [2, DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor, "assessmentRole")],
+      [1, DTOsHelper.getUserRequestContext(scenario.users.samAccessor, "accessorRole")],
+      [2, DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, "qaRole")],
+      [0, DTOsHelper.getUserRequestContext(scenario.users.bartQualifyingAccessor, "qaRole")],
+      [5, DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, "innovatorRole")]
+    ])("should return %s results", async (count: number, domainContext: DomainContextType) => {
       const result = await sut.getExportRequestList(
         domainContext,
         innovation.id,
         {},
-        { order: { createdAt: 'ASC' }, take: 1, skip: 0 },
+        { order: { createdAt: "ASC" }, take: 1, skip: 0 },
         em
       );
       expect(result.count).toBe(count);
     });
   });
 
-  describe('updateExportRequest', () => {
+  describe("updateExportRequest", () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
     const pendingAliceRequest = innovation.exportRequests.requestByAlice;
     const pendingPaulRequest = innovation.exportRequests.requestByPaulPending;
     const rejectedPaulRequest = innovation.exportRequests.requestByPaulRejected;
 
-    const johnContext = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, 'innovatorRole');
-    const aliceContext = DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole');
-    const paulContext = DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor, 'assessmentRole');
+    const johnContext = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, "innovatorRole");
+    const aliceContext = DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, "qaRole");
+    const paulContext = DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor, "assessmentRole");
 
     it.each([
-      [InnovationExportRequestStatusEnum.APPROVED, 'innovator', johnContext, pendingAliceRequest.id],
-      [InnovationExportRequestStatusEnum.REJECTED, 'innovator', johnContext, pendingAliceRequest.id],
-      [InnovationExportRequestStatusEnum.CANCELLED, 'QA', aliceContext, pendingAliceRequest.id],
-      [InnovationExportRequestStatusEnum.APPROVED, 'innovator', johnContext, pendingPaulRequest.id],
-      [InnovationExportRequestStatusEnum.REJECTED, 'innovator', johnContext, pendingPaulRequest.id],
-      [InnovationExportRequestStatusEnum.CANCELLED, 'NA', paulContext, pendingPaulRequest.id]
+      [InnovationExportRequestStatusEnum.APPROVED, "innovator", johnContext, pendingAliceRequest.id],
+      [InnovationExportRequestStatusEnum.REJECTED, "innovator", johnContext, pendingAliceRequest.id],
+      [InnovationExportRequestStatusEnum.CANCELLED, "QA", aliceContext, pendingAliceRequest.id],
+      [InnovationExportRequestStatusEnum.APPROVED, "innovator", johnContext, pendingPaulRequest.id],
+      [InnovationExportRequestStatusEnum.REJECTED, "innovator", johnContext, pendingPaulRequest.id],
+      [InnovationExportRequestStatusEnum.CANCELLED, "NA", paulContext, pendingPaulRequest.id]
     ])(
-      'should update a request to %s as a %s',
+      "should update a request to %s as a %s",
       async (
         status: InnovationExportRequestStatusEnum,
         _user: string,
@@ -287,8 +288,8 @@ describe('Innovations / _services / innovation export request suite', () => {
         await sut.updateExportRequest(domainContext, requestId, { status, rejectReason }, em);
 
         const dbRequest = await em
-          .createQueryBuilder(InnovationExportRequestEntity, 'request')
-          .where('request.id = :requestId', { requestId })
+          .createQueryBuilder(InnovationExportRequestEntity, "request")
+          .where("request.id = :requestId", { requestId })
           .getOneOrFail();
 
         expect(dbRequest).toMatchObject({
@@ -328,10 +329,10 @@ describe('Innovations / _services / innovation export request suite', () => {
     });
 
     it.each([
-      ['NA', 'QA/A', paulContext, pendingAliceRequest.id],
-      ['QA/A', 'NA', aliceContext, pendingPaulRequest.id]
+      ["NA", "QA/A", paulContext, pendingAliceRequest.id],
+      ["QA/A", "NA", aliceContext, pendingPaulRequest.id]
     ])(
-      'should return ForbiddenError when a %s tries to update a %s request',
+      "should return ForbiddenError when a %s tries to update a %s request",
       async (_: string, __: string, domainContext: DomainContextType, requestId: string) => {
         await expect(() =>
           sut.updateExportRequest(domainContext, requestId, { status: InnovationExportRequestStatusEnum.CANCELLED }, em)

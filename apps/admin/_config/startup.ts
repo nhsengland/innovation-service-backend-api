@@ -12,6 +12,7 @@ import { OrganisationsService } from '../_services/organisations.service';
 import { SearchService } from '../_services/search.service';
 import { StatisticsService } from '../_services/statistics.service';
 import { SYMBOLS } from '../_services/symbols';
+import { AlertManagerService } from '../_services/alert-manager.service';
 import { TermsOfUseService } from '../_services/terms-of-use.service';
 import { UsersService } from '../_services/users.service';
 import { ValidationService } from '../_services/validation.service';
@@ -24,6 +25,7 @@ container.bind<UsersService>(SYMBOLS.UsersService).to(UsersService).inSingletonS
 container.bind<ValidationService>(SYMBOLS.ValidationService).to(ValidationService).inSingletonScope();
 container.bind<AnnouncementsService>(SYMBOLS.AnnouncementsService).to(AnnouncementsService).inSingletonScope();
 container.bind<SearchService>(SYMBOLS.SearchService).to(SearchService).inSingletonScope();
+container.bind<AlertManagerService>(SYMBOLS.AlertManagerService).to(AlertManagerService).inSingletonScope();
 
 export const startup = async (): Promise<void> => {
   const logger = container.get<LoggerService>(SHARED_SYMBOLS.LoggerService);

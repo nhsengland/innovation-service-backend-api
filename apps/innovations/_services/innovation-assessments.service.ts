@@ -1,4 +1,4 @@
-import { inject, injectable } from 'inversify';
+import { inject, injectable } from "inversify";
 
 import {
   InnovationAssessmentEntity,
@@ -9,7 +9,7 @@ import {
   OrganisationEntity,
   OrganisationUnitEntity,
   UserEntity
-} from '@innovations/shared/entities';
+} from "@innovations/shared/entities";
 import {
   ActivityEnum,
   InnovationStatusEnum,
@@ -21,7 +21,7 @@ import {
   ServiceRoleEnum,
   ThreadContextTypeEnum,
   YesPartiallyNoCatalogueType
-} from '@innovations/shared/enums';
+} from "@innovations/shared/enums";
 import {
   BadRequestError,
   ConflictError,
@@ -30,22 +30,22 @@ import {
   NotFoundError,
   UnprocessableEntityError,
   UserErrorsEnum
-} from '@innovations/shared/errors';
-import type { DomainService, IRSchemaService, NotifierService } from '@innovations/shared/services';
-import type { DomainContextType, InnovationAssessmentKPIExemptionType } from '@innovations/shared/types';
+} from "@innovations/shared/errors";
+import type { DomainService, IRSchemaService, NotifierService } from "@innovations/shared/services";
+import type { DomainContextType, InnovationAssessmentKPIExemptionType } from "@innovations/shared/types";
 
-import { InnovationHelper } from '../_helpers/innovation.helper';
-import type { InnovationAssessmentType, ReassessmentType } from '../_types/innovation.types';
+import { InnovationHelper } from "../_helpers/innovation.helper";
+import type { InnovationAssessmentType, ReassessmentType } from "../_types/innovation.types";
 
-import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import { omit } from 'lodash';
-import type { EntityManager } from 'typeorm';
-import { BaseService } from './base.service';
-import type { InnovationDocumentService } from './innovation-document.service';
-import { InnovationSupportsService } from './innovation-supports.service';
-import type { InnovationTasksService } from './innovation-tasks.service';
-import type { InnovationThreadsService } from './innovation-threads.service';
-import SYMBOLS from './symbols';
+import SHARED_SYMBOLS from "@innovations/shared/services/symbols";
+import { omit } from "lodash";
+import type { EntityManager } from "typeorm";
+import { BaseService } from "./base.service";
+import type { InnovationDocumentService } from "./innovation-document.service";
+import { InnovationSupportsService } from "./innovation-supports.service";
+import type { InnovationTasksService } from "./innovation-tasks.service";
+import type { InnovationThreadsService } from "./innovation-threads.service";
+import SYMBOLS from "./symbols";
 
 @injectable()
 export class InnovationAssessmentsService extends BaseService {
@@ -79,18 +79,18 @@ export class InnovationAssessmentsService extends BaseService {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const assessments = await em
-      .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
+      .createQueryBuilder(InnovationAssessmentEntity, "assessment")
       .select([
-        'assessment.id',
-        'assessment.majorVersion',
-        'assessment.minorVersion',
-        'assessment.startedAt',
-        'assessment.finishedAt'
+        "assessment.id",
+        "assessment.majorVersion",
+        "assessment.minorVersion",
+        "assessment.startedAt",
+        "assessment.finishedAt"
       ])
-      .where('assessment.innovation_id = :innovationId', { innovationId })
-      .andWhere('assessment.startedAt IS NOT NULL')
-      .andWhere('assessment.finishedAt IS NOT NULL')
-      .orderBy('assessment.startedAt', 'DESC')
+      .where("assessment.innovation_id = :innovationId", { innovationId })
+      .andWhere("assessment.startedAt IS NOT NULL")
+      .andWhere("assessment.finishedAt IS NOT NULL")
+      .orderBy("assessment.startedAt", "DESC")
       .getMany();
 
     return assessments.map(a => ({
@@ -111,64 +111,64 @@ export class InnovationAssessmentsService extends BaseService {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const assessment = await connection
-      .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
+      .createQueryBuilder(InnovationAssessmentEntity, "assessment")
       .select([
-        'assessment.id',
-        'assessment.majorVersion',
-        'assessment.minorVersion',
-        'assessment.editReason',
-        'assessment.description',
-        'assessment.startedAt',
-        'assessment.finishedAt',
-        'assessment.summary',
-        'assessment.updatedAt',
-        'assessment.updatedBy',
+        "assessment.id",
+        "assessment.majorVersion",
+        "assessment.minorVersion",
+        "assessment.editReason",
+        "assessment.description",
+        "assessment.startedAt",
+        "assessment.finishedAt",
+        "assessment.summary",
+        "assessment.updatedAt",
+        "assessment.updatedBy",
         // questions
-        'assessment.maturityLevel',
-        'assessment.maturityLevelComment',
-        'assessment.hasRegulatoryApprovals',
-        'assessment.hasRegulatoryApprovalsComment',
-        'assessment.hasEvidence',
-        'assessment.hasEvidenceComment',
-        'assessment.hasValidation',
-        'assessment.hasValidationComment',
-        'assessment.hasProposition',
-        'assessment.hasPropositionComment',
-        'assessment.hasCompetitionKnowledge',
-        'assessment.hasCompetitionKnowledgeComment',
-        'assessment.hasImplementationPlan',
-        'assessment.hasImplementationPlanComment',
-        'assessment.hasScaleResource',
-        'assessment.hasScaleResourceComment',
+        "assessment.maturityLevel",
+        "assessment.maturityLevelComment",
+        "assessment.hasRegulatoryApprovals",
+        "assessment.hasRegulatoryApprovalsComment",
+        "assessment.hasEvidence",
+        "assessment.hasEvidenceComment",
+        "assessment.hasValidation",
+        "assessment.hasValidationComment",
+        "assessment.hasProposition",
+        "assessment.hasPropositionComment",
+        "assessment.hasCompetitionKnowledge",
+        "assessment.hasCompetitionKnowledgeComment",
+        "assessment.hasImplementationPlan",
+        "assessment.hasImplementationPlanComment",
+        "assessment.hasScaleResource",
+        "assessment.hasScaleResourceComment",
         // relations
-        'assignTo.id',
-        'organisationUnit.id',
-        'organisationUnit.name',
-        'organisationUnit.acronym',
-        'organisation.id',
-        'organisation.name',
-        'organisation.acronym',
-        'previousAssessment.id',
-        'previousAssessment.majorVersion',
-        'previousAssessment.minorVersion',
-        'previousAssessment.createdAt',
-        'reassessmentRequest.updatedInnovationRecord',
-        'reassessmentRequest.description',
-        'reassessmentRequest.reassessmentReason',
-        'reassessmentRequest.otherReassessmentReason',
-        'reassessmentRequest.whatSupportDoYouNeed',
-        'reassessmentRequest.createdAt',
-        'innovation.id',
-        'currentAssessment.id'
+        "assignTo.id",
+        "organisationUnit.id",
+        "organisationUnit.name",
+        "organisationUnit.acronym",
+        "organisation.id",
+        "organisation.name",
+        "organisation.acronym",
+        "previousAssessment.id",
+        "previousAssessment.majorVersion",
+        "previousAssessment.minorVersion",
+        "previousAssessment.createdAt",
+        "reassessmentRequest.updatedInnovationRecord",
+        "reassessmentRequest.description",
+        "reassessmentRequest.reassessmentReason",
+        "reassessmentRequest.otherReassessmentReason",
+        "reassessmentRequest.whatSupportDoYouNeed",
+        "reassessmentRequest.createdAt",
+        "innovation.id",
+        "currentAssessment.id"
       ])
-      .leftJoin('assessment.assignTo', 'assignTo')
-      .leftJoin('assessment.organisationUnits', 'organisationUnit')
-      .leftJoin('organisationUnit.organisation', 'organisation')
-      .leftJoin('assessment.reassessmentRequest', 'reassessmentRequest')
-      .leftJoin('assessment.previousAssessment', 'previousAssessment')
-      .innerJoin('assessment.innovation', 'innovation')
-      .innerJoin('innovation.currentAssessment', 'currentAssessment')
-      .where('assessment.id = :assessmentId', { assessmentId })
+      .leftJoin("assessment.assignTo", "assignTo")
+      .leftJoin("assessment.organisationUnits", "organisationUnit")
+      .leftJoin("organisationUnit.organisation", "organisation")
+      .leftJoin("assessment.reassessmentRequest", "reassessmentRequest")
+      .leftJoin("assessment.previousAssessment", "previousAssessment")
+      .innerJoin("assessment.innovation", "innovation")
+      .innerJoin("innovation.currentAssessment", "currentAssessment")
+      .where("assessment.id = :assessmentId", { assessmentId })
       .getOne();
     if (!assessment) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND);
@@ -307,8 +307,8 @@ export class InnovationAssessmentsService extends BaseService {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const assessmentsCount = await connection
-      .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
-      .where('assessment.innovation_id = :innovationId', { innovationId })
+      .createQueryBuilder(InnovationAssessmentEntity, "assessment")
+      .where("assessment.innovation_id = :innovationId", { innovationId })
       .getCount();
     if (assessmentsCount > 0) {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_ALREADY_EXISTS);
@@ -318,7 +318,7 @@ export class InnovationAssessmentsService extends BaseService {
       const assessment = await transaction.save(
         InnovationAssessmentEntity,
         InnovationAssessmentEntity.new({
-          description: '', // assessment.description,
+          description: "", // assessment.description,
           innovation: InnovationEntity.new({ id: innovationId }),
           assignTo: UserEntity.new({ id: domainContext.id }),
           startedAt: new Date(),
@@ -343,7 +343,7 @@ export class InnovationAssessmentsService extends BaseService {
       const thread = await this.threadService.createThreadOrMessage(
         domainContext,
         innovationId,
-        'Initial needs assessment',
+        "Initial needs assessment",
         data.message,
         assessment.id,
         ThreadContextTypeEnum.NEEDS_ASSESSMENT,
@@ -369,7 +369,7 @@ export class InnovationAssessmentsService extends BaseService {
         message: data.message
       });
 
-      return { id: assessment['id'] };
+      return { id: assessment["id"] };
     });
   }
 
@@ -383,12 +383,12 @@ export class InnovationAssessmentsService extends BaseService {
 
     // Get the latest assessment record.
     const latestAssessment = await connection
-      .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
-      .innerJoinAndSelect('assessment.innovation', 'innovation')
-      .leftJoinAndSelect('assessment.assignTo', 'assignTo')
-      .leftJoinAndSelect('assessment.organisationUnits', 'organisationUnits')
-      .where('innovation.id = :innovationId', { innovationId })
-      .orderBy('assessment.createdAt', 'DESC') // Not needed, but it doesn't do any harm.
+      .createQueryBuilder(InnovationAssessmentEntity, "assessment")
+      .innerJoinAndSelect("assessment.innovation", "innovation")
+      .leftJoinAndSelect("assessment.assignTo", "assignTo")
+      .leftJoinAndSelect("assessment.organisationUnits", "organisationUnits")
+      .where("innovation.id = :innovationId", { innovationId })
+      .orderBy("assessment.createdAt", "DESC") // Not needed, but it doesn't do any harm.
       .getOne();
 
     if (!latestAssessment) {
@@ -404,17 +404,17 @@ export class InnovationAssessmentsService extends BaseService {
     return connection.transaction(async transaction => {
       const assessmentClone = await transaction.save(InnovationAssessmentEntity, {
         ...omit(latestAssessment, [
-          'id',
-          'finishedAt',
-          'startedAt',
-          'createdAt',
-          'createdBy',
-          'updatedAt',
-          'updatedBy',
-          'deletedAt',
-          'assignTo',
-          'previousAssessment',
-          'reassessmentRequest'
+          "id",
+          "finishedAt",
+          "startedAt",
+          "createdAt",
+          "createdBy",
+          "updatedAt",
+          "updatedBy",
+          "deletedAt",
+          "assignTo",
+          "previousAssessment",
+          "reassessmentRequest"
         ]),
         startedAt: now,
         createdBy: domainContext.id,
@@ -489,8 +489,8 @@ export class InnovationAssessmentsService extends BaseService {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const innovation = await connection
-      .createQueryBuilder(InnovationEntity, 'innovation')
-      .where('innovation.id = :innovationId', { innovationId })
+      .createQueryBuilder(InnovationEntity, "innovation")
+      .where("innovation.id = :innovationId", { innovationId })
       .getOne();
 
     if (!innovation) {
@@ -498,11 +498,11 @@ export class InnovationAssessmentsService extends BaseService {
     }
 
     const dbAssessment = await connection
-      .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
-      .leftJoinAndSelect('assessment.assignTo', 'assignTo')
-      .leftJoinAndSelect('assessment.organisationUnits', 'organisationUnits')
-      .leftJoinAndSelect('assessment.reassessmentRequest', 'reassessmentRequest')
-      .where('assessment.id = :assessmentId', { assessmentId })
+      .createQueryBuilder(InnovationAssessmentEntity, "assessment")
+      .leftJoinAndSelect("assessment.assignTo", "assignTo")
+      .leftJoinAndSelect("assessment.organisationUnits", "organisationUnits")
+      .leftJoinAndSelect("assessment.reassessmentRequest", "reassessmentRequest")
+      .where("assessment.id = :assessmentId", { assessmentId })
       .getOne();
     if (!dbAssessment) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND);
@@ -606,11 +606,11 @@ export class InnovationAssessmentsService extends BaseService {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const innovation = await connection
-      .createQueryBuilder(InnovationEntity, 'innovation')
-      .select(['innovation.id', 'innovation.status', 'innovationOwner.id', 'support.id', 'support.status'])
-      .leftJoin('innovation.owner', 'innovationOwner')
-      .leftJoin('innovation.innovationSupports', 'support')
-      .where('innovation.id = :innovationId', { innovationId })
+      .createQueryBuilder(InnovationEntity, "innovation")
+      .select(["innovation.id", "innovation.status", "innovationOwner.id", "support.id", "support.status"])
+      .leftJoin("innovation.owner", "innovationOwner")
+      .leftJoin("innovation.innovationSupports", "support")
+      .where("innovation.id = :innovationId", { innovationId })
       .getOne();
 
     if (!innovation) {
@@ -652,10 +652,10 @@ export class InnovationAssessmentsService extends BaseService {
 
     // Get the latest assessment record.
     const previousAssessment = await connection
-      .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
-      .select(['assessment.id', 'assessment.majorVersion'])
-      .where('assessment.innovation_id = :innovationId', { innovationId })
-      .orderBy('assessment.createdAt', 'DESC') // Not needed, but it doesn't do any harm.
+      .createQueryBuilder(InnovationAssessmentEntity, "assessment")
+      .select(["assessment.id", "assessment.majorVersion"])
+      .where("assessment.innovation_id = :innovationId", { innovationId })
+      .orderBy("assessment.createdAt", "DESC") // Not needed, but it doesn't do any harm.
       .getOne();
     if (!previousAssessment) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND);
@@ -677,7 +677,7 @@ export class InnovationAssessmentsService extends BaseService {
       const assessment = await transaction.save(
         InnovationAssessmentEntity,
         InnovationAssessmentEntity.new({
-          description: '', // assessment.description,
+          description: "", // assessment.description,
           innovation: InnovationEntity.new({ id: innovationId }),
           assignTo: null,
           createdBy: domainContext.id,
@@ -733,7 +733,7 @@ export class InnovationAssessmentsService extends BaseService {
              SET document = JSON_MODIFY(document, @0, @1), updated_by=@2, updated_at=@3, is_snapshot=0, description=NULL WHERE id = @4`,
         [
           `$.INNOVATION_DESCRIPTION.supportDescription`,
-          data['whatSupportDoYouNeed'],
+          data["whatSupportDoYouNeed"],
           domainContext.id,
           updatedAt,
           innovationId
@@ -745,7 +745,7 @@ export class InnovationAssessmentsService extends BaseService {
              SET document = JSON_MODIFY(document, @0, @1), updated_by=@2, updated_at=@3 WHERE id = @4`,
         [
           `$.INNOVATION_DESCRIPTION.supportDescription`,
-          data['whatSupportDoYouNeed'],
+          data["whatSupportDoYouNeed"],
           domainContext.id,
           updatedAt,
           innovationId
@@ -776,11 +776,11 @@ export class InnovationAssessmentsService extends BaseService {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const assessment = await connection
-      .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
-      .leftJoinAndSelect('assessment.assignTo', 'assignedAssessor')
-      .innerJoinAndSelect('assessment.innovation', 'innovation')
-      .where('assessment.id = :assessmentId', { assessmentId })
-      .andWhere('innovation.id = :innovationId', { innovationId })
+      .createQueryBuilder(InnovationAssessmentEntity, "assessment")
+      .leftJoinAndSelect("assessment.assignTo", "assignedAssessor")
+      .innerJoinAndSelect("assessment.innovation", "innovation")
+      .where("assessment.id = :assessmentId", { assessmentId })
+      .andWhere("innovation.id = :innovationId", { innovationId })
       .getOne();
 
     if (!assessment) {
@@ -788,10 +788,10 @@ export class InnovationAssessmentsService extends BaseService {
     }
 
     const newAssessor = await connection
-      .createQueryBuilder(UserEntity, 'user')
-      .innerJoinAndSelect('user.serviceRoles', 'serviceRoles')
-      .where('user.id = :assessorId', { assessorId })
-      .andWhere('serviceRoles.role = :serviceRoleType', {
+      .createQueryBuilder(UserEntity, "user")
+      .innerJoinAndSelect("user.serviceRoles", "serviceRoles")
+      .where("user.id = :assessorId", { assessorId })
+      .andWhere("serviceRoles.role = :serviceRoleType", {
         serviceRoleType: ServiceRoleEnum.ASSESSMENT
       })
       .getOne();
@@ -810,13 +810,13 @@ export class InnovationAssessmentsService extends BaseService {
 
       if (previousAssessor) {
         const tasks = await transaction
-          .createQueryBuilder(InnovationTaskEntity, 'task')
-          .innerJoin('task.innovationSection', 'section')
-          .where('section.innovation_id = :innovationId', { innovationId })
+          .createQueryBuilder(InnovationTaskEntity, "task")
+          .innerJoin("task.innovationSection", "section")
+          .where("section.innovation_id = :innovationId", { innovationId })
           // .andWhere('task.created_by_user_role_id = :previousAssessorRoleId', {
           //   previousAssessorRoleId: previousAssessor.id
           // })
-          .andWhere('task.status = :status', { status: InnovationTaskStatusEnum.OPEN })
+          .andWhere("task.status = :status", { status: InnovationTaskStatusEnum.OPEN })
           .getMany();
 
         for (const task of tasks) {
@@ -849,8 +849,8 @@ export class InnovationAssessmentsService extends BaseService {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const assessment = await em
-      .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
-      .where('assessment.id = :assessmentId', { assessmentId })
+      .createQueryBuilder(InnovationAssessmentEntity, "assessment")
+      .where("assessment.id = :assessmentId", { assessmentId })
       .getOne();
     if (!assessment) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND);
@@ -884,9 +884,9 @@ export class InnovationAssessmentsService extends BaseService {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const assessment = await em
-      .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
-      .select(['assessment.id', 'assessment.exemptedReason', 'assessment.exemptedMessage', 'assessment.exemptedAt'])
-      .where('assessment.id = :assessmentId', { assessmentId })
+      .createQueryBuilder(InnovationAssessmentEntity, "assessment")
+      .select(["assessment.id", "assessment.exemptedReason", "assessment.exemptedMessage", "assessment.exemptedAt"])
+      .where("assessment.id = :assessmentId", { assessmentId })
       .getOne();
     if (!assessment) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND);
@@ -946,12 +946,12 @@ export class InnovationAssessmentsService extends BaseService {
     if (suggestedOrganisationUnitsIds?.length) {
       // Add suggested organisations (NOT units) names to activity log.
       const organisations = await transaction
-        .createQueryBuilder(OrganisationEntity, 'organisation')
+        .createQueryBuilder(OrganisationEntity, "organisation")
         .distinct()
-        .innerJoin('organisation.organisationUnits', 'organisationUnits')
-        .where('organisationUnits.id IN (:...ids)', { ids: suggestedOrganisationUnitsIds })
-        .andWhere('organisation.inactivated_at IS NULL')
-        .andWhere('organisationUnits.inactivated_at IS NULL')
+        .innerJoin("organisation.organisationUnits", "organisationUnits")
+        .where("organisationUnits.id IN (:...ids)", { ids: suggestedOrganisationUnitsIds })
+        .andWhere("organisation.inactivated_at IS NULL")
+        .andWhere("organisationUnits.inactivated_at IS NULL")
         .getMany();
 
       await this.domainService.innovations.addActivityLog(
@@ -968,11 +968,11 @@ export class InnovationAssessmentsService extends BaseService {
       // If it's the edition of a (re)assessment, compare the new suggested org units with the latest (re)assessment.
       if (assessment.minorVersion > 0) {
         const lastSubmittedAssessment = await transaction
-          .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
-          .leftJoinAndSelect('assessment.organisationUnits', 'organisationUnits')
-          .where('assessment.finishedAt IS NOT NULL')
-          .andWhere('assessment.innovation = :innovationId', { innovationId })
-          .orderBy('assessment.finishedAt', 'DESC')
+          .createQueryBuilder(InnovationAssessmentEntity, "assessment")
+          .leftJoinAndSelect("assessment.organisationUnits", "organisationUnits")
+          .where("assessment.finishedAt IS NOT NULL")
+          .andWhere("assessment.innovation = :innovationId", { innovationId })
+          .orderBy("assessment.finishedAt", "DESC")
           .getOne();
 
         const lastestAssessmentUnitsIds = lastSubmittedAssessment?.organisationUnits.map(unit => unit.id) ?? [];
@@ -993,7 +993,7 @@ export class InnovationAssessmentsService extends BaseService {
           innovationId,
           {
             type: InnovationSupportLogTypeEnum.ASSESSMENT_SUGGESTION,
-            description: 'NA suggested units',
+            description: "NA suggested units",
             suggestedOrganisationUnits: newSuggestions,
             params: { assessmentId }
           }
@@ -1015,9 +1015,9 @@ export class InnovationAssessmentsService extends BaseService {
     entityManager: EntityManager
   ): Promise<void> {
     const thread = await entityManager
-      .createQueryBuilder(InnovationThreadEntity, 'thread')
-      .where('thread.context_type = :contextType', { contextType: ThreadContextTypeEnum.NEEDS_ASSESSMENT }) // Only one thread per innovation of type needs_assessment
-      .andWhere('thread.innovation_id = :innovationId', { innovationId: innovationId })
+      .createQueryBuilder(InnovationThreadEntity, "thread")
+      .where("thread.context_type = :contextType", { contextType: ThreadContextTypeEnum.NEEDS_ASSESSMENT }) // Only one thread per innovation of type needs_assessment
+      .andWhere("thread.innovation_id = :innovationId", { innovationId: innovationId })
       .getOne();
 
     if (!thread) {

@@ -1,7 +1,7 @@
-import Joi from 'joi';
+import Joi from "joi";
 
-import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
-import { JoiHelper } from '@innovations/shared/helpers';
+import { TEXTAREA_LENGTH_LIMIT } from "@innovations/shared/constants";
+import { JoiHelper } from "@innovations/shared/helpers";
 
 export type ParamsType = {
   innovationId: string;
@@ -18,7 +18,7 @@ export type BodyType = {
 };
 
 export const BodySchema = Joi.object<BodyType>({
-  message: JoiHelper.AppCustomJoi().string().allow(null, '').max(TEXTAREA_LENGTH_LIMIT.xl).required(),
+  message: JoiHelper.AppCustomJoi().string().allow(null, "").max(TEXTAREA_LENGTH_LIMIT.xl).required(),
   accessors: Joi.array()
     .items(
       Joi.object({

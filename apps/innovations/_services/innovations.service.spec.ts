@@ -4,8 +4,8 @@ import {
   InnovationExportRequestEntity,
   InnovationSupportEntity,
   InnovationTaskEntity
-} from '@innovations/shared/entities';
-import { ActivityEnum, ActivityTypeEnum } from '@innovations/shared/enums';
+} from "@innovations/shared/entities";
+import { ActivityEnum, ActivityTypeEnum } from "@innovations/shared/enums";
 import {
   InnovationArchiveReasonEnum,
   InnovationExportRequestStatusEnum,
@@ -15,21 +15,21 @@ import {
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
   InnovationTaskStatusEnum
-} from '@innovations/shared/enums/innovation.enums';
+} from "@innovations/shared/enums/innovation.enums";
 import {
   InnovationErrorsEnum,
   NotFoundError,
   OrganisationErrorsEnum,
   UnprocessableEntityError
-} from '@innovations/shared/errors';
-import { TranslationHelper } from '@innovations/shared/helpers';
-import { DomainInnovationsService, NotifierService } from '@innovations/shared/services';
-import { TestsHelper } from '@innovations/shared/tests';
-import type { TestActivityLogType } from '@innovations/shared/tests/builders/activity-log.builder';
-import { ActivityLogBuilder } from '@innovations/shared/tests/builders/activity-log.builder';
-import { InnovationAssessmentBuilder } from '@innovations/shared/tests/builders/innovation-assessment.builder';
-import { InnovationSectionBuilder } from '@innovations/shared/tests/builders/innovation-section.builder';
-import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
+} from "@innovations/shared/errors";
+import { TranslationHelper } from "@innovations/shared/helpers";
+import { DomainInnovationsService, NotifierService } from "@innovations/shared/services";
+import { TestsHelper } from "@innovations/shared/tests";
+import type { TestActivityLogType } from "@innovations/shared/tests/builders/activity-log.builder";
+import { ActivityLogBuilder } from "@innovations/shared/tests/builders/activity-log.builder";
+import { InnovationAssessmentBuilder } from "@innovations/shared/tests/builders/innovation-assessment.builder";
+import { InnovationSectionBuilder } from "@innovations/shared/tests/builders/innovation-section.builder";
+import { DTOsHelper } from "@innovations/shared/tests/helpers/dtos.helper";
 import {
   randCompanyName,
   randCountry,
@@ -38,15 +38,15 @@ import {
   randPastDate,
   randText,
   randUuid
-} from '@ngneat/falso';
-import assert from 'node:assert';
-import { EntityManager } from 'typeorm';
-import { container } from '../_config';
-import { InnovationSupportsService } from './innovation-supports.service';
-import type { InnovationsService } from './innovations.service';
-import SYMBOLS from './symbols';
+} from "@ngneat/falso";
+import assert from "node:assert";
+import { EntityManager } from "typeorm";
+import { container } from "../_config";
+import { InnovationSupportsService } from "./innovation-supports.service";
+import type { InnovationsService } from "./innovations.service";
+import SYMBOLS from "./symbols";
 
-describe('Innovations / _services / innovations suite', () => {
+describe("Innovations / _services / innovations suite", () => {
   let sut: InnovationsService;
 
   let em: EntityManager;
@@ -54,9 +54,9 @@ describe('Innovations / _services / innovations suite', () => {
   const testsHelper = new TestsHelper();
   const scenario = testsHelper.getCompleteScenario();
 
-  const activityLogSpy = jest.spyOn(DomainInnovationsService.prototype, 'addActivityLog');
-  const supportLogSpy = jest.spyOn(DomainInnovationsService.prototype, 'addSupportLog');
-  const notifierSendSpy = jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
+  const activityLogSpy = jest.spyOn(DomainInnovationsService.prototype, "addActivityLog");
+  const supportLogSpy = jest.spyOn(DomainInnovationsService.prototype, "addSupportLog");
+  const notifierSendSpy = jest.spyOn(NotifierService.prototype, "send").mockResolvedValue(true);
 
   beforeAll(async () => {
     sut = container.get<InnovationsService>(SYMBOLS.InnovationsService);
@@ -74,19 +74,19 @@ describe('Innovations / _services / innovations suite', () => {
     notifierSendSpy.mockClear();
   });
 
-  describe.skip('getInnovationsList', () => {
+  describe.skip("getInnovationsList", () => {
     //TODO
-    it('should list innovations', async () => {});
+    it("should list innovations", async () => {});
   });
 
-  describe.skip('getInnovationInfo', () => {
+  describe.skip("getInnovationInfo", () => {
     //TODO
-    it('should get innovation info', async () => {});
+    it("should get innovation info", async () => {});
   });
 
-  describe('getNeedsAssessmentOverdueInnovations', () => {
+  describe("getNeedsAssessmentOverdueInnovations", () => {
     it.each([InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT as const, InnovationStatusEnum.NEEDS_ASSESSMENT as const])(
-      'should get the number of innovations with overdue assessments in status %s',
+      "should get the number of innovations with overdue assessments in status %s",
       async (
         innovationStatus: InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT | InnovationStatusEnum.NEEDS_ASSESSMENT
       ) => {
@@ -113,7 +113,7 @@ describe('Innovations / _services / innovations suite', () => {
       }
     );
 
-    it('should get the number of innovations with overdue assessments that are assigned to me', async () => {
+    it("should get the number of innovations with overdue assessments that are assigned to me", async () => {
       const johnInnovation = scenario.users.johnInnovator.innovations.johnInnovationEmpty;
       const adamInnovation = scenario.users.adamInnovator.innovations.adamInnovationEmpty;
 
@@ -151,8 +151,8 @@ describe('Innovations / _services / innovations suite', () => {
     });
   });
 
-  describe('createInnovation', () => {
-    it('should create an innovation', async () => {
+  describe("createInnovation", () => {
+    it("should create an innovation", async () => {
       const result = await sut.createInnovation(
         DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
         {
@@ -161,7 +161,7 @@ describe('Innovations / _services / innovations suite', () => {
           countryName: randCountry(),
           officeLocation: randCountry(),
           postcode: randCountryCode(),
-          hasWebsite: 'YES',
+          hasWebsite: "YES",
           website: randDomainName()
         },
         em
@@ -172,7 +172,7 @@ describe('Innovations / _services / innovations suite', () => {
       expect(activityLogSpy).toHaveBeenCalled();
     });
 
-    it('should throw an error if the name is not unique', async () => {
+    it("should throw an error if the name is not unique", async () => {
       await expect(() =>
         sut.createInnovation(
           DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
@@ -183,7 +183,7 @@ describe('Innovations / _services / innovations suite', () => {
             officeLocation: randCountry(),
             postcode: randCountryCode(),
             website: randDomainName(),
-            hasWebsite: 'YES'
+            hasWebsite: "YES"
           },
           em
         )
@@ -191,8 +191,8 @@ describe('Innovations / _services / innovations suite', () => {
     });
   });
 
-  describe('getInnovationShares', () => {
-    it('should get the organisations the innovation is shared with', async () => {
+  describe("getInnovationShares", () => {
+    it("should get the organisations the innovation is shared with", async () => {
       const result = await sut.getInnovationShares(scenario.users.johnInnovator.innovations.johnInnovation.id, em);
 
       expect(result).toMatchObject([
@@ -227,13 +227,13 @@ describe('Innovations / _services / innovations suite', () => {
     });
   });
 
-  describe('updateInnovationShares', () => {
+  describe("updateInnovationShares", () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
 
     const getInnovationSuggestedUnitsSpy = jest
-      .spyOn(InnovationSupportsService.prototype, 'getInnovationSuggestedUnits')
+      .spyOn(InnovationSupportsService.prototype, "getInnovationSuggestedUnits")
       .mockResolvedValue([]);
-    const createSuggestedSupports = jest.spyOn(InnovationSupportsService.prototype, 'createSuggestedSupports');
+    const createSuggestedSupports = jest.spyOn(InnovationSupportsService.prototype, "createSuggestedSupports");
 
     beforeEach(() => {
       getInnovationSuggestedUnitsSpy.mockClear();
@@ -245,7 +245,7 @@ describe('Innovations / _services / innovations suite', () => {
       createSuggestedSupports.mockRestore();
     });
 
-    it('should update the organisations that the innovation is shared with', async () => {
+    it("should update the organisations that the innovation is shared with", async () => {
       // remove all existing shares and add share with innovTechOrg
       await sut.updateInnovationShares(
         DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
@@ -255,9 +255,9 @@ describe('Innovations / _services / innovations suite', () => {
       );
 
       const dbInnovation = await em
-        .createQueryBuilder(InnovationEntity, 'innovation')
-        .innerJoinAndSelect('innovation.organisationShares', 'organisationShares')
-        .where('innovation.id = :innovationId', { innovationId: innovation.id })
+        .createQueryBuilder(InnovationEntity, "innovation")
+        .innerJoinAndSelect("innovation.organisationShares", "organisationShares")
+        .where("innovation.id = :innovationId", { innovationId: innovation.id })
         .getOne();
 
       expect(dbInnovation?.organisationShares).toHaveLength(1);
@@ -266,7 +266,7 @@ describe('Innovations / _services / innovations suite', () => {
       expect(activityLogSpy).toHaveBeenCalled();
     });
 
-    it('should set all open tasks from removed organisations to DECLINED', async () => {
+    it("should set all open tasks from removed organisations to DECLINED", async () => {
       // remove all existing shares and add share with innovTechOrg
       await sut.updateInnovationShares(
         DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
@@ -276,21 +276,21 @@ describe('Innovations / _services / innovations suite', () => {
       );
 
       const dbTasks = await em
-        .createQueryBuilder(InnovationTaskEntity, 'task')
-        .where('task.innovation_support_id IN (:...innovationSupportIds)', {
+        .createQueryBuilder(InnovationTaskEntity, "task")
+        .where("task.innovation_support_id IN (:...innovationSupportIds)", {
           innovationSupportIds: [
             innovation.supports.supportByHealthOrgAiUnit.id,
             innovation.supports.supportByHealthOrgUnit.id,
             innovation.supports.supportByMedTechOrgUnit.id
           ]
         })
-        .andWhere('task.status IN (:...taskStatus)', { taskStatus: [InnovationTaskStatusEnum.OPEN] })
+        .andWhere("task.status IN (:...taskStatus)", { taskStatus: [InnovationTaskStatusEnum.OPEN] })
         .getMany();
 
       expect(dbTasks).toHaveLength(0);
     });
 
-    it('should set all ongoing supports from removed organisations to CLOSED', async () => {
+    it("should set all ongoing supports from removed organisations to CLOSED", async () => {
       // remove all existing shares and add share with innovTechOrg
       await sut.updateInnovationShares(
         DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
@@ -300,8 +300,8 @@ describe('Innovations / _services / innovations suite', () => {
       );
 
       const dbSupports = await em
-        .createQueryBuilder(InnovationSupportEntity, 'support')
-        .where('support.id IN (:...innovationSupportIds)', {
+        .createQueryBuilder(InnovationSupportEntity, "support")
+        .where("support.id IN (:...innovationSupportIds)", {
           innovationSupportIds: [
             innovation.supports.supportByHealthOrgAiUnit.id,
             innovation.supports.supportByHealthOrgUnit.id,
@@ -315,7 +315,7 @@ describe('Innovations / _services / innovations suite', () => {
       }
     });
 
-    it('should reject all pending export requests from removed orgs', async () => {
+    it("should reject all pending export requests from removed orgs", async () => {
       // ensure request is pending
       await em.update(
         InnovationExportRequestEntity,
@@ -332,21 +332,21 @@ describe('Innovations / _services / innovations suite', () => {
       );
 
       const dbRequest = await em
-        .createQueryBuilder(InnovationExportRequestEntity, 'request')
-        .select(['request.status', 'request.rejectReason'])
-        .where('request.id = :requestId', { requestId: innovation.exportRequests.requestBySam.id })
+        .createQueryBuilder(InnovationExportRequestEntity, "request")
+        .select(["request.status", "request.rejectReason"])
+        .where("request.id = :requestId", { requestId: innovation.exportRequests.requestBySam.id })
         .getOne();
 
       expect(dbRequest?.status).toBe(InnovationExportRequestStatusEnum.REJECTED);
-      expect(dbRequest?.rejectReason).toBe(TranslationHelper.translate('DEFAULT_MESSAGES.EXPORT_REQUEST.STOP_SHARING'));
+      expect(dbRequest?.rejectReason).toBe(TranslationHelper.translate("DEFAULT_MESSAGES.EXPORT_REQUEST.STOP_SHARING"));
     });
 
-    it('should add a support when adding a share if the support organisation unit had been suggested', async () => {
+    it("should add a support when adding a share if the support organisation unit had been suggested", async () => {
       const context = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator);
       getInnovationSuggestedUnitsSpy.mockResolvedValueOnce([
         scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.id
       ]);
-      await em.query('DELETE FROM innovation_share WHERE innovation_id = @0', [innovation.id]);
+      await em.query("DELETE FROM innovation_share WHERE innovation_id = @0", [innovation.id]);
       await sut.updateInnovationShares(context, innovation.id, [scenario.organisations.innovTechOrg.id], em);
 
       expect(createSuggestedSupports).toHaveBeenCalled();
@@ -360,20 +360,20 @@ describe('Innovations / _services / innovations suite', () => {
 
     it("should not add a support when adding a share if the support organisation unit hadn't been suggested", async () => {
       const context = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator);
-      await em.query('DELETE FROM innovation_share WHERE innovation_id = @0', [innovation.id]);
+      await em.query("DELETE FROM innovation_share WHERE innovation_id = @0", [innovation.id]);
       await sut.updateInnovationShares(context, innovation.id, [scenario.organisations.innovTechOrg.id], em);
 
       expect(createSuggestedSupports).toHaveBeenCalledTimes(0);
     });
 
-    it('should not add support when sharing with an organisation that was already shared', async () => {
+    it("should not add support when sharing with an organisation that was already shared", async () => {
       const context = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator);
       await sut.updateInnovationShares(context, innovation.id, [scenario.organisations.innovTechOrg.id], em);
 
       expect(createSuggestedSupports).toHaveBeenCalledTimes(0);
     });
 
-    it('should add the stop share to support summary from removed units', async () => {
+    it("should add the stop share to support summary from removed units", async () => {
       const context = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator);
 
       // Remove medTechOrg share
@@ -387,7 +387,7 @@ describe('Innovations / _services / innovations suite', () => {
         {
           type: InnovationSupportLogTypeEnum.STOP_SHARE,
           unitId: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id,
-          description: '',
+          description: "",
           supportStatus: InnovationSupportStatusEnum.CLOSED
         }
       );
@@ -411,10 +411,10 @@ describe('Innovations / _services / innovations suite', () => {
     });
   });
 
-  describe('submitInnovation', () => {
+  describe("submitInnovation", () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovationEmpty;
 
-    it('should submit the innovation for needs assessment', async () => {
+    it("should submit the innovation for needs assessment", async () => {
       //prepare innovation status
       await em.getRepository(InnovationEntity).update({ id: innovation.id }, { status: InnovationStatusEnum.CREATED });
       await testsHelper.submitAllInnovationSections(innovation.id, em);
@@ -426,8 +426,8 @@ describe('Innovations / _services / innovations suite', () => {
       );
 
       const dbInnovation = await em
-        .createQueryBuilder(InnovationEntity, 'innovation')
-        .where('innovation.id = :innovationId', { innovationId: innovation.id })
+        .createQueryBuilder(InnovationEntity, "innovation")
+        .where("innovation.id = :innovationId", { innovationId: innovation.id })
         .getOne();
 
       expect(dbInnovation?.status).toBe(InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT);
@@ -458,7 +458,7 @@ describe('Innovations / _services / innovations suite', () => {
       //add submitted section to innovation
       await new InnovationSectionBuilder(em)
         .setInnovation(innovation.id)
-        .setSection('INNOVATION_DESCRIPTION')
+        .setSection("INNOVATION_DESCRIPTION")
         .setStatus(InnovationSectionStatusEnum.SUBMITTED)
         .save();
 
@@ -468,32 +468,32 @@ describe('Innovations / _services / innovations suite', () => {
     });
   });
 
-  describe('archiveInnovation', () => {
+  describe("archiveInnovation", () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
     const context = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator);
     const reason = InnovationArchiveReasonEnum.ALREADY_LIVE_NHS;
 
-    it('should archive the innovation', async () => {
+    it("should archive the innovation", async () => {
       await sut.archiveInnovation(context, innovation.id, { reason }, em);
 
       const dbInnovation = await em
-        .createQueryBuilder(InnovationEntity, 'innovation')
-        .select(['innovation.status', 'innovation.archiveReason'])
-        .where('innovation.id = :innovationId', { innovationId: innovation.id })
+        .createQueryBuilder(InnovationEntity, "innovation")
+        .select(["innovation.status", "innovation.archiveReason"])
+        .where("innovation.id = :innovationId", { innovationId: innovation.id })
         .getOneOrFail();
 
       expect(dbInnovation.status).toBe(InnovationStatusEnum.ARCHIVED);
       expect(dbInnovation.archiveReason).toBe(reason);
     });
 
-    it('should cancel all open tasks', async () => {
+    it("should cancel all open tasks", async () => {
       const dbPreviouslyOpenTasks = await em
-        .createQueryBuilder(InnovationTaskEntity, 'task')
-        .select(['task.status', 'task.id'])
-        .innerJoin('task.innovationSection', 'innovationSection')
-        .innerJoin('innovationSection.innovation', 'innovation')
-        .where('innovation.id = :innovationId', { innovationId: innovation.id })
-        .andWhere('task.status IN (:...openTaskStatuses)', {
+        .createQueryBuilder(InnovationTaskEntity, "task")
+        .select(["task.status", "task.id"])
+        .innerJoin("task.innovationSection", "innovationSection")
+        .innerJoin("innovationSection.innovation", "innovation")
+        .where("innovation.id = :innovationId", { innovationId: innovation.id })
+        .andWhere("task.status IN (:...openTaskStatuses)", {
           openTaskStatuses: [InnovationTaskStatusEnum.OPEN]
         })
         .getMany();
@@ -501,34 +501,34 @@ describe('Innovations / _services / innovations suite', () => {
       await sut.archiveInnovation(context, innovation.id, { reason }, em);
 
       const dbCancelledTasks = await em
-        .createQueryBuilder(InnovationTaskEntity, 'task')
-        .select(['task.status'])
-        .where('task.id IN (:...taskIds)', { taskIds: dbPreviouslyOpenTasks.map(a => a.id) })
+        .createQueryBuilder(InnovationTaskEntity, "task")
+        .select(["task.status"])
+        .where("task.id IN (:...taskIds)", { taskIds: dbPreviouslyOpenTasks.map(a => a.id) })
         .getMany();
 
       expect(dbCancelledTasks).toHaveLength(dbPreviouslyOpenTasks.length);
     });
 
-    it('should close all support', async () => {
+    it("should close all support", async () => {
       const dbPreviousSupports = await em
-        .createQueryBuilder(InnovationSupportEntity, 'support')
-        .select(['support.id', 'support.status', 'userRole.id', 'user.id'])
-        .innerJoin('support.innovation', 'innovation')
-        .leftJoin('support.userRoles', 'userRole')
-        .leftJoin('userRole.user', 'user')
-        .where('innovation.id = :innovationId', { innovationId: innovation.id })
-        .andWhere('support.status NOT IN (:...statuses)', {
+        .createQueryBuilder(InnovationSupportEntity, "support")
+        .select(["support.id", "support.status", "userRole.id", "user.id"])
+        .innerJoin("support.innovation", "innovation")
+        .leftJoin("support.userRoles", "userRole")
+        .leftJoin("userRole.user", "user")
+        .where("innovation.id = :innovationId", { innovationId: innovation.id })
+        .andWhere("support.status NOT IN (:...statuses)", {
           statuses: [InnovationSupportStatusEnum.CLOSED, InnovationSupportStatusEnum.UNSUITABLE]
         })
-        .andWhere('support.isMostRecent = 1')
+        .andWhere("support.isMostRecent = 1")
         .getMany();
 
       await sut.archiveInnovation(context, innovation.id, { reason }, em);
 
       const dbSupports = await em
-        .createQueryBuilder(InnovationSupportEntity, 'support')
-        .select(['support.id', 'support.status', 'support.closeReason', 'support.finishedAt'])
-        .where('support.id IN (:...supportIds)', { supportIds: dbPreviousSupports.map(s => s.id) })
+        .createQueryBuilder(InnovationSupportEntity, "support")
+        .select(["support.id", "support.status", "support.closeReason", "support.finishedAt"])
+        .where("support.id IN (:...supportIds)", { supportIds: dbPreviousSupports.map(s => s.id) })
         .getMany();
 
       for (const support of dbSupports) {
@@ -540,7 +540,7 @@ describe('Innovations / _services / innovations suite', () => {
       }
     });
 
-    it('should reject all pending export requests', async () => {
+    it("should reject all pending export requests", async () => {
       // ensure request is pending
       await em
         .getRepository(InnovationExportRequestEntity)
@@ -552,19 +552,19 @@ describe('Innovations / _services / innovations suite', () => {
       await sut.archiveInnovation(context, innovation.id, { reason }, em);
 
       const dbRequest = await em
-        .createQueryBuilder(InnovationExportRequestEntity, 'request')
-        .select(['request.status', 'request.rejectReason'])
-        .where('request.id = :requestId', { requestId: innovation.exportRequests.requestByAlice.id })
+        .createQueryBuilder(InnovationExportRequestEntity, "request")
+        .select(["request.status", "request.rejectReason"])
+        .where("request.id = :requestId", { requestId: innovation.exportRequests.requestByAlice.id })
         .getOne();
 
       expect(dbRequest?.status).toBe(InnovationExportRequestStatusEnum.REJECTED);
-      expect(dbRequest?.rejectReason).toBe(TranslationHelper.translate('DEFAULT_MESSAGES.EXPORT_REQUEST.ARCHIVE'));
+      expect(dbRequest?.rejectReason).toBe(TranslationHelper.translate("DEFAULT_MESSAGES.EXPORT_REQUEST.ARCHIVE"));
     });
 
-    it('should add the archive to support summary', async () => {
+    it("should add the archive to support summary", async () => {
       const nPreviousSupports = await em
-        .createQueryBuilder(InnovationSupportEntity, 'support')
-        .where('innovation_id = :innovationId', { innovationId: innovation.id })
+        .createQueryBuilder(InnovationSupportEntity, "support")
+        .where("innovation_id = :innovationId", { innovationId: innovation.id })
         .getCount();
 
       await sut.archiveInnovation(context, innovation.id, { reason }, em);
@@ -583,18 +583,18 @@ describe('Innovations / _services / innovations suite', () => {
       );
     });
 
-    describe('Needs assessment side-effects', () => {
+    describe("Needs assessment side-effects", () => {
       const ottoOctavius = scenario.users.ottoOctaviusInnovator;
 
-      it('should and complete assessment when innovation is in NEEDS_ASSESSMENT', async () => {
+      it("should and complete assessment when innovation is in NEEDS_ASSESSMENT", async () => {
         const naInProgress = ottoOctavius.innovations.brainComputerInterfaceInnovation;
 
         await sut.archiveInnovation(DTOsHelper.getUserRequestContext(ottoOctavius), naInProgress.id, { reason }, em);
 
         const dbAssessment = await em
-          .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
-          .select(['assessment.id', 'assessment.finishedAt', 'assessment.updatedBy'])
-          .where('assessment.innovation_id = :innovationId', { innovationId: naInProgress.id })
+          .createQueryBuilder(InnovationAssessmentEntity, "assessment")
+          .select(["assessment.id", "assessment.finishedAt", "assessment.updatedBy"])
+          .where("assessment.innovation_id = :innovationId", { innovationId: naInProgress.id })
           .getOneOrFail();
 
         expect(dbAssessment.id).toBe(naInProgress.assessmentInProgress.id);
@@ -602,15 +602,15 @@ describe('Innovations / _services / innovations suite', () => {
         expect(dbAssessment.updatedBy).toBe(ottoOctavius.id);
       });
 
-      it('should create and complete an assessment when innovation is in WAITING_NEEDS_ASSESSMENT', async () => {
+      it("should create and complete an assessment when innovation is in WAITING_NEEDS_ASSESSMENT", async () => {
         const waitingNa = ottoOctavius.innovations.powerSourceInnovation;
 
         await sut.archiveInnovation(DTOsHelper.getUserRequestContext(ottoOctavius), waitingNa.id, { reason }, em);
 
         const dbAssessment = await em
-          .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
-          .select(['assessment.id', 'assessment.finishedAt', 'assessment.updatedBy', 'assessment.createdBy'])
-          .where('assessment.innovation_id = :innovationId', { innovationId: waitingNa.id })
+          .createQueryBuilder(InnovationAssessmentEntity, "assessment")
+          .select(["assessment.id", "assessment.finishedAt", "assessment.updatedBy", "assessment.createdBy"])
+          .where("assessment.innovation_id = :innovationId", { innovationId: waitingNa.id })
           .getOneOrFail();
 
         expect(dbAssessment.id).toBeDefined();
@@ -621,7 +621,7 @@ describe('Innovations / _services / innovations suite', () => {
     });
   });
 
-  describe('getInnovationActivitiesLog', () => {
+  describe("getInnovationActivitiesLog", () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
 
     let activityLogOld: TestActivityLogType;
@@ -632,7 +632,7 @@ describe('Innovations / _services / innovations suite', () => {
         .setType(ActivityTypeEnum.TASKS)
         .setActivity(ActivityEnum.TASK_CREATION)
         .setInnovation(innovation.id)
-        .setCreatedAt(new Date('10/10/2015'))
+        .setCreatedAt(new Date("10/10/2015"))
         .setCreatedBy(scenario.users.aliceQualifyingAccessor)
         .setInterveningUser(scenario.users.aliceQualifyingAccessor)
         .save();
@@ -641,20 +641,20 @@ describe('Innovations / _services / innovations suite', () => {
         .setType(ActivityTypeEnum.NEEDS_ASSESSMENT)
         .setActivity(ActivityEnum.NEEDS_ASSESSMENT_COMPLETED)
         .setInnovation(innovation.id)
-        .setCreatedAt(new Date('10/10/2022'))
+        .setCreatedAt(new Date("10/10/2022"))
         .setCreatedBy(scenario.users.paulNeedsAssessor)
         .setInterveningUser(scenario.users.paulNeedsAssessor)
         .save();
     });
 
-    it('should return the activity log data of the innovation', async () => {
+    it("should return the activity log data of the innovation", async () => {
       const result = await sut.getInnovationActivitiesLog(
         innovation.id,
         {},
         {
           skip: 0,
           take: 10,
-          order: { createdAt: 'DESC' }
+          order: { createdAt: "DESC" }
         },
         em
       );
@@ -678,14 +678,14 @@ describe('Innovations / _services / innovations suite', () => {
       });
     });
 
-    it('should return the activity log data of the innovation ordered by ascending creation date', async () => {
+    it("should return the activity log data of the innovation ordered by ascending creation date", async () => {
       const result = await sut.getInnovationActivitiesLog(
         innovation.id,
         {},
         {
           skip: 0,
           take: 10,
-          order: { createdAt: 'ASC' }
+          order: { createdAt: "ASC" }
         },
         em
       );
@@ -709,7 +709,7 @@ describe('Innovations / _services / innovations suite', () => {
       });
     });
 
-    it('should return the activity log data of the innovation for the given activity type', async () => {
+    it("should return the activity log data of the innovation for the given activity type", async () => {
       const result = await sut.getInnovationActivitiesLog(
         innovation.id,
         {
@@ -718,7 +718,7 @@ describe('Innovations / _services / innovations suite', () => {
         {
           skip: 0,
           take: 10,
-          order: { createdAt: 'DESC' }
+          order: { createdAt: "DESC" }
         },
         em
       );
@@ -736,16 +736,16 @@ describe('Innovations / _services / innovations suite', () => {
       });
     });
 
-    it('should return the activity log data of the innovation according to the given start date', async () => {
+    it("should return the activity log data of the innovation according to the given start date", async () => {
       const result = await sut.getInnovationActivitiesLog(
         innovation.id,
         {
-          dateFilters: [{ field: 'createdAt', startDate: new Date('10/10/2020') }]
+          dateFilters: [{ field: "createdAt", startDate: new Date("10/10/2020") }]
         },
         {
           skip: 0,
           take: 10,
-          order: { createdAt: 'DESC' }
+          order: { createdAt: "DESC" }
         },
         em
       );
@@ -763,16 +763,16 @@ describe('Innovations / _services / innovations suite', () => {
       });
     });
 
-    it('should return the activity log data of the innovation according to the given end date', async () => {
+    it("should return the activity log data of the innovation according to the given end date", async () => {
       const result = await sut.getInnovationActivitiesLog(
         innovation.id,
         {
-          dateFilters: [{ field: 'createdAt', endDate: new Date('10/10/2020') }]
+          dateFilters: [{ field: "createdAt", endDate: new Date("10/10/2020") }]
         },
         {
           skip: 0,
           take: 10,
-          order: { createdAt: 'DESC' }
+          order: { createdAt: "DESC" }
         },
         em
       );
@@ -791,8 +791,8 @@ describe('Innovations / _services / innovations suite', () => {
     });
   });
 
-  describe('getInnovationSubmissionsState', () => {
-    it('should get the innovation submission state', async () => {
+  describe("getInnovationSubmissionsState", () => {
+    it("should get the innovation submission state", async () => {
       const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
       const result = await sut.getInnovationSubmissionsState(innovation.id, em);
 
@@ -809,10 +809,10 @@ describe('Innovations / _services / innovations suite', () => {
     });
   });
 
-  describe('getInnovationProgress', () => {
+  describe("getInnovationProgress", () => {
     // Not testing the progress update part as the units don't exist in scenario nor the payloads as they are all randomly generated
     // and the result is actually dependent on sql view logic
-    it('should get the innovation progress info', async () => {
+    it("should get the innovation progress info", async () => {
       const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
       const result = await sut.getInnovationProgress(innovation.id, em);
 
@@ -835,10 +835,10 @@ describe('Innovations / _services / innovations suite', () => {
     });
   });
 
-  describe('getInnovationRelavantOrganisationsStatusList', () => {
+  describe("getInnovationRelavantOrganisationsStatusList", () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
 
-    it('should return organisations with relevant status and its users', async () => {
+    it("should return organisations with relevant status and its users", async () => {
       const relevantStatusOrganisationList = await sut.getInnovationRelavantOrganisationsStatusList(
         innovation.id,
         true,
@@ -896,7 +896,7 @@ describe('Innovations / _services / innovations suite', () => {
       ]);
     });
 
-    it('should return organisations with relevant status', async () => {
+    it("should return organisations with relevant status", async () => {
       const relevantStatusOrganisationList = await sut.getInnovationRelavantOrganisationsStatusList(
         innovation.id,
         false,
@@ -956,38 +956,38 @@ describe('Innovations / _services / innovations suite', () => {
     });
   });
 
-  describe('getNextUniqueIdentifier', () => {
-    it('should return the next unique identifier as YYMM-0001-X if first for the year/month', async () => {
+  describe("getNextUniqueIdentifier", () => {
+    it("should return the next unique identifier as YYMM-0001-X if first for the year/month", async () => {
       const result = await sut.getNextUniqueIdentifier(em);
 
       const currentYearMonth = new Date().toISOString().slice(2, 4) + new Date().toISOString().slice(5, 7);
-      const checksum = `${currentYearMonth}0001`.split('').reduce((acc, curr) => acc + Number(curr), 0) % 10;
+      const checksum = `${currentYearMonth}0001`.split("").reduce((acc, curr) => acc + Number(curr), 0) % 10;
       expect(result).toBe(`INN-${currentYearMonth}-0001-${checksum}`);
     });
 
-    it('should return the next unique identifier as YYMM-0002-X if second year/month', async () => {
+    it("should return the next unique identifier as YYMM-0002-X if second year/month", async () => {
       const currentYearMonth = new Date().toISOString().slice(2, 4) + new Date().toISOString().slice(5, 7);
 
       // uniqueId not updatable
-      await em.query('UPDATE innovation SET unique_id = @0 WHERE id = @1', [
+      await em.query("UPDATE innovation SET unique_id = @0 WHERE id = @1", [
         `INN-${currentYearMonth}-0001-1`,
         scenario.users.johnInnovator.innovations.johnInnovation.id
       ]);
       const result = await sut.getNextUniqueIdentifier(em);
 
-      const checksum = `${currentYearMonth}0002`.split('').reduce((acc, curr) => acc + Number(curr), 0) % 10;
+      const checksum = `${currentYearMonth}0002`.split("").reduce((acc, curr) => acc + Number(curr), 0) % 10;
       expect(result).toBe(`INN-${currentYearMonth}-0002-${checksum}`);
     });
   });
 
-  describe('shareInnovationsWithOrganisation', () => {
+  describe("shareInnovationsWithOrganisation", () => {
     // John has 3 innovations, Jane is collaborator in 2
     const john = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator);
     const jane = DTOsHelper.getUserRequestContext(scenario.users.janeInnovator);
     let updateInnovationSharesMock: jest.SpyInstance;
 
     beforeAll(() => {
-      updateInnovationSharesMock = jest.spyOn(sut, 'updateInnovationShares').mockResolvedValue();
+      updateInnovationSharesMock = jest.spyOn(sut, "updateInnovationShares").mockResolvedValue();
     });
 
     beforeEach(() => {
@@ -998,17 +998,17 @@ describe('Innovations / _services / innovations suite', () => {
       updateInnovationSharesMock.mockRestore();
     });
 
-    it('should share all the innovator innovations with the organisation', async () => {
+    it("should share all the innovator innovations with the organisation", async () => {
       await sut.shareInnovationsWithOrganisation(john, scenario.organisations.notSharedOrg.id, em);
       expect(updateInnovationSharesMock).toHaveBeenCalledTimes(3);
     });
 
-    it('should share if the user has access as collaborator', async () => {
+    it("should share if the user has access as collaborator", async () => {
       await sut.shareInnovationsWithOrganisation(jane, scenario.organisations.notSharedOrg.id, em);
       expect(updateInnovationSharesMock).toHaveBeenCalledTimes(2);
     });
 
-    it('should ignore if the innovation is already shared with the organisation', async () => {
+    it("should ignore if the innovation is already shared with the organisation", async () => {
       // Only one of the innovations shared with innovTech
       await sut.shareInnovationsWithOrganisation(john, scenario.organisations.innovTechOrg.id, em);
       expect(updateInnovationSharesMock).toHaveBeenCalledTimes(2);
@@ -1024,7 +1024,7 @@ describe('Innovations / _services / innovations suite', () => {
       expect(updateInnovationSharesMock).toHaveBeenCalledTimes(2);
     });
 
-    it('should include previous innovation shares in the list to update', async () => {
+    it("should include previous innovation shares in the list to update", async () => {
       await sut.shareInnovationsWithOrganisation(john, scenario.organisations.notSharedOrg.id, em);
       expect(updateInnovationSharesMock).toHaveBeenCalledWith(
         john,

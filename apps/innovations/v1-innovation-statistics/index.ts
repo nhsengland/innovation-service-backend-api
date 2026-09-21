@@ -1,17 +1,17 @@
-import { mapOpenApi3 as openapi } from '@aaronpowell/azure-functions-nodejs-openapi';
-import type { AzureFunction, HttpRequest } from '@azure/functions';
+import { mapOpenApi3 as openapi } from "@aaronpowell/azure-functions-nodejs-openapi";
+import type { AzureFunction, HttpRequest } from "@azure/functions";
 
-import { JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
-import type { AuthorizationService } from '@innovations/shared/services';
-import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import type { CustomContextType } from '@innovations/shared/types';
+import { JwtDecoder } from "@innovations/shared/decorators";
+import { JoiHelper, ResponseHelper, SwaggerHelper } from "@innovations/shared/helpers";
+import type { AuthorizationService } from "@innovations/shared/services";
+import SHARED_SYMBOLS from "@innovations/shared/services/symbols";
+import type { CustomContextType } from "@innovations/shared/types";
 
-import { container } from '../_config';
+import { container } from "../_config";
 
-import { StatisticsHandlersHelper } from '../_helpers/handlers.helper';
-import type { ResponseDTO } from './transformation.dtos';
-import { ParamsSchema, ParamsType, QuerySchema, QueryType } from './validation.schemas';
+import { StatisticsHandlersHelper } from "../_helpers/handlers.helper";
+import type { ResponseDTO } from "./transformation.dtos";
+import { ParamsSchema, ParamsType, QuerySchema, QueryType } from "./validation.schemas";
 
 class GetInnovationStatistics {
   @JwtDecoder()
@@ -47,15 +47,15 @@ class GetInnovationStatistics {
   }
 }
 
-export default openapi(GetInnovationStatistics.httpTrigger as AzureFunction, '/v1/{innovationId}/statistics', {
+export default openapi(GetInnovationStatistics.httpTrigger as AzureFunction, "/v1/{innovationId}/statistics", {
   get: {
-    description: 'Get an innovation statistics',
-    tags: ['[v1] Innovation Statistics'],
-    operationId: 'v1-innovation-statistics',
+    description: "Get an innovation statistics",
+    tags: ["[v1] Innovation Statistics"],
+    operationId: "v1-innovation-statistics",
     parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema, query: QuerySchema }),
     responses: {
-      200: { description: 'Ok.' },
-      400: { description: 'Bad request.' }
+      200: { description: "Ok." },
+      400: { description: "Bad request." }
     }
   }
 });

@@ -1,6 +1,6 @@
-import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
-import { JoiHelper } from '@innovations/shared/helpers';
-import Joi from 'joi';
+import { TEXTAREA_LENGTH_LIMIT } from "@innovations/shared/constants";
+import { JoiHelper } from "@innovations/shared/helpers";
+import Joi from "joi";
 
 export type ParamsType = {
   innovationId: string;

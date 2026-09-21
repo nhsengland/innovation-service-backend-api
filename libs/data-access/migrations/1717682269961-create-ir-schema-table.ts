@@ -18,10 +18,13 @@ export class createIrSchemaTable1717682269961 implements MigrationInterface {
         )
       `);
 
-    await queryRunner.query(`
+    await queryRunner.query(
+      `
       INSERT INTO innovation_record_schema ("schema", "created_by", "updated_by")
       VALUES (@0, @1, @2)
-    `, [JSON.stringify(IR_SCHEMA),'00000000-0000-0000-0000-000000000000', '00000000-0000-0000-0000-000000000000']);
+    `,
+      [JSON.stringify(IR_SCHEMA), '00000000-0000-0000-0000-000000000000', '00000000-0000-0000-0000-000000000000']
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

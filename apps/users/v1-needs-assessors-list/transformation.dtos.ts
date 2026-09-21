@@ -1,5 +1,5 @@
 import Joi from 'joi';
-import { NeedsAssement } from '../_types/users.types';
+import type { NeedsAssement } from '../_types/users.types';
 
 export type ResponseDTO = {
   count: number;

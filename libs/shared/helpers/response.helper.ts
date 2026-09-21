@@ -1,7 +1,7 @@
 import type { Context } from '@azure/functions';
 import { AxiosError } from 'axios';
 import { GenericErrorsEnum } from '../errors';
-import type { AppResponse} from '../types';
+import type { AppResponse } from '../types';
 import { isBaseErrorType } from '../types';
 
 export class ResponseHelper {

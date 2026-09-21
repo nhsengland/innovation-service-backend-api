@@ -1,6 +1,6 @@
-import Joi from 'joi';
+import Joi from "joi";
 
-import { JoiHelper } from '@innovations/shared/helpers';
+import { JoiHelper } from "@innovations/shared/helpers";
 
 export type ParamsType = {
   organisationId: string;

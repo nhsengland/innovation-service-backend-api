@@ -1,4 +1,3 @@
- 
 import type { AzureFunction, HttpRequest, HttpRequestParams } from '@azure/functions';
 import { randUserName, randUuid } from '@ngneat/falso';
 

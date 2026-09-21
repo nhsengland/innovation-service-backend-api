@@ -1,14 +1,14 @@
-import azureFunction from '.';
+import azureFunction from ".";
 
 import {
   InnovationGroupedStatusEnum,
   InnovationStatusEnum,
   InnovationSupportStatusEnum,
   PhoneUserPreferenceEnum
-} from '@innovations/shared/enums';
-import { AzureHttpTriggerBuilder, TestsHelper } from '@innovations/shared/tests';
-import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
-import type { ErrorResponseType } from '@innovations/shared/types';
+} from "@innovations/shared/enums";
+import { AzureHttpTriggerBuilder, TestsHelper } from "@innovations/shared/tests";
+import type { TestUserType } from "@innovations/shared/tests/builders/user.builder";
+import type { ErrorResponseType } from "@innovations/shared/types";
 import {
   randBoolean,
   randCountry,
@@ -20,13 +20,13 @@ import {
   randProductDescription,
   randProductName,
   randUuid
-} from '@ngneat/falso';
-import { omit, pick } from 'lodash';
-import { InnovationsService } from '../_services/innovations.service';
-import type { ResponseDTO } from './transformation.dtos';
-import type { ParamsType } from './validation.schemas';
+} from "@ngneat/falso";
+import { omit, pick } from "lodash";
+import { InnovationsService } from "../_services/innovations.service";
+import type { ResponseDTO } from "./transformation.dtos";
+import type { ParamsType } from "./validation.schemas";
 
-jest.mock('@innovations/shared/decorators', () => ({
+jest.mock("@innovations/shared/decorators", () => ({
   JwtDecoder: jest.fn().mockImplementation(() => (_: any, __: string, descriptor: PropertyDescriptor) => {
     return descriptor;
   }),
@@ -42,7 +42,7 @@ beforeAll(async () => {
   await testsHelper.init();
 });
 
-const expected: Awaited<ReturnType<InnovationsService['getInnovationInfo']>> = {
+const expected: Awaited<ReturnType<InnovationsService["getInnovationInfo"]>> = {
   id: randUuid(),
   uniqueId: randUuid(),
   name: randProductName(),
@@ -60,18 +60,18 @@ const expected: Awaited<ReturnType<InnovationsService['getInnovationInfo']>> = {
   status: InnovationStatusEnum.IN_PROGRESS,
   statusUpdatedAt: randPastDate(),
   submittedAt: randPastDate(),
-  version: '1.0',
+  version: "1.0",
   collaboratorId: undefined
 };
-const mock = jest.spyOn(InnovationsService.prototype, 'getInnovationInfo').mockResolvedValue(expected);
+const mock = jest.spyOn(InnovationsService.prototype, "getInnovationInfo").mockResolvedValue(expected);
 
 afterEach(() => {
   jest.clearAllMocks();
 });
 
-describe('v1-innovation-info Suite', () => {
-  describe('200', () => {
-    it('should return the innovation', async () => {
+describe("v1-innovation-info Suite", () => {
+  describe("200", () => {
+    it("should return the innovation", async () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.johnInnovator)
         .setParams<ParamsType>({
@@ -101,7 +101,7 @@ describe('v1-innovation-info Suite', () => {
       }
     };
 
-    it('should return owner info if present', async () => {
+    it("should return owner info if present", async () => {
       mock.mockResolvedValueOnce(expectedWithOwner);
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.johnInnovator)
@@ -113,13 +113,13 @@ describe('v1-innovation-info Suite', () => {
       expect(result.body).toStrictEqual({
         ...expectedWithOwner,
         owner: {
-          ...pick(expectedWithOwner.owner, ['id', 'name', 'isActive', 'jobTitle']),
+          ...pick(expectedWithOwner.owner, ["id", "name", "isActive", "jobTitle"]),
           organisation: undefined
         }
       });
     });
 
-    it('should include owner with contact details for NA', async () => {
+    it("should include owner with contact details for NA", async () => {
       mock.mockResolvedValueOnce(expectedWithOwner);
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.paulNeedsAssessor)
@@ -132,16 +132,16 @@ describe('v1-innovation-info Suite', () => {
         ...expectedWithOwner,
         owner: {
           ...pick(expectedWithOwner.owner, [
-            'id',
-            'name',
-            'isActive',
-            'email',
-            'mobilePhone',
-            'contactByEmail',
-            'contactByPhone',
-            'contactByPhoneTimeframe',
-            'contactDetails',
-            'jobTitle'
+            "id",
+            "name",
+            "isActive",
+            "email",
+            "mobilePhone",
+            "contactByEmail",
+            "contactByPhone",
+            "contactByPhoneTimeframe",
+            "contactDetails",
+            "jobTitle"
           ]),
           organisation: undefined
         }
@@ -161,13 +161,13 @@ describe('v1-innovation-info Suite', () => {
         ...expectedWithOwner,
         status: InnovationStatusEnum.ARCHIVED,
         owner: {
-          ...pick(expectedWithOwner.owner, ['id', 'name', 'isActive', 'jobTitle']),
+          ...pick(expectedWithOwner.owner, ["id", "name", "isActive", "jobTitle"]),
           organisation: undefined
         }
       });
     });
 
-    it('should include owner with contact details+last login at for admin', async () => {
+    it("should include owner with contact details+last login at for admin", async () => {
       mock.mockResolvedValueOnce(expectedWithOwner);
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.allMighty)
@@ -180,24 +180,24 @@ describe('v1-innovation-info Suite', () => {
         ...expectedWithOwner,
         owner: {
           ...pick(expectedWithOwner.owner, [
-            'id',
-            'name',
-            'isActive',
-            'email',
-            'mobilePhone',
-            'contactByEmail',
-            'contactByPhone',
-            'contactByPhoneTimeframe',
-            'contactDetails',
-            'lastLoginAt',
-            'jobTitle'
+            "id",
+            "name",
+            "isActive",
+            "email",
+            "mobilePhone",
+            "contactByEmail",
+            "contactByPhone",
+            "contactByPhoneTimeframe",
+            "contactDetails",
+            "lastLoginAt",
+            "jobTitle"
           ]),
           organisation: undefined
         }
       });
     });
 
-    it('should include owner organisations if he has', async () => {
+    it("should include owner organisations if he has", async () => {
       const organisation = { name: randFullName(), size: null, registrationNumber: null };
       mock.mockResolvedValueOnce({
         ...expectedWithOwner,
@@ -213,13 +213,13 @@ describe('v1-innovation-info Suite', () => {
       expect(result.body).toStrictEqual({
         ...expectedWithOwner,
         owner: {
-          ...pick(expectedWithOwner.owner, ['id', 'name', 'isActive', 'jobTitle']),
+          ...pick(expectedWithOwner.owner, ["id", "name", "isActive", "jobTitle"]),
           organisation
         }
       });
     });
 
-    it('should test assessments', async () => {
+    it("should test assessments", async () => {
       const expectedWithAssessment = {
         ...expected,
         assessment: {
@@ -242,13 +242,11 @@ describe('v1-innovation-info Suite', () => {
 
       expect(result.body).toStrictEqual({
         ...expectedWithAssessment,
-        assessment: omit(expectedWithAssessment.assessment, [
-          'currentMajorAssessmentId',
-        ])
+        assessment: omit(expectedWithAssessment.assessment, ["currentMajorAssessmentId"])
       });
     });
 
-    it('should test supports', async () => {
+    it("should test supports", async () => {
       const expectedWithSupport = {
         ...expected,
         supports: [
@@ -270,7 +268,7 @@ describe('v1-innovation-info Suite', () => {
       expect(result.body).toStrictEqual(expectedWithSupport);
     });
 
-    it('should return collaborator id', async () => {
+    it("should return collaborator id", async () => {
       const expectedWithCollaboratorId = {
         ...expected,
         collaboratorId: randUuid()
@@ -287,14 +285,14 @@ describe('v1-innovation-info Suite', () => {
     });
   });
 
-  describe('Access', () => {
+  describe("Access", () => {
     it.each([
-      ['Admin', 200, scenario.users.allMighty],
-      ['QA', 200, scenario.users.aliceQualifyingAccessor],
-      ['NA', 200, scenario.users.paulNeedsAssessor],
-      ['Innovator owner', 200, scenario.users.johnInnovator],
-      ['Innovator other', 403, scenario.users.ottoOctaviusInnovator]
-    ])('access with user %s should give %i', async (_role: string, status: number, user: TestUserType) => {
+      ["Admin", 200, scenario.users.allMighty],
+      ["QA", 200, scenario.users.aliceQualifyingAccessor],
+      ["NA", 200, scenario.users.paulNeedsAssessor],
+      ["Innovator owner", 200, scenario.users.johnInnovator],
+      ["Innovator other", 403, scenario.users.ottoOctaviusInnovator]
+    ])("access with user %s should give %i", async (_role: string, status: number, user: TestUserType) => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(user)
         .setParams<ParamsType>({

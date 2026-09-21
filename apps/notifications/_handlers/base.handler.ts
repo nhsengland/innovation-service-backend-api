@@ -240,6 +240,8 @@ export abstract class BaseHandler<
   }
 
   protected getRequestJobTitleWithFallback(): string {
-    return this.requestUser.jobTitle || TranslationHelper.translate(`SERVICE_ROLES.${this.requestUser.currentRole.role}`);
+    return (
+      this.requestUser.jobTitle || TranslationHelper.translate(`SERVICE_ROLES.${this.requestUser.currentRole.role}`)
+    );
   }
 }

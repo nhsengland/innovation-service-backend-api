@@ -1,13 +1,13 @@
-import azureFunction from '.';
+import azureFunction from ".";
 
-import { AzureHttpTriggerBuilder, TestsHelper } from '@innovations/shared/tests';
-import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
-import type { ErrorResponseType } from '@innovations/shared/types';
-import { randUuid } from '@ngneat/falso';
-import { InnovationSupportsService } from '../_services/innovation-supports.service';
-import type { ParamsType } from './validation.schemas';
+import { AzureHttpTriggerBuilder, TestsHelper } from "@innovations/shared/tests";
+import type { TestUserType } from "@innovations/shared/tests/builders/user.builder";
+import type { ErrorResponseType } from "@innovations/shared/types";
+import { randUuid } from "@ngneat/falso";
+import { InnovationSupportsService } from "../_services/innovation-supports.service";
+import type { ParamsType } from "./validation.schemas";
 
-jest.mock('@innovations/shared/decorators', () => ({
+jest.mock("@innovations/shared/decorators", () => ({
   JwtDecoder: jest.fn().mockImplementation(() => (_: any, __: string, descriptor: PropertyDescriptor) => {
     return descriptor;
   }),
@@ -23,15 +23,15 @@ beforeAll(async () => {
   await testsHelper.init();
 });
 
-const mock = jest.spyOn(InnovationSupportsService.prototype, 'deleteProgressUpdate').mockResolvedValue();
+const mock = jest.spyOn(InnovationSupportsService.prototype, "deleteProgressUpdate").mockResolvedValue();
 
 afterEach(() => {
   jest.clearAllMocks();
 });
 
-describe('v1-innovation-support-summary-progress-delete', () => {
-  describe('204', () => {
-    it('should create an innovation support summary progress', async () => {
+describe("v1-innovation-support-summary-progress-delete", () => {
+  describe("204", () => {
+    it("should create an innovation support summary progress", async () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.aliceQualifyingAccessor)
         .setParams<ParamsType>({
@@ -46,15 +46,15 @@ describe('v1-innovation-support-summary-progress-delete', () => {
     });
   });
 
-  describe('Access', () => {
+  describe("Access", () => {
     it.each([
-      ['Admin', 403, scenario.users.allMighty],
-      ['QA', 204, scenario.users.aliceQualifyingAccessor],
-      ['NA', 403, scenario.users.paulNeedsAssessor],
-      ['Innovator owner', 403, scenario.users.johnInnovator],
-      ['Innovator collaborator', 403, scenario.users.janeInnovator],
-      ['Innovator other', 403, scenario.users.ottoOctaviusInnovator]
-    ])('access with user %s should give %i', async (_role: string, status: number, user: TestUserType) => {
+      ["Admin", 403, scenario.users.allMighty],
+      ["QA", 204, scenario.users.aliceQualifyingAccessor],
+      ["NA", 403, scenario.users.paulNeedsAssessor],
+      ["Innovator owner", 403, scenario.users.johnInnovator],
+      ["Innovator collaborator", 403, scenario.users.janeInnovator],
+      ["Innovator other", 403, scenario.users.ottoOctaviusInnovator]
+    ])("access with user %s should give %i", async (_role: string, status: number, user: TestUserType) => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(user)
         .setParams<ParamsType>({
@@ -68,10 +68,10 @@ describe('v1-innovation-support-summary-progress-delete', () => {
   });
 
   it.each([
-    ['QA', scenario.users.aliceQualifyingAccessor, undefined],
-    ['A', scenario.users.jamieMadroxAccessor, 'healthAccessorRole']
+    ["QA", scenario.users.aliceQualifyingAccessor, undefined],
+    ["A", scenario.users.jamieMadroxAccessor, "healthAccessorRole"]
   ])(
-    'access with user %s should give conflict in the archive',
+    "access with user %s should give conflict in the archive",
     async (_role: string, user: TestUserType, roleKey?: string) => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(user, roleKey)

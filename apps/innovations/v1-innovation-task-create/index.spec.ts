@@ -1,14 +1,14 @@
-import { GenericErrorsEnum } from '@innovations/shared/errors';
-import { AzureHttpTriggerBuilder, TestsHelper } from '@innovations/shared/tests';
-import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
-import type { ErrorResponseType } from '@innovations/shared/types';
-import { randText, randUuid } from '@ngneat/falso';
-import v1InnovationTaskCreate from '.';
-import { InnovationTasksService } from '../_services/innovation-tasks.service';
-import type { ResponseDTO } from './transformation.dtos';
-import type { BodyType, ParamsType } from './validation.schemas';
+import { GenericErrorsEnum } from "@innovations/shared/errors";
+import { AzureHttpTriggerBuilder, TestsHelper } from "@innovations/shared/tests";
+import type { TestUserType } from "@innovations/shared/tests/builders/user.builder";
+import type { ErrorResponseType } from "@innovations/shared/types";
+import { randText, randUuid } from "@ngneat/falso";
+import v1InnovationTaskCreate from ".";
+import { InnovationTasksService } from "../_services/innovation-tasks.service";
+import type { ResponseDTO } from "./transformation.dtos";
+import type { BodyType, ParamsType } from "./validation.schemas";
 
-jest.mock('@innovations/shared/decorators', () => ({
+jest.mock("@innovations/shared/decorators", () => ({
   JwtDecoder: jest.fn().mockImplementation(() => (_: any, __: string, descriptor: PropertyDescriptor) => {
     return descriptor;
   })
@@ -22,17 +22,17 @@ beforeAll(async () => {
 });
 
 const expected = { id: randUuid() };
-const createTaskSpy = jest.spyOn(InnovationTasksService.prototype, 'createTask').mockResolvedValue(expected);
+const createTaskSpy = jest.spyOn(InnovationTasksService.prototype, "createTask").mockResolvedValue(expected);
 
 afterEach(() => {
   jest.clearAllMocks();
 });
 
-describe('v1-innovation-task-create Suite', () => {
-  const payload = { section: 'INNOVATION_DESCRIPTION' as const, description: randText() };
+describe("v1-innovation-task-create Suite", () => {
+  const payload = { section: "INNOVATION_DESCRIPTION" as const, description: randText() };
 
-  describe('200', () => {
-    it('should create an task', async () => {
+  describe("200", () => {
+    it("should create an task", async () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.aliceQualifyingAccessor)
         .setParams<ParamsType>({
@@ -48,8 +48,8 @@ describe('v1-innovation-task-create Suite', () => {
   });
 
   // POC: maybe improve tests in the future by including the validation schemas
-  describe('400', () => {
-    it.each(['section', 'description'] as const)('should fail if missing mandatory parameter %s', async parameter => {
+  describe("400", () => {
+    it.each(["section", "description"] as const)("should fail if missing mandatory parameter %s", async parameter => {
       const body = { ...payload };
       delete body[parameter];
       const result = await new AzureHttpTriggerBuilder()
@@ -61,17 +61,17 @@ describe('v1-innovation-task-create Suite', () => {
         .call<ErrorResponseType>(v1InnovationTaskCreate);
 
       expect(result.body.error).toMatch(GenericErrorsEnum.INVALID_PAYLOAD);
-      expect(result.body.message).toMatch('Invalid request');
+      expect(result.body.message).toMatch("Invalid request");
       expect(result.status).toBe(400);
     });
   });
 
-  describe('409', () => {
+  describe("409", () => {
     it.each([
-      ['QA', scenario.users.aliceQualifyingAccessor, undefined],
-      ['A', scenario.users.jamieMadroxAccessor, 'healthAccessorRole']
+      ["QA", scenario.users.aliceQualifyingAccessor, undefined],
+      ["A", scenario.users.jamieMadroxAccessor, "healthAccessorRole"]
     ])(
-      'access with user %s should give conflict in the archive',
+      "access with user %s should give conflict in the archive",
       async (_role: string, user: TestUserType, roleKey?: string) => {
         const result = await new AzureHttpTriggerBuilder()
           .setAuth(user, roleKey)
@@ -86,13 +86,13 @@ describe('v1-innovation-task-create Suite', () => {
     );
   });
 
-  describe('Access', () => {
+  describe("Access", () => {
     it.each([
-      ['Admin', 403, scenario.users.allMighty],
-      ['QA', 200, scenario.users.aliceQualifyingAccessor],
-      ['NA', 200, scenario.users.paulNeedsAssessor],
-      ['Innovator', 403, scenario.users.johnInnovator]
-    ])('access with user %s should give %i', async (_role: string, status: number, user: TestUserType) => {
+      ["Admin", 403, scenario.users.allMighty],
+      ["QA", 200, scenario.users.aliceQualifyingAccessor],
+      ["NA", 200, scenario.users.paulNeedsAssessor],
+      ["Innovator", 403, scenario.users.johnInnovator]
+    ])("access with user %s should give %i", async (_role: string, status: number, user: TestUserType) => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(user)
         .setParams<ParamsType>({

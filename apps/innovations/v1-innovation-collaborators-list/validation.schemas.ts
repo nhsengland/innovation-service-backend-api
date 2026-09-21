@@ -1,14 +1,14 @@
-import Joi from 'joi';
+import Joi from "joi";
 
-import { InnovationCollaboratorStatusEnum } from '@innovations/shared/enums';
-import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
-import { JoiHelper } from '@innovations/shared/helpers';
+import { InnovationCollaboratorStatusEnum } from "@innovations/shared/enums";
+import type { PaginationQueryParamsType } from "@innovations/shared/helpers";
+import { JoiHelper } from "@innovations/shared/helpers";
 
 enum orderFields {
-  createdAt = 'createdAt',
-  updatedAt = 'updatedAt',
-  invitedAt = 'invitedAt',
-  status = 'status'
+  createdAt = "createdAt",
+  updatedAt = "updatedAt",
+  invitedAt = "invitedAt",
+  status = "status"
 }
 
 export type ParamsType = {

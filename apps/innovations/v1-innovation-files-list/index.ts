@@ -1,19 +1,19 @@
-import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
-import type { AzureFunction, HttpRequest } from '@azure/functions';
+import { mapOpenApi3 as openApi } from "@aaronpowell/azure-functions-nodejs-openapi";
+import type { AzureFunction, HttpRequest } from "@azure/functions";
 
-import { JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
-import type { AuthorizationService } from '@innovations/shared/services';
-import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import type { CustomContextType } from '@innovations/shared/types';
+import { JwtDecoder } from "@innovations/shared/decorators";
+import { JoiHelper, ResponseHelper, SwaggerHelper } from "@innovations/shared/helpers";
+import type { AuthorizationService } from "@innovations/shared/services";
+import SHARED_SYMBOLS from "@innovations/shared/services/symbols";
+import type { CustomContextType } from "@innovations/shared/types";
 
-import { container } from '../_config';
+import { container } from "../_config";
 
-import { InnovationFileContextTypeEnum, ServiceRoleEnum } from '@innovations/shared/enums';
-import type { InnovationFileService } from '../_services/innovation-file.service';
-import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
-import { ParamsSchema, ParamsType, QueryParamsSchema, QueryParamsType } from './validation.schemas';
+import { InnovationFileContextTypeEnum, ServiceRoleEnum } from "@innovations/shared/enums";
+import type { InnovationFileService } from "../_services/innovation-file.service";
+import SYMBOLS from "../_services/symbols";
+import type { ResponseDTO } from "./transformation.dtos";
+import { ParamsSchema, ParamsType, QueryParamsSchema, QueryParamsType } from "./validation.schemas";
 
 class V1InnovationFilesList {
   @JwtDecoder()
@@ -75,63 +75,63 @@ class V1InnovationFilesList {
   }
 }
 
-export default openApi(V1InnovationFilesList.httpTrigger as AzureFunction, '/v1/{innovationId}/files', {
+export default openApi(V1InnovationFilesList.httpTrigger as AzureFunction, "/v1/{innovationId}/files", {
   get: {
-    operationId: 'v1-innovation-files-list',
-    description: 'Get innovation files list',
-    tags: ['[v1] Innovation Files'],
+    operationId: "v1-innovation-files-list",
+    description: "Get innovation files list",
+    tags: ["[v1] Innovation Files"],
     parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema, query: QueryParamsSchema }),
     responses: {
       200: {
-        description: 'Success',
+        description: "Success",
         content: {
-          'application/json': {
+          "application/json": {
             schema: {
-              type: 'object',
+              type: "object",
               properties: {
                 count: {
-                  type: 'integer',
-                  description: 'The total number of records.'
+                  type: "integer",
+                  description: "The total number of records."
                 },
                 data: {
-                  type: 'array',
+                  type: "array",
                   items: {
-                    type: 'object',
+                    type: "object",
                     properties: {
-                      id: { type: 'string' },
+                      id: { type: "string" },
                       context: {
-                        type: 'object',
+                        type: "object",
                         properties: {
-                          id: { type: 'string' },
+                          id: { type: "string" },
                           type: {
-                            type: 'string',
+                            type: "string",
                             enum: Object.values(InnovationFileContextTypeEnum)
                           }
                         }
                       },
-                      name: { type: 'string' },
-                      description: { type: 'string' },
-                      createdAt: { type: 'string' },
+                      name: { type: "string" },
+                      description: { type: "string" },
+                      createdAt: { type: "string" },
                       createdBy: {
-                        type: 'object',
+                        type: "object",
                         properties: {
-                          name: { type: 'string' },
+                          name: { type: "string" },
                           role: {
-                            type: 'string',
+                            type: "string",
                             enum: Object.values(ServiceRoleEnum)
                           },
-                          isOwner: { type: 'boolean' },
-                          orgUnitName: { type: 'string' }
+                          isOwner: { type: "boolean" },
+                          orgUnitName: { type: "string" }
                         }
                       },
                       file: {
-                        type: 'object',
+                        type: "object",
                         properties: {
-                          id: { type: 'string', description: 'Storage Id' },
-                          name: { type: 'string' },
-                          size: { type: 'number' },
-                          extension: { type: 'string' },
-                          url: { type: 'string' }
+                          id: { type: "string", description: "Storage Id" },
+                          name: { type: "string" },
+                          size: { type: "number" },
+                          extension: { type: "string" },
+                          url: { type: "string" }
                         }
                       }
                     }
@@ -143,16 +143,16 @@ export default openApi(V1InnovationFilesList.httpTrigger as AzureFunction, '/v1/
         }
       },
       400: {
-        description: 'The request is invalid.'
+        description: "The request is invalid."
       },
       401: {
-        description: 'The user is not authenticated.'
+        description: "The user is not authenticated."
       },
       403: {
-        description: 'The user is not authorized to access this resource.'
+        description: "The user is not authorized to access this resource."
       },
       500: {
-        description: 'An error occurred while processing the request.'
+        description: "An error occurred while processing the request."
       }
     }
   }

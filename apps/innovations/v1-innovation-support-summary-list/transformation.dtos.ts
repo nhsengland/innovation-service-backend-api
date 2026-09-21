@@ -1,4 +1,4 @@
-import type { InnovationSupportStatusEnum, InnovationSupportSummaryTypeEnum } from '@innovations/shared/enums';
+import type { InnovationSupportStatusEnum, InnovationSupportSummaryTypeEnum } from "@innovations/shared/enums";
 
 export type ResponseDTO = Record<
   keyof typeof InnovationSupportSummaryTypeEnum,

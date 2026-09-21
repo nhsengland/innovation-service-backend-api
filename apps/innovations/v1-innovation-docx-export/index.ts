@@ -1,13 +1,13 @@
-import { mapOpenApi3 as openapi } from '@aaronpowell/azure-functions-nodejs-openapi';
-import type { AzureFunction, HttpRequest } from '@azure/functions';
+import { mapOpenApi3 as openapi } from "@aaronpowell/azure-functions-nodejs-openapi";
+import type { AzureFunction, HttpRequest } from "@azure/functions";
 
-import { JwtDecoder } from '@innovations/shared/decorators';
-import { ResponseHelper } from '@innovations/shared/helpers';
-import type { AuthorizationService } from '@innovations/shared/services';
-import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import type { CustomContextType } from '@innovations/shared/types';
-import { container } from '../_config';
-import type { IRExportService } from '@innovations/shared/services/storage/ir-export.service';
+import { JwtDecoder } from "@innovations/shared/decorators";
+import { ResponseHelper } from "@innovations/shared/helpers";
+import type { AuthorizationService } from "@innovations/shared/services";
+import SHARED_SYMBOLS from "@innovations/shared/services/symbols";
+import type { CustomContextType } from "@innovations/shared/types";
+import { container } from "../_config";
+import type { IRExportService } from "@innovations/shared/services/storage/ir-export.service";
 
 class V1InnovationRecordDocxExport {
   @JwtDecoder()
@@ -28,14 +28,14 @@ class V1InnovationRecordDocxExport {
       const docxBuffer = await irExportService.generateDocx();
 
       // Convert to Base64 to avoid binary corruption (ETF-8)
-      const base64Content = docxBuffer.toString('base64');
+      const base64Content = docxBuffer.toString("base64");
 
       context.res = {
         status: 200,
         body: base64Content,
         headers: {
-          'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-          'Content-Encoding': 'base64'
+          "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          "Content-Encoding": "base64"
         }
       };
 
@@ -47,23 +47,23 @@ class V1InnovationRecordDocxExport {
   }
 }
 
-export default openapi(V1InnovationRecordDocxExport.httpTrigger as AzureFunction, '/v1/innovation-record/docx', {
+export default openapi(V1InnovationRecordDocxExport.httpTrigger as AzureFunction, "/v1/innovation-record/docx", {
   get: {
-    description: 'Generate docx for the innovation record',
-    tags: ['[v1] Innovations'],
-    operationId: 'v1-innovation-record-docx-export',
+    description: "Generate docx for the innovation record",
+    tags: ["[v1] Innovations"],
+    operationId: "v1-innovation-record-docx-export",
     responses: {
       200: {
-        description: 'DOCX file download',
+        description: "DOCX file download",
         content: {
-          'application/vnd.openxmlformats-officedocument.wordprocessingml.document': {
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document": {
             schema: {
-              type: 'string'
+              type: "string"
             }
           }
         }
       },
-      400: { description: 'Bad request.' }
+      400: { description: "Bad request." }
     }
   }
 });

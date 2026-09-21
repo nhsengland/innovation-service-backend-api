@@ -1,14 +1,14 @@
-import { injectable } from 'inversify';
-import Joi from 'joi';
-import type { EntityManager } from 'typeorm';
+import { injectable } from "inversify";
+import Joi from "joi";
+import type { EntityManager } from "typeorm";
 
-import { BadRequestError, GenericErrorsEnum } from '@innovations/shared/errors';
-import { DatesHelper, JoiHelper } from '@innovations/shared/helpers';
-import type { DomainContextType } from '@innovations/shared/types';
+import { BadRequestError, GenericErrorsEnum } from "@innovations/shared/errors";
+import { DatesHelper, JoiHelper } from "@innovations/shared/helpers";
+import type { DomainContextType } from "@innovations/shared/types";
 
-import { BaseService } from './base.service';
+import { BaseService } from "./base.service";
 
-export const ValidationRules = ['checkIfSupportHadAlreadyStartedAtDate'] as const;
+export const ValidationRules = ["checkIfSupportHadAlreadyStartedAtDate"] as const;
 export type ValidationRules = (typeof ValidationRules)[number];
 export type ValidationResult = {
   rule: ValidationRules;
@@ -58,7 +58,7 @@ export class ValidationService extends BaseService {
     date.setHours(0, 0, 0, 0);
 
     if (date > today) {
-      throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD, { message: 'Date cannot be in the future' });
+      throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD, { message: "Date cannot be in the future" });
     }
 
     const result = await em.query(
@@ -71,12 +71,12 @@ export class ValidationService extends BaseService {
       const minStartedAtDate = new Date(result[0].minStartedAt);
       minStartedAtDate.setHours(0, 0, 0, 0);
       if (date >= minStartedAtDate) {
-        return { rule: 'checkIfSupportHadAlreadyStartedAtDate', valid: true };
+        return { rule: "checkIfSupportHadAlreadyStartedAtDate", valid: true };
       }
     }
 
     return {
-      rule: 'checkIfSupportHadAlreadyStartedAtDate',
+      rule: "checkIfSupportHadAlreadyStartedAtDate",
       valid: false,
       details: { message: `Support had not yet started on ${dateString}` }
     };

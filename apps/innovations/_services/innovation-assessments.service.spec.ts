@@ -1,4 +1,4 @@
-import { container } from '../_config';
+import { container } from "../_config";
 
 import {
   InnovationAssessmentEntity,
@@ -6,12 +6,12 @@ import {
   InnovationReassessmentRequestEntity,
   InnovationSectionEntity,
   InnovationSupportEntity
-} from '@innovations/shared/entities';
+} from "@innovations/shared/entities";
 import {
   InnovationSectionStatusEnum,
   InnovationStatusEnum,
   InnovationSupportStatusEnum
-} from '@innovations/shared/enums';
+} from "@innovations/shared/enums";
 import {
   BadRequestError,
   ConflictError,
@@ -20,22 +20,22 @@ import {
   NotFoundError,
   UnprocessableEntityError,
   UserErrorsEnum
-} from '@innovations/shared/errors';
-import { DomainInnovationsService, NotifierService } from '@innovations/shared/services';
-import { TestsHelper } from '@innovations/shared/tests';
-import { InnovationAssessmentBuilder } from '@innovations/shared/tests/builders/innovation-assessment.builder';
-import { InnovationReassessmentRequestBuilder } from '@innovations/shared/tests/builders/innovation-reassessment-request.builder';
-import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
-import type { InnovationAssessmentKPIExemptionType } from '@innovations/shared/types/assessment.types';
-import { randText, randUuid } from '@ngneat/falso';
-import { randomUUID } from 'crypto';
-import type { EntityManager } from 'typeorm';
-import type { InnovationAssessmentsService } from './innovation-assessments.service';
-import { InnovationSupportsService } from './innovation-supports.service';
-import SYMBOLS from './symbols';
-import { InnovationSectionBuilder } from '@innovations/shared/tests/builders/innovation-section.builder';
+} from "@innovations/shared/errors";
+import { DomainInnovationsService, NotifierService } from "@innovations/shared/services";
+import { TestsHelper } from "@innovations/shared/tests";
+import { InnovationAssessmentBuilder } from "@innovations/shared/tests/builders/innovation-assessment.builder";
+import { InnovationReassessmentRequestBuilder } from "@innovations/shared/tests/builders/innovation-reassessment-request.builder";
+import { DTOsHelper } from "@innovations/shared/tests/helpers/dtos.helper";
+import type { InnovationAssessmentKPIExemptionType } from "@innovations/shared/types/assessment.types";
+import { randText, randUuid } from "@ngneat/falso";
+import { randomUUID } from "crypto";
+import type { EntityManager } from "typeorm";
+import type { InnovationAssessmentsService } from "./innovation-assessments.service";
+import { InnovationSupportsService } from "./innovation-supports.service";
+import SYMBOLS from "./symbols";
+import { InnovationSectionBuilder } from "@innovations/shared/tests/builders/innovation-section.builder";
 
-describe('Innovation Assessments Suite', () => {
+describe("Innovation Assessments Suite", () => {
   let sut: InnovationAssessmentsService;
 
   let em: EntityManager;
@@ -44,7 +44,7 @@ describe('Innovation Assessments Suite', () => {
   const scenario = testsHelper.getCompleteScenario();
 
   const createSuggestedSupportsMock = jest
-    .spyOn(InnovationSupportsService.prototype, 'createSuggestedSupports')
+    .spyOn(InnovationSupportsService.prototype, "createSuggestedSupports")
     .mockResolvedValue();
 
   beforeAll(async () => {
@@ -52,8 +52,8 @@ describe('Innovation Assessments Suite', () => {
     await testsHelper.init();
 
     // Setup mocks
-    jest.spyOn(DomainInnovationsService.prototype, 'addActivityLog').mockResolvedValue();
-    jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
+    jest.spyOn(DomainInnovationsService.prototype, "addActivityLog").mockResolvedValue();
+    jest.spyOn(NotifierService.prototype, "send").mockResolvedValue(true);
   });
 
   beforeEach(async () => {
@@ -72,8 +72,8 @@ describe('Innovation Assessments Suite', () => {
   const innovationWithArchivedStatus = scenario.users.johnInnovator.innovations.johnInnovationArchived;
   const innovationWithMultipleAssessments = scenario.users.tristanInnovator.innovations.innovationMultipleAssessments;
 
-  describe('getAssessmentsList', () => {
-    it('should return all the assessments completed ordered by startedAt', async () => {
+  describe("getAssessmentsList", () => {
+    it("should return all the assessments completed ordered by startedAt", async () => {
       await em.update(
         InnovationAssessmentEntity,
         { id: innovationWithMultipleAssessments.assessment.id },
@@ -95,13 +95,13 @@ describe('Innovation Assessments Suite', () => {
     });
   });
 
-  describe('getInnovationAssessmentInfo', () => {
+  describe("getInnovationAssessmentInfo", () => {
     const naUser = DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor);
     it.each([
-      ['QA', scenario.users.aliceQualifyingAccessor],
-      ['A', scenario.users.ingridAccessor],
-      ['NA', scenario.users.paulNeedsAssessor],
-      ['I', scenario.users.johnInnovator]
+      ["QA", scenario.users.aliceQualifyingAccessor],
+      ["A", scenario.users.ingridAccessor],
+      ["NA", scenario.users.paulNeedsAssessor],
+      ["I", scenario.users.johnInnovator]
     ])("should get an innovation assessment that's submitted as %s", async (_label, user) => {
       const assessment = innovationWithAssessment.assessment;
       const res = await sut.getInnovationAssessmentInfo(
@@ -167,7 +167,7 @@ describe('Innovation Assessments Suite', () => {
       });
     });
 
-    it('should return null finishedAt if assessment not submitted', async () => {
+    it("should return null finishedAt if assessment not submitted", async () => {
       const res = await sut.getInnovationAssessmentInfo(
         naUser,
         innovationWithAssessmentInProgress.assessmentInProgress.id,
@@ -176,13 +176,13 @@ describe('Innovation Assessments Suite', () => {
       expect(res.finishedAt).toBeNull();
     });
 
-    it('should not get an innovation assessment if it does not exist', async () => {
+    it("should not get an innovation assessment if it does not exist", async () => {
       await expect(() => sut.getInnovationAssessmentInfo(naUser, randUuid())).rejects.toThrow(
         new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND)
       );
     });
 
-    it('should get innovation assessment if user is a needs assessor and assessment not submitted', async () => {
+    it("should get innovation assessment if user is a needs assessor and assessment not submitted", async () => {
       const res = await sut.getInnovationAssessmentInfo(
         naUser,
         innovationWithAssessmentInProgress.assessmentInProgress.id,
@@ -191,15 +191,15 @@ describe('Innovation Assessments Suite', () => {
       expect(res).toBeDefined();
     });
 
-    it('should return the previous assessment if it exists', async () => {
+    it("should return the previous assessment if it exists", async () => {
       const res = await sut.getInnovationAssessmentInfo(naUser, innovationWithMultipleAssessments.assessment.id);
       expect(res.previousAssessment?.id).toBe(innovationWithMultipleAssessments.previousAssessment.id);
     });
 
-    it('should return the sections changed since the previous assessment', async () => {
+    it("should return the sections changed since the previous assessment", async () => {
       const res = await sut.getInnovationAssessmentInfo(naUser, innovationWithMultipleAssessments.assessment.id);
       expect(res.reassessment?.sectionsUpdatedSinceLastAssessment.sort()).toEqual(
-        ['COST_OF_INNOVATION', 'INNOVATION_DESCRIPTION'].sort()
+        ["COST_OF_INNOVATION", "INNOVATION_DESCRIPTION"].sort()
       );
     });
 
@@ -219,10 +219,10 @@ describe('Innovation Assessments Suite', () => {
     });
 
     it.each([
-      ['QA', scenario.users.aliceQualifyingAccessor],
-      ['A', scenario.users.ingridAccessor],
-      ['I', scenario.users.johnInnovator]
-    ])('should not get an innovation assessment if user %s and assessment not submitted', async (_label, user) => {
+      ["QA", scenario.users.aliceQualifyingAccessor],
+      ["A", scenario.users.ingridAccessor],
+      ["I", scenario.users.johnInnovator]
+    ])("should not get an innovation assessment if user %s and assessment not submitted", async (_label, user) => {
       await expect(
         sut.getInnovationAssessmentInfo(
           DTOsHelper.getUserRequestContext(user),
@@ -233,23 +233,23 @@ describe('Innovation Assessments Suite', () => {
     });
   });
 
-  describe('getSectionsUpdatedSincePreviousAssessment', () => {
+  describe("getSectionsUpdatedSincePreviousAssessment", () => {
     const innovation = scenario.users.tristanInnovator.innovations.innovationMultipleAssessments;
-    it('should return the sections updated since the previous assessment', async () => {
+    it("should return the sections updated since the previous assessment", async () => {
       const res = await sut.getSectionsUpdatedSincePreviousAssessment(innovation.assessment.id, em);
 
-      expect(res.sort()).toEqual(['COST_OF_INNOVATION', 'INNOVATION_DESCRIPTION'].sort());
+      expect(res.sort()).toEqual(["COST_OF_INNOVATION", "INNOVATION_DESCRIPTION"].sort());
     });
 
-    it('should return only the valid sections (on the schema) updated since the previous assessment', async () => {
+    it("should return only the valid sections (on the schema) updated since the previous assessment", async () => {
       await new InnovationSectionBuilder(em)
         .setInnovation(innovation.id)
-        .setSection('OLD_SECTION' as any)
+        .setSection("OLD_SECTION" as any)
         .setStatus(InnovationSectionStatusEnum.SUBMITTED)
         .save();
 
       const res = await sut.getSectionsUpdatedSincePreviousAssessment(innovation.assessment.id, em);
-      expect(res.sort()).toEqual(['COST_OF_INNOVATION', 'INNOVATION_DESCRIPTION'].sort());
+      expect(res.sort()).toEqual(["COST_OF_INNOVATION", "INNOVATION_DESCRIPTION"].sort());
     });
 
     // This test is not possible since it leverages the temporal tables feature of SQL Server.
@@ -257,42 +257,42 @@ describe('Innovation Assessments Suite', () => {
       await em.update(
         InnovationAssessmentEntity,
         { id: innovation.previousAssessment.id },
-        { finishedAt: '2024-01-01' }
+        { finishedAt: "2024-01-01" }
       );
-      await em.update(InnovationAssessmentEntity, { id: innovation.assessment.id }, { finishedAt: '2024-02-01' });
+      await em.update(InnovationAssessmentEntity, { id: innovation.assessment.id }, { finishedAt: "2024-02-01" });
       await em.update(
         InnovationSectionEntity,
-        { innovation: { id: innovation.id }, section: 'INNOVATION_DESCRIPTION' },
-        { updatedAt: '2024-01-15' }
+        { innovation: { id: innovation.id }, section: "INNOVATION_DESCRIPTION" },
+        { updatedAt: "2024-01-15" }
       );
       await em.update(
         InnovationSectionEntity,
-        { innovation: { id: innovation.id }, section: 'COST_OF_INNOVATION' },
-        { updatedAt: '2024-02-15' }
+        { innovation: { id: innovation.id }, section: "COST_OF_INNOVATION" },
+        { updatedAt: "2024-02-15" }
       );
       const res = await sut.getSectionsUpdatedSincePreviousAssessment(innovation.assessment.id, em);
-      expect(res).toEqual(['INNOVATION_DESCRIPTION']);
+      expect(res).toEqual(["INNOVATION_DESCRIPTION"]);
     });
 
-    it('should return an empty array if there is no previous assessment', async () => {
+    it("should return an empty array if there is no previous assessment", async () => {
       const res = await sut.getSectionsUpdatedSincePreviousAssessment(innovation.previousAssessment.id, em);
       expect(res).toEqual([]);
     });
 
     // This test is not possible since it leverages the temporal tables feature of SQL Server.
-    it.skip('should return an empty array if there are no sections updated since the previous assessment', async () => {
-      await em.update(InnovationSectionEntity, { innovation: { id: innovation.id } }, { updatedAt: '2022-01-01' });
+    it.skip("should return an empty array if there are no sections updated since the previous assessment", async () => {
+      await em.update(InnovationSectionEntity, { innovation: { id: innovation.id } }, { updatedAt: "2022-01-01" });
       const res = await sut.getSectionsUpdatedSincePreviousAssessment(innovation.assessment.id, em);
       expect(res).toEqual([]);
     });
   });
 
-  describe('createInnovationAssessment', () => {
-    it('should create an assessment', async () => {
+  describe("createInnovationAssessment", () => {
+    it("should create an assessment", async () => {
       const assessment = await sut.createInnovationAssessment(
         DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
         innovationWithoutAssessment.id,
-        { message: 'test assessment' },
+        { message: "test assessment" },
         em
       );
 
@@ -302,39 +302,39 @@ describe('Innovation Assessments Suite', () => {
       expect(dbAssessment).toBeDefined();
     });
 
-    it('should not create an innovation assessment if one already exists', async () => {
+    it("should not create an innovation assessment if one already exists", async () => {
       await expect(() =>
         sut.createInnovationAssessment(
           DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
           innovationWithAssessment.id,
-          { message: 'test assessment' },
+          { message: "test assessment" },
           em
         )
       ).rejects.toThrow(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_ALREADY_EXISTS));
     });
 
-    it('should update the innovation current assessment', async () => {
+    it("should update the innovation current assessment", async () => {
       const assessment = await sut.createInnovationAssessment(
         DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
         innovationWithoutAssessment.id,
-        { message: 'test assessment' },
+        { message: "test assessment" },
         em
       );
 
       const innovation = await em
         .getRepository(InnovationEntity)
-        .findOne({ where: { id: innovationWithoutAssessment.id }, relations: ['currentAssessment'] });
+        .findOne({ where: { id: innovationWithoutAssessment.id }, relations: ["currentAssessment"] });
 
       expect(innovation?.currentAssessment?.id).toBe(assessment.id);
     });
   });
 
-  describe('editInnovationAssessment', () => {
-    it('should create a new assessment when editing an assessment', async () => {
+  describe("editInnovationAssessment", () => {
+    it("should create a new assessment when editing an assessment", async () => {
       const assessment = await sut.editInnovationAssessment(
         DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
         innovationWithAssessment.id,
-        { reason: 'test edit assessment' },
+        { reason: "test edit assessment" },
         em
       );
 
@@ -344,39 +344,39 @@ describe('Innovation Assessments Suite', () => {
       expect(dbAssessment).toBeDefined();
     });
 
-    it('should not edit assessment if the assessment does not exist', async () => {
+    it("should not edit assessment if the assessment does not exist", async () => {
       await expect(
         async () =>
           await sut.editInnovationAssessment(
             DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
             innovationWithoutAssessment.id,
-            { reason: 'test edit assessment' },
+            { reason: "test edit assessment" },
             em
           )
       ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND));
     });
 
-    it('should not edit assessment if assessment is not submitted', async () => {
+    it("should not edit assessment if assessment is not submitted", async () => {
       await expect(
         sut.editInnovationAssessment(
           DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
           innovationWithAssessmentInProgress.id,
-          { reason: 'test edit assessment' },
+          { reason: "test edit assessment" },
           em
         )
       ).rejects.toThrow(new ConflictError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_SUBMITTED));
     });
   });
 
-  describe('updateInnovationAssessment', () => {
-    it('should update an assessment', async () => {
+  describe("updateInnovationAssessment", () => {
+    it("should update an assessment", async () => {
       const assessment = innovationWithAssessmentInProgress.assessmentInProgress;
 
       const updatedAssessment = await sut.updateInnovationAssessment(
         DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
         innovationWithAssessmentInProgress.id,
         assessment.id,
-        { summary: 'test update assessment' },
+        { summary: "test update assessment" },
         em
       );
 
@@ -385,10 +385,10 @@ describe('Innovation Assessments Suite', () => {
         .findOne({ where: { id: updatedAssessment.id } });
 
       expect(updatedAssessment.id).toBe(assessment.id);
-      expect(dbUpdatedAssessment?.summary).toBe('test update assessment');
+      expect(dbUpdatedAssessment?.summary).toBe("test update assessment");
     });
 
-    it('should not update a finished assessment', async () => {
+    it("should not update a finished assessment", async () => {
       const assessment = innovationWithAssessment.assessment;
 
       await expect(
@@ -396,39 +396,39 @@ describe('Innovation Assessments Suite', () => {
           DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
           innovationWithAssessment.id,
           assessment.id,
-          { summary: 'test update assessment' },
+          { summary: "test update assessment" },
           em
         )
       ).rejects.toThrow(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_ALREADY_SUBMITTED));
     });
 
-    it('should not update assessment if the innovation does not exist', async () => {
+    it("should not update assessment if the innovation does not exist", async () => {
       await expect(
         async () =>
           await sut.updateInnovationAssessment(
             DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
             randomUUID(),
             innovationWithAssessment.id,
-            { summary: 'test update assessment' },
+            { summary: "test update assessment" },
             em
           )
       ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND));
     });
 
-    it('should not update assessment if the assessment does not exist', async () => {
+    it("should not update assessment if the assessment does not exist", async () => {
       await expect(
         async () =>
           await sut.updateInnovationAssessment(
             DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
             innovationWithAssessment.id,
             randomUUID(),
-            { summary: 'test update assessment' },
+            { summary: "test update assessment" },
             em
           )
       ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND));
     });
 
-    it('should not update assessment if the suggestions were removed', async () => {
+    it("should not update assessment if the suggestions were removed", async () => {
       const innovation = innovationWithAssessmentInProgress;
 
       await sut.updateInnovationAssessment(
@@ -453,7 +453,7 @@ describe('Innovation Assessments Suite', () => {
       ).rejects.toThrow(new ConflictError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_SUGGESTIONS_CANT_BE_REMOVED));
     });
 
-    it('should submit an assessment', async () => {
+    it("should submit an assessment", async () => {
       const assessment = innovationWithAssessmentInProgress.assessmentInProgress;
 
       const updatedAssessment = await sut.updateInnovationAssessment(
@@ -463,7 +463,7 @@ describe('Innovation Assessments Suite', () => {
         {
           isSubmission: true,
           suggestedOrganisationUnitsIds: [scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id],
-          summary: 'test update assessment'
+          summary: "test update assessment"
         },
         em
       );
@@ -479,7 +479,7 @@ describe('Innovation Assessments Suite', () => {
       });
     });
 
-    it('should save a reassessment', async () => {
+    it("should save a reassessment", async () => {
       await new InnovationReassessmentRequestBuilder(em)
         .setAssessment(innovationWithAssessment.assessment)
         .setInnovation(innovationWithAssessment)
@@ -503,7 +503,7 @@ describe('Innovation Assessments Suite', () => {
       expect(dbUpdatedInnovation?.status).toBe(InnovationStatusEnum.NEEDS_ASSESSMENT);
     });
 
-    it('should submit a reassessment', async () => {
+    it("should submit a reassessment", async () => {
       await new InnovationReassessmentRequestBuilder(em)
         .setAssessment(innovationWithAssessment.assessment)
         .setInnovation(innovationWithAssessment)
@@ -521,7 +521,7 @@ describe('Innovation Assessments Suite', () => {
             scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
             scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.id
           ],
-          summary: 'test update assessment'
+          summary: "test update assessment"
         },
         em
       );
@@ -537,7 +537,7 @@ describe('Innovation Assessments Suite', () => {
       });
     });
 
-    it('should create support for suggested units', async () => {
+    it("should create support for suggested units", async () => {
       const assessment = innovationWithAssessmentInProgress.assessmentInProgress;
       const context = DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor);
 
@@ -551,7 +551,7 @@ describe('Innovation Assessments Suite', () => {
             scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
             scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id
           ],
-          summary: 'test update assessment'
+          summary: "test update assessment"
         },
         em
       );
@@ -568,7 +568,7 @@ describe('Innovation Assessments Suite', () => {
       );
     });
 
-    it('should create support for only new suggested units', async () => {
+    it("should create support for only new suggested units", async () => {
       const na = scenario.users.paulNeedsAssessor;
       // Create a edit reassessment
       const assessment = await new InnovationAssessmentBuilder(em)
@@ -590,7 +590,7 @@ describe('Innovation Assessments Suite', () => {
             scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
             scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id
           ],
-          summary: 'test update assessment'
+          summary: "test update assessment"
         },
         em
       );
@@ -604,7 +604,7 @@ describe('Innovation Assessments Suite', () => {
       );
     });
 
-    it('should throw error if submitting an assessment without suggestions', async () => {
+    it("should throw error if submitting an assessment without suggestions", async () => {
       const assessment = innovationWithAssessmentInProgress.assessmentInProgress;
       const context = DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor);
 
@@ -615,14 +615,14 @@ describe('Innovation Assessments Suite', () => {
           assessment.id,
           {
             isSubmission: true,
-            summary: 'test update assessment'
+            summary: "test update assessment"
           },
           em
         )
       ).rejects.toThrow(new BadRequestError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_SUBMISSION_NO_SUGGESTIONS));
     });
 
-    it('should fail if submitting a assessment without summary', async () => {
+    it("should fail if submitting a assessment without summary", async () => {
       const assessment = innovationWithAssessmentInProgress.assessmentInProgress;
       const context = DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor);
 
@@ -641,8 +641,8 @@ describe('Innovation Assessments Suite', () => {
     });
   });
 
-  describe('createInnovationReassessment', () => {
-    it('should create a ressessment', async () => {
+  describe("createInnovationReassessment", () => {
+    it("should create a ressessment", async () => {
       await em.update(
         InnovationSupportEntity,
         { innovation: { id: innovationWithAssessment.id } },
@@ -651,22 +651,22 @@ describe('Innovation Assessments Suite', () => {
       const innovationReassessment = await sut.createInnovationReassessment(
         DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
         innovationWithAssessment.id,
-        { reassessmentReason: ['NO_SUPPORT'], description: randText(), whatSupportDoYouNeed: randText() },
+        { reassessmentReason: ["NO_SUPPORT"], description: randText(), whatSupportDoYouNeed: randText() },
         em
       );
 
       const bdReassessment = await em
-        .createQueryBuilder(InnovationReassessmentRequestEntity, 'reassessment')
-        .leftJoinAndSelect('reassessment.assessment', 'assessment')
-        .where('reassessment.id = :reassessmentId', {
+        .createQueryBuilder(InnovationReassessmentRequestEntity, "reassessment")
+        .leftJoinAndSelect("reassessment.assessment", "assessment")
+        .where("reassessment.id = :reassessmentId", {
           reassessmentId: innovationReassessment.reassessment.id
         })
         .getOneOrFail();
 
       const dbInnovation = await em
-        .createQueryBuilder(InnovationEntity, 'innovation')
-        .select(['innovation.id', 'innovation.current_major_assessment_id'])
-        .where('innovation.id = :innovationId', { innovationId: innovationWithAssessment.id })
+        .createQueryBuilder(InnovationEntity, "innovation")
+        .select(["innovation.id", "innovation.current_major_assessment_id"])
+        .where("innovation.id = :innovationId", { innovationId: innovationWithAssessment.id })
         .getRawOne();
 
       expect(innovationReassessment).toEqual({
@@ -676,51 +676,51 @@ describe('Innovation Assessments Suite', () => {
       expect(dbInnovation.current_major_assessment_id).toBe(bdReassessment.assessment.id);
     });
 
-    it('should not create a reassessment if the innovation has no assessment', async () => {
+    it("should not create a reassessment if the innovation has no assessment", async () => {
       await expect(async () =>
         sut.createInnovationReassessment(
           DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
           innovationWithoutAssessment.id,
-          { reassessmentReason: ['NO_SUPPORT'], description: randText(), whatSupportDoYouNeed: randText() },
+          { reassessmentReason: ["NO_SUPPORT"], description: randText(), whatSupportDoYouNeed: randText() },
           em
         )
       ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND));
     });
 
-    it('should not create a reassessment if the innovation is in archived status and user is a collaborator', async () => {
+    it("should not create a reassessment if the innovation is in archived status and user is a collaborator", async () => {
       await expect(async () =>
         sut.createInnovationReassessment(
           DTOsHelper.getUserRequestContext(scenario.users.janeInnovator),
           innovationWithArchivedStatus.id,
-          { reassessmentReason: ['NO_SUPPORT'], description: randText(), whatSupportDoYouNeed: randText() },
+          { reassessmentReason: ["NO_SUPPORT"], description: randText(), whatSupportDoYouNeed: randText() },
           em
         )
       ).rejects.toThrow(new ForbiddenError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_MUST_BE_OWNER));
     });
 
-    it('should not create a reassessment if the innovation has ongoing supports when req by innov', async () => {
+    it("should not create a reassessment if the innovation has ongoing supports when req by innov", async () => {
       await expect(async () =>
         sut.createInnovationReassessment(
           DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
           innovationWithAssessment.id,
-          { reassessmentReason: ['NO_SUPPORT'], description: randText(), whatSupportDoYouNeed: randText() },
+          { reassessmentReason: ["NO_SUPPORT"], description: randText(), whatSupportDoYouNeed: randText() },
           em
         )
       ).rejects.toThrow(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_CANNOT_REQUEST_REASSESSMENT));
     });
 
-    it('should not create a reassessment if the innovation is not in progress when req by NA', async () => {
+    it("should not create a reassessment if the innovation is not in progress when req by NA", async () => {
       await expect(async () =>
         sut.createInnovationReassessment(
           DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
           innovationWithArchivedStatus.id,
-          { reassessmentReason: ['NO_SUPPORT'], description: randText(), whatSupportDoYouNeed: randText() },
+          { reassessmentReason: ["NO_SUPPORT"], description: randText(), whatSupportDoYouNeed: randText() },
           em
         )
       ).rejects.toThrow(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_CANNOT_REQUEST_REASSESSMENT));
     });
 
-    it('should create a reassessment if the innovation has ongoing supports when req by NA', async () => {
+    it("should create a reassessment if the innovation has ongoing supports when req by NA", async () => {
       await em.update(
         InnovationSupportEntity,
         { innovation: { id: innovationWithAssessment.id } },
@@ -729,14 +729,14 @@ describe('Innovation Assessments Suite', () => {
       const innovationReassessment = await sut.createInnovationReassessment(
         DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
         innovationWithAssessment.id,
-        { reassessmentReason: ['NO_SUPPORT'], description: randText(), whatSupportDoYouNeed: randText() },
+        { reassessmentReason: ["NO_SUPPORT"], description: randText(), whatSupportDoYouNeed: randText() },
         em
       );
 
       const bdReassessment = await em
-        .createQueryBuilder(InnovationReassessmentRequestEntity, 'reassessment')
-        .leftJoinAndSelect('reassessment.assessment', 'assessment')
-        .where('reassessment.id = :reassessmentId', {
+        .createQueryBuilder(InnovationReassessmentRequestEntity, "reassessment")
+        .leftJoinAndSelect("reassessment.assessment", "assessment")
+        .where("reassessment.id = :reassessmentId", {
           reassessmentId: innovationReassessment.reassessment.id
         })
         .getOne();
@@ -746,8 +746,8 @@ describe('Innovation Assessments Suite', () => {
         reassessment: { id: bdReassessment?.id }
       });
     });
-    it.each(['finishedAt', 'assignTo', 'exemptedAt', 'exemptedReason', 'exemptedMessage'] as const)(
-      'should not include field %s from previous assessment',
+    it.each(["finishedAt", "assignTo", "exemptedAt", "exemptedReason", "exemptedMessage"] as const)(
+      "should not include field %s from previous assessment",
       async field => {
         await em.update(
           InnovationSupportEntity,
@@ -757,14 +757,14 @@ describe('Innovation Assessments Suite', () => {
         const innovationReassessment = await sut.createInnovationReassessment(
           DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
           innovationWithAssessment.id,
-          { reassessmentReason: ['NO_SUPPORT'], description: randText(), whatSupportDoYouNeed: randText() },
+          { reassessmentReason: ["NO_SUPPORT"], description: randText(), whatSupportDoYouNeed: randText() },
           em
         );
 
         const bdReassessment = await em
-          .createQueryBuilder(InnovationReassessmentRequestEntity, 'reassessment')
-          .leftJoinAndSelect('reassessment.assessment', 'assessment')
-          .where('reassessment.id = :reassessmentId', {
+          .createQueryBuilder(InnovationReassessmentRequestEntity, "reassessment")
+          .leftJoinAndSelect("reassessment.assessment", "assessment")
+          .where("reassessment.id = :reassessmentId", {
             reassessmentId: innovationReassessment.reassessment.id
           })
           .getOne();
@@ -773,7 +773,7 @@ describe('Innovation Assessments Suite', () => {
       }
     );
 
-    it('should keep the previous assessment', async () => {
+    it("should keep the previous assessment", async () => {
       await em.update(
         InnovationSupportEntity,
         { innovation: { id: innovationWithAssessment.id } },
@@ -783,7 +783,7 @@ describe('Innovation Assessments Suite', () => {
       const { assessment } = await sut.createInnovationReassessment(
         DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
         innovationWithAssessment.id,
-        { reassessmentReason: ['NO_SUPPORT'], description: randText(), whatSupportDoYouNeed: randText() },
+        { reassessmentReason: ["NO_SUPPORT"], description: randText(), whatSupportDoYouNeed: randText() },
         em
       );
 
@@ -791,7 +791,7 @@ describe('Innovation Assessments Suite', () => {
       expect(dbAssessment?.deletedAt).toBe(null);
     });
 
-    it('should update the innovation current assessment', async () => {
+    it("should update the innovation current assessment", async () => {
       await em.update(
         InnovationSupportEntity,
         { innovation: { id: innovationWithAssessment.id } },
@@ -801,17 +801,17 @@ describe('Innovation Assessments Suite', () => {
       const { assessment } = await sut.createInnovationReassessment(
         DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
         innovationWithAssessment.id,
-        { reassessmentReason: ['NO_SUPPORT'], description: randText(), whatSupportDoYouNeed: randText() },
+        { reassessmentReason: ["NO_SUPPORT"], description: randText(), whatSupportDoYouNeed: randText() },
         em
       );
 
       const dbInnovation = await em
         .getRepository(InnovationEntity)
-        .findOne({ where: { id: innovationWithAssessment.id }, relations: ['currentAssessment'] });
+        .findOne({ where: { id: innovationWithAssessment.id }, relations: ["currentAssessment"] });
       expect(dbInnovation?.currentAssessment?.id).toBe(assessment.id);
     });
 
-    it('should link the previous assessment', async () => {
+    it("should link the previous assessment", async () => {
       await em.update(
         InnovationSupportEntity,
         { innovation: { id: innovationWithAssessment.id } },
@@ -821,19 +821,19 @@ describe('Innovation Assessments Suite', () => {
       const { assessment } = await sut.createInnovationReassessment(
         DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
         innovationWithAssessment.id,
-        { reassessmentReason: ['NO_SUPPORT'], description: randText(), whatSupportDoYouNeed: randText() },
+        { reassessmentReason: ["NO_SUPPORT"], description: randText(), whatSupportDoYouNeed: randText() },
         em
       );
 
       const dbAssessment = await em
         .getRepository(InnovationAssessmentEntity)
-        .findOne({ where: { id: assessment.id }, relations: ['previousAssessment'] });
+        .findOne({ where: { id: assessment.id }, relations: ["previousAssessment"] });
       expect(dbAssessment?.previousAssessment?.id).toBe(innovationWithAssessment.assessment.id);
     });
   });
 
-  describe('updateAssessor', () => {
-    it('should update the assigned assessor', async () => {
+  describe("updateAssessor", () => {
+    it("should update the assigned assessor", async () => {
       const newAssessor = scenario.users.seanNeedsAssessor;
       const result = await sut.updateAssessor(
         DTOsHelper.getUserRequestContext(newAssessor),
@@ -849,7 +849,7 @@ describe('Innovation Assessments Suite', () => {
       });
     });
 
-    it('should not update assessor if the new assessor does not exist', async () => {
+    it("should not update assessor if the new assessor does not exist", async () => {
       await expect(() =>
         sut.updateAssessor(
           DTOsHelper.getUserRequestContext(scenario.users.seanNeedsAssessor),
@@ -861,7 +861,7 @@ describe('Innovation Assessments Suite', () => {
       ).rejects.toThrow(new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND));
     });
 
-    it('should not update assessor if the innovation has no assessment', async () => {
+    it("should not update assessor if the innovation has no assessment", async () => {
       const newAssessor = scenario.users.seanNeedsAssessor;
       await expect(() =>
         sut.updateAssessor(
@@ -875,26 +875,26 @@ describe('Innovation Assessments Suite', () => {
     });
   });
 
-  describe('upsertExemption', () => {
+  describe("upsertExemption", () => {
     const assessment = scenario.users.johnInnovator.innovations.johnInnovation.assessment;
     const paulNeedsAssessor = scenario.users.paulNeedsAssessor;
 
-    it('should create an exemption request for the first time', async () => {
+    it("should create an exemption request for the first time", async () => {
       const data = {
-        reason: 'TECHNICAL_DIFFICULTIES' as InnovationAssessmentKPIExemptionType,
+        reason: "TECHNICAL_DIFFICULTIES" as InnovationAssessmentKPIExemptionType,
         message: randText()
       };
 
       await sut.upsertExemption(
-        DTOsHelper.getUserRequestContext(paulNeedsAssessor, 'assessmentRole'),
+        DTOsHelper.getUserRequestContext(paulNeedsAssessor, "assessmentRole"),
         assessment.id,
         data,
         em
       );
 
       const dbAssessment = await em
-        .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
-        .where('assessment.id = :assessmentId', { assessmentId: assessment.id })
+        .createQueryBuilder(InnovationAssessmentEntity, "assessment")
+        .where("assessment.id = :assessmentId", { assessmentId: assessment.id })
         .getOne();
 
       expect(dbAssessment).toMatchObject({
@@ -907,7 +907,7 @@ describe('Innovation Assessments Suite', () => {
 
     it("should update an exemption request and don't update the exemptedAt date", async () => {
       const oldData = {
-        reason: 'TECHNICAL_DIFFICULTIES' as InnovationAssessmentKPIExemptionType,
+        reason: "TECHNICAL_DIFFICULTIES" as InnovationAssessmentKPIExemptionType,
         message: randText(),
         date: new Date()
       };
@@ -917,17 +917,17 @@ describe('Innovation Assessments Suite', () => {
         { exemptedReason: oldData.reason, exemptedMessage: randText(), exemptedAt: oldData.date }
       );
 
-      const data = { reason: 'TECHNICAL_DIFFICULTIES' as InnovationAssessmentKPIExemptionType };
+      const data = { reason: "TECHNICAL_DIFFICULTIES" as InnovationAssessmentKPIExemptionType };
       await sut.upsertExemption(
-        DTOsHelper.getUserRequestContext(paulNeedsAssessor, 'assessmentRole'),
+        DTOsHelper.getUserRequestContext(paulNeedsAssessor, "assessmentRole"),
         assessment.id,
         data,
         em
       );
 
       const dbAssessment = await em
-        .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
-        .where('assessment.id = :assessmentId', { assessmentId: assessment.id })
+        .createQueryBuilder(InnovationAssessmentEntity, "assessment")
+        .where("assessment.id = :assessmentId", { assessmentId: assessment.id })
         .getOne();
 
       expect(dbAssessment).toMatchObject({
@@ -941,21 +941,21 @@ describe('Innovation Assessments Suite', () => {
     it("should return an NotFoundError when an assessment doesn't exist", async () => {
       await expect(() =>
         sut.upsertExemption(
-          DTOsHelper.getUserRequestContext(paulNeedsAssessor, 'assessmentRole'),
+          DTOsHelper.getUserRequestContext(paulNeedsAssessor, "assessmentRole"),
           randUuid(),
-          { reason: 'SERVICE_UNAVAILABLE' },
+          { reason: "SERVICE_UNAVAILABLE" },
           em
         )
       ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND));
     });
   });
 
-  describe('getExemption', () => {
+  describe("getExemption", () => {
     const assessment = scenario.users.johnInnovator.innovations.johnInnovation.assessment;
 
-    it('should return the exemption info and isExempted as true', async () => {
+    it("should return the exemption info and isExempted as true", async () => {
       const expected = {
-        reason: 'INCORRECT_DETAILS' as InnovationAssessmentKPIExemptionType,
+        reason: "INCORRECT_DETAILS" as InnovationAssessmentKPIExemptionType,
         message: randText(),
         exemptedAt: new Date()
       };
@@ -973,7 +973,7 @@ describe('Innovation Assessments Suite', () => {
       });
     });
 
-    it('should not return the exemption info and isExempted as false', async () => {
+    it("should not return the exemption info and isExempted as false", async () => {
       const exemption = await sut.getExemption(assessment.id, em);
 
       expect(exemption).toStrictEqual({

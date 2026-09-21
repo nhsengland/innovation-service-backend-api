@@ -1,7 +1,7 @@
-import Joi from 'joi';
-import type { DocumentExportInboundDataType } from '../_services/export-file-service';
-import { DocumentExportBodySchema } from '../_services/export-file-service';
-import { JoiHelper } from '@innovations/shared/helpers';
+import Joi from "joi";
+import type { DocumentExportInboundDataType } from "../_services/export-file-service";
+import { DocumentExportBodySchema } from "../_services/export-file-service";
+import { JoiHelper } from "@innovations/shared/helpers";
 
 export type ParamsType = {
   innovationId: string;

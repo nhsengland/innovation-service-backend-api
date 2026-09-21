@@ -1,5 +1,5 @@
-import { InnovationCollaboratorStatusEnum } from '@innovations/shared/enums';
-import Joi from 'joi';
+import { InnovationCollaboratorStatusEnum } from "@innovations/shared/enums";
+import Joi from "joi";
 
 export type ResponseDTO = {
   userExists: boolean;

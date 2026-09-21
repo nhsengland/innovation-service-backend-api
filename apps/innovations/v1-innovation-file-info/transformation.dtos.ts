@@ -1,5 +1,5 @@
-import { InnovationFileContextTypeEnum, ServiceRoleEnum } from '@innovations/shared/enums';
-import Joi from 'joi';
+import { InnovationFileContextTypeEnum, ServiceRoleEnum } from "@innovations/shared/enums";
+import Joi from "joi";
 
 export type ResponseDTO = {
   id: string;

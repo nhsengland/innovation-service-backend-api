@@ -1,6 +1,6 @@
-import { ActivityEnum, ActivityTypeEnum } from '@innovations/shared/enums';
-import type { ActivityLogListParamsType } from '@innovations/shared/types';
-import Joi from 'joi';
+import { ActivityEnum, ActivityTypeEnum } from "@innovations/shared/enums";
+import type { ActivityLogListParamsType } from "@innovations/shared/types";
+import Joi from "joi";
 
 export type ResponseDTO = {
   count: number;

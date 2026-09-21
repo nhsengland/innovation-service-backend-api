@@ -1,18 +1,18 @@
-import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
-import type { AzureFunction, HttpRequest } from '@azure/functions';
+import { mapOpenApi3 as openApi } from "@aaronpowell/azure-functions-nodejs-openapi";
+import type { AzureFunction, HttpRequest } from "@azure/functions";
 
-import { ElasticSearchDocumentUpdate, JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
-import type { AuthorizationService } from '@innovations/shared/services';
-import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import type { CustomContextType } from '@innovations/shared/types';
+import { ElasticSearchDocumentUpdate, JwtDecoder } from "@innovations/shared/decorators";
+import { JoiHelper, ResponseHelper, SwaggerHelper } from "@innovations/shared/helpers";
+import type { AuthorizationService } from "@innovations/shared/services";
+import SHARED_SYMBOLS from "@innovations/shared/services/symbols";
+import type { CustomContextType } from "@innovations/shared/types";
 
-import { container } from '../_config';
+import { container } from "../_config";
 
-import type { InnovationsService } from '../_services/innovations.service';
-import SYMBOLS from '../_services/symbols';
-import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
-import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
+import type { InnovationsService } from "../_services/innovations.service";
+import SYMBOLS from "../_services/symbols";
+import { ResponseBodySchema, type ResponseDTO } from "./transformation.dtos";
+import { BodySchema, BodyType, ParamsSchema, ParamsType } from "./validation.schemas";
 
 class V1InnovationSharesUpdate {
   @JwtDecoder()
@@ -44,29 +44,29 @@ class V1InnovationSharesUpdate {
   }
 }
 
-export default openApi(V1InnovationSharesUpdate.httpTrigger as AzureFunction, '/v1/{innovationId}/shares', {
+export default openApi(V1InnovationSharesUpdate.httpTrigger as AzureFunction, "/v1/{innovationId}/shares", {
   put: {
-    description: 'Update the shares for an innovation.',
-    tags: ['Innovation'],
-    summary: 'Update all the shares for an innovation.',
-    operationId: 'v1-innovation-shares-update',
+    description: "Update the shares for an innovation.",
+    tags: ["Innovation"],
+    summary: "Update all the shares for an innovation.",
+    operationId: "v1-innovation-shares-update",
     parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     requestBody: SwaggerHelper.bodyJ2S(BodySchema),
     responses: {
       200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
-        description: 'OK'
+        description: "OK"
       }),
       401: {
-        description: 'Unauthorized'
+        description: "Unauthorized"
       },
       403: {
-        description: 'Forbidden'
+        description: "Forbidden"
       },
       404: {
-        description: 'Not Found'
+        description: "Not Found"
       },
       500: {
-        description: 'Internal Server Error'
+        description: "Internal Server Error"
       }
     }
   }

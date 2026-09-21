@@ -1,5 +1,5 @@
-import { InnovationSupportStatusEnum } from '@innovations/shared/enums';
-import Joi from 'joi';
+import { InnovationSupportStatusEnum } from "@innovations/shared/enums";
+import Joi from "joi";
 
 export type ResponseDTO = {
   id: string;

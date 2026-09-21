@@ -1,14 +1,14 @@
-import azureFunction from '.';
+import azureFunction from ".";
 
-import { InnovationGroupedStatusEnum, ServiceRoleEnum } from '@innovations/shared/enums';
-import { AzureHttpTriggerBuilder, TestsHelper } from '@innovations/shared/tests';
-import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
-import type { ErrorResponseType } from '@innovations/shared/types';
-import { randProductName, randUuid } from '@ngneat/falso';
-import { InnovationsService } from '../_services/innovations.service';
-import type { ResponseDTO } from './transformation.dtos';
+import { InnovationGroupedStatusEnum, ServiceRoleEnum } from "@innovations/shared/enums";
+import { AzureHttpTriggerBuilder, TestsHelper } from "@innovations/shared/tests";
+import type { TestUserType } from "@innovations/shared/tests/builders/user.builder";
+import type { ErrorResponseType } from "@innovations/shared/types";
+import { randProductName, randUuid } from "@ngneat/falso";
+import { InnovationsService } from "../_services/innovations.service";
+import type { ResponseDTO } from "./transformation.dtos";
 
-jest.mock('@innovations/shared/decorators', () => ({
+jest.mock("@innovations/shared/decorators", () => ({
   JwtDecoder: jest.fn().mockImplementation(() => (_: any, __: string, descriptor: PropertyDescriptor) => {
     return descriptor;
   }),
@@ -39,19 +39,19 @@ const expected = {
     }
   ]
 };
-const mock = jest.spyOn(InnovationsService.prototype, 'getInnovationsList').mockResolvedValue(expected as any);
+const mock = jest.spyOn(InnovationsService.prototype, "getInnovationsList").mockResolvedValue(expected as any);
 
 afterEach(() => {
   jest.clearAllMocks();
 });
 
-describe('v1-innovations-list Suite', () => {
-  describe('200', () => {
-    it('should return the innovations', async () => {
+describe("v1-innovations-list Suite", () => {
+  describe("200", () => {
+    it("should return the innovations", async () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.aliceQualifyingAccessor)
         .setQuery({
-          fields: 'id,name,groupedStatus'
+          fields: "id,name,groupedStatus"
         })
         .call<ResponseDTO>(azureFunction);
 
@@ -61,41 +61,41 @@ describe('v1-innovations-list Suite', () => {
     });
   });
 
-  describe('400', () => {
-    it('should return bad request on invalid parameters', async () => {
+  describe("400", () => {
+    it("should return bad request on invalid parameters", async () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.aliceQualifyingAccessor)
-        .setQuery({ invalid: 'invalid' })
+        .setQuery({ invalid: "invalid" })
         .call<ResponseDTO>(azureFunction);
 
       expect(result.status).toBe(400);
     });
   });
 
-  describe('Access', () => {
+  describe("Access", () => {
     it.each([
-      ['Admin', 200, scenario.users.allMighty],
-      ['QA', 200, scenario.users.aliceQualifyingAccessor],
-      ['NA', 200, scenario.users.paulNeedsAssessor],
-      ['Innovator owner', 200, scenario.users.johnInnovator],
-      ['Innovator collaborator', 200, scenario.users.janeInnovator]
-    ])('access with user %s should give %i', async (_role: string, status: number, user: TestUserType) => {
+      ["Admin", 200, scenario.users.allMighty],
+      ["QA", 200, scenario.users.aliceQualifyingAccessor],
+      ["NA", 200, scenario.users.paulNeedsAssessor],
+      ["Innovator owner", 200, scenario.users.johnInnovator],
+      ["Innovator collaborator", 200, scenario.users.janeInnovator]
+    ])("access with user %s should give %i", async (_role: string, status: number, user: TestUserType) => {
       const call = await new AzureHttpTriggerBuilder().setAuth(user);
 
       if (user.roles[0]?.role === ServiceRoleEnum.INNOVATOR) {
-        call.setQuery({ fields: 'name', hasAccessThrough: 'owner' });
+        call.setQuery({ fields: "name", hasAccessThrough: "owner" });
       } else {
-        call.setQuery({ fields: 'name' });
+        call.setQuery({ fields: "name" });
       }
       const result = await call.call<ErrorResponseType>(azureFunction);
 
       expect(result.status).toBe(status);
     });
 
-    it('access with user A should give 200', async () => {
+    it("access with user A should give 200", async () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.ingridAccessor)
-        .setQuery({ fields: 'name', supportStatuses: 'ENGAGING' })
+        .setQuery({ fields: "name", supportStatuses: "ENGAGING" })
         .call<ErrorResponseType>(azureFunction);
 
       expect(result.status).toBe(200);

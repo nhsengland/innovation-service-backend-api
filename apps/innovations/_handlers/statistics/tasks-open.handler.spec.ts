@@ -1,11 +1,11 @@
-import { TasksOpenStatisticsHandler } from './tasks-open.handler';
+import { TasksOpenStatisticsHandler } from "./tasks-open.handler";
 
-import { TestsHelper } from '@innovations/shared/tests';
-import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
-import { randPastDate, randUuid } from '@ngneat/falso';
-import { StatisticsService } from '../../_services/statistics.service';
+import { TestsHelper } from "@innovations/shared/tests";
+import { DTOsHelper } from "@innovations/shared/tests/helpers/dtos.helper";
+import { randPastDate, randUuid } from "@ngneat/falso";
+import { StatisticsService } from "../../_services/statistics.service";
 
-describe('Actions To Submit Statistics Handler Suite', () => {
+describe("Actions To Submit Statistics Handler Suite", () => {
   const testsHelper = new TestsHelper();
   const scenario = testsHelper.getCompleteScenario();
 
@@ -15,22 +15,22 @@ describe('Actions To Submit Statistics Handler Suite', () => {
 
   const expected = [
     {
-      section: 'INNOVATION_DESCRIPTION' as const,
+      section: "INNOVATION_DESCRIPTION" as const,
       updatedAt: randPastDate()
     },
     {
-      section: 'INNOVATION_DESCRIPTION' as const,
+      section: "INNOVATION_DESCRIPTION" as const,
       updatedAt: randPastDate()
     }
   ];
-  const mock = jest.spyOn(StatisticsService.prototype, 'getTasks').mockResolvedValue(expected);
+  const mock = jest.spyOn(StatisticsService.prototype, "getTasks").mockResolvedValue(expected);
 
   afterEach(() => {
     jest.clearAllMocks();
   });
 
-  describe('run', () => {
-    it('should return the statistic', async () => {
+  describe("run", () => {
+    it("should return the statistic", async () => {
       const handler = new TasksOpenStatisticsHandler(
         DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
         { innovationId: randUuid() }
@@ -44,7 +44,7 @@ describe('Actions To Submit Statistics Handler Suite', () => {
       expect(mock).toBeCalledTimes(1);
     });
 
-    it('should return the statistic with null values', async () => {
+    it("should return the statistic with null values", async () => {
       mock.mockResolvedValueOnce([]);
       const handler = new TasksOpenStatisticsHandler(
         DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),

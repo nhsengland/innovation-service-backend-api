@@ -1,5 +1,5 @@
-import { inject, injectable } from 'inversify';
-import type { EntityManager, SelectQueryBuilder } from 'typeorm';
+import { inject, injectable } from "inversify";
+import type { EntityManager, SelectQueryBuilder } from "typeorm";
 
 import {
   InnovationEntity,
@@ -10,7 +10,7 @@ import {
   OrganisationUnitEntity,
   UserEntity,
   UserRoleEntity
-} from '@innovations/shared/entities';
+} from "@innovations/shared/entities";
 import {
   ActivityEnum,
   InnovationFileContextTypeEnum,
@@ -18,7 +18,7 @@ import {
   ServiceRoleEnum,
   ThreadContextTypeEnum,
   UserStatusEnum
-} from '@innovations/shared/enums';
+} from "@innovations/shared/enums";
 import {
   BadRequestError,
   ForbiddenError,
@@ -27,21 +27,21 @@ import {
   NotFoundError,
   UnprocessableEntityError,
   UserErrorsEnum
-} from '@innovations/shared/errors';
+} from "@innovations/shared/errors";
 import type {
   DomainService,
   FileStorageService,
   IdentityProviderService,
   NotifierService
-} from '@innovations/shared/services';
-import type { DomainContextType, DomainUserInfoType, IdentityUserInfo } from '@innovations/shared/types';
+} from "@innovations/shared/services";
+import type { DomainContextType, DomainUserInfoType, IdentityUserInfo } from "@innovations/shared/types";
 
-import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
-import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import type { InnovationFileType } from '../_types/innovation.types';
-import { BaseService } from './base.service';
-import type { InnovationFileService } from './innovation-file.service';
-import SYMBOLS from './symbols';
+import type { PaginationQueryParamsType } from "@innovations/shared/helpers";
+import SHARED_SYMBOLS from "@innovations/shared/services/symbols";
+import type { InnovationFileType } from "../_types/innovation.types";
+import { BaseService } from "./base.service";
+import type { InnovationFileService } from "./innovation-file.service";
+import SYMBOLS from "./symbols";
 
 @injectable()
 export class InnovationThreadsService extends BaseService {
@@ -183,11 +183,11 @@ export class InnovationThreadsService extends BaseService {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const dbThread = await em
-      .createQueryBuilder(InnovationThreadEntity, 'thread')
-      .select(['thread', 'followerUserRole.id', 'innovation.id'])
-      .leftJoin('thread.followers', 'followerUserRole')
-      .innerJoin('thread.innovation', 'innovation')
-      .where('thread.id = :threadId', { threadId })
+      .createQueryBuilder(InnovationThreadEntity, "thread")
+      .select(["thread", "followerUserRole.id", "innovation.id"])
+      .leftJoin("thread.followers", "followerUserRole")
+      .innerJoin("thread.innovation", "innovation")
+      .where("thread.id = :threadId", { threadId })
       .getOne();
 
     if (!dbThread) {
@@ -217,9 +217,9 @@ export class InnovationThreadsService extends BaseService {
     const manager = entityManager ?? this.sqlConnection.manager;
 
     const dbThread = await manager
-      .createQueryBuilder(InnovationThreadEntity, 'thread')
-      .leftJoinAndSelect('thread.followers', 'follower')
-      .where('thread.id = :threadId', { threadId })
+      .createQueryBuilder(InnovationThreadEntity, "thread")
+      .leftJoinAndSelect("thread.followers", "follower")
+      .where("thread.id = :threadId", { threadId })
       .getOne();
     if (!dbThread) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND);
@@ -242,9 +242,9 @@ export class InnovationThreadsService extends BaseService {
     await manager
       .createQueryBuilder()
       .delete()
-      .from('innovation_thread_follower')
-      .where('innovation_thread_id = :threadId', { threadId })
-      .andWhere('user_role_id IN (:...userRoleIds)', { userRoleIds: unfollowersRolesIds })
+      .from("innovation_thread_follower")
+      .where("innovation_thread_id = :threadId", { threadId })
+      .andWhere("user_role_id IN (:...userRoleIds)", { userRoleIds: unfollowersRolesIds })
       .execute();
   }
 
@@ -258,10 +258,10 @@ export class InnovationThreadsService extends BaseService {
     await manager
       .createQueryBuilder()
       .delete()
-      .from('innovation_thread_follower')
-      .where('innovation_thread_id = :threadId', { threadId })
+      .from("innovation_thread_follower")
+      .where("innovation_thread_id = :threadId", { threadId })
       .andWhere(
-        'EXISTS(SELECT 1 FROM user_role r WHERE user_role_id=r.id AND r.organisation_unit_id=:organisationUnitId)',
+        "EXISTS(SELECT 1 FROM user_role r WHERE user_role_id=r.id AND r.organisation_unit_id=:organisationUnitId)",
         {
           organisationUnitId
         }
@@ -275,8 +275,8 @@ export class InnovationThreadsService extends BaseService {
     await manager
       .createQueryBuilder()
       .delete()
-      .from('innovation_thread_follower')
-      .where('innovation_thread_id = :threadId', { threadId })
+      .from("innovation_thread_follower")
+      .where("innovation_thread_id = :threadId", { threadId })
       .andWhere("EXISTS(SELECT 1 FROM user_role r WHERE user_role_id=r.id AND r.role='ASSESSMENT')")
       .execute();
   }
@@ -359,9 +359,9 @@ export class InnovationThreadsService extends BaseService {
     }
 
     const author = await connection
-      .createQueryBuilder(UserEntity, 'user')
-      .where('user.id = :userId', { userId: domainContext.id })
-      .andWhere('user.status = :userActive', { userActive: UserStatusEnum.ACTIVE })
+      .createQueryBuilder(UserEntity, "user")
+      .where("user.id = :userId", { userId: domainContext.id })
+      .andWhere("user.status = :userActive", { userActive: UserStatusEnum.ACTIVE })
       .getOne();
 
     if (!author) {
@@ -369,9 +369,9 @@ export class InnovationThreadsService extends BaseService {
     }
 
     const thread = await connection
-      .createQueryBuilder(InnovationThreadEntity, 'threads')
-      .innerJoinAndSelect('threads.innovation', 'innovations')
-      .where('threads.id = :threadId', { threadId })
+      .createQueryBuilder(InnovationThreadEntity, "threads")
+      .innerJoinAndSelect("threads.innovation", "innovations")
+      .where("threads.id = :threadId", { threadId })
       .getOne();
 
     if (!thread) {
@@ -415,7 +415,7 @@ export class InnovationThreadsService extends BaseService {
     sendNotification: boolean,
     isEditable = false,
     transaction: EntityManager
-  ): ReturnType<InnovationThreadsService['createThreadMessage']> {
+  ): ReturnType<InnovationThreadsService["createThreadMessage"]> {
     const thread = await this.getThreadByContextId(contextType, contextId, transaction);
     if (!thread) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND);
@@ -438,12 +438,12 @@ export class InnovationThreadsService extends BaseService {
     payload: { message: string }
   ): Promise<{ id: string }> {
     const message = await this.sqlConnection
-      .createQueryBuilder(InnovationThreadMessageEntity, 'message')
-      .innerJoinAndSelect('message.thread', 'thread')
-      .innerJoinAndSelect('thread.innovation', 'innovation')
-      .innerJoinAndSelect('message.author', 'author')
-      .where('message.id = :messageId', { messageId })
-      .andWhere('author.status = :userActive', { userActive: UserStatusEnum.ACTIVE })
+      .createQueryBuilder(InnovationThreadMessageEntity, "message")
+      .innerJoinAndSelect("message.thread", "thread")
+      .innerJoinAndSelect("thread.innovation", "innovation")
+      .innerJoinAndSelect("message.author", "author")
+      .where("message.id = :messageId", { messageId })
+      .andWhere("author.status = :userActive", { userActive: UserStatusEnum.ACTIVE })
       .getOne();
 
     if (!message) {
@@ -481,19 +481,19 @@ export class InnovationThreadsService extends BaseService {
     };
   }> {
     const thread = await this.sqlConnection
-      .createQueryBuilder(InnovationThreadEntity, 'thread')
+      .createQueryBuilder(InnovationThreadEntity, "thread")
       .select([
-        'thread.id',
-        'thread.subject',
-        'thread.createdAt',
-        'thread.contextType',
-        'thread.contextId',
-        'author.id',
-        'author.identityId',
-        'author.status'
+        "thread.id",
+        "thread.subject",
+        "thread.createdAt",
+        "thread.contextType",
+        "thread.contextId",
+        "author.id",
+        "author.identityId",
+        "author.status"
       ])
-      .leftJoin('thread.author', 'author')
-      .where('thread.id = :threadId', { threadId })
+      .leftJoin("thread.author", "author")
+      .where("thread.id = :threadId", { threadId })
       .getOne();
     if (!thread) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND);
@@ -511,7 +511,7 @@ export class InnovationThreadsService extends BaseService {
       createdAt: thread.createdAt,
       createdBy: {
         id: thread.author.id,
-        name: author ? author?.displayName || 'unknown user' : '[deleted user]'
+        name: author ? author?.displayName || "unknown user" : "[deleted user]"
       }
     };
   }
@@ -522,8 +522,8 @@ export class InnovationThreadsService extends BaseService {
     createdAt: Date;
   }> {
     const message = await this.sqlConnection
-      .createQueryBuilder(InnovationThreadMessageEntity, 'message')
-      .where('message.id = :messageId', { messageId })
+      .createQueryBuilder(InnovationThreadMessageEntity, "message")
+      .where("message.id = :messageId", { messageId })
       .getOneOrFail();
 
     return {
@@ -539,7 +539,7 @@ export class InnovationThreadsService extends BaseService {
     skip = 0,
     take = 10,
     order?: {
-      createdAt?: 'ASC' | 'DESC';
+      createdAt?: "ASC" | "DESC";
     },
     entityManager?: EntityManager
   ): Promise<{
@@ -565,41 +565,41 @@ export class InnovationThreadsService extends BaseService {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const threadMessageQuery = em
-      .createQueryBuilder(InnovationThreadMessageEntity, 'messages')
+      .createQueryBuilder(InnovationThreadMessageEntity, "messages")
       .select([
-        'messages.id',
-        'messages.message',
-        'messages.isEditable',
-        'messages.createdAt',
-        'messages.updatedAt',
-        'messageAuthor.id',
-        'messageAuthor.identityId',
-        'messageAuthor.status',
-        'authorUserRole.role',
-        'organisation.id',
-        'organisation.acronym',
-        'organisation.name',
-        'organisationUnit.id',
-        'organisationUnit.acronym',
-        'organisationUnit.name',
-        'thread.id',
-        'thread.subject',
-        'thread.author',
-        'users.identityId',
-        'users.status',
-        'innovation.id',
-        'owner.id'
+        "messages.id",
+        "messages.message",
+        "messages.isEditable",
+        "messages.createdAt",
+        "messages.updatedAt",
+        "messageAuthor.id",
+        "messageAuthor.identityId",
+        "messageAuthor.status",
+        "authorUserRole.role",
+        "organisation.id",
+        "organisation.acronym",
+        "organisation.name",
+        "organisationUnit.id",
+        "organisationUnit.acronym",
+        "organisationUnit.name",
+        "thread.id",
+        "thread.subject",
+        "thread.author",
+        "users.identityId",
+        "users.status",
+        "innovation.id",
+        "owner.id"
       ])
-      .leftJoin('messages.author', 'messageAuthor')
-      .leftJoin('messages.authorUserRole', 'authorUserRole')
-      .leftJoin('messages.authorOrganisationUnit', 'organisationUnit')
-      .innerJoin('messages.thread', 'thread')
-      .leftJoin('organisationUnit.organisation', 'organisation')
-      .innerJoin('thread.innovation', 'innovation')
-      .leftJoin('innovation.owner', 'owner')
-      .leftJoin('thread.author', 'users')
-      .where('thread.id = :threadId', { threadId })
-      .orderBy('messages.createdAt', order?.createdAt || 'DESC')
+      .leftJoin("messages.author", "messageAuthor")
+      .leftJoin("messages.authorUserRole", "authorUserRole")
+      .leftJoin("messages.authorOrganisationUnit", "organisationUnit")
+      .innerJoin("messages.thread", "thread")
+      .leftJoin("organisationUnit.organisation", "organisation")
+      .innerJoin("thread.innovation", "innovation")
+      .leftJoin("innovation.owner", "owner")
+      .leftJoin("thread.author", "users")
+      .where("thread.id = :threadId", { threadId })
+      .orderBy("messages.createdAt", order?.createdAt || "DESC")
       .skip(skip)
       .take(take);
 
@@ -624,28 +624,28 @@ export class InnovationThreadsService extends BaseService {
     const notifications = new Set(
       (
         await em
-          .createQueryBuilder(NotificationEntity, 'notification')
-          .select(['notification.params'])
-          .innerJoin('notification.notificationUsers', 'notificationUsers')
-          .where('notification.context_id IN (:...contextIds)', {
+          .createQueryBuilder(NotificationEntity, "notification")
+          .select(["notification.params"])
+          .innerJoin("notification.notificationUsers", "notificationUsers")
+          .where("notification.context_id IN (:...contextIds)", {
             contextIds: messages.map(m => m.thread.id)
           })
-          .andWhere('notificationUsers.user_role_id = :roleId', {
+          .andWhere("notificationUsers.user_role_id = :roleId", {
             roleId: domainContext.currentRole.id
           })
-          .andWhere('notificationUsers.read_at IS NULL')
+          .andWhere("notificationUsers.read_at IS NULL")
           .getMany()
       )
         .filter(Boolean)
-        .map(n => n.params['messageId'])
+        .map(n => n.params["messageId"])
     );
 
     const messageIds = messages.map(m => m.id);
     const files = await em
-      .createQueryBuilder(InnovationFileEntity, 'file')
-      .select(['file.id', 'file.name', 'file.storageId', 'file.filename', 'file.contextId'])
-      .where('file.contextId IN(:...messageIds)', { messageIds })
-      .andWhere('file.contextType = :contextType', { contextType: InnovationFileContextTypeEnum.INNOVATION_MESSAGE })
+      .createQueryBuilder(InnovationFileEntity, "file")
+      .select(["file.id", "file.name", "file.storageId", "file.filename", "file.contextId"])
+      .where("file.contextId IN(:...messageIds)", { messageIds })
+      .andWhere("file.contextType = :contextType", { contextType: InnovationFileContextTypeEnum.INNOVATION_MESSAGE })
       .getMany();
     const filesMap = new Map(files.map(f => [f.contextId, f]));
 
@@ -694,7 +694,7 @@ export class InnovationThreadsService extends BaseService {
       subject?: string;
       following?: boolean;
     },
-    pagination: PaginationQueryParamsType<'subject' | 'messageCount' | 'latestMessageCreatedAt'>,
+    pagination: PaginationQueryParamsType<"subject" | "messageCount" | "latestMessageCreatedAt">,
     entityManager?: EntityManager
   ): Promise<{
     count: number;
@@ -714,11 +714,11 @@ export class InnovationThreadsService extends BaseService {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const countQuery = em
-      .createQueryBuilder(InnovationThreadEntity, 'thread')
-      .where('thread.innovation_id = :innovationId', { innovationId });
+      .createQueryBuilder(InnovationThreadEntity, "thread")
+      .where("thread.innovation_id = :innovationId", { innovationId });
 
     if (filters.subject) {
-      countQuery.andWhere('thread.subject LIKE :subject', { subject: `%${filters.subject}%` });
+      countQuery.andWhere("thread.subject LIKE :subject", { subject: `%${filters.subject}%` });
     }
 
     if (filters.following) {
@@ -731,55 +731,55 @@ export class InnovationThreadsService extends BaseService {
     }
 
     const query = em
-      .createQueryBuilder(InnovationThreadEntity, 'thread')
+      .createQueryBuilder(InnovationThreadEntity, "thread")
       .select([
-        'thread.id as thread_id',
-        'thread.subject as thread_subject',
-        'thread.created_at as thread_created_at',
-        'threadAuthorRole.user_id as thread_author_id',
-        'threadAuthorRole.id as thread_author_role_id',
-        'threadAuthorRole.role as thread_author_role_role',
-        'threadAuthorUnit.id as thread_author_unit_id',
-        'threadAuthorUnit.name as thread_author_unit_name',
-        'innovation.owner_id as innovation_owner_id',
-        'info.nMessages as n_messages',
-        'message.id as message_id',
-        'message.created_at as message_created_at',
-        'messageAuthorRole.user_id as message_author_id',
-        'messageAuthorRole.id as message_author_role_id',
-        'messageAuthorRole.role as message_author_role_role',
-        'messageAuthorUnit.id as message_author_unit_id',
-        'messageAuthorUnit.name as message_author_unit_name',
-        'threadAuthor.jobTitle as thread_author_job_title',
-        'messageAuthor.jobTitle as message_author_job_title'
+        "thread.id as thread_id",
+        "thread.subject as thread_subject",
+        "thread.created_at as thread_created_at",
+        "threadAuthorRole.user_id as thread_author_id",
+        "threadAuthorRole.id as thread_author_role_id",
+        "threadAuthorRole.role as thread_author_role_role",
+        "threadAuthorUnit.id as thread_author_unit_id",
+        "threadAuthorUnit.name as thread_author_unit_name",
+        "innovation.owner_id as innovation_owner_id",
+        "info.nMessages as n_messages",
+        "message.id as message_id",
+        "message.created_at as message_created_at",
+        "messageAuthorRole.user_id as message_author_id",
+        "messageAuthorRole.id as message_author_role_id",
+        "messageAuthorRole.role as message_author_role_role",
+        "messageAuthorUnit.id as message_author_unit_id",
+        "messageAuthorUnit.name as message_author_unit_name",
+        "threadAuthor.jobTitle as thread_author_job_title",
+        "messageAuthor.jobTitle as message_author_job_title"
       ])
-      .innerJoin('thread.innovation', 'innovation')
-      .leftJoin('thread.authorUserRole', 'threadAuthorRole')
-      .leftJoin('threadAuthorRole.user', 'threadAuthor')
-      .leftJoin('threadAuthorRole.organisationUnit', 'threadAuthorUnit')
+      .innerJoin("thread.innovation", "innovation")
+      .leftJoin("thread.authorUserRole", "threadAuthorRole")
+      .leftJoin("threadAuthorRole.user", "threadAuthor")
+      .leftJoin("threadAuthorRole.organisationUnit", "threadAuthorUnit")
       // Get the information needed about Message
-      .innerJoin('thread.messages', 'message')
-      .leftJoin('message.authorUserRole', 'messageAuthorRole')
-      .leftJoin('messageAuthorRole.user', 'messageAuthor')
-      .leftJoin('messageAuthorRole.organisationUnit', 'messageAuthorUnit')
+      .innerJoin("thread.messages", "message")
+      .leftJoin("message.authorUserRole", "messageAuthorRole")
+      .leftJoin("messageAuthorRole.user", "messageAuthor")
+      .leftJoin("messageAuthorRole.organisationUnit", "messageAuthorUnit")
       // Get the latest message from the Thread
       .innerJoin(
         subQuery =>
           subQuery
-            .from(InnovationThreadMessageEntity, 'message')
+            .from(InnovationThreadMessageEntity, "message")
             .select([
-              'message.innovation_thread_id',
-              'MAX(message.createdAt) as latestCreatedAtMessage',
-              'COUNT(*) as nMessages'
+              "message.innovation_thread_id",
+              "MAX(message.createdAt) as latestCreatedAtMessage",
+              "COUNT(*) as nMessages"
             ])
-            .groupBy('message.innovation_thread_id'),
-        'info',
-        'info.innovation_thread_id = thread.id AND info.latestCreatedAtMessage = message.created_at'
+            .groupBy("message.innovation_thread_id"),
+        "info",
+        "info.innovation_thread_id = thread.id AND info.latestCreatedAtMessage = message.created_at"
       )
-      .where('thread.innovation_id = :innovationId', { innovationId });
+      .where("thread.innovation_id = :innovationId", { innovationId });
 
     if (filters.subject) {
-      query.andWhere('thread.subject LIKE :subject', { subject: `%${filters.subject}%` });
+      query.andWhere("thread.subject LIKE :subject", { subject: `%${filters.subject}%` });
     }
 
     if (filters.following) {
@@ -793,17 +793,17 @@ export class InnovationThreadsService extends BaseService {
     for (const [key, order] of Object.entries(pagination.order)) {
       let field: string;
       switch (key) {
-        case 'subject':
-          field = 'thread.subject';
+        case "subject":
+          field = "thread.subject";
           break;
-        case 'messageCount':
-          field = 'info.nMessages';
+        case "messageCount":
+          field = "info.nMessages";
           break;
-        case 'latestMessageCreatedAt':
-          field = 'message.created_at';
+        case "latestMessageCreatedAt":
+          field = "message.created_at";
           break;
         default:
-          field = 'message.created_at';
+          field = "message.created_at";
           break;
       }
       query.addOrderBy(field, order);
@@ -860,9 +860,9 @@ export class InnovationThreadsService extends BaseService {
     transaction: EntityManager
   ): Promise<InnovationThreadEntity | null> {
     const threadQuery = transaction
-      .createQueryBuilder(InnovationThreadEntity, 'thread')
-      .where('thread.context_id = :contextId', { contextId })
-      .andWhere('thread.context_type = :contextType', { contextType });
+      .createQueryBuilder(InnovationThreadEntity, "thread")
+      .where("thread.context_id = :contextId", { contextId })
+      .andWhere("thread.context_type = :contextType", { contextType });
 
     return threadQuery.getOne();
   }
@@ -973,15 +973,15 @@ export class InnovationThreadsService extends BaseService {
     message: InnovationThreadMessageEntity;
   }> {
     const author = await transaction
-      .createQueryBuilder(UserEntity, 'users')
-      .where('users.id = :userId', { userId: domainContext.id })
-      .andWhere('users.status = :userActive', { userActive: UserStatusEnum.ACTIVE })
+      .createQueryBuilder(UserEntity, "users")
+      .where("users.id = :userId", { userId: domainContext.id })
+      .andWhere("users.status = :userActive", { userActive: UserStatusEnum.ACTIVE })
       .getOneOrFail();
 
     const innovation = await transaction
-      .createQueryBuilder(InnovationEntity, 'innovations')
-      .leftJoinAndSelect('innovations.owner', 'owner')
-      .where('innovations.id = :innovationId', { innovationId })
+      .createQueryBuilder(InnovationEntity, "innovations")
+      .leftJoinAndSelect("innovations.owner", "owner")
+      .where("innovations.id = :innovationId", { innovationId })
       .getOneOrFail();
 
     const threadObj = InnovationThreadEntity.new({
@@ -1026,8 +1026,8 @@ export class InnovationThreadsService extends BaseService {
     entityManager: EntityManager
   ): Promise<void> {
     const messages = await entityManager
-      .createQueryBuilder(InnovationThreadMessageEntity, 'message')
-      .where('message.innovation_thread_id = :threadId', { threadId: thread.id })
+      .createQueryBuilder(InnovationThreadMessageEntity, "message")
+      .where("message.innovation_thread_id = :threadId", { threadId: thread.id })
       .getMany();
 
     const sortedMessagesAsc = messages.sort(
@@ -1061,12 +1061,12 @@ export class InnovationThreadsService extends BaseService {
 
   private async getUnreadMessageNotifications(roleId: string, threadIds: string[]): Promise<Set<string>> {
     const notifications = await this.sqlConnection
-      .createQueryBuilder(NotificationEntity, 'notifications')
-      .select(['notifications.contextId'])
-      .innerJoin('notifications.notificationUsers', 'notificationUsers')
-      .where('notifications.contextId IN (:...threadIds)', { threadIds })
-      .andWhere('notificationUsers.user_role_id = :roleId', { roleId })
-      .andWhere('notificationUsers.read_at IS NULL')
+      .createQueryBuilder(NotificationEntity, "notifications")
+      .select(["notifications.contextId"])
+      .innerJoin("notifications.notificationUsers", "notificationUsers")
+      .where("notifications.contextId IN (:...threadIds)", { threadIds })
+      .andWhere("notificationUsers.user_role_id = :roleId", { roleId })
+      .andWhere("notificationUsers.read_at IS NULL")
       .getMany();
 
     return new Set(notifications.map(n => n.contextId));

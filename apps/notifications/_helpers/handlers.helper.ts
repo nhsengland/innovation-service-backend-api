@@ -1,12 +1,7 @@
 import type { Schema } from 'joi';
 
-import type {
-  NotificationCategoryType,
-  NotifierTypeEnum} from '@notifications/shared/enums';
-import {
-  NotificationPreferenceEnum,
-  ServiceRoleEnum
-} from '@notifications/shared/enums';
+import type { NotificationCategoryType, NotifierTypeEnum } from '@notifications/shared/enums';
+import { NotificationPreferenceEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 // import { GenericErrorsEnum, InternalServerError } from '@notifications/shared/errors';
 
 import type { Context } from '@azure/functions';
@@ -58,7 +53,7 @@ export class HandlersHelper {
   static getRequestUnitName(requestUser: DomainContextType): string {
     return requestUser.currentRole.role === ServiceRoleEnum.ASSESSMENT
       ? TranslationHelper.translate(`TEAMS.${requestUser.currentRole.role}`)
-      : requestUser.organisation?.organisationUnit?.name ?? '';
+      : (requestUser.organisation?.organisationUnit?.name ?? '');
   }
 
   /**

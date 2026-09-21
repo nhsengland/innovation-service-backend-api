@@ -1,20 +1,20 @@
-import { InnovationEntity, UserEntity } from '@innovations/shared/entities';
-import { InnovationCollaboratorEntity } from '@innovations/shared/entities/innovation/innovation-collaborator.entity';
-import { InnovationCollaboratorStatusEnum, NotifierTypeEnum, ServiceRoleEnum } from '@innovations/shared/enums';
+import { InnovationEntity, UserEntity } from "@innovations/shared/entities";
+import { InnovationCollaboratorEntity } from "@innovations/shared/entities/innovation/innovation-collaborator.entity";
+import { InnovationCollaboratorStatusEnum, NotifierTypeEnum, ServiceRoleEnum } from "@innovations/shared/enums";
 import {
   ConflictError,
   ForbiddenError,
   InnovationErrorsEnum,
   NotFoundError,
   UnprocessableEntityError
-} from '@innovations/shared/errors';
-import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
-import type { DomainService, IdentityProviderService, NotifierService } from '@innovations/shared/services';
-import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import type { DomainContextType } from '@innovations/shared/types';
-import { inject, injectable } from 'inversify';
-import { Brackets, EntityManager, ObjectLiteral } from 'typeorm';
-import { BaseService } from './base.service';
+} from "@innovations/shared/errors";
+import type { PaginationQueryParamsType } from "@innovations/shared/helpers";
+import type { DomainService, IdentityProviderService, NotifierService } from "@innovations/shared/services";
+import SHARED_SYMBOLS from "@innovations/shared/services/symbols";
+import type { DomainContextType } from "@innovations/shared/types";
+import { inject, injectable } from "inversify";
+import { Brackets, EntityManager, ObjectLiteral } from "typeorm";
+import { BaseService } from "./base.service";
 
 type UpdateCollaboratorStatusType =
   | InnovationCollaboratorStatusEnum.ACTIVE
@@ -45,9 +45,9 @@ export class InnovationCollaboratorsService extends BaseService {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const dbCollaborator = await connection
-      .createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
-      .select(['collaborator.id', 'collaborator.status', 'collaborator.invitedAt'])
-      .where('collaborator.email = :email AND collaborator.innovation_id = :innovationId', {
+      .createQueryBuilder(InnovationCollaboratorEntity, "collaborator")
+      .select(["collaborator.id", "collaborator.status", "collaborator.invitedAt"])
+      .where("collaborator.email = :email AND collaborator.innovation_id = :innovationId", {
         email: data.email,
         innovationId
       })
@@ -116,7 +116,7 @@ export class InnovationCollaboratorsService extends BaseService {
     filters: {
       status?: InnovationCollaboratorStatusEnum[];
     },
-    pagination: PaginationQueryParamsType<'createdAt' | 'updatedAt' | 'invitedAt' | 'status'>,
+    pagination: PaginationQueryParamsType<"createdAt" | "updatedAt" | "invitedAt" | "status">,
     entityManager?: EntityManager
   ): Promise<{
     count: number;
@@ -132,8 +132,8 @@ export class InnovationCollaboratorsService extends BaseService {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const query = em
-      .createQueryBuilder(InnovationCollaboratorEntity, 'collaborators')
-      .where('collaborators.innovation_id = :innovationId', { innovationId });
+      .createQueryBuilder(InnovationCollaboratorEntity, "collaborators")
+      .where("collaborators.innovation_id = :innovationId", { innovationId });
 
     // Filters
     if (filters.status && filters.status.length > 0) {
@@ -153,7 +153,7 @@ export class InnovationCollaboratorsService extends BaseService {
 
       if (status.length > 0) {
         conditions.push({
-          condition: 'collaborators.status IN (:...status)',
+          condition: "collaborators.status IN (:...status)",
           parameters: { status: status }
         });
       }
@@ -167,7 +167,7 @@ export class InnovationCollaboratorsService extends BaseService {
         // Since Expired is an afterLoad status we can not directly search for it in WHERE
         if (filters.status.includes(InnovationCollaboratorStatusEnum.EXPIRED)) {
           conditions.push({
-            condition: 'collaborators.status = :pendingStatus AND collaborators.invitedAt < :expiredAtDate',
+            condition: "collaborators.status = :pendingStatus AND collaborators.invitedAt < :expiredAtDate",
             parameters
           });
         }
@@ -175,7 +175,7 @@ export class InnovationCollaboratorsService extends BaseService {
         // Since Pending can be expired aswell we have to me more specific in WHERE clause
         if (filters.status.includes(InnovationCollaboratorStatusEnum.PENDING)) {
           conditions.push({
-            condition: 'collaborators.status = :pendingStatus AND collaborators.invitedAt >= :expiredAtDate',
+            condition: "collaborators.status = :pendingStatus AND collaborators.invitedAt >= :expiredAtDate",
             parameters
           });
         }
@@ -199,20 +199,20 @@ export class InnovationCollaboratorsService extends BaseService {
     for (const [key, order] of Object.entries(pagination.order)) {
       let field: string;
       switch (key) {
-        case 'createdAt':
-          field = 'collaborators.createdAt';
+        case "createdAt":
+          field = "collaborators.createdAt";
           break;
-        case 'updatedAt':
-          field = 'collaborators.updatedAt';
+        case "updatedAt":
+          field = "collaborators.updatedAt";
           break;
-        case 'invitedAt':
-          field = 'collaborators.invitedAt';
+        case "invitedAt":
+          field = "collaborators.invitedAt";
           break;
-        case 'status':
-          field = 'collaborators.status';
+        case "status":
+          field = "collaborators.status";
           break;
         default:
-          field = 'collaborators.createdAt';
+          field = "collaborators.createdAt";
           break;
       }
       query.addOrderBy(field, order);
@@ -264,30 +264,30 @@ export class InnovationCollaboratorsService extends BaseService {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const collaborator = await em
-      .createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
+      .createQueryBuilder(InnovationCollaboratorEntity, "collaborator")
       .withDeleted()
-      .innerJoin('collaborator.innovation', 'innovation')
-      .innerJoin('innovation.documentDraft', 'documentDraft')
-      .leftJoin('collaborator.user', 'collaboratorUser')
-      .leftJoin('innovation.owner', 'innovationOwner')
+      .innerJoin("collaborator.innovation", "innovation")
+      .innerJoin("innovation.documentDraft", "documentDraft")
+      .leftJoin("collaborator.user", "collaboratorUser")
+      .leftJoin("innovation.owner", "innovationOwner")
       .select([
-        'innovation.id',
-        'innovation.name',
-        'documentDraft.document',
-        'innovationOwner.identityId',
-        'innovationOwner.id',
-        'innovationOwner.status',
-        'innovationOwner.deletedAt',
-        'collaboratorUser.identityId',
-        'collaboratorUser.status',
-        'collaborator.id',
-        'collaborator.email',
-        'collaborator.status',
-        'collaborator.collaboratorRole',
-        'collaborator.invitedAt',
-        'collaborator.createdBy'
+        "innovation.id",
+        "innovation.name",
+        "documentDraft.document",
+        "innovationOwner.identityId",
+        "innovationOwner.id",
+        "innovationOwner.status",
+        "innovationOwner.deletedAt",
+        "collaboratorUser.identityId",
+        "collaboratorUser.status",
+        "collaborator.id",
+        "collaborator.email",
+        "collaborator.status",
+        "collaborator.collaboratorRole",
+        "collaborator.invitedAt",
+        "collaborator.createdBy"
       ])
-      .where('collaborator.innovation = :innovationId AND collaborator.id = :collaboratorId', {
+      .where("collaborator.innovation = :innovationId AND collaborator.id = :collaboratorId", {
         innovationId,
         collaboratorId
       })
@@ -349,9 +349,9 @@ export class InnovationCollaboratorsService extends BaseService {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const collaborator = await connection
-      .createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
-      .select(['collaborator.email', 'collaborator.id', 'collaborator.status', 'collaborator.invitedAt'])
-      .where('collaborator.id = :collaboratorId', { collaboratorId })
+      .createQueryBuilder(InnovationCollaboratorEntity, "collaborator")
+      .select(["collaborator.email", "collaborator.id", "collaborator.status", "collaborator.invitedAt"])
+      .where("collaborator.id = :collaboratorId", { collaboratorId })
       .getOne();
 
     if (!collaborator) {
@@ -390,21 +390,21 @@ export class InnovationCollaboratorsService extends BaseService {
     requestUser: { id: string; email: string },
     collaboratorId: string,
     entityManager?: EntityManager
-  ): Promise<{ type: 'OWNER' | 'COLLABORATOR'; status?: InnovationCollaboratorStatusEnum }> {
+  ): Promise<{ type: "OWNER" | "COLLABORATOR"; status?: InnovationCollaboratorStatusEnum }> {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const collaborator = await connection
-      .createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
-      .innerJoin('collaborator.innovation', 'innovation')
-      .leftJoin('innovation.owner', 'innovationOwner')
+      .createQueryBuilder(InnovationCollaboratorEntity, "collaborator")
+      .innerJoin("collaborator.innovation", "innovation")
+      .leftJoin("innovation.owner", "innovationOwner")
       .select([
-        'innovation.id',
-        'innovationOwner.id',
-        'collaborator.email',
-        'collaborator.status',
-        'collaborator.invitedAt'
+        "innovation.id",
+        "innovationOwner.id",
+        "collaborator.email",
+        "collaborator.status",
+        "collaborator.invitedAt"
       ])
-      .where('collaborator.id = :collaboratorId', { collaboratorId })
+      .where("collaborator.id = :collaboratorId", { collaboratorId })
       .getOne();
 
     if (!collaborator) {
@@ -419,7 +419,7 @@ export class InnovationCollaboratorsService extends BaseService {
     }
 
     return {
-      type: isOwner ? 'OWNER' : 'COLLABORATOR',
+      type: isOwner ? "OWNER" : "COLLABORATOR",
       status: collaborator.status
     };
   }
@@ -437,10 +437,10 @@ export class InnovationCollaboratorsService extends BaseService {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const collaborator = await connection
-      .createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
+      .createQueryBuilder(InnovationCollaboratorEntity, "collaborator")
       .withDeleted()
-      .select(['collaborator.id'])
-      .where('collaborator.email = :email AND collaborator.innovation_id = :innovationId', {
+      .select(["collaborator.id"])
+      .where("collaborator.email = :email AND collaborator.innovation_id = :innovationId", {
         email: data.email,
         innovationId: data.innovationId
       })
@@ -481,15 +481,15 @@ export class InnovationCollaboratorsService extends BaseService {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const collaborator = await connection
-      .createQueryBuilder(InnovationCollaboratorEntity, 'collaborators')
-      .where('collaborators.email = :email AND collaborators.innovation_id = :innovationId', {
+      .createQueryBuilder(InnovationCollaboratorEntity, "collaborators")
+      .where("collaborators.email = :email AND collaborators.innovation_id = :innovationId", {
         email,
         innovationId
       })
       .getOne();
 
     if (!collaborator) {
-      return { id: '' };
+      return { id: "" };
     }
 
     await connection.softDelete(InnovationCollaboratorEntity, { id: collaborator.id });
@@ -510,9 +510,9 @@ export class InnovationCollaboratorsService extends BaseService {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const collaborator = await connection
-      .createQueryBuilder(InnovationCollaboratorEntity, 'collaborators')
-      .select(['collaborators.id', 'collaborators.status', 'collaborators.email', 'collaborators.invitedAt'])
-      .where('collaborators.id = :id', { id })
+      .createQueryBuilder(InnovationCollaboratorEntity, "collaborators")
+      .select(["collaborators.id", "collaborators.status", "collaborators.email", "collaborators.invitedAt"])
+      .where("collaborators.id = :id", { id })
       .getOne();
 
     if (!collaborator) {

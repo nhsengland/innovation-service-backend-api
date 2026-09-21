@@ -1,6 +1,6 @@
-import { InnovationTaskStatusEnum } from '@innovations/shared/enums';
-import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
-import Joi from 'joi';
+import { InnovationTaskStatusEnum } from "@innovations/shared/enums";
+import { CurrentCatalogTypes } from "@innovations/shared/schemas/innovation-record";
+import Joi from "joi";
 
 export type ResponseDTO = {
   id: string;

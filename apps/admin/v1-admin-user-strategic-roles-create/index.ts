@@ -39,27 +39,31 @@ class V1AdminUserStrategicRolesCreate {
   }
 }
 
-export default openApi(V1AdminUserStrategicRolesCreate.httpTrigger as AzureFunction, '/v1/users/{userId}/strategic-roles', {
-  post: {
-    description: 'Create strategic roles for a user.',
-    operationId: 'v1-admin-user-strategic-roles-create',
-    parameters: [
-      {
-        name: 'userId',
-        in: 'path',
-        required: true,
-        schema: { type: 'string' },
-        description: 'The user id.'
+export default openApi(
+  V1AdminUserStrategicRolesCreate.httpTrigger as AzureFunction,
+  '/v1/users/{userId}/strategic-roles',
+  {
+    post: {
+      description: 'Create strategic roles for a user.',
+      operationId: 'v1-admin-user-strategic-roles-create',
+      parameters: [
+        {
+          name: 'userId',
+          in: 'path',
+          required: true,
+          schema: { type: 'string' },
+          description: 'The user id.'
+        }
+      ],
+      requestBody: SwaggerHelper.bodyJ2S(BodySchema, { description: 'The strategic roles to be assigned.' }),
+      responses: {
+        '201': SwaggerHelper.responseJ2S(ResponseBodySchema, {
+          description: 'The strategic roles have been created.'
+        }),
+        '400': { description: 'Bad request.' },
+        '401': { description: 'The user is not authorized.' },
+        '500': { description: 'An error occurred.' }
       }
-    ],
-    requestBody: SwaggerHelper.bodyJ2S(BodySchema, { description: 'The strategic roles to be assigned.' }),
-    responses: {
-      '201': SwaggerHelper.responseJ2S(ResponseBodySchema, {
-        description: 'The strategic roles have been created.'
-      }),
-      '400': { description: 'Bad request.' },
-      '401': { description: 'The user is not authorized.' },
-      '500': { description: 'An error occurred.' }
     }
   }
-});
+);

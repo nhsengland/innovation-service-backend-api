@@ -1,18 +1,18 @@
-import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
-import type { AzureFunction, HttpRequest } from '@azure/functions';
+import { mapOpenApi3 as openApi } from "@aaronpowell/azure-functions-nodejs-openapi";
+import type { AzureFunction, HttpRequest } from "@azure/functions";
 
-import { JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
-import type { AuthorizationService } from '@innovations/shared/services';
-import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import type { CustomContextType } from '@innovations/shared/types';
+import { JwtDecoder } from "@innovations/shared/decorators";
+import { JoiHelper, ResponseHelper, SwaggerHelper } from "@innovations/shared/helpers";
+import type { AuthorizationService } from "@innovations/shared/services";
+import SHARED_SYMBOLS from "@innovations/shared/services/symbols";
+import type { CustomContextType } from "@innovations/shared/types";
 
-import { container } from '../_config';
+import { container } from "../_config";
 
-import SYMBOLS from '../_services/symbols';
-import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
-import { ParamsSchema, type ParamsType } from './validation.schemas';
-import type { InnovationsService } from '../_services/innovations.service';
+import SYMBOLS from "../_services/symbols";
+import { ResponseBodySchema, type ResponseDTO } from "./transformation.dtos";
+import { ParamsSchema, type ParamsType } from "./validation.schemas";
+import type { InnovationsService } from "../_services/innovations.service";
 
 class V1InnovationThreadAvailableRecipients {
   @JwtDecoder()
@@ -66,19 +66,19 @@ class V1InnovationThreadAvailableRecipients {
 
 export default openApi(
   V1InnovationThreadAvailableRecipients.httpTrigger as AzureFunction,
-  '/v1/{innovationId}/threads/available-recipients',
+  "/v1/{innovationId}/threads/available-recipients",
   {
     get: {
       description: `Get a list with a list of thread recipients for a respective innovation.`,
-      operationId: 'v1-innovations-threads-available-recipients',
-      tags: ['[v1] Innovation Threads Available Recipients'],
+      operationId: "v1-innovations-threads-available-recipients",
+      tags: ["[v1] Innovation Threads Available Recipients"],
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       responses: {
         200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
-          description: 'Success'
+          description: "Success"
         }),
         404: {
-          description: 'Not found'
+          description: "Not found"
         }
       }
     }

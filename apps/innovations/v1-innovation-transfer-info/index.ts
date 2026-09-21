@@ -1,17 +1,17 @@
-import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
-import type { AzureFunction, HttpRequest } from '@azure/functions';
+import { mapOpenApi3 as openApi } from "@aaronpowell/azure-functions-nodejs-openapi";
+import type { AzureFunction, HttpRequest } from "@azure/functions";
 
-import { JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
-import type { AuthorizationService } from '@innovations/shared/services';
-import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import type { CustomContextType } from '@innovations/shared/types';
+import { JwtDecoder } from "@innovations/shared/decorators";
+import { JoiHelper, ResponseHelper, SwaggerHelper } from "@innovations/shared/helpers";
+import type { AuthorizationService } from "@innovations/shared/services";
+import SHARED_SYMBOLS from "@innovations/shared/services/symbols";
+import type { CustomContextType } from "@innovations/shared/types";
 
-import { container } from '../_config';
-import type { InnovationTransferService } from '../_services/innovation-transfer.service';
-import SYMBOLS from '../_services/symbols';
-import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
-import { ParamsSchema, ParamsType } from './validation.schemas';
+import { container } from "../_config";
+import type { InnovationTransferService } from "../_services/innovation-transfer.service";
+import SYMBOLS from "../_services/symbols";
+import { ResponseBodySchema, type ResponseDTO } from "./transformation.dtos";
+import { ParamsSchema, ParamsType } from "./validation.schemas";
 
 class GetInnovationTransfer {
   @JwtDecoder()
@@ -42,21 +42,21 @@ class GetInnovationTransfer {
   }
 }
 
-export default openApi(GetInnovationTransfer.httpTrigger as AzureFunction, '/v1/transfers/{transferId}', {
+export default openApi(GetInnovationTransfer.httpTrigger as AzureFunction, "/v1/transfers/{transferId}", {
   get: {
-    description: 'Get an innovation transfer',
-    operationId: 'getInnovationTransfer',
+    description: "Get an innovation transfer",
+    operationId: "getInnovationTransfer",
     parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     responses: {
       200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
-        description: 'Success'
+        description: "Success"
       }),
       404: {
-        description: 'Not Found',
+        description: "Not Found",
         content: {
-          'application/json': {
+          "application/json": {
             schema: {
-              type: 'object'
+              type: "object"
             }
           }
         }

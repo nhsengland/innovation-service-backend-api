@@ -1,12 +1,12 @@
-import { InnovationFileContextTypeEnum, ServiceRoleEnum } from '@innovations/shared/enums';
-import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
-import { JoiHelper } from '@innovations/shared/helpers';
-import Joi from 'joi';
+import { InnovationFileContextTypeEnum, ServiceRoleEnum } from "@innovations/shared/enums";
+import type { PaginationQueryParamsType } from "@innovations/shared/helpers";
+import { JoiHelper } from "@innovations/shared/helpers";
+import Joi from "joi";
 
 enum OrderFields {
-  name = 'name',
-  createdAt = 'createdAt',
-  contextType = 'contextType'
+  name = "name",
+  createdAt = "createdAt",
+  contextType = "contextType"
 }
 
 export type ParamsType = {
@@ -23,11 +23,11 @@ export type QueryParamsType = PaginationQueryParamsType<OrderFields> & {
   contextId?: string;
   units?: string[];
   dateFilter?: {
-    field: 'createdAt';
+    field: "createdAt";
     startDate?: Date;
     endDate?: Date;
   }[];
-  fields: 'description'[];
+  fields: "description"[];
 };
 export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
   orderKeys: Object.keys(OrderFields)
@@ -55,7 +55,7 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
     .stringArrayOfObjects()
     .items(
       Joi.object({
-        field: JoiHelper.AppCustomJoi().string().valid('createdAt').required(),
+        field: JoiHelper.AppCustomJoi().string().valid("createdAt").required(),
         startDate: Joi.date().optional(),
         endDate: Joi.date().optional()
       })
@@ -63,6 +63,6 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
     .optional(),
   fields: JoiHelper.AppCustomJoi()
     .stringArray()
-    .items(JoiHelper.AppCustomJoi().string().valid('description'))
+    .items(JoiHelper.AppCustomJoi().string().valid("description"))
     .optional()
 });

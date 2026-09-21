@@ -310,6 +310,28 @@ describe('DocxHelper suite', () => {
       });
     });
 
+    it('should include conditional question labels for radio-group items', () => {
+      const radioQuestion = createMockRadioGroupQuestion({
+        items: [
+          {
+            id: 'YES',
+            label: 'Yes',
+            conditional: {
+              id: 'website',
+              dataType: 'text',
+              label: 'Website'
+            }
+          },
+          { id: 'NO', label: 'No' }
+        ]
+      });
+
+      const result = processQuestionItems(radioQuestion);
+
+      expect(JSON.stringify(result)).toContain('Website');
+      expect(JSON.stringify(result)).toContain('[Write your answer here]');
+    });
+
     it('should process checkbox-array question items correctly', () => {
       const checkboxQuestion = createMockCheckboxArrayQuestion({
         items: [
@@ -326,6 +348,28 @@ describe('DocxHelper suite', () => {
       result.forEach(item => {
         expect(item).toBeInstanceOf(Paragraph);
       });
+    });
+
+    it('should include conditional question labels for checkbox-array items', () => {
+      const checkboxQuestion = createMockCheckboxArrayQuestion({
+        items: [
+          {
+            id: 'OTHER',
+            label: 'Other',
+            conditional: {
+              id: 'otherCategoryDescription',
+              dataType: 'text',
+              label: 'Other category'
+            }
+          },
+          { id: 'MEDICAL_DEVICE', label: 'Medical device' }
+        ]
+      } as Partial<CheckboxArray>);
+
+      const result = processQuestionItems(checkboxQuestion);
+
+      expect(JSON.stringify(result)).toContain('Other category');
+      expect(JSON.stringify(result)).toContain('[Write your answer here]');
     });
 
     it('should handle text questions by returning empty array', () => {

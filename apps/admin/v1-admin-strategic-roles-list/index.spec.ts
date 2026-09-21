@@ -36,9 +36,7 @@ afterEach(() => {
 describe('v1-admin-strategic-roles-list Suite', () => {
   describe('200', () => {
     it('should list strategic roles', async () => {
-      const result = await new AzureHttpTriggerBuilder()
-        .setAuth(scenario.users.allMighty)
-        .call<never>(azureFunction);
+      const result = await new AzureHttpTriggerBuilder().setAuth(scenario.users.allMighty).call<never>(azureFunction);
 
       expect(result.body).toStrictEqual(expected);
       expect(result.status).toBe(200);

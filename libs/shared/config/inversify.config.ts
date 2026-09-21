@@ -44,7 +44,10 @@ container.bind<IRSchemaService>(SHARED_SYMBOLS.IRSchemaService).to(IRSchemaServi
 container.bind<IRExportService>(SHARED_SYMBOLS.IRExportService).to(IRExportService).inSingletonScope();
 container.bind<ExcelExportService>(SHARED_SYMBOLS.ExcelExportService).to(ExcelExportService).inSingletonScope();
 container.bind<ExcelImportService>(SHARED_SYMBOLS.ExcelImportService).to(ExcelImportService).inSingletonScope();
-container.bind<SchemaDocGeneratorService>(SHARED_SYMBOLS.SchemaDocGeneratorService).to(SchemaDocGeneratorService).inSingletonScope();
+container
+  .bind<SchemaDocGeneratorService>(SHARED_SYMBOLS.SchemaDocGeneratorService)
+  .to(SchemaDocGeneratorService)
+  .inSingletonScope();
 
 // Force SQL initialization on startup so that the connection is ready on first request
 container.get<SQLConnectionService>(SHARED_SYMBOLS.SQLConnectionService);

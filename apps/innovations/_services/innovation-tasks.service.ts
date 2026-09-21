@@ -1,4 +1,4 @@
-import { inject, injectable } from 'inversify';
+import { inject, injectable } from "inversify";
 
 import {
   InnovationEntity,
@@ -8,7 +8,7 @@ import {
   InnovationThreadEntity,
   InnovationThreadMessageEntity,
   UserRoleEntity
-} from '@innovations/shared/entities';
+} from "@innovations/shared/entities";
 import {
   ActivityEnum,
   InnovationCollaboratorStatusEnum,
@@ -20,7 +20,7 @@ import {
   ServiceRoleEnum,
   ThreadContextTypeEnum,
   UserStatusEnum
-} from '@innovations/shared/enums';
+} from "@innovations/shared/enums";
 import {
   ForbiddenError,
   InnovationErrorsEnum,
@@ -28,21 +28,21 @@ import {
   NotImplementedError,
   UnprocessableEntityError,
   UserErrorsEnum
-} from '@innovations/shared/errors';
-import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
-import type { DomainService, NotifierService } from '@innovations/shared/services';
+} from "@innovations/shared/errors";
+import type { PaginationQueryParamsType } from "@innovations/shared/helpers";
+import type { DomainService, NotifierService } from "@innovations/shared/services";
 import {
   DomainContextType,
   isAccessorDomainContextType,
   isAssessmentDomainContextType
-} from '@innovations/shared/types';
+} from "@innovations/shared/types";
 
-import { CurrentCatalogTypes, InnovationSectionAliasEnum } from '@innovations/shared/schemas/innovation-record';
-import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import { Brackets, EntityManager } from 'typeorm';
-import { BaseService } from './base.service';
-import type { InnovationThreadsService } from './innovation-threads.service';
-import SYMBOLS from './symbols';
+import { CurrentCatalogTypes, InnovationSectionAliasEnum } from "@innovations/shared/schemas/innovation-record";
+import SHARED_SYMBOLS from "@innovations/shared/services/symbols";
+import { Brackets, EntityManager } from "typeorm";
+import { BaseService } from "./base.service";
+import type { InnovationThreadsService } from "./innovation-threads.service";
+import SYMBOLS from "./symbols";
 
 @injectable()
 export class InnovationTasksService extends BaseService {
@@ -65,10 +65,10 @@ export class InnovationTasksService extends BaseService {
       innovationStatus?: InnovationStatusEnum[];
       createdByMe?: boolean;
       createdByMyUnit?: boolean;
-      fields: 'notifications'[];
+      fields: "notifications"[];
     },
     pagination: PaginationQueryParamsType<
-      'displayId' | 'section' | 'innovationName' | 'createdAt' | 'updatedAt' | 'status'
+      "displayId" | "section" | "innovationName" | "createdAt" | "updatedAt" | "status"
     >,
     entityManager?: EntityManager
   ): Promise<{
@@ -91,77 +91,77 @@ export class InnovationTasksService extends BaseService {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const query = em
-      .createQueryBuilder(InnovationTaskEntity, 'task')
+      .createQueryBuilder(InnovationTaskEntity, "task")
       .select([
-        'task.id',
-        'task.displayId',
-        'task.status',
-        'task.createdAt',
-        'task.updatedAt',
-        'innovation.name',
-        'innovation.id',
-        'innovationSection.section',
-        'innovationSupport.id',
-        'updatedByUser.identityId',
-        'updatedByUser.status',
-        'updatedByUserRole.role',
-        'createdByUser.id',
-        'createdByUser.identityId',
-        'createdByUser.status',
-        'createdByUserRole.role',
-        'assignedToUser.id',
-        'assignedToUser.identityId',
-        'assignedToUser.status',
-        'assignedToUserRole.role',
-        'organisationUnit.id',
-        'organisationUnit.acronym',
-        'organisationUnit.name'
+        "task.id",
+        "task.displayId",
+        "task.status",
+        "task.createdAt",
+        "task.updatedAt",
+        "innovation.name",
+        "innovation.id",
+        "innovationSection.section",
+        "innovationSupport.id",
+        "updatedByUser.identityId",
+        "updatedByUser.status",
+        "updatedByUserRole.role",
+        "createdByUser.id",
+        "createdByUser.identityId",
+        "createdByUser.status",
+        "createdByUserRole.role",
+        "assignedToUser.id",
+        "assignedToUser.identityId",
+        "assignedToUser.status",
+        "assignedToUserRole.role",
+        "organisationUnit.id",
+        "organisationUnit.acronym",
+        "organisationUnit.name"
       ])
-      .innerJoin('task.innovationSection', 'innovationSection')
-      .innerJoin('innovationSection.innovation', 'innovation')
-      .innerJoin('task.createdByUserRole', 'createdByUserRole')
-      .innerJoin('createdByUserRole.user', 'createdByUser')
-      .leftJoin('task.assignedToUserRole', 'assignedToUserRole')
-      .leftJoin('assignedToUserRole.user', 'assignedToUser')
-      .leftJoin('task.innovationSupport', 'innovationSupport')
-      .leftJoin('innovationSupport.organisationUnit', 'organisationUnit')
-      .leftJoin('task.updatedByUserRole', 'updatedByUserRole')
-      .leftJoin('updatedByUserRole.user', 'updatedByUser');
+      .innerJoin("task.innovationSection", "innovationSection")
+      .innerJoin("innovationSection.innovation", "innovation")
+      .innerJoin("task.createdByUserRole", "createdByUserRole")
+      .innerJoin("createdByUserRole.user", "createdByUser")
+      .leftJoin("task.assignedToUserRole", "assignedToUserRole")
+      .leftJoin("assignedToUserRole.user", "assignedToUser")
+      .leftJoin("task.innovationSupport", "innovationSupport")
+      .leftJoin("innovationSupport.organisationUnit", "organisationUnit")
+      .leftJoin("task.updatedByUserRole", "updatedByUserRole")
+      .leftJoin("updatedByUserRole.user", "updatedByUser");
 
     if (domainContext.currentRole.role === ServiceRoleEnum.INNOVATOR) {
-      query.leftJoin('innovation.collaborators', 'collaborator', 'collaborator.status = :status', {
+      query.leftJoin("innovation.collaborators", "collaborator", "collaborator.status = :status", {
         status: InnovationCollaboratorStatusEnum.ACTIVE
       });
       query.andWhere(
         new Brackets(qb => {
-          qb.andWhere('innovation.owner_id = :ownerId', { ownerId: domainContext.id });
-          qb.orWhere('collaborator.user_id = :userId', { userId: domainContext.id });
+          qb.andWhere("innovation.owner_id = :ownerId", { ownerId: domainContext.id });
+          qb.orWhere("collaborator.user_id = :userId", { userId: domainContext.id });
         })
       );
     }
 
     if (domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT) {
       query
-        .andWhere('innovation.status != :withdrawn', { withdrawn: InnovationStatusEnum.WITHDRAWN })
-        .andWhere('innovation.submittedAt IS NOT NULL');
+        .andWhere("innovation.status != :withdrawn", { withdrawn: InnovationStatusEnum.WITHDRAWN })
+        .andWhere("innovation.submittedAt IS NOT NULL");
     }
 
     if (isAccessorDomainContextType(domainContext)) {
       query
-        .innerJoin('innovation.organisationShares', 'shares')
+        .innerJoin("innovation.organisationShares", "shares")
         .leftJoin(
-          'innovation.innovationSupports',
-          'accessorSupports',
-          'accessorSupports.organisation_unit_id = :accessorSupportsOrganisationUnitId',
+          "innovation.innovationSupports",
+          "accessorSupports",
+          "accessorSupports.organisation_unit_id = :accessorSupportsOrganisationUnitId",
           { accessorSupportsOrganisationUnitId: domainContext.organisation.organisationUnit.id }
         )
-        .andWhere('innovation.hasBeenAssessed = 1')
-        .andWhere('shares.id = :accessorOrganisationId', {
+        .andWhere("innovation.hasBeenAssessed = 1")
+        .andWhere("shares.id = :accessorOrganisationId", {
           accessorOrganisationId: domainContext.organisation.id
         });
 
       if (domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR) {
-        query.andWhere('accessorSupports.status IN (:...accessorSupportsSupportStatuses01)', {
+        query.andWhere("accessorSupports.status IN (:...accessorSupportsSupportStatuses01)", {
           accessorSupportsSupportStatuses01: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.CLOSED]
         });
       }
@@ -169,40 +169,40 @@ export class InnovationTasksService extends BaseService {
 
     // Filters.
     if (filters.innovationId) {
-      query.andWhere('innovation.id = :innovationId', { innovationId: filters.innovationId });
+      query.andWhere("innovation.id = :innovationId", { innovationId: filters.innovationId });
     }
 
     if (filters.innovationName) {
-      query.andWhere('innovation.name LIKE :innovationName', {
+      query.andWhere("innovation.name LIKE :innovationName", {
         innovationName: `%${filters.innovationName}%`
       });
     }
 
     if (filters.sections && filters.sections.length > 0) {
-      query.andWhere('innovationSection.section IN (:...sections)', { sections: filters.sections });
+      query.andWhere("innovationSection.section IN (:...sections)", { sections: filters.sections });
     }
 
     if (filters.status && filters.status.length > 0) {
-      query.andWhere('task.status IN (:...statuses)', { statuses: filters.status });
+      query.andWhere("task.status IN (:...statuses)", { statuses: filters.status });
     }
 
     if (filters.innovationStatus && filters.innovationStatus.length > 0) {
-      query.andWhere('innovation.status IN (:...innovationStatuses)', {
+      query.andWhere("innovation.status IN (:...innovationStatuses)", {
         innovationStatuses: filters.innovationStatus
       });
     }
 
     if (filters.createdByMe) {
-      query.andWhere('createdByUser.id = :createdBy', { createdBy: domainContext.id });
+      query.andWhere("createdByUser.id = :createdBy", { createdBy: domainContext.id });
     }
 
     if (filters.createdByMyUnit || filters.createdByMe) {
       if (isAccessorDomainContextType(domainContext)) {
-        query.andWhere('innovationSupport.organisation_unit_id = :orgUnitId', {
+        query.andWhere("innovationSupport.organisation_unit_id = :orgUnitId", {
           orgUnitId: domainContext.organisation.organisationUnit.id
         });
       } else if (isAssessmentDomainContextType(domainContext)) {
-        query.andWhere('task.innovation_support_id IS NULL');
+        query.andWhere("task.innovation_support_id IS NULL");
       }
     }
 
@@ -213,26 +213,26 @@ export class InnovationTasksService extends BaseService {
     for (const [key, order] of Object.entries(pagination.order)) {
       let field: string;
       switch (key) {
-        case 'displayId':
-          field = 'task.displayId';
+        case "displayId":
+          field = "task.displayId";
           break;
-        case 'section':
-          field = 'innovationSection.section';
+        case "section":
+          field = "innovationSection.section";
           break;
-        case 'innovationName':
-          field = 'innovation.name';
+        case "innovationName":
+          field = "innovation.name";
           break;
-        case 'createdAt':
-          field = 'task.createdAt';
+        case "createdAt":
+          field = "task.createdAt";
           break;
-        case 'updatedAt':
-          field = 'task.updatedAt';
+        case "updatedAt":
+          field = "task.updatedAt";
           break;
-        case 'status':
-          field = 'task.status';
+        case "status":
+          field = "task.status";
           break;
         default:
-          field = 'task.createdAt';
+          field = "task.createdAt";
           break;
       }
       query.addOrderBy(field, order);
@@ -251,7 +251,7 @@ export class InnovationTasksService extends BaseService {
       params: Record<string, unknown>;
     }[] = [];
 
-    if (filters.fields?.includes('notifications')) {
+    if (filters.fields?.includes("notifications")) {
       notifications = await this.domainService.innovations.getUnreadNotifications(
         domainContext.currentRole.id,
         tasks.map(task => task.id),
@@ -308,9 +308,9 @@ export class InnovationTasksService extends BaseService {
           ? this.domainService.users.getDisplayTag(task.assignedToUserRole.role, {
               unitName: task.innovationSupport?.organisationUnit?.name
             })
-          : ''
+          : ""
       },
-      ...(!filters.fields?.includes('notifications')
+      ...(!filters.fields?.includes("notifications")
         ? {}
         : {
             notifications: notifications.filter(item => item.contextId === task.id).length
@@ -346,55 +346,55 @@ export class InnovationTasksService extends BaseService {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const dbTask = await em
-      .createQueryBuilder(InnovationTaskEntity, 'task')
+      .createQueryBuilder(InnovationTaskEntity, "task")
       .select([
-        'task.id',
-        'task.status',
-        'task.displayId',
-        'task.createdAt',
-        'task.updatedAt',
-        'task.createdBy',
-        'task.updatedBy',
-        'descriptions.description',
-        'descriptions.createdAt',
-        'descriptions.createdByIdentityId',
-        'descriptions.createdByRole',
-        'descriptions.createdByOrganisationUnitName',
-        'descriptions.threadId',
-        'innovationSection.section',
-        'innovation.id',
-        'owner.id',
-        'owner.status',
-        'createdByUserRole.role',
-        'createdByUserOrganisationUnit.id',
-        'createdByUserOrganisationUnit.name',
-        'createdByUser.id',
-        'createdByUser.identityId',
-        'createdByUser.status',
-        'updatedByUserRole.id',
-        'updatedByUserRole.role',
-        'updatedByUser.id',
-        'updatedByUser.identityId',
-        'updatedByUser.status',
-        'assignedToUserRole.id',
-        'assignedToUserRole.role',
-        'assignedToUser.id',
-        'assignedToUser.identityId',
-        'assignedToUser.status'
+        "task.id",
+        "task.status",
+        "task.displayId",
+        "task.createdAt",
+        "task.updatedAt",
+        "task.createdBy",
+        "task.updatedBy",
+        "descriptions.description",
+        "descriptions.createdAt",
+        "descriptions.createdByIdentityId",
+        "descriptions.createdByRole",
+        "descriptions.createdByOrganisationUnitName",
+        "descriptions.threadId",
+        "innovationSection.section",
+        "innovation.id",
+        "owner.id",
+        "owner.status",
+        "createdByUserRole.role",
+        "createdByUserOrganisationUnit.id",
+        "createdByUserOrganisationUnit.name",
+        "createdByUser.id",
+        "createdByUser.identityId",
+        "createdByUser.status",
+        "updatedByUserRole.id",
+        "updatedByUserRole.role",
+        "updatedByUser.id",
+        "updatedByUser.identityId",
+        "updatedByUser.status",
+        "assignedToUserRole.id",
+        "assignedToUserRole.role",
+        "assignedToUser.id",
+        "assignedToUser.identityId",
+        "assignedToUser.status"
       ])
-      .innerJoin('task.innovationSection', 'innovationSection')
-      .innerJoin('task.descriptions', 'descriptions')
-      .innerJoin('innovationSection.innovation', 'innovation')
-      .leftJoin('innovation.owner', 'owner')
-      .leftJoin('task.createdByUserRole', 'createdByUserRole')
-      .leftJoin('createdByUserRole.user', 'createdByUser')
-      .leftJoin('createdByUserRole.organisationUnit', 'createdByUserOrganisationUnit')
-      .leftJoin('task.updatedByUserRole', 'updatedByUserRole')
-      .leftJoin('updatedByUserRole.user', 'updatedByUser')
-      .leftJoin('task.assignedToUserRole', 'assignedToUserRole')
-      .leftJoin('assignedToUserRole.user', 'assignedToUser')
-      .where('task.id = :taskId', { taskId })
-      .andWhere('descriptions.status = :descriptionStatus', { descriptionStatus: InnovationTaskStatusEnum.OPEN }) // descriptions only fetch open messages
+      .innerJoin("task.innovationSection", "innovationSection")
+      .innerJoin("task.descriptions", "descriptions")
+      .innerJoin("innovationSection.innovation", "innovation")
+      .leftJoin("innovation.owner", "owner")
+      .leftJoin("task.createdByUserRole", "createdByUserRole")
+      .leftJoin("createdByUserRole.user", "createdByUser")
+      .leftJoin("createdByUserRole.organisationUnit", "createdByUserOrganisationUnit")
+      .leftJoin("task.updatedByUserRole", "updatedByUserRole")
+      .leftJoin("updatedByUserRole.user", "updatedByUser")
+      .leftJoin("task.assignedToUserRole", "assignedToUserRole")
+      .leftJoin("assignedToUserRole.user", "assignedToUser")
+      .where("task.id = :taskId", { taskId })
+      .andWhere("descriptions.status = :descriptionStatus", { descriptionStatus: InnovationTaskStatusEnum.OPEN }) // descriptions only fetch open messages
       .getOne();
     if (!dbTask) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_TASK_NOT_FOUND);
@@ -429,7 +429,7 @@ export class InnovationTasksService extends BaseService {
         role: dbTask.createdByUserRole.role,
         unitId: dbTask.createdByUserRole.organisationUnit?.id
       }),
-      threadId: dbTask.descriptions[0]?.threadId ?? '', // All the threads have a description so we can use the first one
+      threadId: dbTask.descriptions[0]?.threadId ?? "", // All the threads have a description so we can use the first one
       createdAt: dbTask.createdAt,
       updatedAt: dbTask.updatedAt,
       updatedBy: {
@@ -439,7 +439,7 @@ export class InnovationTasksService extends BaseService {
               unitName,
               isOwner: dbTask.innovationSection.innovation.owner?.id === dbTask.updatedByUserRole?.user.id
             })
-          : ''
+          : ""
       },
       createdBy: {
         name: usersMap.getDisplayName(dbTask.createdByUserRole.user.identityId),
@@ -453,7 +453,7 @@ export class InnovationTasksService extends BaseService {
           ? this.domainService.users.getDisplayTag(dbTask.assignedToUserRole.role, {
               unitName
             })
-          : ''
+          : ""
       }
     };
   }
@@ -467,13 +467,13 @@ export class InnovationTasksService extends BaseService {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const innovation = await connection
-      .createQueryBuilder(InnovationEntity, 'innovation')
-      .leftJoinAndSelect('innovation.owner', 'owner')
-      .leftJoinAndSelect('innovation.sections', 'sections')
-      .leftJoinAndSelect('innovation.innovationSupports', 'supports')
-      .leftJoinAndSelect('supports.organisationUnit', 'organisationUnit')
-      .leftJoinAndSelect('sections.tasks', 'tasks')
-      .where('innovation.id = :innovationId', { innovationId })
+      .createQueryBuilder(InnovationEntity, "innovation")
+      .leftJoinAndSelect("innovation.owner", "owner")
+      .leftJoinAndSelect("innovation.sections", "sections")
+      .leftJoinAndSelect("innovation.innovationSupports", "supports")
+      .leftJoinAndSelect("supports.organisationUnit", "organisationUnit")
+      .leftJoinAndSelect("sections.tasks", "tasks")
+      .where("innovation.id = :innovationId", { innovationId })
       .getOne();
 
     if (!innovation) {
@@ -491,7 +491,7 @@ export class InnovationTasksService extends BaseService {
     );
 
     let taskCounter = innovationSection.tasks.length;
-    const displayId = InnovationSectionAliasEnum[data.section] + (++taskCounter).toString().slice(-2).padStart(2, '0');
+    const displayId = InnovationSectionAliasEnum[data.section] + (++taskCounter).toString().slice(-2).padStart(2, "0");
 
     const taskObj = InnovationTaskEntity.new({
       displayId: displayId,
@@ -565,14 +565,14 @@ export class InnovationTasksService extends BaseService {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const dbTask = await connection
-      .createQueryBuilder(InnovationTaskEntity, 'ia')
-      .innerJoinAndSelect('ia.innovationSection', 'is')
-      .innerJoinAndSelect('ia.innovationSupport', 'isup')
-      .innerJoinAndSelect('is.innovation', 'i')
-      .innerJoinAndSelect('isup.organisationUnit', 'ou')
-      .innerJoinAndSelect('ou.organisation', 'o')
-      .leftJoinAndSelect('ia.updatedByUserRole', 'updatedByUserRole')
-      .where('ia.id = :taskId', { taskId: taskId })
+      .createQueryBuilder(InnovationTaskEntity, "ia")
+      .innerJoinAndSelect("ia.innovationSection", "is")
+      .innerJoinAndSelect("ia.innovationSupport", "isup")
+      .innerJoinAndSelect("is.innovation", "i")
+      .innerJoinAndSelect("isup.organisationUnit", "ou")
+      .innerJoinAndSelect("ou.organisation", "o")
+      .leftJoinAndSelect("ia.updatedByUserRole", "updatedByUserRole")
+      .where("ia.id = :taskId", { taskId: taskId })
       .getOne();
     if (!dbTask) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_TASK_NOT_FOUND);
@@ -621,13 +621,13 @@ export class InnovationTasksService extends BaseService {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const dbTask = await connection
-      .createQueryBuilder(InnovationTaskEntity, 'ia')
-      .innerJoinAndSelect('ia.innovationSection', 'is')
-      .innerJoinAndSelect('is.innovation', 'i')
-      .leftJoinAndSelect('ia.innovationSupport', 'isup')
-      .leftJoinAndSelect('ia.updatedByUserRole', 'updatedByUserRole')
-      .where('ia.id = :taskId', { taskId: taskId })
-      .andWhere('ia.innovationSupport.id IS NULL')
+      .createQueryBuilder(InnovationTaskEntity, "ia")
+      .innerJoinAndSelect("ia.innovationSection", "is")
+      .innerJoinAndSelect("is.innovation", "i")
+      .leftJoinAndSelect("ia.innovationSupport", "isup")
+      .leftJoinAndSelect("ia.updatedByUserRole", "updatedByUserRole")
+      .where("ia.id = :taskId", { taskId: taskId })
+      .andWhere("ia.innovationSupport.id IS NULL")
       .getOne();
     if (!dbTask) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_TASK_NOT_FOUND);
@@ -671,9 +671,9 @@ export class InnovationTasksService extends BaseService {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const dbTask = await connection
-      .createQueryBuilder(InnovationTaskEntity, 'task')
-      .innerJoinAndSelect('task.innovationSection', 'section')
-      .where('task.id = :taskId', { taskId: taskId })
+      .createQueryBuilder(InnovationTaskEntity, "task")
+      .innerJoinAndSelect("task.innovationSection", "section")
+      .where("task.id = :taskId", { taskId: taskId })
       .getOne();
 
     if (!dbTask) {
@@ -710,27 +710,27 @@ export class InnovationTasksService extends BaseService {
    */
   private getSaveTaskSubject(displayId: string, section: CurrentCatalogTypes.InnovationSections): string {
     switch (section) {
-      case 'INNOVATION_DESCRIPTION':
+      case "INNOVATION_DESCRIPTION":
         return `Task (${displayId}) update section 1.1 (Description of innovation)`;
-      case 'UNDERSTANDING_OF_NEEDS':
+      case "UNDERSTANDING_OF_NEEDS":
         return `Task (${displayId}) update section 2.1 (Detailed understanding of needs and benefits)`;
-      case 'EVIDENCE_OF_EFFECTIVENESS':
+      case "EVIDENCE_OF_EFFECTIVENESS":
         return `Task (${displayId}) update section 2.2 (Evidence of impact and benefit)`;
-      case 'MARKET_RESEARCH':
+      case "MARKET_RESEARCH":
         return `Task (${displayId}) update section 3.1 (Market research)`;
-      case 'CURRENT_CARE_PATHWAY':
+      case "CURRENT_CARE_PATHWAY":
         return `Task (${displayId}) update section 3.2 (Current care pathway)`;
-      case 'TESTING_WITH_USERS':
+      case "TESTING_WITH_USERS":
         return `Task (${displayId}) update section 4.1 (Testing with users)`;
-      case 'REGULATIONS_AND_STANDARDS':
+      case "REGULATIONS_AND_STANDARDS":
         return `Task (${displayId}) update section 5.1 (Regulatory approvals, standards and certifications)`;
-      case 'INTELLECTUAL_PROPERTY':
+      case "INTELLECTUAL_PROPERTY":
         return `Task (${displayId}) update section 5.2 (Intellectual property)`;
-      case 'REVENUE_MODEL':
+      case "REVENUE_MODEL":
         return `Task (${displayId}) update section 6.1 (Revenue model)`;
-      case 'COST_OF_INNOVATION':
+      case "COST_OF_INNOVATION":
         return `Task (${displayId}) update section 7.1 (Cost of your innovation)`;
-      case 'DEPLOYMENT':
+      case "DEPLOYMENT":
         return `Task (${displayId}) update section 8.1 (Deployment)`;
       default: {
         const s: never = section;
@@ -772,7 +772,7 @@ export class InnovationTasksService extends BaseService {
           {
             taskId: dbTask.id,
             interveningUserId: dbTask.createdBy,
-            comment: { id: threadMessage?.id || '', value: data.message ?? '' }
+            comment: { id: threadMessage?.id || "", value: data.message ?? "" }
           }
         );
       }
@@ -833,7 +833,7 @@ export class InnovationTasksService extends BaseService {
       .createQueryBuilder()
       .insert()
       .orIgnore()
-      .into('innovation_task_message')
+      .into("innovation_task_message")
       .values({
         innovation_task_id: taskId,
         innovation_thread_message_id: messageId,
@@ -870,17 +870,15 @@ export class InnovationTasksService extends BaseService {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const task = await connection
-      .createQueryBuilder(InnovationTaskEntity, 'task')
-      .leftJoinAndSelect('task.assignedToUserRole', 'assignedToUserRole')
-      .innerJoinAndSelect('task.createdByUserRole', 'createdByUserRole')
-      .where('task.id = :taskId', { taskId })
+      .createQueryBuilder(InnovationTaskEntity, "task")
+      .leftJoinAndSelect("task.assignedToUserRole", "assignedToUserRole")
+      .innerJoinAndSelect("task.createdByUserRole", "createdByUserRole")
+      .where("task.id = :taskId", { taskId })
       .getOne();
 
     if (!task) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_TASK_NOT_FOUND);
     }
-
-
 
     const oldAssessorRoleId = (task.assignedToUserRole ?? task.createdByUserRole)?.id;
 
@@ -896,9 +894,9 @@ export class InnovationTasksService extends BaseService {
       );
 
       const thread = await transaction
-        .createQueryBuilder(InnovationThreadEntity, 'thread')
-        .where('thread.context_id = :contextId', { contextId: taskId })
-        .andWhere('thread.context_type = :contextType', { contextType: ThreadContextTypeEnum.TASK })
+        .createQueryBuilder(InnovationThreadEntity, "thread")
+        .where("thread.context_id = :contextId", { contextId: taskId })
+        .andWhere("thread.context_type = :contextType", { contextType: ThreadContextTypeEnum.TASK })
         .getOne();
 
       if (thread) {

@@ -1,15 +1,15 @@
-import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
-import type { AzureFunction, Context, HttpRequest } from '@azure/functions';
+import { mapOpenApi3 as openApi } from "@aaronpowell/azure-functions-nodejs-openapi";
+import type { AzureFunction, Context, HttpRequest } from "@azure/functions";
 
-import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from "@innovations/shared/helpers";
 
-import { container } from '../_config';
+import { container } from "../_config";
 
-import type { InnovationTransferService } from '../_services/innovation-transfer.service';
-import SYMBOLS from '../_services/symbols';
-import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
-import type { ParamsType } from './validation.schemas';
-import { ParamsSchema } from './validation.schemas';
+import type { InnovationTransferService } from "../_services/innovation-transfer.service";
+import SYMBOLS from "../_services/symbols";
+import { ResponseBodySchema, type ResponseDTO } from "./transformation.dtos";
+import type { ParamsType } from "./validation.schemas";
+import { ParamsSchema } from "./validation.schemas";
 
 class V1InnovationTransferCheck {
   static async httpTrigger(context: Context, request: HttpRequest): Promise<void> {
@@ -29,17 +29,17 @@ class V1InnovationTransferCheck {
   }
 }
 
-export default openApi(V1InnovationTransferCheck.httpTrigger as AzureFunction, '/v1/transfers/{transferId}/check', {
+export default openApi(V1InnovationTransferCheck.httpTrigger as AzureFunction, "/v1/transfers/{transferId}/check", {
   get: {
-    description: 'Get details of pending innovations transfers',
-    operationId: 'v1-innovation-transfer-check',
+    description: "Get details of pending innovations transfers",
+    operationId: "v1-innovation-transfer-check",
     parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     responses: {
       200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
-        description: 'Ok'
+        description: "Ok"
       }),
       404: {
-        description: 'The innovation transfer does not exist'
+        description: "The innovation transfer does not exist"
       }
     }
   }

@@ -1,14 +1,14 @@
-import azureFunction from '.';
+import azureFunction from ".";
 
-import { InnovationGroupedStatusEnum } from '@innovations/shared/enums';
-import { AzureHttpTriggerBuilder, TestsHelper } from '@innovations/shared/tests';
-import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
-import type { ErrorResponseType } from '@innovations/shared/types';
-import { randProductName, randUuid } from '@ngneat/falso';
-import type { ResponseDTO } from './transformation.dtos';
-import { SearchService } from '../_services/search.service';
+import { InnovationGroupedStatusEnum } from "@innovations/shared/enums";
+import { AzureHttpTriggerBuilder, TestsHelper } from "@innovations/shared/tests";
+import type { TestUserType } from "@innovations/shared/tests/builders/user.builder";
+import type { ErrorResponseType } from "@innovations/shared/types";
+import { randProductName, randUuid } from "@ngneat/falso";
+import type { ResponseDTO } from "./transformation.dtos";
+import { SearchService } from "../_services/search.service";
 
-jest.mock('@innovations/shared/decorators', () => ({
+jest.mock("@innovations/shared/decorators", () => ({
   JwtDecoder: jest.fn().mockImplementation(() => (_: any, __: string, descriptor: PropertyDescriptor) => {
     return descriptor;
   }),
@@ -39,19 +39,19 @@ const expected = {
     }
   ]
 };
-const mock = jest.spyOn(SearchService.prototype, 'getDocuments').mockResolvedValue(expected as any);
+const mock = jest.spyOn(SearchService.prototype, "getDocuments").mockResolvedValue(expected as any);
 
 afterEach(() => {
   jest.clearAllMocks();
 });
 
-describe('v1-innovations-search Suite', () => {
-  describe('200', () => {
-    it('should return the innovations', async () => {
+describe("v1-innovations-search Suite", () => {
+  describe("200", () => {
+    it("should return the innovations", async () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.aliceQualifyingAccessor)
         .setQuery({
-          fields: 'id,name,groupedStatus'
+          fields: "id,name,groupedStatus"
         })
         .call<ResponseDTO>(azureFunction);
 
@@ -61,27 +61,30 @@ describe('v1-innovations-search Suite', () => {
     });
   });
 
-  describe('400', () => {
-    it('should return bad request on invalid parameters', async () => {
+  describe("400", () => {
+    it("should return bad request on invalid parameters", async () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.aliceQualifyingAccessor)
-        .setQuery({ invalid: 'invalid' })
+        .setQuery({ invalid: "invalid" })
         .call<ResponseDTO>(azureFunction);
 
       expect(result.status).toBe(400);
     });
   });
 
-  describe('Access', () => {
+  describe("Access", () => {
     it.each([
-      ['Admin', 200, scenario.users.allMighty],
-      ['QA', 200, scenario.users.aliceQualifyingAccessor],
-      ['A', 200, scenario.users.ingridAccessor],
-      ['NA', 200, scenario.users.paulNeedsAssessor],
-      ['Innovator owner', 403, scenario.users.johnInnovator],
-      ['Innovator collaborator', 403, scenario.users.janeInnovator]
-    ])('access with user %s should give %i', async (_role: string, status: number, user: TestUserType) => {
-      const result = await new AzureHttpTriggerBuilder().setAuth(user).setQuery({ fields: 'name' }).call<ErrorResponseType>(azureFunction);
+      ["Admin", 200, scenario.users.allMighty],
+      ["QA", 200, scenario.users.aliceQualifyingAccessor],
+      ["A", 200, scenario.users.ingridAccessor],
+      ["NA", 200, scenario.users.paulNeedsAssessor],
+      ["Innovator owner", 403, scenario.users.johnInnovator],
+      ["Innovator collaborator", 403, scenario.users.janeInnovator]
+    ])("access with user %s should give %i", async (_role: string, status: number, user: TestUserType) => {
+      const result = await new AzureHttpTriggerBuilder()
+        .setAuth(user)
+        .setQuery({ fields: "name" })
+        .call<ErrorResponseType>(azureFunction);
       expect(result.status).toBe(status);
     });
   });

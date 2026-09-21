@@ -1,5 +1,5 @@
-import type { InnovationSupportStatusEnum } from '@innovations/shared/enums';
-import type { SupportLogProgressUpdate } from '@innovations/shared/types';
+import type { InnovationSupportStatusEnum } from "@innovations/shared/enums";
+import type { SupportLogProgressUpdate } from "@innovations/shared/types";
 
 export type SupportSummaryUnitInfo = {
   id: string;
@@ -8,7 +8,7 @@ export type SupportSummaryUnitInfo = {
 } & (SupportUpdateData | SuggestedOrganisationData | ProgressUpdateData | InnovationArchivedData | StopShareData);
 
 type SupportUpdateData = {
-  type: 'SUPPORT_UPDATE';
+  type: "SUPPORT_UPDATE";
   params: {
     supportStatus: InnovationSupportStatusEnum;
     message: string;
@@ -16,7 +16,7 @@ type SupportUpdateData = {
 };
 
 type SuggestedOrganisationData = {
-  type: 'SUGGESTED_ORGANISATION';
+  type: "SUGGESTED_ORGANISATION";
   params: {
     suggestedByName?: string;
     message?: string;
@@ -24,19 +24,19 @@ type SuggestedOrganisationData = {
 };
 
 type ProgressUpdateData = {
-  type: 'PROGRESS_UPDATE';
+  type: "PROGRESS_UPDATE";
   params: {
     message: string;
     file?: { id: string; name: string; url: string };
-  } & SupportLogProgressUpdate['params'];
+  } & SupportLogProgressUpdate["params"];
 };
 
 type InnovationArchivedData = {
-  type: 'INNOVATION_ARCHIVED';
+  type: "INNOVATION_ARCHIVED";
   params: { supportStatus: InnovationSupportStatusEnum; message: string };
 };
 
 type StopShareData = {
-  type: 'STOP_SHARE';
+  type: "STOP_SHARE";
   params: { supportStatus: InnovationSupportStatusEnum };
 };

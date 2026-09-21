@@ -31,6 +31,7 @@
   },
   "dependencies": {
     "@aaronpowell/azure-functions-nodejs-openapi": "^0.4.0",
+    "@azure/data-tables": "^13.3.2",
     "@azure/storage-blob": "^12.27.0",
     "@azure/storage-queue": "^12.26.0",
     "@elastic/elasticsearch": "^8.17.1",
