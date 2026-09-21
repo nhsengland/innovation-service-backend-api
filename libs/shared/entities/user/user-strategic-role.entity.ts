@@ -20,6 +20,7 @@ export class UserStrategicRoleEntity extends BaseEntity {
   @JoinColumn({ name: 'user_id' })
   user: UserEntity;
 
+
   @ManyToOne(() => OrganisationEntity, record => record.strategicRoles, { nullable: false })
   @JoinColumn({ name: 'organisation_id' })
   organisation: OrganisationEntity;

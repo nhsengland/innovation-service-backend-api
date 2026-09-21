@@ -5,7 +5,9 @@
       "type": "httpTrigger",
       "direction": "in",
       "name": "request",
-      "methods": ["delete"],
+      "methods": [
+        "delete"
+      ],
       "route": "v1/users/{userId}/strategic-roles/{strategicRoleId}"
     },
     {
@@ -13,5 +15,5 @@
       "direction": "out",
       "name": "res"
     }
-  ]
+  ],
 }

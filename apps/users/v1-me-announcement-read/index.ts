@@ -29,11 +29,7 @@ class V1MeAnnouncementRead {
         .checkInnovatorType()
         .verify();
 
-      await announcementsService.readUserAnnouncement(
-        auth.getContext(),
-        pathParams.announcementId,
-        queryParams.innovationId
-      );
+      await announcementsService.readUserAnnouncement(auth.getContext(), pathParams.announcementId, queryParams.innovationId);
       context.res = ResponseHelper.NoContent();
       return;
     } catch (error) {

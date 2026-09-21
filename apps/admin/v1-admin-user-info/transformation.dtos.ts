@@ -44,14 +44,10 @@ export const ResponseBodySchema = Joi.object<ResponseDTO>({
       displayTeam: Joi.string().optional()
     })
   ),
-  strategicRoles: Joi.array()
-    .items(
-      Joi.object({
-        id: Joi.string().uuid().required(),
-        role: Joi.string()
-          .valid(...Object.values(StrategicRoleEnum))
-          .required()
-      })
-    )
-    .required()
+  strategicRoles: Joi.array().items(
+    Joi.object({
+      id: Joi.string().uuid().required(),
+      role: Joi.string().valid(...Object.values(StrategicRoleEnum)).required()
+    })
+  ).required()
 });

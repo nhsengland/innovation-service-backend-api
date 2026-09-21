@@ -18,12 +18,11 @@ export const questionMap: Map<string, Question> = new Map();
  * Call this once at startup, before any question lookups are needed.
  */
 export function buildQuestionMap(sections: any[]): void {
-  questionMap.clear();
-  sections.forEach(s =>
-    s.subSections.forEach((ss: any) =>
-      ss.steps.forEach((step: any) => step.questions.forEach((q: any) => indexQuestion(q)))
-    )
-  );
+    questionMap.clear();
+    sections.forEach(s =>
+        s.subSections.forEach((ss: any) =>
+            ss.steps.forEach((step: any) =>
+                step.questions.forEach((q: any) => indexQuestion(q)))));
 }
 
 /**
@@ -31,13 +30,10 @@ export function buildQuestionMap(sections: any[]): void {
  * Recursively handles: items[].conditional, addQuestion, and field.
  */
 export function indexQuestion(q: any): void {
-  questionMap.set(q.id, q);
-  if (q.items)
-    q.items.forEach((i: any) => {
-      if (i.conditional) indexQuestion(i.conditional);
-    });
-  if (q.addQuestion) indexQuestion(q.addQuestion);
-  if (q.field) indexQuestion(q.field);
+    questionMap.set(q.id, q);
+    if (q.items) q.items.forEach((i: any) => { if (i.conditional) indexQuestion(i.conditional); });
+    if (q.addQuestion) indexQuestion(q.addQuestion);
+    if (q.field) indexQuestion(q.field);
 }
 
 /**
@@ -48,20 +44,20 @@ export function indexQuestion(q: any): void {
  * In that case, we look up the source question in questionMap and return its items.
  */
 export function resolveQuestionItems(q: Question): any[] {
-  const anyQ = q as any;
-  if (anyQ.items && Array.isArray(anyQ.items)) {
-    if (
-      anyQ.items.length > 0 &&
-      anyQ.items[0] &&
-      typeof anyQ.items[0] === 'object' &&
-      'itemsFromAnswer' in anyQ.items[0]
-    ) {
-      const refQ = questionMap.get(anyQ.items[0].itemsFromAnswer);
-      if (refQ && (refQ as any).items) return (refQ as any).items as any[];
+    const anyQ = q as any;
+    if (anyQ.items && Array.isArray(anyQ.items)) {
+        if (
+            anyQ.items.length > 0 &&
+            anyQ.items[0] &&
+            typeof anyQ.items[0] === 'object' &&
+            'itemsFromAnswer' in anyQ.items[0]
+        ) {
+            const refQ = questionMap.get(anyQ.items[0].itemsFromAnswer);
+            if (refQ && (refQ as any).items) return (refQ as any).items as any[];
+        }
+        return anyQ.items;
     }
-    return anyQ.items;
-  }
-  return [];
+    return [];
 }
 
 /**
@@ -77,23 +73,23 @@ export function resolveQuestionItems(q: Question): any[] {
  * @returns A record of question IDs mapped to null, representing the "expected" keys
  */
 export function getSmartMockPayload(subSection: any, currentData: Record<string, any>): Record<string, null> {
-  const mockPayload: Record<string, null> = {};
+    const mockPayload: Record<string, null> = {};
 
-  if (!subSection || !subSection.steps) return mockPayload;
+    if (!subSection || !subSection.steps) return mockPayload;
 
-  subSection.steps.forEach((step: any) => {
-    let isStepActive = true;
-    if (step.condition) {
-      const parentValue = currentData[step.condition.id];
-      isStepActive = Array.isArray(step.condition.options) && step.condition.options.includes(parentValue);
-    }
+    subSection.steps.forEach((step: any) => {
+        let isStepActive = true;
+        if (step.condition) {
+            const parentValue = currentData[step.condition.id];
+            isStepActive = Array.isArray(step.condition.options) && step.condition.options.includes(parentValue);
+        }
 
-    if (isStepActive && step.questions) {
-      step.questions.forEach((q: any) => {
-        mockPayload[q.id] = null;
-      });
-    }
-  });
+        if (isStepActive && step.questions) {
+            step.questions.forEach((q: any) => {
+                mockPayload[q.id] = null;
+            });
+        }
+    });
 
-  return mockPayload;
+    return mockPayload;
 }

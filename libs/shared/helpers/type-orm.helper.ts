@@ -14,7 +14,7 @@ export class TypeORMHelper {
 
   //   }
 
-  static addLastSupportGivenAtSubquery(query: SelectQueryBuilder<any>, organisationUnitID: string): void {
+  static addLastSupportGivenAtSubquery(query: SelectQueryBuilder<any>, organisationUnitID: string) {
     // Subquery for latest message
     const lastMsgSubquery = query
       .subQuery()
@@ -32,7 +32,10 @@ export class TypeORMHelper {
       .from('innovation_support_log', 'sl')
       .where(`sl.innovation_id = innovation.id`)
       .andWhere('sl.deleted_at IS NULL')
-      .andWhere('(sl.organisation_unit_id = :organisationUnitID)', { organisationUnitID })
+      .andWhere(
+        '(sl.organisation_unit_id = :organisationUnitID)',
+        { organisationUnitID }
+      )
       .orderBy('sl.created_at', 'DESC');
 
     // Combine them using derived table and MAX

@@ -470,48 +470,44 @@ export function generateDocumentContent(schema: IRSchemaType): Paragraph[] {
           // Add question's child "addQuestion", if present.
           if (
             (question.dataType === 'fields-group' || question.dataType === 'checkbox-array') &&
-            question.addQuestions
+            question.addQuestion
           ) {
             // Add label
             /* Since these are edge cases, we need to replace the {{variable}} on the label
             with the same text used on store.ctx.schema.getIrSchemaSectionAllStepsList() on the frontend
             for the non-started section questions' list */
 
-            question.addQuestions.forEach(aq => {
-              let textToReplaceLabelVariable = '';
-              switch (aq.id) {
-                case 'hasMet':
-                  textToReplaceLabelVariable = 'each standard?';
-                  break;
-                case 'feedback':
-                  textToReplaceLabelVariable = 'each testing type';
-                  break;
-              }
+            let textToReplaceLabelVariable = '';
 
-              paragraphs.push(
-                new Paragraph({
-                  children: [
-                    new TextRun({
-                      text: aq?.label.replace(/\{\{(.*?)\}\}/g, textToReplaceLabelVariable),
-                      bold: true,
-                      size: 24,
-                      font: DOCUMENT_FONT
-                    })
-                  ],
-                  spacing: { before: 400 }
-                })
-              );
-            });
+            switch (question.addQuestion.id) {
+              case 'hasMet':
+                textToReplaceLabelVariable = 'each standard?';
+                break;
+              case 'feedback':
+                textToReplaceLabelVariable = 'each testing type';
+                break;
+            }
+
+            paragraphs.push(
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: question.addQuestion?.label.replace(/\{\{(.*?)\}\}/g, textToReplaceLabelVariable),
+                    bold: true,
+                    size: 24,
+                    font: DOCUMENT_FONT
+                  })
+                ],
+                spacing: { before: 400 }
+              })
+            );
 
             // Format the answer based on data type
             switch (question.dataType) {
-              case 'checkbox-array': {
-                question.addQuestions?.forEach(aq => {
-                  const items = processQuestionItems(aq);
-                  paragraphs.push(...items);
-                });
+              case 'checkbox-array':
+                const items = processQuestionItems(question.addQuestion);
+                paragraphs.push(...items);
                 break;
-              }
               case 'fields-group':
               default:
                 paragraphs.push(basicParagraph('[Write your answer here]'));
@@ -534,31 +530,6 @@ export function processQuestionItems(question: Question): Paragraph[] {
   }
 
   const items = question.items || [];
-
-  const processConditionalQuestion = (conditional: Question): void => {
-    paragraphs.push(
-      new Paragraph({
-        children: [
-          new TextRun({
-            text: conditional.label,
-            bold: true,
-            size: 24,
-            font: DOCUMENT_FONT
-          })
-        ],
-        spacing: { before: 400 }
-      })
-    );
-
-    switch (conditional.dataType) {
-      case 'radio-group':
-      case 'checkbox-array':
-        paragraphs.push(...processQuestionItems(conditional));
-        break;
-      default:
-        paragraphs.push(basicParagraph('[Write your answer here]'));
-    }
-  };
 
   items.forEach(item => {
     if ('type' in item && item.type === 'separator') {
@@ -584,10 +555,6 @@ export function processQuestionItems(question: Question): Paragraph[] {
             spacing: { before: 100, after: 200 }
           })
         );
-      }
-
-      if ('conditional' in item && item.conditional && typeof item.conditional !== 'string') {
-        processConditionalQuestion(item.conditional);
       }
     } else {
       paragraphs.push(basicParagraph('[Write your answer here]'));

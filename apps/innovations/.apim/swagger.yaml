@@ -1551,22 +1551,6 @@ paths:
                 - NO_ACTIVE_SUPPORT
                 - AWAITING_NEEDS_REASSESSMENT
                 - ARCHIVED
-        - name: archiveReason
-          in: query
-          required: false
-          schema:
-            type: array
-            items:
-              type: string
-              enum:
-                - DEVELOP_FURTHER
-                - HAVE_ALL_SUPPORT
-                - DECIDED_NOT_TO_PURSUE
-                - ALREADY_LIVE_NHS
-                - OTHER_DONT_WANT_TO_SAY
-                - SIX_MONTHS_INACTIVITY
-                - OWNER_ACCOUNT_DELETED
-                - LEGACY
         - name: involvedAACProgrammes
           in: query
           required: false
@@ -2039,7 +2023,6 @@ paths:
                         - INNOVATION_MESSAGE
                         - INNOVATION_PROGRESS_UPDATE
                         - INNOVATION_SECTION
-                        - INNOVATION_REGULATIONS
                   required:
                     - id
                     - type
@@ -2168,7 +2151,6 @@ paths:
                 - INNOVATION_MESSAGE
                 - INNOVATION_PROGRESS_UPDATE
                 - INNOVATION_SECTION
-                - INNOVATION_REGULATIONS
         - name: contextId
           in: query
           required: false
@@ -2244,7 +2226,6 @@ paths:
                                 - INNOVATION_MESSAGE
                                 - INNOVATION_PROGRESS_UPDATE
                                 - INNOVATION_SECTION
-                                - INNOVATION_REGULATIONS
                         name:
                           type: string
                         description:
@@ -2365,7 +2346,6 @@ paths:
                           - INNOVATION_MESSAGE
                           - INNOVATION_PROGRESS_UPDATE
                           - INNOVATION_SECTION
-                          - INNOVATION_REGULATIONS
                       name:
                         type: string
                     required:
@@ -6741,22 +6721,6 @@ paths:
                 - NO_ACTIVE_SUPPORT
                 - AWAITING_NEEDS_REASSESSMENT
                 - ARCHIVED
-        - name: archiveReason
-          in: query
-          required: false
-          schema:
-            type: array
-            items:
-              type: string
-              enum:
-                - DEVELOP_FURTHER
-                - HAVE_ALL_SUPPORT
-                - DECIDED_NOT_TO_PURSUE
-                - ALREADY_LIVE_NHS
-                - OTHER_DONT_WANT_TO_SAY
-                - SIX_MONTHS_INACTIVITY
-                - OWNER_ACCOUNT_DELETED
-                - LEGACY
         - name: involvedAACProgrammes
           in: query
           required: false

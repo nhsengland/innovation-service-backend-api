@@ -71,7 +71,7 @@ export class InnovationBuilder extends BaseBuilder {
       impactDiseaseCondition: randBoolean() ? 'YES' : 'NO',
       keyHealthInequalities: ['NONE'],
       problemsTackled: randBoolean() ? 'YES' : 'NO',
-      hasProductServiceOrPrototype: randBoolean() ? 'WORKING_PRODUCT' : 'CONCEPT_STAGE'
+      hasProductServiceOrPrototype: randBoolean() ? 'YES' : 'NO'
     },
     EVIDENCE_OF_EFFECTIVENESS: {
       hasEvidence: 'YES',

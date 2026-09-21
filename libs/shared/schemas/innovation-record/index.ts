@@ -67,7 +67,7 @@ export const createSampleDocument = (data?: {
       impactDiseaseCondition: randBoolean() ? 'YES' : 'NO',
       keyHealthInequalities: ['NONE'],
       problemsTackled: randBoolean() ? 'YES' : 'NO',
-      hasProductServiceOrPrototype: randBoolean() ? 'WORKING_PRODUCT' : 'CONCEPT_STAGE'
+      hasProductServiceOrPrototype: randBoolean() ? 'YES' : 'NO'
     },
     EVIDENCE_OF_EFFECTIVENESS: {
       hasEvidence: randBoolean() ? 'YES' : 'NOT_YET',

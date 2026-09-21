@@ -22,7 +22,7 @@ import {
   TermsOfUseTypeEnum,
   UserStatusEnum
 } from '@users/shared/enums';
-import { UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
+import { NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
 import type { PaginationQueryParamsType } from '@users/shared/helpers';
 import type {
   CacheConfigType,
@@ -361,17 +361,16 @@ export class UsersService extends BaseService {
       em
     );
 
-    const users = dbUsers.flatMap(dbUser => {
-      const identityUser = identityUsers.get(dbUser.identityId);
-      if (!identityUser) {
-        this.logger.error(
-          `[getUserList] Skipping user with missing B2C identity (user ${dbUser.id}, identity ${dbUser.identityId})`
-        );
-        return [];
-      }
+    const users = await Promise.all(
+      dbUsers.map(async dbUser => {
+        const identityUser = identityUsers.get(dbUser.identityId);
+        if (!identityUser) {
+          throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND, {
+            details: { context: 'S.DU.gUL' }
+          });
+        }
 
-      return [
-        {
+        return {
           id: dbUser.id,
           isActive: dbUser.status === UserStatusEnum.ACTIVE,
           roles: dbUser.serviceRoles,
@@ -379,9 +378,9 @@ export class UsersService extends BaseService {
           jobTitle: dbUser.jobTitle,
           lockedAt: dbUser.lockedAt,
           ...(fieldSet.has('email') ? { email: identityUser.email } : {})
-        }
-      ];
-    });
+        };
+      })
+    );
 
     return {
       count: count,

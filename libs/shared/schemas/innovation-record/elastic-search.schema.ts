@@ -1,7 +1,6 @@
 import type { MappingProperty } from '@elastic/elasticsearch/lib/api/types';
 import type { CurrentDocumentType } from '.';
 import type {
-  InnovationArchiveReasonEnum,
   InnovationGroupedStatusEnum,
   InnovationStatusEnum,
   InnovationSupportCloseReasonEnum,
@@ -18,7 +17,6 @@ export type ElasticSearchDocumentType = {
   status: InnovationStatusEnum;
   statusUpdatedAt: Date;
   groupedStatus: InnovationGroupedStatusEnum;
-  archiveReason: InnovationArchiveReasonEnum;
   hasBeenAssessed: boolean;
   submittedAt: Date | null;
   updatedAt: Date;
@@ -98,7 +96,6 @@ export const ElasticSearchSchema: CreateIndexParams = {
       status: { type: 'keyword' },
       statusUpdatedAt: { type: 'date' },
       groupedStatus: { type: 'keyword' },
-      archiveReason: { type: 'keyword' },
       hasBeenAssessed: { type: 'boolean' },
       submittedAt: { type: 'date' },
       updatedAt: { type: 'date' },
@@ -160,7 +157,7 @@ export const ElasticSearchSchema: CreateIndexParams = {
           assignedToIdentityId: { type: 'keyword' },
           updatedAt: { type: 'date' },
           isExempt: { type: 'boolean' },
-          maturityLevel: { type: 'keyword' },
+          maturityLevel:{ type: 'keyword' },
           finishedAt: { type: 'date' }
         }
       },

@@ -1,25 +1,25 @@
-import { container } from "@innovations/shared/config/inversify.config";
+import { container } from '@innovations/shared/config/inversify.config';
 
-import SYMBOLS from "../_services/symbols";
+import SYMBOLS from '../_services/symbols';
 
-import { AnalyticsService } from "../_services/analytics.service";
-import { ExportFileService } from "../_services/export-file-service";
-import { InnovationAssessmentsService } from "../_services/innovation-assessments.service";
-import { InnovationCollaboratorsService } from "../_services/innovation-collaborators.service";
-import { InnovationDocumentService } from "../_services/innovation-document.service";
-import { InnovationExportRequestService } from "../_services/innovation-export-request.service";
-import { InnovationFileService } from "../_services/innovation-file.service";
-import { InnovationSectionsService } from "../_services/innovation-sections.service";
-import { InnovationSupportsService } from "../_services/innovation-supports.service";
-import { InnovationTasksService } from "../_services/innovation-tasks.service";
-import { InnovationThreadsService } from "../_services/innovation-threads.service";
-import { InnovationTransferService } from "../_services/innovation-transfer.service";
-import { InnovationsService } from "../_services/innovations.service";
-import { ExcelInnovationService } from "../_services/excel-innovation.service";
-import { SearchService } from "../_services/search.service";
-import { StatisticsService } from "../_services/statistics.service";
-import { SurveysService } from "../_services/surveys.service";
-import { ValidationService } from "../_services/validation.service";
+import { AnalyticsService } from '../_services/analytics.service';
+import { ExportFileService } from '../_services/export-file-service';
+import { InnovationAssessmentsService } from '../_services/innovation-assessments.service';
+import { InnovationCollaboratorsService } from '../_services/innovation-collaborators.service';
+import { InnovationDocumentService } from '../_services/innovation-document.service';
+import { InnovationExportRequestService } from '../_services/innovation-export-request.service';
+import { InnovationFileService } from '../_services/innovation-file.service';
+import { InnovationSectionsService } from '../_services/innovation-sections.service';
+import { InnovationSupportsService } from '../_services/innovation-supports.service';
+import { InnovationTasksService } from '../_services/innovation-tasks.service';
+import { InnovationThreadsService } from '../_services/innovation-threads.service';
+import { InnovationTransferService } from '../_services/innovation-transfer.service';
+import { InnovationsService } from '../_services/innovations.service';
+import { ExcelInnovationService } from '../_services/excel-innovation.service';
+import { SearchService } from '../_services/search.service';
+import { StatisticsService } from '../_services/statistics.service';
+import { SurveysService } from '../_services/surveys.service';
+import { ValidationService } from '../_services/validation.service';
 
 // Specific inversify container configuration.
 container.bind<AnalyticsService>(SYMBOLS.AnalyticsService).to(AnalyticsService).inSingletonScope();

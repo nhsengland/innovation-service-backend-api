@@ -1,19 +1,14 @@
-import Joi from "joi";
+import Joi from 'joi';
 
-import {
-  InnovationArchiveReasonEnum,
-  InnovationGroupedStatusEnum,
-  InnovationSupportStatusEnum,
-  ServiceRoleEnum
-} from "@innovations/shared/enums";
-import type { PaginationQueryParamsType } from "@innovations/shared/helpers";
-import { JoiHelper } from "@innovations/shared/helpers";
+import { InnovationGroupedStatusEnum, InnovationSupportStatusEnum, ServiceRoleEnum } from '@innovations/shared/enums';
+import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
+import { JoiHelper } from '@innovations/shared/helpers';
 
-import { TEXTAREA_LENGTH_LIMIT } from "@innovations/shared/constants";
-import { CurrentCatalogTypes } from "@innovations/shared/schemas/innovation-record";
-import { InnovationLocationEnum } from "../_enums/innovation.enums";
-import type { InnovationListFilters } from "../_services/innovations.service";
-import { DateFilterFieldsType, HasAccessThroughKeys, InnovationListSelectType } from "../_services/innovations.service";
+import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
+import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
+import { InnovationLocationEnum } from '../_enums/innovation.enums';
+import type { InnovationListFilters } from '../_services/innovations.service';
+import { DateFilterFieldsType, HasAccessThroughKeys, InnovationListSelectType } from '../_services/innovations.service';
 
 export type QueryParamsType = PaginationQueryParamsType<InnovationListSelectType> &
   InnovationListFilters & {
@@ -77,14 +72,6 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
           .valid(...Object.values(InnovationGroupedStatusEnum).filter(v => v !== InnovationGroupedStatusEnum.WITHDRAWN))
       ) // withdrawn is not allowed filter except for admin
       .optional(),
-    archiveReason: JoiHelper.AppCustomJoi()
-      .stringArray()
-      .items(
-        JoiHelper.AppCustomJoi()
-          .string()
-          .valid(...Object.values(InnovationArchiveReasonEnum))
-      )
-      .optional(),
     involvedAACProgrammes: JoiHelper.AppCustomJoi()
       .stringArray()
       .items(
@@ -109,7 +96,7 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
           .valid(...Object.values(InnovationLocationEnum))
       )
       .optional(),
-    search: JoiHelper.AppCustomJoi().decodeURIString().max(TEXTAREA_LENGTH_LIMIT.xs).allow(null, "").optional(),
+    search: JoiHelper.AppCustomJoi().decodeURIString().max(TEXTAREA_LENGTH_LIMIT.xs).allow(null, '').optional(),
     areas: JoiHelper.AppCustomJoi()
       .stringArray()
       .items(
@@ -119,7 +106,7 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
       )
       .optional()
   })
-  .when("$userType", {
+  .when('$userType', {
     switch: [
       {
         is: ServiceRoleEnum.INNOVATOR,
@@ -131,7 +118,7 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
                 .string()
                 .valid(...HasAccessThroughKeys)
             )
-            .default(["owner", "collaborator"])
+            .default(['owner', 'collaborator'])
             .min(1)
         })
       },
@@ -183,14 +170,6 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
                 .valid(...Object.values(InnovationGroupedStatusEnum))
             )
             .optional(),
-          archiveReason: JoiHelper.AppCustomJoi()
-            .stringArray()
-            .items(
-              JoiHelper.AppCustomJoi()
-                .string()
-                .valid(...Object.values(InnovationArchiveReasonEnum))
-            )
-            .optional(),
           supportStatuses: JoiHelper.AppCustomJoi()
             .stringArray()
             .items(
@@ -199,7 +178,7 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
                 .valid(...Object.values(InnovationSupportStatusEnum))
             )
             .optional(),
-          supportUnit: Joi.when("supportStatuses", {
+          supportUnit: Joi.when('supportStatuses', {
             is: Joi.exist(),
             then: JoiHelper.AppCustomJoi().string().uuid().required()
           })

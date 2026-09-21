@@ -1,46 +1,10 @@
-import type { IRSchemaType } from './schema.model';
+import type { IRSchemaType} from './schema.model';
 import { SchemaModel } from './schema.model';
 import { requiredSectionsAndQuestions } from '../../schemas/innovation-record';
 import { randCountry, randText } from '@ngneat/falso';
 import { IR_SCHEMA } from '../../schemas/innovation-record/schema';
 
 describe('models / schema-engine / schema.model.ts', () => {
-  const checkboxTranslationSchema: any = {
-    sections: [
-      {
-        id: 'section',
-        title: 'Section',
-        subSections: [
-          {
-            id: 'REGULATIONS_AND_STANDARDS',
-            title: 'Regulations and standards',
-            steps: [
-              {
-                questions: [
-                  {
-                    id: 'standards',
-                    dataType: 'checkbox-array',
-                    label: 'Standards',
-                    checkboxAnswerId: 'type',
-                    items: [{ id: 'STANDARD_A', label: 'Standard A' }],
-                    addQuestions: [
-                      {
-                        id: 'certifications',
-                        dataType: 'input-array',
-                        label: 'Certifications',
-                        items: [{ id: 'GMDN', label: 'GMDN' }]
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  };
-
   beforeAll(() => {
     requiredSectionsAndQuestions.clear();
   });
@@ -53,40 +17,6 @@ describe('models / schema-engine / schema.model.ts', () => {
     const { errors } = schema.runRules();
 
     expect(errors).toStrictEqual([{ context: undefined, message: '"sections[0].title" is required' }]);
-  });
-
-  it('should normalize a legacy addQuestion into addQuestions', () => {
-    const legacyChild = { id: 'child', dataType: 'text', label: 'Child question' } as const;
-    const schema = new SchemaModel({
-      sections: [
-        {
-          id: 'section',
-          title: 'Section',
-          subSections: [
-            {
-              id: 'subSection',
-              title: 'Subsection',
-              steps: [
-                {
-                  questions: [
-                    {
-                      id: 'group',
-                      dataType: 'fields-group',
-                      label: 'Group',
-                      field: { id: 'field', dataType: 'text', label: 'Field' },
-                      addQuestion: legacyChild
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    });
-
-    expect(schema.runRules().errors).toHaveLength(0);
-    expect(schema.getQuestion('group')).toMatchObject({ addQuestions: [legacyChild] });
   });
 
   it('should give an error when two sections have the same id', () => {
@@ -375,7 +305,7 @@ describe('models / schema-engine / schema.model.ts', () => {
     expect(errors).toHaveLength(1);
   });
 
-  it('should give error when the addQuestions question is not valid', () => {
+  it('should give error when the addQuestion question is not valid', () => {
     const body: IRSchemaType = {
       sections: [
         {
@@ -394,7 +324,7 @@ describe('models / schema-engine / schema.model.ts', () => {
                       label: 'Question 1',
                       description: 'description 1',
                       field: { id: 'q2', dataType: 'text', label: 'Question 2' },
-                      addQuestions: [{ id: 'q1', dataType: 'text', label: 'Question 2' }],
+                      addQuestion: { id: 'q1', dataType: 'text', label: 'Question 2' },
                       addNewLabel: 'New label'
                     }
                   ]
@@ -641,54 +571,6 @@ describe('models / schema-engine / schema.model.ts', () => {
   });
 
   describe('translateDocument', () => {
-    it('preserves a non-array checkbox answer value', () => {
-      const schema = new SchemaModel(checkboxTranslationSchema);
-      expect(schema.runRules().errors).toHaveLength(0);
-      const document = {
-        REGULATIONS_AND_STANDARDS: {
-          standards: 'legacy-standard'
-        }
-      };
-
-      expect(schema.translateDocument(document)['REGULATIONS_AND_STANDARDS'].standards).toBe('legacy-standard');
-    });
-
-    it('preserves a null checkbox answer value', () => {
-      const schema = new SchemaModel(checkboxTranslationSchema);
-      expect(schema.runRules().errors).toHaveLength(0);
-      const document = {
-        REGULATIONS_AND_STANDARDS: {
-          standards: null
-        }
-      };
-
-      expect(schema.translateDocument(document)['REGULATIONS_AND_STANDARDS'].standards).toBeNull();
-    });
-
-    it('preserves unknown fields on checkbox answer rows', () => {
-      const schema = new SchemaModel(checkboxTranslationSchema);
-      expect(schema.runRules().errors).toHaveLength(0);
-      const document = {
-        REGULATIONS_AND_STANDARDS: {
-          standards: [
-            {
-              type: 'STANDARD_A',
-              legacyField: 'preserve-me',
-              certifications: { GMDN: '12345' }
-            }
-          ]
-        }
-      };
-
-      expect(schema.translateDocument(document)['REGULATIONS_AND_STANDARDS'].standards).toEqual([
-        {
-          type: 'Standard A',
-          legacyField: 'preserve-me',
-          certifications: { GMDN: '12345' }
-        }
-      ]);
-    });
-
     it('should translate document info', () => {
       const schema = new SchemaModel(IR_SCHEMA);
       schema.runRules();
@@ -701,7 +583,7 @@ describe('models / schema-engine / schema.model.ts', () => {
           categories: ['IN_VITRO_DIAGNOSTIC'],
           mainCategory: 'IN_VITRO_DIAGNOSTIC',
           areas: ['DATA_ANALYTICS_AND_RESEARCH', 'DIGITALISING_SYSTEM', 'IMPROVING_SYSTEM_FLOW'],
-          careSettings: ['END_LIFE_CARE', 'INDUSTRY', 'LOCAL_AUTHORITY_EDUCATION', 'OTHER'],
+          careSettings: [ 'END_LIFE_CARE', 'INDUSTRY', 'LOCAL_AUTHORITY_EDUCATION', 'OTHER' ],
           otherCareSetting: 'I want another',
           mainPurpose: 'ENABLING_CARE',
           involvedAACProgrammes: [
@@ -713,7 +595,7 @@ describe('models / schema-engine / schema.model.ts', () => {
         },
         UNDERSTANDING_OF_NEEDS: {
           howInnovationWork: 'daasdadsa',
-          hasProductServiceOrPrototype: 'WORKING_PRODUCT',
+          hasProductServiceOrPrototype: 'YES',
           benefitsOrImpact: [
             'Increases self-management',
             'Increases quality of life',
@@ -757,40 +639,10 @@ describe('models / schema-engine / schema.model.ts', () => {
         REGULATIONS_AND_STANDARDS: {
           hasRegulationKnowledge: 'YES_ALL',
           standards: [
-            {
-              type: 'UKR_MDR_GENERAL_IVD',
-              hasMet: 'YES',
-              certifications: {
-                GMDN: '12345',
-                UDI: null,
-                'UDI-DI': null
-              }
-            },
-            {
-              type: 'UK_MDR_CLASS_I',
-              hasMet: 'YES',
-              certifications: {
-                GMDN: '12345',
-                UDI: null,
-                'UDI-DI': null
-              }
-            },
-            {
-              type: 'CQC',
-              hasMet: 'IN_PROGRESS',
-              certifications: {
-                CQC: null
-              }
-            },
-            {
-              type: 'UKR_MDR_IVD_SELF_TEST',
-              hasMet: 'IN_PROGRESS',
-              certifications: {
-                GMDN: null,
-                UDI: null,
-                UDI_DI: null
-              }
-            }
+            { type: 'CE_UKCA_NON_MEDICAL', hasMet: 'YES' },
+            { type: 'CE_UKCA_CLASS_I', hasMet: 'YES' },
+            { type: 'IVD_GENERAL', hasMet: 'IN_PROGRESS' },
+            { type: 'IVD_SELF_TEST', hasMet: 'IN_PROGRESS' }
           ]
         },
         REVENUE_MODEL: {
@@ -844,11 +696,11 @@ describe('models / schema-engine / schema.model.ts', () => {
             'Innovation for Healthcare Inequalities Programme'
           ],
           mainPurpose: 'Enabling care, services or communication',
-          careSettings: ['End of life care (EOLC)', 'Industry', 'Local authority - education', 'Other']
+          careSettings: [ 'End of life care (EOLC)', 'Industry', 'Local authority - education', 'Other' ]
         },
         UNDERSTANDING_OF_NEEDS: {
           diseasesConditionsImpact: ['Blood and immune system conditions - Allergies'],
-          hasProductServiceOrPrototype: 'Working product',
+          hasProductServiceOrPrototype: 'Yes',
           carbonReductionPlan: 'I am working on one',
           completedHealthInequalitiesImpactAssessment: 'Yes',
           benefitsOrImpact: [
@@ -895,40 +747,10 @@ describe('models / schema-engine / schema.model.ts', () => {
         },
         REGULATIONS_AND_STANDARDS: {
           standards: [
-            {
-              hasMet: 'Yes',
-              type: 'UK MDR General IVD (Great Britain)',
-              certifications: {
-                GMDN: '12345',
-                'Basic UDI': null,
-                'UDI-DI': null
-              }
-            },
-            {
-              hasMet: 'Yes',
-              type: 'UK MDR Class I (Great Britain)',
-              certifications: {
-                GMDN: '12345',
-                'Basic UDI': null,
-                'UDI-DI': null
-              }
-            },
-            {
-              hasMet: 'I am actively working towards it',
-              type: 'Care Quality Commission (CQC) registration',
-              certifications: {
-                'CQC registration number': null
-              }
-            },
-            {
-              hasMet: 'I am actively working towards it',
-              type: 'UK MDR IVD for self test (Great Britain)',
-              certifications: {
-                'Basic UDI': null,
-                GMDN: null,
-                'UDI-DI': null
-              }
-            }
+            { hasMet: 'Yes', type: 'Non-medical device' },
+            { hasMet: 'Yes', type: 'Class I medical device' },
+            { hasMet: 'I am actively working towards it', type: 'IVD general' },
+            { hasMet: 'I am actively working towards it', type: 'IVD self-test' }
           ],
           hasRegulationKnowledge: 'Yes, I know all of them'
         },
@@ -949,7 +771,7 @@ describe('models / schema-engine / schema.model.ts', () => {
           hasCostKnowledge: 'Yes, I have a detailed estimate',
           costComparison:
             'My innovation costs more to purchase, but has greater benefits that will lead to overall cost savings',
-          patientsRange: 'More than half a million per year'
+          patientsRange: 'More than half a million per year',
         },
         DEPLOYMENT: {},
         version: '6',
@@ -968,171 +790,6 @@ describe('models / schema-engine / schema.model.ts', () => {
           }
         ]
       });
-    });
-  });
-
-  describe('getSubSectionPayloadValidation', () => {
-    it('shows the other registration field for OTHER and IONISING_RADIATION', () => {
-      const standardsQuestion = (IR_SCHEMA as any).sections
-        .flatMap((section: any) => section.subSections)
-        .flatMap((subSection: any) => subSection.steps)
-        .flatMap((step: any) => step.questions)
-        .find((question: any) => question.id === 'standards');
-      const certificationsQuestion = standardsQuestion?.addQuestions?.find(
-        (question: any) => question.id === 'certifications'
-      );
-      const otherRegistrationItem = certificationsQuestion?.items?.find((item: any) => item.id === 'OTHER_REG');
-
-      expect(otherRegistrationItem?.itemConditionOptions?.displayIf?.conditions[0]?.list).toEqual(
-        expect.arrayContaining(['OTHER', 'IONISING_RADIATION'])
-      );
-    });
-
-    it.each(['YES', 'CONCEPT_STAGE', 'PROOF_OF_CONCEPT', 'MVP', 'PROTOTYPE', 'WORKING_PRODUCT', 'SERVICE'])(
-      'accepts prototype answer %s',
-      answer => {
-        const model = new SchemaModel(IR_SCHEMA);
-        model.runRules();
-
-        const validationSchema = model.getSubSectionPayloadValidation('UNDERSTANDING_OF_NEEDS', {
-          hasProductServiceOrPrototype: answer
-        });
-
-        expect(validationSchema.validate({ hasProductServiceOrPrototype: answer }).error).toBeUndefined();
-      }
-    );
-
-    it('rejects the migrated prototype answer NO', () => {
-      const model = new SchemaModel(IR_SCHEMA);
-      model.runRules();
-
-      const validationSchema = model.getSubSectionPayloadValidation('UNDERSTANDING_OF_NEEDS', {
-        hasProductServiceOrPrototype: 'NO'
-      });
-
-      expect(validationSchema.validate({ hasProductServiceOrPrototype: 'NO' }).error).toBeDefined();
-    });
-
-    it('accepts legacy standards when explicitly validating an existing regulations update', () => {
-      const model = new SchemaModel(IR_SCHEMA);
-      model.runRules();
-      const payload = {
-        standards: [{ type: 'CE_UKCA_CLASS_II_B', hasMet: 'YES' }]
-      };
-
-      const validationSchema = model.getSubSectionPayloadValidation('REGULATIONS_AND_STANDARDS', payload, {
-        allowLegacyStandards: true
-      });
-
-      expect(validationSchema.validate(payload).error).toBeUndefined();
-    });
-
-    it('does not accept legacy standards without explicit update compatibility', () => {
-      const model = new SchemaModel(IR_SCHEMA);
-      model.runRules();
-      const payload = {
-        standards: [{ type: 'CE_UKCA_CLASS_II_B', hasMet: 'YES' }]
-      };
-
-      const validationSchema = model.getSubSectionPayloadValidation('REGULATIONS_AND_STANDARDS', payload);
-
-      expect(validationSchema.validate(payload).error).toBeDefined();
-    });
-
-    it('should fail validation when fields-group is required but empty array is provided', () => {
-      const model = new SchemaModel({
-        sections: [
-          {
-            id: 'TEST_SECTION',
-            title: 'Test Section',
-            subSections: [
-              {
-                id: 'TEST_SUBSECTION',
-                title: 'Test Subsection',
-                steps: [
-                  {
-                    questions: [
-                      {
-                        id: 'userTests',
-                        dataType: 'fields-group',
-                        label: 'What kind of testing with users have you done?',
-                        field: {
-                          id: 'kind',
-                          dataType: 'text',
-                          label: 'User test',
-                          validations: { isRequired: 'Required' }
-                        },
-                        addQuestion: {
-                          id: 'feedback',
-                          dataType: 'textarea',
-                          label: 'Describe testing',
-                          validations: { isRequired: 'Required' }
-                        },
-                        validations: { isRequired: 'At least one user test is required.' }
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      });
-      model.runRules();
-
-      const validationSchema = model.getSubSectionPayloadValidation('TEST_SUBSECTION', { userTests: [] });
-      const { error } = validationSchema.validate({ userTests: [] });
-      expect(error).toBeDefined();
-    });
-
-    it('should pass validation when fields-group is required and non-empty array is provided', () => {
-      const model = new SchemaModel({
-        sections: [
-          {
-            id: 'TEST_SECTION',
-            title: 'Test Section',
-            subSections: [
-              {
-                id: 'TEST_SUBSECTION',
-                title: 'Test Subsection',
-                steps: [
-                  {
-                    questions: [
-                      {
-                        id: 'userTests',
-                        dataType: 'fields-group',
-                        label: 'What kind of testing with users have you done?',
-                        field: {
-                          id: 'kind',
-                          dataType: 'text',
-                          label: 'User test',
-                          validations: { isRequired: 'Required' }
-                        },
-                        addQuestion: {
-                          id: 'feedback',
-                          dataType: 'textarea',
-                          label: 'Describe testing',
-                          validations: { isRequired: 'Required' }
-                        },
-                        validations: { isRequired: 'At least one user test is required.' }
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      });
-      model.runRules();
-
-      const validationSchema = model.getSubSectionPayloadValidation('TEST_SUBSECTION', {
-        userTests: [{ kind: 'Beta', feedback: 'Good' }]
-      });
-      const { error } = validationSchema.validate({
-        userTests: [{ kind: 'Beta', feedback: 'Good' }]
-      });
-      expect(error).toBeUndefined();
     });
   });
 });

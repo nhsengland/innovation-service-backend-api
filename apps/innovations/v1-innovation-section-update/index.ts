@@ -1,19 +1,19 @@
-import { mapOpenApi3 as openApi } from "@aaronpowell/azure-functions-nodejs-openapi";
-import type { AzureFunction, HttpRequest } from "@azure/functions";
+import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+import type { AzureFunction, HttpRequest } from '@azure/functions';
 
-import { JwtDecoder } from "@innovations/shared/decorators";
-import { ConflictError, InnovationErrorsEnum, InternalServerError } from "@innovations/shared/errors";
-import { JoiHelper, ResponseHelper, SwaggerHelper } from "@innovations/shared/helpers";
-import type { AuthorizationService, IRSchemaService } from "@innovations/shared/services";
-import SHARED_SYMBOLS from "@innovations/shared/services/symbols";
-import type { CustomContextType } from "@innovations/shared/types";
+import { JwtDecoder } from '@innovations/shared/decorators';
+import { ConflictError, InnovationErrorsEnum, InternalServerError } from '@innovations/shared/errors';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
+import type { AuthorizationService, IRSchemaService } from '@innovations/shared/services';
+import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
+import type { CustomContextType } from '@innovations/shared/types';
 
-import { container } from "../_config";
+import { container } from '../_config';
 
-import type { InnovationSectionsService } from "../_services/innovation-sections.service";
-import SYMBOLS from "../_services/symbols";
-import { ResponseBodySchema, type ResponseDTO } from "./transformation.dtos";
-import { ParamsSchema, ParamsType } from "./validation.schemas";
+import type { InnovationSectionsService } from '../_services/innovation-sections.service';
+import SYMBOLS from '../_services/symbols';
+import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
+import { ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1InnovationSectionUpdate {
   @JwtDecoder()
@@ -33,7 +33,7 @@ class V1InnovationSectionUpdate {
         .verify();
 
       const schema = await irSchemaService.getSchema();
-      if (request.body["version"] != schema.version) {
+      if (request.body['version'] != schema.version) {
         throw new ConflictError(InnovationErrorsEnum.INNOVATION_RECORD_SCHEMA_VERSION_MISMATCH);
       }
 
@@ -42,12 +42,10 @@ class V1InnovationSectionUpdate {
       }
 
       // Validate Payload
-      const validation = schema.model.getSubSectionPayloadValidation(params.sectionKey, request.body["data"], {
-        allowLegacyStandards: params.sectionKey === "REGULATIONS_AND_STANDARDS"
-      });
+      const validation = schema.model.getSubSectionPayloadValidation(params.sectionKey, request.body['data']);
       const body = {
-        ...JoiHelper.Validate<{ [key: string]: any }>(validation, request.body["data"]),
-        ...schema.model.getCalculatedFields(params.sectionKey, request.body["data"])
+        ...JoiHelper.Validate<{ [key: string]: any }>(validation, request.body['data']),
+        ...schema.model.getCalculatedFields(params.sectionKey, request.body['data'])
       };
 
       const result = await innovationSectionsService.updateInnovationSectionInfo(
@@ -67,24 +65,24 @@ class V1InnovationSectionUpdate {
 
 export default openApi(
   V1InnovationSectionUpdate.httpTrigger as AzureFunction,
-  "/v1/{innovationId}/sections/{sectionKey}",
+  '/v1/{innovationId}/sections/{sectionKey}',
   {
     put: {
-      description: "Update an innovation section info.",
-      tags: ["Innovation"],
-      summary: "Update an innovation section info.",
-      operationId: "v1-innovation-section-update",
+      description: 'Update an innovation section info.',
+      tags: ['Innovation'],
+      summary: 'Update an innovation section info.',
+      operationId: 'v1-innovation-section-update',
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       requestBody: {
-        description: "Innovation section info update request body.",
+        description: 'Innovation section info update request body.',
         content: {
-          "application/json": {
+          'application/json': {
             schema: {
-              type: "object",
+              type: 'object',
               properties: {
-                name: { type: "string" },
-                description: { type: "string" },
-                status: { type: "string" }
+                name: { type: 'string' },
+                description: { type: 'string' },
+                status: { type: 'string' }
               }
             }
           }
@@ -92,13 +90,13 @@ export default openApi(
       },
       responses: {
         200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
-          description: "Innovation section info updated successfully."
+          description: 'Innovation section info updated successfully.'
         }),
-        400: { description: "Bad request." },
-        401: { description: "Unauthorized." },
-        403: { description: "Forbidden." },
-        404: { description: "Not found." },
-        500: { description: "Internal server error." }
+        400: { description: 'Bad request.' },
+        401: { description: 'Unauthorized.' },
+        403: { description: 'Forbidden.' },
+        404: { description: 'Not found.' },
+        500: { description: 'Internal server error.' }
       }
     }
   }

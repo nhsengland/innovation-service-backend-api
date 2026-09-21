@@ -9,35 +9,14 @@ const StringSchema = JoiHelper.AppCustomJoi().string().max(100);
 const id = JoiHelper.AppCustomJoi().string().max(250).required();
 const isRequired = Joi.alternatives(Joi.boolean().valid(true), StringSchema);
 const postcodeFormat = Joi.alternatives(Joi.boolean().valid(true), StringSchema);
-const urlFormat = Joi.object({
-  message: StringSchema.optional(),
-  errorMessage: StringSchema.optional(),
-  maxLength: Joi.number().integer()
-});
+const urlFormat = Joi.object({ message: StringSchema, maxLength: Joi.number().integer() });
 const max = Joi.object({ length: Joi.number().integer().min(1), errorMessage: StringSchema });
 const min = Joi.object({ length: Joi.number().integer().min(1), errorMessage: StringSchema });
 const maxLength = Joi.number().integer().min(1);
 const condition = Joi.object({ id: StringSchema.required(), options: Joi.array().items(StringSchema).required() });
-const equalToLength = Joi.object({
-  length: Joi.number().integer().min(1).required(),
-  message: StringSchema.optional(),
-  errorMessage: StringSchema.optional()
-});
 
 const textLimit = JoiHelper.AppCustomJoi().string().valid('xs');
 const textAreaLimit = JoiHelper.AppCustomJoi().string().valid('xs', 's', 'm', 'l', 'xl', 'xxl');
-
-const conditionItem = Joi.object({
-  list: Joi.array().items(Joi.string()),
-  logic: Joi.string().valid('inclusive', 'exclusive').optional(),
-  id: Joi.string(),
-  relation: Joi.string().valid('parent', 'sibling').optional()
-});
-
-const conditionGroup = Joi.object({
-  groupLogic: Joi.string().valid('AND', 'OR').optional(),
-  conditions: Joi.array().items(conditionItem)
-});
 
 const text = Joi.object({
   id,
@@ -70,7 +49,6 @@ const radioGroup = Joi.object({
       Joi.object({
         id,
         label: JoiHelper.AppCustomJoi().string().min(1),
-        isLegacy: Joi.boolean().valid(true).optional(),
         conditional: Joi.alternatives(text, textArea).optional()
       })
     )
@@ -88,36 +66,6 @@ const autocompleteArray = Joi.object({
       Joi.object({
         id,
         label: JoiHelper.AppCustomJoi().string().min(1)
-      })
-    )
-    .required()
-});
-
-const inputArray = Joi.object({
-  id,
-  dataType: JoiHelper.AppCustomJoi().string().valid('input-array').required(),
-  label: JoiHelper.AppCustomJoi().string().min(1).required(),
-  description: JoiHelper.AppCustomJoi().string().min(1).optional(),
-  validations: Joi.object({ isRequired, max, min }),
-  items: Joi.array()
-    .items(
-      Joi.object({
-        id,
-        label: JoiHelper.AppCustomJoi().string().min(1),
-        description: JoiHelper.AppCustomJoi().string().optional(),
-        itemConditionOptions: Joi.object({
-          mandatoryIf: conditionGroup.optional(),
-          displayIf: conditionGroup.optional()
-        }).optional(),
-        validations: Joi.object({
-          isRequired,
-          maxLength,
-          max,
-          min,
-          equalToLength,
-          urlFormat,
-          postcodeFormat
-        }).optional()
       })
     )
     .required()
@@ -142,7 +90,7 @@ const checkboxArray = Joi.object({
       })
     )
     .required(),
-  addQuestions: Joi.array().items(Joi.alternatives(text, textArea, radioGroup, inputArray))
+  addQuestion: Joi.alternatives(text, textArea, radioGroup)
 });
 
 const fieldsGroup = Joi.object({
@@ -153,18 +101,10 @@ const fieldsGroup = Joi.object({
   validations: Joi.object({ isRequired, max }),
   addNewLabel: JoiHelper.AppCustomJoi().string().min(1),
   field: text.required(),
-  addQuestions: Joi.array().items(Joi.alternatives(text, textArea).optional())
+  addQuestion: Joi.alternatives(text, textArea).optional()
 });
 
-const questions = Joi.array().items(
-  text,
-  textArea,
-  radioGroup,
-  autocompleteArray,
-  checkboxArray,
-  inputArray,
-  fieldsGroup
-);
+const questions = Joi.array().items(text, textArea, radioGroup, autocompleteArray, checkboxArray, fieldsGroup);
 
 const subSection = Joi.object({
   id,
