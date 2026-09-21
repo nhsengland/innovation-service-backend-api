@@ -5,6 +5,15 @@ servers:
   - url: https://nhse-${ENV}-innovation-service-admin-functions.azurewebsites.net/api
 openapi: 3.0.3
 paths:
+  /v1/alert-manager/webhook:
+    post:
+      description: Receive Azure Monitor manager alert webhook notifications.
+      operationId: v1-admin-alert-manager-webhook
+      responses:
+        "202":
+          description: Accepted.
+        "400":
+          description: Invalid Azure Monitor alert payload.
   /v1/health:
     get:
       summary: Get admin health
