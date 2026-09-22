@@ -113,6 +113,18 @@ describe('Shared / services / IdentityProviderService', () => {
     it('should invalidate the cached user after updating the identity provider', async () => {
       const identityId = scenario.users.johnInnovator.id;
       const cacheDeleteManyMock = jest.spyOn(sut['cache'], 'deleteMany').mockResolvedValue();
+      jest.spyOn(sut['cache'], 'getMany').mockResolvedValue([]);
+      jest.spyOn(sut['cache'], 'setMany').mockResolvedValue();
+      jest.spyOn<any, any>(sut, 'getUsersListFromB2C').mockResolvedValue([
+        {
+          identityId,
+          givenName: 'Updated',
+          surname: 'Name',
+          displayName: 'Updated Name',
+          email: scenario.users.johnInnovator.email,
+          isActive: true
+        }
+      ]);
       jest.spyOn<any, any>(sut, 'verifyAccessToken').mockResolvedValue(undefined);
       jest.spyOn(axios, 'patch').mockResolvedValue({} as any);
 
