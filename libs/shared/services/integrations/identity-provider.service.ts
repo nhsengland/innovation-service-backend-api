@@ -399,10 +399,7 @@ export class IdentityProviderService {
     return response.data.id;
   }
 
-  async updateUser(
-    identityId: string,
-    body: IdentityUpdateBody
-  ): Promise<void> {
+  async updateUser(identityId: string, body: IdentityUpdateBody): Promise<void> {
     await this.verifyAccessToken();
 
     // DOCS: https://docs.microsoft.com/pt-PT/graph/api/user-update?view=graph-rest-1.0&tabs=http
