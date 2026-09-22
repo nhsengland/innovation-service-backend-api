@@ -1,3 +1,5 @@
+import axios from 'axios';
+
 //import type { EntityManager } from 'typeorm';
 import SHARED_SYMBOLS from '../symbols';
 import type { IdentityProviderService } from './identity-provider.service';
@@ -104,6 +106,23 @@ describe('Shared / services / IdentityProviderService', () => {
           isActive: true
         }
       ]);
+    });
+  });
+
+  describe('updateUser', () => {
+    it('should invalidate the cached user after updating the identity provider', async () => {
+      const identityId = scenario.users.johnInnovator.id;
+      const cacheDeleteManyMock = jest.spyOn(sut['cache'], 'deleteMany').mockResolvedValue();
+      jest.spyOn<any, any>(sut, 'verifyAccessToken').mockResolvedValue(undefined);
+      jest.spyOn(axios, 'patch').mockResolvedValue({} as any);
+
+      await sut.updateUser(identityId, {
+        givenName: 'Updated',
+        surname: 'Name',
+        displayName: 'Updated Name'
+      });
+
+      expect(cacheDeleteManyMock).toHaveBeenCalledWith([identityId]);
     });
   });
 });

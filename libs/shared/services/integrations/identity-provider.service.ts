@@ -65,6 +65,14 @@ type b2cGetUsersListDTO = {
   }[];
 };
 
+type IdentityUpdateBody = {
+  givenName?: string;
+  surname?: string;
+  displayName?: string;
+  mobilePhone?: string | null;
+  accountEnabled?: boolean;
+};
+
 @injectable()
 export class IdentityProviderService {
   private tenantName = process.env['AD_TENANT_NAME'] || '';
@@ -393,13 +401,7 @@ export class IdentityProviderService {
 
   async updateUser(
     identityId: string,
-    body: {
-      givenName?: string;
-      surname?: string;
-      displayName?: string;
-      mobilePhone?: string | null;
-      accountEnabled?: boolean;
-    }
+    body: IdentityUpdateBody
   ): Promise<void> {
     await this.verifyAccessToken();
 
@@ -412,6 +414,31 @@ export class IdentityProviderService {
       .catch(error => {
         throw this.getError(error.response.status, error.response.data.message);
       });
+
+    await this.refreshUserCacheAfterUpdate(identityId, body);
+  }
+
+  private async refreshUserCacheAfterUpdate(identityId: string, body: IdentityUpdateBody): Promise<void> {
+    // Allow Microsoft Graph time to expose the update before refreshing the cache.
+    await sleep(700);
+
+    for (let attempt = 0; attempt < 7; attempt += 1) {
+      const updatedUser = await this.getUserInfo(identityId, true);
+      const isConfirmed = Object.entries(body).every(([field, value]) => {
+        if (value === undefined) return true;
+        return updatedUser[field as keyof typeof updatedUser] === value;
+      });
+
+      if (isConfirmed) return;
+
+      // Do not leave a stale Graph response in the cache while propagation catches up.
+      await this.cache.delete(identityId);
+      if (attempt < 6) await sleep(700);
+    }
+
+    throw new ServiceUnavailableError(GenericErrorsEnum.SERVICE_IDENTIY_UNAVAILABLE, {
+      details: { message: 'B2C user update was not visible after cache refresh attempts' }
+    });
   }
 
   async updateUserEmail(identityId: string, email: string): Promise<void> {
