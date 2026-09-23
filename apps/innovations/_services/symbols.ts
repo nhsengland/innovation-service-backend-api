@@ -11,6 +11,7 @@ export const SYMBOLS = {
   InnovationThreadsService: Symbol.for("InnovationThreadsService"),
   InnovationTransferService: Symbol.for("InnovationTransferService"),
   InnovationDocumentService: Symbol.for("InnovationDocumentService"),
+  ExcelInnovationService: Symbol.for("ExcelInnovationService"),
   ExportFileService: Symbol.for("ExportFileService"),
   StatisticsService: Symbol.for("StatisticsService"),
   ValidationService: Symbol.for("ValidationService"),

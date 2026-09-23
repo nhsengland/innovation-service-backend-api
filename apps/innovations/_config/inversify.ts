@@ -15,6 +15,7 @@ import { InnovationTasksService } from "../_services/innovation-tasks.service";
 import { InnovationThreadsService } from "../_services/innovation-threads.service";
 import { InnovationTransferService } from "../_services/innovation-transfer.service";
 import { InnovationsService } from "../_services/innovations.service";
+import { ExcelInnovationService } from "../_services/excel-innovation.service";
 import { SearchService } from "../_services/search.service";
 import { StatisticsService } from "../_services/statistics.service";
 import { SurveysService } from "../_services/surveys.service";
@@ -57,6 +58,7 @@ container
   .to(InnovationDocumentService)
   .inSingletonScope();
 container.bind<InnovationsService>(SYMBOLS.InnovationsService).to(InnovationsService).inSingletonScope();
+container.bind<ExcelInnovationService>(SYMBOLS.ExcelInnovationService).to(ExcelInnovationService).inSingletonScope();
 container.bind<ExportFileService>(SYMBOLS.ExportFileService).to(ExportFileService).inSingletonScope();
 container.bind<StatisticsService>(SYMBOLS.StatisticsService).to(StatisticsService).inSingletonScope();
 container.bind<ValidationService>(SYMBOLS.ValidationService).to(ValidationService).inSingletonScope();
