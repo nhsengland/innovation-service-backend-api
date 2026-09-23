@@ -451,7 +451,11 @@ export class InnovationFileService extends BaseService {
   async deleteFiles(
     domainContext: DomainContextType,
     innovationId: string,
-    filters: { contextType?: InnovationFileContextTypeEnum; contextId?: string },
+    filters: {
+      contextType?: InnovationFileContextTypeEnum;
+      contextId?: string;
+      contextIdsToKeep?: string[];
+    },
     entityManager: EntityManager
   ): Promise<void> {
     const query = entityManager
@@ -465,6 +469,12 @@ export class InnovationFileService extends BaseService {
 
     if (filters.contextId) {
       query.andWhere("file.context_id = :contextId", { contextId: filters.contextId });
+    }
+
+    if (filters.contextIdsToKeep && filters.contextIdsToKeep.length > 0) {
+      query.andWhere("file.context_id NOT IN (:...contextIdsToKeep)", {
+        contextIdsToKeep: filters.contextIdsToKeep
+      });
     }
 
     const files = await query.getMany();

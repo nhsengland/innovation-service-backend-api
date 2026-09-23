@@ -331,6 +331,32 @@ export class InnovationSectionsService extends BaseService {
           { dataToUpdate, updatedBy: domainContext.id, updatedAt },
           transaction
         );
+
+        if (
+          sectionKey === "REGULATIONS_AND_STANDARDS" &&
+          (Object.prototype.hasOwnProperty.call(dataToUpdate, "standards") ||
+            ["NO", "NOT_RELEVANT"].includes(dataToUpdate["hasRegulationKnowledge"]))
+        ) {
+          const regulationKnowledgeNotApplicable = ["NO", "NOT_RELEVANT"].includes(
+            dataToUpdate["hasRegulationKnowledge"]
+          );
+          const standards = Array.isArray(dataToUpdate["standards"]) ? dataToUpdate["standards"] : [];
+          const contextIdsToKeep = regulationKnowledgeNotApplicable
+            ? []
+            : standards
+                .filter((standard: { type?: string; hasMet?: string }) => standard.hasMet === "YES")
+                .map((standard: { type: string }) => standard.type);
+
+          await this.innovationFileService.deleteFiles(
+            domainContext,
+            innovationId,
+            {
+              contextType: InnovationFileContextTypeEnum.INNOVATION_REGULATIONS,
+              contextIdsToKeep
+            },
+            transaction
+          );
+        }
       }
 
       // Make sure to keep name up-to-date accross the innovation
