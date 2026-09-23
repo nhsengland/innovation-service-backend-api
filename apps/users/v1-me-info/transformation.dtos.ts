@@ -6,6 +6,8 @@ import { ServiceRoleEnum } from '@users/shared/enums';
 export type ResponseDTO = {
   id: string;
   email: string;
+  givenName: string;
+  surname: string;
   displayName: string;
   jobTitle?: string | null;
   roles: RoleType[];
@@ -65,6 +67,8 @@ export const ResponseBodySchema = Joi.array<ResponseDTO>().items(
   Joi.object({
     id: Joi.string().uuid().required(),
     email: Joi.string().required(),
+    givenName: Joi.string().required(),
+    surname: Joi.string().required(),
     displayName: Joi.string().required(),
     jobTitle: Joi.string().allow(null).required(),
     roles: rolesTypeSchema,

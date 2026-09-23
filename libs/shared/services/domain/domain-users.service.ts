@@ -96,6 +96,8 @@ export class DomainUsersService {
     id: string;
     identityId: string;
     email: string;
+    givenName: string;
+    surname: string;
     displayName: string;
     roles: RoleType[];
     phone: null | string;
@@ -225,6 +227,8 @@ export class DomainUsersService {
       id: dbUser.id,
       identityId: user.identityId,
       email: user.email,
+      givenName: user.givenName,
+      surname: user.surname,
       displayName: user.displayName,
       roles: dbUser.serviceRoles.map(roleEntity2RoleType),
       phone: user.mobilePhone,
