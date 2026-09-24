@@ -162,7 +162,7 @@ export class TestsHelper {
 
     jest
       .spyOn(IdentityProviderService.prototype, 'createUser')
-      .mockImplementation(async (_data: { name: string; email: string; password: string }) => {
+      .mockImplementation(async (_data: { givenName: string; surname: string; email: string; password: string }) => {
         return randUuid();
       });
 

@@ -16,10 +16,10 @@ import {
   UserErrorsEnum
 } from '@admin/shared/errors';
 import { TranslationHelper } from '@admin/shared/helpers';
-import { NotifierService } from '@admin/shared/services';
+import { IdentityProviderService, NotifierService } from '@admin/shared/services';
 import type { TestUserType } from '@admin/shared/tests/builders/user.builder';
 import { DTOsHelper } from '@admin/shared/tests/helpers/dtos.helper';
-import { randEmail, randFullName, randPastDate, randText, randUuid } from '@ngneat/falso';
+import { randEmail, randPastDate, randText, randUuid } from '@ngneat/falso';
 import { container } from '../_config';
 import * as AdminOperationsConfig from '../_config/admin-operations.config';
 import SYMBOLS from './symbols';
@@ -189,11 +189,87 @@ describe('Admin / _services / users service suite', () => {
   });
 
   describe('createUser', () => {
+    it('should update names when reusing a B2C identity that is not in the application database', async () => {
+      const identityId = randUuid();
+      const email = randEmail();
+      const getUserInfoByEmailSpy = jest.spyOn(IdentityProviderService.prototype, 'getUserInfoByEmail');
+      const updateUserSpy = jest.spyOn(IdentityProviderService.prototype, 'updateUser');
+
+      getUserInfoByEmailSpy.mockResolvedValueOnce({
+        identityId,
+        displayName: 'John Smith',
+        email,
+        phone: null
+      });
+      updateUserSpy.mockResolvedValueOnce();
+
+      const result = await sut.createUser(
+        userAdminContext,
+        {
+          givenName: 'Jonathan',
+          surname: 'Smythe',
+          email,
+          role: ServiceRoleEnum.ASSESSMENT
+        },
+        em
+      );
+
+      expect(updateUserSpy).toHaveBeenCalledWith(identityId, {
+        givenName: 'Jonathan',
+        surname: 'Smythe',
+        displayName: 'Jonathan Smythe'
+      });
+
+      const createdUser = await em
+        .createQueryBuilder(UserEntity, 'user')
+        .where('user.id = :userId', { userId: result.id })
+        .getOne();
+
+      expect(createdUser?.identityId).toBe(identityId);
+    });
+
+    it('should not create an application user when updating a reused B2C identity fails', async () => {
+      const identityId = randUuid();
+      const email = randEmail();
+      const updateError = new Error('B2C update failed');
+      const getUserInfoByEmailSpy = jest.spyOn(IdentityProviderService.prototype, 'getUserInfoByEmail');
+      const updateUserSpy = jest.spyOn(IdentityProviderService.prototype, 'updateUser');
+
+      getUserInfoByEmailSpy.mockResolvedValueOnce({
+        identityId,
+        displayName: 'John Smith',
+        email,
+        phone: null
+      });
+      updateUserSpy.mockRejectedValueOnce(updateError);
+
+      await expect(
+        sut.createUser(
+          userAdminContext,
+          {
+            givenName: 'Jonathan',
+            surname: 'Smythe',
+            email,
+            role: ServiceRoleEnum.ASSESSMENT
+          },
+          em
+        )
+      ).rejects.toBe(updateError);
+
+      const createdUser = await em
+        .createQueryBuilder(UserEntity, 'user')
+        .where('user.identityId = :identityId', { identityId })
+        .getOne();
+
+      expect(createdUser).toBeNull();
+    });
+
     it.each([ServiceRoleEnum.ASSESSMENT, ServiceRoleEnum.ADMIN] as const)('should create a %s user', async userType => {
       const result = await sut.createUser(
         userAdminContext,
         {
-          name: randFullName(),
+          givenName: 'Test',
+          surname: 'User',
           email: randEmail(),
           role: userType
         },
@@ -215,7 +291,8 @@ describe('Admin / _services / users service suite', () => {
         const result = await sut.createUser(
           userAdminContext,
           {
-            name: randFullName(),
+            givenName: 'Test',
+            surname: 'User',
             email: randEmail(),
             role: userType,
             organisationId: scenario.organisations.healthOrg.id,
@@ -244,7 +321,8 @@ describe('Admin / _services / users service suite', () => {
         const result = await sut.createUser(
           userAdminContext,
           {
-            name: randFullName(),
+            givenName: 'Test',
+            surname: 'User',
             email: randEmail(),
             role: userType,
             organisationId: scenario.organisations.healthOrg.id,
@@ -282,7 +360,8 @@ describe('Admin / _services / users service suite', () => {
         sut.createUser(
           userAdminContext,
           {
-            name: randFullName(),
+            givenName: 'Test',
+            surname: 'User',
             email: randEmail(),
             role: ServiceRoleEnum.ACCESSOR,
             organisationId: randUuid(),
@@ -298,7 +377,8 @@ describe('Admin / _services / users service suite', () => {
         sut.createUser(
           userAdminContext,
           {
-            name: randFullName(),
+            givenName: 'Test',
+            surname: 'User',
             email: randEmail(),
             role: ServiceRoleEnum.ACCESSOR,
             organisationId: randUuid(),
@@ -316,7 +396,8 @@ describe('Admin / _services / users service suite', () => {
           sut.createUser(
             userAdminContext,
             {
-              name: randFullName(),
+              givenName: 'Test',
+              surname: 'User',
               email: randEmail(),
               role: ServiceRoleEnum.ACCESSOR,
               organisationId: randUuid(),
@@ -333,7 +414,8 @@ describe('Admin / _services / users service suite', () => {
         sut.createUser(
           userAdminContext,
           {
-            name: randFullName(),
+            givenName: 'Test',
+            surname: 'User',
             email: scenario.users.adamInnovator.email,
             role: ServiceRoleEnum.ASSESSMENT
           },

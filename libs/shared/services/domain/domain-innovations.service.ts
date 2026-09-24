@@ -1037,7 +1037,7 @@ export class DomainInnovationsService {
         case 'checkbox-array':
           // This validation is needed since the checkbox array can be an array of objects when `addQuestion` is defined.
           // And in this cases we need to do an aditional JSON_VALUE to get the value from inside the object.
-          if (question.addQuestion) {
+          if (question.addQuestions) {
             query.andWhere(
               `
                   EXISTS (

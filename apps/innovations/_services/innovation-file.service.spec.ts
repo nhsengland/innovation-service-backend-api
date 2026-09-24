@@ -1361,6 +1361,45 @@ describe("Services / Innovation File service suite", () => {
       const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
       const domainContext = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, "innovatorRole");
 
+      it("should delete regulation files whose certification is not in the keep list", async () => {
+        deleteFileMock.mockClear();
+        const retainedFile = await new InnovationFileBuilder(em)
+          .setContext({ id: "UK_MDR_CLASS_I", type: InnovationFileContextTypeEnum.INNOVATION_REGULATIONS })
+          .setCreatedByUserRole(scenario.users.johnInnovator.roles["innovatorRole"]!.id)
+          .setInnovation(innovation.id)
+          .save();
+        const obsoleteFile = await new InnovationFileBuilder(em)
+          .setContext({ id: "DTAC", type: InnovationFileContextTypeEnum.INNOVATION_REGULATIONS })
+          .setCreatedByUserRole(scenario.users.johnInnovator.roles["innovatorRole"]!.id)
+          .setInnovation(innovation.id)
+          .save();
+
+        await sut.deleteFiles(
+          domainContext,
+          innovation.id,
+          {
+            contextType: InnovationFileContextTypeEnum.INNOVATION_REGULATIONS,
+            contextIdsToKeep: [retainedFile.context.id]
+          },
+          em
+        );
+
+        const retainedDbFile = await em
+          .createQueryBuilder(InnovationFileEntity, "file")
+          .withDeleted()
+          .where("file.id = :fileId", { fileId: retainedFile.id })
+          .getOne();
+        const obsoleteDbFile = await em
+          .createQueryBuilder(InnovationFileEntity, "file")
+          .withDeleted()
+          .where("file.id = :fileId", { fileId: obsoleteFile.id })
+          .getOne();
+
+        expect(retainedDbFile?.deletedAt).toBeFalsy();
+        expect(obsoleteDbFile?.deletedAt).toBeTruthy();
+        expect(deleteFileMock).toHaveBeenCalledTimes(1);
+      });
+
       it("should delete all files related to the contextType INNOVATION_SECTION", async () => {
         const nInnovationSectionFilesBefore = await em
           .createQueryBuilder(InnovationFileEntity, "file")

@@ -470,43 +470,46 @@ export function generateDocumentContent(schema: IRSchemaType): Paragraph[] {
           // Add question's child "addQuestion", if present.
           if (
             (question.dataType === 'fields-group' || question.dataType === 'checkbox-array') &&
-            question.addQuestion
+            question.addQuestions
           ) {
             // Add label
             /* Since these are edge cases, we need to replace the {{variable}} on the label
             with the same text used on store.ctx.schema.getIrSchemaSectionAllStepsList() on the frontend
             for the non-started section questions' list */
 
-            let textToReplaceLabelVariable = '';
+            question.addQuestions.forEach(aq => {
+              let textToReplaceLabelVariable = '';
+              switch (aq.id) {
+                case 'hasMet':
+                  textToReplaceLabelVariable = 'each standard?';
+                  break;
+                case 'feedback':
+                  textToReplaceLabelVariable = 'each testing type';
+                  break;
+              }
 
-            switch (question.addQuestion.id) {
-              case 'hasMet':
-                textToReplaceLabelVariable = 'each standard?';
-                break;
-              case 'feedback':
-                textToReplaceLabelVariable = 'each testing type';
-                break;
-            }
-
-            paragraphs.push(
-              new Paragraph({
-                children: [
-                  new TextRun({
-                    text: question.addQuestion?.label.replace(/\{\{(.*?)\}\}/g, textToReplaceLabelVariable),
-                    bold: true,
-                    size: 24,
-                    font: DOCUMENT_FONT
-                  })
-                ],
-                spacing: { before: 400 }
-              })
-            );
+              paragraphs.push(
+                new Paragraph({
+                  children: [
+                    new TextRun({
+                      text: aq?.label.replace(/\{\{(.*?)\}\}/g, textToReplaceLabelVariable),
+                      bold: true,
+                      size: 24,
+                      font: DOCUMENT_FONT
+                    })
+                  ],
+                  spacing: { before: 400 }
+                })
+              );
+            });
 
             // Format the answer based on data type
             switch (question.dataType) {
               case 'checkbox-array': {
-                const items = processQuestionItems(question.addQuestion);
-                paragraphs.push(...items);
+                question.addQuestions?.forEach(aq => {
+                  const items = processQuestionItems(aq);
+                  paragraphs.push(...items);
+                });
                 break;
               }
               case 'fields-group':

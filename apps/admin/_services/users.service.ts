@@ -148,7 +148,8 @@ export class UsersService extends BaseService {
   async createUser(
     domainContext: DomainContextType,
     data: {
-      name: string;
+      givenName: string;
+      surname: string;
       email: string;
     } & CreateRolesType & { strategicRoles?: StrategicRoleEnum[] },
     entityManager?: EntityManager
@@ -195,10 +196,17 @@ export class UsersService extends BaseService {
       if (user) {
         throw new UnprocessableEntityError(UserErrorsEnum.USER_ALREADY_EXISTS);
       }
+
+      await this.identityProviderService.updateUser(identityId, {
+        givenName: data.givenName,
+        surname: data.surname,
+        displayName: `${data.givenName} ${data.surname}`
+      });
     } else {
       // b2c user doesn't exist, create it
       const iId = await this.identityProviderService.createUser({
-        name: data.name,
+        givenName: data.givenName,
+        surname: data.surname,
         email: data.email,
         password: password
       });

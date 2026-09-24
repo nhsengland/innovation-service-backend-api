@@ -22,7 +22,7 @@ import {
   TermsOfUseTypeEnum,
   UserStatusEnum
 } from '@users/shared/enums';
-import { NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
+import { UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
 import type { PaginationQueryParamsType } from '@users/shared/helpers';
 import type {
   CacheConfigType,
@@ -173,6 +173,8 @@ export class UsersService extends BaseService {
     user: { id: string; identityId: string; firstTimeSignInAt?: null | Date },
     currentRole: ServiceRoleEnum | '',
     data: {
+      givenName: string;
+      surname: string;
       displayName: string;
       contactByEmail?: boolean;
       contactByPhone?: boolean;
@@ -192,99 +194,119 @@ export class UsersService extends BaseService {
     },
     entityManager?: EntityManager
   ): Promise<{ id: string }> {
+    const previousIdentity = await this.identityProviderService.getUserInfo(user.identityId);
+    const displayName = `${data.givenName} ${data.surname}`;
+
     await this.identityProviderService.updateUser(user.identityId, {
-      displayName: data.displayName,
+      displayName,
+      givenName: data.givenName,
+      surname: data.surname,
       ...(data.mobilePhone !== undefined ? { mobilePhone: data.mobilePhone } : {})
     });
 
-    const em = entityManager ?? this.sqlConnection.manager;
+    try {
+      const em = entityManager ?? this.sqlConnection.manager;
 
-    if (data.jobTitle !== undefined) {
-      await em.getRepository(UserEntity).update(user.id, { jobTitle: data.jobTitle });
-    }
+      if (data.jobTitle !== undefined) {
+        await em.getRepository(UserEntity).update(user.id, { jobTitle: data.jobTitle });
+      }
 
-    // NOTE: Only innovators can change their organisation, we make a sanity check here.
-    if (currentRole === ServiceRoleEnum.INNOVATOR) {
-      await em.transaction(async transaction => {
-        // If user does not have firstTimeSignInAt, it means this is the first time the user is signing in
-        // Updates the firstTimeSignInAt with the current date.
-        if (!user.firstTimeSignInAt) {
-          await transaction.getRepository(UserEntity).update(user.id, {
-            firstTimeSignInAt: new Date().toISOString(),
-            howDidYouFindUsAnswers: Object.keys(data.howDidYouFindUsAnswers).length
-              ? Object.fromEntries(Object.entries(data.howDidYouFindUsAnswers).filter(([_k, v]) => v))
-              : null
-          });
-        }
-
-        let updateIndex = false;
-        if (data.organisation) {
-          const organisationData: {
-            isShadow: boolean;
-            name?: string;
-            size?: null | string;
-            description?: null | string;
-            registrationNumber?: null | string;
-          } = {
-            isShadow: data.organisation.isShadow
-          };
-
-          if (organisationData.isShadow) {
-            organisationData.name = user.identityId;
-            organisationData.size = null;
-            organisationData.description = null;
-            organisationData.registrationNumber = null;
-          } else {
-            if (data.organisation.name) {
-              organisationData.name = data.organisation.name;
-            }
-            if (data.organisation.size) {
-              organisationData.size = data.organisation.size;
-            }
-            if (data.organisation.description) {
-              organisationData.description = data.organisation.description;
-            }
-            organisationData.registrationNumber = data.organisation.registrationNumber;
-
-            updateIndex = true;
+      // NOTE: Only innovators can change their organisation, we make a sanity check here.
+      if (currentRole === ServiceRoleEnum.INNOVATOR) {
+        await em.transaction(async transaction => {
+          // If user does not have firstTimeSignInAt, it means this is the first time the user is signing in
+          // Updates the firstTimeSignInAt with the current date.
+          if (!user.firstTimeSignInAt) {
+            await transaction.getRepository(UserEntity).update(user.id, {
+              firstTimeSignInAt: new Date().toISOString(),
+              howDidYouFindUsAnswers: Object.keys(data.howDidYouFindUsAnswers).length
+                ? Object.fromEntries(Object.entries(data.howDidYouFindUsAnswers).filter(([_k, v]) => v))
+                : null
+            });
           }
 
-          await transaction.getRepository(OrganisationEntity).update(data.organisation.id, organisationData);
-        }
+          let updateIndex = false;
+          if (data.organisation) {
+            const organisationData: {
+              isShadow: boolean;
+              name?: string;
+              size?: null | string;
+              description?: null | string;
+              registrationNumber?: null | string;
+            } = {
+              isShadow: data.organisation.isShadow
+            };
 
-        const preferences: {
-          contactByPhone: boolean;
-          contactByEmail: boolean;
-          contactByPhoneTimeframe: null | PhoneUserPreferenceEnum;
-          contactDetails: null | string;
-        } = {
-          contactByPhone: data.contactByPhone as boolean,
-          contactByEmail: data.contactByEmail as boolean,
-          contactByPhoneTimeframe: data.contactByPhoneTimeframe ?? null,
-          contactDetails: data.contactDetails ?? null
-        };
+            if (organisationData.isShadow) {
+              organisationData.name = user.identityId;
+              organisationData.size = null;
+              organisationData.description = null;
+              organisationData.registrationNumber = null;
+            } else {
+              if (data.organisation.name) {
+                organisationData.name = data.organisation.name;
+              }
+              if (data.organisation.size) {
+                organisationData.size = data.organisation.size;
+              }
+              if (data.organisation.description) {
+                organisationData.description = data.organisation.description;
+              }
+              organisationData.registrationNumber = data.organisation.registrationNumber;
 
-        await this.upsertUserPreferences(user.id, preferences, transaction);
+              updateIndex = true;
+            }
 
-        if (updateIndex) {
-          // Update ES index for all the innovations that the user is owner.
-          const innovations = await transaction
-            .createQueryBuilder(InnovationEntity, 'innovation')
-            .select(['innovation.id'])
-            .where('innovation.owner_id = :ownerId', { ownerId: user.id })
-            .getMany();
-          await this.redisService.addToSet(
-            'elasticsearch',
-            innovations.map(i => i.id)
-          );
-        }
-      });
+            await transaction.getRepository(OrganisationEntity).update(data.organisation.id, organisationData);
+          }
+
+          const preferences: {
+            contactByPhone: boolean;
+            contactByEmail: boolean;
+            contactByPhoneTimeframe: null | PhoneUserPreferenceEnum;
+            contactDetails: null | string;
+          } = {
+            contactByPhone: data.contactByPhone as boolean,
+            contactByEmail: data.contactByEmail as boolean,
+            contactByPhoneTimeframe: data.contactByPhoneTimeframe ?? null,
+            contactDetails: data.contactDetails ?? null
+          };
+
+          await this.upsertUserPreferences(user.id, preferences, transaction);
+
+          if (updateIndex) {
+            // Update ES index for all the innovations that the user is owner.
+            const innovations = await transaction
+              .createQueryBuilder(InnovationEntity, 'innovation')
+              .select(['innovation.id'])
+              .where('innovation.owner_id = :ownerId', { ownerId: user.id })
+              .getMany();
+            await this.redisService.addToSet(
+              'elasticsearch',
+              innovations.map(i => i.id)
+            );
+          }
+        });
+      }
+
+      // Remove the cache entry on update
+      await this.cache.delete(user.identityId);
+
+      return { id: user.id };
+    } catch (error) {
+      try {
+        await this.identityProviderService.updateUser(user.identityId, {
+          displayName: previousIdentity.displayName,
+          givenName: previousIdentity.givenName ?? '',
+          surname: previousIdentity.surname ?? '',
+          mobilePhone: previousIdentity.mobilePhone
+        });
+        await this.cache.delete(user.identityId);
+      } catch (rollbackError) {
+        this.logger.error('Failed to roll back B2C user name update', rollbackError);
+      }
+      throw error;
     }
-
-    // Remove the cache entry on update
-    await this.cache.delete(user.identityId);
-
-    return { id: user.id };
   }
 
   /**
@@ -361,16 +383,17 @@ export class UsersService extends BaseService {
       em
     );
 
-    const users = await Promise.all(
-      dbUsers.map(async dbUser => {
-        const identityUser = identityUsers.get(dbUser.identityId);
-        if (!identityUser) {
-          throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND, {
-            details: { context: 'S.DU.gUL' }
-          });
-        }
+    const users = dbUsers.flatMap(dbUser => {
+      const identityUser = identityUsers.get(dbUser.identityId);
+      if (!identityUser) {
+        this.logger.error(
+          `[getUserList] Skipping user with missing B2C identity (user ${dbUser.id}, identity ${dbUser.identityId})`
+        );
+        return [];
+      }
 
-        return {
+      return [
+        {
           id: dbUser.id,
           isActive: dbUser.status === UserStatusEnum.ACTIVE,
           roles: dbUser.serviceRoles,
@@ -378,9 +401,9 @@ export class UsersService extends BaseService {
           jobTitle: dbUser.jobTitle,
           lockedAt: dbUser.lockedAt,
           ...(fieldSet.has('email') ? { email: identityUser.email } : {})
-        };
-      })
-    );
+        }
+      ];
+    });
 
     return {
       count: count,

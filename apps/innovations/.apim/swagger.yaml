@@ -1734,6 +1734,22 @@ paths:
           description: Ok.
         "400":
           description: Bad request.
+  /v1/innovation-record/docs:
+    get:
+      description: Get the API integration specification for the Innovation Record in
+        Markdown format.
+      tags:
+        - "[v1] Innovations"
+      operationId: v1-innovation-record-docs
+      responses:
+        "200":
+          description: Markdown specification file
+          content:
+            text/markdown:
+              schema:
+                type: string
+        "401":
+          description: Unauthorized
   /v1/innovation-record/docx:
     get:
       description: Generate docx for the innovation record
@@ -2486,6 +2502,63 @@ paths:
           description: Invalid payload
         "404":
           description: Innovation not found
+  /v1/innovations/import:
+    post:
+      description: Create a new innovation record as DRAFT by importing a filled-in
+        Excel file or JSON payload.
+      tags:
+        - "[v1] Innovations"
+      operationId: v1-innovation-import
+      requestBody:
+        description: The import payload containing either base64 Excel file or JSON object.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                format:
+                  type: string
+                  enum:
+                    - excel
+                    - json
+                file:
+                  oneOf:
+                    - type: string
+                      x-required: true
+                payload:
+                  oneOf:
+                    - type: object
+                      properties: {}
+                      x-required: true
+              required:
+                - format
+              additionalProperties: false
+      responses:
+        "200":
+          description: New innovation record ID with any validation warnings.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  validationIssues:
+                    type: object
+                    additionalProperties:
+                      type: array
+                      items:
+                        type: string
+                  emptySections:
+                    type: array
+                    items:
+                      type: string
+        "400":
+          description: Invalid payload
+        "422":
+          description: Unprocessable entity
   /v1/{innovationId}:
     get:
       operationId: v1-innovation-info
@@ -6099,6 +6172,42 @@ paths:
           description: Bad Request
         "404":
           description: Not found
+  /v1/innovation-record/xlsx:
+    post:
+      description: Generate a pre-filled Excel file for a given innovation record JSON
+        payload
+      tags:
+        - "[v1] Innovations"
+      operationId: v1-innovation-record-xlsx-export
+      requestBody:
+        description: Innovation Record payload (InnovationRecordDocumentType)
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Excel file result
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+        "400":
+          description: Bad request.
+    get:
+      description: Get an empty Excel template for the Innovation Record
+      tags:
+        - "[v1] Innovations"
+      operationId: v1-innovation-record-xlsx-template
+      responses:
+        "200":
+          description: Excel template file
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+        "401":
+          description: Unauthorized
   /v1/{innovationId}/export-requests:
     post:
       operationId: v1-innovations-export-requests-create

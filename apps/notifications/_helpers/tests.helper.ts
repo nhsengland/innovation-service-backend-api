@@ -35,11 +35,11 @@ export const testEmails = async <
     .map(e => ({
       ...e,
       to: (() => {
-        const { jobTitle, ...rest } = e.to as any;
+        const { jobTitle: _jobTitle, ...rest } = e.to as any;
         return rest;
       })(),
       params: (() => {
-        const { date, ...rest } = e.params;
+        const { date: _date, ...rest } = e.params;
         return rest;
       })()
     }));
@@ -50,11 +50,11 @@ export const testEmails = async <
       templateId: template,
       notificationPreferenceType: data.notificationPreferenceType,
       to: (() => {
-        const { jobTitle, ...rest } = r as any;
+        const { jobTitle: _jobTitle, ...rest } = r as any;
         return rest;
       })(),
       params: (() => {
-        const { date, ...rest } = (Array.isArray(data.outputData) ? data.outputData[i] : data.outputData) as any;
+        const { date: _date, ...rest } = (Array.isArray(data.outputData) ? data.outputData[i] : data.outputData) as any;
         return rest;
       })(),
       ...(data.options && { options: data.options })

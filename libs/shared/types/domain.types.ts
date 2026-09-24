@@ -379,6 +379,8 @@ export type ActivityLogTemplatesType = {
 // This is the type for B2C user info.
 export type IdentityUserInfo = {
   identityId: string;
+  givenName: string;
+  surname: string;
   displayName: string;
   jobTitle?: null | string;
   email: string;

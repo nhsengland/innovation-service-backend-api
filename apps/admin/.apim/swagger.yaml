@@ -787,10 +787,16 @@ paths:
             schema:
               type: object
               properties:
-                name:
+                givenName:
                   type: string
-                  maxLength: 100
-                  description: Name of the user.
+                  minLength: 1
+                  maxLength: 64
+                  description: Given name of the user.
+                surname:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                  description: Surname of the user.
                 email:
                   type: string
                   format: email
@@ -813,7 +819,8 @@ paths:
                     - QUALIFYING_ACCESSOR
                   description: Role of the user.
               required:
-                - name
+                - givenName
+                - surname
                 - email
                 - role
               additionalProperties: false

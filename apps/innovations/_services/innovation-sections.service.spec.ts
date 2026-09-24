@@ -1,7 +1,7 @@
 import { container } from "../_config";
 
 import { InnovationEntity, InnovationSectionEntity } from "@innovations/shared/entities";
-import { InnovationSectionStatusEnum } from "@innovations/shared/enums";
+import { InnovationFileContextTypeEnum, InnovationSectionStatusEnum } from "@innovations/shared/enums";
 import { CurrentCatalogTypes } from "@innovations/shared/schemas/innovation-record";
 import { NotifierService } from "@innovations/shared/services";
 import { TestsHelper } from "@innovations/shared/tests";
@@ -9,6 +9,7 @@ import { DTOsHelper } from "@innovations/shared/tests/helpers/dtos.helper";
 import { rand, randText } from "@ngneat/falso";
 import type { EntityManager } from "typeorm";
 import type { InnovationSectionsService } from "./innovation-sections.service";
+import type { InnovationFileService } from "./innovation-file.service";
 import SYMBOLS from "./symbols";
 
 describe("Innovation Sections Suite", () => {
@@ -80,6 +81,65 @@ describe("Innovation Sections Suite", () => {
   });
 
   describe("updateInnovationSectionInfo", () => {
+    it("should delete regulation files for certifications that are no longer YES", async () => {
+      const fileService = container.get<InnovationFileService>(SYMBOLS.InnovationFileService);
+      const deleteFilesSpy = jest.spyOn(fileService, "deleteFiles").mockResolvedValue();
+      const domainContext = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator);
+
+      await sut.updateInnovationSectionInfo(
+        domainContext,
+        innovation.id,
+        "REGULATIONS_AND_STANDARDS",
+        {
+          hasRegulationKnowledge: "YES_ALL",
+          standards: [
+            { type: "UK_MDR_CLASS_I", hasMet: "YES" },
+            { type: "DTAC", hasMet: "NO" }
+          ]
+        },
+        em
+      );
+
+      expect(deleteFilesSpy).toHaveBeenCalledWith(
+        domainContext,
+        innovation.id,
+        {
+          contextType: InnovationFileContextTypeEnum.INNOVATION_REGULATIONS,
+          contextIdsToKeep: ["UK_MDR_CLASS_I"]
+        },
+        expect.anything()
+      );
+      deleteFilesSpy.mockRestore();
+    });
+
+    it("should delete all regulation files when regulation knowledge is no longer applicable", async () => {
+      const fileService = container.get<InnovationFileService>(SYMBOLS.InnovationFileService);
+      const deleteFilesSpy = jest.spyOn(fileService, "deleteFiles").mockResolvedValue();
+      const domainContext = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator);
+
+      await sut.updateInnovationSectionInfo(
+        domainContext,
+        innovation.id,
+        "REGULATIONS_AND_STANDARDS",
+        {
+          hasRegulationKnowledge: "NO",
+          standards: [{ type: "UK_MDR_CLASS_I", hasMet: "YES" }]
+        },
+        em
+      );
+
+      expect(deleteFilesSpy).toHaveBeenCalledWith(
+        domainContext,
+        innovation.id,
+        {
+          contextType: InnovationFileContextTypeEnum.INNOVATION_REGULATIONS,
+          contextIdsToKeep: []
+        },
+        expect.anything()
+      );
+      deleteFilesSpy.mockRestore();
+    });
+
     it("should update a section and only change the draft document", async () => {
       const newSummary = randText();
 
