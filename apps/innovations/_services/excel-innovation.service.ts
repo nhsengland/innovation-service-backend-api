@@ -11,7 +11,7 @@ import type { ExcelImportService } from "@innovations/shared/services/storage/ex
 import type { InnovationsService } from "./innovations.service";
 import type { InnovationSectionsService } from "./innovation-sections.service";
 import SYMBOLS from "./symbols";
-import { getSmartMockPayload } from "../../../libs/shared/services/storage/excel-schema-helpers";
+import { getSmartMockPayload } from "@innovations/shared/services/storage/excel-schema-helpers";
 
 @injectable()
 export class ExcelInnovationService {
