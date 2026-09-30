@@ -229,11 +229,8 @@ export class IdentityProviderService {
         { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
       )
       .catch(error => {
-        this.loggerService.error('Error generating B2C access token', {
-          message: error instanceof Error ? error.message : String(error)
-        });
         throw new ServiceUnavailableError(GenericErrorsEnum.SERVICE_IDENTIY_UNAVAILABLE, {
-          details: error
+          details: { message: this.getIdentityProviderErrorMessage(error) }
         });
       });
 
@@ -243,7 +240,7 @@ export class IdentityProviderService {
     }; // Conversion to miliseconds needed.
   }
 
-  private getError(status: number, message: string): Error {
+  private getError(status: number | undefined, message: string): Error {
     switch (status) {
       case 404:
         return new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
@@ -252,10 +249,30 @@ export class IdentityProviderService {
       case 400:
         return new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD, { message });
       default:
-        return new ServiceUnavailableError(GenericErrorsEnum.SERVICE_SQL_UNAVAILABLE, {
+        return new ServiceUnavailableError(GenericErrorsEnum.SERVICE_IDENTIY_UNAVAILABLE, {
           details: { message }
         });
     }
+  }
+
+  /** Safely extracts an external identity-provider error status. */
+  private getIdentityProviderErrorStatus(error: unknown): number | undefined {
+    return axios.isAxiosError(error) ? error.response?.status : undefined;
+  }
+
+  /** Safely extracts an external identity-provider error message. */
+  private getIdentityProviderErrorMessage(error: unknown): string {
+    if (axios.isAxiosError(error)) {
+      const responseData = error.response?.data as { message?: string; error?: { message?: string } } | undefined;
+      return responseData?.message ?? responseData?.error?.message ?? error.message;
+    }
+
+    return error instanceof Error ? error.message : String(error);
+  }
+
+  /** Maps an unknown external identity-provider failure without assuming an Axios response exists. */
+  private getIdentityProviderError(error: unknown): Error {
+    return this.getError(this.getIdentityProviderErrorStatus(error), this.getIdentityProviderErrorMessage(error));
   }
 
   /**
@@ -289,7 +306,7 @@ export class IdentityProviderService {
         headers: { Authorization: `Bearer ${this.sessionData.token}` }
       })
       .catch(error => {
-        throw this.getError(error.response.status, error.response.data.message);
+        throw this.getIdentityProviderError(error);
       });
 
     if (response.data.value.length === 0) {
@@ -491,7 +508,18 @@ export class IdentityProviderService {
 
     for (let i = 0; i < userIdsChunks.length; i += B2C_MAX_CONCURRENT_BATCHES) {
       const currentChunks = userIdsChunks.slice(i, i + B2C_MAX_CONCURRENT_BATCHES);
-      const results = await Promise.all(currentChunks.map(chunk => this.fetchUserBatchWithRetry(chunk, retryState)));
+      let results: B2CUserResolutionResult[];
+      try {
+        results = await Promise.all(currentChunks.map(chunk => this.fetchUserBatchWithRetry(chunk, retryState)));
+      } catch (error: unknown) {
+        const requestError = this.toB2CBatchRequestError(error);
+        this.loggerService.error(
+          `[B2C] User resolution operation failed (status ${requestError.status ?? 'unknown'}): ${requestError.message}`,
+          requestError
+        );
+        throw error;
+      }
+
       usersList.push(...results.flatMap(result => result.users));
       failedIdentityIds.push(...results.flatMap(result => result.failedIdentityIds));
       processedUserCount += currentChunks.reduce((count, chunk) => count + chunk.length, 0);
@@ -503,6 +531,13 @@ export class IdentityProviderService {
         resolvedCount: usersList.length,
         failedCount: failedIdentityIds.length,
         remainingCount: entityIds.length - processedUserCount
+      });
+    }
+
+    if (usersList.length === 0 && failedIdentityIds.length === entityIds.length) {
+      this.loggerService.error('[B2C] User resolution failed for all requested identities', {
+        requestedCount: entityIds.length,
+        failedIdentityIds
       });
     }
 
@@ -537,9 +572,6 @@ export class IdentityProviderService {
         result = this.processB2CBatchResponses(pendingUserIds, batchResult.responses);
       } catch (error: unknown) {
         const requestError = this.toB2CBatchRequestError(error);
-        this.loggerService.error(
-          `[B2C] Batch subrequest processing failed (status ${requestError.status ?? 'unknown'}): ${requestError.message}. Identities: ${pendingUserIds.join(', ')}`
-        );
         throw requestError;
       }
       users.push(...result.users);
@@ -558,7 +590,7 @@ export class IdentityProviderService {
 
       if (!(await this.waitForB2CRetry(requestError, retryCount, retryState, result.retryStatuses))) {
         failedIdentityIds.push(...result.retryUserIds);
-        this.loggerService.error(
+        this.loggerService.log(
           `[B2C] Retriable batch subrequests exhausted; skipped identities: ${result.retryUserIds.join(', ')}`
         );
         break;
@@ -734,12 +766,13 @@ export class IdentityProviderService {
     const axiosError = axios.isAxiosError(error) ? error : undefined;
     const response = axiosError?.response;
     const status = response?.status;
+    const message = axiosError?.message ?? (error instanceof Error ? error.message : 'B2C batch request failed');
 
     return new B2CBatchRequestError(
       status,
       getRetryAfterMsFromHeaders(response?.headers),
       !response || (status !== undefined && isRetryableHttpStatus(status)),
-      axiosError?.message ?? 'B2C batch request failed'
+      message
     );
   }
 
@@ -763,7 +796,7 @@ export class IdentityProviderService {
           !batchError.retryable ||
           !(await this.waitForB2CRetry(batchError, retryCount, retryState, [batchError.status]))
         ) {
-          this.loggerService.error(
+          this.loggerService.log(
             `[B2C] Batch request failed; no more retries (status ${batchError.status ?? 'unknown'}): ${batchError.message}. Identities: ${userIds.join(', ')}`
           );
 
@@ -823,7 +856,7 @@ export class IdentityProviderService {
       })
       .catch(error => {
         throw new ServiceUnavailableError(GenericErrorsEnum.SERVICE_IDENTIY_UNAVAILABLE, {
-          details: error
+          details: { message: this.getIdentityProviderErrorMessage(error) }
         });
       });
 
@@ -840,7 +873,7 @@ export class IdentityProviderService {
         headers: { Authorization: `Bearer ${this.sessionData.token}` }
       })
       .catch(error => {
-        throw this.getError(error.response.status, error.response.data.message);
+        throw this.getIdentityProviderError(error);
       });
 
     await this.refreshUserCacheAfterUpdate(identityId, body);
@@ -891,10 +924,11 @@ export class IdentityProviderService {
         }
       )
       .catch(error => {
-        if (error.response.status === 400 && error.response.data?.error?.message?.includes('conflicting object')) {
+        const errorMessage = this.getIdentityProviderErrorMessage(error);
+        if (this.getIdentityProviderErrorStatus(error) === 400 && errorMessage.includes('conflicting object')) {
           throw new ConflictError(UserErrorsEnum.USER_IDENTITY_CONFLICT, { message: 'Email already exists' });
         }
-        throw this.getError(error.response.status, error.response.data.error.message);
+        throw this.getIdentityProviderError(error);
       });
   }
 
@@ -919,6 +953,7 @@ export class IdentityProviderService {
       this.loggerService.log(`Identity operation sent to queue`, { identityId, body });
     } catch (error) {
       this.loggerService.error('Error sending identity operation to queue', error);
+      return false;
     }
     return true;
   }
@@ -933,7 +968,7 @@ export class IdentityProviderService {
         headers: { Authorization: `Bearer ${this.sessionData.token}` }
       })
       .catch(error => {
-        throw this.getError(error.response.status, error.response.data.message);
+        throw this.getIdentityProviderError(error);
       });
 
     await this.cache.delete(identityId);
@@ -961,12 +996,12 @@ export class IdentityProviderService {
         { headers: { Authorization: `Bearer ${this.sessionData.token}` } }
       );
       return response.data.phoneNumber;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // It means the user doesn't have a phone number created
-      if (error.response.status === 404) {
+      if (this.getIdentityProviderErrorStatus(error) === 404) {
         return null;
       }
-      throw this.getError(error.response.status, error.response.data.message);
+      throw this.getIdentityProviderError(error);
     }
   }
 
@@ -993,7 +1028,7 @@ export class IdentityProviderService {
         headers: { Authorization: `Bearer ${this.sessionData.token}` }
       })
       .catch(error => {
-        throw this.getError(error.response.status, error.response.data.message);
+        throw this.getIdentityProviderError(error);
       });
 
     return response.data[this.constants.mfa_extension_key] ?? 'none';
@@ -1009,7 +1044,7 @@ export class IdentityProviderService {
         { headers: { Authorization: `Bearer ${this.sessionData.token}` } }
       )
       .catch(error => {
-        throw this.getError(error.response.status, error.response.data.message);
+        throw this.getIdentityProviderError(error);
       });
   }
   private async upsertMfaPhoneNumber(identityId: string, phoneNumber: string): Promise<void> {
@@ -1032,8 +1067,8 @@ export class IdentityProviderService {
           { headers: { Authorization: `Bearer ${this.sessionData.token}` } }
         );
       }
-    } catch (error: any) {
-      throw this.getError(error.response.status, error.response.data.error.message);
+    } catch (error: unknown) {
+      throw this.getIdentityProviderError(error);
     }
   }
 }

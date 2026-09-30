@@ -79,6 +79,40 @@ describe('Shared / services / IdentityProviderService', () => {
       expect(postBatch).toHaveBeenCalledTimes(2);
     });
 
+    it('does not error-log one failed outer batch when later batches succeed', async () => {
+      const failedChunkIds = Array.from({ length: 20 }, (_, index) => `failed-${index}`);
+      const successfulChunkIds = Array.from({ length: 20 }, (_, index) => `success-${index}`);
+      const loggerError = jest.spyOn(sut['loggerService'], 'error');
+      jest
+        .spyOn<any, any>(sut, 'postB2CUserBatch')
+        .mockRejectedValueOnce(new Error('temporary outer batch failure'))
+        .mockResolvedValueOnce(successfulChunkIds.map(id => ({ id, status: 200, body: { id } })));
+
+      const result = await sut['fetchUsersWithJsonBatch']([...failedChunkIds, ...successfulChunkIds], {
+        policy: { maxRetries: 0 },
+        startedAt: Date.now()
+      });
+
+      expect(result.users).toHaveLength(20);
+      expect(result.failedIdentityIds).toEqual(failedChunkIds);
+      expect(loggerError).not.toHaveBeenCalled();
+    });
+
+    it('error-logs once when every outer batch fails', async () => {
+      const ids = Array.from({ length: 40 }, (_, index) => `failed-${index}`);
+      const loggerError = jest.spyOn(sut['loggerService'], 'error');
+      jest.spyOn<any, any>(sut, 'postB2CUserBatch').mockRejectedValue(new Error('outer batch failure'));
+
+      const result = await sut['fetchUsersWithJsonBatch'](ids, {
+        policy: { maxRetries: 0 },
+        startedAt: Date.now()
+      });
+
+      expect(result.users).toEqual([]);
+      expect(result.failedIdentityIds).toEqual(ids);
+      expect(loggerError).toHaveBeenCalledTimes(1);
+    });
+
     it('keeps authentication failures as operation failures', async () => {
       const ids = Array.from({ length: 20 }, (_, index) => `identity-${index}`);
       jest
@@ -90,8 +124,22 @@ describe('Shared / services / IdentityProviderService', () => {
       ).rejects.toThrow('status 401');
     });
 
+    it('error-logs once for a fatal batch operation failure', async () => {
+      const ids = Array.from({ length: 40 }, (_, index) => `identity-${index}`);
+      const loggerError = jest.spyOn(sut['loggerService'], 'error');
+      jest
+        .spyOn<any, any>(sut, 'postB2CUserBatchWithRetry')
+        .mockRejectedValue(new Error('B2C rejected with status 401'));
+
+      await expect(
+        sut['fetchUsersWithJsonBatch'](ids, { policy: { maxRetries: 0 }, startedAt: Date.now() })
+      ).rejects.toThrow('status 401');
+      expect(loggerError).toHaveBeenCalledTimes(1);
+    });
+
     it('returns successful users and failed IDs when subrequest retries are exhausted', async () => {
       const ids = ['successful-id', 'failed-id'];
+      const loggerError = jest.spyOn(sut['loggerService'], 'error');
       jest.spyOn<any, any>(sut, 'postB2CUserBatchWithRetry').mockResolvedValue({
         kind: 'success',
         responses: [
@@ -104,6 +152,32 @@ describe('Shared / services / IdentityProviderService', () => {
 
       expect(result.users).toHaveLength(1);
       expect(result.failedIdentityIds).toEqual(['failed-id']);
+      expect(loggerError).not.toHaveBeenCalled();
+    });
+
+    it('does not error-log when access-token generation fails before resolution', async () => {
+      const loggerError = jest.spyOn(sut['loggerService'], 'error');
+      sut['sessionData'] = { token: '', expiresAt: 0 };
+      jest.spyOn(axios, 'post').mockRejectedValue(new Error('token failure'));
+
+      await expect(sut['getUsersListFromB2C'](['identity-id'], 'interactive')).rejects.toMatchObject({
+        name: 'GEN.0003'
+      });
+      expect(loggerError).not.toHaveBeenCalled();
+    });
+
+    it('maps unknown identity-provider errors to identity-provider availability', () => {
+      const error = sut['getError'](undefined, 'network failure');
+
+      expect(error.message).toBe('network failure');
+      expect(error.name).toBe('GEN.0003');
+    });
+
+    it('maps a network error without an Axios response safely', async () => {
+      jest.spyOn<any, any>(sut, 'verifyAccessToken').mockResolvedValue(undefined);
+      jest.spyOn(axios, 'get').mockRejectedValue(new Error('network failure'));
+
+      await expect(sut.getUserInfoByEmail('user@example.com')).rejects.toMatchObject({ name: 'GEN.0003' });
     });
 
     it('keeps the public list response and caches only successful users', async () => {
@@ -268,6 +342,12 @@ describe('Shared / services / IdentityProviderService', () => {
       });
 
       expect(cacheDeleteManyMock).toHaveBeenCalledWith([identityId]);
+    });
+
+    it('returns false when an asynchronous identity operation cannot be queued', async () => {
+      jest.spyOn(sut['storageQueueService'], 'sendMessage').mockRejectedValue(new Error('queue unavailable'));
+
+      await expect(sut.updateUserAsync('identity-id', { accountEnabled: false })).resolves.toBe(false);
     });
   });
 });
