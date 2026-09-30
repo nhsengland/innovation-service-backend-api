@@ -87,9 +87,20 @@ type B2CBatchRequest = {
 
 type B2CBatchProcessingResult = {
   retryAfterMs?: number;
+  failedIdentityIds: string[];
   retryUserIds: string[];
+  retryStatuses: (number | undefined)[];
   users: IdentityUserInfo[];
 };
+
+type B2CUserResolutionResult = {
+  users: IdentityUserInfo[];
+  failedIdentityIds: string[];
+};
+
+type B2CBatchRequestResult =
+  | { kind: 'success'; responses: B2CBatchSubResponse[] }
+  | { kind: 'skipped'; failedIdentityIds: string[] };
 
 class B2CBatchRequestError extends Error {
   constructor(
@@ -107,6 +118,12 @@ const B2C_BATCH_SIZE = 20;
 const B2C_MAX_CONCURRENT_BATCHES = 3;
 const B2C_MAX_RETRIES = 50;
 const B2C_MAX_BACKOFF_MS = 1 * 60 * 60 * 1000;
+/** Microsoft Graph supports 15 default expressions in an OData in filter. */
+const FILTERED_LOOKUP_MAX_IDS = 15;
+/** Keep one expression below Graph's documented default limit for the filtered path. */
+const FILTERED_LOOKUP_THRESHOLD = FILTERED_LOOKUP_MAX_IDS - 1;
+const INTERACTIVE_B2C_MAX_RETRIES = 3;
+const INTERACTIVE_B2C_MAX_DURATION_MS = 200_000;
 const B2C_BATCH_FIELDS = [
   'id',
   'givenName',
@@ -119,6 +136,27 @@ const B2C_BATCH_FIELDS = [
   'lastPasswordChangeDateTime',
   'signInActivity'
 ];
+
+export type B2CResolutionMode = 'interactive' | 'bulk';
+
+export type B2CResolutionOptions = {
+  mode?: B2CResolutionMode;
+};
+
+type B2CRetryPolicy = {
+  maxRetries: number;
+  maxDurationMs?: number;
+};
+
+type B2CRetryState = {
+  policy: B2CRetryPolicy;
+  startedAt: number;
+};
+
+const getB2CRetryPolicy = (mode: B2CResolutionMode): B2CRetryPolicy =>
+  mode === 'bulk'
+    ? { maxRetries: B2C_MAX_RETRIES }
+    : { maxRetries: INTERACTIVE_B2C_MAX_RETRIES, maxDurationMs: INTERACTIVE_B2C_MAX_DURATION_MS };
 
 type IdentityUpdateBody = {
   givenName?: string;
@@ -191,11 +229,8 @@ export class IdentityProviderService {
         { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
       )
       .catch(error => {
-        this.loggerService.error('Error generating B2C access token', {
-          message: error instanceof Error ? error.message : String(error)
-        });
         throw new ServiceUnavailableError(GenericErrorsEnum.SERVICE_IDENTIY_UNAVAILABLE, {
-          details: error
+          details: { message: this.getIdentityProviderErrorMessage(error) }
         });
       });
 
@@ -205,7 +240,7 @@ export class IdentityProviderService {
     }; // Conversion to miliseconds needed.
   }
 
-  private getError(status: number, message: string): Error {
+  private getError(status: number | undefined, message: string): Error {
     switch (status) {
       case 404:
         return new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
@@ -214,10 +249,30 @@ export class IdentityProviderService {
       case 400:
         return new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD, { message });
       default:
-        return new ServiceUnavailableError(GenericErrorsEnum.SERVICE_SQL_UNAVAILABLE, {
+        return new ServiceUnavailableError(GenericErrorsEnum.SERVICE_IDENTIY_UNAVAILABLE, {
           details: { message }
         });
     }
+  }
+
+  /** Safely extracts an external identity-provider error status. */
+  private getIdentityProviderErrorStatus(error: unknown): number | undefined {
+    return axios.isAxiosError(error) ? error.response?.status : undefined;
+  }
+
+  /** Safely extracts an external identity-provider error message. */
+  private getIdentityProviderErrorMessage(error: unknown): string {
+    if (axios.isAxiosError(error)) {
+      const responseData = error.response?.data as { message?: string; error?: { message?: string } } | undefined;
+      return responseData?.message ?? responseData?.error?.message ?? error.message;
+    }
+
+    return error instanceof Error ? error.message : String(error);
+  }
+
+  /** Maps an unknown external identity-provider failure without assuming an Axios response exists. */
+  private getIdentityProviderError(error: unknown): Error {
+    return this.getError(this.getIdentityProviderErrorStatus(error), this.getIdentityProviderErrorMessage(error));
   }
 
   /**
@@ -251,7 +306,7 @@ export class IdentityProviderService {
         headers: { Authorization: `Bearer ${this.sessionData.token}` }
       })
       .catch(error => {
-        throw this.getError(error.response.status, error.response.data.message);
+        throw this.getIdentityProviderError(error);
       });
 
     if (response.data.value.length === 0) {
@@ -271,9 +326,14 @@ export class IdentityProviderService {
    * @see DomainUsersService.getUsersMap
    *
    * @param identityIds the user identities
+   * @param options resolution mode and retry policy
    * @returns list of users
    */
-  async getUsersList(identityIds: string[], forceRefresh?: boolean): Promise<IdentityUserInfo[]> {
+  async getUsersList(
+    identityIds: string[],
+    forceRefresh?: boolean,
+    options: B2CResolutionOptions = {}
+  ): Promise<IdentityUserInfo[]> {
     const requestedCount = identityIds.length;
 
     // Filter SYSTEM user
@@ -310,7 +370,17 @@ export class IdentityProviderService {
     if (res.length !== eligibleUserIds.length) {
       const cachedUserIds = new Set(res.map(user => user.identityId));
       const tempUsers = eligibleUserIds.filter(id => !cachedUserIds.has(id));
-      const nonCachedUsers = await this.getUsersListFromB2C(tempUsers);
+      const { users: nonCachedUsers, failedIdentityIds } = await this.getUsersListFromB2C(
+        tempUsers,
+        options.mode ?? 'interactive'
+      );
+
+      if (failedIdentityIds.length > 0) {
+        this.loggerService.log('[B2C] User resolution skipped identities', {
+          failedCount: failedIdentityIds.length,
+          failedIdentityIds
+        });
+      }
 
       // Add new users to cache.
       await this.cache.setMany(nonCachedUsers.map(user => ({ key: user.identityId, value: user })));
@@ -332,10 +402,11 @@ export class IdentityProviderService {
    * @see DomainUsersService.getUsersMap
    *
    * @param identityIds the user identities
+   * @param options resolution mode and retry policy
    * @returns list of users as a map
    */
-  async getUsersMap(identityIds: string[]): Promise<Map<string, IdentityUserInfo>> {
-    const users = await this.getUsersList(identityIds);
+  async getUsersMap(identityIds: string[], options: B2CResolutionOptions = {}): Promise<Map<string, IdentityUserInfo>> {
+    const users = await this.getUsersList(identityIds, undefined, options);
     return new Map(users.map(u => [u.identityId, u]));
   }
 
@@ -344,59 +415,182 @@ export class IdentityProviderService {
    *
    * Graph supports up to 20 individual requests in one JSON batch.
    * @param entityIds user identities to be fetched
+   * @param mode selects the interactive or bulk retry policy
    * @returns list of users
    */
-  private async getUsersListFromB2C(entityIds: string[]): Promise<IdentityUserInfo[]> {
+  private async getUsersListFromB2C(entityIds: string[], mode: B2CResolutionMode): Promise<B2CUserResolutionResult> {
     if ((entityIds || []).length === 0) {
-      return [];
+      return { users: [], failedIdentityIds: [] };
     }
     await this.verifyAccessToken();
 
     const uniqueUserIds = [...new Set(entityIds)]; // Remove duplicated entries.
+    const retryState: B2CRetryState = {
+      policy: getB2CRetryPolicy(mode),
+      startedAt: Date.now()
+    };
+
+    if (uniqueUserIds.length <= FILTERED_LOOKUP_THRESHOLD) {
+      return this.fetchUsersWithFilteredLookup(uniqueUserIds, retryState);
+    }
+
+    return this.fetchUsersWithJsonBatch(uniqueUserIds, retryState);
+  }
+
+  /** Retrieves up to fourteen identities using the legacy filtered Graph query. */
+  private async fetchUsersWithFilteredLookup(
+    userIds: string[],
+    retryState: B2CRetryState
+  ): Promise<B2CUserResolutionResult> {
+    const url = this.buildFilteredUsersUrl(userIds);
+    if (encodeURI(url).length > 2048) {
+      return this.fetchUsersWithJsonBatch(userIds, retryState);
+    }
+
+    let retryCount = 0;
+    while (true) {
+      try {
+        const response = await axios.get<b2cGetUsersListDTO>(url, {
+          headers: { Authorization: `Bearer ${this.sessionData.token}` },
+          validateStatus: () => true
+        });
+
+        if (response.status >= 200 && response.status < 300) {
+          return {
+            users: this.mapB2CUsersToDomain(response.data.value),
+            failedIdentityIds: []
+          };
+        }
+
+        const requestError = new B2CBatchRequestError(
+          response.status,
+          getRetryAfterMsFromHeaders(response.headers),
+          isRetryableHttpStatus(response.status),
+          `B2C filtered user lookup failed with status ${response.status}`
+        );
+
+        if (!requestError.retryable || !(await this.waitForB2CRetry(requestError, retryCount, retryState))) {
+          this.loggerService.error(requestError.message);
+          throw requestError;
+        }
+
+        retryCount += 1;
+      } catch (error: unknown) {
+        if (error instanceof B2CBatchRequestError) {
+          throw error;
+        }
+
+        const requestError = this.toB2CBatchRequestError(error);
+        if (!requestError.retryable || !(await this.waitForB2CRetry(requestError, retryCount, retryState))) {
+          this.loggerService.error(requestError.message);
+          throw requestError;
+        }
+
+        retryCount += 1;
+      }
+    }
+  }
+
+  /** Retrieves fifteen or more identities using Microsoft Graph JSON batching. */
+  private async fetchUsersWithJsonBatch(
+    entityIds: string[],
+    retryState: B2CRetryState
+  ): Promise<B2CUserResolutionResult> {
     const userIdsChunks: string[][] = [];
 
-    for (let i = 0; i < uniqueUserIds.length; i += B2C_BATCH_SIZE) {
-      userIdsChunks.push(uniqueUserIds.slice(i, i + B2C_BATCH_SIZE));
+    for (let i = 0; i < entityIds.length; i += B2C_BATCH_SIZE) {
+      userIdsChunks.push(entityIds.slice(i, i + B2C_BATCH_SIZE));
     }
 
     const usersList: IdentityUserInfo[] = [];
+    const failedIdentityIds: string[] = [];
     let processedUserCount = 0;
 
     for (let i = 0; i < userIdsChunks.length; i += B2C_MAX_CONCURRENT_BATCHES) {
       const currentChunks = userIdsChunks.slice(i, i + B2C_MAX_CONCURRENT_BATCHES);
-      const results = await Promise.all(currentChunks.map(chunk => this.fetchUserBatchWithRetry(chunk)));
-      usersList.push(...results.flat());
+      let results: B2CUserResolutionResult[];
+      try {
+        results = await Promise.all(currentChunks.map(chunk => this.fetchUserBatchWithRetry(chunk, retryState)));
+      } catch (error: unknown) {
+        const requestError = this.toB2CBatchRequestError(error);
+        this.loggerService.error(
+          `[B2C] User resolution operation failed (status ${requestError.status ?? 'unknown'}): ${requestError.message}`,
+          requestError
+        );
+        throw error;
+      }
+
+      usersList.push(...results.flatMap(result => result.users));
+      failedIdentityIds.push(...results.flatMap(result => result.failedIdentityIds));
       processedUserCount += currentChunks.reduce((count, chunk) => count + chunk.length, 0);
 
       this.loggerService.log('[B2C] Graph batch lookup progress', {
-        progress: `${processedUserCount}/${uniqueUserIds.length}`,
+        progress: `${processedUserCount}/${entityIds.length}`,
         processedCount: processedUserCount,
-        totalCount: uniqueUserIds.length,
+        totalCount: entityIds.length,
         resolvedCount: usersList.length,
-        remainingCount: uniqueUserIds.length - processedUserCount
+        failedCount: failedIdentityIds.length,
+        remainingCount: entityIds.length - processedUserCount
       });
     }
 
-    return usersList;
+    if (usersList.length === 0 && failedIdentityIds.length === entityIds.length) {
+      this.loggerService.error('[B2C] User resolution failed for all requested identities', {
+        requestedCount: entityIds.length,
+        failedIdentityIds
+      });
+    }
+
+    return { users: usersList, failedIdentityIds };
+  }
+
+  /** Builds the legacy filtered users URL with the existing selected fields. */
+  private buildFilteredUsersUrl(userIds: string[]): string {
+    const idsFilter = userIds.map(id => `'${id}'`).join(',');
+    return `https://graph.microsoft.com/beta/users?$filter=id in (${idsFilter})&$select=${B2C_BATCH_FIELDS.join(',')}`;
   }
 
   /** Fetches one batch's users, retrying only retriable subrequests. */
-  private async fetchUserBatchWithRetry(userIds: string[]): Promise<IdentityUserInfo[]> {
+  private async fetchUserBatchWithRetry(
+    userIds: string[],
+    retryState: B2CRetryState
+  ): Promise<B2CUserResolutionResult> {
     let pendingUserIds = [...new Set(userIds)];
     const users: IdentityUserInfo[] = [];
+    const failedIdentityIds: string[] = [];
     let retryCount = 0;
 
     while (pendingUserIds.length > 0) {
-      const responses = await this.postB2CUserBatchWithRetry(pendingUserIds);
-      const result = this.processB2CBatchResponses(pendingUserIds, responses);
+      const batchResult = await this.postB2CUserBatchWithRetry(pendingUserIds, retryState);
+      if (batchResult.kind === 'skipped') {
+        failedIdentityIds.push(...batchResult.failedIdentityIds);
+        break;
+      }
+
+      let result: B2CBatchProcessingResult;
+      try {
+        result = this.processB2CBatchResponses(pendingUserIds, batchResult.responses);
+      } catch (error: unknown) {
+        const requestError = this.toB2CBatchRequestError(error);
+        throw requestError;
+      }
       users.push(...result.users);
+      failedIdentityIds.push(...result.failedIdentityIds);
 
       if (result.retryUserIds.length === 0) {
         break;
       }
 
-      if (retryCount >= B2C_MAX_RETRIES) {
-        this.loggerService.error(
+      const requestError = new B2CBatchRequestError(
+        undefined,
+        result.retryAfterMs,
+        true,
+        `B2C batch subrequests remained retryable for ${result.retryUserIds.length} identities`
+      );
+
+      if (!(await this.waitForB2CRetry(requestError, retryCount, retryState, result.retryStatuses))) {
+        failedIdentityIds.push(...result.retryUserIds);
+        this.loggerService.log(
           `[B2C] Retriable batch subrequests exhausted; skipped identities: ${result.retryUserIds.join(', ')}`
         );
         break;
@@ -404,35 +598,66 @@ export class IdentityProviderService {
 
       retryCount += 1;
       pendingUserIds = result.retryUserIds;
-      const backoffMs = result.retryAfterMs ?? getExponentialBackoffMs(retryCount, B2C_MAX_BACKOFF_MS);
-      this.loggerService.error(
-        `[B2C] Retrying ${result.retryUserIds.length} batch subrequests in ${backoffMs}ms (attempt ${retryCount}/${B2C_MAX_RETRIES})`
-      );
-      await sleep(backoffMs);
     }
 
-    return users;
+    return { users, failedIdentityIds };
+  }
+
+  /** Waits for a retry without exceeding the selected B2C retry policy. */
+  private async waitForB2CRetry(
+    requestError: B2CBatchRequestError,
+    retryCount: number,
+    retryState: B2CRetryState,
+    retryStatuses: (number | undefined)[] = []
+  ): Promise<boolean> {
+    if (retryCount >= retryState.policy.maxRetries) {
+      return false;
+    }
+
+    const nextAttempt = retryCount + 1;
+    const backoffMs = requestError.retryAfterMs ?? getExponentialBackoffMs(nextAttempt, B2C_MAX_BACKOFF_MS);
+    const elapsedMs = Date.now() - retryState.startedAt;
+    const remainingMs = retryState.policy.maxDurationMs ? retryState.policy.maxDurationMs - elapsedMs : undefined;
+
+    if (remainingMs !== undefined && backoffMs >= remainingMs) {
+      return false;
+    }
+
+    this.loggerService.log('[B2C] Retrying user lookup', {
+      statuses: retryStatuses.length ? retryStatuses : [requestError.status],
+      retryAfterMs: requestError.retryAfterMs,
+      backoffMs,
+      attempt: nextAttempt,
+      maxRetries: retryState.policy.maxRetries,
+      remainingMs
+    });
+    await sleep(backoffMs);
+    return true;
   }
 
   /** Maps each batch subresponse to a user, retry list, or quarantine action. */
   private processB2CBatchResponses(userIds: string[], responses: B2CBatchSubResponse[]): B2CBatchProcessingResult {
     const responseById = new Map(responses.map(response => [response.id, response]));
     const users: IdentityUserInfo[] = [];
+    const failedIdentityIds: string[] = [];
     const retryUserIds: string[] = [];
+    const retryStatuses: (number | undefined)[] = [];
     let retryAfterMs: number | undefined;
 
     for (const identityId of userIds) {
       const response = responseById.get(identityId);
       if (!response) {
         retryUserIds.push(identityId);
-        this.loggerService.error(`[B2C] Batch response missing for identity: ${identityId}`);
+        retryStatuses.push(undefined);
+        this.loggerService.log(`[B2C] Batch response missing for identity: ${identityId}`);
         continue;
       }
 
       if (response.status >= 200 && response.status < 300) {
         if (!response.body || !('id' in response.body) || response.body.id !== identityId) {
           retryUserIds.push(identityId);
-          this.loggerService.error(`[B2C] Successful response had an invalid user body: ${identityId}`);
+          retryStatuses.push(response.status);
+          this.loggerService.log(`[B2C] Successful response had an invalid user body: ${identityId}`);
           continue;
         }
 
@@ -442,6 +667,7 @@ export class IdentityProviderService {
 
       if (response.status === 404) {
         this.quarantineMissingUser(identityId);
+        failedIdentityIds.push(identityId);
         continue;
       }
 
@@ -456,6 +682,7 @@ export class IdentityProviderService {
 
       if (isRetryableHttpStatus(response.status)) {
         retryUserIds.push(identityId);
+        retryStatuses.push(response.status);
         const responseRetryAfterMs = getRetryAfterMsFromHeaders(response.headers);
         if (responseRetryAfterMs !== undefined) {
           retryAfterMs = Math.max(retryAfterMs ?? 0, responseRetryAfterMs);
@@ -463,13 +690,14 @@ export class IdentityProviderService {
         continue;
       }
 
-      this.loggerService.error(
+      this.loggerService.log(
         `[B2C] Permanent batch subrequest failure (status ${response.status}); skipped identity ${identityId}`,
         { body: response.body }
       );
+      failedIdentityIds.push(identityId);
     }
 
-    return { retryAfterMs, retryUserIds, users };
+    return { failedIdentityIds, retryAfterMs, retryStatuses, retryUserIds, users };
   }
 
   /** Builds up to 20 individual Graph user requests for one JSON batch. */
@@ -538,38 +766,48 @@ export class IdentityProviderService {
     const axiosError = axios.isAxiosError(error) ? error : undefined;
     const response = axiosError?.response;
     const status = response?.status;
+    const message = axiosError?.message ?? (error instanceof Error ? error.message : 'B2C batch request failed');
 
     return new B2CBatchRequestError(
       status,
       getRetryAfterMsFromHeaders(response?.headers),
       !response || (status !== undefined && isRetryableHttpStatus(status)),
-      axiosError?.message ?? 'B2C batch request failed'
+      message
     );
   }
 
   /** Sends a Graph batch and retries transient outer-request failures. */
-  private async postB2CUserBatchWithRetry(userIds: string[]): Promise<B2CBatchSubResponse[]> {
+  private async postB2CUserBatchWithRetry(
+    userIds: string[],
+    retryState: B2CRetryState
+  ): Promise<B2CBatchRequestResult> {
     let retryCount = 0;
 
     while (true) {
       try {
-        return await this.postB2CUserBatch(userIds);
+        return {
+          kind: 'success',
+          responses: await this.postB2CUserBatch(userIds)
+        };
       } catch (error: unknown) {
         const batchError = this.toB2CBatchRequestError(error);
 
-        if (!batchError.retryable || retryCount >= B2C_MAX_RETRIES) {
-          this.loggerService.error(
+        if (
+          !batchError.retryable ||
+          !(await this.waitForB2CRetry(batchError, retryCount, retryState, [batchError.status]))
+        ) {
+          this.loggerService.log(
             `[B2C] Batch request failed; no more retries (status ${batchError.status ?? 'unknown'}): ${batchError.message}. Identities: ${userIds.join(', ')}`
           );
-          throw batchError;
+
+          if (batchError.status === 401 || batchError.status === 403) {
+            throw batchError;
+          }
+
+          return { kind: 'skipped', failedIdentityIds: userIds };
         }
 
         retryCount += 1;
-        const backoffMs = batchError.retryAfterMs ?? getExponentialBackoffMs(retryCount, B2C_MAX_BACKOFF_MS);
-        this.loggerService.error(
-          `[B2C] Batch request retrying in ${backoffMs}ms (status ${batchError.status ?? 'unknown'}, attempt ${retryCount}/${B2C_MAX_RETRIES})`
-        );
-        await sleep(backoffMs);
       }
     }
   }
@@ -618,7 +856,7 @@ export class IdentityProviderService {
       })
       .catch(error => {
         throw new ServiceUnavailableError(GenericErrorsEnum.SERVICE_IDENTIY_UNAVAILABLE, {
-          details: error
+          details: { message: this.getIdentityProviderErrorMessage(error) }
         });
       });
 
@@ -635,7 +873,7 @@ export class IdentityProviderService {
         headers: { Authorization: `Bearer ${this.sessionData.token}` }
       })
       .catch(error => {
-        throw this.getError(error.response.status, error.response.data.message);
+        throw this.getIdentityProviderError(error);
       });
 
     await this.refreshUserCacheAfterUpdate(identityId, body);
@@ -686,10 +924,11 @@ export class IdentityProviderService {
         }
       )
       .catch(error => {
-        if (error.response.status === 400 && error.response.data?.error?.message?.includes('conflicting object')) {
+        const errorMessage = this.getIdentityProviderErrorMessage(error);
+        if (this.getIdentityProviderErrorStatus(error) === 400 && errorMessage.includes('conflicting object')) {
           throw new ConflictError(UserErrorsEnum.USER_IDENTITY_CONFLICT, { message: 'Email already exists' });
         }
-        throw this.getError(error.response.status, error.response.data.error.message);
+        throw this.getIdentityProviderError(error);
       });
   }
 
@@ -714,6 +953,7 @@ export class IdentityProviderService {
       this.loggerService.log(`Identity operation sent to queue`, { identityId, body });
     } catch (error) {
       this.loggerService.error('Error sending identity operation to queue', error);
+      return false;
     }
     return true;
   }
@@ -728,7 +968,7 @@ export class IdentityProviderService {
         headers: { Authorization: `Bearer ${this.sessionData.token}` }
       })
       .catch(error => {
-        throw this.getError(error.response.status, error.response.data.message);
+        throw this.getIdentityProviderError(error);
       });
 
     await this.cache.delete(identityId);
@@ -756,12 +996,12 @@ export class IdentityProviderService {
         { headers: { Authorization: `Bearer ${this.sessionData.token}` } }
       );
       return response.data.phoneNumber;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // It means the user doesn't have a phone number created
-      if (error.response.status === 404) {
+      if (this.getIdentityProviderErrorStatus(error) === 404) {
         return null;
       }
-      throw this.getError(error.response.status, error.response.data.message);
+      throw this.getIdentityProviderError(error);
     }
   }
 
@@ -788,7 +1028,7 @@ export class IdentityProviderService {
         headers: { Authorization: `Bearer ${this.sessionData.token}` }
       })
       .catch(error => {
-        throw this.getError(error.response.status, error.response.data.message);
+        throw this.getIdentityProviderError(error);
       });
 
     return response.data[this.constants.mfa_extension_key] ?? 'none';
@@ -804,7 +1044,7 @@ export class IdentityProviderService {
         { headers: { Authorization: `Bearer ${this.sessionData.token}` } }
       )
       .catch(error => {
-        throw this.getError(error.response.status, error.response.data.message);
+        throw this.getIdentityProviderError(error);
       });
   }
   private async upsertMfaPhoneNumber(identityId: string, phoneNumber: string): Promise<void> {
@@ -827,8 +1067,8 @@ export class IdentityProviderService {
           { headers: { Authorization: `Bearer ${this.sessionData.token}` } }
         );
       }
-    } catch (error: any) {
-      throw this.getError(error.response.status, error.response.data.error.message);
+    } catch (error: unknown) {
+      throw this.getIdentityProviderError(error);
     }
   }
 }
