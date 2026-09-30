@@ -17,7 +17,7 @@ describe('Shared / services / IdentityProviderService', () => {
   });
 
   afterEach(async () => {
-    jest.clearAllMocks();
+    jest.restoreAllMocks();
   });
 
   describe('getUsersList', () => {
@@ -169,7 +169,7 @@ describe('Shared / services / IdentityProviderService', () => {
     it('maps unknown identity-provider errors to identity-provider availability', () => {
       const error = sut['getError'](undefined, 'network failure');
 
-      expect(error.message).toBe('network failure');
+      expect((error as any).details.message).toBe('network failure');
       expect(error.name).toBe('GEN.0003');
     });
 
