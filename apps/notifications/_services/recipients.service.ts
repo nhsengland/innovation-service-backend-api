@@ -102,7 +102,7 @@ export class RecipientsService extends BaseService {
     if (typeof userIdentityIds === 'string') {
       return (await this.identityProviderService.getUsersList([userIdentityIds]))[0] ?? null;
     } else {
-      return this.identityProviderService.getUsersMap(userIdentityIds);
+      return this.identityProviderService.getUsersMap(userIdentityIds, { mode: 'bulk' });
     }
   }
 
