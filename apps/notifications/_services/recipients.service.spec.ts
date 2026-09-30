@@ -68,13 +68,23 @@ describe('Notifications / _services / recipients service suite', () => {
     });
 
     it('Should get multiple identity info when passed an array of user identity ids', async () => {
-      const identityInfo = await sut.usersIdentityInfo([
+      const userIdentityIds = [
         scenario.users.johnInnovator.identityId,
         scenario.users.adamInnovator.identityId,
         scenario.users.ingridAccessor.identityId
-      ]);
+      ];
+      const getUsersMap = jest.spyOn((sut as any).identityProviderService, 'getUsersMap').mockResolvedValue(
+        new Map([
+          [scenario.users.johnInnovator.identityId, DTOsHelper.getIdentityUserInfo(scenario.users.johnInnovator)],
+          [scenario.users.adamInnovator.identityId, DTOsHelper.getIdentityUserInfo(scenario.users.adamInnovator)],
+          [scenario.users.ingridAccessor.identityId, DTOsHelper.getIdentityUserInfo(scenario.users.ingridAccessor)]
+        ])
+      );
+
+      const identityInfo = await sut.usersIdentityInfo(userIdentityIds);
 
       expect(identityInfo.size).toBe(3);
+      expect(getUsersMap).toHaveBeenCalledWith(userIdentityIds, { mode: 'bulk' });
       expect(identityInfo).toMatchObject(
         new Map([
           [scenario.users.johnInnovator.identityId, DTOsHelper.getIdentityUserInfo(scenario.users.johnInnovator)],
@@ -82,6 +92,7 @@ describe('Notifications / _services / recipients service suite', () => {
           [scenario.users.ingridAccessor.identityId, DTOsHelper.getIdentityUserInfo(scenario.users.ingridAccessor)]
         ])
       );
+      getUsersMap.mockRestore();
     });
 
     it('Should return null when passed a non existent user identity id', async () => {

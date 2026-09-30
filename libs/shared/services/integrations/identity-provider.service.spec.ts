@@ -21,23 +21,150 @@ describe('Shared / services / IdentityProviderService', () => {
   });
 
   describe('getUsersList', () => {
+    it('uses filtered lookup for fourteen uncached identity IDs', async () => {
+      const ids = Array.from({ length: 14 }, (_, index) => 'identity-' + index);
+      jest.spyOn<any, any>(sut, 'verifyAccessToken').mockResolvedValue(undefined);
+      jest.spyOn(axios, 'post').mockResolvedValue({
+        status: 200,
+        data: { responses: ids.map(id => ({ id, status: 200, body: { id } })) }
+      } as any);
+      jest.spyOn(axios, 'get').mockResolvedValue({ status: 200, data: { value: ids.map(id => ({ id })) } } as any);
+      const post = jest.spyOn(axios, 'post');
+
+      await sut['getUsersListFromB2C'](ids, 'interactive');
+
+      expect(axios.get).toHaveBeenCalledWith(expect.stringContaining('$filter=id in'), expect.any(Object));
+      expect(post).not.toHaveBeenCalledWith(
+        'https://graph.microsoft.com/v1.0/$batch',
+        expect.anything(),
+        expect.anything()
+      );
+    });
+
+    it('uses JSON batch for fifteen uncached identity IDs', async () => {
+      const ids = Array.from({ length: 15 }, (_, index) => 'identity-' + index);
+      jest.spyOn<any, any>(sut, 'verifyAccessToken').mockResolvedValue(undefined);
+      jest.spyOn(axios, 'post').mockResolvedValue({
+        status: 200,
+        data: { responses: ids.map(id => ({ id, status: 200, body: { id } })) }
+      } as any);
+
+      await sut['getUsersListFromB2C'](ids, 'interactive');
+
+      expect(axios.post).toHaveBeenCalledWith(
+        'https://graph.microsoft.com/v1.0/$batch',
+        expect.objectContaining({ requests: expect.any(Array) }),
+        expect.any(Object)
+      );
+    });
+
+    it('skips one failed outer batch and continues with later batches', async () => {
+      const firstChunkIds = Array.from({ length: 20 }, (_, index) => `failed-${index}`);
+      const secondChunkIds = Array.from({ length: 20 }, (_, index) => `success-${index}`);
+      const postBatch = jest
+        .spyOn<any, any>(sut, 'postB2CUserBatchWithRetry')
+        .mockResolvedValueOnce({ kind: 'skipped', failedIdentityIds: firstChunkIds })
+        .mockResolvedValueOnce({
+          kind: 'success',
+          responses: secondChunkIds.map(id => ({ id, status: 200, body: { id } }))
+        });
+
+      const result = await sut['fetchUsersWithJsonBatch']([...firstChunkIds, ...secondChunkIds], {
+        policy: { maxRetries: 0 },
+        startedAt: Date.now()
+      });
+
+      expect(result.users).toHaveLength(20);
+      expect(result.failedIdentityIds).toEqual(firstChunkIds);
+      expect(postBatch).toHaveBeenCalledTimes(2);
+    });
+
+    it('keeps authentication failures as operation failures', async () => {
+      const ids = Array.from({ length: 20 }, (_, index) => `identity-${index}`);
+      jest
+        .spyOn<any, any>(sut, 'postB2CUserBatchWithRetry')
+        .mockRejectedValue(new Error('B2C rejected with status 401'));
+
+      await expect(
+        sut['fetchUsersWithJsonBatch'](ids, { policy: { maxRetries: 0 }, startedAt: Date.now() })
+      ).rejects.toThrow('status 401');
+    });
+
+    it('returns successful users and failed IDs when subrequest retries are exhausted', async () => {
+      const ids = ['successful-id', 'failed-id'];
+      jest.spyOn<any, any>(sut, 'postB2CUserBatchWithRetry').mockResolvedValue({
+        kind: 'success',
+        responses: [
+          { id: 'successful-id', status: 200, body: { id: 'successful-id' } },
+          { id: 'failed-id', status: 429, headers: { 'retry-after': '60' } }
+        ]
+      });
+
+      const result = await sut['fetchUserBatchWithRetry'](ids, { policy: { maxRetries: 0 }, startedAt: Date.now() });
+
+      expect(result.users).toHaveLength(1);
+      expect(result.failedIdentityIds).toEqual(['failed-id']);
+    });
+
+    it('keeps the public list response and caches only successful users', async () => {
+      const successUser = {
+        identityId: 'successful-id',
+        displayName: 'Successful User',
+        email: 'successful@example.com',
+        isActive: true
+      };
+      jest.spyOn(sut['cache'], 'getMany').mockResolvedValue([]);
+      const cacheSetMany = jest.spyOn(sut['cache'], 'setMany').mockResolvedValue();
+      jest.spyOn<any, any>(sut, 'getUsersListFromB2C').mockResolvedValue({
+        users: [successUser],
+        failedIdentityIds: ['failed-id']
+      });
+
+      const result = await sut.getUsersList(['successful-id', 'failed-id']);
+
+      expect(result).toEqual([successUser]);
+      expect(cacheSetMany).toHaveBeenCalledWith([{ key: 'successful-id', value: successUser }]);
+    });
+
+    it('uses informational logging for retryable and permanent subresponses', () => {
+      const loggerError = jest.spyOn(sut['loggerService'], 'error');
+      const loggerLog = jest.spyOn(sut['loggerService'], 'log');
+
+      const result = sut['processB2CBatchResponses'](
+        ['retryable-id', 'permanent-id'],
+        [
+          { id: 'retryable-id', status: 429, headers: { 'retry-after': '60' } },
+          { id: 'permanent-id', status: 400, body: { error: { message: 'invalid request' } } }
+        ]
+      );
+
+      expect(result.retryUserIds).toEqual(['retryable-id']);
+      expect(loggerLog).toHaveBeenCalled();
+      expect(loggerError).not.toHaveBeenCalled();
+      loggerError.mockRestore();
+      loggerLog.mockRestore();
+    });
+
     it('should return list of users', async () => {
       const users = [scenario.users.johnInnovator.id, scenario.users.janeInnovator.id];
 
-      const getUsersListFromB2CMock = jest.spyOn<any, any>(sut, 'getUsersListFromB2C').mockResolvedValue([
-        {
-          identityId: scenario.users.johnInnovator.id,
-          displayName: scenario.users.johnInnovator.name,
-          email: scenario.users.johnInnovator.email,
-          isActive: true
-        },
-        {
-          identityId: scenario.users.janeInnovator.id,
-          displayName: scenario.users.janeInnovator.name,
-          email: scenario.users.janeInnovator.email,
-          isActive: true
-        }
-      ]);
+      const getUsersListFromB2CMock = jest.spyOn<any, any>(sut, 'getUsersListFromB2C').mockResolvedValue({
+        users: [
+          {
+            identityId: scenario.users.johnInnovator.id,
+            displayName: scenario.users.johnInnovator.name,
+            email: scenario.users.johnInnovator.email,
+            isActive: true
+          },
+          {
+            identityId: scenario.users.janeInnovator.id,
+            displayName: scenario.users.janeInnovator.name,
+            email: scenario.users.janeInnovator.email,
+            isActive: true
+          }
+        ],
+        failedIdentityIds: []
+      });
 
       const result = await sut.getUsersList(users, false);
       expect(result).toHaveLength(2);
@@ -56,7 +183,7 @@ describe('Shared / services / IdentityProviderService', () => {
         }
       ]);
 
-      expect(getUsersListFromB2CMock).toHaveBeenCalledWith(users);
+      expect(getUsersListFromB2CMock).toHaveBeenCalledWith(users, 'interactive');
     });
 
     it('should delete cache and retrieve fresh user data', async () => {
@@ -68,20 +195,23 @@ describe('Shared / services / IdentityProviderService', () => {
       const cacheSetManyMock = jest.spyOn(sut['cache'], 'setMany').mockResolvedValue();
 
       // Mock the method to retrieve fresh users from B2C.
-      const getUsersListFromB2CMock = jest.spyOn<any, any>(sut, 'getUsersListFromB2C').mockResolvedValue([
-        {
-          identityId: scenario.users.johnInnovator.id,
-          displayName: scenario.users.johnInnovator.name,
-          email: scenario.users.johnInnovator.email,
-          isActive: true
-        },
-        {
-          identityId: scenario.users.janeInnovator.id,
-          displayName: scenario.users.janeInnovator.name,
-          email: scenario.users.janeInnovator.email,
-          isActive: true
-        }
-      ]);
+      const getUsersListFromB2CMock = jest.spyOn<any, any>(sut, 'getUsersListFromB2C').mockResolvedValue({
+        users: [
+          {
+            identityId: scenario.users.johnInnovator.id,
+            displayName: scenario.users.johnInnovator.name,
+            email: scenario.users.johnInnovator.email,
+            isActive: true
+          },
+          {
+            identityId: scenario.users.janeInnovator.id,
+            displayName: scenario.users.janeInnovator.name,
+            email: scenario.users.janeInnovator.email,
+            isActive: true
+          }
+        ],
+        failedIdentityIds: []
+      });
 
       // Call the function with forceRefresh = true
       const result = await sut.getUsersList(users, true);
@@ -89,7 +219,7 @@ describe('Shared / services / IdentityProviderService', () => {
       // Assertions
       expect(cacheDeleteManyMock).toHaveBeenCalledWith(users); // Cache should be deleted
       expect(cacheGetManyMock).toHaveBeenCalledWith(users); // Cache should be checked
-      expect(getUsersListFromB2CMock).toHaveBeenCalledWith(users); // Fresh users should be fetched from B2C
+      expect(getUsersListFromB2CMock).toHaveBeenCalledWith(users, 'interactive'); // Fresh users should be fetched from B2C
       expect(cacheSetManyMock).toHaveBeenCalled(); // New users should be set in cache
 
       expect(result).toEqual([
@@ -115,16 +245,19 @@ describe('Shared / services / IdentityProviderService', () => {
       const cacheDeleteManyMock = jest.spyOn(sut['cache'], 'deleteMany').mockResolvedValue();
       jest.spyOn(sut['cache'], 'getMany').mockResolvedValue([]);
       jest.spyOn(sut['cache'], 'setMany').mockResolvedValue();
-      jest.spyOn<any, any>(sut, 'getUsersListFromB2C').mockResolvedValue([
-        {
-          identityId,
-          givenName: 'Updated',
-          surname: 'Name',
-          displayName: 'Updated Name',
-          email: scenario.users.johnInnovator.email,
-          isActive: true
-        }
-      ]);
+      jest.spyOn<any, any>(sut, 'getUsersListFromB2C').mockResolvedValue({
+        users: [
+          {
+            identityId,
+            givenName: 'Updated',
+            surname: 'Name',
+            displayName: 'Updated Name',
+            email: scenario.users.johnInnovator.email,
+            isActive: true
+          }
+        ],
+        failedIdentityIds: []
+      });
       jest.spyOn<any, any>(sut, 'verifyAccessToken').mockResolvedValue(undefined);
       jest.spyOn(axios, 'patch').mockResolvedValue({} as any);
 
