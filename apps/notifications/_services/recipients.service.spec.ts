@@ -29,10 +29,10 @@ import {
 } from '@notifications/shared/errors';
 import { DomainInnovationsService } from '@notifications/shared/services';
 import { TestsHelper } from '@notifications/shared/tests';
+import { InnovationAssessmentBuilder } from '@notifications/shared/tests/builders/innovation-assessment.builder';
 import { InnovationSupportBuilder } from '@notifications/shared/tests/builders/innovation-support.builder';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import type { Role2PreferencesType } from '@notifications/shared/types';
-import range from 'lodash/range';
 import { In, type EntityManager } from 'typeorm';
 import { container } from '../_config';
 import type { RecipientsService } from './recipients.service';
@@ -957,10 +957,40 @@ describe('Notifications / _services / recipients service suite', () => {
     });
 
     it('returns innovations if there are idle innovations', async () => {
-      //TODO: Remove the numbersArray and use the actual number of days(30). This should be done 6 months after the deployment of this feature.
-      const numbersArray = range(0, 181);
-      const res = await sut.innovationsWithoutSupportForNDays(numbersArray, em);
-      expect(res).toHaveLength(1);
+      // The configured deployment baseline may be recent. Keep a deterministic old baseline
+      // only inside this rolled-back test transaction, so the real day-90 selector is exercised.
+      const [module] = await em.query(
+        "SELECT definition FROM sys.sql_modules WHERE object_id=OBJECT_ID('dbo.innovation_grouped_status_view_entity')"
+      );
+      await em.query(
+        module.definition
+          .replace(/^\s*(?:CREATE(?:\s+OR\s+ALTER)?|ALTER)\s+VIEW/i, 'ALTER VIEW')
+          .replace(/'\d{4}-\d{2}-\d{2}'/g, "'2000-01-01'")
+      );
+      const innovationId = scenario.users.johnInnovator.innovations.johnInnovationEmpty.id;
+      const [dates] = await em.query(
+        'SELECT DATEADD(DAY, -180, GETDATE()) AS oldCompletion, DATEADD(DAY, -91, GETDATE()) AS completion, DATEADD(DAY, -90, GETDATE()) AS closedAt'
+      );
+      const old = await new InnovationAssessmentBuilder(em)
+        .setInnovation(innovationId)
+        .setFinishedAt(dates.oldCompletion)
+        .save();
+      await new InnovationAssessmentBuilder(em)
+        .setInnovation(innovationId)
+        .setVersion(2, 0)
+        .setFinishedAt(dates.completion)
+        .save();
+      await new InnovationSupportBuilder(em)
+        .setInnovation(innovationId)
+        .setMajorAssessment(old.id)
+        .setOrganisationUnit(scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id)
+        .setStatus(InnovationSupportStatusEnum.CLOSED)
+        .setFinishedAt(dates.closedAt)
+        .save();
+      const res = await sut.innovationsWithoutSupportForNDays([90], em);
+      expect(res).toEqual(
+        expect.arrayContaining([expect.objectContaining({ id: innovationId, daysSinceNoActiveSupport: 90 })])
+      );
     });
 
     it('throws error if array is empty', async () => {
