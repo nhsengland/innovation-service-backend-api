@@ -2,6 +2,7 @@ import Joi from 'joi';
 
 export type ResponseDTO = {
   organisation: { id: string; name: string };
+  organisationUnit: { id: string; name: string };
   champions: { name: string; email: string }[];
   seniorSponsors: { name: string; email: string }[];
 }[];
@@ -9,6 +10,10 @@ export type ResponseDTO = {
 export const ResponseBodySchema = Joi.array().items(
   Joi.object({
     organisation: Joi.object({
+      id: Joi.string().guid().required(),
+      name: Joi.string().required()
+    }).required(),
+    organisationUnit: Joi.object({
       id: Joi.string().guid().required(),
       name: Joi.string().required()
     }).required(),

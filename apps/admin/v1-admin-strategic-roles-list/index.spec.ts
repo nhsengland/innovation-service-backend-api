@@ -23,6 +23,7 @@ beforeAll(async () => {
 const expected = [
   {
     organisation: { id: randUuid(), name: 'Org 1' },
+    organisationUnit: { id: randUuid(), name: 'Unit 1' },
     champions: [{ name: 'Champ 1', email: 'champ1@test.com' }],
     seniorSponsors: [{ name: 'Sponsor 1', email: 'sponsor1@test.com' }]
   }
