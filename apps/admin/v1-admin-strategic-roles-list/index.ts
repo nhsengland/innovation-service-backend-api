@@ -35,7 +35,7 @@ class V1AdminStrategicRolesList {
 
 export default openApi(V1AdminStrategicRolesList.httpTrigger as AzureFunction, '/v1/strategic-roles', {
   get: {
-    description: 'List all users with strategic roles grouped by organisation.',
+    description: 'List all users with strategic roles grouped by organisation unit.',
     operationId: 'v1-admin-strategic-roles-list',
     responses: {
       '200': SwaggerHelper.responseJ2S(ResponseBodySchema, {

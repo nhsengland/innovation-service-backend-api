@@ -375,6 +375,7 @@ export class UsersService extends BaseService {
   async getStrategicRolesList(entityManager?: EntityManager): Promise<
     {
       organisation: { id: string; name: string };
+      organisationUnit: { id: string; name: string };
       champions: { name: string; email: string }[];
       seniorSponsors: { name: string; email: string }[];
     }[]
@@ -385,43 +386,66 @@ export class UsersService extends BaseService {
       .createQueryBuilder(UserStrategicRoleEntity, 'sr')
       .innerJoinAndSelect('sr.organisation', 'organisation')
       .innerJoinAndSelect('sr.user', 'user')
+      .leftJoinAndSelect('user.serviceRoles', 'role')
+      .leftJoinAndSelect('role.organisationUnit', 'unit')
       .getMany();
 
     const identityIds = strategicRoles.map(sr => sr.user.identityId);
     const usersMap = await this.domainService.users.getUsersMap({ identityIds }, em);
 
-    const orgMap = new Map<
+    const unitMap = new Map<
       string,
       {
         organisation: { id: string; name: string };
+        organisationUnit: { id: string; name: string };
         champions: { name: string; email: string }[];
         seniorSponsors: { name: string; email: string }[];
       }
     >();
 
     for (const sr of strategicRoles) {
-      if (!orgMap.has(sr.organisation.id)) {
-        orgMap.set(sr.organisation.id, {
-          organisation: { id: sr.organisation.id, name: sr.organisation.name },
-          champions: [],
-          seniorSponsors: []
-        });
-      }
-
-      const orgData = orgMap.get(sr.organisation.id)!;
       const userDetails = {
         name: usersMap.getDisplayName(sr.user.identityId),
         email: usersMap.get(sr.user.identityId)?.email ?? ''
       };
 
-      if (sr.strategicRole === StrategicRoleEnum.CHAMPION) {
-        orgData.champions.push(userDetails);
-      } else if (sr.strategicRole === StrategicRoleEnum.SENIOR_SPONSOR) {
-        orgData.seniorSponsors.push(userDetails);
+      const units = new Map(
+        sr.user.serviceRoles
+          .filter(
+            role =>
+              role.isActive &&
+              role.organisationId === sr.organisation.id &&
+              [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR].includes(role.role) &&
+              role.organisationUnit
+          )
+          .map(role => [role.organisationUnit!.id, role.organisationUnit!])
+      );
+
+      for (const unit of units.values()) {
+        const key = `${sr.organisation.id}:${unit.id}`;
+        if (!unitMap.has(key)) {
+          unitMap.set(key, {
+            organisation: { id: sr.organisation.id, name: sr.organisation.name },
+            organisationUnit: { id: unit.id, name: unit.name },
+            champions: [],
+            seniorSponsors: []
+          });
+        }
+
+        const unitData = unitMap.get(key)!;
+        if (sr.strategicRole === StrategicRoleEnum.CHAMPION) {
+          unitData.champions.push(userDetails);
+        } else if (sr.strategicRole === StrategicRoleEnum.SENIOR_SPONSOR) {
+          unitData.seniorSponsors.push(userDetails);
+        }
       }
     }
 
-    return Array.from(orgMap.values()).sort((a, b) => a.organisation.name.localeCompare(b.organisation.name));
+    return Array.from(unitMap.values()).sort(
+      (a, b) =>
+        a.organisation.name.localeCompare(b.organisation.name) ||
+        a.organisationUnit.name.localeCompare(b.organisationUnit.name)
+    );
   }
 
   async addRoles(

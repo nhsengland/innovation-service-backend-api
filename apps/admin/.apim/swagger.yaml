@@ -197,7 +197,7 @@ paths:
           description: Internal Server Error
   /v1/strategic-roles:
     get:
-      description: List all users with strategic roles grouped by organisation.
+      description: List all users with strategic roles grouped by organisation unit.
       operationId: v1-admin-strategic-roles-list
       responses:
         "200":
@@ -210,6 +210,18 @@ paths:
                   type: object
                   properties:
                     organisation:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        name:
+                          type: string
+                      required:
+                        - id
+                        - name
+                      additionalProperties: false
+                    organisationUnit:
                       type: object
                       properties:
                         id:
@@ -251,6 +263,7 @@ paths:
                         additionalProperties: false
                   required:
                     - organisation
+                    - organisationUnit
                     - champions
                     - seniorSponsors
                   additionalProperties: false
