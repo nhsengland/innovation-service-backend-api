@@ -16,7 +16,7 @@ import {
   NotFoundError,
   UnprocessableEntityError
 } from "@innovations/shared/errors";
-import { FileStorageService, NotifierService } from "@innovations/shared/services";
+import { FileStorageService, NotifierService, type FileDownloadAccess } from "@innovations/shared/services";
 import { AuthErrorsEnum } from "@innovations/shared/services/auth/authorization-validation.model";
 import type { CompleteScenarioType } from "@innovations/shared/tests";
 import { MocksHelper, TestsHelper } from "@innovations/shared/tests";
@@ -28,6 +28,8 @@ import { randAirportName, randFileName, randFutureDate, randNumber, randText, ra
 import type { EntityManager } from "typeorm";
 import type { InnovationFileService } from "./innovation-file.service";
 import SYMBOLS from "./symbols";
+
+const readyDownloadAccess = (url: string): FileDownloadAccess => ({ scanState: "ready", canDownload: true, url });
 
 describe("Services / Innovation File service suite", () => {
   const testsHelper = new TestsHelper();
@@ -62,9 +64,9 @@ describe("Services / Innovation File service suite", () => {
       const secondFileOrderedByName = { file: innovation.files.innovationFileByIngrid, url: randUrl() };
 
       jest
-        .spyOn(FileStorageService.prototype, "getDownloadUrl")
-        .mockReturnValueOnce(firstFileOrderedByName.url)
-        .mockReturnValueOnce(secondFileOrderedByName.url);
+        .spyOn(FileStorageService.prototype, "getDownloadAccess")
+        .mockResolvedValueOnce(readyDownloadAccess(firstFileOrderedByName.url))
+        .mockResolvedValueOnce(readyDownloadAccess(secondFileOrderedByName.url));
 
       const files = await sut.getFilesList(
         context,
@@ -94,7 +96,9 @@ describe("Services / Innovation File service suite", () => {
     it("should return a file filtered by name", async () => {
       const paulFile = { file: innovation.files.innovationFileByPaul, url: randUrl() };
 
-      jest.spyOn(FileStorageService.prototype, "getDownloadUrl").mockReturnValueOnce(paulFile.url);
+      jest
+        .spyOn(FileStorageService.prototype, "getDownloadAccess")
+        .mockResolvedValueOnce(readyDownloadAccess(paulFile.url));
 
       const files = await sut.getFilesList(
         context,
@@ -126,12 +130,12 @@ describe("Services / Innovation File service suite", () => {
       };
 
       jest
-        .spyOn(FileStorageService.prototype, "getDownloadUrl")
-        .mockReturnValueOnce(innovationOwnerFile.url)
-        .mockReturnValueOnce(johnInnovationEvidenceFileByJohn.url)
-        .mockReturnValueOnce(innovationCollaboratorFile.url)
-        .mockReturnValueOnce(innovationDeletedUserFile.url)
-        .mockReturnValueOnce(innovationCreatedAfterTodayFile.url);
+        .spyOn(FileStorageService.prototype, "getDownloadAccess")
+        .mockResolvedValueOnce(readyDownloadAccess(innovationOwnerFile.url))
+        .mockResolvedValueOnce(readyDownloadAccess(johnInnovationEvidenceFileByJohn.url))
+        .mockResolvedValueOnce(readyDownloadAccess(innovationCollaboratorFile.url))
+        .mockResolvedValueOnce(readyDownloadAccess(innovationDeletedUserFile.url))
+        .mockResolvedValueOnce(readyDownloadAccess(innovationCreatedAfterTodayFile.url));
 
       const files = await sut.getFilesList(
         context,
@@ -179,9 +183,9 @@ describe("Services / Innovation File service suite", () => {
       const innovationCollaboratorFile = { file: innovation.files.sectionFileByJane, url: randUrl() };
 
       jest
-        .spyOn(FileStorageService.prototype, "getDownloadUrl")
-        .mockReturnValueOnce(innovationOwnerFile.url)
-        .mockReturnValueOnce(innovationCollaboratorFile.url);
+        .spyOn(FileStorageService.prototype, "getDownloadAccess")
+        .mockResolvedValueOnce(readyDownloadAccess(innovationOwnerFile.url))
+        .mockResolvedValueOnce(readyDownloadAccess(innovationCollaboratorFile.url));
 
       const files = await sut.getFilesList(
         context,
@@ -216,10 +220,10 @@ describe("Services / Innovation File service suite", () => {
       const innovationFileByAlice = { file: innovation.files.innovationFileByAlice, url: randUrl() };
 
       jest
-        .spyOn(FileStorageService.prototype, "getDownloadUrl")
-        .mockReturnValueOnce(innovationFileByPaul.url)
-        .mockReturnValueOnce(innovationFileBySean.url)
-        .mockReturnValueOnce(innovationFileByAlice.url);
+        .spyOn(FileStorageService.prototype, "getDownloadAccess")
+        .mockResolvedValueOnce(readyDownloadAccess(innovationFileByPaul.url))
+        .mockResolvedValueOnce(readyDownloadAccess(innovationFileBySean.url))
+        .mockResolvedValueOnce(readyDownloadAccess(innovationFileByAlice.url));
 
       const files = await sut.getFilesList(
         context,
@@ -263,10 +267,10 @@ describe("Services / Innovation File service suite", () => {
       const innovationFileByIngrid = { file: innovation.files.innovationFileByIngrid, url: randUrl() };
 
       jest
-        .spyOn(FileStorageService.prototype, "getDownloadUrl")
-        .mockReturnValueOnce(innovationMessageFileByAlice.url)
-        .mockReturnValueOnce(innovationFileByAlice.url)
-        .mockReturnValueOnce(innovationFileByIngrid.url);
+        .spyOn(FileStorageService.prototype, "getDownloadAccess")
+        .mockResolvedValueOnce(readyDownloadAccess(innovationMessageFileByAlice.url))
+        .mockResolvedValueOnce(readyDownloadAccess(innovationFileByAlice.url))
+        .mockResolvedValueOnce(readyDownloadAccess(innovationFileByIngrid.url));
 
       const files = await sut.getFilesList(
         context,
@@ -305,7 +309,9 @@ describe("Services / Innovation File service suite", () => {
     it("should return a file filtered by created at date", async () => {
       const futureFile = { file: innovation.files.innovationFileUploadedAfterToday, url: randUrl() };
 
-      jest.spyOn(FileStorageService.prototype, "getDownloadUrl").mockReturnValueOnce(futureFile.url);
+      jest
+        .spyOn(FileStorageService.prototype, "getDownloadAccess")
+        .mockResolvedValueOnce(readyDownloadAccess(futureFile.url));
 
       const files = await sut.getFilesList(
         context,
@@ -340,7 +346,9 @@ describe("Services / Innovation File service suite", () => {
     it("should return a file with the createdBy name as 'deleted user' when createdBy user was deleted", async () => {
       const innovationDeletedUserFile = { file: innovation.files.innovationFileByDeletedUser, url: randUrl() };
 
-      jest.spyOn(FileStorageService.prototype, "getDownloadUrl").mockReturnValueOnce(innovationDeletedUserFile.url);
+      jest
+        .spyOn(FileStorageService.prototype, "getDownloadAccess")
+        .mockResolvedValueOnce(readyDownloadAccess(innovationDeletedUserFile.url));
 
       const files = await sut.getFilesList(
         context,
@@ -369,10 +377,10 @@ describe("Services / Innovation File service suite", () => {
       const innovationCollaboratorFile = { file: innovation.files.sectionFileByJane, url: randUrl() };
 
       jest
-        .spyOn(FileStorageService.prototype, "getDownloadUrl")
-        .mockReturnValueOnce(innovationOwnerFile.url)
-        .mockReturnValueOnce(evidenceFileByJohn.url)
-        .mockReturnValueOnce(innovationCollaboratorFile.url);
+        .spyOn(FileStorageService.prototype, "getDownloadAccess")
+        .mockResolvedValueOnce(readyDownloadAccess(innovationOwnerFile.url))
+        .mockResolvedValueOnce(readyDownloadAccess(evidenceFileByJohn.url))
+        .mockResolvedValueOnce(readyDownloadAccess(innovationCollaboratorFile.url));
 
       const files = await sut.getFilesList(
         context,
@@ -416,11 +424,11 @@ describe("Services / Innovation File service suite", () => {
       };
 
       jest
-        .spyOn(FileStorageService.prototype, "getDownloadUrl")
-        .mockReturnValueOnce(innovationDeletedUserFile.url)
-        .mockReturnValueOnce(innovationCreatedAfterTodayFile.url)
-        .mockReturnValueOnce(evidenceFileByJohn.url)
-        .mockReturnValueOnce(innovationOwnerFile.url);
+        .spyOn(FileStorageService.prototype, "getDownloadAccess")
+        .mockResolvedValueOnce(readyDownloadAccess(innovationDeletedUserFile.url))
+        .mockResolvedValueOnce(readyDownloadAccess(innovationCreatedAfterTodayFile.url))
+        .mockResolvedValueOnce(readyDownloadAccess(evidenceFileByJohn.url))
+        .mockResolvedValueOnce(readyDownloadAccess(innovationOwnerFile.url));
 
       const files = await sut.getFilesList(
         context,
@@ -472,7 +480,9 @@ describe("Services / Innovation File service suite", () => {
     });
 
     describe("archived innovations", () => {
-      const mock = jest.spyOn(FileStorageService.prototype, "getDownloadUrl").mockReturnValue(randUrl());
+      const mock = jest
+        .spyOn(FileStorageService.prototype, "getDownloadAccess")
+        .mockResolvedValue(readyDownloadAccess(randUrl()));
       const innovationFiles = scenario.users.johnInnovator.innovations.johnInnovation.files;
 
       beforeEach(async () => {
@@ -627,7 +637,9 @@ describe("Services / Innovation File service suite", () => {
 
         beforeAll(() => {
           randomUrl = randUrl();
-          jest.spyOn(FileStorageService.prototype, "getDownloadUrl").mockReturnValue(randomUrl);
+          jest
+            .spyOn(FileStorageService.prototype, "getDownloadAccess")
+            .mockResolvedValue(readyDownloadAccess(randomUrl));
         });
 
         beforeEach(() => {
@@ -677,7 +689,7 @@ describe("Services / Innovation File service suite", () => {
               name: file.file.name,
               size: file.file.size,
               extension: file.file.extension,
-              url: randomUrl
+              ...readyDownloadAccess(randomUrl)
             },
             createdAt: new Date(file.createdAt),
             createdBy: {
@@ -745,7 +757,9 @@ describe("Services / Innovation File service suite", () => {
 
           // Mocks
           const randomUrl = randUrl();
-          jest.spyOn(FileStorageService.prototype, "getDownloadUrl").mockReturnValue(randomUrl);
+          jest
+            .spyOn(FileStorageService.prototype, "getDownloadAccess")
+            .mockResolvedValue(readyDownloadAccess(randomUrl));
 
           const result = await sut.getFileInfo(domainContext, innovation.id, file.id, em);
 
@@ -759,7 +773,7 @@ describe("Services / Innovation File service suite", () => {
               name: file.file.name,
               size: file.file.size,
               extension: file.file.extension,
-              url: randomUrl
+              ...readyDownloadAccess(randomUrl)
             },
             createdAt: new Date(file.createdAt),
             createdBy: {
@@ -1506,6 +1520,8 @@ describe("Services / Innovation File service suite", () => {
       size?: number;
       extension: string;
       url: string;
+      scanState: "ready";
+      canDownload: true;
     };
   } => {
     return {
@@ -1515,7 +1531,7 @@ describe("Services / Innovation File service suite", () => {
       name: file.name,
       createdAt: new Date(file.createdAt),
       createdBy,
-      file: { ...file.file, url }
+      file: { ...file.file, url, scanState: "ready", canDownload: true }
     };
   };
 

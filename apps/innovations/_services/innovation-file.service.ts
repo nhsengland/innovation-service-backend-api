@@ -223,6 +223,8 @@ export class InnovationFileService extends BaseService {
 
     const contextMap = await this.files2ResolvedContexts(domainContext, files, innovationId, connection);
 
+    const downloadAccess = await this.fileStorageService.getDownloadAccessForFiles(files);
+
     return {
       count,
       data: files.map(file => ({
@@ -254,7 +256,7 @@ export class InnovationFileService extends BaseService {
           name: file.filename,
           size: file.filesize ?? undefined,
           extension: file.extension,
-          url: this.fileStorageService.getDownloadUrl(file.storageId, file.filename)
+          ...downloadAccess.get(file.storageId)!
         }
       }))
     };
@@ -273,7 +275,7 @@ export class InnovationFileService extends BaseService {
     description?: string;
     createdAt: Date;
     createdBy: { name: string; role: ServiceRoleEnum; isOwner?: boolean; orgUnitName?: string };
-    file: { name: string; size?: number; extension: string; url: string };
+    file: InnovationFileOutputType;
     canDelete: boolean;
   }> {
     const connection = entityManager ?? this.sqlConnection.manager;
@@ -347,7 +349,7 @@ export class InnovationFileService extends BaseService {
         name: file.filename,
         size: file.filesize ?? undefined,
         extension: file.extension,
-        url: this.fileStorageService.getDownloadUrl(file.storageId, file.filename)
+        ...(await this.fileStorageService.getDownloadAccess(file.storageId, file.filename))
       },
       canDelete: this.canDeleteFile(
         { role: file.createdByUserRole.role, orgUnitId: file.createdByUserRole.organisationUnit?.id },
