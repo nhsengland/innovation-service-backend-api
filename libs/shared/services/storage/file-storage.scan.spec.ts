@@ -1,7 +1,9 @@
 import 'reflect-metadata';
-import { BlobClient, generateBlobSASQueryParameters } from '@azure/storage-blob';
+import type { BlobClient, generateBlobSASQueryParameters } from '@azure/storage-blob';
+import type * as AzureStorage from '@azure/storage-blob';
 import type { LoggerService } from '../integrations/logger.service';
-import { FileStorageService } from './file-storage.service';
+import type { FileStorageService } from './file-storage.service';
+import type * as FileStorage from './file-storage.service';
 
 jest.mock('../../config/file-storage.config', () => ({
   FILE_STORAGE_CONFIG: {
@@ -23,8 +25,18 @@ describe('FileStorageService scan-gated download access', () => {
   let getProperties: jest.Mock;
   let getTags: jest.Mock;
   let log: jest.Mock;
-  const signer = jest.mocked(generateBlobSASQueryParameters);
-  const blobConstructor = jest.mocked(BlobClient);
+  let StorageService: typeof FileStorageService;
+  let signer: jest.MockedFunction<typeof generateBlobSASQueryParameters>;
+  let blobConstructor: jest.MockedObjectDeep<typeof BlobClient>;
+
+  // The shared integration setup may already have loaded the real service.
+  // Load a fresh service and its mocked dependencies in the same module registry.
+  jest.isolateModules(() => {
+    const storage = jest.requireMock<typeof AzureStorage>('@azure/storage-blob');
+    signer = jest.mocked(storage.generateBlobSASQueryParameters);
+    blobConstructor = jest.mocked(storage.BlobClient);
+    StorageService = jest.requireActual<typeof FileStorage>('./file-storage.service').FileStorageService;
+  });
 
   beforeEach(() => {
     jest.resetAllMocks();
@@ -34,7 +46,7 @@ describe('FileStorageService scan-gated download access', () => {
     blobConstructor.mockImplementation(() => ({ getProperties, getTags }) as unknown as BlobClient);
     signer.mockReturnValue({ toString: () => 'unit-signature' } as ReturnType<typeof generateBlobSASQueryParameters>);
     log = jest.fn();
-    service = new FileStorageService({ log } as unknown as LoggerService);
+    service = new StorageService({ log } as unknown as LoggerService);
   });
   afterEach(() => jest.restoreAllMocks());
 
