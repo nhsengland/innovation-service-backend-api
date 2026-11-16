@@ -63,7 +63,9 @@ class V1InnovationFilesList {
             name: item.file.name,
             size: item.file.size,
             extension: item.file.extension,
-            url: item.file.url
+            scanState: item.file.scanState,
+            canDownload: item.file.canDownload,
+            ...(item.file.url && { url: item.file.url })
           }
         }))
       });

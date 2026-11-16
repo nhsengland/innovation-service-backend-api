@@ -1,3 +1,4 @@
+import type { FileDownloadAccess } from "@innovations/shared/services";
 import type { InnovationSupportStatusEnum } from "@innovations/shared/enums";
 import type { SupportLogProgressUpdate } from "@innovations/shared/types";
 
@@ -27,7 +28,7 @@ type ProgressUpdateData = {
   type: "PROGRESS_UPDATE";
   params: {
     message: string;
-    file?: { id: string; name: string; url: string };
+    file?: { id: string; name: string } & FileDownloadAccess;
   } & SupportLogProgressUpdate["params"];
 };
 

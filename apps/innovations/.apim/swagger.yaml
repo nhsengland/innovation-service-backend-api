@@ -2428,13 +2428,30 @@ paths:
                         format: float
                       extension:
                         type: string
-                      url:
+                      scanState:
                         type: string
+                        enum:
+                          - legacy_allowed
+                          - scanning
+                          - ready
+                          - rejected
+                          - delayed
+                          - scan_failed
+                          - not_scanned
+                          - removed
+                          - unavailable
+                      canDownload:
+                        type: boolean
+                      url:
+                        oneOf:
+                          - type: string
+                            x-required: true
                     required:
                       - id
                       - name
                       - extension
-                      - url
+                      - scanState
+                      - canDownload
                     additionalProperties: false
                   canDelete:
                     type: boolean
@@ -2453,6 +2470,73 @@ paths:
           description: The user is not authorized to access this resource.
         "500":
           description: An error occurred while processing the request.
+  /v1/{innovationId}/files/{fileId}/scan-status:
+    get:
+      operationId: v1-innovation-file-scan-status
+      description: Get the current malware scan state and download availability of an
+        authorized file.
+      tags:
+        - "[v1] Innovation Files"
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: fileId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Current scan state
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  scanState:
+                    type: string
+                    enum:
+                      - legacy_allowed
+                      - scanning
+                      - ready
+                      - rejected
+                      - delayed
+                      - scan_failed
+                      - not_scanned
+                      - removed
+                      - unavailable
+                  canDownload:
+                    type: boolean
+                  retryAfterSeconds:
+                    type: integer
+                    minimum: 1
+                  url:
+                    oneOf:
+                      - type: string
+                        x-required: true
+                required:
+                  - id
+                  - scanState
+                  - canDownload
+                additionalProperties: false
+        "400":
+          description: Invalid request
+        "401":
+          description: Not authenticated
+        "403":
+          description: Not authorized
+        "404":
+          description: File not found
+        "500":
+          description: An error occurred while processing the request
   /v1/{innovationId}/files/upload-url:
     post:
       operationId: v1-innovation-file-upload-url
@@ -5730,12 +5814,29 @@ paths:
                               format: uuid
                             name:
                               type: string
-                            url:
+                            scanState:
                               type: string
+                              enum:
+                                - legacy_allowed
+                                - scanning
+                                - ready
+                                - rejected
+                                - delayed
+                                - scan_failed
+                                - not_scanned
+                                - removed
+                                - unavailable
+                            canDownload:
+                              type: boolean
+                            url:
+                              oneOf:
+                                - type: string
+                                  x-required: true
                           required:
                             - id
                             - name
-                            - url
+                            - scanState
+                            - canDownload
                           additionalProperties: false
                         createdAt:
                           type: string

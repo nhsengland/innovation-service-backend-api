@@ -1,3 +1,4 @@
+import type { FileDownloadAccess } from "@innovations/shared/services";
 import { inject, injectable } from "inversify";
 import type { EntityManager, SelectQueryBuilder } from "typeorm";
 
@@ -547,7 +548,7 @@ export class InnovationThreadsService extends BaseService {
     messages: {
       id: string;
       message: string;
-      file?: { id: string; name: string; url: string };
+      file?: { id: string; name: string } & FileDownloadAccess;
       createdAt: Date;
       isNew: boolean;
       isEditable: boolean;
@@ -648,6 +649,7 @@ export class InnovationThreadsService extends BaseService {
       .andWhere("file.contextType = :contextType", { contextType: InnovationFileContextTypeEnum.INNOVATION_MESSAGE })
       .getMany();
     const filesMap = new Map(files.map(f => [f.contextId, f]));
+    const downloadAccess = await this.fileStorageService.getDownloadAccessForFiles(files);
 
     const messageResult = messages.map(tm => {
       const organisationUnit = tm.authorOrganisationUnit ?? undefined;
@@ -661,7 +663,7 @@ export class InnovationThreadsService extends BaseService {
           file: {
             id: file.id,
             name: file.name,
-            url: this.fileStorageService.getDownloadUrl(file.storageId, file.filename)
+            ...downloadAccess.get(file.storageId)!
           }
         }),
         createdAt: tm.createdAt,

@@ -1,3 +1,4 @@
+import { FILE_SCAN_STATES, type FileDownloadAccess } from "@innovations/shared/services";
 import Joi from "joi";
 
 export type ResponseDTO = {
@@ -5,7 +6,7 @@ export type ResponseDTO = {
   messages: {
     id: string;
     message: string;
-    file?: { id: string; name: string; url: string };
+    file?: { id: string; name: string } & FileDownloadAccess;
     createdAt: Date;
     isNew: boolean;
     isEditable: boolean;
@@ -30,7 +31,15 @@ export const ResponseBodySchema = Joi.object<ResponseDTO>({
       file: Joi.object({
         id: Joi.string().uuid().required(),
         name: Joi.string().required(),
-        url: Joi.string().required()
+        scanState: Joi.string()
+          .valid(...FILE_SCAN_STATES)
+          .required(),
+        canDownload: Joi.boolean().required(),
+        url: Joi.when("canDownload", {
+          is: true,
+          then: Joi.string().required(),
+          otherwise: Joi.forbidden()
+        })
       }).optional(),
       createdAt: Joi.date().required(),
       isNew: Joi.boolean().required(),

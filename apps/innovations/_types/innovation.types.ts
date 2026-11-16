@@ -1,3 +1,4 @@
+import type { FileDownloadAccess } from "@innovations/shared/services";
 import { TEXTAREA_LENGTH_LIMIT } from "@innovations/shared/constants";
 import type {
   InnovationExportRequestStatusEnum,
@@ -206,8 +207,7 @@ export type InnovationFileOutputType = {
   name: string;
   size?: number;
   extension: string;
-  url: string;
-};
+} & FileDownloadAccess;
 
 export type InnovationFileOutputContextType =
   | {

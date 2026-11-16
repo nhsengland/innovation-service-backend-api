@@ -45,7 +45,14 @@ const expected = {
   description: randText(),
   createdAt: randRecentDate(),
   createdBy: { name: randFullName(), role: ServiceRoleEnum.ACCESSOR, isOwner: false, orgUnitName: randCompanyName() },
-  file: { name: randFileName(), size: randNumber(), extension: randFileExt(), url: randUrl() },
+  file: {
+    name: randFileName(),
+    size: randNumber(),
+    extension: randFileExt(),
+    url: randUrl(),
+    scanState: "ready" as const,
+    canDownload: true
+  },
   canDelete: randBoolean()
 };
 const mock = jest.spyOn(InnovationFileService.prototype, "getFileInfo").mockResolvedValue(expected);

@@ -1,3 +1,4 @@
+import type { FileDownloadAccess } from "@innovations/shared/services";
 import { inject, injectable } from "inversify";
 import { Brackets, EntityManager, In } from "typeorm";
 
@@ -1382,7 +1383,17 @@ export class InnovationSupportsService extends BaseService {
                 params: {
                   message: supportLog.description,
                   ...supportLog.params,
-                  ...(file ? { file: { id: file.id, name: file.name, url: file.file.url } } : {})
+                  ...(file
+                    ? {
+                        file: {
+                          id: file.id,
+                          name: file.name,
+                          scanState: file.file.scanState,
+                          canDownload: file.file.canDownload,
+                          ...(file.file.url && { url: file.file.url })
+                        }
+                      }
+                    : {})
                 }
               });
             }
@@ -1638,7 +1649,7 @@ export class InnovationSupportsService extends BaseService {
         description?: string;
         createdAt: Date;
         createdBy: { name: string; role: ServiceRoleEnum; isOwner?: boolean; orgUnitName?: string };
-        file: { name: string; size?: number; extension: string; url: string };
+        file: { name: string; size?: number; extension: string } & FileDownloadAccess;
       }
     | undefined
   > {

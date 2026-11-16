@@ -14,6 +14,8 @@ export { ElasticSearchService } from './integrations/elastic-search.service';
 
 export { CacheService, CacheConfigType } from './storage/cache.service';
 export { FileStorageService } from './storage/file-storage.service';
+export { FILE_SCAN_STATES } from './storage/file-scan-policy';
+export type { FileScanState, FileScanStatus, FileDownloadAccess } from './storage/file-scan-policy';
 export { SQLConnectionService } from './storage/sql-connection.service';
 export { RedisService } from './storage/redis.service';
 export { IRSchemaService } from './storage/ir-schema.service';

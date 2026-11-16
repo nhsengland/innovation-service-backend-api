@@ -52,7 +52,14 @@ const expected = {
         isOwner: false,
         orgUnitName: randCompanyName()
       },
-      file: { name: randFileName(), size: randNumber(), extension: randFileExt(), url: randUrl() }
+      file: {
+        name: randFileName(),
+        size: randNumber(),
+        extension: randFileExt(),
+        url: randUrl(),
+        scanState: "ready" as const,
+        canDownload: true
+      }
     },
     {
       id: randUuid(),
@@ -67,7 +74,14 @@ const expected = {
         isOwner: false,
         orgUnitName: randCompanyName()
       },
-      file: { name: randFileName(), size: randNumber(), extension: randFileExt(), url: randUrl() }
+      file: {
+        name: randFileName(),
+        size: randNumber(),
+        extension: randFileExt(),
+        url: randUrl(),
+        scanState: "ready" as const,
+        canDownload: true
+      }
     }
   ]
 };

@@ -52,7 +52,9 @@ class V1InnovationFileInfo {
           name: result.file.name,
           size: result.file.size,
           extension: result.file.extension,
-          url: result.file.url
+          scanState: result.file.scanState,
+          canDownload: result.file.canDownload,
+          ...(result.file.url && { url: result.file.url })
         },
         canDelete: result.canDelete
       });

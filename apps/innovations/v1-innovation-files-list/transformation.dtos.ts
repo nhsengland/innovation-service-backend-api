@@ -1,3 +1,4 @@
+import { FILE_SCAN_STATES, type FileDownloadAccess } from "@innovations/shared/services";
 import { InnovationFileContextTypeEnum, ServiceRoleEnum } from "@innovations/shared/enums";
 import Joi from "joi";
 
@@ -10,7 +11,7 @@ export type ResponseDTO = {
     description?: string;
     createdAt: Date;
     createdBy: { name: string; role: ServiceRoleEnum; isOwner?: boolean; orgUnitName?: string };
-    file: { id: string; name: string; size?: number; extension: string; url: string };
+    file: { id: string; name: string; size?: number; extension: string } & FileDownloadAccess;
   }[];
 };
 
@@ -38,7 +39,15 @@ export const ResponseBodySchema = Joi.object({
         name: Joi.string().required(),
         size: Joi.number().optional(),
         extension: Joi.string().required(),
-        url: Joi.string().required()
+        scanState: Joi.string()
+          .valid(...FILE_SCAN_STATES)
+          .required(),
+        canDownload: Joi.boolean().required(),
+        url: Joi.when("canDownload", {
+          is: true,
+          then: Joi.string().required(),
+          otherwise: Joi.forbidden()
+        })
       })
     })
   )
