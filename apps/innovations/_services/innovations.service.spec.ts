@@ -414,6 +414,19 @@ describe("Innovations / _services / innovations suite", () => {
   describe("submitInnovation", () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovationEmpty;
 
+    beforeEach(async () => {
+      // These tests exercise submission status, with no supporting documents required.
+      // The shared builder otherwise defaults to hasEvidence=YES without any uploads.
+      await em.query(
+        `UPDATE innovation_document_draft
+         SET document = JSON_MODIFY(
+           JSON_MODIFY(document, '$.EVIDENCE_OF_EFFECTIVENESS.hasEvidence', 'NOT_YET'),
+           '$.REGULATIONS_AND_STANDARDS.standards', JSON_QUERY('[]'))
+         WHERE id = @0`,
+        [innovation.id]
+      );
+    });
+
     it("should submit the innovation for needs assessment", async () => {
       //prepare innovation status
       await em.getRepository(InnovationEntity).update({ id: innovation.id }, { status: InnovationStatusEnum.CREATED });
@@ -452,7 +465,7 @@ describe("Innovations / _services / innovations suite", () => {
       ).rejects.toThrow(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_NO_SECTIONS));
     });
 
-    it(`should throw an error if the innovation has no submitted sections`, async () => {
+    it(`should throw an error if the innovation has incomplete sections`, async () => {
       //prepare innovation status
       await em.getRepository(InnovationEntity).update({ id: innovation.id }, { status: InnovationStatusEnum.CREATED });
       //add submitted section to innovation
@@ -466,6 +479,37 @@ describe("Innovations / _services / innovations suite", () => {
         sut.submitInnovation(DTOsHelper.getUserRequestContext(scenario.users.johnInnovator), innovation.id, em)
       ).rejects.toThrow(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SECTIONS_INCOMPLETE));
     });
+
+    it.each([
+      ["EVIDENCE_OF_EFFECTIVENESS", "INNOVATION_EVIDENCE", { hasEvidence: "YES" }],
+      [
+        "REGULATIONS_AND_STANDARDS",
+        "INNOVATION_REGULATIONS",
+        { standards: [{ type: "DTAC", hasMet: "YES", certifications: { ICO: "QA123456" } }] }
+      ]
+    ])(
+      "should reject missing %s documents even when every section is submitted",
+      async (section, contextType, answers) => {
+        await em
+          .getRepository(InnovationEntity)
+          .update({ id: innovation.id }, { status: InnovationStatusEnum.CREATED });
+        await testsHelper.submitAllInnovationSections(innovation.id, em);
+        await em.query(
+          `UPDATE innovation_document_draft SET document = JSON_MODIFY(document, @0, JSON_QUERY(@1)) WHERE id = @2`,
+          [`$.${section}`, JSON.stringify(answers), innovation.id]
+        );
+
+        await expect(
+          sut.submitInnovation(DTOsHelper.getUserRequestContext(scenario.users.johnInnovator), innovation.id, em)
+        ).rejects.toMatchObject({
+          name: InnovationErrorsEnum.INNOVATION_REQUIRED_DOCUMENTS_INVALID,
+          details: { files: [expect.objectContaining({ section, contextType, scanState: "missing" })] }
+        });
+        const saved = await em.getRepository(InnovationEntity).findOneByOrFail({ id: innovation.id });
+        expect(saved.status).toBe(InnovationStatusEnum.CREATED);
+        expect(notifierSendSpy).not.toHaveBeenCalled();
+      }
+    );
   });
 
   describe("archiveInnovation", () => {

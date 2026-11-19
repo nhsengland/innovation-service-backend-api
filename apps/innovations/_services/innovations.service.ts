@@ -75,6 +75,7 @@ import { ActionEnum } from "@innovations/shared/services/integrations/audit.serv
 import SHARED_SYMBOLS from "@innovations/shared/services/symbols";
 import { groupBy, isString, mapValues, omit, pick, snakeCase } from "lodash";
 import { BaseService } from "./base.service";
+import type { InnovationFileService } from "./innovation-file.service";
 import { InnovationDocumentService } from "./innovation-document.service";
 import { InnovationSupportsService } from "./innovation-supports.service";
 import SYMBOLS from "./symbols";
@@ -246,7 +247,8 @@ export class InnovationsService extends BaseService {
     @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
     @inject(SHARED_SYMBOLS.IRSchemaService) private irSchemaService: IRSchemaService,
     @inject(SYMBOLS.InnovationSupportsService) private innovationSupportsService: InnovationSupportsService,
-    @inject(SYMBOLS.InnovationDocumentService) private innovationDocumentService: InnovationDocumentService
+    @inject(SYMBOLS.InnovationDocumentService) private innovationDocumentService: InnovationDocumentService,
+    @inject(SYMBOLS.InnovationFileService) private innovationFileService: InnovationFileService
   ) {
     super();
   }
@@ -1912,9 +1914,8 @@ export class InnovationsService extends BaseService {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_NO_SECTIONS);
     }
 
-    // TODO: I believe that an error exists here.
-    // this.hasIncompleteSections does not take into account if ALL sections exists.
-    // If a section has never been saved before, is returning as being completed.
+    await this.innovationFileService.validateRequiredDocuments(innovationId, undefined, connection);
+
     const canSubmit = !(await this.hasIncompleteSections(sections));
 
     if (!canSubmit) {
