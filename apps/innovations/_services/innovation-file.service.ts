@@ -44,6 +44,7 @@ import type {
 import { BaseService } from "./base.service";
 import type { InnovationDocumentService } from "./innovation-document.service";
 import SYMBOLS from "./symbols";
+import { getRequiredDocumentContexts, getRequiredDocumentIssues } from "./required-documents.validation";
 
 const INNOVATOR_ONLY_FILE_CONTEXTS = [
   InnovationFileContextTypeEnum.INNOVATION_SECTION,
@@ -61,6 +62,48 @@ export class InnovationFileService extends BaseService {
     @inject(SYMBOLS.InnovationDocumentService) private innovationDocumentService: InnovationDocumentService
   ) {
     super();
+  }
+
+  async validateRequiredDocuments(
+    innovationId: string,
+    section?: CurrentCatalogTypes.InnovationSections,
+    entityManager?: EntityManager
+  ): Promise<void> {
+    if (section && section !== "EVIDENCE_OF_EFFECTIVENESS" && section !== "REGULATIONS_AND_STANDARDS") return;
+    const connection = entityManager ?? this.sqlConnection.manager;
+    const document = await this.innovationDocumentService.getInnovationDocument(
+      innovationId,
+      { type: "DRAFT" },
+      connection
+    );
+    const contexts = getRequiredDocumentContexts(document, section);
+    for (const context of contexts) {
+      if (context.contextType === InnovationFileContextTypeEnum.INNOVATION_EVIDENCE) {
+        const evidence = document.evidences?.find(item => item.id === context.contextId);
+        if (evidence && !evidence.description)
+          context.contextName = TranslationHelper.translate(`EVIDENCE_SUBMIT_TYPES.${evidence.evidenceSubmitType}`);
+      }
+    }
+    if (!contexts.length) return;
+
+    const files = (await connection.find(InnovationFileEntity, { where: { innovation: { id: innovationId } } })).filter(
+      file => contexts.some(context => context.contextType === file.contextType && context.contextId === file.contextId)
+    );
+    // Existing storage helper limits concurrency and deduplicates storage IDs per request.
+    const access = await this.fileStorageService.getDownloadAccessForFiles(files);
+    const issues = getRequiredDocumentIssues(
+      contexts,
+      files.map(file => ({
+        ...file,
+        scanState: access.get(file.storageId)?.scanState ?? "unavailable"
+      }))
+    );
+    if (issues.length) {
+      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_REQUIRED_DOCUMENTS_INVALID, {
+        message: "Required supporting documents are missing or have not passed security checks.",
+        details: { files: issues }
+      });
+    }
   }
 
   async getFilesList(

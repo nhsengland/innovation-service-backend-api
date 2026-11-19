@@ -420,6 +420,8 @@ export class InnovationSectionsService extends BaseService {
     if (!dbSection) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SECTION_NOT_FOUND);
     }
+    await this.innovationFileService.validateRequiredDocuments(innovationId, sectionKey, connection);
+
     if (dbSection.status !== InnovationSectionStatusEnum.DRAFT) {
       // TODO: TechDebt #116721 this should be reviewed, as it is not possible to submit a section that is not in draft.
       // throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SECTION_WITH_UNPROCESSABLE_STATUS);
