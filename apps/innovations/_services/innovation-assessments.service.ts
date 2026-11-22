@@ -42,6 +42,7 @@ import { omit } from "lodash";
 import type { EntityManager } from "typeorm";
 import { BaseService } from "./base.service";
 import type { InnovationDocumentService } from "./innovation-document.service";
+import type { InnovationFileService } from "./innovation-file.service";
 import { InnovationSupportsService } from "./innovation-supports.service";
 import type { InnovationTasksService } from "./innovation-tasks.service";
 import type { InnovationThreadsService } from "./innovation-threads.service";
@@ -56,7 +57,8 @@ export class InnovationAssessmentsService extends BaseService {
     @inject(SYMBOLS.InnovationDocumentService) private documentService: InnovationDocumentService,
     @inject(SYMBOLS.InnovationSupportsService) private innovationSupportsService: InnovationSupportsService,
     @inject(SYMBOLS.InnovationTasksService) private innovationTasksService: InnovationTasksService,
-    @inject(SYMBOLS.InnovationThreadsService) private threadService: InnovationThreadsService
+    @inject(SYMBOLS.InnovationThreadsService) private threadService: InnovationThreadsService,
+    @inject(SYMBOLS.InnovationFileService) private innovationFileService: InnovationFileService
   ) {
     super();
   }
@@ -660,6 +662,8 @@ export class InnovationAssessmentsService extends BaseService {
     if (!previousAssessment) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND);
     }
+
+    await this.innovationFileService.validateRequiredDocuments(innovationId, undefined, connection);
 
     const result = await connection.transaction(async transaction => {
       // 1. Update the innovation status to WAITING_NEEDS_ASSESSMENT
