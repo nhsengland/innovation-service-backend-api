@@ -642,6 +642,18 @@ describe("Innovation Assessments Suite", () => {
   });
 
   describe("createInnovationReassessment", () => {
+    beforeEach(async () => {
+      // These tests exercise reassessment status/versions, without required uploads.
+      await em.query(
+        `UPDATE innovation_document_draft
+         SET document = JSON_MODIFY(
+           JSON_MODIFY(document, '$.EVIDENCE_OF_EFFECTIVENESS.hasEvidence', 'NOT_YET'),
+           '$.REGULATIONS_AND_STANDARDS.standards', JSON_QUERY('[]'))
+         WHERE id = @0`,
+        [innovationWithAssessment.id]
+      );
+    });
+
     it("should create a ressessment", async () => {
       await em.update(
         InnovationSupportEntity,
