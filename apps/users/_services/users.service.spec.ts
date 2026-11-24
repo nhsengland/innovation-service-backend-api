@@ -162,12 +162,16 @@ describe('Users / _services / users service suite', () => {
       });
 
       expect(result).toMatchObject({ id: user.id });
-      expect(identityServiceSpy).toHaveBeenCalledWith(user.identityId, {
-        displayName: `${givenName} ${surname}`,
-        givenName: givenName,
-        surname: surname,
-        mobilePhone: newPhoneNumber
-      });
+      expect(identityServiceSpy).toHaveBeenCalledWith(
+        user.identityId,
+        {
+          displayName: `${givenName} ${surname}`,
+          givenName: givenName,
+          surname: surname,
+          mobilePhone: newPhoneNumber
+        },
+        { confirmNames: false }
+      );
     });
 
     it.each([
@@ -217,12 +221,16 @@ describe('Users / _services / users service suite', () => {
       );
 
       expect(result).toMatchObject({ id: user.id });
-      expect(identityServiceSpy).toHaveBeenCalledWith(user.identityId, {
-        displayName: `${givenName} ${surname}`,
-        givenName: givenName,
-        surname: surname,
-        mobilePhone: newPhoneNumber
-      });
+      expect(identityServiceSpy).toHaveBeenCalledWith(
+        user.identityId,
+        {
+          displayName: `${givenName} ${surname}`,
+          givenName: givenName,
+          surname: surname,
+          mobilePhone: newPhoneNumber
+        },
+        { confirmNames: false }
+      );
       expect(userPreferencesSpy).toHaveBeenCalledWith(
         user.id,
         {
@@ -298,18 +306,28 @@ describe('Users / _services / users service suite', () => {
         )
       ).rejects.toThrow('profile persistence failed');
 
-      expect(identityServiceSpy).toHaveBeenNthCalledWith(1, user.identityId, {
-        displayName: 'New Name',
-        givenName: 'New',
-        surname: 'Name',
-        mobilePhone: '1111111111'
-      });
-      expect(identityServiceSpy).toHaveBeenNthCalledWith(2, user.identityId, {
-        displayName: 'Previous Name',
-        givenName: 'Previous',
-        surname: 'Name',
-        mobilePhone: '0000000000'
-      });
+      expect(identityServiceSpy).toHaveBeenNthCalledWith(
+        1,
+        user.identityId,
+        {
+          displayName: 'New Name',
+          givenName: 'New',
+          surname: 'Name',
+          mobilePhone: '1111111111'
+        },
+        { confirmNames: false }
+      );
+      expect(identityServiceSpy).toHaveBeenNthCalledWith(
+        2,
+        user.identityId,
+        {
+          displayName: 'Previous Name',
+          givenName: 'Previous',
+          surname: 'Name',
+          mobilePhone: '0000000000'
+        },
+        { confirmNames: false }
+      );
 
       updatePreferencesSpy.mockRestore();
       getIdentitySpy.mockRestore();

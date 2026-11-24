@@ -250,12 +250,6 @@ export class DomainUsersService {
   ): Promise<DomainUserIdentityInfo[]> {
     const em = entityManager ?? this.sqlConnection.manager;
 
-    // [TechDebt]: This function breaks with more than 2100 users (probably shouldn't happen anyway)
-    // However we're doing needless query since we could force the identityId (only place calling it has it)
-    // and it would also be easy to do in chunks of 1000 users or so.
-    // My suggestion is parameter becomes identity: string[]; if there really is a need in the future to have
-    // both parameters we could add a function that does that part and calls this one
-
     if (!data.userIds && !data.identityIds) {
       throw new InternalServerError(UserErrorsEnum.USER_INFO_EMPTY_INPUT);
     }
@@ -265,26 +259,35 @@ export class DomainUsersService {
       return [];
     }
 
-    const query = em
-      .createQueryBuilder(UserEntity, 'users')
-      .select([
-        'users.id',
-        'users.identityId',
-        'users.status',
-        'users.jobTitle',
-        'roles.id',
-        'roles.role',
-        'roles.isActive'
-      ])
-      .innerJoin('users.serviceRoles', 'roles')
-      .where('users.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED });
-    if (data.userIds) {
-      query.andWhere('users.id IN (:...userIds)', { userIds: data.userIds });
-    } else if (data.identityIds) {
-      query.andWhere('users.external_id IN (:...identityIds)', { identityIds: data.identityIds });
-    }
+    const identifiers = [...new Set(data.userIds ?? data.identityIds!)];
+    const usersById = new Map<string, UserEntity>();
+    // Leave room for other query parameters below SQL Server's 2100 parameter limit.
+    for (let offset = 0; offset < identifiers.length; offset += 1000) {
+      const chunk = identifiers.slice(offset, offset + 1000);
+      const query = em
+        .createQueryBuilder(UserEntity, 'users')
+        .select([
+          'users.id',
+          'users.identityId',
+          'users.status',
+          'users.jobTitle',
+          'roles.id',
+          'roles.role',
+          'roles.isActive'
+        ])
+        .innerJoin('users.serviceRoles', 'roles')
+        .where('users.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED });
+      if (data.userIds) {
+        query.andWhere('users.id IN (:...userIds)', { userIds: chunk });
+      } else {
+        query.andWhere('users.external_id IN (:...identityIds)', { identityIds: chunk });
+      }
 
-    const dbUsers = await query.getMany();
+      for (const user of await query.getMany()) {
+        if (!usersById.has(user.id)) usersById.set(user.id, user);
+      }
+    }
+    const dbUsers = [...usersById.values()];
     const identityUsers = await this.identityProviderService.getUsersMap(dbUsers.map(items => items.identityId));
 
     return dbUsers.map(dbUser => {
