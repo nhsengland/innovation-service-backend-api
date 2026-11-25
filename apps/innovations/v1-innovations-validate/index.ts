@@ -1,18 +1,18 @@
-import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
-import type { AzureFunction, HttpRequest } from '@azure/functions';
+import { mapOpenApi3 as openApi } from "@aaronpowell/azure-functions-nodejs-openapi";
+import type { AzureFunction, HttpRequest } from "@azure/functions";
 
-import { JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
-import type { AuthorizationService } from '@innovations/shared/services';
-import type { CustomContextType } from '@innovations/shared/types';
+import { JwtDecoder } from "@innovations/shared/decorators";
+import { JoiHelper, ResponseHelper, SwaggerHelper } from "@innovations/shared/helpers";
+import type { AuthorizationService } from "@innovations/shared/services";
+import type { CustomContextType } from "@innovations/shared/types";
 
-import { container } from '../_config';
+import { container } from "../_config";
 
-import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import SYMBOLS from '../_services/symbols';
-import type { ValidationService } from '../_services/validation.service';
-import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
-import { ParamsSchema, ParamsType, QueryParamsSchema, QueryParamsType } from './validation.schemas';
+import SHARED_SYMBOLS from "@innovations/shared/services/symbols";
+import SYMBOLS from "../_services/symbols";
+import type { ValidationService } from "../_services/validation.service";
+import { ResponseBodySchema, type ResponseDTO } from "./transformation.dtos";
+import { ParamsSchema, ParamsType, QueryParamsSchema, QueryParamsType } from "./validation.schemas";
 
 class V1InnovationsValidate {
   @JwtDecoder()
@@ -45,18 +45,18 @@ class V1InnovationsValidate {
   }
 }
 
-export default openApi(V1InnovationsValidate.httpTrigger as AzureFunction, '/v1/{innovationId}/validate', {
+export default openApi(V1InnovationsValidate.httpTrigger as AzureFunction, "/v1/{innovationId}/validate", {
   get: {
-    description: 'Get validation information.',
-    operationId: 'v1-innovations-validate',
+    description: "Get validation information.",
+    operationId: "v1-innovations-validate",
     parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     responses: {
-      '200': SwaggerHelper.responseJ2S(ResponseBodySchema, {
-        description: 'The innovation assessment has been created.'
+      "200": SwaggerHelper.responseJ2S(ResponseBodySchema, {
+        description: "The innovation assessment has been created."
       }),
-      '400': { description: 'Bad request.' },
-      '401': { description: 'The user is not authorized to access validation data.' },
-      '500': { description: 'An error occurred while fetching the validation data.' }
+      "400": { description: "Bad request." },
+      "401": { description: "The user is not authorized to access validation data." },
+      "500": { description: "An error occurred while fetching the validation data." }
     }
   }
 });

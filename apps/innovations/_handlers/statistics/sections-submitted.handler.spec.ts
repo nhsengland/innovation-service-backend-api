@@ -1,12 +1,12 @@
-import { SectionsSubmittedStatisticsHandler } from './sections-submitted.handler';
+import { SectionsSubmittedStatisticsHandler } from "./sections-submitted.handler";
 
-import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
-import { TestsHelper } from '@innovations/shared/tests';
-import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
-import { randPastDate, randUuid } from '@ngneat/falso';
-import { StatisticsService } from '../../_services/statistics.service';
+import { CurrentCatalogTypes } from "@innovations/shared/schemas/innovation-record";
+import { TestsHelper } from "@innovations/shared/tests";
+import { DTOsHelper } from "@innovations/shared/tests/helpers/dtos.helper";
+import { randPastDate, randUuid } from "@ngneat/falso";
+import { StatisticsService } from "../../_services/statistics.service";
 
-describe('Sections Submitted Statistics Handler Suite', () => {
+describe("Sections Submitted Statistics Handler Suite", () => {
   const testsHelper = new TestsHelper();
   const scenario = testsHelper.getCompleteScenario();
 
@@ -20,18 +20,18 @@ describe('Sections Submitted Statistics Handler Suite', () => {
 
   const expected = [
     {
-      section: 'INNOVATION_DESCRIPTION' as const,
+      section: "INNOVATION_DESCRIPTION" as const,
       updatedAt: randPastDate()
     },
     {
-      section: 'INNOVATION_DESCRIPTION' as const,
+      section: "INNOVATION_DESCRIPTION" as const,
       updatedAt: randPastDate()
     }
   ];
-  const mock = jest.spyOn(StatisticsService.prototype, 'getSubmittedSections').mockResolvedValue(expected);
+  const mock = jest.spyOn(StatisticsService.prototype, "getSubmittedSections").mockResolvedValue(expected);
 
-  describe('run', () => {
-    it('should return the statistic', async () => {
+  describe("run", () => {
+    it("should return the statistic", async () => {
       const handler = new SectionsSubmittedStatisticsHandler(
         DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
         { innovationId: randUuid() }
@@ -46,7 +46,7 @@ describe('Sections Submitted Statistics Handler Suite', () => {
       expect(mock).toBeCalledTimes(1);
     });
 
-    it('should return the statistic with null values', async () => {
+    it("should return the statistic with null values", async () => {
       mock.mockResolvedValueOnce([]);
       const handler = new SectionsSubmittedStatisticsHandler(
         DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),

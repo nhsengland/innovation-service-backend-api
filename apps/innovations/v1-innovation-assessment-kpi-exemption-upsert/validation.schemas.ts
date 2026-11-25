@@ -1,8 +1,8 @@
-import Joi from 'joi';
+import Joi from "joi";
 
-import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
-import { InnovationAssessmentKPIExemption } from '@innovations/shared/types';
-import { JoiHelper } from '@innovations/shared/helpers';
+import { TEXTAREA_LENGTH_LIMIT } from "@innovations/shared/constants";
+import { InnovationAssessmentKPIExemption } from "@innovations/shared/types";
+import { JoiHelper } from "@innovations/shared/helpers";
 
 export type ParamsType = {
   innovationId: string;

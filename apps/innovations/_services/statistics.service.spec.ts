@@ -1,5 +1,5 @@
-import { randPastDate, randUuid } from '@ngneat/falso';
-import { In, type EntityManager } from 'typeorm';
+import { randPastDate, randUuid } from "@ngneat/falso";
+import { In, type EntityManager } from "typeorm";
 
 import {
   InnovationExportRequestStatusEnum,
@@ -7,22 +7,22 @@ import {
   InnovationSectionStatusEnum,
   InnovationTaskStatusEnum,
   ServiceRoleEnum
-} from '@innovations/shared/enums';
-import { BadRequestError, GenericErrorsEnum, NotFoundError, OrganisationErrorsEnum } from '@innovations/shared/errors';
-import { TestsHelper } from '@innovations/shared/tests';
-import { InnovationAssessmentBuilder } from '@innovations/shared/tests/builders/innovation-assessment.builder';
-import { InnovationSectionBuilder } from '@innovations/shared/tests/builders/innovation-section.builder';
-import { NotificationBuilder } from '@innovations/shared/tests/builders/notification.builder';
-import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
+} from "@innovations/shared/enums";
+import { BadRequestError, GenericErrorsEnum, NotFoundError, OrganisationErrorsEnum } from "@innovations/shared/errors";
+import { TestsHelper } from "@innovations/shared/tests";
+import { InnovationAssessmentBuilder } from "@innovations/shared/tests/builders/innovation-assessment.builder";
+import { InnovationSectionBuilder } from "@innovations/shared/tests/builders/innovation-section.builder";
+import { NotificationBuilder } from "@innovations/shared/tests/builders/notification.builder";
+import { DTOsHelper } from "@innovations/shared/tests/helpers/dtos.helper";
 
-import { InnovationTaskEntity } from '@innovations/shared/entities';
-import { InnovationFileBuilder } from '@innovations/shared/tests/builders/innovation-file.builder';
-import { container } from '../_config';
-import type { StatisticsService } from './statistics.service';
-import SYMBOLS from './symbols';
-import { InnovationSurveyBuilder } from '@innovations/shared/tests/builders/innovation-survey.builder';
+import { InnovationTaskEntity } from "@innovations/shared/entities";
+import { InnovationFileBuilder } from "@innovations/shared/tests/builders/innovation-file.builder";
+import { container } from "../_config";
+import type { StatisticsService } from "./statistics.service";
+import SYMBOLS from "./symbols";
+import { InnovationSurveyBuilder } from "@innovations/shared/tests/builders/innovation-survey.builder";
 
-describe('Innovations / _services / innovation statistics suite', () => {
+describe("Innovations / _services / innovation statistics suite", () => {
   let sut: StatisticsService;
 
   let em: EntityManager;
@@ -43,8 +43,8 @@ describe('Innovations / _services / innovation statistics suite', () => {
     await testsHelper.releaseQueryRunnerEntityManager();
   });
 
-  describe('getTasks', () => {
-    it('should get tasks for the given innovation and status', async () => {
+  describe("getTasks", () => {
+    it("should get tasks for the given innovation and status", async () => {
       const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
       const tasks = await sut.getTasks(innovation.id, [InnovationTaskStatusEnum.OPEN], em);
 
@@ -65,22 +65,22 @@ describe('Innovations / _services / innovation statistics suite', () => {
     });
   });
 
-  describe('getTasksCounter', () => {
+  describe("getTasksCounter", () => {
     it.each([
       [
-        'QA',
+        "QA",
         [InnovationTaskStatusEnum.OPEN, InnovationTaskStatusEnum.DONE, InnovationTaskStatusEnum.CANCELLED],
         scenario.users.aliceQualifyingAccessor, // has two tasks one open and one done
         { OPEN: 1, DONE: 1, CANCELLED: 0 }
       ],
       [
-        'NA',
+        "NA",
         [InnovationTaskStatusEnum.OPEN, InnovationTaskStatusEnum.DONE],
         scenario.users.seanNeedsAssessor, // has 0 task and paulNA has 1
         { OPEN: 1, DONE: 0 }
       ]
     ])(
-      'as %s should get my organisation tasks counter for the given innovation and $s',
+      "as %s should get my organisation tasks counter for the given innovation and $s",
       async (_label, statuses, user, res) => {
         const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
         const tasksCounter = await sut.getTasksCounter(DTOsHelper.getUserRequestContext(user), innovation.id, statuses);
@@ -102,14 +102,14 @@ describe('Innovations / _services / innovation statistics suite', () => {
       expect((tasksCounter as any)[InnovationTaskStatusEnum.DECLINED]).toBeUndefined();
     });
 
-    it('should throw bad request if status missing', async () => {
+    it("should throw bad request if status missing", async () => {
       await expect(() =>
         sut.getTasksCounter(DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor), randUuid(), [])
       ).rejects.toThrow(new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD));
     });
   });
 
-  describe('getLastUpdatedTask', () => {
+  describe("getLastUpdatedTask", () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
     const taskStatus = [
       InnovationTaskStatusEnum.OPEN,
@@ -117,7 +117,7 @@ describe('Innovations / _services / innovation statistics suite', () => {
       InnovationTaskStatusEnum.CANCELLED
     ];
 
-    it('should return the last updated task from my unit', async () => {
+    it("should return the last updated task from my unit", async () => {
       const task = await em.getRepository(InnovationTaskEntity).findOne({
         where: {
           innovationSection: {
@@ -130,8 +130,8 @@ describe('Innovations / _services / innovation statistics suite', () => {
           },
           status: In(taskStatus)
         },
-        order: { updatedAt: 'DESC' },
-        relations: ['innovationSection']
+        order: { updatedAt: "DESC" },
+        relations: ["innovationSection"]
       });
 
       const lastUpdatedByTask = await sut.getLastUpdatedTask(
@@ -149,7 +149,7 @@ describe('Innovations / _services / innovation statistics suite', () => {
       });
     });
 
-    it('should return the last updated task from my team', async () => {
+    it("should return the last updated task from my team", async () => {
       const task = innovation.tasks.taskByPaul;
 
       const lastUpdatedByTask = await sut.getLastUpdatedTask(
@@ -163,7 +163,7 @@ describe('Innovations / _services / innovation statistics suite', () => {
       expect(lastUpdatedByTask).toEqual({ id: task.id, updatedAt: expect.any(Date), section: task.section });
     });
 
-    it('should return the last updated task by me', async () => {
+    it("should return the last updated task by me", async () => {
       const task = innovation.tasks.taskByPaul;
 
       const lastUpdatedByTask = await sut.getLastUpdatedTask(
@@ -177,7 +177,7 @@ describe('Innovations / _services / innovation statistics suite', () => {
       expect(lastUpdatedByTask).toEqual({ id: task.id, updatedAt: expect.any(Date), section: task.section });
     });
 
-    it('should return null if no task is found', async () => {
+    it("should return null if no task is found", async () => {
       const lastUpdatedByTask = await sut.getLastUpdatedTask(
         DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
         randUuid(),
@@ -189,8 +189,8 @@ describe('Innovations / _services / innovation statistics suite', () => {
     });
   });
 
-  describe('getSubmittedSections', () => {
-    it('should get submitted sections for the given innovation', async () => {
+  describe("getSubmittedSections", () => {
+    it("should get submitted sections for the given innovation", async () => {
       const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
       const sections = await sut.getSubmittedSections(innovation.id, em);
 
@@ -203,14 +203,14 @@ describe('Innovations / _services / innovation statistics suite', () => {
     });
   });
 
-  describe('getSubmittedSectionsSinceSupportStart', () => {
-    it('should get submitted sections for given innovation', async () => {
+  describe("getSubmittedSectionsSinceSupportStart", () => {
+    it("should get submitted sections for given innovation", async () => {
       const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
 
       //submit new section on jonhInnovation
       const section = await new InnovationSectionBuilder(em)
         .setInnovation(innovation.id)
-        .setSection('COST_OF_INNOVATION')
+        .setSection("COST_OF_INNOVATION")
         .setStatus(InnovationSectionStatusEnum.SUBMITTED)
         .save();
 
@@ -228,7 +228,7 @@ describe('Innovations / _services / innovation statistics suite', () => {
       ]);
     });
 
-    it('should throw a not found error when the domain context has no organisation unit', async () => {
+    it("should throw a not found error when the domain context has no organisation unit", async () => {
       await expect(() =>
         sut.getSubmittedSectionsSinceSupportStart(
           scenario.users.johnInnovator.innovations.johnInnovation.id,
@@ -238,14 +238,14 @@ describe('Innovations / _services / innovation statistics suite', () => {
     });
   });
 
-  describe('getSubmittedSectionsSinceAssessmentStart', () => {
-    it('should get submitted sections for given innovation', async () => {
+  describe("getSubmittedSectionsSinceAssessmentStart", () => {
+    it("should get submitted sections for given innovation", async () => {
       const innovation = scenario.users.johnInnovator.innovations.johnInnovationEmpty;
 
       //submit section before assessment start
       await new InnovationSectionBuilder(em)
         .setInnovation(innovation.id)
-        .setSection('INNOVATION_DESCRIPTION')
+        .setSection("INNOVATION_DESCRIPTION")
         .setStatus(InnovationSectionStatusEnum.SUBMITTED)
         .setUpdatedAt(randPastDate())
         .save();
@@ -259,7 +259,7 @@ describe('Innovations / _services / innovation statistics suite', () => {
       //submit section
       const section = await new InnovationSectionBuilder(em)
         .setInnovation(innovation.id)
-        .setSection('COST_OF_INNOVATION')
+        .setSection("COST_OF_INNOVATION")
         .setStatus(InnovationSectionStatusEnum.SUBMITTED)
         .save();
 
@@ -274,15 +274,15 @@ describe('Innovations / _services / innovation statistics suite', () => {
     });
   });
 
-  describe('getUnreadMessages', () => {
-    it('should get unread messages for the given innovation and roleId', async () => {
+  describe("getUnreadMessages", () => {
+    it("should get unread messages for the given innovation and roleId", async () => {
       const innovation = scenario.users.johnInnovator.innovations.johnInnovationEmpty;
 
       //create unread message notification
       const notification = await new NotificationBuilder(em)
         .setInnovation(innovation.id)
-        .setContext('MESSAGES', 'ME03_THREAD_MESSAGE_CREATION', randUuid())
-        .addNotificationUser(scenario.users.aliceQualifyingAccessor, 'qaRole')
+        .setContext("MESSAGES", "ME03_THREAD_MESSAGE_CREATION", randUuid())
+        .addNotificationUser(scenario.users.aliceQualifyingAccessor, "qaRole")
         .save();
 
       const unreadMessages = await sut.getUnreadMessages(
@@ -298,16 +298,16 @@ describe('Innovations / _services / innovation statistics suite', () => {
     });
   });
 
-  describe('getUnreadMessagesInitiatedBy', () => {
-    it('should get unread messages for the given innovation and initiated by the given roleId', async () => {
+  describe("getUnreadMessagesInitiatedBy", () => {
+    it("should get unread messages for the given innovation and initiated by the given roleId", async () => {
       const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
       const thread = innovation.threads.threadByAliceQA;
 
       //create unread message notification
       await new NotificationBuilder(em)
         .setInnovation(innovation.id)
-        .setContext('MESSAGES', 'ME03_THREAD_MESSAGE_CREATION', thread.id)
-        .addNotificationUser(scenario.users.aliceQualifyingAccessor, 'qaRole')
+        .setContext("MESSAGES", "ME03_THREAD_MESSAGE_CREATION", thread.id)
+        .addNotificationUser(scenario.users.aliceQualifyingAccessor, "qaRole")
         .save();
 
       const unreadMessages = await sut.getUnreadMessagesInitiatedBy(
@@ -323,8 +323,8 @@ describe('Innovations / _services / innovation statistics suite', () => {
     });
   });
 
-  describe('getPendingExportRequests', () => {
-    it('should get pending request for the given innovation', async () => {
+  describe("getPendingExportRequests", () => {
+    it("should get pending request for the given innovation", async () => {
       const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
 
       const nPendingRequests = await sut.getPendingExportRequests(innovation.id, em);
@@ -336,10 +336,10 @@ describe('Innovations / _services / innovation statistics suite', () => {
     });
   });
 
-  describe('getDocumentsStatistics', () => {
+  describe("getDocumentsStatistics", () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovationEmpty;
 
-    it('should return statistics about the uploaded documents', async () => {
+    it("should return statistics about the uploaded documents", async () => {
       await new InnovationFileBuilder(em)
         .setContext({ id: innovation.id, type: InnovationFileContextTypeEnum.INNOVATION })
         .setCreatedByUserRole(scenario.users.aliceQualifyingAccessor.roles.qaRole.id)
@@ -360,7 +360,7 @@ describe('Innovations / _services / innovation statistics suite', () => {
       });
     });
 
-    it('should return empty statistics when no uploaded documents', async () => {
+    it("should return empty statistics when no uploaded documents", async () => {
       const statistics = await sut.getDocumentsStatistics(innovation.id, em);
       expect(statistics).toStrictEqual({
         uploadedByRoles: [],
@@ -370,23 +370,23 @@ describe('Innovations / _services / innovation statistics suite', () => {
     });
   });
 
-  describe('getUnansweredSurveysByUnitStatistics', () => {
+  describe("getUnansweredSurveysByUnitStatistics", () => {
     const john = scenario.users.johnInnovator;
     const innovation = john.innovations.johnInnovation;
     beforeEach(async () => {
       await new InnovationSurveyBuilder(em)
         .setInnovation(innovation.id)
-        .setTypeAndContext('SUPPORT_END', innovation.supports.supportByHealthOrgUnit.id)
+        .setTypeAndContext("SUPPORT_END", innovation.supports.supportByHealthOrgUnit.id)
         .setTarget(john.roles.innovatorRole.id)
         .save();
       await new InnovationSurveyBuilder(em)
         .setInnovation(innovation.id)
-        .setTypeAndContext('SUPPORT_END', innovation.supports.supportByHealthOrgUnit.id)
+        .setTypeAndContext("SUPPORT_END", innovation.supports.supportByHealthOrgUnit.id)
         .setTarget(john.roles.innovatorRole.id)
         .save();
     });
 
-    it('should get pending request for the given innovation', async () => {
+    it("should get pending request for the given innovation", async () => {
       const nSurveysByUnit = await sut.getUnansweredSurveysByUnitStatistics(
         DTOsHelper.getUserRequestContext(john),
         innovation.id,

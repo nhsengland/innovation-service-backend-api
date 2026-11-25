@@ -1,6 +1,6 @@
-import { InnovationCollaboratorStatusEnum } from '@innovations/shared/enums';
-import { JoiHelper } from '@innovations/shared/helpers';
-import Joi from 'joi';
+import { InnovationCollaboratorStatusEnum } from "@innovations/shared/enums";
+import { JoiHelper } from "@innovations/shared/helpers";
+import Joi from "joi";
 
 export type CollaboratorStatusType =
   | InnovationCollaboratorStatusEnum.ACTIVE
@@ -23,14 +23,14 @@ export type BodyType = {
   role?: string;
 };
 export const BodySchema = Joi.object<BodyType>({
-  status: Joi.when('$collaboratorType', {
-    is: 'OWNER',
+  status: Joi.when("$collaboratorType", {
+    is: "OWNER",
     then: JoiHelper.AppCustomJoi()
       .string()
       .valid(InnovationCollaboratorStatusEnum.CANCELLED, InnovationCollaboratorStatusEnum.REMOVED)
       .optional()
-  }).when('$collaboratorType', {
-    is: 'COLLABORATOR',
+  }).when("$collaboratorType", {
+    is: "COLLABORATOR",
     then: JoiHelper.AppCustomJoi()
       .string()
       .valid(
@@ -40,8 +40,8 @@ export const BodySchema = Joi.object<BodyType>({
       )
       .optional()
   }),
-  role: Joi.when('$collaboratorType', {
-    is: 'OWNER',
+  role: Joi.when("$collaboratorType", {
+    is: "OWNER",
     then: JoiHelper.AppCustomJoi().string().max(25).allow(null).optional(),
     otherwise: Joi.forbidden()
   })

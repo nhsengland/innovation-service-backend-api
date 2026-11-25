@@ -1,5 +1,5 @@
-import { JoiHelper } from '@innovations/shared/helpers';
-import Joi from 'joi';
+import { JoiHelper } from "@innovations/shared/helpers";
+import Joi from "joi";
 
 export type ParamsType = {
   innovationId: string;

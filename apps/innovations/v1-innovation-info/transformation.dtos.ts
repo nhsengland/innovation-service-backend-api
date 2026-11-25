@@ -3,10 +3,10 @@ import {
   InnovationStatusEnum,
   InnovationSupportStatusEnum,
   PhoneUserPreferenceEnum
-} from '@innovations/shared/enums';
-import { JoiHelper } from '@innovations/shared/helpers';
-import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
-import Joi from 'joi';
+} from "@innovations/shared/enums";
+import { JoiHelper } from "@innovations/shared/helpers";
+import { CurrentCatalogTypes } from "@innovations/shared/schemas/innovation-record";
+import Joi from "joi";
 
 export const ResponseBodySchema = Joi.object<ResponseDTO>({
   id: JoiHelper.AppCustomJoi().string().uuid().required(),

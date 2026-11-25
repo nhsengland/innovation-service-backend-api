@@ -1,17 +1,17 @@
-import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
-import type { AzureFunction, HttpRequest } from '@azure/functions';
+import { mapOpenApi3 as openApi } from "@aaronpowell/azure-functions-nodejs-openapi";
+import type { AzureFunction, HttpRequest } from "@azure/functions";
 
-import { JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
-import type { AuthorizationService } from '@innovations/shared/services';
-import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import type { CustomContextType } from '@innovations/shared/types';
+import { JwtDecoder } from "@innovations/shared/decorators";
+import { JoiHelper, ResponseHelper, SwaggerHelper } from "@innovations/shared/helpers";
+import type { AuthorizationService } from "@innovations/shared/services";
+import SHARED_SYMBOLS from "@innovations/shared/services/symbols";
+import type { CustomContextType } from "@innovations/shared/types";
 
-import { container } from '../_config';
+import { container } from "../_config";
 
-import type { InnovationSupportsService } from '../_services/innovation-supports.service';
-import SYMBOLS from '../_services/symbols';
-import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
+import type { InnovationSupportsService } from "../_services/innovation-supports.service";
+import SYMBOLS from "../_services/symbols";
+import { BodySchema, BodyType, ParamsSchema, ParamsType } from "./validation.schemas";
 
 class V1InnovationSupportSummaryProgressCreate {
   @JwtDecoder()
@@ -43,20 +43,20 @@ class V1InnovationSupportSummaryProgressCreate {
 
 export default openApi(
   V1InnovationSupportSummaryProgressCreate.httpTrigger as AzureFunction,
-  '/v1/{innovationId}/support-summary/progress-update',
+  "/v1/{innovationId}/support-summary/progress-update",
   {
     post: {
-      description: 'Create support summary progress update.',
-      operationId: 'v1-innovation-support-summary-progress-create',
-      tags: ['[v1] Innovation Support Summary'],
+      description: "Create support summary progress update.",
+      operationId: "v1-innovation-support-summary-progress-create",
+      tags: ["[v1] Innovation Support Summary"],
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       requestBody: SwaggerHelper.bodyJ2S(BodySchema),
       responses: {
-        201: { description: 'Creates a new progress update' },
-        400: { description: 'The request is invalid.' },
-        401: { description: 'The user is not authenticated.' },
-        403: { description: 'The user is not authorized to access this resource.' },
-        500: { description: 'An error occurred while processing the request.' }
+        201: { description: "Creates a new progress update" },
+        400: { description: "The request is invalid." },
+        401: { description: "The user is not authenticated." },
+        403: { description: "The user is not authorized to access this resource." },
+        500: { description: "An error occurred while processing the request." }
       }
     }
   }

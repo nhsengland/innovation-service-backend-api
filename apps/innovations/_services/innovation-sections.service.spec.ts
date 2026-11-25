@@ -1,18 +1,18 @@
-import { container } from '../_config';
+import { container } from "../_config";
 
-import { InnovationEntity, InnovationSectionEntity } from '@innovations/shared/entities';
-import { InnovationFileContextTypeEnum, InnovationSectionStatusEnum } from '@innovations/shared/enums';
-import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
-import { NotifierService } from '@innovations/shared/services';
-import { TestsHelper } from '@innovations/shared/tests';
-import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
-import { rand, randText } from '@ngneat/falso';
-import type { EntityManager } from 'typeorm';
-import type { InnovationSectionsService } from './innovation-sections.service';
-import type { InnovationFileService } from './innovation-file.service';
-import SYMBOLS from './symbols';
+import { InnovationEntity, InnovationSectionEntity } from "@innovations/shared/entities";
+import { InnovationFileContextTypeEnum, InnovationSectionStatusEnum } from "@innovations/shared/enums";
+import { CurrentCatalogTypes } from "@innovations/shared/schemas/innovation-record";
+import { NotifierService } from "@innovations/shared/services";
+import { TestsHelper } from "@innovations/shared/tests";
+import { DTOsHelper } from "@innovations/shared/tests/helpers/dtos.helper";
+import { rand, randText } from "@ngneat/falso";
+import type { EntityManager } from "typeorm";
+import type { InnovationSectionsService } from "./innovation-sections.service";
+import type { InnovationFileService } from "./innovation-file.service";
+import SYMBOLS from "./symbols";
 
-describe('Innovation Sections Suite', () => {
+describe("Innovation Sections Suite", () => {
   let sut: InnovationSectionsService;
 
   const testsHelper = new TestsHelper();
@@ -20,7 +20,7 @@ describe('Innovation Sections Suite', () => {
 
   let em: EntityManager;
 
-  const notifierSendNotifyMeSpy = jest.spyOn(NotifierService.prototype, 'sendNotifyMe').mockResolvedValue(true);
+  const notifierSendNotifyMeSpy = jest.spyOn(NotifierService.prototype, "sendNotifyMe").mockResolvedValue(true);
 
   beforeAll(async () => {
     sut = container.get<InnovationSectionsService>(SYMBOLS.InnovationSectionsService);
@@ -38,8 +38,8 @@ describe('Innovation Sections Suite', () => {
 
   const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
 
-  describe('getInnovationSectionsList', () => {
-    it('should list all sections as an innovator for his innovation', async () => {
+  describe("getInnovationSectionsList", () => {
+    it("should list all sections as an innovator for his innovation", async () => {
       const sectionsList = await sut.getInnovationSectionsList(
         DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
         innovation.id,
@@ -52,7 +52,7 @@ describe('Innovation Sections Suite', () => {
       expect(actionCount).toEqual(3);
     });
 
-    it('should list all sections as an accessor for an innovation', async () => {
+    it("should list all sections as an accessor for an innovation", async () => {
       const sectionsList = await sut.getInnovationSectionsList(
         DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
         innovation.id,
@@ -66,12 +66,12 @@ describe('Innovation Sections Suite', () => {
     });
   });
 
-  describe('getInnovationSectionInfo', () => {
-    it('should get submitted section info', async () => {
+  describe("getInnovationSectionInfo", () => {
+    it("should get submitted section info", async () => {
       const sectionsList = await sut.getInnovationSectionInfo(
         DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
         innovation.id,
-        'INNOVATION_DESCRIPTION',
+        "INNOVATION_DESCRIPTION",
         {},
         em
       );
@@ -80,21 +80,21 @@ describe('Innovation Sections Suite', () => {
     });
   });
 
-  describe('updateInnovationSectionInfo', () => {
-    it('should delete regulation files for certifications that are no longer YES', async () => {
+  describe("updateInnovationSectionInfo", () => {
+    it("should delete regulation files for certifications that are no longer YES", async () => {
       const fileService = container.get<InnovationFileService>(SYMBOLS.InnovationFileService);
-      const deleteFilesSpy = jest.spyOn(fileService, 'deleteFiles').mockResolvedValue();
+      const deleteFilesSpy = jest.spyOn(fileService, "deleteFiles").mockResolvedValue();
       const domainContext = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator);
 
       await sut.updateInnovationSectionInfo(
         domainContext,
         innovation.id,
-        'REGULATIONS_AND_STANDARDS',
+        "REGULATIONS_AND_STANDARDS",
         {
-          hasRegulationKnowledge: 'YES_ALL',
+          hasRegulationKnowledge: "YES_ALL",
           standards: [
-            { type: 'UK_MDR_CLASS_I', hasMet: 'YES' },
-            { type: 'DTAC', hasMet: 'NO' }
+            { type: "UK_MDR_CLASS_I", hasMet: "YES" },
+            { type: "DTAC", hasMet: "NO" }
           ]
         },
         em
@@ -105,25 +105,25 @@ describe('Innovation Sections Suite', () => {
         innovation.id,
         {
           contextType: InnovationFileContextTypeEnum.INNOVATION_REGULATIONS,
-          contextIdsToKeep: ['UK_MDR_CLASS_I']
+          contextIdsToKeep: ["UK_MDR_CLASS_I"]
         },
         expect.anything()
       );
       deleteFilesSpy.mockRestore();
     });
 
-    it('should delete all regulation files when regulation knowledge is no longer applicable', async () => {
+    it("should delete all regulation files when regulation knowledge is no longer applicable", async () => {
       const fileService = container.get<InnovationFileService>(SYMBOLS.InnovationFileService);
-      const deleteFilesSpy = jest.spyOn(fileService, 'deleteFiles').mockResolvedValue();
+      const deleteFilesSpy = jest.spyOn(fileService, "deleteFiles").mockResolvedValue();
       const domainContext = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator);
 
       await sut.updateInnovationSectionInfo(
         domainContext,
         innovation.id,
-        'REGULATIONS_AND_STANDARDS',
+        "REGULATIONS_AND_STANDARDS",
         {
-          hasRegulationKnowledge: 'NO',
-          standards: [{ type: 'UK_MDR_CLASS_I', hasMet: 'YES' }]
+          hasRegulationKnowledge: "NO",
+          standards: [{ type: "UK_MDR_CLASS_I", hasMet: "YES" }]
         },
         em
       );
@@ -140,49 +140,49 @@ describe('Innovation Sections Suite', () => {
       deleteFilesSpy.mockRestore();
     });
 
-    it('should update a section and only change the draft document', async () => {
+    it("should update a section and only change the draft document", async () => {
       const newSummary = randText();
 
       await sut.updateInnovationSectionInfo(
         DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
         innovation.id,
-        'INNOVATION_DESCRIPTION',
+        "INNOVATION_DESCRIPTION",
         { summary: newSummary },
         em
       );
 
       const dbInnovation = await em
-        .createQueryBuilder(InnovationEntity, 'innovation')
-        .addSelect("JSON_VALUE(document.document, '$.INNOVATION_DESCRIPTION.summary')", 'documentSummary')
-        .addSelect("JSON_VALUE(documentDraft.document, '$.INNOVATION_DESCRIPTION.summary')", 'documentDraftSummary')
-        .innerJoin('innovation.document', 'document')
-        .innerJoin('innovation_document_draft', 'documentDraft', 'documentDraft.id = innovation.id')
-        .where('innovation.id = :innovationId', { innovationId: innovation.id })
+        .createQueryBuilder(InnovationEntity, "innovation")
+        .addSelect("JSON_VALUE(document.document, '$.INNOVATION_DESCRIPTION.summary')", "documentSummary")
+        .addSelect("JSON_VALUE(documentDraft.document, '$.INNOVATION_DESCRIPTION.summary')", "documentDraftSummary")
+        .innerJoin("innovation.document", "document")
+        .innerJoin("innovation_document_draft", "documentDraft", "documentDraft.id = innovation.id")
+        .where("innovation.id = :innovationId", { innovationId: innovation.id })
         .getRawOne();
 
       expect(dbInnovation.documentSummary).not.toBe(newSummary);
       expect(dbInnovation.documentDraftSummary).toBe(newSummary);
     });
 
-    it('should sync the innovation name across documents and innovation', async () => {
+    it("should sync the innovation name across documents and innovation", async () => {
       const newValue = randText();
 
       await sut.updateInnovationSectionInfo(
         DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
         innovation.id,
-        'INNOVATION_DESCRIPTION',
+        "INNOVATION_DESCRIPTION",
         { name: newValue },
         em
       );
 
       const dbInnovation = await em
-        .createQueryBuilder(InnovationEntity, 'innovation')
-        .select('innovation.name', 'innovationName')
-        .addSelect("JSON_VALUE(document.document, '$.INNOVATION_DESCRIPTION.name')", 'documentName')
-        .addSelect("JSON_VALUE(documentDraft.document, '$.INNOVATION_DESCRIPTION.name')", 'documentDraftName')
-        .innerJoin('innovation.document', 'document')
-        .innerJoin('innovation_document_draft', 'documentDraft', 'documentDraft.id = innovation.id')
-        .where('innovation.id = :innovationId', { innovationId: innovation.id })
+        .createQueryBuilder(InnovationEntity, "innovation")
+        .select("innovation.name", "innovationName")
+        .addSelect("JSON_VALUE(document.document, '$.INNOVATION_DESCRIPTION.name')", "documentName")
+        .addSelect("JSON_VALUE(documentDraft.document, '$.INNOVATION_DESCRIPTION.name')", "documentDraftName")
+        .innerJoin("innovation.document", "document")
+        .innerJoin("innovation_document_draft", "documentDraft", "documentDraft.id = innovation.id")
+        .where("innovation.id = :innovationId", { innovationId: innovation.id })
         .getRawOne();
 
       expect(dbInnovation.innovationName).toBe(newValue);
@@ -191,8 +191,8 @@ describe('Innovation Sections Suite', () => {
     });
   });
 
-  describe('submitInnovationSection', () => {
-    it('should submit a section', async () => {
+  describe("submitInnovationSection", () => {
+    it("should submit a section", async () => {
       await em.update(
         InnovationSectionEntity,
         { id: innovation.sections.INNOVATION_DESCRIPTION.id },
@@ -201,14 +201,14 @@ describe('Innovation Sections Suite', () => {
       const section = await sut.submitInnovationSection(
         DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
         innovation.id,
-        'INNOVATION_DESCRIPTION',
+        "INNOVATION_DESCRIPTION",
         em
       );
       // assert
       expect(section.id).toBeDefined();
     });
 
-    it('should send the notifyMe notification', async () => {
+    it("should send the notifyMe notification", async () => {
       await em.update(
         InnovationSectionEntity,
         { id: innovation.sections.INNOVATION_DESCRIPTION.id },
@@ -217,7 +217,7 @@ describe('Innovation Sections Suite', () => {
       await sut.submitInnovationSection(
         DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
         innovation.id,
-        'INNOVATION_DESCRIPTION',
+        "INNOVATION_DESCRIPTION",
         em
       );
       // assert
@@ -225,19 +225,19 @@ describe('Innovation Sections Suite', () => {
       expect(notifierSendNotifyMeSpy).toHaveBeenCalledWith(
         DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
         innovation.id,
-        'INNOVATION_RECORD_UPDATED',
-        { sections: 'INNOVATION_DESCRIPTION' }
+        "INNOVATION_RECORD_UPDATED",
+        { sections: "INNOVATION_DESCRIPTION" }
       );
     });
   });
 
-  describe('createInnovationEvidence', () => {
-    it('should create clinical evidence', async () => {
+  describe("createInnovationEvidence", () => {
+    it("should create clinical evidence", async () => {
       await sut.createInnovationEvidence(
         { id: scenario.users.johnInnovator.id },
         innovation.id,
         {
-          evidenceSubmitType: 'CLINICAL_OR_CARE',
+          evidenceSubmitType: "CLINICAL_OR_CARE",
           evidenceType: rand(Object.values(CurrentCatalogTypes.catalogEvidenceType)),
           description: randText(),
           summary: randText()
@@ -248,9 +248,9 @@ describe('Innovation Sections Suite', () => {
       // assert assuming if no error is thrown then the test is successful (for now)
     });
 
-    it('should create non-clinical evidence', async () => {
+    it("should create non-clinical evidence", async () => {
       const allowedEvidenceTypes = CurrentCatalogTypes.catalogEvidenceSubmitType.filter(
-        et => et !== 'CLINICAL_OR_CARE'
+        et => et !== "CLINICAL_OR_CARE"
       );
 
       await sut.createInnovationEvidence(
@@ -258,7 +258,7 @@ describe('Innovation Sections Suite', () => {
         innovation.id,
         {
           evidenceSubmitType: rand(allowedEvidenceTypes),
-          evidenceType: 'OTHER',
+          evidenceType: "OTHER",
           description: randText(),
           summary: randText()
         },
@@ -269,8 +269,8 @@ describe('Innovation Sections Suite', () => {
     });
   });
 
-  describe('findAllSections', () => {
-    it('should return all the sections info', async () => {
+  describe("findAllSections", () => {
+    it("should return all the sections info", async () => {
       const allSectionsInfo = await sut.findAllSections(
         DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
         innovation.id
@@ -282,15 +282,15 @@ describe('Innovation Sections Suite', () => {
             section: innovation.sections.INNOVATION_DESCRIPTION.section,
             status: innovation.sections.INNOVATION_DESCRIPTION.status,
             submittedAt: undefined,
-            submittedBy: { displayTag: 'Innovator', name: '[deleted user]' },
+            submittedBy: { displayTag: "Innovator", name: "[deleted user]" },
             openTasksCount: 3 // John innovation has 4 tasks, 3 open and 1 done
           },
           data: expect.any(Object)
         },
         {
           section: {
-            section: 'UNDERSTANDING_OF_NEEDS',
-            status: 'NOT_STARTED',
+            section: "UNDERSTANDING_OF_NEEDS",
+            status: "NOT_STARTED",
             openTasksCount: 0
           },
           data: expect.any(Object)
@@ -300,7 +300,7 @@ describe('Innovation Sections Suite', () => {
             section: innovation.sections.EVIDENCE_OF_EFFECTIVENESS.section,
             status: innovation.sections.EVIDENCE_OF_EFFECTIVENESS.status,
             submittedAt: undefined,
-            submittedBy: { displayTag: 'Innovator', name: '[deleted user]' },
+            submittedBy: { displayTag: "Innovator", name: "[deleted user]" },
             openTasksCount: 0
           },
           data: {
@@ -312,18 +312,18 @@ describe('Innovation Sections Suite', () => {
           }
         },
         ...[
-          'MARKET_RESEARCH',
-          'CURRENT_CARE_PATHWAY',
-          'TESTING_WITH_USERS',
-          'REGULATIONS_AND_STANDARDS',
-          'INTELLECTUAL_PROPERTY',
-          'REVENUE_MODEL',
-          'COST_OF_INNOVATION',
-          'DEPLOYMENT'
+          "MARKET_RESEARCH",
+          "CURRENT_CARE_PATHWAY",
+          "TESTING_WITH_USERS",
+          "REGULATIONS_AND_STANDARDS",
+          "INTELLECTUAL_PROPERTY",
+          "REVENUE_MODEL",
+          "COST_OF_INNOVATION",
+          "DEPLOYMENT"
         ].map(s => ({
           section: {
             section: s,
-            status: 'NOT_STARTED',
+            status: "NOT_STARTED",
             openTasksCount: 0
           },
           data: expect.any(Object)
@@ -331,7 +331,7 @@ describe('Innovation Sections Suite', () => {
       ]);
     });
 
-    it('should return empty section data if the user is an accessor and the section is not submitted', async () => {
+    it("should return empty section data if the user is an accessor and the section is not submitted", async () => {
       const allSectionsInfo = await sut.findAllSections(
         DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
         innovation.id,
@@ -345,15 +345,15 @@ describe('Innovation Sections Suite', () => {
             section: innovation.sections.INNOVATION_DESCRIPTION.section,
             status: innovation.sections.INNOVATION_DESCRIPTION.status,
             submittedAt: undefined,
-            submittedBy: { displayTag: 'Innovator', name: '[deleted user]' },
+            submittedBy: { displayTag: "Innovator", name: "[deleted user]" },
             openTasksCount: 3 // John innovation has 4 tasks, 3 open and 1 done
           },
           data: expect.any(Object)
         },
         {
           section: {
-            section: 'UNDERSTANDING_OF_NEEDS',
-            status: 'NOT_STARTED',
+            section: "UNDERSTANDING_OF_NEEDS",
+            status: "NOT_STARTED",
             openTasksCount: 0
           },
           data: expect.any(Object)
@@ -363,24 +363,24 @@ describe('Innovation Sections Suite', () => {
             section: innovation.sections.EVIDENCE_OF_EFFECTIVENESS.section,
             status: innovation.sections.EVIDENCE_OF_EFFECTIVENESS.status,
             submittedAt: undefined,
-            submittedBy: { displayTag: 'Innovator', name: '[deleted user]' },
+            submittedBy: { displayTag: "Innovator", name: "[deleted user]" },
             openTasksCount: 0
           },
           data: expect.any(Object)
         },
         ...[
-          'MARKET_RESEARCH',
-          'CURRENT_CARE_PATHWAY',
-          'TESTING_WITH_USERS',
-          'REGULATIONS_AND_STANDARDS',
-          'INTELLECTUAL_PROPERTY',
-          'REVENUE_MODEL',
-          'COST_OF_INNOVATION',
-          'DEPLOYMENT'
+          "MARKET_RESEARCH",
+          "CURRENT_CARE_PATHWAY",
+          "TESTING_WITH_USERS",
+          "REGULATIONS_AND_STANDARDS",
+          "INTELLECTUAL_PROPERTY",
+          "REVENUE_MODEL",
+          "COST_OF_INNOVATION",
+          "DEPLOYMENT"
         ].map(s => ({
           section: {
             section: s,
-            status: 'NOT_STARTED',
+            status: "NOT_STARTED",
             openTasksCount: 0
           },
           data: expect.any(Object)

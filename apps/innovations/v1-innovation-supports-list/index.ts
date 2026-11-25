@@ -1,18 +1,18 @@
-import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
-import type { AzureFunction, HttpRequest } from '@azure/functions';
+import { mapOpenApi3 as openApi } from "@aaronpowell/azure-functions-nodejs-openapi";
+import type { AzureFunction, HttpRequest } from "@azure/functions";
 
-import { JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
-import type { AuthorizationService } from '@innovations/shared/services';
-import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import type { CustomContextType } from '@innovations/shared/types';
+import { JwtDecoder } from "@innovations/shared/decorators";
+import { JoiHelper, ResponseHelper, SwaggerHelper } from "@innovations/shared/helpers";
+import type { AuthorizationService } from "@innovations/shared/services";
+import SHARED_SYMBOLS from "@innovations/shared/services/symbols";
+import type { CustomContextType } from "@innovations/shared/types";
 
-import { container } from '../_config';
+import { container } from "../_config";
 
-import type { InnovationSupportsService } from '../_services/innovation-supports.service';
-import SYMBOLS from '../_services/symbols';
-import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
-import { ParamsSchema, QueryParamsSchema, type ParamsType, type QueryParamsType } from './validation.schemas';
+import type { InnovationSupportsService } from "../_services/innovation-supports.service";
+import SYMBOLS from "../_services/symbols";
+import { ResponseBodySchema, type ResponseDTO } from "./transformation.dtos";
+import { ParamsSchema, QueryParamsSchema, type ParamsType, type QueryParamsType } from "./validation.schemas";
 
 class V1InnovationSupportsList {
   @JwtDecoder()
@@ -60,18 +60,18 @@ class V1InnovationSupportsList {
   }
 }
 
-export default openApi(V1InnovationSupportsList.httpTrigger as AzureFunction, '/v1/{innovationId}/supports', {
+export default openApi(V1InnovationSupportsList.httpTrigger as AzureFunction, "/v1/{innovationId}/supports", {
   get: {
     description: `Get a list with all Innovation's Supports.`,
-    operationId: 'v1-innovations-supports-list',
-    tags: ['[v1] Innovation Support'],
+    operationId: "v1-innovations-supports-list",
+    tags: ["[v1] Innovation Support"],
     parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     responses: {
       200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
-        description: 'Success'
+        description: "Success"
       }),
       404: {
-        description: 'Not found'
+        description: "Not found"
       }
     }
   }

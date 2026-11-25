@@ -1,13 +1,13 @@
-import { TasksRespondedStatisticsHandler } from './tasks-responded.handler';
+import { TasksRespondedStatisticsHandler } from "./tasks-responded.handler";
 
-import { InnovationTaskStatusEnum } from '@innovations/shared/enums';
-import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
-import { TestsHelper } from '@innovations/shared/tests';
-import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
-import { randPastDate, randUuid } from '@ngneat/falso';
-import { StatisticsService } from '../../_services/statistics.service';
+import { InnovationTaskStatusEnum } from "@innovations/shared/enums";
+import { CurrentCatalogTypes } from "@innovations/shared/schemas/innovation-record";
+import { TestsHelper } from "@innovations/shared/tests";
+import { DTOsHelper } from "@innovations/shared/tests/helpers/dtos.helper";
+import { randPastDate, randUuid } from "@ngneat/falso";
+import { StatisticsService } from "../../_services/statistics.service";
 
-describe('Tasks To Submit Statistics Handler Suite', () => {
+describe("Tasks To Submit Statistics Handler Suite", () => {
   const testsHelper = new TestsHelper();
   const scenario = testsHelper.getCompleteScenario();
 
@@ -27,18 +27,18 @@ describe('Tasks To Submit Statistics Handler Suite', () => {
     section: CurrentCatalogTypes.InnovationSections[0]!
   };
   const mockGetTasksCounter = jest
-    .spyOn(StatisticsService.prototype, 'getTasksCounter')
+    .spyOn(StatisticsService.prototype, "getTasksCounter")
     .mockResolvedValue(expectedGetTasksCounter);
   const mockGetLastUpdatedTask = jest
-    .spyOn(StatisticsService.prototype, 'getLastUpdatedTask')
+    .spyOn(StatisticsService.prototype, "getLastUpdatedTask")
     .mockResolvedValue(expectedGetLastUpdatedTask);
 
   afterEach(() => {
     jest.clearAllMocks();
   });
 
-  describe('run', () => {
-    it('should return the statistic', async () => {
+  describe("run", () => {
+    it("should return the statistic", async () => {
       const handler = new TasksRespondedStatisticsHandler(
         DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
         { innovationId: randUuid() }

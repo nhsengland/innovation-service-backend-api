@@ -1,11 +1,11 @@
-import { ServiceRoleEnum } from '@innovations/shared/enums';
-import { JoiHelper, type PaginationQueryParamsType } from '@innovations/shared/helpers';
-import Joi from 'joi';
+import { ServiceRoleEnum } from "@innovations/shared/enums";
+import { JoiHelper, type PaginationQueryParamsType } from "@innovations/shared/helpers";
+import Joi from "joi";
 
 enum OrderFields {
-  'subject' = 'subject',
-  'messageCount' = 'messageCount',
-  'latestMessageCreatedAt' = 'latestMessageCreatedAt'
+  "subject" = "subject",
+  "messageCount" = "messageCount",
+  "latestMessageCreatedAt" = "latestMessageCreatedAt"
 }
 
 export type ParamsType = { innovationId: string };
@@ -21,7 +21,7 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
   orderKeys: Object.keys(OrderFields)
 })
   .append({ subject: JoiHelper.AppCustomJoi().decodeURIString().trim().max(100).optional() })
-  .when('$userType', {
+  .when("$userType", {
     is: JoiHelper.AppCustomJoi()
       .string()
       .valid(ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR, ServiceRoleEnum.ASSESSMENT),

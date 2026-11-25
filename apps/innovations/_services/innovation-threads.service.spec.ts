@@ -1,17 +1,17 @@
-import { container } from '../_config';
+import { container } from "../_config";
 
-import { InnovationThreadEntity, UserRoleEntity } from '@innovations/shared/entities';
-import { ThreadContextTypeEnum } from '@innovations/shared/enums';
-import { BadRequestError, InnovationErrorsEnum, NotFoundError } from '@innovations/shared/errors';
-import { NotifierService } from '@innovations/shared/services';
-import { TestsHelper } from '@innovations/shared/tests';
-import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
-import { randUuid } from '@ngneat/falso';
-import type { EntityManager } from 'typeorm';
-import type { InnovationThreadsService } from './innovation-threads.service';
-import SYMBOLS from './symbols';
+import { InnovationThreadEntity, UserRoleEntity } from "@innovations/shared/entities";
+import { ThreadContextTypeEnum } from "@innovations/shared/enums";
+import { BadRequestError, InnovationErrorsEnum, NotFoundError } from "@innovations/shared/errors";
+import { NotifierService } from "@innovations/shared/services";
+import { TestsHelper } from "@innovations/shared/tests";
+import { DTOsHelper } from "@innovations/shared/tests/helpers/dtos.helper";
+import { randUuid } from "@ngneat/falso";
+import type { EntityManager } from "typeorm";
+import type { InnovationThreadsService } from "./innovation-threads.service";
+import SYMBOLS from "./symbols";
 
-describe('Innovations / _services / innovation-threads suite', () => {
+describe("Innovations / _services / innovation-threads suite", () => {
   let sut: InnovationThreadsService;
 
   let em: EntityManager;
@@ -20,7 +20,7 @@ describe('Innovations / _services / innovation-threads suite', () => {
   const scenario = testsHelper.getCompleteScenario();
 
   // Setup global mocks for these tests
-  const notifierSendSpy = jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
+  const notifierSendSpy = jest.spyOn(NotifierService.prototype, "send").mockResolvedValue(true);
 
   beforeAll(async () => {
     sut = container.get<InnovationThreadsService>(SYMBOLS.InnovationThreadsService);
@@ -36,11 +36,11 @@ describe('Innovations / _services / innovation-threads suite', () => {
     notifierSendSpy.mockReset();
   });
 
-  describe('addFollowersToThread', () => {
+  describe("addFollowersToThread", () => {
     const thread = scenario.users.johnInnovator.innovations.johnInnovation.threads.threadByAliceQA;
     const requestUserContext = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator);
 
-    it('should add followers to a thread and send notification', async () => {
+    it("should add followers to a thread and send notification", async () => {
       await sut.addFollowersToThread(
         requestUserContext,
         thread.id,
@@ -50,9 +50,9 @@ describe('Innovations / _services / innovation-threads suite', () => {
       );
 
       const dbThread = await em
-        .createQueryBuilder(InnovationThreadEntity, 'thread')
-        .leftJoinAndSelect('thread.followers', 'followers')
-        .where('thread.id = :threadId', { threadId: thread.id })
+        .createQueryBuilder(InnovationThreadEntity, "thread")
+        .leftJoinAndSelect("thread.followers", "followers")
+        .where("thread.id = :threadId", { threadId: thread.id })
         .getOne();
 
       expect(dbThread?.followers).toMatchObject([
@@ -74,10 +74,10 @@ describe('Innovations / _services / innovation-threads suite', () => {
     });
   });
 
-  describe('unfollowThread', () => {
+  describe("unfollowThread", () => {
     const thread = scenario.users.johnInnovator.innovations.johnInnovation.threads.threadByAliceQA;
 
-    it('should unfollow a thread', async () => {
+    it("should unfollow a thread", async () => {
       // ensure user is a follower
       await em.getRepository(InnovationThreadEntity).save({
         id: thread.id,
@@ -87,15 +87,15 @@ describe('Innovations / _services / innovation-threads suite', () => {
       await sut.unfollowThread(thread.id, scenario.users.aliceQualifyingAccessor.roles.qaRole.id, em);
 
       const dbThread = await em
-        .createQueryBuilder(InnovationThreadEntity, 'thread')
-        .leftJoinAndSelect('thread.followers', 'followers')
-        .where('thread.id = :threadId', { threadId: thread.id })
+        .createQueryBuilder(InnovationThreadEntity, "thread")
+        .leftJoinAndSelect("thread.followers", "followers")
+        .where("thread.id = :threadId", { threadId: thread.id })
         .getOne();
 
       expect(dbThread?.followers).toMatchObject([]);
     });
 
-    it('should throw an error if the user is not a follower', async () => {
+    it("should throw an error if the user is not a follower", async () => {
       await expect(
         sut.unfollowThread(thread.id, scenario.users.sarahQualifyingAccessor.roles.qaRole.id, em)
       ).rejects.toThrow(new BadRequestError(InnovationErrorsEnum.INNOVATION_THREAD_USER_IS_NOT_FOLLOWER));
@@ -108,7 +108,7 @@ describe('Innovations / _services / innovation-threads suite', () => {
     });
   });
 
-  describe('removeFollowers', () => {
+  describe("removeFollowers", () => {
     const thread = scenario.users.johnInnovator.innovations.johnInnovation.threads.threadByAliceQA;
 
     beforeEach(async () => {
@@ -121,7 +121,7 @@ describe('Innovations / _services / innovation-threads suite', () => {
       });
     });
 
-    it('should remove users as followers from threads', async () => {
+    it("should remove users as followers from threads", async () => {
       await sut.removeFollowers(
         thread.id,
         [scenario.users.aliceQualifyingAccessor.roles.qaRole.id, scenario.users.ingridAccessor.roles.accessorRole.id],
@@ -129,29 +129,29 @@ describe('Innovations / _services / innovation-threads suite', () => {
       );
 
       const dbThread = await em
-        .createQueryBuilder(InnovationThreadEntity, 'thread')
-        .leftJoinAndSelect('thread.followers', 'followers')
-        .where('thread.id = :threadId', { threadId: thread.id })
+        .createQueryBuilder(InnovationThreadEntity, "thread")
+        .leftJoinAndSelect("thread.followers", "followers")
+        .where("thread.id = :threadId", { threadId: thread.id })
         .getOne();
 
       expect(dbThread?.followers).toHaveLength(0);
     });
 
-    it('should not remove users as followers from threads when an empty array is passed', async () => {
+    it("should not remove users as followers from threads when an empty array is passed", async () => {
       await sut.removeFollowers(thread.id, [], em);
 
       const dbThread = await em
-        .createQueryBuilder(InnovationThreadEntity, 'thread')
-        .leftJoinAndSelect('thread.followers', 'followers')
-        .where('thread.id = :threadId', { threadId: thread.id })
+        .createQueryBuilder(InnovationThreadEntity, "thread")
+        .leftJoinAndSelect("thread.followers", "followers")
+        .where("thread.id = :threadId", { threadId: thread.id })
         .getOne();
 
       expect(dbThread?.followers).toHaveLength(2);
     });
   });
 
-  describe('getThreadByContextId', () => {
-    it('returns a thread by context id', async () => {
+  describe("getThreadByContextId", () => {
+    it("returns a thread by context id", async () => {
       const thread = scenario.users.johnInnovator.innovations.johnInnovation.threads.threadByAliceQA;
       const support = scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByHealthOrgUnit;
 
@@ -160,7 +160,7 @@ describe('Innovations / _services / innovation-threads suite', () => {
       expect(result).toMatchObject({ id: thread.id, subject: thread.subject });
     });
 
-    it('returns null if no thread is found', async () => {
+    it("returns null if no thread is found", async () => {
       const result = await sut.getThreadByContextId(ThreadContextTypeEnum.SUPPORT, randUuid(), em);
       expect(result).toBeNull();
     });

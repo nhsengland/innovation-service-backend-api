@@ -1,9 +1,9 @@
-import Joi from 'joi';
+import Joi from "joi";
 
-import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
-import { InnovationSupportStatusEnum } from '@innovations/shared/enums';
-import { InnovationFileSchema, type InnovationFileType } from '../_types/innovation.types';
-import { JoiHelper } from '@innovations/shared/helpers';
+import { TEXTAREA_LENGTH_LIMIT } from "@innovations/shared/constants";
+import { InnovationSupportStatusEnum } from "@innovations/shared/enums";
+import { InnovationFileSchema, type InnovationFileType } from "../_types/innovation.types";
+import { JoiHelper } from "@innovations/shared/helpers";
 
 export type ParamsType = {
   innovationId: string;
@@ -13,7 +13,7 @@ export const ParamsSchema = Joi.object<ParamsType>({
 }).required();
 
 export type BodyType = {
-  status: Exclude<InnovationSupportStatusEnum, 'UNASSIGNED'>;
+  status: Exclude<InnovationSupportStatusEnum, "UNASSIGNED">;
   message: string;
   file?: InnovationFileType;
   accessors?: { id: string; userRoleId: string }[];
@@ -29,7 +29,7 @@ export const BodySchema = Joi.object<BodyType>({
     .required(),
   message: JoiHelper.AppCustomJoi().string().max(TEXTAREA_LENGTH_LIMIT.xxl).required(),
   file: InnovationFileSchema,
-  accessors: Joi.when('status', {
+  accessors: Joi.when("status", {
     is: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.WAITING],
     then: Joi.array()
       .items(

@@ -1,7 +1,7 @@
-import { inject, injectable } from 'inversify';
-import type { EntityManager, SelectQueryBuilder } from 'typeorm';
+import { inject, injectable } from "inversify";
+import type { EntityManager, SelectQueryBuilder } from "typeorm";
 
-import { InnovationEntity, InnovationTransferEntity, UserEntity } from '@innovations/shared/entities';
+import { InnovationEntity, InnovationTransferEntity, UserEntity } from "@innovations/shared/entities";
 import {
   ActivityEnum,
   InnovationArchiveReasonEnum,
@@ -9,21 +9,21 @@ import {
   InnovationTransferStatusEnum,
   NotifierTypeEnum,
   ServiceRoleEnum
-} from '@innovations/shared/enums';
+} from "@innovations/shared/enums";
 import {
   BadRequestError,
   GenericErrorsEnum,
   InnovationErrorsEnum,
   UnprocessableEntityError
-} from '@innovations/shared/errors';
-import type { DomainService, IdentityProviderService, NotifierService } from '@innovations/shared/services';
+} from "@innovations/shared/errors";
+import type { DomainService, IdentityProviderService, NotifierService } from "@innovations/shared/services";
 
-import { NotFoundError } from '@innovations/shared/errors';
-import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import type { DomainContextType } from '@innovations/shared/types';
-import { BaseService } from './base.service';
-import type { InnovationCollaboratorsService } from './innovation-collaborators.service';
-import SYMBOLS from './symbols';
+import { NotFoundError } from "@innovations/shared/errors";
+import SHARED_SYMBOLS from "@innovations/shared/services/symbols";
+import type { DomainContextType } from "@innovations/shared/types";
+import { BaseService } from "./base.service";
+import type { InnovationCollaboratorsService } from "./innovation-collaborators.service";
+import SYMBOLS from "./symbols";
 
 type TransferQueryFilterType = {
   id?: string;
@@ -52,26 +52,26 @@ export class InnovationTransferService extends BaseService {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const query = connection
-      .createQueryBuilder(InnovationTransferEntity, 'innovationTransfer')
-      .innerJoinAndSelect('innovationTransfer.innovation', 'innovation')
-      .where('DATEDIFF(day, innovationTransfer.created_at, GETDATE()) < 31');
+      .createQueryBuilder(InnovationTransferEntity, "innovationTransfer")
+      .innerJoinAndSelect("innovationTransfer.innovation", "innovation")
+      .where("DATEDIFF(day, innovationTransfer.created_at, GETDATE()) < 31");
 
     if (filter.id) {
-      query.andWhere('innovationTransfer.id = :id', { id: filter.id });
+      query.andWhere("innovationTransfer.id = :id", { id: filter.id });
     }
     if (filter.innovationId) {
-      query.andWhere('innovationTransfer.innovation_id = :innovationId', {
+      query.andWhere("innovationTransfer.innovation_id = :innovationId", {
         innovationId: filter.innovationId
       });
     }
     if (filter.status) {
-      query.andWhere('innovationTransfer.status = :status', { status: filter.status });
+      query.andWhere("innovationTransfer.status = :status", { status: filter.status });
     }
     if (filter.email) {
-      query.andWhere('innovationTransfer.email = :email', { email: filter.email });
+      query.andWhere("innovationTransfer.email = :email", { email: filter.email });
     }
     if (filter.createdBy) {
-      query.andWhere('innovationTransfer.created_by = :createdBy', { createdBy: filter.createdBy });
+      query.andWhere("innovationTransfer.created_by = :createdBy", { createdBy: filter.createdBy });
     }
 
     return query;
@@ -181,9 +181,9 @@ export class InnovationTransferService extends BaseService {
 
     // Get innovation information.
     const innovation = await this.sqlConnection
-      .createQueryBuilder(InnovationEntity, 'innovation')
-      .select(['innovation.id'])
-      .where('innovation.id = :innovationId', { innovationId })
+      .createQueryBuilder(InnovationEntity, "innovation")
+      .select(["innovation.id"])
+      .where("innovation.id = :innovationId", { innovationId })
       .getOne();
     if (!innovation) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
@@ -210,10 +210,10 @@ export class InnovationTransferService extends BaseService {
     if (targetUser) {
       // Check if target user is an Innovator
       const isTargetUserInnovator = await connection
-        .createQueryBuilder(UserEntity, 'user')
-        .innerJoin('user.serviceRoles', 'userRoles')
-        .where('user.identityId = :identityId', { identityId: targetUser?.identityId })
-        .andWhere('userRoles.role = :innovatorRole', { innovatorRole: ServiceRoleEnum.INNOVATOR })
+        .createQueryBuilder(UserEntity, "user")
+        .innerJoin("user.serviceRoles", "userRoles")
+        .where("user.identityId = :identityId", { identityId: targetUser?.identityId })
+        .andWhere("userRoles.role = :innovatorRole", { innovatorRole: ServiceRoleEnum.INNOVATOR })
         .getCount();
       if (!isTargetUserInnovator) {
         throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_TRANSFER_TARGET_USER_MUST_BE_INNOVATOR);

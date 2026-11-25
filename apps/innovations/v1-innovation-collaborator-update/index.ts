@@ -1,18 +1,18 @@
-import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
-import type { AzureFunction, HttpRequest } from '@azure/functions';
+import { mapOpenApi3 as openApi } from "@aaronpowell/azure-functions-nodejs-openapi";
+import type { AzureFunction, HttpRequest } from "@azure/functions";
 
-import { JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
-import type { AuthorizationService } from '@innovations/shared/services';
-import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import type { CustomContextType } from '@innovations/shared/types';
+import { JwtDecoder } from "@innovations/shared/decorators";
+import { JoiHelper, ResponseHelper, SwaggerHelper } from "@innovations/shared/helpers";
+import type { AuthorizationService } from "@innovations/shared/services";
+import SHARED_SYMBOLS from "@innovations/shared/services/symbols";
+import type { CustomContextType } from "@innovations/shared/types";
 
-import { container } from '../_config';
+import { container } from "../_config";
 
-import type { InnovationCollaboratorsService } from '../_services/innovation-collaborators.service';
-import SYMBOLS from '../_services/symbols';
-import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
-import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
+import type { InnovationCollaboratorsService } from "../_services/innovation-collaborators.service";
+import SYMBOLS from "../_services/symbols";
+import { ResponseBodySchema, type ResponseDTO } from "./transformation.dtos";
+import { BodySchema, BodyType, ParamsSchema, ParamsType } from "./validation.schemas";
 
 class V1InnovationCollaboratorUpdate {
   @JwtDecoder()
@@ -41,7 +41,7 @@ class V1InnovationCollaboratorUpdate {
         domainContext,
         params.collaboratorId,
         params.innovationId,
-        collaboratorType === 'OWNER',
+        collaboratorType === "OWNER",
         body
       );
 
@@ -56,34 +56,34 @@ class V1InnovationCollaboratorUpdate {
 
 export default openApi(
   V1InnovationCollaboratorUpdate.httpTrigger as AzureFunction,
-  '/v1/{innovationId}/collaborators/{collaboratorId}',
+  "/v1/{innovationId}/collaborators/{collaboratorId}",
   {
     patch: {
-      description: 'Updates information of collaborator.',
-      operationId: 'v1-innovation-collaborator-update',
-      tags: ['[v1] Innovation Collaborators'],
+      description: "Updates information of collaborator.",
+      operationId: "v1-innovation-collaborator-update",
+      tags: ["[v1] Innovation Collaborators"],
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       requestBody: SwaggerHelper.bodyJ2S(BodySchema, {
-        description: 'The information to update collaborator invite.'
+        description: "The information to update collaborator invite."
       }),
       responses: {
         200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
-          description: 'The collaborator has been updated.'
+          description: "The collaborator has been updated."
         }),
         400: {
-          description: 'The collaborator could not be updated.'
+          description: "The collaborator could not be updated."
         },
         401: {
-          description: 'The user is not authorized to update an collaborator.'
+          description: "The user is not authorized to update an collaborator."
         },
         403: {
-          description: 'The user is not allowed to update an collaborator.'
+          description: "The user is not allowed to update an collaborator."
         },
         404: {
-          description: 'The innovation could not be found.'
+          description: "The innovation could not be found."
         },
         500: {
-          description: 'An unexpected error occurred while updating the collaborator.'
+          description: "An unexpected error occurred while updating the collaborator."
         }
       }
     }

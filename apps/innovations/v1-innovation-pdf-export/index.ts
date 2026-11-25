@@ -1,17 +1,17 @@
-import { mapOpenApi3 as openapi } from '@aaronpowell/azure-functions-nodejs-openapi';
-import type { AzureFunction, HttpRequest } from '@azure/functions';
+import { mapOpenApi3 as openapi } from "@aaronpowell/azure-functions-nodejs-openapi";
+import type { AzureFunction, HttpRequest } from "@azure/functions";
 
-import { JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
-import type { AuthorizationService } from '@innovations/shared/services';
-import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import type { CustomContextType } from '@innovations/shared/types';
+import { JwtDecoder } from "@innovations/shared/decorators";
+import { JoiHelper, ResponseHelper, SwaggerHelper } from "@innovations/shared/helpers";
+import type { AuthorizationService } from "@innovations/shared/services";
+import SHARED_SYMBOLS from "@innovations/shared/services/symbols";
+import type { CustomContextType } from "@innovations/shared/types";
 
-import { container } from '../_config';
+import { container } from "../_config";
 
-import type { ExportFileService } from '../_services/export-file-service';
-import SYMBOLS from '../_services/symbols';
-import { BodySchema, ParamsSchema, ParamsType, type BodyType } from './validation.schemas';
+import type { ExportFileService } from "../_services/export-file-service";
+import SYMBOLS from "../_services/symbols";
+import { BodySchema, ParamsSchema, ParamsType, type BodyType } from "./validation.schemas";
 class PostInnovationPDFExport {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
@@ -35,7 +35,7 @@ class PostInnovationPDFExport {
 
       const pdf = await exportFileService.create(
         auth.getContext(),
-        'pdf',
+        "pdf",
         { name: innovation.name, uniqueId: innovation.uniqueId },
         body
       );
@@ -43,7 +43,7 @@ class PostInnovationPDFExport {
       context.res = {
         body: pdf,
         headers: {
-          'Content-Type': 'application/pdf'
+          "Content-Type": "application/pdf"
         }
       };
 
@@ -55,16 +55,16 @@ class PostInnovationPDFExport {
   }
 }
 
-export default openapi(PostInnovationPDFExport.httpTrigger as AzureFunction, '/v1/{innovationId}/pdf', {
+export default openapi(PostInnovationPDFExport.httpTrigger as AzureFunction, "/v1/{innovationId}/pdf", {
   post: {
-    description: 'Generate PDF for an innovation',
-    tags: ['[v1] Innovations'],
-    operationId: 'v1-innovation-pdf-export',
+    description: "Generate PDF for an innovation",
+    tags: ["[v1] Innovations"],
+    operationId: "v1-innovation-pdf-export",
     parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     requestBody: SwaggerHelper.bodyJ2S(BodySchema),
     responses: {
-      200: { description: 'Ok.' },
-      400: { description: 'Bad request.' }
+      200: { description: "Ok." },
+      400: { description: "Bad request." }
     }
   }
 });

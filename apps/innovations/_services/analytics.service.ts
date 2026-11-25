@@ -1,5 +1,5 @@
-import { injectable } from 'inversify';
-import { BaseService } from './base.service';
+import { injectable } from "inversify";
+import { BaseService } from "./base.service";
 
 @injectable()
 export class AnalyticsService extends BaseService {
@@ -25,7 +25,7 @@ export class AnalyticsService extends BaseService {
       )[0];
 
     if (!sqlLastDate) {
-      this.logger.log('No data found in analytics_organisation_inactivity_breach or innovation_support');
+      this.logger.log("No data found in analytics_organisation_inactivity_breach or innovation_support");
       return;
     }
 

@@ -1,22 +1,22 @@
-import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
-import type { AzureFunction, HttpRequest } from '@azure/functions';
+import { mapOpenApi3 as openApi } from "@aaronpowell/azure-functions-nodejs-openapi";
+import type { AzureFunction, HttpRequest } from "@azure/functions";
 
-import { Audit, JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
-import type { AuthorizationService, DomainService } from '@innovations/shared/services';
-import { ActionEnum, TargetEnum } from '@innovations/shared/services/integrations/audit.service';
-import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import type { CustomContextType } from '@innovations/shared/types';
+import { Audit, JwtDecoder } from "@innovations/shared/decorators";
+import { JoiHelper, ResponseHelper, SwaggerHelper } from "@innovations/shared/helpers";
+import type { AuthorizationService, DomainService } from "@innovations/shared/services";
+import { ActionEnum, TargetEnum } from "@innovations/shared/services/integrations/audit.service";
+import SHARED_SYMBOLS from "@innovations/shared/services/symbols";
+import type { CustomContextType } from "@innovations/shared/types";
 
-import { container } from '../_config';
+import { container } from "../_config";
 
-import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
-import type { ParamsType } from './validation.schemas';
-import { ParamsSchema } from './validation.schemas';
+import { ResponseBodySchema, type ResponseDTO } from "./transformation.dtos";
+import type { ParamsType } from "./validation.schemas";
+import { ParamsSchema } from "./validation.schemas";
 
 class V1InnovationThreadFollowers {
   @JwtDecoder()
-  @Audit({ action: ActionEnum.READ, target: TargetEnum.THREAD, identifierParam: 'threadId' })
+  @Audit({ action: ActionEnum.READ, target: TargetEnum.THREAD, identifierParam: "threadId" })
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
     const authorizationService = container.get<AuthorizationService>(SHARED_SYMBOLS.AuthorizationService);
     const domainService = container.get<DomainService>(SHARED_SYMBOLS.DomainService);
@@ -62,29 +62,29 @@ class V1InnovationThreadFollowers {
 
 export default openApi(
   V1InnovationThreadFollowers.httpTrigger as AzureFunction,
-  '/v1/{innovationId}/threads/{threadId}/followers',
+  "/v1/{innovationId}/threads/{threadId}/followers",
   {
     get: {
-      summary: 'Get Innovation Thread Followers',
-      description: 'Get Innovation Thread Followers',
-      tags: ['Innovation Thread'],
-      operationId: 'v1-innovation-thread-followers',
+      summary: "Get Innovation Thread Followers",
+      description: "Get Innovation Thread Followers",
+      tags: ["Innovation Thread"],
+      operationId: "v1-innovation-thread-followers",
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       responses: {
         200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
-          description: 'Success'
+          description: "Success"
         }),
         401: {
-          description: 'Unauthorized'
+          description: "Unauthorized"
         },
         403: {
-          description: 'Forbidden'
+          description: "Forbidden"
         },
         404: {
-          description: 'Not Found'
+          description: "Not Found"
         },
         500: {
-          description: 'Internal Server Error'
+          description: "Internal Server Error"
         }
       }
     }

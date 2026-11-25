@@ -4,10 +4,10 @@ export const buildDocumentHeaderDefinition = (): any => {
       return {
         columns: [
           {
-            text: 'Innovation Record',
-            style: 'dimmed',
+            text: "Innovation Record",
+            style: "dimmed",
             margin: [10, 10, 10, 10],
-            alignment: 'right',
+            alignment: "right",
             italic: true
           }
         ]
@@ -23,8 +23,8 @@ export const buildDocumentFooterDefinition = (): any => {
         columns: [
           {
             text: `${current} of ${total}`,
-            style: 'footer',
-            alignment: 'right',
+            style: "footer",
+            alignment: "right",
             margin: [0, 0, 10, 10]
           }
         ]
@@ -42,39 +42,39 @@ export const buildDocumentTOCDefinition = ({
 }): any => {
   return [
     {
-      text: 'Innovation Record Export',
-      style: 'hero',
+      text: "Innovation Record Export",
+      style: "hero",
       margin: [0, 80, 0, 0],
-      alignment: 'center'
+      alignment: "center"
     },
     {
       text: innovationName,
-      style: 'documentTitle',
+      style: "documentTitle",
       margin: [20, 90, 0, 0],
-      alignment: 'left'
+      alignment: "left"
     },
     {
       text: uniqueId,
-      style: 'documentSubtitle',
+      style: "documentSubtitle",
       margin: [20, 0, 0, 0],
-      alignment: 'left'
+      alignment: "left"
     },
     {
-      text: 'NHS Innovation Service',
-      style: 'documentInfo',
+      text: "NHS Innovation Service",
+      style: "documentInfo",
       margin: [0, 420, 0, 0],
-      alignment: 'right'
+      alignment: "right"
     },
     {
       text: `Exported at: ${new Date().toDateString()}`,
-      style: 'documentInfo',
+      style: "documentInfo",
       margin: [0, 0, 0, 0],
-      alignment: 'right',
-      pageBreak: 'after'
+      alignment: "right",
+      pageBreak: "after"
     },
     {
       toc: {
-        title: { text: 'INDEX', style: 'header' },
+        title: { text: "INDEX", style: "header" },
         numberStyle: { bold: true }
       }
     }
@@ -86,33 +86,33 @@ export const buildDocumentStylesDefinition = (): any => {
     hero: {
       fontSize: 44,
       bold: true,
-      color: '#1874a5'
+      color: "#1874a5"
     },
     sectionTitle: {
       fontSize: 28,
       bold: true,
-      color: '#1874a5',
-      decoration: 'underline'
+      color: "#1874a5",
+      decoration: "underline"
     },
     dimmed: {
       fontSize: 10,
-      color: '#999999',
+      color: "#999999",
       italic: true
     },
     documentTitle: {
       fontSize: 26,
       bold: true,
-      color: '#333333'
+      color: "#333333"
     },
     documentSubtitle: {
       fontSize: 12,
-      color: '#999999',
+      color: "#999999",
       italic: true
     },
     documentInfo: {
       fontSize: 16,
       italics: true,
-      color: '#333333'
+      color: "#333333"
     },
     header: {
       fontSize: 20,
@@ -139,7 +139,7 @@ export const buildDocumentStylesDefinition = (): any => {
     },
     footer: {
       fontSize: 10,
-      color: '#999999',
+      color: "#999999",
       italics: true
     }
   };

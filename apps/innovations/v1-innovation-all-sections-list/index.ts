@@ -1,19 +1,19 @@
-import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
-import type { AzureFunction, HttpRequest } from '@azure/functions';
+import { mapOpenApi3 as openApi } from "@aaronpowell/azure-functions-nodejs-openapi";
+import type { AzureFunction, HttpRequest } from "@azure/functions";
 
-import { JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
+import { JwtDecoder } from "@innovations/shared/decorators";
+import { JoiHelper, ResponseHelper, SwaggerHelper } from "@innovations/shared/helpers";
 
-import type { AuthorizationService } from '@innovations/shared/services';
-import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import type { CustomContextType } from '@innovations/shared/types';
+import type { AuthorizationService } from "@innovations/shared/services";
+import SHARED_SYMBOLS from "@innovations/shared/services/symbols";
+import type { CustomContextType } from "@innovations/shared/types";
 
-import { container } from '../_config';
+import { container } from "../_config";
 
-import type { InnovationSectionsService } from '../_services/innovation-sections.service';
-import SYMBOLS from '../_services/symbols';
-import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
-import { ParamsSchema, ParamsType, QueryParamsSchema, QueryParamsType } from './validation.schemas';
+import type { InnovationSectionsService } from "../_services/innovation-sections.service";
+import SYMBOLS from "../_services/symbols";
+import { ResponseBodySchema, type ResponseDTO } from "./transformation.dtos";
+import { ParamsSchema, ParamsType, QueryParamsSchema, QueryParamsType } from "./validation.schemas";
 
 class GetInnovationAllSectionsList {
   @JwtDecoder()
@@ -49,28 +49,28 @@ class GetInnovationAllSectionsList {
   }
 }
 
-export default openApi(GetInnovationAllSectionsList.httpTrigger as AzureFunction, '/v1/{innovationId}/all-sections', {
+export default openApi(GetInnovationAllSectionsList.httpTrigger as AzureFunction, "/v1/{innovationId}/all-sections", {
   get: {
-    description: 'Get an innovation sections list details.',
-    tags: ['Innovation'],
-    summary: 'Get an innovation sections list details.',
-    operationId: 'v1-innovation-all-sections-list',
+    description: "Get an innovation sections list details.",
+    tags: ["Innovation"],
+    summary: "Get an innovation sections list details.",
+    operationId: "v1-innovation-all-sections-list",
     parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     responses: {
       200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
-        description: 'Success'
+        description: "Success"
       }),
       401: {
-        description: 'Unauthorized'
+        description: "Unauthorized"
       },
       403: {
-        description: 'Forbidden'
+        description: "Forbidden"
       },
       404: {
-        description: 'Not Found'
+        description: "Not Found"
       },
       500: {
-        description: 'Internal Server Error'
+        description: "Internal Server Error"
       }
     }
   }

@@ -1,17 +1,17 @@
-import { inject, injectable } from 'inversify';
-import * as ExcelJS from 'exceljs';
+import { inject, injectable } from "inversify";
+import * as ExcelJS from "exceljs";
 
-import { InnovationErrorsEnum, UnprocessableEntityError, BadRequestError } from '@innovations/shared/errors';
-import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import type { DomainContextType } from '@innovations/shared/types';
-import type { IRSchemaService } from '@innovations/shared/services';
-import type { ExcelExportService } from '@innovations/shared/services/storage/excel-export.service';
-import type { ExcelImportService } from '@innovations/shared/services/storage/excel-import.service';
+import { InnovationErrorsEnum, UnprocessableEntityError, BadRequestError } from "@innovations/shared/errors";
+import SHARED_SYMBOLS from "@innovations/shared/services/symbols";
+import type { DomainContextType } from "@innovations/shared/types";
+import type { IRSchemaService } from "@innovations/shared/services";
+import type { ExcelExportService } from "@innovations/shared/services/storage/excel-export.service";
+import type { ExcelImportService } from "@innovations/shared/services/storage/excel-import.service";
 
-import type { InnovationsService } from './innovations.service';
-import type { InnovationSectionsService } from './innovation-sections.service';
-import SYMBOLS from './symbols';
-import { getSmartMockPayload } from '@innovations/shared/services/storage/excel-schema-helpers';
+import type { InnovationsService } from "./innovations.service";
+import type { InnovationSectionsService } from "./innovation-sections.service";
+import SYMBOLS from "./symbols";
+import { getSmartMockPayload } from "@innovations/shared/services/storage/excel-schema-helpers";
 
 @injectable()
 export class ExcelInnovationService {
@@ -50,13 +50,13 @@ export class ExcelInnovationService {
     domainContext: DomainContextType,
     base64Xlsx: string
   ): Promise<{ id: string; validationIssues: Record<string, string[]>; emptySections: string[] }> {
-    const buffer = Buffer.from(base64Xlsx, 'base64');
+    const buffer = Buffer.from(base64Xlsx, "base64");
     const workbook = new ExcelJS.Workbook();
 
     try {
       await workbook.xlsx.load(buffer as any);
     } catch (err) {
-      console.error('[ExcelImport] Failed to load Excel workbook:', err);
+      console.error("[ExcelImport] Failed to load Excel workbook:", err);
       throw new BadRequestError(InnovationErrorsEnum.INNOVATION_RECORD_INVALID_EXCEL_FILE);
     }
 
@@ -67,11 +67,11 @@ export class ExcelInnovationService {
 
     // --- SCHEMA VERSION CHECK ---
     const extractedVersion = this.excelImportService.extractSchemaVersion(workbook);
-    console.log(`[ExcelImport] Uploaded file schema version: ${extractedVersion || 'Unknown'}`);
+    console.log(`[ExcelImport] Uploaded file schema version: ${extractedVersion || "Unknown"}`);
 
     if (!extractedVersion || extractedVersion < schema.version) {
-      allValidationIssues['GLOBAL_WARNING'] = [
-        `Warning: You uploaded an outdated Excel template (Version ${extractedVersion || 'Unknown'}). Some fields may not have imported correctly because the system rules have been updated.`
+      allValidationIssues["GLOBAL_WARNING"] = [
+        `Warning: You uploaded an outdated Excel template (Version ${extractedVersion || "Unknown"}). Some fields may not have imported correctly because the system rules have been updated.`
       ];
       console.warn(`[ExcelImport] Schema drift detected! Added global warning.`);
     }
@@ -83,20 +83,20 @@ export class ExcelInnovationService {
       schema.model
     );
 
-    console.log('[ExcelImport] Registration Payload Extracted:', JSON.stringify(regPayload, null, 2));
+    console.log("[ExcelImport] Registration Payload Extracted:", JSON.stringify(regPayload, null, 2));
     if (validationIssues.length > 0) {
-      allValidationIssues['INNOVATION_DESCRIPTION'] = validationIssues;
-      console.warn('[ExcelImport] Registration Validation Issues:', validationIssues);
+      allValidationIssues["INNOVATION_DESCRIPTION"] = validationIssues;
+      console.warn("[ExcelImport] Registration Validation Issues:", validationIssues);
     }
 
-    if (!regPayload['name'] || !regPayload['description'] || !regPayload['officeLocation']) {
+    if (!regPayload["name"] || !regPayload["description"] || !regPayload["officeLocation"]) {
       console.error(
-        '[ExcelImport] Missing required fields. Name:',
-        regPayload['name'],
-        'Description:',
-        regPayload['description'],
-        'Location:',
-        regPayload['officeLocation']
+        "[ExcelImport] Missing required fields. Name:",
+        regPayload["name"],
+        "Description:",
+        regPayload["description"],
+        "Location:",
+        regPayload["officeLocation"]
       );
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_INFO_EMPTY_INPUT);
     }
@@ -137,22 +137,22 @@ export class ExcelInnovationService {
     const emptySections: string[] = [];
 
     // 1. Extract Registration (INNOVATION_DESCRIPTION) first to create the record.
-    const rawRegPayload = jsonPayload['INNOVATION_DESCRIPTION'] || {};
+    const rawRegPayload = jsonPayload["INNOVATION_DESCRIPTION"] || {};
 
-    const regCalculatedFields = schema.model.getCalculatedFields('INNOVATION_DESCRIPTION', rawRegPayload);
+    const regCalculatedFields = schema.model.getCalculatedFields("INNOVATION_DESCRIPTION", rawRegPayload);
     const regPayload = { ...rawRegPayload, ...regCalculatedFields };
 
     const validationIssues: string[] = [];
     try {
       const descSection = schema.model.schema.sections
         .flatMap((s: any) => s.subSections)
-        .find((ss: any) => ss.id === 'INNOVATION_DESCRIPTION');
-      if (!descSection) throw new Error('INNOVATION_DESCRIPTION section not found in schema.');
+        .find((ss: any) => ss.id === "INNOVATION_DESCRIPTION");
+      if (!descSection) throw new Error("INNOVATION_DESCRIPTION section not found in schema.");
 
       // Smart mock payload for registration
       const mockPayload = getSmartMockPayload(descSection, rawRegPayload);
 
-      const joiSchema = schema.model.getSubSectionPayloadValidation('INNOVATION_DESCRIPTION', mockPayload);
+      const joiSchema = schema.model.getSubSectionPayloadValidation("INNOVATION_DESCRIPTION", mockPayload);
       const { error } = joiSchema.validate(rawRegPayload, { abortEarly: false, allowUnknown: true });
       if (error) {
         error.details.forEach(d => validationIssues.push(d.message));
@@ -161,20 +161,20 @@ export class ExcelInnovationService {
       validationIssues.push(`Validation error: ${err?.message}`);
     }
 
-    console.log('[JsonImport] Registration Payload Extracted:', JSON.stringify(regPayload, null, 2));
+    console.log("[JsonImport] Registration Payload Extracted:", JSON.stringify(regPayload, null, 2));
     if (validationIssues.length > 0) {
-      allValidationIssues['INNOVATION_DESCRIPTION'] = validationIssues;
-      console.warn('[JsonImport] Registration Validation Issues:', validationIssues);
+      allValidationIssues["INNOVATION_DESCRIPTION"] = validationIssues;
+      console.warn("[JsonImport] Registration Validation Issues:", validationIssues);
     }
 
-    if (!regPayload['name'] || !regPayload['description'] || !regPayload['officeLocation']) {
+    if (!regPayload["name"] || !regPayload["description"] || !regPayload["officeLocation"]) {
       console.error(
-        '[JsonImport] Missing required fields. Name:',
-        regPayload['name'],
-        'Description:',
-        regPayload['description'],
-        'Location:',
-        regPayload['officeLocation']
+        "[JsonImport] Missing required fields. Name:",
+        regPayload["name"],
+        "Description:",
+        regPayload["description"],
+        "Location:",
+        regPayload["officeLocation"]
       );
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_INFO_EMPTY_INPUT);
     }

@@ -1,9 +1,9 @@
-import Joi from 'joi';
+import Joi from "joi";
 
-import { JoiHelper } from '@innovations/shared/helpers';
-import type { SurveyAnswersType } from '@innovations/shared/entities/innovation/innovation-survey.entity';
-import { YesOrNoCatalogueType } from '@innovations/shared/enums';
-import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
+import { JoiHelper } from "@innovations/shared/helpers";
+import type { SurveyAnswersType } from "@innovations/shared/entities/innovation/innovation-survey.entity";
+import { YesOrNoCatalogueType } from "@innovations/shared/enums";
+import { TEXTAREA_LENGTH_LIMIT } from "@innovations/shared/constants";
 
 export type ParamsType = { innovationId: string; surveyId: string };
 export const ParamsSchema = Joi.object<ParamsType>({
@@ -11,7 +11,7 @@ export const ParamsSchema = Joi.object<ParamsType>({
   surveyId: JoiHelper.AppCustomJoi().string().guid().required()
 }).required();
 
-const validScale = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'] as const;
+const validScale = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"] as const;
 
 export type BodyType = SurveyAnswersType;
 export const BodySchema = Joi.object<BodyType>({

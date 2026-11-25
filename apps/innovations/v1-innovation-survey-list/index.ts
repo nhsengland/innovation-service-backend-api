@@ -1,18 +1,18 @@
-import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
-import type { AzureFunction, HttpRequest } from '@azure/functions';
+import { mapOpenApi3 as openApi } from "@aaronpowell/azure-functions-nodejs-openapi";
+import type { AzureFunction, HttpRequest } from "@azure/functions";
 
-import { JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
-import type { AuthorizationService } from '@innovations/shared/services';
-import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import type { CustomContextType } from '@innovations/shared/types';
+import { JwtDecoder } from "@innovations/shared/decorators";
+import { JoiHelper, ResponseHelper, SwaggerHelper } from "@innovations/shared/helpers";
+import type { AuthorizationService } from "@innovations/shared/services";
+import SHARED_SYMBOLS from "@innovations/shared/services/symbols";
+import type { CustomContextType } from "@innovations/shared/types";
 
-import { container } from '../_config';
+import { container } from "../_config";
 
-import SYMBOLS from '../_services/symbols';
-import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
-import { ParamsSchema, type ParamsType } from './validation.schemas';
-import { SurveysService } from '../_services/surveys.service';
+import SYMBOLS from "../_services/symbols";
+import { ResponseBodySchema, type ResponseDTO } from "./transformation.dtos";
+import { ParamsSchema, type ParamsType } from "./validation.schemas";
+import { SurveysService } from "../_services/surveys.service";
 
 class V1InnovationSurveyList {
   @JwtDecoder()
@@ -41,19 +41,19 @@ class V1InnovationSurveyList {
   }
 }
 
-export default openApi(V1InnovationSurveyList.httpTrigger as AzureFunction, '/v1/{innovationId}/surveys', {
+export default openApi(V1InnovationSurveyList.httpTrigger as AzureFunction, "/v1/{innovationId}/surveys", {
   get: {
-    description: 'Get a list of all unanswered surveys',
-    operationId: 'v1-innovation-survey-list',
-    tags: ['[v1] Innovation Surveys'],
+    description: "Get a list of all unanswered surveys",
+    operationId: "v1-innovation-survey-list",
+    tags: ["[v1] Innovation Surveys"],
     parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     responses: {
-      200: SwaggerHelper.responseJ2S(ResponseBodySchema, { description: 'Success' }),
-      400: { description: 'Bad request.' },
-      401: { description: 'Unauthorized.' },
-      403: { description: 'Forbidden.' },
-      404: { description: 'Not found.' },
-      500: { description: 'Internal server error.' }
+      200: SwaggerHelper.responseJ2S(ResponseBodySchema, { description: "Success" }),
+      400: { description: "Bad request." },
+      401: { description: "Unauthorized." },
+      403: { description: "Forbidden." },
+      404: { description: "Not found." },
+      500: { description: "Internal server error." }
     }
   }
 });

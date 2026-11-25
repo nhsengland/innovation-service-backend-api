@@ -1,19 +1,19 @@
-import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
-import type { AzureFunction, HttpRequest } from '@azure/functions';
+import { mapOpenApi3 as openApi } from "@aaronpowell/azure-functions-nodejs-openapi";
+import type { AzureFunction, HttpRequest } from "@azure/functions";
 
-import { JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
-import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
-import type { AuthorizationService } from '@innovations/shared/services';
-import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import type { CustomContextType } from '@innovations/shared/types';
+import { JwtDecoder } from "@innovations/shared/decorators";
+import { JoiHelper, ResponseHelper, SwaggerHelper } from "@innovations/shared/helpers";
+import { CurrentCatalogTypes } from "@innovations/shared/schemas/innovation-record";
+import type { AuthorizationService } from "@innovations/shared/services";
+import SHARED_SYMBOLS from "@innovations/shared/services/symbols";
+import type { CustomContextType } from "@innovations/shared/types";
 
-import { container } from '../_config';
+import { container } from "../_config";
 
-import type { InnovationSectionsService } from '../_services/innovation-sections.service';
-import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
-import { ParamsSchema, ParamsType } from './validation.schemas';
+import type { InnovationSectionsService } from "../_services/innovation-sections.service";
+import SYMBOLS from "../_services/symbols";
+import type { ResponseDTO } from "./transformation.dtos";
+import { ParamsSchema, ParamsType } from "./validation.schemas";
 
 class GetInnovationEvidenceInfo {
   @JwtDecoder()
@@ -57,61 +57,61 @@ class GetInnovationEvidenceInfo {
 
 export default openApi(
   GetInnovationEvidenceInfo.httpTrigger as AzureFunction,
-  '/v1/{innovationId}/evidences/{evidenceId}',
+  "/v1/{innovationId}/evidences/{evidenceId}",
   {
     get: {
-      description: 'Get an innovation evidence info.',
-      tags: ['Innovation'],
-      summary: 'Get an innovation evidence info.',
-      operationId: 'v1-innovation-evidence-info',
+      description: "Get an innovation evidence info.",
+      tags: ["Innovation"],
+      summary: "Get an innovation evidence info.",
+      operationId: "v1-innovation-evidence-info",
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       responses: {
         200: {
-          description: 'Innovation section info.',
+          description: "Innovation section info.",
           content: {
-            'application/json': {
+            "application/json": {
               schema: {
-                type: 'object',
+                type: "object",
                 properties: {
                   id: {
-                    type: 'string',
-                    description: 'Innovation evidence id.'
+                    type: "string",
+                    description: "Innovation evidence id."
                   },
                   evidenceType: {
-                    type: 'string',
+                    type: "string",
                     enum: Object.values(CurrentCatalogTypes.catalogEvidenceType),
-                    description: 'Evidence type.'
+                    description: "Evidence type."
                   },
                   evidenceSubmitType: {
-                    type: 'string',
+                    type: "string",
                     enum: Object.values(CurrentCatalogTypes.catalogEvidenceSubmitType),
-                    description: 'Clinical submit type.'
+                    description: "Clinical submit type."
                   },
                   description: {
-                    type: 'string',
-                    description: 'Evidence description.'
+                    type: "string",
+                    description: "Evidence description."
                   },
                   summary: {
-                    type: 'string',
-                    description: 'Evidence summary.'
+                    type: "string",
+                    description: "Evidence summary."
                   },
                   files: {
-                    type: 'array',
-                    description: 'Innovation evidence files.',
+                    type: "array",
+                    description: "Innovation evidence files.",
                     items: {
-                      type: 'object',
+                      type: "object",
                       properties: {
                         id: {
-                          type: 'string',
-                          description: 'File id.'
+                          type: "string",
+                          description: "File id."
                         },
                         displayFileName: {
-                          type: 'string',
-                          description: 'File display name.'
+                          type: "string",
+                          description: "File display name."
                         },
                         url: {
-                          type: 'string',
-                          description: 'File url.'
+                          type: "string",
+                          description: "File url."
                         }
                       }
                     }
@@ -122,16 +122,16 @@ export default openApi(
           }
         },
         401: {
-          description: 'Unauthorized'
+          description: "Unauthorized"
         },
         403: {
-          description: 'Forbidden'
+          description: "Forbidden"
         },
         404: {
-          description: 'Not found'
+          description: "Not found"
         },
         500: {
-          description: 'Internal server error'
+          description: "Internal server error"
         }
       }
     }

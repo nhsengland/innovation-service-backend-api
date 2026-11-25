@@ -1,5 +1,5 @@
-import { ThreadContextTypeEnum } from '@innovations/shared/enums';
-import Joi from 'joi';
+import { ThreadContextTypeEnum } from "@innovations/shared/enums";
+import Joi from "joi";
 
 export type ResponseDTO = {
   id: string;

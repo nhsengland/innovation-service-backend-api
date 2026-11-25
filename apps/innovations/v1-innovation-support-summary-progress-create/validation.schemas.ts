@@ -1,9 +1,9 @@
-import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
-import { JoiHelper } from '@innovations/shared/helpers';
-import type { SupportLogProgressUpdate } from '@innovations/shared/types';
-import Joi from 'joi';
-import type { InnovationFileType } from '../_types/innovation.types';
-import { InnovationFileSchema } from '../_types/innovation.types';
+import { TEXTAREA_LENGTH_LIMIT } from "@innovations/shared/constants";
+import { JoiHelper } from "@innovations/shared/helpers";
+import type { SupportLogProgressUpdate } from "@innovations/shared/types";
+import Joi from "joi";
+import type { InnovationFileType } from "../_types/innovation.types";
+import { InnovationFileSchema } from "../_types/innovation.types";
 
 export type ParamsType = {
   innovationId: string;
@@ -16,12 +16,12 @@ export type BodyType = {
   description: string;
   document?: InnovationFileType;
   createdAt: Date;
-} & SupportLogProgressUpdate['params'];
+} & SupportLogProgressUpdate["params"];
 
 const BaseSchema = Joi.object<BodyType>({
   description: JoiHelper.AppCustomJoi().string().max(TEXTAREA_LENGTH_LIMIT.xl).required(),
   document: InnovationFileSchema.optional(),
-  createdAt: Joi.date().max('now')
+  createdAt: Joi.date().max("now")
 });
 
 export const BodySchema = Joi.alternatives([

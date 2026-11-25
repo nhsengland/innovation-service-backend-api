@@ -1,5 +1,5 @@
-import { FILE_SCAN_STATES, type FileDownloadAccess } from '@innovations/shared/services';
-import Joi from 'joi';
+import { FILE_SCAN_STATES, type FileDownloadAccess } from "@innovations/shared/services";
+import Joi from "joi";
 
 export type ResponseDTO = { id: string; retryAfterSeconds?: number } & FileDownloadAccess;
 
@@ -10,7 +10,7 @@ export const ResponseBodySchema = Joi.object<ResponseDTO>({
     .required(),
   canDownload: Joi.boolean().required(),
   retryAfterSeconds: Joi.number().integer().positive().optional(),
-  url: Joi.when('canDownload', {
+  url: Joi.when("canDownload", {
     is: true,
     then: Joi.string().required(),
     otherwise: Joi.forbidden()

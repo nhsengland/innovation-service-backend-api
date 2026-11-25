@@ -1,14 +1,14 @@
-import { injectable } from 'inversify';
+import { injectable } from "inversify";
 
-import type { EntityManager } from 'typeorm';
+import type { EntityManager } from "typeorm";
 
-import { ServiceRoleEnum } from '@innovations/shared/enums';
-import { ConflictError, InnovationErrorsEnum, NotFoundError } from '@innovations/shared/errors';
-import type { DocumentType } from '@innovations/shared/schemas/innovation-record';
+import { ServiceRoleEnum } from "@innovations/shared/enums";
+import { ConflictError, InnovationErrorsEnum, NotFoundError } from "@innovations/shared/errors";
+import type { DocumentType } from "@innovations/shared/schemas/innovation-record";
 
-import { BaseService } from './base.service';
-import { InnovationDocumentDraftEntity, InnovationDocumentEntity } from '@innovations/shared/entities';
-import type { DomainContextType } from '@innovations/shared/types';
+import { BaseService } from "./base.service";
+import { InnovationDocumentDraftEntity, InnovationDocumentEntity } from "@innovations/shared/entities";
+import type { DomainContextType } from "@innovations/shared/types";
 
 @injectable()
 export class InnovationDocumentService extends BaseService {
@@ -25,7 +25,7 @@ export class InnovationDocumentService extends BaseService {
    */
   async getInnovationDocument(
     innovationId: string,
-    params: { type: 'SUBMITTED' | 'DRAFT'; version?: number },
+    params: { type: "SUBMITTED" | "DRAFT"; version?: number },
     entityManager?: EntityManager
   ): Promise<DocumentType> {
     const connection = entityManager ?? this.sqlConnection.manager;
@@ -36,17 +36,17 @@ export class InnovationDocumentService extends BaseService {
       document = (
         await connection
           .createQueryBuilder(
-            params.type === 'SUBMITTED' ? InnovationDocumentEntity : InnovationDocumentDraftEntity,
-            'document'
+            params.type === "SUBMITTED" ? InnovationDocumentEntity : InnovationDocumentDraftEntity,
+            "document"
           )
-          .where('document.id = :innovationId', { innovationId })
+          .where("document.id = :innovationId", { innovationId })
           .getOne()
       )?.document;
     } else {
       const raw = await connection.query(
         `
         SELECT TOP 1 document
-        FROM ${params.type === 'SUBMITTED' ? 'innovation_document' : 'innovation_document_draft'}
+        FROM ${params.type === "SUBMITTED" ? "innovation_document" : "innovation_document_draft"}
         FOR SYSTEM_TIME ALL
         WHERE id = @0
         AND version = @1
@@ -80,7 +80,7 @@ export class InnovationDocumentService extends BaseService {
     transaction: EntityManager,
     params?: { updatedAt?: Date; description?: string }
   ): Promise<void> {
-    const draftDocument = await this.getInnovationDocument(innovationId, { type: 'DRAFT' }, transaction);
+    const draftDocument = await this.getInnovationDocument(innovationId, { type: "DRAFT" }, transaction);
     await transaction.update(
       InnovationDocumentEntity,
       { id: innovationId },
@@ -89,7 +89,7 @@ export class InnovationDocumentService extends BaseService {
         updatedAt: params?.updatedAt ?? new Date(),
         updatedBy: domainContext.id,
         isSnapshot: true,
-        description: params?.description ?? 'INNOVATION-SUBMITTED'
+        description: params?.description ?? "INNOVATION-SUBMITTED"
       }
     );
   }
@@ -101,7 +101,7 @@ export class InnovationDocumentService extends BaseService {
    * QA/A/NA: always sees the SUBMITTED version.
    * Innovators: always sees the DRAFT version.
    */
-  getDocumentTypeAccordingWithRole(role: ServiceRoleEnum): 'SUBMITTED' | 'DRAFT' {
-    return [ServiceRoleEnum.INNOVATOR, ServiceRoleEnum.ADMIN].includes(role) ? 'DRAFT' : 'SUBMITTED';
+  getDocumentTypeAccordingWithRole(role: ServiceRoleEnum): "SUBMITTED" | "DRAFT" {
+    return [ServiceRoleEnum.INNOVATOR, ServiceRoleEnum.ADMIN].includes(role) ? "DRAFT" : "SUBMITTED";
   }
 }

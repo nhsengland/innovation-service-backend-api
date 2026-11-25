@@ -1,13 +1,13 @@
-import { ActivityTypeEnum } from '@innovations/shared/enums';
-import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
-import { JoiHelper } from '@innovations/shared/helpers';
-import Joi from 'joi';
+import { ActivityTypeEnum } from "@innovations/shared/enums";
+import type { PaginationQueryParamsType } from "@innovations/shared/helpers";
+import { JoiHelper } from "@innovations/shared/helpers";
+import Joi from "joi";
 
 enum orderFields {
-  createdAt = 'createdAt'
+  createdAt = "createdAt"
 }
 
-export const DateFilterFieldsType = ['createdAt'] as const;
+export const DateFilterFieldsType = ["createdAt"] as const;
 export type DateFilterFieldsType = (typeof DateFilterFieldsType)[number];
 
 export type ParamsType = {

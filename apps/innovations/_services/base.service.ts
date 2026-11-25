@@ -1,10 +1,10 @@
-import { injectable } from 'inversify';
-import type { DataSource } from 'typeorm';
+import { injectable } from "inversify";
+import type { DataSource } from "typeorm";
 
-import type { LoggerService, SQLConnectionService } from '@innovations/shared/services';
+import type { LoggerService, SQLConnectionService } from "@innovations/shared/services";
 
-import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import container from '../_config/init';
+import SHARED_SYMBOLS from "@innovations/shared/services/symbols";
+import container from "../_config/init";
 
 @injectable()
 export class BaseService {

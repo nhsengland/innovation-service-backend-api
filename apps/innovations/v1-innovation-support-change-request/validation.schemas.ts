@@ -1,8 +1,8 @@
-import Joi from 'joi';
+import Joi from "joi";
 
-import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
-import { InnovationSupportStatusEnum } from '@innovations/shared/enums';
-import { JoiHelper } from '@innovations/shared/helpers';
+import { TEXTAREA_LENGTH_LIMIT } from "@innovations/shared/constants";
+import { InnovationSupportStatusEnum } from "@innovations/shared/enums";
+import { JoiHelper } from "@innovations/shared/helpers";
 
 export type ParamsType = {
   innovationId: string;
@@ -14,7 +14,7 @@ export const ParamsSchema = Joi.object<ParamsType>({
 }).required();
 
 export type BodyType = {
-  status: Exclude<InnovationSupportStatusEnum, 'SUGGESTED'>;
+  status: Exclude<InnovationSupportStatusEnum, "SUGGESTED">;
   message: string;
 };
 

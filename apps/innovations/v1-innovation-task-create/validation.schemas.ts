@@ -1,8 +1,8 @@
-import Joi from 'joi';
+import Joi from "joi";
 
-import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
-import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
-import { JoiHelper } from '@innovations/shared/helpers';
+import { TEXTAREA_LENGTH_LIMIT } from "@innovations/shared/constants";
+import { CurrentCatalogTypes } from "@innovations/shared/schemas/innovation-record";
+import { JoiHelper } from "@innovations/shared/helpers";
 
 export type ParamsType = {
   innovationId: string;
@@ -20,10 +20,10 @@ export const BodySchema = Joi.object<BodyType>({
     .string()
     .valid(...CurrentCatalogTypes.InnovationSections)
     .required()
-    .description('The section key.'),
+    .description("The section key."),
   description: JoiHelper.AppCustomJoi()
     .string()
     .max(TEXTAREA_LENGTH_LIMIT.s)
     .required()
-    .description('The description of the task.')
+    .description("The description of the task.")
 }).required();

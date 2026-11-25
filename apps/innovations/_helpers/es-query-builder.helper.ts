@@ -5,8 +5,8 @@ import type {
   SearchHighlight,
   SearchRequest,
   Sort
-} from '@elastic/elasticsearch/lib/api/types';
-import { isArray } from 'lodash';
+} from "@elastic/elasticsearch/lib/api/types";
+import { isArray } from "lodash";
 
 type SearchQueryBody = SearchRequest & { query: SearchBoolQuery };
 type SearchBoolQuery = {
@@ -107,13 +107,13 @@ export function boolQuery(params: {
  */
 export function escapeElasticSpecialCharsAndFuzziness(input: string): string {
   // Remove < and > characters
-  input = input.trim().replace(/[<>]/g, '');
+  input = input.trim().replace(/[<>]/g, "");
   // Escape other special characters
   const specialChars = /[+\-=&|!(){}[\]^"~*?:\\/]/g;
-  const escaped = input.replace(specialChars, '\\$&');
+  const escaped = input.replace(specialChars, "\\$&");
 
   return escaped
-    .split(' ')
-    .map(f => f + '~1')
-    .join(' ');
+    .split(" ")
+    .map(f => f + "~1")
+    .join(" ");
 }

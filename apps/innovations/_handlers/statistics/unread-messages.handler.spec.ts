@@ -1,11 +1,11 @@
-import { UnreadMessagesStatisticsHandler } from './unread-messages.handler';
+import { UnreadMessagesStatisticsHandler } from "./unread-messages.handler";
 
-import { TestsHelper } from '@innovations/shared/tests';
-import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
-import { randNumber, randPastDate, randUuid } from '@ngneat/falso';
-import { StatisticsService } from '../../_services/statistics.service';
+import { TestsHelper } from "@innovations/shared/tests";
+import { DTOsHelper } from "@innovations/shared/tests/helpers/dtos.helper";
+import { randNumber, randPastDate, randUuid } from "@ngneat/falso";
+import { StatisticsService } from "../../_services/statistics.service";
 
-describe('Unread Messages Statistics Handler Suite', () => {
+describe("Unread Messages Statistics Handler Suite", () => {
   const testsHelper = new TestsHelper();
   const scenario = testsHelper.getCompleteScenario();
 
@@ -17,10 +17,10 @@ describe('Unread Messages Statistics Handler Suite', () => {
     count: randNumber(),
     lastSubmittedAt: randPastDate()
   };
-  const mock = jest.spyOn(StatisticsService.prototype, 'getUnreadMessages').mockResolvedValue(expected);
+  const mock = jest.spyOn(StatisticsService.prototype, "getUnreadMessages").mockResolvedValue(expected);
 
-  describe('run', () => {
-    it('should return the statistic', async () => {
+  describe("run", () => {
+    it("should return the statistic", async () => {
       const handler = new UnreadMessagesStatisticsHandler(
         DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
         { innovationId: randUuid() }

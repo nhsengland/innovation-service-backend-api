@@ -1,18 +1,18 @@
-import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
-import type { AzureFunction, HttpRequest } from '@azure/functions';
+import { mapOpenApi3 as openApi } from "@aaronpowell/azure-functions-nodejs-openapi";
+import type { AzureFunction, HttpRequest } from "@azure/functions";
 
-import { ElasticSearchDocumentUpdate, JwtDecoder } from '@innovations/shared/decorators';
-import { ServiceRoleEnum } from '@innovations/shared/enums';
-import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
-import type { AuthorizationService } from '@innovations/shared/services';
-import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import type { CustomContextType } from '@innovations/shared/types';
+import { ElasticSearchDocumentUpdate, JwtDecoder } from "@innovations/shared/decorators";
+import { ServiceRoleEnum } from "@innovations/shared/enums";
+import { JoiHelper, ResponseHelper, SwaggerHelper } from "@innovations/shared/helpers";
+import type { AuthorizationService } from "@innovations/shared/services";
+import SHARED_SYMBOLS from "@innovations/shared/services/symbols";
+import type { CustomContextType } from "@innovations/shared/types";
 
-import { container } from '../_config';
+import { container } from "../_config";
 
-import type { InnovationSupportsService } from '../_services/innovation-supports.service';
-import SYMBOLS from '../_services/symbols';
-import { BodySchema, ParamsSchema, type BodyType, type ParamsType } from './validation.schemas';
+import type { InnovationSupportsService } from "../_services/innovation-supports.service";
+import SYMBOLS from "../_services/symbols";
+import { BodySchema, ParamsSchema, type BodyType, type ParamsType } from "./validation.schemas";
 
 class V1InnovationSupportUpdate {
   @JwtDecoder()
@@ -50,30 +50,30 @@ class V1InnovationSupportUpdate {
 
 export default openApi(
   V1InnovationSupportUpdate.httpTrigger as AzureFunction,
-  '/v1/{innovationId}/supports/{supportId}/accessors',
+  "/v1/{innovationId}/supports/{supportId}/accessors",
   {
     put: {
-      description: 'Assigns accessors to a support.',
-      operationId: 'v1-innovation-support-change-accessors',
-      tags: ['[v1] Innovation Support'],
+      description: "Assigns accessors to a support.",
+      operationId: "v1-innovation-support-change-accessors",
+      tags: ["[v1] Innovation Support"],
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       requestBody: SwaggerHelper.bodyJ2S(BodySchema, {
-        description: 'The accessors to be assigned.'
+        description: "The accessors to be assigned."
       }),
       responses: {
-        '204': {
-          description: 'Innovation ID',
+        "204": {
+          description: "Innovation ID",
           content: {
-            'application/json': {
+            "application/json": {
               schema: {
-                type: 'object',
+                type: "object",
                 properties: {
                   id: {
-                    type: 'string',
-                    format: 'uuid'
+                    type: "string",
+                    format: "uuid"
                   }
                 },
-                required: ['id']
+                required: ["id"]
               }
             }
           }

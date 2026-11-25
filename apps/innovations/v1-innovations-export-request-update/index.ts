@@ -1,17 +1,17 @@
-import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
-import type { AzureFunction, HttpRequest } from '@azure/functions';
+import { mapOpenApi3 as openApi } from "@aaronpowell/azure-functions-nodejs-openapi";
+import type { AzureFunction, HttpRequest } from "@azure/functions";
 
-import { JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
-import type { AuthorizationService } from '@innovations/shared/services';
-import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import type { CustomContextType } from '@innovations/shared/types';
+import { JwtDecoder } from "@innovations/shared/decorators";
+import { JoiHelper, ResponseHelper, SwaggerHelper } from "@innovations/shared/helpers";
+import type { AuthorizationService } from "@innovations/shared/services";
+import SHARED_SYMBOLS from "@innovations/shared/services/symbols";
+import type { CustomContextType } from "@innovations/shared/types";
 
-import { container } from '../_config';
+import { container } from "../_config";
 
-import type { InnovationExportRequestService } from '../_services/innovation-export-request.service';
-import SYMBOLS from '../_services/symbols';
-import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
+import type { InnovationExportRequestService } from "../_services/innovation-export-request.service";
+import SYMBOLS from "../_services/symbols";
+import { BodySchema, BodyType, ParamsSchema, ParamsType } from "./validation.schemas";
 
 class V1InnovationsExportRequestsUpdate {
   @JwtDecoder()
@@ -50,20 +50,20 @@ class V1InnovationsExportRequestsUpdate {
 
 export default openApi(
   V1InnovationsExportRequestsUpdate.httpTrigger as AzureFunction,
-  '/v1/{innovationId}/export-requests/{requestId}',
+  "/v1/{innovationId}/export-requests/{requestId}",
   {
     patch: {
-      operationId: 'v1-innovations-export-request-update',
-      description: 'Patch export request status',
-      tags: ['[v1] Innovation Export Requests'],
+      operationId: "v1-innovations-export-request-update",
+      description: "Patch export request status",
+      tags: ["[v1] Innovation Export Requests"],
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       requestBody: SwaggerHelper.bodyJ2S(BodySchema),
       responses: {
-        204: { description: 'Export request was successfully updated' },
-        400: { description: 'The request is invalid.' },
-        401: { description: 'The user is not authenticated.' },
-        403: { description: 'The user is not authorized to access this resource.' },
-        500: { description: 'An error occurred while processing the request.' }
+        204: { description: "Export request was successfully updated" },
+        400: { description: "The request is invalid." },
+        401: { description: "The user is not authenticated." },
+        403: { description: "The user is not authorized to access this resource." },
+        500: { description: "An error occurred while processing the request." }
       }
     }
   }

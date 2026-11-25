@@ -1,5 +1,5 @@
-import { ServiceRoleEnum } from '@innovations/shared/enums';
-import Joi from 'joi';
+import { ServiceRoleEnum } from "@innovations/shared/enums";
+import Joi from "joi";
 
 export type ResponseDTO = {
   followers: {

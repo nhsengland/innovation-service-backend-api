@@ -1,18 +1,18 @@
-import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
-import type { AzureFunction, HttpRequest } from '@azure/functions';
+import { mapOpenApi3 as openApi } from "@aaronpowell/azure-functions-nodejs-openapi";
+import type { AzureFunction, HttpRequest } from "@azure/functions";
 
-import { JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
-import type { AuthorizationService } from '@innovations/shared/services';
-import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import type { CustomContextType } from '@innovations/shared/types';
+import { JwtDecoder } from "@innovations/shared/decorators";
+import { JoiHelper, ResponseHelper, SwaggerHelper } from "@innovations/shared/helpers";
+import type { AuthorizationService } from "@innovations/shared/services";
+import SHARED_SYMBOLS from "@innovations/shared/services/symbols";
+import type { CustomContextType } from "@innovations/shared/types";
 
-import { container } from '../_config';
+import { container } from "../_config";
 
-import type { InnovationsService } from '../_services/innovations.service';
-import SYMBOLS from '../_services/symbols';
-import type { NewResponseDTO } from './transformation.dtos';
-import { QueryParamsSchema, QueryParamsType } from './validation.schemas';
+import type { InnovationsService } from "../_services/innovations.service";
+import SYMBOLS from "../_services/symbols";
+import type { NewResponseDTO } from "./transformation.dtos";
+import { QueryParamsSchema, QueryParamsType } from "./validation.schemas";
 
 class V1InnovationsList {
   @JwtDecoder()
@@ -50,26 +50,26 @@ class V1InnovationsList {
   }
 }
 
-export default openApi(V1InnovationsList.httpTrigger as AzureFunction, '/v1', {
+export default openApi(V1InnovationsList.httpTrigger as AzureFunction, "/v1", {
   get: {
-    operationId: 'v1-innovations-list',
-    description: 'Get innovations list',
+    operationId: "v1-innovations-list",
+    description: "Get innovations list",
     parameters: SwaggerHelper.paramJ2S({ query: QueryParamsSchema }),
     responses: {
       200: {
-        description: 'Success',
+        description: "Success",
         content: {
-          'application/json': {
+          "application/json": {
             schema: {
-              type: 'object',
+              type: "object",
               properties: {
-                id: { type: 'string', description: 'Unique identifier for innovation object' }
+                id: { type: "string", description: "Unique identifier for innovation object" }
               }
             }
           }
         }
       },
-      400: { description: 'Invalid innovation payload' }
+      400: { description: "Invalid innovation payload" }
     }
   }
 });

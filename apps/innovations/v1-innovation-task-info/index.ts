@@ -1,18 +1,18 @@
-import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
-import type { AzureFunction, HttpRequest } from '@azure/functions';
+import { mapOpenApi3 as openApi } from "@aaronpowell/azure-functions-nodejs-openapi";
+import type { AzureFunction, HttpRequest } from "@azure/functions";
 
-import { JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
-import type { AuthorizationService } from '@innovations/shared/services';
-import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import type { CustomContextType } from '@innovations/shared/types';
+import { JwtDecoder } from "@innovations/shared/decorators";
+import { JoiHelper, ResponseHelper, SwaggerHelper } from "@innovations/shared/helpers";
+import type { AuthorizationService } from "@innovations/shared/services";
+import SHARED_SYMBOLS from "@innovations/shared/services/symbols";
+import type { CustomContextType } from "@innovations/shared/types";
 
-import { container } from '../_config';
+import { container } from "../_config";
 
-import type { InnovationTasksService } from '../_services/innovation-tasks.service';
-import SYMBOLS from '../_services/symbols';
-import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
-import { ParamsSchema, ParamsType } from './validation.schemas';
+import type { InnovationTasksService } from "../_services/innovation-tasks.service";
+import SYMBOLS from "../_services/symbols";
+import { ResponseBodySchema, type ResponseDTO } from "./transformation.dtos";
+import { ParamsSchema, ParamsType } from "./validation.schemas";
 
 class V1InnovationTaskInfo {
   @JwtDecoder()
@@ -67,24 +67,24 @@ class V1InnovationTaskInfo {
   }
 }
 
-export default openApi(V1InnovationTaskInfo.httpTrigger as AzureFunction, '/v1/{innovationId}/tasks/{taskId}', {
+export default openApi(V1InnovationTaskInfo.httpTrigger as AzureFunction, "/v1/{innovationId}/tasks/{taskId}", {
   get: {
-    description: 'Get an innovation task.',
-    operationId: 'v1-innovation-task-info',
-    tags: ['[v1] Innovation Tasks'],
+    description: "Get an innovation task.",
+    operationId: "v1-innovation-task-info",
+    tags: ["[v1] Innovation Tasks"],
     parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     responses: {
       200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
-        description: 'The innovation task.'
+        description: "The innovation task."
       }),
       401: {
-        description: 'Unauthorized'
+        description: "Unauthorized"
       },
       403: {
-        description: 'Forbidden'
+        description: "Forbidden"
       },
       404: {
-        description: 'Not Found'
+        description: "Not Found"
       }
     }
   }

@@ -1,5 +1,5 @@
-import type { IRSchemaType } from '@innovations/shared/models';
-import Joi from 'joi';
+import type { IRSchemaType } from "@innovations/shared/models";
+import Joi from "joi";
 
 export type ResponseDTO = { version: number; schema: IRSchemaType };
 

@@ -1,13 +1,13 @@
-import azureFunction from '.';
+import azureFunction from ".";
 
-import { AzureHttpTriggerBuilder, TestsHelper } from '@innovations/shared/tests';
-import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
-import { randPastDate, randText, randUserName, randUuid } from '@ngneat/falso';
-import { InnovationAssessmentsService } from '../_services/innovation-assessments.service';
-import type { ResponseDTO } from './transformation.dtos';
-import type { ParamsType } from './validation.schemas';
+import { AzureHttpTriggerBuilder, TestsHelper } from "@innovations/shared/tests";
+import type { TestUserType } from "@innovations/shared/tests/builders/user.builder";
+import { randPastDate, randText, randUserName, randUuid } from "@ngneat/falso";
+import { InnovationAssessmentsService } from "../_services/innovation-assessments.service";
+import type { ResponseDTO } from "./transformation.dtos";
+import type { ParamsType } from "./validation.schemas";
 
-jest.mock('@innovations/shared/decorators', () => ({
+jest.mock("@innovations/shared/decorators", () => ({
   JwtDecoder: jest.fn().mockImplementation(() => (_: any, __: string, descriptor: PropertyDescriptor) => {
     return descriptor;
   }),
@@ -28,10 +28,10 @@ const expected = {
   majorVersion: 1,
   minorVersion: 0,
   editReason: null,
-  previousAssessment: { id: '', majorVersion: 0, minorVersion: 0 },
+  previousAssessment: { id: "", majorVersion: 0, minorVersion: 0 },
   reassessment: {
     description: randText(),
-    reassessmentReason: ['NO_SUPPORT'],
+    reassessmentReason: ["NO_SUPPORT"],
     otherReassessmentReason: randText(),
     whatSupportDoYouNeed: randText(),
     sectionsUpdatedSinceLastAssessment: [],
@@ -43,21 +43,21 @@ const expected = {
   startedAt: randPastDate(),
   finishedAt: randPastDate(),
   assignTo: { id: randUuid(), name: randUserName() },
-  maturityLevel: 'READY' as const,
+  maturityLevel: "READY" as const,
   maturityLevelComment: randText(),
-  hasRegulatoryApprovals: 'YES' as const,
+  hasRegulatoryApprovals: "YES" as const,
   hasRegulatoryApprovalsComment: randText(),
-  hasEvidence: 'YES' as const,
+  hasEvidence: "YES" as const,
   hasEvidenceComment: randText(),
-  hasValidation: 'YES' as const,
+  hasValidation: "YES" as const,
   hasValidationComment: randText(),
-  hasProposition: 'YES' as const,
+  hasProposition: "YES" as const,
   hasPropositionComment: randText(),
-  hasCompetitionKnowledge: 'YES' as const,
+  hasCompetitionKnowledge: "YES" as const,
   hasCompetitionKnowledgeComment: randText(),
-  hasImplementationPlan: 'YES' as const,
+  hasImplementationPlan: "YES" as const,
   hasImplementationPlanComment: randText(),
-  hasScaleResource: 'YES' as const,
+  hasScaleResource: "YES" as const,
   hasScaleResourceComment: randText(),
   suggestedOrganisations: [
     {
@@ -72,19 +72,19 @@ const expected = {
   isLatest: true
 };
 const mock = jest
-  .spyOn(InnovationAssessmentsService.prototype, 'getInnovationAssessmentInfo')
+  .spyOn(InnovationAssessmentsService.prototype, "getInnovationAssessmentInfo")
   .mockResolvedValue(expected);
 
 afterEach(() => {
   jest.clearAllMocks();
 });
 
-describe('v1-innovation-assessment-info', () => {
+describe("v1-innovation-assessment-info", () => {
   const innovationId = scenario.users.johnInnovator.innovations.johnInnovation.id;
   const assessmentId = scenario.users.johnInnovator.innovations.johnInnovation.assessment.id;
 
-  describe('200', () => {
-    it('should return success', async () => {
+  describe("200", () => {
+    it("should return success", async () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.paulNeedsAssessor)
         .setParams<ParamsType>({ innovationId, assessmentId })
@@ -95,11 +95,11 @@ describe('v1-innovation-assessment-info', () => {
       expect(mock).toHaveBeenCalledTimes(1);
     });
 
-    it('should return success with reassessment', async () => {
+    it("should return success with reassessment", async () => {
       const expectedWithReassessment = {
         ...expected,
         reassessment: {
-          reassessmentReason: ['NO_SUPPORT'],
+          reassessmentReason: ["NO_SUPPORT"],
           createdAt: new Date(),
           previousCreatedAt: new Date(),
           description: randText(),
@@ -119,14 +119,14 @@ describe('v1-innovation-assessment-info', () => {
     });
   });
 
-  describe('Access', () => {
+  describe("Access", () => {
     it.each([
-      ['Admin', 200, scenario.users.allMighty],
-      ['QA', 200, scenario.users.aliceQualifyingAccessor],
-      ['NA', 200, scenario.users.paulNeedsAssessor],
-      ['Innovator', 200, scenario.users.johnInnovator],
-      ['Outside innovator', 403, scenario.users.ottoOctaviusInnovator]
-    ])('access with user %s should give %i', async (_role: string, status: number, user: TestUserType) => {
+      ["Admin", 200, scenario.users.allMighty],
+      ["QA", 200, scenario.users.aliceQualifyingAccessor],
+      ["NA", 200, scenario.users.paulNeedsAssessor],
+      ["Innovator", 200, scenario.users.johnInnovator],
+      ["Outside innovator", 403, scenario.users.ottoOctaviusInnovator]
+    ])("access with user %s should give %i", async (_role: string, status: number, user: TestUserType) => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(user)
         .setParams<ParamsType>({ innovationId, assessmentId })

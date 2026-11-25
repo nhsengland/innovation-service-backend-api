@@ -1,6 +1,6 @@
-import { JoiHelper } from '@innovations/shared/helpers';
-import Joi from 'joi';
-import { InnovationStatisticsEnum } from '../_enums/innovation.enums';
+import { JoiHelper } from "@innovations/shared/helpers";
+import Joi from "joi";
+import { InnovationStatisticsEnum } from "../_enums/innovation.enums";
 
 export type ParamsType = {
   innovationId: string;

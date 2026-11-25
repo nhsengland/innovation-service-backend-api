@@ -1,15 +1,15 @@
-import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
-import type { AzureFunction, HttpRequest } from '@azure/functions';
+import { mapOpenApi3 as openApi } from "@aaronpowell/azure-functions-nodejs-openapi";
+import type { AzureFunction, HttpRequest } from "@azure/functions";
 
-import { JwtDecoder } from '@innovations/shared/decorators';
-import { ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
-import type { AuthorizationService, IRSchemaService } from '@innovations/shared/services';
-import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import type { CustomContextType } from '@innovations/shared/types';
+import { JwtDecoder } from "@innovations/shared/decorators";
+import { ResponseHelper, SwaggerHelper } from "@innovations/shared/helpers";
+import type { AuthorizationService, IRSchemaService } from "@innovations/shared/services";
+import SHARED_SYMBOLS from "@innovations/shared/services/symbols";
+import type { CustomContextType } from "@innovations/shared/types";
 
-import { container } from '../_config';
+import { container } from "../_config";
 
-import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
+import { ResponseBodySchema, type ResponseDTO } from "./transformation.dtos";
 
 class V1IrSchemaInfo {
   @JwtDecoder()
@@ -37,19 +37,19 @@ class V1IrSchemaInfo {
   }
 }
 
-export default openApi(V1IrSchemaInfo.httpTrigger as AzureFunction, '/v1/ir-schema', {
+export default openApi(V1IrSchemaInfo.httpTrigger as AzureFunction, "/v1/ir-schema", {
   get: {
-    operationId: 'v1-ir-schema-info',
-    description: 'Get current ir schema',
-    tags: ['[v1] IR Schema'],
+    operationId: "v1-ir-schema-info",
+    description: "Get current ir schema",
+    tags: ["[v1] IR Schema"],
     responses: {
       200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
-        description: 'Success'
+        description: "Success"
       }),
-      400: { description: 'Bad request' },
-      401: { description: 'Not authorized' },
-      403: { description: 'Forbidden' },
-      500: { description: 'An error occurred' }
+      400: { description: "Bad request" },
+      401: { description: "Not authorized" },
+      403: { description: "Forbidden" },
+      500: { description: "An error occurred" }
     }
   }
 });

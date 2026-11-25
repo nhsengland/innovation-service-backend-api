@@ -1,9 +1,9 @@
-import Joi from 'joi';
+import Joi from "joi";
 
-import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
-import type { InnovationFileType } from '../_types/innovation.types';
-import { InnovationFileSchema } from '../_types/innovation.types';
-import { JoiHelper } from '@innovations/shared/helpers';
+import { TEXTAREA_LENGTH_LIMIT } from "@innovations/shared/constants";
+import type { InnovationFileType } from "../_types/innovation.types";
+import { InnovationFileSchema } from "../_types/innovation.types";
+import { JoiHelper } from "@innovations/shared/helpers";
 
 export type BodyType = {
   message: string;

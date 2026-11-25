@@ -1,18 +1,18 @@
-import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
-import type { AzureFunction, HttpRequest } from '@azure/functions';
+import { mapOpenApi3 as openApi } from "@aaronpowell/azure-functions-nodejs-openapi";
+import type { AzureFunction, HttpRequest } from "@azure/functions";
 
-import { JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
-import type { AuthorizationService } from '@innovations/shared/services';
-import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import type { CustomContextType } from '@innovations/shared/types';
+import { JwtDecoder } from "@innovations/shared/decorators";
+import { JoiHelper, ResponseHelper, SwaggerHelper } from "@innovations/shared/helpers";
+import type { AuthorizationService } from "@innovations/shared/services";
+import SHARED_SYMBOLS from "@innovations/shared/services/symbols";
+import type { CustomContextType } from "@innovations/shared/types";
 
-import { container } from '../_config';
+import { container } from "../_config";
 
-import type { InnovationTasksService } from '../_services/innovation-tasks.service';
-import SYMBOLS from '../_services/symbols';
-import { ResponseBodySchema, type ResponseDTO } from './transformation.dtos';
-import { QueryParamsSchema, QueryParamsType } from './validation.schemas';
+import type { InnovationTasksService } from "../_services/innovation-tasks.service";
+import SYMBOLS from "../_services/symbols";
+import { ResponseBodySchema, type ResponseDTO } from "./transformation.dtos";
+import { QueryParamsSchema, QueryParamsType } from "./validation.schemas";
 
 class V1InnovationTasksList {
   @JwtDecoder()
@@ -63,27 +63,27 @@ class V1InnovationTasksList {
   }
 }
 
-export default openApi(V1InnovationTasksList.httpTrigger as AzureFunction, '/v1/tasks', {
+export default openApi(V1InnovationTasksList.httpTrigger as AzureFunction, "/v1/tasks", {
   get: {
-    description: 'Get a list of innovation tasks.',
-    operationId: 'v1-innovation-tasks-list',
-    tags: ['[v1] Innovation Tasks'],
+    description: "Get a list of innovation tasks.",
+    operationId: "v1-innovation-tasks-list",
+    tags: ["[v1] Innovation Tasks"],
     parameters: SwaggerHelper.paramJ2S({ query: QueryParamsSchema }),
     responses: {
       200: SwaggerHelper.responseJ2S(ResponseBodySchema, {
-        description: 'The list of innovation tasks.'
+        description: "The list of innovation tasks."
       }),
       400: {
-        description: 'The request is invalid.'
+        description: "The request is invalid."
       },
       401: {
-        description: 'The user is not authenticated.'
+        description: "The user is not authenticated."
       },
       403: {
-        description: 'The user is not authorized to access this resource.'
+        description: "The user is not authorized to access this resource."
       },
       500: {
-        description: 'An error occurred while processing the request.'
+        description: "An error occurred while processing the request."
       }
     }
   }

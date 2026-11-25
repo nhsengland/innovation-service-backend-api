@@ -1,14 +1,14 @@
-import azureFunction from '.';
+import azureFunction from ".";
 
-import { AzureHttpTriggerBuilder, TestsHelper } from '@innovations/shared/tests';
-import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
-import type { ErrorResponseType } from '@innovations/shared/types';
-import { randPastDate, randUuid } from '@ngneat/falso';
-import type { ResponseDTO } from './transformation.dtos';
-import type { ParamsType } from './validation.schemas';
-import { InnovationAssessmentsService } from '../_services/innovation-assessments.service';
+import { AzureHttpTriggerBuilder, TestsHelper } from "@innovations/shared/tests";
+import type { TestUserType } from "@innovations/shared/tests/builders/user.builder";
+import type { ErrorResponseType } from "@innovations/shared/types";
+import { randPastDate, randUuid } from "@ngneat/falso";
+import type { ResponseDTO } from "./transformation.dtos";
+import type { ParamsType } from "./validation.schemas";
+import { InnovationAssessmentsService } from "../_services/innovation-assessments.service";
 
-jest.mock('@innovations/shared/decorators', () => ({
+jest.mock("@innovations/shared/decorators", () => ({
   JwtDecoder: jest.fn().mockImplementation(() => (_: any, __: string, descriptor: PropertyDescriptor) => {
     return descriptor;
   })
@@ -37,15 +37,15 @@ const expected = [
     finishedAt: new Date()
   }
 ];
-const mock = jest.spyOn(InnovationAssessmentsService.prototype, 'getAssessmentsList').mockResolvedValue(expected);
+const mock = jest.spyOn(InnovationAssessmentsService.prototype, "getAssessmentsList").mockResolvedValue(expected);
 
 afterEach(() => {
   jest.clearAllMocks();
 });
 
-describe('v1-innovation-assessments-list Suite', () => {
-  describe('200', () => {
-    it('should return the completed assessments list', async () => {
+describe("v1-innovation-assessments-list Suite", () => {
+  describe("200", () => {
+    it("should return the completed assessments list", async () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.johnInnovator)
         .setParams<ParamsType>({ innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id })
@@ -57,14 +57,14 @@ describe('v1-innovation-assessments-list Suite', () => {
     });
   });
 
-  describe('Access', () => {
+  describe("Access", () => {
     it.each([
-      ['Admin', 200, scenario.users.allMighty],
-      ['QA', 200, scenario.users.aliceQualifyingAccessor],
-      ['NA', 200, scenario.users.paulNeedsAssessor],
-      ['Innovator', 200, scenario.users.johnInnovator],
-      ['Innovator other', 403, scenario.users.ottoOctaviusInnovator]
-    ])('access with user %s should give %i', async (_role: string, status: number, user: TestUserType) => {
+      ["Admin", 200, scenario.users.allMighty],
+      ["QA", 200, scenario.users.aliceQualifyingAccessor],
+      ["NA", 200, scenario.users.paulNeedsAssessor],
+      ["Innovator", 200, scenario.users.johnInnovator],
+      ["Innovator other", 403, scenario.users.ottoOctaviusInnovator]
+    ])("access with user %s should give %i", async (_role: string, status: number, user: TestUserType) => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(user)
         .setParams<ParamsType>({ innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id })

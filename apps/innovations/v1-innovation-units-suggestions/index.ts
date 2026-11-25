@@ -1,20 +1,20 @@
-import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
-import type { AzureFunction, HttpRequest } from '@azure/functions';
+import { mapOpenApi3 as openApi } from "@aaronpowell/azure-functions-nodejs-openapi";
+import type { AzureFunction, HttpRequest } from "@azure/functions";
 
-import { JwtDecoder } from '@innovations/shared/decorators';
-import type { AuthorizationService } from '@innovations/shared/services';
-import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import type { CustomContextType } from '@innovations/shared/types';
+import { JwtDecoder } from "@innovations/shared/decorators";
+import type { AuthorizationService } from "@innovations/shared/services";
+import SHARED_SYMBOLS from "@innovations/shared/services/symbols";
+import type { CustomContextType } from "@innovations/shared/types";
 
-import type { ResponseDTO } from './transformation.dtos';
+import type { ResponseDTO } from "./transformation.dtos";
 
-import { container } from '../_config';
+import { container } from "../_config";
 
-import type { InnovationSupportsService } from '../_services/innovation-supports.service';
-import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
-import { ParamsSchema, ParamsType } from './validation.schemas';
-import SYMBOLS from '../_services/symbols';
-import { ServiceRoleEnum } from '@innovations/shared/enums/user.enums';
+import type { InnovationSupportsService } from "../_services/innovation-supports.service";
+import { JoiHelper, ResponseHelper, SwaggerHelper } from "@innovations/shared/helpers";
+import { ParamsSchema, ParamsType } from "./validation.schemas";
+import SYMBOLS from "../_services/symbols";
+import { ServiceRoleEnum } from "@innovations/shared/enums/user.enums";
 
 class V1GetInnovationQASuggestions {
   @JwtDecoder()
@@ -48,22 +48,22 @@ class V1GetInnovationQASuggestions {
 
 export default openApi(
   V1GetInnovationQASuggestions.httpTrigger as AzureFunction,
-  '/v1/{innovationId}/units-suggestions',
+  "/v1/{innovationId}/units-suggestions",
   {
     get: {
-      description: 'Get suggestions made by other units to the innovation',
-      operationId: 'v1-innovation-units-suggestions',
-      tags: ['Innovation Suggestions'],
+      description: "Get suggestions made by other units to the innovation",
+      operationId: "v1-innovation-units-suggestions",
+      tags: ["Innovation Suggestions"],
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       responses: {
         200: {
-          description: 'OK'
+          description: "OK"
         },
         400: {
-          description: 'Bad Request'
+          description: "Bad Request"
         },
         404: {
-          description: 'Not found'
+          description: "Not found"
         }
       }
     }

@@ -1,6 +1,6 @@
-import { JoiHelper } from '@innovations/shared/helpers';
-import type { DocumentType } from '@innovations/shared/schemas/innovation-record';
-import Joi from 'joi';
+import { JoiHelper } from "@innovations/shared/helpers";
+import type { DocumentType } from "@innovations/shared/schemas/innovation-record";
+import Joi from "joi";
 
 export type ParamsType = {
   innovationId: string;
@@ -10,7 +10,7 @@ export const ParamsSchema = Joi.object<ParamsType>({
 }).required();
 
 export type QueryParamsType = {
-  version?: DocumentType['version'];
+  version?: DocumentType["version"];
 };
 
 export const QueryParamsSchema = Joi.object<QueryParamsType>({

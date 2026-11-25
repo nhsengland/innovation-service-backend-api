@@ -1,55 +1,55 @@
-import type { QueryDslQueryContainer, SearchHighlight } from '@elastic/elasticsearch/lib/api/types';
-import { randText } from '@ngneat/falso';
+import type { QueryDslQueryContainer, SearchHighlight } from "@elastic/elasticsearch/lib/api/types";
+import { randText } from "@ngneat/falso";
 import {
   boolQuery,
   ElasticSearchQueryBuilder,
   escapeElasticSpecialCharsAndFuzziness,
   nestedQuery,
   orQuery
-} from './es-query-builder.helper';
+} from "./es-query-builder.helper";
 
-describe('innovations / _helpers / es-query-builder suite', () => {
+describe("innovations / _helpers / es-query-builder suite", () => {
   const query: QueryDslQueryContainer = { term: { test: randText() } };
 
-  describe('ElasticSearchQueryBuilder', () => {
+  describe("ElasticSearchQueryBuilder", () => {
     let builder: ElasticSearchQueryBuilder;
-    const indexName = 'ir-documents-test';
+    const indexName = "ir-documents-test";
 
     beforeEach(() => {
       builder = new ElasticSearchQueryBuilder(indexName);
     });
 
-    it('should create helper and add the index name', () => {
+    it("should create helper and add the index name", () => {
       expect(builder.build().index).toBe(indexName);
     });
 
-    it('should add a single must clause', () => {
+    it("should add a single must clause", () => {
       builder.addMust(query);
       expect(builder.build().query.bool.must).toStrictEqual([query]);
     });
 
-    it('should add an array of must clauses', () => {
+    it("should add an array of must clauses", () => {
       builder.addMust([query, query]);
       expect(builder.build().query.bool.must).toStrictEqual([query, query]);
     });
 
-    it('should add a filter clause', () => {
+    it("should add a filter clause", () => {
       builder.addFilter(query);
       expect(builder.build().query.bool.filter).toStrictEqual([query]);
     });
 
-    it('should add an array of filter clauses', () => {
+    it("should add an array of filter clauses", () => {
       builder.addFilter([query, query]);
       expect(builder.build().query.bool.filter).toStrictEqual([query, query]);
     });
 
-    it('should highlight to query', () => {
+    it("should highlight to query", () => {
       const highlight: SearchHighlight = { fields: {} };
       builder.addHighlight(highlight);
       expect(builder.build().highlight).toStrictEqual(highlight);
     });
 
-    it('should pagination to query', () => {
+    it("should pagination to query", () => {
       const params = { from: 1, size: 1 };
       builder.addPagination(params);
       expect(builder.build().from).toBe(params.from);
@@ -57,13 +57,13 @@ describe('innovations / _helpers / es-query-builder suite', () => {
     });
   });
 
-  describe('Helper functions', () => {
-    it('should create a nestedQuery', () => {
-      const nested = nestedQuery('supports', query);
-      expect(nested).toStrictEqual({ nested: { path: 'supports', query } });
+  describe("Helper functions", () => {
+    it("should create a nestedQuery", () => {
+      const nested = nestedQuery("supports", query);
+      expect(nested).toStrictEqual({ nested: { path: "supports", query } });
     });
 
-    it('should create a orQuery', () => {
+    it("should create a orQuery", () => {
       const firstCondition = query;
       const secondCondition = query;
       const orQueryResult = orQuery([firstCondition, secondCondition]);
@@ -75,14 +75,14 @@ describe('innovations / _helpers / es-query-builder suite', () => {
       });
     });
 
-    it('should create a boolQuery', () => {
+    it("should create a boolQuery", () => {
       const boolQueryResult = boolQuery({ must: [query], filter: query });
       expect(boolQueryResult).toEqual({ bool: { must: [query], filter: query } });
     });
 
-    it('should prepare the input for a search with fuzziness', () => {
-      const result = escapeElasticSpecialCharsAndFuzziness(' asd~ ~[Test] <asd!> ');
-      expect(result).toBe('asd\\~~1 \\~\\[Test\\]~1 asd\\!~1');
+    it("should prepare the input for a search with fuzziness", () => {
+      const result = escapeElasticSpecialCharsAndFuzziness(" asd~ ~[Test] <asd!> ");
+      expect(result).toBe("asd\\~~1 \\~\\[Test\\]~1 asd\\!~1");
     });
   });
 });

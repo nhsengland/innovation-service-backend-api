@@ -1,15 +1,15 @@
-import azureFunction from '.';
+import azureFunction from ".";
 
-import { InnovationThreadMessageEntity, UserEntity } from '@innovations/shared/entities';
-import { AzureHttpTriggerBuilder, TestsHelper } from '@innovations/shared/tests';
-import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
-import type { ErrorResponseType } from '@innovations/shared/types';
-import { randBoolean, randPastDate, randText, randUuid } from '@ngneat/falso';
-import { InnovationThreadsService } from '../_services/innovation-threads.service';
-import type { ResponseDTO } from './transformation.dtos';
-import type { BodyType, ParamsType } from './validation.schemas';
+import { InnovationThreadMessageEntity, UserEntity } from "@innovations/shared/entities";
+import { AzureHttpTriggerBuilder, TestsHelper } from "@innovations/shared/tests";
+import type { TestUserType } from "@innovations/shared/tests/builders/user.builder";
+import type { ErrorResponseType } from "@innovations/shared/types";
+import { randBoolean, randPastDate, randText, randUuid } from "@ngneat/falso";
+import { InnovationThreadsService } from "../_services/innovation-threads.service";
+import type { ResponseDTO } from "./transformation.dtos";
+import type { BodyType, ParamsType } from "./validation.schemas";
 
-jest.mock('@innovations/shared/decorators', () => ({
+jest.mock("@innovations/shared/decorators", () => ({
   JwtDecoder: jest.fn().mockImplementation(() => (_: any, __: string, descriptor: PropertyDescriptor) => {
     return descriptor;
   }),
@@ -38,15 +38,15 @@ const expected = {
     })
   })
 };
-const mock = jest.spyOn(InnovationThreadsService.prototype, 'createEditableMessage').mockResolvedValue(expected);
+const mock = jest.spyOn(InnovationThreadsService.prototype, "createEditableMessage").mockResolvedValue(expected);
 
 afterEach(() => {
   jest.clearAllMocks();
 });
 
-describe('v1-innovation-thread-message-create Suite', () => {
-  describe('200', () => {
-    it('should create an innovation thread message', async () => {
+describe("v1-innovation-thread-message-create Suite", () => {
+  describe("200", () => {
+    it("should create an innovation thread message", async () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.aliceQualifyingAccessor)
         .setParams<ParamsType>({
@@ -75,16 +75,16 @@ describe('v1-innovation-thread-message-create Suite', () => {
     });
   });
 
-  describe('Access', () => {
+  describe("Access", () => {
     it.each([
-      ['Admin', 403, scenario.users.allMighty],
-      ['QA', 200, scenario.users.aliceQualifyingAccessor],
-      ['A', 200, scenario.users.ingridAccessor],
-      ['NA', 200, scenario.users.paulNeedsAssessor],
-      ['Innovator owner', 200, scenario.users.johnInnovator],
-      ['Innovator collaborator', 200, scenario.users.janeInnovator],
-      ['Innovator other', 403, scenario.users.ottoOctaviusInnovator]
-    ])('access with user %s should give %i', async (_role: string, status: number, user: TestUserType) => {
+      ["Admin", 403, scenario.users.allMighty],
+      ["QA", 200, scenario.users.aliceQualifyingAccessor],
+      ["A", 200, scenario.users.ingridAccessor],
+      ["NA", 200, scenario.users.paulNeedsAssessor],
+      ["Innovator owner", 200, scenario.users.johnInnovator],
+      ["Innovator collaborator", 200, scenario.users.janeInnovator],
+      ["Innovator other", 403, scenario.users.ottoOctaviusInnovator]
+    ])("access with user %s should give %i", async (_role: string, status: number, user: TestUserType) => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(user)
         .setParams<ParamsType>({
@@ -100,13 +100,13 @@ describe('v1-innovation-thread-message-create Suite', () => {
     });
 
     it.each([
-      ['QA', 409, scenario.users.aliceQualifyingAccessor],
-      ['A', 409, scenario.users.ingridAccessor],
-      ['NA', 409, scenario.users.paulNeedsAssessor],
-      ['Innovator owner', 409, scenario.users.johnInnovator],
-      ['Innovator collaborator', 409, scenario.users.janeInnovator]
+      ["QA", 409, scenario.users.aliceQualifyingAccessor],
+      ["A", 409, scenario.users.ingridAccessor],
+      ["NA", 409, scenario.users.paulNeedsAssessor],
+      ["Innovator owner", 409, scenario.users.johnInnovator],
+      ["Innovator collaborator", 409, scenario.users.janeInnovator]
     ])(
-      'access with user %s should give conflict on creating message',
+      "access with user %s should give conflict on creating message",
       async (_role: string, status: number, user: TestUserType) => {
         const result = await new AzureHttpTriggerBuilder()
           .setAuth(user)

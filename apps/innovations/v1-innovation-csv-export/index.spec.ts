@@ -1,15 +1,15 @@
-import azureFunction from '.';
+import azureFunction from ".";
 
-import { InnovationSectionStatusEnum } from '@innovations/shared/enums';
-import { AzureHttpTriggerBuilder, TestsHelper } from '@innovations/shared/tests';
-import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
-import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
-import type { ErrorResponseType } from '@innovations/shared/types';
-import { randText } from '@ngneat/falso';
-import { ExportFileService } from '../_services/export-file-service';
-import type { BodyType, ParamsType } from './validation.schemas';
+import { InnovationSectionStatusEnum } from "@innovations/shared/enums";
+import { AzureHttpTriggerBuilder, TestsHelper } from "@innovations/shared/tests";
+import type { TestUserType } from "@innovations/shared/tests/builders/user.builder";
+import { DTOsHelper } from "@innovations/shared/tests/helpers/dtos.helper";
+import type { ErrorResponseType } from "@innovations/shared/types";
+import { randText } from "@ngneat/falso";
+import { ExportFileService } from "../_services/export-file-service";
+import type { BodyType, ParamsType } from "./validation.schemas";
 
-jest.mock('@innovations/shared/decorators', () => ({
+jest.mock("@innovations/shared/decorators", () => ({
   JwtDecoder: jest.fn().mockImplementation(() => (_: any, __: string, descriptor: PropertyDescriptor) => {
     return descriptor;
   }),
@@ -26,13 +26,13 @@ beforeAll(async () => {
 });
 
 const csv = randText();
-const generateCSVMock = jest.spyOn(ExportFileService.prototype, 'create').mockResolvedValue(csv);
+const generateCSVMock = jest.spyOn(ExportFileService.prototype, "create").mockResolvedValue(csv);
 
 afterEach(() => {
   jest.clearAllMocks();
 });
 
-describe('v1-innovation-csv-export Suite', () => {
+describe("v1-innovation-csv-export Suite", () => {
   const body = {
     sections: [
       {
@@ -51,8 +51,8 @@ describe('v1-innovation-csv-export Suite', () => {
     ],
     startSectionIndex: 1
   };
-  describe('200', () => {
-    it('should return the csv', async () => {
+  describe("200", () => {
+    it("should return the csv", async () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.johnInnovator)
         .setParams<ParamsType>({
@@ -65,7 +65,7 @@ describe('v1-innovation-csv-export Suite', () => {
       expect(generateCSVMock).toHaveBeenCalledTimes(1);
       expect(generateCSVMock).toHaveBeenCalledWith(
         DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
-        'csv',
+        "csv",
         {
           name: scenario.users.johnInnovator.innovations.johnInnovation.name,
           uniqueId: scenario.users.johnInnovator.innovations.johnInnovation.uniqueId
@@ -76,13 +76,13 @@ describe('v1-innovation-csv-export Suite', () => {
     });
   });
 
-  describe('Access', () => {
+  describe("Access", () => {
     it.each([
-      ['Admin', 200, scenario.users.allMighty],
-      ['QA', 200, scenario.users.aliceQualifyingAccessor],
-      ['NA', 200, scenario.users.paulNeedsAssessor],
-      ['Innovator owner', 200, scenario.users.johnInnovator]
-    ])('access with user %s should give %i', async (_role: string, status: number, user: TestUserType) => {
+      ["Admin", 200, scenario.users.allMighty],
+      ["QA", 200, scenario.users.aliceQualifyingAccessor],
+      ["NA", 200, scenario.users.paulNeedsAssessor],
+      ["Innovator owner", 200, scenario.users.johnInnovator]
+    ])("access with user %s should give %i", async (_role: string, status: number, user: TestUserType) => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(user)
         .setParams<ParamsType>({

@@ -1,8 +1,8 @@
-import Joi from 'joi';
+import Joi from "joi";
 
-import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
-import { InnovationTaskStatusEnum, ServiceRoleEnum } from '@innovations/shared/enums';
-import { JoiHelper } from '@innovations/shared/helpers';
+import { TEXTAREA_LENGTH_LIMIT } from "@innovations/shared/constants";
+import { InnovationTaskStatusEnum, ServiceRoleEnum } from "@innovations/shared/enums";
+import { JoiHelper } from "@innovations/shared/helpers";
 
 export type ParamsType = {
   innovationId: string;
@@ -19,7 +19,7 @@ export type BodyType = {
 };
 
 export const BodySchema = Joi.object<BodyType>({
-  status: Joi.when('$userRole', {
+  status: Joi.when("$userRole", {
     is: [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR, ServiceRoleEnum.ASSESSMENT],
     then: JoiHelper.AppCustomJoi()
       .string()
