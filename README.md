@@ -7,6 +7,39 @@ Explanation here
 - Node 20
 - Docker and Docker compose
 
+## Run locally in WSL
+
+Use Ubuntu in WSL. Put this repo and `innovation-service-transactional-frontend` next to each other in the Linux filesystem (for example, `~/NHS`). The backend creates Unix symbolic links during `npm ci`, so install it from WSL.
+
+1. Install Node 20.18 or later within Node 20, npm, Docker with WSL integration, and Azure Functions Core Tools (`func`).
+2. Set up this repo's `.env` and `local.settings.json` as described below. Set up the frontend's `.env` using its README. Keep secrets out of Git.
+3. In each repo, run `npm ci`.
+4. In this backend repo, start SQL Server, Azurite, Redis, and Elasticsearch:
+
+```bash
+docker compose -f .docker/docker-compose.yml up -d
+```
+
+On the first start, wait for SQL Server to be ready, then create the local databases and run migrations and seeds:
+
+```bash
+node scripts/create-local-dbs.js
+npm run migrations
+npm run seeds
+```
+
+Open three WSL terminals in this backend repo. Run one command in each:
+
+```bash
+npm run app:watch --function-app=admin --port=7071
+npm run app:watch --function-app=innovations --port=7072
+npm run app:watch --function-app=users --port=7074
+```
+
+In a fourth WSL terminal, go to the sibling frontend repo and run `npm run start:dev:ssr`. Open `http://localhost:4200`. These commands do not start the informational frontend or notifications function. Press Ctrl+C in each terminal to stop an app; use `docker compose -f .docker/docker-compose.yml down` in this backend repo to stop Docker services.
+
+If startup fails, read the error in that terminal. Check Docker in WSL, `func`, dependencies in both repos, and the local settings.
+
 ### Instructions to install docker + docker compose on a linux ubuntu flavored environment.
 
 ```bash
@@ -113,10 +146,8 @@ $ docker compose -f .docker/docker-compose.yml up
 
 #### **Note: When running for the first time, make sure that:**
 
-1. Create a 2 DB's manually trought Microsoft SQL Server Managemente Studio. Create "innovationdb" and "tests" DB's.
-1. Run the following command to allow parallel transactions in jest: `ALTER DATABASE tests SET READ_COMMITTED_SNAPSHOT ON;`
-   **Note:** you only need to run this when you create the tests database
-1. Run migrations and seeds trought the commands:
+1. After SQL Server is ready, run `node scripts/create-local-dbs.js`. This creates `innovationdb` and `tests` and enables `READ_COMMITTED_SNAPSHOT` for tests.
+2. Run migrations and seeds:
 
 ```bash
 $ npm run migrations
