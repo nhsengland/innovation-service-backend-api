@@ -1215,7 +1215,18 @@ export class RecipientsService extends BaseService {
     },
     entityManager?: EntityManager
   ): Promise<RecipientType[]> {
-    const { userIds, roles, organisations, organisationUnits, includeLocked, withDeleted } = filters;
+    const { roles, organisations, organisationUnits, includeLocked, withDeleted } = filters;
+    const userIds = filters.userIds && [...new Set(filters.userIds)];
+
+    if (userIds && userIds.length > 1000) {
+      const recipients: RecipientType[] = [];
+      for (let offset = 0; offset < userIds.length; offset += 1000) {
+        recipients.push(
+          ...(await this.getRole({ ...filters, userIds: userIds.slice(offset, offset + 1000) }, entityManager))
+        );
+      }
+      return recipients;
+    }
 
     // sanity check to ensure we're filtering for something
     if (!userIds?.length && !roles?.length && !organisations?.length && !organisationUnits?.length) {

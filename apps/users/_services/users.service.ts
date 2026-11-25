@@ -197,12 +197,16 @@ export class UsersService extends BaseService {
     const previousIdentity = await this.identityProviderService.getUserInfo(user.identityId);
     const displayName = `${data.givenName} ${data.surname}`;
 
-    await this.identityProviderService.updateUser(user.identityId, {
-      displayName,
-      givenName: data.givenName,
-      surname: data.surname,
-      ...(data.mobilePhone !== undefined ? { mobilePhone: data.mobilePhone } : {})
-    });
+    await this.identityProviderService.updateUser(
+      user.identityId,
+      {
+        displayName,
+        givenName: data.givenName,
+        surname: data.surname,
+        ...(data.mobilePhone !== undefined ? { mobilePhone: data.mobilePhone } : {})
+      },
+      { confirmNames: false }
+    );
 
     try {
       const em = entityManager ?? this.sqlConnection.manager;
@@ -295,12 +299,16 @@ export class UsersService extends BaseService {
       return { id: user.id };
     } catch (error) {
       try {
-        await this.identityProviderService.updateUser(user.identityId, {
-          displayName: previousIdentity.displayName,
-          givenName: previousIdentity.givenName ?? '',
-          surname: previousIdentity.surname ?? '',
-          mobilePhone: previousIdentity.mobilePhone
-        });
+        await this.identityProviderService.updateUser(
+          user.identityId,
+          {
+            displayName: previousIdentity.displayName,
+            givenName: previousIdentity.givenName ?? '',
+            surname: previousIdentity.surname ?? '',
+            mobilePhone: previousIdentity.mobilePhone
+          },
+          { confirmNames: false }
+        );
         await this.cache.delete(user.identityId);
       } catch (rollbackError) {
         this.logger.error('Failed to roll back B2C user name update', rollbackError);
@@ -373,6 +381,7 @@ export class UsersService extends BaseService {
       }
       query.addOrderBy(field, order);
     }
+    query.addOrderBy('user.id', pagination.order.createdAt ?? 'ASC');
 
     // Get users from database
     const [dbUsers, count] = await query.getManyAndCount();

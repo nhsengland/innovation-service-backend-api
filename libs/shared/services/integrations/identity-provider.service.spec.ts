@@ -292,7 +292,7 @@ describe('Shared / services / IdentityProviderService', () => {
 
       // Assertions
       expect(cacheDeleteManyMock).toHaveBeenCalledWith(users); // Cache should be deleted
-      expect(cacheGetManyMock).toHaveBeenCalledWith(users); // Cache should be checked
+      expect(cacheGetManyMock).not.toHaveBeenCalled(); // Force refresh bypasses stale cache values
       expect(getUsersListFromB2CMock).toHaveBeenCalledWith(users, 'interactive'); // Fresh users should be fetched from B2C
       expect(cacheSetManyMock).toHaveBeenCalled(); // New users should be set in cache
 

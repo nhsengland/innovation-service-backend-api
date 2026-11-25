@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from 'async_hooks';
 import axios from 'axios';
 import { inject, injectable } from 'inversify';
 
@@ -116,14 +117,15 @@ class B2CBatchRequestError extends Error {
 
 const B2C_BATCH_SIZE = 20;
 const B2C_MAX_CONCURRENT_BATCHES = 3;
-const B2C_MAX_RETRIES = 50;
+const B2C_MAX_RETRIES = 500;
 const B2C_MAX_BACKOFF_MS = 1 * 60 * 60 * 1000;
 /** Microsoft Graph supports 15 default expressions in an OData in filter. */
 const FILTERED_LOOKUP_MAX_IDS = 15;
 /** Keep one expression below Graph's documented default limit for the filtered path. */
 const FILTERED_LOOKUP_THRESHOLD = FILTERED_LOOKUP_MAX_IDS - 1;
-const INTERACTIVE_B2C_MAX_RETRIES = 3;
+const INTERACTIVE_B2C_MAX_RETRIES = 30;
 const INTERACTIVE_B2C_MAX_DURATION_MS = 200_000;
+const B2C_UPDATE_CONFIRMATION_ATTEMPTS = 70;
 const B2C_BATCH_FIELDS = [
   'id',
   'givenName',
@@ -168,6 +170,58 @@ type IdentityUpdateBody = {
 
 @injectable()
 export class IdentityProviderService {
+  private readonly retryContext = new AsyncLocalStorage<B2CRetryState>();
+
+  /** Share one retry budget across nested Graph reads, writes and confirmation. */
+  private withB2CRetryBudget<T>(operation: () => Promise<T>, mode: B2CResolutionMode = 'interactive'): Promise<T> {
+    if (this.retryContext.getStore()) return operation();
+    return this.retryContext.run({ policy: getB2CRetryPolicy(mode), startedAt: Date.now() }, operation);
+  }
+
+  private getB2CRequestTimeout(): number {
+    const state = this.retryContext.getStore();
+    const remaining = state?.policy.maxDurationMs
+      ? state.policy.maxDurationMs - (Date.now() - state.startedAt)
+      : INTERACTIVE_B2C_MAX_DURATION_MS;
+    if (remaining <= 0) {
+      throw new ServiceUnavailableError(GenericErrorsEnum.SERVICE_IDENTIY_UNAVAILABLE, {
+        details: { message: 'B2C operation exceeded its retry time budget' }
+      });
+    }
+    return remaining;
+  }
+
+  /** Retry transient failures; never replay an ambiguously accepted creation. */
+  private async requestWithB2CRetry<T>(
+    operation: () => Promise<T>,
+    options: { creation?: boolean; allowMissingAfterRetry?: boolean } = {}
+  ): Promise<T> {
+    return this.withB2CRetryBudget(async () => {
+      const retryState = this.retryContext.getStore()!;
+      let retryCount = 0;
+      while (true) {
+        this.getB2CRequestTimeout();
+        try {
+          return await operation();
+        } catch (error: unknown) {
+          const status = this.getIdentityProviderErrorStatus(error);
+          if (status === 404 && options.allowMissingAfterRetry && retryCount > 0) return undefined as T;
+          const retryable =
+            axios.isAxiosError(error) &&
+            (options.creation
+              ? status === 429
+              : status === undefined
+                ? error.code !== 'ERR_CANCELED'
+                : isRetryableHttpStatus(status));
+          if (!retryable) throw error;
+          const requestError = this.toB2CBatchRequestError(error);
+          if (!(await this.waitForB2CRetry(requestError, retryCount, retryState))) throw error;
+          retryCount += 1;
+        }
+      }
+    });
+  }
+
   private tenantName = process.env['AD_TENANT_NAME'] || '';
   private tenantExtensionId = process.env['AD_EXTENSION_ID'] || '';
   private authData = {
@@ -217,8 +271,8 @@ export class IdentityProviderService {
       return;
     }
 
-    const response = await axios
-      .post<{
+    const response = await this.requestWithB2CRetry(() =>
+      axios.post<{
         access_token: string;
         expires_in: number;
         ext_expires_in: number;
@@ -226,13 +280,13 @@ export class IdentityProviderService {
       }>(
         `https://login.microsoftonline.com/${this.tenantName}.onmicrosoft.com/oauth2/v2.0/token`,
         this.encodeAuthData(),
-        { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+        { timeout: this.getB2CRequestTimeout(), headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
       )
-      .catch(error => {
-        throw new ServiceUnavailableError(GenericErrorsEnum.SERVICE_IDENTIY_UNAVAILABLE, {
-          details: { message: this.getIdentityProviderErrorMessage(error) }
-        });
+    ).catch(error => {
+      throw new ServiceUnavailableError(GenericErrorsEnum.SERVICE_IDENTIY_UNAVAILABLE, {
+        details: { message: this.getIdentityProviderErrorMessage(error) }
       });
+    });
 
     this.sessionData = {
       token: response.data.access_token,
@@ -297,28 +351,31 @@ export class IdentityProviderService {
     email: string;
     phone: null | string;
   }> {
-    await this.verifyAccessToken();
-    const encodedEmail = encodeURIComponent(email);
-    const odataFilter = `$filter=identities/any(c:c/issuerAssignedId eq '${encodedEmail}' and c/issuer eq '${this.tenantName}.onmicrosoft.com')`;
+    return this.withB2CRetryBudget(async () => {
+      await this.verifyAccessToken();
+      const encodedEmail = encodeURIComponent(email);
+      const odataFilter = `$filter=identities/any(c:c/issuerAssignedId eq '${encodedEmail}' and c/issuer eq '${this.tenantName}.onmicrosoft.com')`;
 
-    const response = await axios
-      .get<b2cGetUserInfoByEmailDTO>(`https://graph.microsoft.com/v1.0/users?${odataFilter}`, {
-        headers: { Authorization: `Bearer ${this.sessionData.token}` }
-      })
-      .catch(error => {
+      const response = await this.requestWithB2CRetry(() =>
+        axios.get<b2cGetUserInfoByEmailDTO>(`https://graph.microsoft.com/v1.0/users?${odataFilter}`, {
+          timeout: this.getB2CRequestTimeout(),
+          headers: { Authorization: `Bearer ${this.sessionData.token}` }
+        })
+      ).catch(error => {
         throw this.getIdentityProviderError(error);
       });
 
-    if (response.data.value.length === 0) {
-      return null;
-    }
+      if (response.data.value.length === 0) {
+        return null;
+      }
 
-    return {
-      identityId: response.data.value[0]?.id ?? '',
-      displayName: response.data.value[0]?.displayName ?? '',
-      email: email,
-      phone: response.data.value[0]?.mobilePhone ?? null
-    };
+      return {
+        identityId: response.data.value[0]?.id ?? '',
+        displayName: response.data.value[0]?.displayName ?? '',
+        email: email,
+        phone: response.data.value[0]?.mobilePhone ?? null
+      };
+    });
   }
   /**
    * this function checks the cache for the users and if they are not found it will fetch them from the identity provider
@@ -334,66 +391,68 @@ export class IdentityProviderService {
     forceRefresh?: boolean,
     options: B2CResolutionOptions = {}
   ): Promise<IdentityUserInfo[]> {
-    const requestedCount = identityIds.length;
+    return this.withB2CRetryBudget(async () => {
+      const requestedCount = identityIds.length;
 
-    // Filter SYSTEM user
-    identityIds = identityIds.filter(id => id !== SYSTEM_CONTEXT.identityId);
+      // Filter SYSTEM user
+      identityIds = identityIds.filter(id => id !== SYSTEM_CONTEXT.identityId);
 
-    const uniqueUserIds = [...new Set(identityIds)]; // Remove duplicated entries.
+      const uniqueUserIds = [...new Set(identityIds)]; // Remove duplicated entries.
 
-    this.loggerService.log('[B2C] Resolving users', {
-      forceRefresh: forceRefresh ?? false,
-      requestedCount,
-      uniqueCount: uniqueUserIds.length,
-      systemUsersFiltered: requestedCount - identityIds.length
-    });
+      this.loggerService.log('[B2C] Resolving users', {
+        forceRefresh: forceRefresh ?? false,
+        requestedCount,
+        uniqueCount: uniqueUserIds.length,
+        systemUsersFiltered: requestedCount - identityIds.length
+      });
 
-    if (forceRefresh) {
-      await this.cache.deleteMany(uniqueUserIds);
-      uniqueUserIds.forEach(identityId => this.missingUserQuarantine.delete(identityId));
-    }
-
-    const eligibleUserIds = uniqueUserIds.filter(identityId => !this.isAMissingUserWhichWasQuarantined(identityId));
-    const quarantinedCount = uniqueUserIds.length - eligibleUserIds.length;
-    const res = (await this.cache.getMany(eligibleUserIds)).map(user => ({
-      ...user,
-      givenName: user.givenName ?? '',
-      surname: user.surname ?? ''
-    }));
-
-    this.loggerService.log('[B2C] Cache lookup complete', {
-      eligibleCount: eligibleUserIds.length,
-      cachedCount: res.length,
-      quarantinedCount
-    });
-
-    if (res.length !== eligibleUserIds.length) {
-      const cachedUserIds = new Set(res.map(user => user.identityId));
-      const tempUsers = eligibleUserIds.filter(id => !cachedUserIds.has(id));
-      const { users: nonCachedUsers, failedIdentityIds } = await this.getUsersListFromB2C(
-        tempUsers,
-        options.mode ?? 'interactive'
-      );
-
-      if (failedIdentityIds.length > 0) {
-        this.loggerService.log('[B2C] User resolution skipped identities', {
-          failedCount: failedIdentityIds.length,
-          failedIdentityIds
-        });
+      if (forceRefresh) {
+        await this.cache.deleteMany(uniqueUserIds);
+        uniqueUserIds.forEach(identityId => this.missingUserQuarantine.delete(identityId));
       }
 
-      // Add new users to cache.
-      await this.cache.setMany(nonCachedUsers.map(user => ({ key: user.identityId, value: user })));
-      res.push(...nonCachedUsers);
-    }
+      const eligibleUserIds = uniqueUserIds.filter(identityId => !this.isAMissingUserWhichWasQuarantined(identityId));
+      const quarantinedCount = uniqueUserIds.length - eligibleUserIds.length;
+      const res = (forceRefresh ? [] : await this.cache.getMany(eligibleUserIds)).map(user => ({
+        ...user,
+        givenName: user.givenName ?? '',
+        surname: user.surname ?? ''
+      }));
 
-    this.loggerService.log('[B2C] User resolution complete', {
-      requestedCount,
-      resolvedCount: res.length,
-      skippedQuarantinedCount: quarantinedCount
-    });
+      this.loggerService.log('[B2C] Cache lookup complete', {
+        eligibleCount: eligibleUserIds.length,
+        cachedCount: res.length,
+        quarantinedCount
+      });
 
-    return res;
+      if (res.length !== eligibleUserIds.length) {
+        const cachedUserIds = new Set(res.map(user => user.identityId));
+        const tempUsers = eligibleUserIds.filter(id => !cachedUserIds.has(id));
+        const { users: nonCachedUsers, failedIdentityIds } = await this.getUsersListFromB2C(
+          tempUsers,
+          options.mode ?? 'interactive'
+        );
+
+        if (failedIdentityIds.length > 0) {
+          this.loggerService.log('[B2C] User resolution skipped identities', {
+            failedCount: failedIdentityIds.length,
+            failedIdentityIds
+          });
+        }
+
+        // Add new users to cache.
+        await this.cache.setMany(nonCachedUsers.map(user => ({ key: user.identityId, value: user })));
+        res.push(...nonCachedUsers);
+      }
+
+      this.loggerService.log('[B2C] User resolution complete', {
+        requestedCount,
+        resolvedCount: res.length,
+        skippedQuarantinedCount: quarantinedCount
+      });
+
+      return res;
+    }, options.mode ?? 'interactive');
   }
 
   /**
@@ -425,10 +484,7 @@ export class IdentityProviderService {
     await this.verifyAccessToken();
 
     const uniqueUserIds = [...new Set(entityIds)]; // Remove duplicated entries.
-    const retryState: B2CRetryState = {
-      policy: getB2CRetryPolicy(mode),
-      startedAt: Date.now()
-    };
+    const retryState = this.retryContext.getStore() ?? { policy: getB2CRetryPolicy(mode), startedAt: Date.now() };
 
     if (uniqueUserIds.length <= FILTERED_LOOKUP_THRESHOLD) {
       return this.fetchUsersWithFilteredLookup(uniqueUserIds, retryState);
@@ -451,6 +507,7 @@ export class IdentityProviderService {
     while (true) {
       try {
         const response = await axios.get<b2cGetUsersListDTO>(url, {
+          timeout: this.getB2CRequestTimeout(),
           headers: { Authorization: `Bearer ${this.sessionData.token}` },
           validateStatus: () => true
         });
@@ -615,7 +672,10 @@ export class IdentityProviderService {
     }
 
     const nextAttempt = retryCount + 1;
-    const backoffMs = requestError.retryAfterMs ?? getExponentialBackoffMs(nextAttempt, B2C_MAX_BACKOFF_MS);
+    const backoffMs =
+      requestError.retryAfterMs !== undefined
+        ? Math.ceil(requestError.retryAfterMs / 10)
+        : getExponentialBackoffMs(nextAttempt, B2C_MAX_BACKOFF_MS);
     const elapsedMs = Date.now() - retryState.startedAt;
     const remainingMs = retryState.policy.maxDurationMs ? retryState.policy.maxDurationMs - elapsedMs : undefined;
 
@@ -740,6 +800,7 @@ export class IdentityProviderService {
       'https://graph.microsoft.com/v1.0/$batch',
       { requests: this.createB2CBatchRequests(userIds) },
       {
+        timeout: this.getB2CRequestTimeout(),
         headers: { Authorization: `Bearer ${this.sessionData.token}` },
         validateStatus: () => true
       }
@@ -828,73 +889,99 @@ export class IdentityProviderService {
   }
 
   async createUser(data: { givenName: string; surname: string; email: string; password: string }): Promise<string> {
-    await this.verifyAccessToken();
+    return this.withB2CRetryBudget(async () => {
+      await this.verifyAccessToken();
 
-    const body = {
-      accountEnabled: true,
-      givenName: data.givenName,
-      surname: data.surname,
-      displayName: `${data.givenName} ${data.surname}`,
-      passwordPolicies: 'DisablePasswordExpiration',
-      passwordProfile: { password: data.password, forceChangePasswordNextSignIn: false },
-      identities: [
-        {
-          signInType: 'emailAddress',
-          issuer: `${process.env['AD_TENANT_NAME']}.onmicrosoft.com`,
-          issuerAssignedId: data.email
-        }
-      ],
-      [`extension_${this.tenantExtensionId}_termsOfUseConsentVersion`]: 'V1',
-      [`extension_${this.tenantExtensionId}_termsOfUseConsentChoice`]: 'AgreeToTermsOfUseConsentYes',
-      [`extension_${this.tenantExtensionId}_termsOfUseConsentDateTime`]: new Date().toISOString(),
-      [`extension_${this.tenantExtensionId}_passwordResetOn`]: new Date().toISOString()
-    };
+      const body = {
+        accountEnabled: true,
+        givenName: data.givenName,
+        surname: data.surname,
+        displayName: `${data.givenName} ${data.surname}`,
+        passwordPolicies: 'DisablePasswordExpiration',
+        passwordProfile: { password: data.password, forceChangePasswordNextSignIn: false },
+        identities: [
+          {
+            signInType: 'emailAddress',
+            issuer: `${process.env['AD_TENANT_NAME']}.onmicrosoft.com`,
+            issuerAssignedId: data.email
+          }
+        ],
+        [`extension_${this.tenantExtensionId}_termsOfUseConsentVersion`]: 'V1',
+        [`extension_${this.tenantExtensionId}_termsOfUseConsentChoice`]: 'AgreeToTermsOfUseConsentYes',
+        [`extension_${this.tenantExtensionId}_termsOfUseConsentDateTime`]: new Date().toISOString(),
+        [`extension_${this.tenantExtensionId}_passwordResetOn`]: new Date().toISOString()
+      };
 
-    const response = await axios
-      .post<any>('https://graph.microsoft.com/v1.0/users', body, {
-        headers: { Authorization: `Bearer ${this.sessionData.token}` }
-      })
-      .catch(error => {
+      const response = await this.requestWithB2CRetry(
+        () =>
+          axios.post<any>('https://graph.microsoft.com/v1.0/users', body, {
+            timeout: this.getB2CRequestTimeout(),
+            headers: { Authorization: `Bearer ${this.sessionData.token}` }
+          }),
+        { creation: true }
+      ).catch(error => {
         throw new ServiceUnavailableError(GenericErrorsEnum.SERVICE_IDENTIY_UNAVAILABLE, {
           details: { message: this.getIdentityProviderErrorMessage(error) }
         });
       });
 
-    return response.data.id;
+      return response.data.id;
+    });
   }
 
-  async updateUser(identityId: string, body: IdentityUpdateBody): Promise<void> {
-    await this.verifyAccessToken();
+  async updateUser(
+    identityId: string,
+    body: IdentityUpdateBody,
+    options: { confirmNames?: boolean } = {}
+  ): Promise<void> {
+    return this.withB2CRetryBudget(async () => {
+      await this.verifyAccessToken();
 
-    // DOCS: https://docs.microsoft.com/pt-PT/graph/api/user-update?view=graph-rest-1.0&tabs=http
-    // Response: 204 No Content, so we can return direcly.
-    await axios
-      .patch<undefined>(`https://graph.microsoft.com/v1.0/users/${identityId}`, body, {
-        headers: { Authorization: `Bearer ${this.sessionData.token}` }
-      })
-      .catch(error => {
+      // DOCS: https://docs.microsoft.com/pt-PT/graph/api/user-update?view=graph-rest-1.0&tabs=http
+      // Response: 204 No Content, so we can return direcly.
+      await this.requestWithB2CRetry(() =>
+        axios.patch<undefined>(`https://graph.microsoft.com/v1.0/users/${identityId}`, body, {
+          timeout: this.getB2CRequestTimeout(),
+          headers: { Authorization: `Bearer ${this.sessionData.token}` }
+        })
+      ).catch(error => {
         throw this.getIdentityProviderError(error);
       });
 
-    await this.refreshUserCacheAfterUpdate(identityId, body);
+      // Acknowledged presentation updates may proceed before Graph reads expose the names.
+      // Invalidate old data, but never cache submitted values as verified Graph data.
+      const confirmationBody = Object.fromEntries(
+        Object.entries(body).filter(
+          ([field, value]) =>
+            value !== undefined &&
+            (options.confirmNames !== false || !['givenName', 'surname', 'displayName'].includes(field))
+        )
+      );
+      if (Object.keys(confirmationBody).length === 0) {
+        await this.cache.delete(identityId);
+        return;
+      }
+      await this.refreshUserCacheAfterUpdate(identityId, confirmationBody);
+    });
   }
 
   private async refreshUserCacheAfterUpdate(identityId: string, body: IdentityUpdateBody): Promise<void> {
     // Allow Microsoft Graph time to expose the update before refreshing the cache.
     await sleep(700);
 
-    for (let attempt = 0; attempt < 7; attempt += 1) {
+    for (let attempt = 0; attempt < B2C_UPDATE_CONFIRMATION_ATTEMPTS; attempt += 1) {
+      this.getB2CRequestTimeout();
       const updatedUser = await this.getUserInfo(identityId, true);
       const isConfirmed = Object.entries(body).every(([field, value]) => {
         if (value === undefined) return true;
-        return updatedUser[field as keyof typeof updatedUser] === value;
+        return updatedUser[(field === 'accountEnabled' ? 'isActive' : field) as keyof typeof updatedUser] === value;
       });
 
       if (isConfirmed) return;
 
       // Do not leave a stale Graph response in the cache while propagation catches up.
       await this.cache.delete(identityId);
-      if (attempt < 6) await sleep(700);
+      if (attempt < B2C_UPDATE_CONFIRMATION_ATTEMPTS - 1) await sleep(Math.min(700, this.getB2CRequestTimeout()));
     }
 
     throw new ServiceUnavailableError(GenericErrorsEnum.SERVICE_IDENTIY_UNAVAILABLE, {
@@ -903,33 +990,33 @@ export class IdentityProviderService {
   }
 
   async updateUserEmail(identityId: string, email: string): Promise<void> {
-    await this.verifyAccessToken();
+    return this.withB2CRetryBudget(async () => {
+      await this.verifyAccessToken();
 
-    // DOCS: https://docs.microsoft.com/pt-PT/graph/api/user-update?view=graph-rest-1.0&tabs=http
-    // Response: 204 No Content, so we can return direcly.
-    await axios
-      .patch<undefined>(
-        `https://graph.microsoft.com/v1.0/users/${identityId}`,
-        {
-          identities: [
-            {
-              signInType: 'emailAddress',
-              issuer: `${this.tenantName}.onmicrosoft.com`,
-              issuerAssignedId: email
-            }
-          ]
-        },
-        {
-          headers: { Authorization: `Bearer ${this.sessionData.token}` }
-        }
-      )
-      .catch(error => {
+      // DOCS: https://docs.microsoft.com/pt-PT/graph/api/user-update?view=graph-rest-1.0&tabs=http
+      // Response: 204 No Content, so we can return direcly.
+      await this.requestWithB2CRetry(() =>
+        axios.patch<undefined>(
+          `https://graph.microsoft.com/v1.0/users/${identityId}`,
+          {
+            identities: [
+              {
+                signInType: 'emailAddress',
+                issuer: `${this.tenantName}.onmicrosoft.com`,
+                issuerAssignedId: email
+              }
+            ]
+          },
+          { timeout: this.getB2CRequestTimeout(), headers: { Authorization: `Bearer ${this.sessionData.token}` } }
+        )
+      ).catch(error => {
         const errorMessage = this.getIdentityProviderErrorMessage(error);
         if (this.getIdentityProviderErrorStatus(error) === 400 && errorMessage.includes('conflicting object')) {
           throw new ConflictError(UserErrorsEnum.USER_IDENTITY_CONFLICT, { message: 'Email already exists' });
         }
         throw this.getIdentityProviderError(error);
       });
+    });
   }
 
   async updateUserAsync(
@@ -959,116 +1046,142 @@ export class IdentityProviderService {
   }
 
   async deleteUser(identityId: string): Promise<void> {
-    await this.verifyAccessToken();
+    return this.withB2CRetryBudget(async () => {
+      await this.verifyAccessToken();
 
-    // DOCS: https://docs.microsoft.com/pt-PT/graph/api/user-delete?view=graph-rest-1.0&tabs=http
-    // Response: 204 No Content, so we can return directly.
-    await axios
-      .delete<undefined>(`https://graph.microsoft.com/v1.0/users/${identityId}`, {
-        headers: { Authorization: `Bearer ${this.sessionData.token}` }
-      })
-      .catch(error => {
+      // DOCS: https://docs.microsoft.com/pt-PT/graph/api/user-delete?view=graph-rest-1.0&tabs=http
+      // Response: 204 No Content, so we can return directly.
+      await this.requestWithB2CRetry(
+        () =>
+          axios.delete<undefined>(`https://graph.microsoft.com/v1.0/users/${identityId}`, {
+            timeout: this.getB2CRequestTimeout(),
+            headers: { Authorization: `Bearer ${this.sessionData.token}` }
+          }),
+        { allowMissingAfterRetry: true }
+      ).catch(error => {
         throw this.getIdentityProviderError(error);
       });
 
-    await this.cache.delete(identityId);
+      await this.cache.delete(identityId);
+    });
   }
 
   async getMfaInfo(
     identityId: string
   ): Promise<{ type: 'none' } | { type: 'email' } | { type: 'phone'; phoneNumber?: string }> {
-    const type = await this.getMfaExtensionType(identityId);
+    return this.withB2CRetryBudget(async () => {
+      const type = await this.getMfaExtensionType(identityId);
 
-    if (type === 'phone') {
-      const phoneNumber = await this.getMfaPhoneNumber(identityId);
-      return { type, phoneNumber: phoneNumber ?? undefined };
-    }
+      if (type === 'phone') {
+        const phoneNumber = await this.getMfaPhoneNumber(identityId);
+        return { type, phoneNumber: phoneNumber ?? undefined };
+      }
 
-    return { type };
+      return { type };
+    });
   }
 
   async getMfaPhoneNumber(identityId: string): Promise<string | null> {
-    await this.verifyAccessToken();
+    return this.withB2CRetryBudget(async () => {
+      await this.verifyAccessToken();
 
-    try {
-      const response = await axios.get<{ id: string; phoneNumber: string; phoneType: string; smsSignInState: string }>(
-        `https://graph.microsoft.com/v1.0/users/${identityId}/authentication/phoneMethods/${this.constants.mfa_mobile_id}`,
-        { headers: { Authorization: `Bearer ${this.sessionData.token}` } }
-      );
-      return response.data.phoneNumber;
-    } catch (error: unknown) {
-      // It means the user doesn't have a phone number created
-      if (this.getIdentityProviderErrorStatus(error) === 404) {
-        return null;
+      try {
+        const response = await this.requestWithB2CRetry(() =>
+          axios.get<{ id: string; phoneNumber: string; phoneType: string; smsSignInState: string }>(
+            `https://graph.microsoft.com/v1.0/users/${identityId}/authentication/phoneMethods/${this.constants.mfa_mobile_id}`,
+            { timeout: this.getB2CRequestTimeout(), headers: { Authorization: `Bearer ${this.sessionData.token}` } }
+          )
+        );
+        return response.data.phoneNumber;
+      } catch (error: unknown) {
+        // It means the user doesn't have a phone number created
+        if (this.getIdentityProviderErrorStatus(error) === 404) {
+          return null;
+        }
+        throw this.getIdentityProviderError(error);
       }
-      throw this.getIdentityProviderError(error);
-    }
+    });
   }
 
   async upsertUserMfa(
     identityId: string,
     data: { type: 'none' } | { type: 'email' } | { type: 'phone'; phoneNumber: string }
   ): Promise<void> {
-    const type = await this.getMfaExtensionType(identityId);
+    return this.withB2CRetryBudget(async () => {
+      const type = await this.getMfaExtensionType(identityId);
 
-    if (data.type === 'phone') {
-      await this.upsertMfaPhoneNumber(identityId, data.phoneNumber);
-    } else if (data.type === type) {
-      return;
-    }
+      if (data.type === 'phone') {
+        await this.upsertMfaPhoneNumber(identityId, data.phoneNumber);
+      } else if (data.type === type) {
+        return;
+      }
 
-    await this.updateMfaExtensionType(identityId, data.type);
+      await this.updateMfaExtensionType(identityId, data.type);
+    });
   }
 
   private async getMfaExtensionType(identityId: string): Promise<'none' | 'email' | 'phone'> {
-    await this.verifyAccessToken();
+    return this.withB2CRetryBudget(async () => {
+      await this.verifyAccessToken();
 
-    const response = await axios
-      .get<any>(`https://graph.microsoft.com/v1.0/users/${identityId}?$select=${this.constants.mfa_extension_key}`, {
-        headers: { Authorization: `Bearer ${this.sessionData.token}` }
-      })
-      .catch(error => {
+      const response = await this.requestWithB2CRetry(() =>
+        axios.get<any>(
+          `https://graph.microsoft.com/v1.0/users/${identityId}?$select=${this.constants.mfa_extension_key}`,
+          { timeout: this.getB2CRequestTimeout(), headers: { Authorization: `Bearer ${this.sessionData.token}` } }
+        )
+      ).catch(error => {
         throw this.getIdentityProviderError(error);
       });
 
-    return response.data[this.constants.mfa_extension_key] ?? 'none';
+      return response.data[this.constants.mfa_extension_key] ?? 'none';
+    });
   }
 
   private async updateMfaExtensionType(identityId: string, type: 'none' | 'email' | 'phone'): Promise<void> {
-    await this.verifyAccessToken();
+    return this.withB2CRetryBudget(async () => {
+      await this.verifyAccessToken();
 
-    await axios
-      .patch<any>(
-        `https://graph.microsoft.com/v1.0/users/${identityId}`,
-        { [this.constants.mfa_extension_key]: type },
-        { headers: { Authorization: `Bearer ${this.sessionData.token}` } }
-      )
-      .catch(error => {
+      await this.requestWithB2CRetry(() =>
+        axios.patch<any>(
+          `https://graph.microsoft.com/v1.0/users/${identityId}`,
+          { [this.constants.mfa_extension_key]: type },
+          { timeout: this.getB2CRequestTimeout(), headers: { Authorization: `Bearer ${this.sessionData.token}` } }
+        )
+      ).catch(error => {
         throw this.getIdentityProviderError(error);
       });
+    });
   }
   private async upsertMfaPhoneNumber(identityId: string, phoneNumber: string): Promise<void> {
-    const curPhoneNumber = await this.getMfaPhoneNumber(identityId);
+    return this.withB2CRetryBudget(async () => {
+      const curPhoneNumber = await this.getMfaPhoneNumber(identityId);
 
-    // No need to hit B2C if the user is trying to update to the same phone.
-    if (curPhoneNumber === phoneNumber) return;
+      // No need to hit B2C if the user is trying to update to the same phone.
+      if (curPhoneNumber === phoneNumber) return;
 
-    try {
-      if (curPhoneNumber !== null) {
-        await axios.patch<any>(
-          `https://graph.microsoft.com/v1.0/users/${identityId}/authentication/phoneMethods/${this.constants.mfa_mobile_id}`,
-          { phoneNumber, phoneType: 'mobile' },
-          { headers: { Authorization: `Bearer ${this.sessionData.token}` } }
-        );
-      } else {
-        await axios.post<any>(
-          `https://graph.microsoft.com/v1.0/users/${identityId}/authentication/phoneMethods`,
-          { phoneNumber, phoneType: 'mobile' },
-          { headers: { Authorization: `Bearer ${this.sessionData.token}` } }
-        );
+      try {
+        if (curPhoneNumber !== null) {
+          await this.requestWithB2CRetry(() =>
+            axios.patch<any>(
+              `https://graph.microsoft.com/v1.0/users/${identityId}/authentication/phoneMethods/${this.constants.mfa_mobile_id}`,
+              { phoneNumber, phoneType: 'mobile' },
+              { timeout: this.getB2CRequestTimeout(), headers: { Authorization: `Bearer ${this.sessionData.token}` } }
+            )
+          );
+        } else {
+          await this.requestWithB2CRetry(
+            () =>
+              axios.post<any>(
+                `https://graph.microsoft.com/v1.0/users/${identityId}/authentication/phoneMethods`,
+                { phoneNumber, phoneType: 'mobile' },
+                { timeout: this.getB2CRequestTimeout(), headers: { Authorization: `Bearer ${this.sessionData.token}` } }
+              ),
+            { creation: true }
+          );
+        }
+      } catch (error: unknown) {
+        throw this.getIdentityProviderError(error);
       }
-    } catch (error: unknown) {
-      throw this.getIdentityProviderError(error);
-    }
+    });
   }
 }
