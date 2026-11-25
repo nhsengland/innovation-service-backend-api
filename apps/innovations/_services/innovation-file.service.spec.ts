@@ -1,45 +1,45 @@
-import { container } from "../_config";
+import { container } from '../_config';
 
-import { MAX_FILES_ALLOWED } from "@innovations/shared/constants";
-import { InnovationEntity, InnovationFileEntity, InnovationSectionEntity } from "@innovations/shared/entities";
+import { MAX_FILES_ALLOWED } from '@innovations/shared/constants';
+import { InnovationEntity, InnovationFileEntity, InnovationSectionEntity } from '@innovations/shared/entities';
 import {
   InnovationFileContextTypeEnum,
   InnovationSectionStatusEnum,
   InnovationStatusEnum,
   NotifierTypeEnum,
   ServiceRoleEnum
-} from "@innovations/shared/enums";
+} from '@innovations/shared/enums';
 import {
   ConflictError,
   ForbiddenError,
   InnovationErrorsEnum,
   NotFoundError,
   UnprocessableEntityError
-} from "@innovations/shared/errors";
-import { FileStorageService, NotifierService, type FileDownloadAccess } from "@innovations/shared/services";
-import { AuthErrorsEnum } from "@innovations/shared/services/auth/authorization-validation.model";
-import type { CompleteScenarioType } from "@innovations/shared/tests";
-import { MocksHelper, TestsHelper } from "@innovations/shared/tests";
-import { InnovationFileBuilder, type TestFileType } from "@innovations/shared/tests/builders/innovation-file.builder";
-import type { TestUserType } from "@innovations/shared/tests/builders/user.builder";
-import { DTOsHelper } from "@innovations/shared/tests/helpers/dtos.helper";
-import type { DomainContextType } from "@innovations/shared/types";
-import { randAirportName, randFileName, randFutureDate, randNumber, randText, randUrl, randUuid } from "@ngneat/falso";
-import type { EntityManager } from "typeorm";
-import type { InnovationFileService } from "./innovation-file.service";
-import SYMBOLS from "./symbols";
+} from '@innovations/shared/errors';
+import { FileStorageService, NotifierService, type FileDownloadAccess } from '@innovations/shared/services';
+import { AuthErrorsEnum } from '@innovations/shared/services/auth/authorization-validation.model';
+import type { CompleteScenarioType } from '@innovations/shared/tests';
+import { MocksHelper, TestsHelper } from '@innovations/shared/tests';
+import { InnovationFileBuilder, type TestFileType } from '@innovations/shared/tests/builders/innovation-file.builder';
+import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
+import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
+import type { DomainContextType } from '@innovations/shared/types';
+import { randAirportName, randFileName, randFutureDate, randNumber, randText, randUrl, randUuid } from '@ngneat/falso';
+import type { EntityManager } from 'typeorm';
+import type { InnovationFileService } from './innovation-file.service';
+import SYMBOLS from './symbols';
 
-const readyDownloadAccess = (url: string): FileDownloadAccess => ({ scanState: "ready", canDownload: true, url });
+const readyDownloadAccess = (url: string): FileDownloadAccess => ({ scanState: 'ready', canDownload: true, url });
 
-describe("Services / Innovation File service suite", () => {
+describe('Services / Innovation File service suite', () => {
   const testsHelper = new TestsHelper();
   const scenario = testsHelper.getCompleteScenario();
 
   let sut: InnovationFileService;
   let em: EntityManager;
 
-  const notifierSendSpy = jest.spyOn(NotifierService.prototype, "send").mockResolvedValue(true);
-  const notifierSendNotifyMeSpy = jest.spyOn(NotifierService.prototype, "sendNotifyMe").mockResolvedValue(true);
+  const notifierSendSpy = jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
+  const notifierSendNotifyMeSpy = jest.spyOn(NotifierService.prototype, 'sendNotifyMe').mockResolvedValue(true);
 
   beforeAll(async () => {
     sut = container.get<InnovationFileService>(SYMBOLS.InnovationFileService);
@@ -55,16 +55,16 @@ describe("Services / Innovation File service suite", () => {
     notifierSendNotifyMeSpy.mockClear();
   });
 
-  describe("getFilesList", () => {
+  describe('getFilesList', () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
-    const context = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, "innovatorRole");
+    const context = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, 'innovatorRole');
 
-    it("should return the list of files without using filters and fields, paginated and orded by name", async () => {
+    it('should return the list of files without using filters and fields, paginated and orded by name', async () => {
       const firstFileOrderedByName = { file: innovation.files.sectionFileByJohn, url: randUrl() };
       const secondFileOrderedByName = { file: innovation.files.innovationFileByIngrid, url: randUrl() };
 
       jest
-        .spyOn(FileStorageService.prototype, "getDownloadAccess")
+        .spyOn(FileStorageService.prototype, 'getDownloadAccess')
         .mockResolvedValueOnce(readyDownloadAccess(firstFileOrderedByName.url))
         .mockResolvedValueOnce(readyDownloadAccess(secondFileOrderedByName.url));
 
@@ -72,7 +72,7 @@ describe("Services / Innovation File service suite", () => {
         context,
         innovation.id,
         {},
-        { take: 2, skip: 0, order: { name: "ASC" } },
+        { take: 2, skip: 0, order: { name: 'ASC' } },
         em
       );
 
@@ -93,18 +93,18 @@ describe("Services / Innovation File service suite", () => {
       });
     });
 
-    it("should return a file filtered by name", async () => {
+    it('should return a file filtered by name', async () => {
       const paulFile = { file: innovation.files.innovationFileByPaul, url: randUrl() };
 
       jest
-        .spyOn(FileStorageService.prototype, "getDownloadAccess")
+        .spyOn(FileStorageService.prototype, 'getDownloadAccess')
         .mockResolvedValueOnce(readyDownloadAccess(paulFile.url));
 
       const files = await sut.getFilesList(
         context,
         innovation.id,
         { name: paulFile.file.name },
-        { take: 20, skip: 0, order: { name: "ASC" } },
+        { take: 20, skip: 0, order: { name: 'ASC' } },
         em
       );
 
@@ -119,7 +119,7 @@ describe("Services / Innovation File service suite", () => {
       });
     });
 
-    it("should return the list of files filtered by uploaded by", async () => {
+    it('should return the list of files filtered by uploaded by', async () => {
       const innovationOwnerFile = { file: innovation.files.sectionFileByJohn, url: randUrl() };
       const johnInnovationEvidenceFileByJohn = { file: innovation.files.evidenceFileByJohn, url: randUrl() };
       const innovationCollaboratorFile = { file: innovation.files.sectionFileByJane, url: randUrl() };
@@ -130,7 +130,7 @@ describe("Services / Innovation File service suite", () => {
       };
 
       jest
-        .spyOn(FileStorageService.prototype, "getDownloadAccess")
+        .spyOn(FileStorageService.prototype, 'getDownloadAccess')
         .mockResolvedValueOnce(readyDownloadAccess(innovationOwnerFile.url))
         .mockResolvedValueOnce(readyDownloadAccess(johnInnovationEvidenceFileByJohn.url))
         .mockResolvedValueOnce(readyDownloadAccess(innovationCollaboratorFile.url))
@@ -141,7 +141,7 @@ describe("Services / Innovation File service suite", () => {
         context,
         innovation.id,
         { uploadedBy: [ServiceRoleEnum.INNOVATOR] },
-        { take: 20, skip: 0, order: { createdAt: "ASC" } },
+        { take: 20, skip: 0, order: { createdAt: 'ASC' } },
         em
       );
 
@@ -162,7 +162,7 @@ describe("Services / Innovation File service suite", () => {
           isOwner: false
         }),
         transformFileData(innovationDeletedUserFile.file, innovationDeletedUserFile.url, {
-          name: "[deleted user]",
+          name: '[deleted user]',
           role: ServiceRoleEnum.INNOVATOR
         }),
         transformFileData(innovationCreatedAfterTodayFile.file, innovationCreatedAfterTodayFile.url, {
@@ -178,12 +178,12 @@ describe("Services / Innovation File service suite", () => {
       });
     });
 
-    it("should return the list of files filtered by uploaded context type", async () => {
+    it('should return the list of files filtered by uploaded context type', async () => {
       const innovationOwnerFile = { file: innovation.files.sectionFileByJohn, url: randUrl() };
       const innovationCollaboratorFile = { file: innovation.files.sectionFileByJane, url: randUrl() };
 
       jest
-        .spyOn(FileStorageService.prototype, "getDownloadAccess")
+        .spyOn(FileStorageService.prototype, 'getDownloadAccess')
         .mockResolvedValueOnce(readyDownloadAccess(innovationOwnerFile.url))
         .mockResolvedValueOnce(readyDownloadAccess(innovationCollaboratorFile.url));
 
@@ -191,7 +191,7 @@ describe("Services / Innovation File service suite", () => {
         context,
         innovation.id,
         { contextTypes: [InnovationFileContextTypeEnum.INNOVATION_SECTION] },
-        { take: 2, skip: 0, order: { createdAt: "ASC" } },
+        { take: 2, skip: 0, order: { createdAt: 'ASC' } },
         em
       );
 
@@ -214,13 +214,13 @@ describe("Services / Innovation File service suite", () => {
       });
     });
 
-    it("should return the list of files filtered by uploaded context id", async () => {
+    it('should return the list of files filtered by uploaded context id', async () => {
       const innovationFileByPaul = { file: innovation.files.innovationFileByPaul, url: randUrl() };
       const innovationFileBySean = { file: innovation.files.innovationFileBySean, url: randUrl() };
       const innovationFileByAlice = { file: innovation.files.innovationFileByAlice, url: randUrl() };
 
       jest
-        .spyOn(FileStorageService.prototype, "getDownloadAccess")
+        .spyOn(FileStorageService.prototype, 'getDownloadAccess')
         .mockResolvedValueOnce(readyDownloadAccess(innovationFileByPaul.url))
         .mockResolvedValueOnce(readyDownloadAccess(innovationFileBySean.url))
         .mockResolvedValueOnce(readyDownloadAccess(innovationFileByAlice.url));
@@ -229,7 +229,7 @@ describe("Services / Innovation File service suite", () => {
         context,
         innovation.id,
         { contextId: innovation.id },
-        { take: 3, skip: 0, order: { createdAt: "ASC" } },
+        { take: 3, skip: 0, order: { createdAt: 'ASC' } },
         em
       );
 
@@ -251,8 +251,8 @@ describe("Services / Innovation File service suite", () => {
       ];
 
       const filesCount = await em
-        .createQueryBuilder(InnovationFileEntity, "file")
-        .where("file.contextId = :contextId", { contextId: innovation.id })
+        .createQueryBuilder(InnovationFileEntity, 'file')
+        .where('file.contextId = :contextId', { contextId: innovation.id })
         .getCount();
 
       expect(files).toMatchObject({
@@ -261,13 +261,13 @@ describe("Services / Innovation File service suite", () => {
       });
     });
 
-    it("should return the list of files filtered by uploaded organisations", async () => {
+    it('should return the list of files filtered by uploaded organisations', async () => {
       const innovationMessageFileByAlice = { file: innovation.files.messageFileByAlice, url: randUrl() };
       const innovationFileByAlice = { file: innovation.files.innovationFileByAlice, url: randUrl() };
       const innovationFileByIngrid = { file: innovation.files.innovationFileByIngrid, url: randUrl() };
 
       jest
-        .spyOn(FileStorageService.prototype, "getDownloadAccess")
+        .spyOn(FileStorageService.prototype, 'getDownloadAccess')
         .mockResolvedValueOnce(readyDownloadAccess(innovationMessageFileByAlice.url))
         .mockResolvedValueOnce(readyDownloadAccess(innovationFileByAlice.url))
         .mockResolvedValueOnce(readyDownloadAccess(innovationFileByIngrid.url));
@@ -276,7 +276,7 @@ describe("Services / Innovation File service suite", () => {
         context,
         innovation.id,
         { units: [scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id] },
-        { take: 3, skip: 0, order: { createdAt: "ASC" } },
+        { take: 3, skip: 0, order: { createdAt: 'ASC' } },
         em
       );
 
@@ -306,11 +306,11 @@ describe("Services / Innovation File service suite", () => {
       });
     });
 
-    it("should return a file filtered by created at date", async () => {
+    it('should return a file filtered by created at date', async () => {
       const futureFile = { file: innovation.files.innovationFileUploadedAfterToday, url: randUrl() };
 
       jest
-        .spyOn(FileStorageService.prototype, "getDownloadAccess")
+        .spyOn(FileStorageService.prototype, 'getDownloadAccess')
         .mockResolvedValueOnce(readyDownloadAccess(futureFile.url));
 
       const files = await sut.getFilesList(
@@ -319,13 +319,13 @@ describe("Services / Innovation File service suite", () => {
         {
           dateFilter: [
             {
-              field: "createdAt",
+              field: 'createdAt',
               startDate: new Date(),
               endDate: randFutureDate()
             }
           ]
         },
-        { take: 20, skip: 0, order: { createdAt: "ASC" } },
+        { take: 20, skip: 0, order: { createdAt: 'ASC' } },
         em
       );
 
@@ -347,20 +347,20 @@ describe("Services / Innovation File service suite", () => {
       const innovationDeletedUserFile = { file: innovation.files.innovationFileByDeletedUser, url: randUrl() };
 
       jest
-        .spyOn(FileStorageService.prototype, "getDownloadAccess")
+        .spyOn(FileStorageService.prototype, 'getDownloadAccess')
         .mockResolvedValueOnce(readyDownloadAccess(innovationDeletedUserFile.url));
 
       const files = await sut.getFilesList(
         context,
         innovation.id,
         { name: innovationDeletedUserFile.file.name },
-        { take: 20, skip: 0, order: { createdAt: "ASC" } },
+        { take: 20, skip: 0, order: { createdAt: 'ASC' } },
         em
       );
 
       const data = [
         transformFileData(innovationDeletedUserFile.file, innovationDeletedUserFile.url, {
-          name: "[deleted user]",
+          name: '[deleted user]',
           role: ServiceRoleEnum.INNOVATOR
         })
       ];
@@ -371,13 +371,13 @@ describe("Services / Innovation File service suite", () => {
       });
     });
 
-    it("should return files order by createdAt", async () => {
+    it('should return files order by createdAt', async () => {
       const innovationOwnerFile = { file: innovation.files.sectionFileByJohn, url: randUrl() };
       const evidenceFileByJohn = { file: innovation.files.evidenceFileByJohn, url: randUrl() };
       const innovationCollaboratorFile = { file: innovation.files.sectionFileByJane, url: randUrl() };
 
       jest
-        .spyOn(FileStorageService.prototype, "getDownloadAccess")
+        .spyOn(FileStorageService.prototype, 'getDownloadAccess')
         .mockResolvedValueOnce(readyDownloadAccess(innovationOwnerFile.url))
         .mockResolvedValueOnce(readyDownloadAccess(evidenceFileByJohn.url))
         .mockResolvedValueOnce(readyDownloadAccess(innovationCollaboratorFile.url));
@@ -386,7 +386,7 @@ describe("Services / Innovation File service suite", () => {
         context,
         innovation.id,
         { uploadedBy: [ServiceRoleEnum.INNOVATOR] },
-        { take: 3, skip: 0, order: { createdAt: "ASC" } },
+        { take: 3, skip: 0, order: { createdAt: 'ASC' } },
         em
       );
 
@@ -414,7 +414,7 @@ describe("Services / Innovation File service suite", () => {
       });
     });
 
-    it("should return files order by contextType", async () => {
+    it('should return files order by contextType', async () => {
       const innovationOwnerFile = { file: innovation.files.sectionFileByJohn, url: randUrl() };
       const innovationDeletedUserFile = { file: innovation.files.innovationFileByDeletedUser, url: randUrl() };
       const evidenceFileByJohn = { file: innovation.files.evidenceFileByJohn, url: randUrl() };
@@ -424,7 +424,7 @@ describe("Services / Innovation File service suite", () => {
       };
 
       jest
-        .spyOn(FileStorageService.prototype, "getDownloadAccess")
+        .spyOn(FileStorageService.prototype, 'getDownloadAccess')
         .mockResolvedValueOnce(readyDownloadAccess(innovationDeletedUserFile.url))
         .mockResolvedValueOnce(readyDownloadAccess(innovationCreatedAfterTodayFile.url))
         .mockResolvedValueOnce(readyDownloadAccess(evidenceFileByJohn.url))
@@ -434,13 +434,13 @@ describe("Services / Innovation File service suite", () => {
         context,
         innovation.id,
         { uploadedBy: [ServiceRoleEnum.INNOVATOR] },
-        { take: 4, skip: 0, order: { contextType: "ASC" } },
+        { take: 4, skip: 0, order: { contextType: 'ASC' } },
         em
       );
 
       const data = [
         transformFileData(innovationDeletedUserFile.file, innovationDeletedUserFile.url, {
-          name: "[deleted user]",
+          name: '[deleted user]',
           role: ServiceRoleEnum.INNOVATOR
         }),
         transformFileData(innovationCreatedAfterTodayFile.file, innovationCreatedAfterTodayFile.url, {
@@ -466,12 +466,12 @@ describe("Services / Innovation File service suite", () => {
       });
     });
 
-    it("should return an empty array when no files are found", async () => {
+    it('should return an empty array when no files are found', async () => {
       const files = await sut.getFilesList(
         context,
         innovation.id,
         { name: randAirportName() },
-        { take: 20, skip: 0, order: { name: "ASC" } },
+        { take: 20, skip: 0, order: { name: 'ASC' } },
         em
       );
 
@@ -479,9 +479,9 @@ describe("Services / Innovation File service suite", () => {
       expect(files.data).toHaveLength(0);
     });
 
-    describe("archived innovations", () => {
+    describe('archived innovations', () => {
       const mock = jest
-        .spyOn(FileStorageService.prototype, "getDownloadAccess")
+        .spyOn(FileStorageService.prototype, 'getDownloadAccess')
         .mockResolvedValue(readyDownloadAccess(randUrl()));
       const innovationFiles = scenario.users.johnInnovator.innovations.johnInnovation.files;
 
@@ -498,29 +498,29 @@ describe("Services / Innovation File service suite", () => {
       });
 
       it.each([
-        ["innovator", scenario.users.johnInnovator],
-        ["admin", scenario.users.allMighty]
-      ])("should return the list of all files for an archived innovation as %s", async (_label, user) => {
+        ['innovator', scenario.users.johnInnovator],
+        ['admin', scenario.users.allMighty]
+      ])('should return the list of all files for an archived innovation as %s', async (_label, user) => {
         const files = await sut.getFilesList(
           DTOsHelper.getUserRequestContext(user),
           innovation.id,
           {},
-          { take: 20, skip: 0, order: { name: "ASC" } },
+          { take: 20, skip: 0, order: { name: 'ASC' } },
           em
         );
         expect(files.data.length).toBe(Object.values(innovationFiles).length);
       });
 
       it.each([
-        ["qualifying accessor", scenario.users.aliceQualifyingAccessor],
-        ["accessor", scenario.users.samAccessor],
-        ["needs assessment", scenario.users.paulNeedsAssessor]
-      ])("should exclude files uploaded after archive for A/QA/NA roles", async (_label, user) => {
+        ['qualifying accessor', scenario.users.aliceQualifyingAccessor],
+        ['accessor', scenario.users.samAccessor],
+        ['needs assessment', scenario.users.paulNeedsAssessor]
+      ])('should exclude files uploaded after archive for A/QA/NA roles', async (_label, user) => {
         const files = await sut.getFilesList(
           DTOsHelper.getUserRequestContext(user),
           innovation.id,
           {},
-          { take: 20, skip: 0, order: { name: "ASC" } },
+          { take: 20, skip: 0, order: { name: 'ASC' } },
           em
         );
         // there is one file in the future so it's after the archive (now)
@@ -530,7 +530,7 @@ describe("Services / Innovation File service suite", () => {
     });
   });
 
-  describe("getFileInfo()", () => {
+  describe('getFileInfo()', () => {
     let userMap: Map<string, { user: TestUserType; file: TestFileType; role: ServiceRoleEnum; orgUnitName?: string }>;
     let innovation: typeof scenario.users.johnInnovator.innovations.johnInnovation;
 
@@ -538,7 +538,7 @@ describe("Services / Innovation File service suite", () => {
       innovation = scenario.users.johnInnovator.innovations.johnInnovation;
       userMap = new Map([
         [
-          "johnInnovator",
+          'johnInnovator',
           {
             user: scenario.users.johnInnovator,
             file: innovation.files.sectionFileByJohn,
@@ -546,7 +546,7 @@ describe("Services / Innovation File service suite", () => {
           }
         ],
         [
-          "janeInnovator",
+          'janeInnovator',
           {
             user: scenario.users.janeInnovator,
             file: innovation.files.sectionFileByJane,
@@ -554,7 +554,7 @@ describe("Services / Innovation File service suite", () => {
           }
         ],
         [
-          "aliceQualifyingAccessor",
+          'aliceQualifyingAccessor',
           {
             user: scenario.users.aliceQualifyingAccessor,
             file: innovation.files.innovationFileByAlice,
@@ -564,7 +564,7 @@ describe("Services / Innovation File service suite", () => {
           }
         ],
         [
-          "ingridAccessor",
+          'ingridAccessor',
           {
             user: scenario.users.ingridAccessor,
             file: innovation.files.innovationFileByIngrid,
@@ -573,7 +573,7 @@ describe("Services / Innovation File service suite", () => {
           }
         ],
         [
-          "jamieMadroxAccessor",
+          'jamieMadroxAccessor',
           {
             user: scenario.users.jamieMadroxAccessor,
             file: innovation.files.innovationFileByJamieWithAiRole,
@@ -583,7 +583,7 @@ describe("Services / Innovation File service suite", () => {
           }
         ],
         [
-          "paulNeedsAssessor",
+          'paulNeedsAssessor',
           {
             user: scenario.users.paulNeedsAssessor,
             file: innovation.files.innovationFileByPaul,
@@ -595,35 +595,35 @@ describe("Services / Innovation File service suite", () => {
 
     describe.each([
       // As ... | request a file uploaded by ... | requestUser | fileUploadedBy | canDelete
-      ["innovation owner", "me", "johnInnovator", "johnInnovator", true],
-      ["innovation owner", "collaborator", "johnInnovator", "janeInnovator", true],
-      ["innovation owner", "QA", "johnInnovator", "aliceQualifyingAccessor", false],
-      ["innovation owner", "A", "johnInnovator", "ingridAccessor", false],
-      ["innovation owner", "NA", "johnInnovator", "paulNeedsAssessor", false],
-      ["innovation collaborator", "me", "janeInnovator", "janeInnovator", true],
-      ["innovation collaborator", "owner", "janeInnovator", "johnInnovator", true],
-      ["innovation collaborator", "QA", "janeInnovator", "aliceQualifyingAccessor", false],
-      ["innovation collaborator", "A", "janeInnovator", "ingridAccessor", false],
-      ["innovation collaborator", "NA", "janeInnovator", "paulNeedsAssessor", false],
-      ["QA", "me", "aliceQualifyingAccessor", "aliceQualifyingAccessor", true],
-      ["QA", "A in the same unit", "aliceQualifyingAccessor", "ingridAccessor", true],
-      ["QA", "A from other unit", "aliceQualifyingAccessor", "jamieMadroxAccessor", false],
-      ["QA", "innovation owner", "aliceQualifyingAccessor", "johnInnovator", false],
-      ["QA", "innovation collaborator", "aliceQualifyingAccessor", "janeInnovator", false],
-      ["QA", "NA", "aliceQualifyingAccessor", "paulNeedsAssessor", false],
-      ["A", "me", "ingridAccessor", "ingridAccessor", true],
-      ["A", "QA in the same unit", "ingridAccessor", "aliceQualifyingAccessor", true],
-      ["A", "A from other unit", "ingridAccessor", "jamieMadroxAccessor", false],
-      ["A", "innovation owner", "ingridAccessor", "johnInnovator", false],
-      ["A", "innovation collaborator", "ingridAccessor", "janeInnovator", false],
-      ["A", "NA", "ingridAccessor", "paulNeedsAssessor", false],
-      ["NA", "me", "paulNeedsAssessor", "paulNeedsAssessor", true],
-      ["NA", "innovation owner", "paulNeedsAssessor", "johnInnovator", false],
-      ["NA", "innovation collaborator", "paulNeedsAssessor", "janeInnovator", false],
-      ["NA", "QA", "paulNeedsAssessor", "aliceQualifyingAccessor", false],
-      ["NA", "A", "paulNeedsAssessor", "ingridAccessor", false]
+      ['innovation owner', 'me', 'johnInnovator', 'johnInnovator', true],
+      ['innovation owner', 'collaborator', 'johnInnovator', 'janeInnovator', true],
+      ['innovation owner', 'QA', 'johnInnovator', 'aliceQualifyingAccessor', false],
+      ['innovation owner', 'A', 'johnInnovator', 'ingridAccessor', false],
+      ['innovation owner', 'NA', 'johnInnovator', 'paulNeedsAssessor', false],
+      ['innovation collaborator', 'me', 'janeInnovator', 'janeInnovator', true],
+      ['innovation collaborator', 'owner', 'janeInnovator', 'johnInnovator', true],
+      ['innovation collaborator', 'QA', 'janeInnovator', 'aliceQualifyingAccessor', false],
+      ['innovation collaborator', 'A', 'janeInnovator', 'ingridAccessor', false],
+      ['innovation collaborator', 'NA', 'janeInnovator', 'paulNeedsAssessor', false],
+      ['QA', 'me', 'aliceQualifyingAccessor', 'aliceQualifyingAccessor', true],
+      ['QA', 'A in the same unit', 'aliceQualifyingAccessor', 'ingridAccessor', true],
+      ['QA', 'A from other unit', 'aliceQualifyingAccessor', 'jamieMadroxAccessor', false],
+      ['QA', 'innovation owner', 'aliceQualifyingAccessor', 'johnInnovator', false],
+      ['QA', 'innovation collaborator', 'aliceQualifyingAccessor', 'janeInnovator', false],
+      ['QA', 'NA', 'aliceQualifyingAccessor', 'paulNeedsAssessor', false],
+      ['A', 'me', 'ingridAccessor', 'ingridAccessor', true],
+      ['A', 'QA in the same unit', 'ingridAccessor', 'aliceQualifyingAccessor', true],
+      ['A', 'A from other unit', 'ingridAccessor', 'jamieMadroxAccessor', false],
+      ['A', 'innovation owner', 'ingridAccessor', 'johnInnovator', false],
+      ['A', 'innovation collaborator', 'ingridAccessor', 'janeInnovator', false],
+      ['A', 'NA', 'ingridAccessor', 'paulNeedsAssessor', false],
+      ['NA', 'me', 'paulNeedsAssessor', 'paulNeedsAssessor', true],
+      ['NA', 'innovation owner', 'paulNeedsAssessor', 'johnInnovator', false],
+      ['NA', 'innovation collaborator', 'paulNeedsAssessor', 'janeInnovator', false],
+      ['NA', 'QA', 'paulNeedsAssessor', 'aliceQualifyingAccessor', false],
+      ['NA', 'A', 'paulNeedsAssessor', 'ingridAccessor', false]
     ])(
-      "As a/an %s when I request a file information about a file uploaded by %s",
+      'As a/an %s when I request a file information about a file uploaded by %s',
       (_: string, __: string, domainContextUser: string, fileCreatedByUser: string, canDelete: boolean) => {
         let fileCreatedBy: {
           user: TestUserType;
@@ -638,29 +638,29 @@ describe("Services / Innovation File service suite", () => {
         beforeAll(() => {
           randomUrl = randUrl();
           jest
-            .spyOn(FileStorageService.prototype, "getDownloadAccess")
+            .spyOn(FileStorageService.prototype, 'getDownloadAccess')
             .mockResolvedValue(readyDownloadAccess(randomUrl));
         });
 
         beforeEach(() => {
           switch (domainContextUser) {
-            case "johnInnovator":
-              domainContext = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, "innovatorRole");
+            case 'johnInnovator':
+              domainContext = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, 'innovatorRole');
               break;
-            case "janeInnovator":
-              domainContext = DTOsHelper.getUserRequestContext(scenario.users.janeInnovator, "innovatorRole");
+            case 'janeInnovator':
+              domainContext = DTOsHelper.getUserRequestContext(scenario.users.janeInnovator, 'innovatorRole');
               break;
-            case "aliceQualifyingAccessor":
-              domainContext = DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, "qaRole");
+            case 'aliceQualifyingAccessor':
+              domainContext = DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole');
               break;
-            case "ingridAccessor":
-              domainContext = DTOsHelper.getUserRequestContext(scenario.users.ingridAccessor, "accessorRole");
+            case 'ingridAccessor':
+              domainContext = DTOsHelper.getUserRequestContext(scenario.users.ingridAccessor, 'accessorRole');
               break;
-            case "paulNeedsAssessor":
-              domainContext = DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor, "assessmentRole");
+            case 'paulNeedsAssessor':
+              domainContext = DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor, 'assessmentRole');
               break;
-            case "jamieMadroxAccessor":
-              domainContext = DTOsHelper.getUserRequestContext(scenario.users.jamieMadroxAccessor, "aiRole");
+            case 'jamieMadroxAccessor':
+              domainContext = DTOsHelper.getUserRequestContext(scenario.users.jamieMadroxAccessor, 'aiRole');
               break;
             default:
               break;
@@ -679,7 +679,7 @@ describe("Services / Innovation File service suite", () => {
 
           const result = await sut.getFileInfo(domainContext, innovation.id, file.id, em);
 
-          const expected: Awaited<ReturnType<InnovationFileService["getFileInfo"]>> = {
+          const expected: Awaited<ReturnType<InnovationFileService['getFileInfo']>> = {
             id: file.id,
             storageId: file.storageId,
             name: file.name,
@@ -708,13 +708,13 @@ describe("Services / Innovation File service suite", () => {
       }
     );
 
-    describe("When innovation is archived", () => {
+    describe('When innovation is archived', () => {
       beforeEach(async () => {
         await em.update(InnovationEntity, { id: innovation.id }, { status: InnovationStatusEnum.ARCHIVED });
       });
 
-      it("should allow delete if is from an innovator and is a section file", async () => {
-        const file = userMap.get("johnInnovator")!.file;
+      it('should allow delete if is from an innovator and is a section file', async () => {
+        const file = userMap.get('johnInnovator')!.file;
         const result = await sut.getFileInfo(
           DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
           innovation.id,
@@ -724,8 +724,8 @@ describe("Services / Innovation File service suite", () => {
         expect(result.canDelete).toBe(true);
       });
 
-      it("should not allow deletion if is not an innovator", async () => {
-        const file = userMap.get("johnInnovator")!.file;
+      it('should not allow deletion if is not an innovator', async () => {
+        const file = userMap.get('johnInnovator')!.file;
         const result = await sut.getFileInfo(
           DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
           innovation.id,
@@ -736,10 +736,10 @@ describe("Services / Innovation File service suite", () => {
       });
     });
 
-    describe("As any role", () => {
+    describe('As any role', () => {
       describe("when I request a file information about a file that doesn't exist", () => {
-        it("should return a not found error", async () => {
-          const domainContext = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, "innovatorRole");
+        it('should return a not found error', async () => {
+          const domainContext = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, 'innovatorRole');
           const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
 
           await expect(() => sut.getFileInfo(domainContext, innovation.id, randUuid(), em)).rejects.toThrow(
@@ -748,9 +748,9 @@ describe("Services / Innovation File service suite", () => {
         });
       });
 
-      describe("when I request a file information about a file uploaded by a deleted innovator", () => {
-        it("should return the createdBy name as [deleted user] and dont return isOwner", async () => {
-          const domainContext = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, "innovatorRole");
+      describe('when I request a file information about a file uploaded by a deleted innovator', () => {
+        it('should return the createdBy name as [deleted user] and dont return isOwner', async () => {
+          const domainContext = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, 'innovatorRole');
           const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
           const file = innovation.files.innovationFileByDeletedUser;
           const createdByUser = scenario.users.sebastiaoDeletedInnovator;
@@ -758,12 +758,12 @@ describe("Services / Innovation File service suite", () => {
           // Mocks
           const randomUrl = randUrl();
           jest
-            .spyOn(FileStorageService.prototype, "getDownloadAccess")
+            .spyOn(FileStorageService.prototype, 'getDownloadAccess')
             .mockResolvedValue(readyDownloadAccess(randomUrl));
 
           const result = await sut.getFileInfo(domainContext, innovation.id, file.id, em);
 
-          const expected: Awaited<ReturnType<InnovationFileService["getFileInfo"]>> = {
+          const expected: Awaited<ReturnType<InnovationFileService['getFileInfo']>> = {
             id: file.id,
             storageId: file.storageId,
             name: file.name,
@@ -777,7 +777,7 @@ describe("Services / Innovation File service suite", () => {
             },
             createdAt: new Date(file.createdAt),
             createdBy: {
-              name: "[deleted user]",
+              name: '[deleted user]',
               role: createdByUser.roles.innovatorRole.role
             },
             canDelete: true
@@ -789,21 +789,21 @@ describe("Services / Innovation File service suite", () => {
     });
   });
 
-  describe("createFile()", () => {
-    let innovation: CompleteScenarioType["users"]["johnInnovator"]["innovations"]["johnInnovation"];
-    let innovationOwner: CompleteScenarioType["users"]["johnInnovator"];
+  describe('createFile()', () => {
+    let innovation: CompleteScenarioType['users']['johnInnovator']['innovations']['johnInnovation'];
+    let innovationOwner: CompleteScenarioType['users']['johnInnovator'];
 
     beforeAll(() => {
       innovation = scenario.users.johnInnovator.innovations.johnInnovation;
       innovationOwner = scenario.users.johnInnovator;
     });
 
-    describe("When I create a file as an innovator", () => {
+    describe('When I create a file as an innovator', () => {
       it.each([
         [InnovationFileContextTypeEnum.INNOVATION, undefined],
-        [InnovationFileContextTypeEnum.INNOVATION_SECTION, "UNDERSTANDING_OF_NEEDS"]
+        [InnovationFileContextTypeEnum.INNOVATION_SECTION, 'UNDERSTANDING_OF_NEEDS']
       ])(
-        "should create a file with context type %s",
+        'should create a file with context type %s',
         async (contextType: InnovationFileContextTypeEnum, contextId: string | undefined) => {
           const data = {
             context: { id: contextId ?? innovation.id, type: contextType },
@@ -812,12 +812,12 @@ describe("Services / Innovation File service suite", () => {
               id: randFileName(),
               name: randFileName(),
               size: randNumber(),
-              extension: "pdf"
+              extension: 'pdf'
             }
           };
 
           const file = await sut.createFile(
-            DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, "innovatorRole"),
+            DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, 'innovatorRole'),
             innovation.id,
             data,
             innovation.status,
@@ -825,11 +825,11 @@ describe("Services / Innovation File service suite", () => {
           );
 
           const dbFile = await em
-            .createQueryBuilder(InnovationFileEntity, "file")
-            .where("file.id = :fileId", { fileId: file.id })
+            .createQueryBuilder(InnovationFileEntity, 'file')
+            .where('file.id = :fileId', { fileId: file.id })
             .getOne();
 
-          expect(file).toHaveProperty("id");
+          expect(file).toHaveProperty('id');
           expect(dbFile).toMatchObject({
             name: data.name,
             storageId: data.file.id,
@@ -845,19 +845,19 @@ describe("Services / Innovation File service suite", () => {
 
       it("should throw error if the section doesn't allow upload before submitting to NA", async () => {
         const data = {
-          context: { id: "INNOVATION_DESCRIPTION", type: InnovationFileContextTypeEnum.INNOVATION_SECTION },
+          context: { id: 'INNOVATION_DESCRIPTION', type: InnovationFileContextTypeEnum.INNOVATION_SECTION },
           name: randFileName(),
           file: {
             id: randFileName(),
             name: randFileName(),
             size: randNumber(),
-            extension: "pdf"
+            extension: 'pdf'
           }
         };
 
         await expect(() =>
           sut.createFile(
-            DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, "innovatorRole"),
+            DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, 'innovatorRole'),
             innovation.id,
             data,
             InnovationStatusEnum.CREATED,
@@ -867,9 +867,9 @@ describe("Services / Innovation File service suite", () => {
       });
 
       it.each([
-        [InnovationFileContextTypeEnum.INNOVATION_SECTION, "INNOVATION_DESCRIPTION"],
+        [InnovationFileContextTypeEnum.INNOVATION_SECTION, 'INNOVATION_DESCRIPTION'],
         [InnovationFileContextTypeEnum.INNOVATION_EVIDENCE, randUuid()]
-      ])("should allow uploading %s if the innovation is archived", async (type, id) => {
+      ])('should allow uploading %s if the innovation is archived', async (type, id) => {
         const innovation = scenario.users.johnInnovator.innovations.johnInnovationArchived;
         const data = {
           context: { id, type },
@@ -878,37 +878,37 @@ describe("Services / Innovation File service suite", () => {
             id: randFileName(),
             name: randFileName(),
             size: randNumber(),
-            extension: "pdf"
+            extension: 'pdf'
           }
         };
 
         const file = await sut.createFile(
-          DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, "innovatorRole"),
+          DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, 'innovatorRole'),
           innovation.id,
           data,
           innovation.status,
           em
         );
 
-        expect(file).toHaveProperty("id");
+        expect(file).toHaveProperty('id');
       });
 
       it("shouldn't allow uploading other files if the innovation is archived", async () => {
         const innovation = scenario.users.johnInnovator.innovations.johnInnovationArchived;
         const data = {
-          context: { type: InnovationFileContextTypeEnum.INNOVATION, id: "" },
+          context: { type: InnovationFileContextTypeEnum.INNOVATION, id: '' },
           name: randFileName(),
           file: {
             id: randFileName(),
             name: randFileName(),
             size: randNumber(),
-            extension: "pdf"
+            extension: 'pdf'
           }
         };
 
         await expect(() =>
           sut.createFile(
-            DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, "innovatorRole"),
+            DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, 'innovatorRole'),
             scenario.users.johnInnovator.innovations.johnInnovationArchived.id,
             data,
             innovation.status,
@@ -917,7 +917,7 @@ describe("Services / Innovation File service suite", () => {
         ).rejects.toThrow(new ConflictError(AuthErrorsEnum.AUTH_INNOVATION_ARCHIVED_CONFLICT));
       });
 
-      it("should send the notifyMe notification", async () => {
+      it('should send the notifyMe notification', async () => {
         const data = {
           context: { id: innovation.id, type: InnovationFileContextTypeEnum.INNOVATION },
           name: randFileName(),
@@ -925,12 +925,12 @@ describe("Services / Innovation File service suite", () => {
             id: randFileName(),
             name: randFileName(),
             size: randNumber(),
-            extension: "pdf"
+            extension: 'pdf'
           }
         };
 
         await sut.createFile(
-          DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, "innovatorRole"),
+          DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, 'innovatorRole'),
           innovation.id,
           data,
           innovation.status,
@@ -939,9 +939,9 @@ describe("Services / Innovation File service suite", () => {
 
         expect(notifierSendNotifyMeSpy).toHaveBeenCalledTimes(1);
         expect(notifierSendNotifyMeSpy).toHaveBeenCalledWith(
-          DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, "innovatorRole"),
+          DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, 'innovatorRole'),
           innovation.id,
-          "DOCUMENT_UPLOADED",
+          'DOCUMENT_UPLOADED',
           {
             documentName: data.name
           }
@@ -949,10 +949,10 @@ describe("Services / Innovation File service suite", () => {
       });
 
       it.each([
-        [InnovationFileContextTypeEnum.INNOVATION_EVIDENCE, randUuid(), "EVIDENCE_OF_EFFECTIVENESS"],
-        [InnovationFileContextTypeEnum.INNOVATION_REGULATIONS, "CE_UKCA_CLASS_I", "REGULATIONS_AND_STANDARDS"]
+        [InnovationFileContextTypeEnum.INNOVATION_EVIDENCE, randUuid(), 'EVIDENCE_OF_EFFECTIVENESS'],
+        [InnovationFileContextTypeEnum.INNOVATION_REGULATIONS, 'CE_UKCA_CLASS_I', 'REGULATIONS_AND_STANDARDS']
       ])(
-        "should mark section as draft when creating a mandatory document with context type %s",
+        'should mark section as draft when creating a mandatory document with context type %s',
         async (contextType, contextId, section) => {
           await em.query(
             `IF EXISTS (SELECT 1 FROM innovation_section WHERE innovation_id = @0 AND section = @1)
@@ -964,7 +964,7 @@ describe("Services / Innovation File service suite", () => {
           );
 
           await sut.createFile(
-            DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, "innovatorRole"),
+            DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, 'innovatorRole'),
             innovation.id,
             {
               context: { id: contextId, type: contextType },
@@ -973,7 +973,7 @@ describe("Services / Innovation File service suite", () => {
                 id: randFileName(),
                 name: randFileName(),
                 size: randNumber(),
-                extension: "pdf"
+                extension: 'pdf'
               }
             },
             innovation.status,
@@ -981,9 +981,9 @@ describe("Services / Innovation File service suite", () => {
           );
 
           const dbSection = await em
-            .createQueryBuilder(InnovationSectionEntity, "section")
-            .where("section.innovation_id = :innovationId", { innovationId: innovation.id })
-            .andWhere("section.section = :section", { section })
+            .createQueryBuilder(InnovationSectionEntity, 'section')
+            .where('section.innovation_id = :innovationId', { innovationId: innovation.id })
+            .andWhere('section.section = :section', { section })
             .getOne();
 
           expect(dbSection?.status).toBe(InnovationSectionStatusEnum.DRAFT);
@@ -991,14 +991,14 @@ describe("Services / Innovation File service suite", () => {
       );
     });
 
-    describe("When I create a file as an NA", () => {
+    describe('When I create a file as an NA', () => {
       let naDomainContext: DomainContextType;
 
       beforeAll(() => {
-        naDomainContext = DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor, "assessmentRole");
+        naDomainContext = DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor, 'assessmentRole');
       });
 
-      it("should create a file with context type INNOVATION and send a notification", async () => {
+      it('should create a file with context type INNOVATION and send a notification', async () => {
         const data = {
           context: { id: innovation.id, type: InnovationFileContextTypeEnum.INNOVATION },
           name: randFileName(),
@@ -1006,18 +1006,18 @@ describe("Services / Innovation File service suite", () => {
             id: randFileName(),
             name: randFileName(),
             size: randNumber(),
-            extension: "pdf"
+            extension: 'pdf'
           }
         };
 
         const file = await sut.createFile(naDomainContext, innovation.id, data, innovation.status, em);
 
         const dbFile = await em
-          .createQueryBuilder(InnovationFileEntity, "file")
-          .where("file.id = :fileId", { fileId: file.id })
+          .createQueryBuilder(InnovationFileEntity, 'file')
+          .where('file.id = :fileId', { fileId: file.id })
           .getOne();
 
-        expect(file).toHaveProperty("id");
+        expect(file).toHaveProperty('id');
         expect(dbFile).toMatchObject({
           name: data.name,
           storageId: data.file.id,
@@ -1034,15 +1034,15 @@ describe("Services / Innovation File service suite", () => {
         });
       });
 
-      it("should throw error when creating file with context type INNOVATION_SECTION", async () => {
+      it('should throw error when creating file with context type INNOVATION_SECTION', async () => {
         const data = {
-          context: { id: "TESTING_WITH_USERS", type: InnovationFileContextTypeEnum.INNOVATION_SECTION },
+          context: { id: 'TESTING_WITH_USERS', type: InnovationFileContextTypeEnum.INNOVATION_SECTION },
           name: randFileName(),
           file: {
             id: randFileName(),
             name: randFileName(),
             size: randNumber(),
-            extension: "pdf"
+            extension: 'pdf'
           }
         };
 
@@ -1053,7 +1053,7 @@ describe("Services / Innovation File service suite", () => {
         );
       });
 
-      it("should throw error when creating file with context type INNOVATION_EVIDENCE", async () => {
+      it('should throw error when creating file with context type INNOVATION_EVIDENCE', async () => {
         const data = {
           context: { id: randUuid(), type: InnovationFileContextTypeEnum.INNOVATION_EVIDENCE },
           name: randFileName(),
@@ -1061,7 +1061,7 @@ describe("Services / Innovation File service suite", () => {
             id: randFileName(),
             name: randFileName(),
             size: randNumber(),
-            extension: "pdf"
+            extension: 'pdf'
           }
         };
 
@@ -1072,15 +1072,15 @@ describe("Services / Innovation File service suite", () => {
         );
       });
 
-      it("should throw error when creating file with context type INNOVATION_REGULATIONS", async () => {
+      it('should throw error when creating file with context type INNOVATION_REGULATIONS', async () => {
         const data = {
-          context: { id: "CE_UKCA_CLASS_I", type: InnovationFileContextTypeEnum.INNOVATION_REGULATIONS },
+          context: { id: 'CE_UKCA_CLASS_I', type: InnovationFileContextTypeEnum.INNOVATION_REGULATIONS },
           name: randFileName(),
           file: {
             id: randFileName(),
             name: randFileName(),
             size: randNumber(),
-            extension: "pdf"
+            extension: 'pdf'
           }
         };
 
@@ -1092,15 +1092,15 @@ describe("Services / Innovation File service suite", () => {
       });
     });
 
-    describe("When I create a file as an QA/A", () => {
+    describe('When I create a file as an QA/A', () => {
       let qaDomainContext: DomainContextType;
 
       beforeAll(() => {
         innovation = scenario.users.johnInnovator.innovations.johnInnovation;
-        qaDomainContext = DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, "qaRole");
+        qaDomainContext = DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole');
       });
 
-      it("should create a file with context type INNOVATION and send notification", async () => {
+      it('should create a file with context type INNOVATION and send notification', async () => {
         const data = {
           context: { id: innovation.id, type: InnovationFileContextTypeEnum.INNOVATION },
           name: randFileName(),
@@ -1108,18 +1108,18 @@ describe("Services / Innovation File service suite", () => {
             id: randFileName(),
             name: randFileName(),
             size: randNumber(),
-            extension: "pdf"
+            extension: 'pdf'
           }
         };
 
         const file = await sut.createFile(qaDomainContext, innovation.id, data, innovation.status, em);
 
         const dbFile = await em
-          .createQueryBuilder(InnovationFileEntity, "file")
-          .where("file.id = :fileId", { fileId: file.id })
+          .createQueryBuilder(InnovationFileEntity, 'file')
+          .where('file.id = :fileId', { fileId: file.id })
           .getOne();
 
-        expect(file).toHaveProperty("id");
+        expect(file).toHaveProperty('id');
         expect(dbFile).toMatchObject({
           name: data.name,
           storageId: data.file.id,
@@ -1136,15 +1136,15 @@ describe("Services / Innovation File service suite", () => {
         });
       });
 
-      it("should throw error when creating file with context type INNOVATION_SECTION", async () => {
+      it('should throw error when creating file with context type INNOVATION_SECTION', async () => {
         const data = {
-          context: { id: "TESTING_WITH_USERS", type: InnovationFileContextTypeEnum.INNOVATION_SECTION },
+          context: { id: 'TESTING_WITH_USERS', type: InnovationFileContextTypeEnum.INNOVATION_SECTION },
           name: randFileName(),
           file: {
             id: randFileName(),
             name: randFileName(),
             size: randNumber(),
-            extension: "pdf"
+            extension: 'pdf'
           }
         };
 
@@ -1155,7 +1155,7 @@ describe("Services / Innovation File service suite", () => {
         );
       });
 
-      it("should throw error when creating file with context type INNOVATION_EVIDENCE", async () => {
+      it('should throw error when creating file with context type INNOVATION_EVIDENCE', async () => {
         const data = {
           context: { id: randUuid(), type: InnovationFileContextTypeEnum.INNOVATION_EVIDENCE },
           name: randFileName(),
@@ -1163,7 +1163,7 @@ describe("Services / Innovation File service suite", () => {
             id: randFileName(),
             name: randFileName(),
             size: randNumber(),
-            extension: "pdf"
+            extension: 'pdf'
           }
         };
 
@@ -1174,15 +1174,15 @@ describe("Services / Innovation File service suite", () => {
         );
       });
 
-      it("should throw error when creating file with context type INNOVATION_REGULATIONS", async () => {
+      it('should throw error when creating file with context type INNOVATION_REGULATIONS', async () => {
         const data = {
-          context: { id: "CE_UKCA_CLASS_I", type: InnovationFileContextTypeEnum.INNOVATION_REGULATIONS },
+          context: { id: 'CE_UKCA_CLASS_I', type: InnovationFileContextTypeEnum.INNOVATION_REGULATIONS },
           name: randFileName(),
           file: {
             id: randFileName(),
             name: randFileName(),
             size: randNumber(),
-            extension: "pdf"
+            extension: 'pdf'
           }
         };
 
@@ -1194,16 +1194,16 @@ describe("Services / Innovation File service suite", () => {
       });
     });
 
-    it("should throw an error if the max allowed files per innovation is reached", async () => {
+    it('should throw an error if the max allowed files per innovation is reached', async () => {
       const johnInnovator = scenario.users.johnInnovator;
 
       for (let i = 0; i < MAX_FILES_ALLOWED; i++) {
         await new InnovationFileBuilder(em)
           .setContext({
-            id: "INNOVATION_DESCRIPTION",
+            id: 'INNOVATION_DESCRIPTION',
             type: InnovationFileContextTypeEnum.INNOVATION_SECTION
           })
-          .setCreatedByUserRole(johnInnovator.roles["innovatorRole"]!.id)
+          .setCreatedByUserRole(johnInnovator.roles['innovatorRole']!.id)
           .setInnovation(innovation.id)
           .save();
       }
@@ -1215,13 +1215,13 @@ describe("Services / Innovation File service suite", () => {
           id: randFileName(),
           name: randFileName(),
           size: randNumber(),
-          extension: "pdf"
+          extension: 'pdf'
         }
       };
 
       await expect(() =>
         sut.createFile(
-          DTOsHelper.getUserRequestContext(johnInnovator, "innovatorRole"),
+          DTOsHelper.getUserRequestContext(johnInnovator, 'innovatorRole'),
           innovation.id,
           data,
           innovation.status,
@@ -1231,53 +1231,53 @@ describe("Services / Innovation File service suite", () => {
     });
   });
 
-  describe("deleteFile()", () => {
+  describe('deleteFile()', () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
-    const deleteFileMock = jest.spyOn(FileStorageService.prototype, "deleteFile").mockResolvedValue({} as any);
+    const deleteFileMock = jest.spyOn(FileStorageService.prototype, 'deleteFile').mockResolvedValue({} as any);
 
     describe.each([
-      ["innovation owner", DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, "innovatorRole")],
-      ["innovation collaborator", DTOsHelper.getUserRequestContext(scenario.users.janeInnovator, "innovatorRole")]
-    ])("When I delete a file as an %s", (_: string, domainContext: DomainContextType) => {
+      ['innovation owner', DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, 'innovatorRole')],
+      ['innovation collaborator', DTOsHelper.getUserRequestContext(scenario.users.janeInnovator, 'innovatorRole')]
+    ])('When I delete a file as an %s', (_: string, domainContext: DomainContextType) => {
       it.each([
-        ["the owner", innovation.files.sectionFileByJohn.id],
-        ["a collaborator", innovation.files.sectionFileByJane.id]
-      ])("should be able to delete a file created by %s", async (_: string, fileId: string) => {
+        ['the owner', innovation.files.sectionFileByJohn.id],
+        ['a collaborator', innovation.files.sectionFileByJane.id]
+      ])('should be able to delete a file created by %s', async (_: string, fileId: string) => {
         await sut.deleteFile(domainContext, fileId, em);
 
         const dbFile = await em
-          .createQueryBuilder(InnovationFileEntity, "file")
+          .createQueryBuilder(InnovationFileEntity, 'file')
           .withDeleted()
-          .where("file.id = :fileId", { fileId })
+          .where('file.id = :fileId', { fileId })
           .getOne();
 
         expect(dbFile?.deletedAt).toBeTruthy();
         expect(deleteFileMock).toHaveBeenCalled();
       });
 
-      it("should mark the evidence section as draft when deleting an evidence document", async () => {
+      it('should mark the evidence section as draft when deleting an evidence document', async () => {
         await em.update(
           InnovationSectionEntity,
-          { innovation: { id: innovation.id }, section: "EVIDENCE_OF_EFFECTIVENESS" },
+          { innovation: { id: innovation.id }, section: 'EVIDENCE_OF_EFFECTIVENESS' },
           { status: InnovationSectionStatusEnum.SUBMITTED }
         );
 
         await sut.deleteFile(domainContext, innovation.files.evidenceFileByJohn.id, em);
 
         const dbSection = await em
-          .createQueryBuilder(InnovationSectionEntity, "section")
-          .where("section.innovation_id = :innovationId", { innovationId: innovation.id })
-          .andWhere("section.section = :section", { section: "EVIDENCE_OF_EFFECTIVENESS" })
+          .createQueryBuilder(InnovationSectionEntity, 'section')
+          .where('section.innovation_id = :innovationId', { innovationId: innovation.id })
+          .andWhere('section.section = :section', { section: 'EVIDENCE_OF_EFFECTIVENESS' })
           .getOne();
 
         expect(dbSection?.status).toBe(InnovationSectionStatusEnum.DRAFT);
       });
 
       it.each([
-        ["NA", innovation.files.innovationFileByPaul.id],
-        ["QA", innovation.files.innovationFileByAlice.id],
-        ["A", innovation.files.innovationFileByIngrid.id]
-      ])("should throw an error if the file was created by a %s", async (_: string, fileId: string) => {
+        ['NA', innovation.files.innovationFileByPaul.id],
+        ['QA', innovation.files.innovationFileByAlice.id],
+        ['A', innovation.files.innovationFileByIngrid.id]
+      ])('should throw an error if the file was created by a %s', async (_: string, fileId: string) => {
         await expect(() => sut.deleteFile(domainContext, fileId, em)).rejects.toThrow(
           new ForbiddenError(InnovationErrorsEnum.INNOVATION_FILE_NO_PERMISSION_TO_DELETE)
         );
@@ -1285,19 +1285,19 @@ describe("Services / Innovation File service suite", () => {
     });
 
     describe.each([
-      ["QA", DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, "qaRole")],
-      ["A", DTOsHelper.getUserRequestContext(scenario.users.ingridAccessor, "accessorRole")]
-    ])("When I delete a file as an %s", (_: string, domainContext: DomainContextType) => {
+      ['QA', DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole')],
+      ['A', DTOsHelper.getUserRequestContext(scenario.users.ingridAccessor, 'accessorRole')]
+    ])('When I delete a file as an %s', (_: string, domainContext: DomainContextType) => {
       it.each([
-        ["myself", innovation.files.innovationFileByAlice.id],
-        ["an QA/A from the same unit", innovation.files.innovationFileByIngrid.id]
-      ])("should be able to delete a file created by %s", async (_: string, fileId: string) => {
+        ['myself', innovation.files.innovationFileByAlice.id],
+        ['an QA/A from the same unit', innovation.files.innovationFileByIngrid.id]
+      ])('should be able to delete a file created by %s', async (_: string, fileId: string) => {
         await sut.deleteFile(domainContext, fileId, em);
 
         const dbFile = await em
-          .createQueryBuilder(InnovationFileEntity, "file")
+          .createQueryBuilder(InnovationFileEntity, 'file')
           .withDeleted()
-          .where("file.id = :fileId", { fileId })
+          .where('file.id = :fileId', { fileId })
           .getOne();
 
         expect(dbFile?.deletedAt).toBeTruthy();
@@ -1305,30 +1305,30 @@ describe("Services / Innovation File service suite", () => {
       });
 
       it.each([
-        ["QA/A from other unit", innovation.files.innovationFileByJamieWithAiRole.id],
-        ["innovation owner", innovation.files.sectionFileByJohn.id],
-        ["innovation collaborator", innovation.files.sectionFileByJane.id],
-        ["NA", innovation.files.innovationFileByPaul.id]
-      ])("should throw an error if the file was created by a %s", async (_: string, fileId: string) => {
+        ['QA/A from other unit', innovation.files.innovationFileByJamieWithAiRole.id],
+        ['innovation owner', innovation.files.sectionFileByJohn.id],
+        ['innovation collaborator', innovation.files.sectionFileByJane.id],
+        ['NA', innovation.files.innovationFileByPaul.id]
+      ])('should throw an error if the file was created by a %s', async (_: string, fileId: string) => {
         await expect(() => sut.deleteFile(domainContext, fileId, em)).rejects.toThrow(
           new ForbiddenError(InnovationErrorsEnum.INNOVATION_FILE_NO_PERMISSION_TO_DELETE)
         );
       });
     });
 
-    describe("When I delete a file as an NA", () => {
-      const domainContext = DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor, "assessmentRole");
+    describe('When I delete a file as an NA', () => {
+      const domainContext = DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor, 'assessmentRole');
 
       it.each([
-        ["myself", innovation.files.innovationFileByPaul.id],
-        ["another NA", innovation.files.innovationFileBySean.id]
-      ])("should be able to delete a file created by %s", async (_: string, fileId: string) => {
+        ['myself', innovation.files.innovationFileByPaul.id],
+        ['another NA', innovation.files.innovationFileBySean.id]
+      ])('should be able to delete a file created by %s', async (_: string, fileId: string) => {
         await sut.deleteFile(domainContext, fileId, em);
 
         const dbFile = await em
-          .createQueryBuilder(InnovationFileEntity, "file")
+          .createQueryBuilder(InnovationFileEntity, 'file')
           .withDeleted()
-          .where("file.id = :fileId", { fileId })
+          .where('file.id = :fileId', { fileId })
           .getOne();
 
         expect(dbFile?.deletedAt).toBeTruthy();
@@ -1336,22 +1336,22 @@ describe("Services / Innovation File service suite", () => {
       });
 
       it.each([
-        ["QA", innovation.files.innovationFileByAlice.id],
-        ["A", innovation.files.innovationFileByIngrid.id],
-        ["innovation owner", innovation.files.sectionFileByJohn.id],
-        ["innovation collaborator", innovation.files.sectionFileByJane.id]
-      ])("should throw an error if the file was created by a %s", async (_: string, fileId: string) => {
+        ['QA', innovation.files.innovationFileByAlice.id],
+        ['A', innovation.files.innovationFileByIngrid.id],
+        ['innovation owner', innovation.files.sectionFileByJohn.id],
+        ['innovation collaborator', innovation.files.sectionFileByJane.id]
+      ])('should throw an error if the file was created by a %s', async (_: string, fileId: string) => {
         await expect(() => sut.deleteFile(domainContext, fileId, em)).rejects.toThrow(
           new ForbiddenError(InnovationErrorsEnum.INNOVATION_FILE_NO_PERMISSION_TO_DELETE)
         );
       });
     });
 
-    describe("when Innovator deletes archived innovation file", () => {
+    describe('when Innovator deletes archived innovation file', () => {
       const sectionFile = innovation.files.sectionFileByJohn.id;
       const evidenceFile = innovation.files.evidenceFileByJohn.id;
       const notSectionFile = innovation.files.innovationFileByDeletedUser.id;
-      const domainContext = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, "innovatorRole");
+      const domainContext = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, 'innovatorRole');
 
       it("should delete the file if it's a section file", async () => {
         await em.update(InnovationEntity, { id: innovation.id }, { status: InnovationStatusEnum.ARCHIVED });
@@ -1363,7 +1363,7 @@ describe("Services / Innovation File service suite", () => {
         await sut.deleteFile(domainContext, evidenceFile, em);
       });
 
-      it("should fail if the file is not a section file", async () => {
+      it('should fail if the file is not a section file', async () => {
         await em.update(InnovationEntity, { id: innovation.id }, { status: InnovationStatusEnum.ARCHIVED });
         await expect(() => sut.deleteFile(domainContext, notSectionFile, em)).rejects.toThrow(
           new ForbiddenError(InnovationErrorsEnum.INNOVATION_FILE_NO_PERMISSION_TO_DELETE)
@@ -1371,20 +1371,20 @@ describe("Services / Innovation File service suite", () => {
       });
     });
 
-    describe("deleteFiles()", () => {
+    describe('deleteFiles()', () => {
       const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
-      const domainContext = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, "innovatorRole");
+      const domainContext = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, 'innovatorRole');
 
-      it("should delete regulation files whose certification is not in the keep list", async () => {
+      it('should delete regulation files whose certification is not in the keep list', async () => {
         deleteFileMock.mockClear();
         const retainedFile = await new InnovationFileBuilder(em)
-          .setContext({ id: "UK_MDR_CLASS_I", type: InnovationFileContextTypeEnum.INNOVATION_REGULATIONS })
-          .setCreatedByUserRole(scenario.users.johnInnovator.roles["innovatorRole"]!.id)
+          .setContext({ id: 'UK_MDR_CLASS_I', type: InnovationFileContextTypeEnum.INNOVATION_REGULATIONS })
+          .setCreatedByUserRole(scenario.users.johnInnovator.roles['innovatorRole']!.id)
           .setInnovation(innovation.id)
           .save();
         const obsoleteFile = await new InnovationFileBuilder(em)
-          .setContext({ id: "DTAC", type: InnovationFileContextTypeEnum.INNOVATION_REGULATIONS })
-          .setCreatedByUserRole(scenario.users.johnInnovator.roles["innovatorRole"]!.id)
+          .setContext({ id: 'DTAC', type: InnovationFileContextTypeEnum.INNOVATION_REGULATIONS })
+          .setCreatedByUserRole(scenario.users.johnInnovator.roles['innovatorRole']!.id)
           .setInnovation(innovation.id)
           .save();
 
@@ -1399,14 +1399,14 @@ describe("Services / Innovation File service suite", () => {
         );
 
         const retainedDbFile = await em
-          .createQueryBuilder(InnovationFileEntity, "file")
+          .createQueryBuilder(InnovationFileEntity, 'file')
           .withDeleted()
-          .where("file.id = :fileId", { fileId: retainedFile.id })
+          .where('file.id = :fileId', { fileId: retainedFile.id })
           .getOne();
         const obsoleteDbFile = await em
-          .createQueryBuilder(InnovationFileEntity, "file")
+          .createQueryBuilder(InnovationFileEntity, 'file')
           .withDeleted()
-          .where("file.id = :fileId", { fileId: obsoleteFile.id })
+          .where('file.id = :fileId', { fileId: obsoleteFile.id })
           .getOne();
 
         expect(retainedDbFile?.deletedAt).toBeFalsy();
@@ -1414,11 +1414,11 @@ describe("Services / Innovation File service suite", () => {
         expect(deleteFileMock).toHaveBeenCalledTimes(1);
       });
 
-      it("should delete all files related to the contextType INNOVATION_SECTION", async () => {
+      it('should delete all files related to the contextType INNOVATION_SECTION', async () => {
         const nInnovationSectionFilesBefore = await em
-          .createQueryBuilder(InnovationFileEntity, "file")
-          .where("file.contextType = :contextType", { contextType: InnovationFileContextTypeEnum.INNOVATION_SECTION })
-          .andWhere("file.innovation_id = :innovationId", { innovationId: innovation.id })
+          .createQueryBuilder(InnovationFileEntity, 'file')
+          .where('file.contextType = :contextType', { contextType: InnovationFileContextTypeEnum.INNOVATION_SECTION })
+          .andWhere('file.innovation_id = :innovationId', { innovationId: innovation.id })
           .getCount();
 
         await sut.deleteFiles(
@@ -1429,29 +1429,29 @@ describe("Services / Innovation File service suite", () => {
         );
 
         const nInnovationSectionFilesAfter = await em
-          .createQueryBuilder(InnovationFileEntity, "file")
-          .where("file.contextType = :contextType", { contextType: InnovationFileContextTypeEnum.INNOVATION_SECTION })
-          .andWhere("file.innovation_id = :innovationId", { innovationId: innovation.id })
+          .createQueryBuilder(InnovationFileEntity, 'file')
+          .where('file.contextType = :contextType', { contextType: InnovationFileContextTypeEnum.INNOVATION_SECTION })
+          .andWhere('file.innovation_id = :innovationId', { innovationId: innovation.id })
           .getCount();
 
         expect(nInnovationSectionFilesBefore).toBeGreaterThan(0);
         expect(nInnovationSectionFilesAfter).toBe(0);
       });
 
-      it("should delete all files related to a specific contextId like for section INNOVATION_DESCRIPTION", async () => {
+      it('should delete all files related to a specific contextId like for section INNOVATION_DESCRIPTION', async () => {
         const contextId = innovation.files.sectionFileByJohn.context.id;
         const nInnovationSectionFilesBefore = await em
-          .createQueryBuilder(InnovationFileEntity, "file")
-          .where("file.contextId = :contextId", { contextId })
-          .andWhere("file.innovation_id = :innovationId", { innovationId: innovation.id })
+          .createQueryBuilder(InnovationFileEntity, 'file')
+          .where('file.contextId = :contextId', { contextId })
+          .andWhere('file.innovation_id = :innovationId', { innovationId: innovation.id })
           .getCount();
 
         await sut.deleteFiles(domainContext, innovation.id, { contextId }, em);
 
         const nInnovationSectionFilesAfter = await em
-          .createQueryBuilder(InnovationFileEntity, "file")
-          .where("file.contextId = :contextId", { contextId })
-          .andWhere("file.innovation_id = :innovationId", { innovationId: innovation.id })
+          .createQueryBuilder(InnovationFileEntity, 'file')
+          .where('file.contextId = :contextId', { contextId })
+          .andWhere('file.innovation_id = :innovationId', { innovationId: innovation.id })
           .getCount();
 
         expect(nInnovationSectionFilesBefore).toBeGreaterThan(0);
@@ -1459,16 +1459,16 @@ describe("Services / Innovation File service suite", () => {
       });
     });
 
-    it("should throw an error if the file doesnt exist", async () => {
+    it('should throw an error if the file doesnt exist', async () => {
       await expect(() =>
-        sut.deleteFile(DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, "innovatorRole"), randUuid(), em)
+        sut.deleteFile(DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, 'innovatorRole'), randUuid(), em)
       ).rejects.toThrow(new NotFoundError(InnovationErrorsEnum.INNOVATION_FILE_NOT_FOUND));
     });
 
-    it("should throw an error if an admin tries to delete a file", async () => {
+    it('should throw an error if an admin tries to delete a file', async () => {
       await expect(() =>
         sut.deleteFile(
-          DTOsHelper.getUserRequestContext(scenario.users.allMighty, "admin"),
+          DTOsHelper.getUserRequestContext(scenario.users.allMighty, 'admin'),
           innovation.files.sectionFileByJohn.id,
           em
         )
@@ -1476,13 +1476,13 @@ describe("Services / Innovation File service suite", () => {
     });
   });
 
-  describe("getFileUploadUrl", () => {
+  describe('getFileUploadUrl', () => {
     const url = randUrl();
-    const mock = jest.spyOn(FileStorageService.prototype, "getUploadUrl").mockReturnValue(url);
+    const mock = jest.spyOn(FileStorageService.prototype, 'getUploadUrl').mockReturnValue(url);
     afterEach(() => {
       mock.mockClear();
     });
-    it("should return the file upload url", async () => {
+    it('should return the file upload url', async () => {
       const name = randFileName();
       const fileUploadUrl = await sut.getFileUploadUrl(name);
 
@@ -1494,8 +1494,8 @@ describe("Services / Innovation File service suite", () => {
       });
     });
 
-    it("should strip the filename to 100 characters if filename too big", async () => {
-      const name = randText({ charCount: 200 }) + ".pdf";
+    it('should strip the filename to 100 characters if filename too big', async () => {
+      const name = randText({ charCount: 200 }) + '.pdf';
       const fileUploadName = (await sut.getFileUploadUrl(name)).name;
 
       expect(fileUploadName).toHaveLength(100);
@@ -1520,7 +1520,7 @@ describe("Services / Innovation File service suite", () => {
       size?: number;
       extension: string;
       url: string;
-      scanState: "ready";
+      scanState: 'ready';
       canDownload: true;
     };
   } => {
@@ -1531,14 +1531,14 @@ describe("Services / Innovation File service suite", () => {
       name: file.name,
       createdAt: new Date(file.createdAt),
       createdBy,
-      file: { ...file.file, url, scanState: "ready", canDownload: true }
+      file: { ...file.file, url, scanState: 'ready', canDownload: true }
     };
   };
 
-  describe("messageContextMapper", () => {
+  describe('messageContextMapper', () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
 
-    it("should resolve a map with all ", async () => {
+    it('should resolve a map with all ', async () => {
       const files = [
         innovation.files.sectionFileByJohn,
         innovation.files.sectionFileByJane,
@@ -1555,9 +1555,9 @@ describe("Services / Innovation File service suite", () => {
         contextId: f.context.id
       }));
 
-      const keys = sut["contextTypeId2Key"];
+      const keys = sut['contextTypeId2Key'];
 
-      const res = await sut["files2ResolvedContexts"](
+      const res = await sut['files2ResolvedContexts'](
         DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
         filesParameter,
         innovation.id,
@@ -1569,11 +1569,11 @@ describe("Services / Innovation File service suite", () => {
         const value = { id, type } as any;
         switch (f.id) {
           case innovation.files.evidenceFileByJohn.id:
-            value["name"] = innovation.evidences?.[0]?.description;
+            value['name'] = innovation.evidences?.[0]?.description;
             break;
           case innovation.files.messageFileByAlice.id:
-            value["name"] = innovation.threads.threadByAliceQA.subject;
-            value["threadId"] = innovation.threads.threadByAliceQA.id;
+            value['name'] = innovation.threads.threadByAliceQA.subject;
+            value['threadId'] = innovation.threads.threadByAliceQA.id;
             break;
         }
         expected.set(keys(type, id), value);

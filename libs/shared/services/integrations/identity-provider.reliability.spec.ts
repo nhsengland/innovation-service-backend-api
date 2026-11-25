@@ -1,17 +1,14 @@
 import axios from 'axios';
 import { IdentityProviderService } from './identity-provider.service';
 import { getRetryAfterMsFromHeaders, getExponentialBackoffMs } from '../../helpers/retry.helper';
-import { sleep } from '../../helpers/misc.helper';
-
-jest.mock('../../helpers/misc.helper', () => ({
-  ...jest.requireActual('../../helpers/misc.helper'),
-  sleep: jest.fn().mockResolvedValue(undefined)
-}));
+import * as miscHelper from '../../helpers/misc.helper';
 
 describe('Identity provider reliability (isolated)', () => {
   let sut: IdentityProviderService;
   let cache: any;
   beforeEach(() => {
+    // Global Jest setup preloads the service, so spy on its existing helper module.
+    jest.spyOn(miscHelper, 'sleep').mockResolvedValue(undefined);
     cache = {
       getMany: jest.fn().mockResolvedValue([{ identityId: 'id', displayName: 'Stale' }]),
       deleteMany: jest.fn().mockResolvedValue(undefined),
@@ -64,7 +61,7 @@ describe('Identity provider reliability (isolated)', () => {
       startedAt: Date.now(),
       policy: { maxRetries: 3, maxDurationMs: 200000 }
     });
-    expect(sleep).toHaveBeenCalledWith(Math.ceil(retryAfterMs / 10));
+    expect(miscHelper.sleep).toHaveBeenCalledWith(Math.ceil(retryAfterMs / 10));
   });
   it('keeps name confirmation as the default for legacy/queued callers', async () => {
     jest.spyOn(sut, 'getUserInfo').mockResolvedValue({ givenName: 'Old' } as any);
@@ -98,8 +95,8 @@ describe('Identity provider reliability (isolated)', () => {
         startedAt: Date.now(),
         policy: { maxRetries: 3 }
       });
-      if (parsed !== undefined) expect(sleep).toHaveBeenCalledWith(Math.ceil(parsed / 10));
-      else expect(sleep).toHaveBeenCalledWith(getExponentialBackoffMs(1, 15000));
+      if (parsed !== undefined) expect(miscHelper.sleep).toHaveBeenCalledWith(Math.ceil(parsed / 10));
+      else expect(miscHelper.sleep).toHaveBeenCalledWith(getExponentialBackoffMs(1, 15000));
     }
   );
   it('selects the largest subresponse header before scaling, retaining successes', async () => {
@@ -118,7 +115,7 @@ describe('Identity provider reliability (isolated)', () => {
       startedAt: Date.now(),
       policy: { maxRetries: 3 }
     });
-    expect(sleep).toHaveBeenCalledWith(6000);
+    expect(miscHelper.sleep).toHaveBeenCalledWith(6000);
   });
   it('retains retry exhaustion and elapsed budget checks', async () => {
     expect(
@@ -133,7 +130,7 @@ describe('Identity provider reliability (isolated)', () => {
         policy: { maxRetries: 3, maxDurationMs: 200000 }
       })
     ).toBe(false);
-    expect(sleep).not.toHaveBeenCalled();
+    expect(miscHelper.sleep).not.toHaveBeenCalled();
   });
   it.each([true, false])('retries stale account status until accountEnabled=%s is visible', async accountEnabled => {
     jest
@@ -147,10 +144,10 @@ describe('Identity provider reliability (isolated)', () => {
   it('retains the one-hour fallback cap for later bulk retries', async () => {
     const retryState = { startedAt: Date.now(), policy: { maxRetries: 50 } };
     expect(await (sut as any).waitForB2CRetry({ status: 429 }, 11, retryState)).toBe(true);
-    expect(sleep).toHaveBeenLastCalledWith(3600000);
+    expect(miscHelper.sleep).toHaveBeenLastCalledWith(3600000);
     expect(await (sut as any).waitForB2CRetry({ status: 429 }, 49, retryState)).toBe(true);
-    expect(sleep).toHaveBeenLastCalledWith(3600000);
+    expect(miscHelper.sleep).toHaveBeenLastCalledWith(3600000);
     expect(await (sut as any).waitForB2CRetry({ status: 429 }, 50, retryState)).toBe(false);
-    expect(sleep).toHaveBeenCalledTimes(2);
+    expect(miscHelper.sleep).toHaveBeenCalledTimes(2);
   });
 });

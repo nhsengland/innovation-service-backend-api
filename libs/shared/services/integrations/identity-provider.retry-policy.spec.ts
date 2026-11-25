@@ -1,9 +1,6 @@
 import axios from 'axios';
 import { IdentityProviderService } from './identity-provider.service';
-jest.mock('../../helpers/misc.helper', () => ({
-  ...jest.requireActual('../../helpers/misc.helper'),
-  sleep: jest.fn().mockResolvedValue(undefined)
-}));
+import * as miscHelper from '../../helpers/misc.helper';
 const failure = (status: number): Error =>
   Object.assign(new Error('Graph fixture'), {
     isAxiosError: true,
@@ -12,6 +9,8 @@ const failure = (status: number): Error =>
 describe('B2C extended retry policy', () => {
   let sut: IdentityProviderService;
   beforeEach(() => {
+    // Global Jest setup preloads the service, so spy on its existing helper module.
+    jest.spyOn(miscHelper, 'sleep').mockResolvedValue(undefined);
     sut = new IdentityProviderService(
       {
         get: () => ({
@@ -145,7 +144,7 @@ describe('B2C extended retry policy', () => {
       }
     });
     await expect(sut.updateUser('id', { accountEnabled: true })).resolves.toBeUndefined();
-    expect(get.mock.calls[0][1]?.timeout).toBe(10000);
+    expect(get.mock.calls[0]?.[1]?.timeout).toBe(10000);
   });
   it('isolates simultaneous requests retry budgets', async () => {
     let now = 0;

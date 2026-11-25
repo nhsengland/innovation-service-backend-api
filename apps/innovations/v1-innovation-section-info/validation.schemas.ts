@@ -1,7 +1,7 @@
-import Joi from "joi";
+import Joi from 'joi';
 
-import { JoiHelper } from "@innovations/shared/helpers";
-import { CurrentCatalogTypes } from "@innovations/shared/schemas/innovation-record";
+import { JoiHelper } from '@innovations/shared/helpers';
+import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 
 export type ParamsType = {
   innovationId: string;
@@ -16,8 +16,8 @@ export const ParamsSchema = Joi.object<ParamsType>({
 }).required();
 
 export type QueryParamsType = {
-  fields?: "tasks"[];
+  fields?: 'tasks'[];
 };
 export const QueryParamsSchema = Joi.object({
-  fields: JoiHelper.AppCustomJoi().stringArray().items(JoiHelper.AppCustomJoi().string().valid("tasks"))
+  fields: JoiHelper.AppCustomJoi().stringArray().items(JoiHelper.AppCustomJoi().string().valid('tasks'))
 });
